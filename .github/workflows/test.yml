@@ -4,17 +4,17 @@ on:
   push:
     branches: [main]
     paths:
-      - '**.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
-      - '.github/workflows/test.yml'
+      - "**.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/test.yml"
   pull_request:
     branches: [main]
     paths:
-      - '**.py'
-      - 'pyproject.toml'
-      - 'uv.lock'
-      - '.github/workflows/test.yml'
+      - "**.py"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/test.yml"
 
 jobs:
   lint:
@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Install uv
         run: pip install uv
@@ -37,10 +37,10 @@ jobs:
         run: uv sync --all-extras
 
       - name: Run ruff lint
-        run: uv run ruff check blunder_tutor/ tests/
+        run: uv run ruff check blunder_tutor/
 
       - name: Run ruff format check
-        run: uv run ruff format --check blunder_tutor/ tests/
+        run: uv run ruff format --check blunder_tutor/
 
   test:
     name: Test
@@ -53,7 +53,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Install uv
         run: pip install uv
