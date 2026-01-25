@@ -1,0 +1,62 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Git
+.git/
+.gitignore
+
+# Data and logs
+data/
+*.log
+
+# Tests
+tests/
+.coverage
+htmlcov/
+
+# Documentation (keep README.md for package metadata)
+CLEANUP.md
+RESEARCH.md
+ROADMAP.md
+DOCKER.md
+
+# Environment files
+.env
+.env.*
+.envrc
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+.env
+
+*.pgn
+*.sqlite3
+*.sqlite
+*.db
+*.jsonl
