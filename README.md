@@ -1,5 +1,7 @@
 # TLDR;
 
+[![codecov](https://codecov.io/gh/MrLokans/chess-blunder-trainer/badge.svg)](https://codecov.io/gh/MrLokans/chess-blunder-trainer)
+
 Load your games from chess.com or lichess.org, run stockfish analysis and train over your past blunders.
 
 ## Self-Hosting with Docker
