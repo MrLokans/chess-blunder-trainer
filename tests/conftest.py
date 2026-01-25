@@ -1,0 +1,111 @@
+"""Pytest configuration and shared fixtures for tests."""
+
+from __future__ import annotations
+
+import tempfile
+from pathlib import Path
+from typing import Generator
+
+import pytest
+from fastapi.testclient import TestClient
+
+from unittest.mock import MagicMock
+
+from blunder_tutor.analysis.db import ensure_schema
+from blunder_tutor.repositories.analysis import AnalysisRepository
+from blunder_tutor.repositories.game_repository import GameRepository
+from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
+from blunder_tutor.trainer import Trainer
+from blunder_tutor.web.app import create_app
+from blunder_tutor.web.config import AppConfig, DataConfig, EngineConfig
+
+
+@pytest.fixture
+def temp_dir() -> Generator[Path, None, None]:
+    """Provide a temporary directory that cleans up after the test."""
+    with tempfile.TemporaryDirectory() as tmp:
+        yield Path(tmp)
+
+
+@pytest.fixture
+def data_dir(temp_dir: Path) -> Path:
+    data_path = temp_dir / "data"
+    data_path.mkdir(parents=True, exist_ok=True)
+    return data_path
+
+
+@pytest.fixture
+def db_path(temp_dir: Path) -> Path:
+    path = temp_dir / "test.sqlite"
+    ensure_schema(path)
+    return path
+
+
+@pytest.fixture
+def test_config(data_dir: Path, db_path: Path) -> AppConfig:
+    """Provide a test configuration object.
+
+    Note: This config uses a mock engine path. Tests that require
+    an actual chess engine should skip or mock the engine.
+    """
+    return AppConfig(
+        username="testuser",
+        engine_path="/usr/bin/stockfish",  # Mock path
+        engine=EngineConfig(
+            path="/usr/bin/stockfish",
+            depth=10,
+            time_limit=1.0,
+        ),
+        data=DataConfig(
+            data_dir=data_dir,
+            db_path=db_path,
+            template_dir=Path(__file__).parent.parent / "templates",
+        ),
+    )
+
+
+@pytest.fixture
+def analysis_repo(data_dir: Path, db_path: Path) -> AnalysisRepository:
+    return AnalysisRepository(data_dir, db_path)
+
+
+@pytest.fixture
+def game_repo(data_dir: Path, db_path: Path) -> GameRepository:
+    return GameRepository(data_dir, db_path)
+
+
+@pytest.fixture
+def puzzle_attempt_repo(data_dir: Path, db_path: Path) -> PuzzleAttemptRepository:
+    return PuzzleAttemptRepository(data_dir, db_path)
+
+
+@pytest.fixture
+def trainer(
+    game_repo: GameRepository,
+    puzzle_attempt_repo: PuzzleAttemptRepository,
+    analysis_repo: AnalysisRepository,
+) -> Trainer:
+    return Trainer(
+        games=game_repo,
+        attempts=puzzle_attempt_repo,
+        analysis=analysis_repo,
+    )
+
+
+@pytest.fixture
+def app(test_config: AppConfig, monkeypatch) -> TestClient:
+    mock_engine = MagicMock()
+
+    def mock_popen_uci(path):
+        return mock_engine
+
+    monkeypatch.setattr("chess.engine.SimpleEngine.popen_uci", mock_popen_uci)
+    fastapi_app = create_app(test_config)
+    return TestClient(fastapi_app)
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "asyncio: mark test as async (requires pytest-asyncio)",
+    )

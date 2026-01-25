@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% from "_nav.html" import render_nav %}
+
+{% block title %}Dashboard - Blunder Tutor{% endblock %}
+
+{% block extra_css %}
+<style>
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .chart-container {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+
+  .chart-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Blunder Tutor Dashboard</h1>
+{{ render_nav('dashboard') }}
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Games</div>
+    <div class="stat-value" id="totalGames">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Analyzed Games</div>
+    <div class="stat-value" id="analyzedGames">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Blunders</div>
+    <div class="stat-value" id="totalBlunders">-</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Analysis Progress</div>
+    <div class="stat-value" id="progressPercent">-</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+    <div id="analysisJobStatus" style="margin-top: 8px; font-size: 0.875rem; color: var(--text-muted);"></div>
+  </div>
+</div>
+
+<div class="chart-container">
+  <div class="chart-title">Game Breakdown by Source</div>
+  <table id="gameBreakdownTable">
+    <thead>
+      <tr>
+        <th>Source</th>
+        <th>Username</th>
+        <th>Total Games</th>
+        <th>Analyzed</th>
+        <th>Pending</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="chart-container">
+  <div class="chart-title">Recent Activity</div>
+  <table id="recentActivityTable">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Username</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div style="margin-top: 24px;">
+  <button class="btn" onclick="location.href='/management'">Manage Imports & Sync</button>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function loadStats() {
+    try {
+      // Load overview stats
+      const overviewResp = await fetch('/api/stats');
+      const overview = await overviewResp.json();
+
+      document.getElementById('totalGames').textContent = overview.total_games || 0;
+      document.getElementById('analyzedGames').textContent = overview.analyzed_games || 0;
+      document.getElementById('totalBlunders').textContent = overview.total_blunders || 0;
+
+      // Calculate progress percentage
+      const totalGames = overview.total_games || 0;
+      const analyzedGames = overview.analyzed_games || 0;
+      const progressPercent = totalGames > 0 ? Math.round((analyzedGames / totalGames) * 100) : 0;
+
+      document.getElementById('progressPercent').textContent = progressPercent + '%';
+      document.getElementById('progressFill').style.width = progressPercent + '%';
+
+      // Check for running analysis job
+      const analysisStatusResp = await fetch('/api/analysis/status');
+      const analysisStatus = await analysisStatusResp.json();
+
+      const statusEl = document.getElementById('analysisJobStatus');
+      if (analysisStatus.status === 'running') {
+        const percent = analysisStatus.progress_total > 0
+          ? Math.round((analysisStatus.progress_current / analysisStatus.progress_total) * 100)
+          : 0;
+        statusEl.textContent = `Analysis running: ${analysisStatus.progress_current || 0}/${analysisStatus.progress_total || 0} (${percent}%)`;
+        statusEl.style.color = 'var(--primary)';
+      } else if (analysisStatus.status === 'completed') {
+        statusEl.textContent = 'Last analysis: completed';
+        statusEl.style.color = 'var(--success)';
+      } else if (analysisStatus.status === 'failed') {
+        statusEl.textContent = 'Last analysis: failed';
+        statusEl.style.color = 'var(--error)';
+      } else {
+        statusEl.textContent = '';
+      }
+
+      // Load game breakdown
+      const breakdownResp = await fetch('/api/stats/games');
+      const breakdown = await breakdownResp.json();
+
+      const tbody = document.querySelector('#gameBreakdownTable tbody');
+      tbody.innerHTML = '';
+      breakdown.forEach(row => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${row.source}</td>
+            <td>${row.username}</td>
+            <td>${row.total_games}</td>
+            <td>${row.analyzed_games}</td>
+            <td>${row.pending_games}</td>
+          </tr>
+        `;
+      });
+
+      // Load recent activity
+      const activityResp = await fetch('/api/stats/progress');
+      // Note: In a full implementation, you'd fetch recent activity from a dedicated endpoint
+
+    } catch (err) {
+      console.error('Failed to load stats:', err);
+    }
+  }
+
+  // Load stats on page load
+  loadStats();
+
+  // Initialize WebSocket for real-time updates
+  wsClient.connect();
+  wsClient.subscribe(['stats.updated', 'job.completed', 'job.progress_updated', 'job.status_changed']);
+
+  // Handle stats updates
+  wsClient.on('stats.updated', () => {
+    // Reload all dashboard data
+    loadStats();
+  });
+
+  wsClient.on('job.completed', () => {
+    // Reload dashboard when any job completes
+    loadStats();
+  });
+
+  wsClient.on('job.progress_updated', () => {
+    // Update analysis status in real-time
+    loadStats();
+  });
+
+  wsClient.on('job.status_changed', () => {
+    // Update when job status changes
+    loadStats();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,76 @@
+[project]
+name = "blunder-tutor"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "apscheduler>=3.10.0",
+  "fastapi>=0.116.1",
+  "httpx>=0.28.1",
+  "jinja2>=3.1.4",
+  "python-chess>=1.999",
+  "python-multipart>=0.0.21",
+  "sqlalchemy>=2.0.0",
+  "tqdm>=4.67.1",
+  "uvicorn>=0.35.0",
+  "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.24.0",
+  "ruff>=0.8.6",
+]
+
+[project.scripts]
+blunder-tutor = "blunder_tutor.cli:main"
+blunder-tutor-migrate = "blunder_tutor.scripts.migrate_index_to_sqlite:main"
+
+[build-system]
+requires = ["hatchling>=1.26.3"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["blunder_tutor"]
+
+[tool.uv]
+package = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+exclude = [
+  ".venv",
+  "__pycache__",
+  "*.pyc",
+]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # isort
+  "N",   # pep8-naming
+  "UP",  # pyupgrade
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "SIM", # flake8-simplify
+]
+ignore = [
+  "E501", # line too long (handled by formatter)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

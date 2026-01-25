@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Blunder Tutor{% endblock %}
+
+{% block extra_css %}
+<style>
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .container {
+    max-width: 520px;
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+  <a href="/" class="back-link">&larr; Back to Trainer</a>
+
+  <div class="card">
+    <h1>Settings</h1>
+    <p class="subtitle">Manage your chess usernames</p>
+
+    <div class="alert alert-info visible">
+      At least one username is required to continue training.
+    </div>
+
+    <div class="alert alert-error" id="errorAlert"></div>
+    <div class="alert alert-success" id="successAlert"></div>
+
+    <form id="settingsForm">
+      <div class="form-group">
+        <label for="lichess">Lichess Username</label>
+        <input type="text" id="lichess" name="lichess" placeholder="Enter your Lichess username" value="{{ lichess_username or '' }}">
+        <div class="help-text">Optional: Leave blank if you don't use Lichess</div>
+      </div>
+
+      <div class="form-group">
+        <label for="chesscom">Chess.com Username</label>
+        <input type="text" id="chesscom" name="chesscom" placeholder="Enter your Chess.com username" value="{{ chesscom_username or '' }}">
+        <div class="help-text">Optional: Leave blank if you don't use Chess.com</div>
+      </div>
+
+      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
+
+      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">Automatic Sync</h2>
+
+      <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="autoSync" name="autoSync" style="width: auto;">
+          Enable automatic sync
+        </label>
+        <div class="help-text">Automatically fetch new games at regular intervals</div>
+      </div>
+
+      <div class="form-group">
+        <label for="syncInterval">Sync Interval</label>
+        <select id="syncInterval" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
+          <option value="6">Every 6 hours</option>
+          <option value="12">Every 12 hours</option>
+          <option value="24" selected>Every 24 hours</option>
+          <option value="48">Every 48 hours</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="maxGames">Max Games per Sync</label>
+        <input type="number" id="maxGames" min="100" max="10000" value="1000" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
+        <div class="help-text">Maximum number of games to fetch during each sync</div>
+      </div>
+
+      <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="autoAnalyze" name="autoAnalyze" checked style="width: auto;">
+          Automatically analyze new games
+        </label>
+        <div class="help-text">Run analysis on newly fetched games</div>
+      </div>
+
+      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
+
+      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">Training Settings</h2>
+
+      <div class="form-group">
+        <label for="spacedRepetitionDays">Spaced Repetition Interval (days)</label>
+        <input type="number" id="spacedRepetitionDays" min="1" max="365" value="30" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
+        <div class="help-text">Don't show correctly solved puzzles again for this many days</div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="window.location.href='/'">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const form = document.getElementById('settingsForm');
+  const errorAlert = document.getElementById('errorAlert');
+  const successAlert = document.getElementById('successAlert');
+  const submitBtn = document.getElementById('submitBtn');
+  const lichessInput = document.getElementById('lichess');
+  const chesscomInput = document.getElementById('chesscom');
+
+  function showError(message) {
+    errorAlert.textContent = message;
+    errorAlert.classList.add('visible');
+    successAlert.classList.remove('visible');
+  }
+
+  function showSuccess(message) {
+    successAlert.textContent = message;
+    successAlert.classList.add('visible');
+    errorAlert.classList.remove('visible');
+  }
+
+  function hideAlerts() {
+    errorAlert.classList.remove('visible');
+    successAlert.classList.remove('visible');
+  }
+
+  // Load sync settings
+  async function loadSyncSettings() {
+    try {
+      // This would load from API in full implementation
+      // For now, use defaults
+      document.getElementById('autoSync').checked = false;
+      document.getElementById('syncInterval').value = '24';
+      document.getElementById('maxGames').value = '1000';
+      document.getElementById('autoAnalyze').checked = true;
+      document.getElementById('spacedRepetitionDays').value = '30';
+    } catch (err) {
+      console.error('Failed to load sync settings:', err);
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlerts();
+
+    const lichess = lichessInput.value.trim();
+    const chesscom = chesscomInput.value.trim();
+
+    // Validate at least one username
+    if (!lichess && !chesscom) {
+      showError('Please provide at least one username (Lichess or Chess.com)');
+      return;
+    }
+
+    // Get sync settings
+    const autoSync = document.getElementById('autoSync').checked;
+    const syncInterval = document.getElementById('syncInterval').value;
+    const maxGames = document.getElementById('maxGames').value;
+    const autoAnalyze = document.getElementById('autoAnalyze').checked;
+    const spacedRepetitionDays = document.getElementById('spacedRepetitionDays').value;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lichess,
+          chesscom,
+          auto_sync: autoSync,
+          sync_interval: syncInterval,
+          max_games: maxGames,
+          auto_analyze: autoAnalyze,
+          spaced_repetition_days: spacedRepetitionDays
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showSuccess('Settings saved successfully!');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1500);
+      } else {
+        showError(data.error || 'Failed to save settings. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save Changes';
+      }
+    } catch (err) {
+      showError('Network error. Please try again.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save Changes';
+      console.error(err);
+    }
+  });
+
+  // Load settings on page load
+  loadSyncSettings();
+</script>
+{% endblock %}

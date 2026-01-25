@@ -1,0 +1,528 @@
+{% extends "base.html" %}
+{% from "_nav.html" import render_nav %}
+
+{% block title %}Management - Blunder Tutor{% endblock %}
+
+{% block content %}
+<h1>Management</h1>
+{{ render_nav('management') }}
+
+<div class="card">
+  <h2>Bulk Import Games</h2>
+  <div id="importMessage" style="display: none;"></div>
+  <form id="importForm">
+    <div class="form-group">
+      <label for="source">Source</label>
+      <select id="source" required>
+        <option value="">Select source...</option>
+        <option value="lichess">Lichess</option>
+        <option value="chesscom">Chess.com</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" required placeholder="Enter username">
+    </div>
+    <div class="form-group">
+      <label for="maxGames">Maximum Games</label>
+      <input type="number" id="maxGames" value="1000" min="1" max="10000">
+    </div>
+    <button type="submit" class="btn">Start Import</button>
+  </form>
+
+  <div id="importProgress" style="display: none; margin-top: 24px;">
+    <p><strong>Import in progress...</strong></p>
+    <div class="progress-bar">
+      <div class="progress-fill" id="importProgressFill" style="width: 0%"></div>
+      <div class="progress-text" id="importProgressText">0%</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Sync Games</h2>
+  <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
+    Fetch new games from all configured sources.
+  </p>
+  <button class="btn" onclick="startSync()">Sync Now</button>
+  <div id="syncStatus" style="margin-top: 16px;"></div>
+</div>
+
+<div class="card">
+  <h2>Analyze Games</h2>
+  <div id="analysisMessage" style="display: none;"></div>
+
+  <div id="analysisInfo" style="margin-bottom: 16px;">
+    <p style="color: var(--text-muted); font-size: 0.875rem;">
+      <span id="unanalyzedCount">-</span> games pending analysis
+    </p>
+  </div>
+
+  <div id="analysisControls">
+    <button class="btn" id="startAnalysisBtn" onclick="startAnalysis()">Analyze All Games</button>
+    <button class="btn" id="stopAnalysisBtn" onclick="stopAnalysis()" style="display: none; background: var(--error);">Stop Analysis</button>
+  </div>
+
+  <div id="analysisProgress" style="display: none; margin-top: 24px;">
+    <p><strong>Analysis in progress...</strong></p>
+    <div class="progress-bar">
+      <div class="progress-fill" id="analysisProgressFill" style="width: 0%"></div>
+      <div class="progress-text" id="analysisProgressText">0%</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Recent Jobs</h2>
+  <table id="jobsTable">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Username</th>
+        <th>Source</th>
+        <th>Progress</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let currentJobId = null;
+  let jobCheckInterval = null;
+  let configuredUsernames = {};
+
+  // LocalStorage keys
+  const STORAGE_KEYS = {
+    source: 'blunder_import_source',
+    username: 'blunder_import_username',
+    maxGames: 'blunder_import_maxGames'
+  };
+
+  // Load configured usernames from settings
+  async function loadConfiguredUsernames() {
+    try {
+      const resp = await fetch('/api/settings/usernames');
+      if (resp.ok) {
+        configuredUsernames = await resp.json();
+      }
+    } catch (err) {
+      console.error('Failed to load configured usernames:', err);
+    }
+  }
+
+  // Prefill username based on selected source
+  function prefillUsername(source) {
+    const usernameInput = document.getElementById('username');
+    const currentValue = usernameInput.value.trim();
+
+    // Only prefill if field is empty
+    if (!currentValue && source) {
+      if (source === 'lichess' && configuredUsernames.lichess_username) {
+        usernameInput.value = configuredUsernames.lichess_username;
+      } else if (source === 'chesscom' && configuredUsernames.chesscom_username) {
+        usernameInput.value = configuredUsernames.chesscom_username;
+      }
+    }
+  }
+
+  // Save form values to localStorage
+  function saveFormValues() {
+    localStorage.setItem(STORAGE_KEYS.source, document.getElementById('source').value);
+    localStorage.setItem(STORAGE_KEYS.username, document.getElementById('username').value);
+    localStorage.setItem(STORAGE_KEYS.maxGames, document.getElementById('maxGames').value);
+  }
+
+  // Restore form values from localStorage
+  function restoreFormValues() {
+    const savedSource = localStorage.getItem(STORAGE_KEYS.source);
+    const savedUsername = localStorage.getItem(STORAGE_KEYS.username);
+    const savedMaxGames = localStorage.getItem(STORAGE_KEYS.maxGames);
+
+    if (savedSource) {
+      document.getElementById('source').value = savedSource;
+    }
+    if (savedUsername) {
+      document.getElementById('username').value = savedUsername;
+    }
+    if (savedMaxGames) {
+      document.getElementById('maxGames').value = savedMaxGames;
+    }
+  }
+
+  // Initialize: Load configured usernames and restore form values
+  async function initialize() {
+    await loadConfiguredUsernames();
+    restoreFormValues();
+
+    // Prefill username based on restored source
+    const restoredSource = document.getElementById('source').value;
+    if (restoredSource && !document.getElementById('username').value) {
+      prefillUsername(restoredSource);
+    }
+  }
+
+  // Add event listener for source change
+  document.getElementById('source').addEventListener('change', (e) => {
+    prefillUsername(e.target.value);
+    saveFormValues();
+  });
+
+  // Add event listeners to save form values on change
+  document.getElementById('username').addEventListener('input', saveFormValues);
+  document.getElementById('maxGames').addEventListener('input', saveFormValues);
+
+  document.getElementById('importForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const source = document.getElementById('source').value;
+    const username = document.getElementById('username').value;
+    const maxGames = parseInt(document.getElementById('maxGames').value);
+
+    try {
+      const resp = await fetch('/api/import/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source, username, max_games: maxGames })
+      });
+
+      const data = await resp.json();
+
+      if (data.error) {
+        showMessage('importMessage', 'error', 'Error: ' + data.error);
+        return;
+      }
+
+      currentJobId = data.job_id;
+      document.getElementById('importProgress').style.display = 'block';
+      showMessage('importMessage', 'success', 'Import job started!');
+
+      // WebSocket will handle updates - no polling needed!
+
+    } catch (err) {
+      showMessage('importMessage', 'error', 'Failed to start import: ' + err.message);
+    }
+  });
+
+  async function startSync() {
+    try {
+      const resp = await fetch('/api/sync/start', { method: 'POST' });
+      const data = await resp.json();
+
+      document.getElementById('syncStatus').innerHTML =
+        '<div class="message success">Sync started! Check Recent Jobs for progress.</div>';
+
+      setTimeout(loadJobs, 1000);
+
+    } catch (err) {
+      document.getElementById('syncStatus').innerHTML =
+        '<div class="message error">Failed to start sync: ' + err.message + '</div>';
+    }
+  }
+
+  async function loadJobs() {
+    try {
+      const resp = await fetch('/api/jobs?limit=20');
+      const jobs = await resp.json();
+
+      const tbody = document.querySelector('#jobsTable tbody');
+      tbody.innerHTML = '';
+
+      jobs.forEach(job => {
+        const progress = job.progress_total > 0
+          ? `${job.progress_current}/${job.progress_total}`
+          : '-';
+
+        const created = new Date(job.created_at).toLocaleString();
+
+        // Show delete button for all jobs except running ones
+        const canDelete = job.status !== 'running';
+        const deleteButton = canDelete
+          ? `<button class="btn-delete" onclick="deleteJob('${job.job_id}')" title="Delete job">&times;</button>`
+          : '';
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${job.job_type}</td>
+            <td><span class="status ${job.status}">${job.status}</span></td>
+            <td>${job.username || '-'}</td>
+            <td>${job.source || '-'}</td>
+            <td>${progress}</td>
+            <td>${created}</td>
+            <td>${deleteButton}</td>
+          </tr>
+        `;
+      });
+
+    } catch (err) {
+      console.error('Failed to load jobs:', err);
+    }
+  }
+
+  function showMessage(elementId, type, text) {
+    const el = document.getElementById(elementId);
+    el.className = 'message ' + type;
+    el.textContent = text;
+    el.style.display = 'block';
+
+    setTimeout(() => {
+      el.style.display = 'none';
+    }, 5000);
+  }
+
+  async function deleteJob(jobId) {
+    if (!confirm('Are you sure you want to delete this job?')) {
+      return;
+    }
+
+    try {
+      const resp = await fetch(`/api/jobs/${jobId}`, {
+        method: 'DELETE'
+      });
+
+      if (resp.ok) {
+        // Reload the jobs table
+        loadJobs();
+      } else {
+        const data = await resp.json();
+        alert('Failed to delete job: ' + (data.detail || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Failed to delete job: ' + err.message);
+    }
+  }
+
+  // Initialize on page load
+  initialize();
+
+  // Load jobs on page load
+  loadJobs();
+
+  // Analysis management
+  let analysisJobId = null;
+  let analysisCheckInterval = null;
+
+  async function loadAnalysisStatus() {
+    try {
+      // Load stats to get unanalyzed count
+      const statsResp = await fetch('/api/stats');
+      const stats = await statsResp.json();
+      document.getElementById('unanalyzedCount').textContent = stats.pending_analysis || 0;
+
+      // Load current analysis job status
+      const statusResp = await fetch('/api/analysis/status');
+      const status = await statusResp.json();
+
+      if (status.status === 'running') {
+        analysisJobId = status.job_id;
+        showAnalysisProgress(status);
+      } else if (status.status === 'no_jobs' || status.status === 'completed' || status.status === 'failed') {
+        hideAnalysisProgress();
+      }
+    } catch (err) {
+      console.error('Failed to load analysis status:', err);
+    }
+  }
+
+  function showAnalysisProgress(job) {
+    document.getElementById('analysisProgress').style.display = 'block';
+    document.getElementById('startAnalysisBtn').style.display = 'none';
+    document.getElementById('stopAnalysisBtn').style.display = 'inline-block';
+
+    if (job.progress_total > 0) {
+      const percent = Math.round((job.progress_current / job.progress_total) * 100);
+      document.getElementById('analysisProgressFill').style.width = percent + '%';
+      document.getElementById('analysisProgressText').textContent =
+        `${job.progress_current}/${job.progress_total} (${percent}%)`;
+    }
+  }
+
+  function hideAnalysisProgress() {
+    document.getElementById('analysisProgress').style.display = 'none';
+    document.getElementById('startAnalysisBtn').style.display = 'inline-block';
+    document.getElementById('stopAnalysisBtn').style.display = 'none';
+
+    if (analysisCheckInterval) {
+      clearInterval(analysisCheckInterval);
+      analysisCheckInterval = null;
+    }
+
+    analysisJobId = null;
+  }
+
+  async function startAnalysis() {
+    try {
+      const resp = await fetch('/api/analysis/start', { method: 'POST' });
+      const data = await resp.json();
+
+      if (data.error) {
+        showMessage('analysisMessage', 'error', 'Error: ' + data.error);
+        return;
+      }
+
+      analysisJobId = data.job_id;
+      showMessage('analysisMessage', 'success', 'Analysis started!');
+
+      // Show progress UI
+      document.getElementById('analysisProgress').style.display = 'block';
+      document.getElementById('startAnalysisBtn').style.display = 'none';
+      document.getElementById('stopAnalysisBtn').style.display = 'inline-block';
+
+      // WebSocket will handle progress updates
+
+    } catch (err) {
+      showMessage('analysisMessage', 'error', 'Failed to start analysis: ' + err.message);
+    }
+  }
+
+  async function stopAnalysis() {
+    if (!analysisJobId) return;
+
+    try {
+      const resp = await fetch(`/api/analysis/stop/${analysisJobId}`, { method: 'POST' });
+      const data = await resp.json();
+
+      showMessage('analysisMessage', 'success', 'Analysis stopped!');
+      hideAnalysisProgress();
+      loadJobs();
+      loadAnalysisStatus();
+
+    } catch (err) {
+      showMessage('analysisMessage', 'error', 'Failed to stop analysis: ' + err.message);
+    }
+  }
+
+  async function checkAnalysisStatus(jobId) {
+    try {
+      const resp = await fetch(`/api/import/status/${jobId}`);
+      const job = await resp.json();
+
+      if (job.error) {
+        clearInterval(analysisCheckInterval);
+        analysisCheckInterval = null;
+        return;
+      }
+
+      // Update progress
+      if (job.progress_total > 0) {
+        const percent = Math.round((job.progress_current / job.progress_total) * 100);
+        document.getElementById('analysisProgressFill').style.width = percent + '%';
+        document.getElementById('analysisProgressText').textContent =
+          `${job.progress_current}/${job.progress_total} (${percent}%)`;
+      }
+
+      // Show progress UI if running
+      if (job.status === 'running') {
+        document.getElementById('analysisProgress').style.display = 'block';
+        document.getElementById('startAnalysisBtn').style.display = 'none';
+        document.getElementById('stopAnalysisBtn').style.display = 'inline-block';
+      }
+
+      // Check if completed
+      if (job.status === 'completed' || job.status === 'failed') {
+        clearInterval(analysisCheckInterval);
+        analysisCheckInterval = null;
+
+        hideAnalysisProgress();
+
+        if (job.status === 'completed') {
+          const result = job.result || {};
+          showMessage('analysisMessage', 'success',
+            `Analysis completed! Analyzed: ${result.analyzed || 0}, Skipped: ${result.skipped || 0}`);
+        } else {
+          showMessage('analysisMessage', 'error', 'Analysis failed: ' + (job.error_message || 'Unknown error'));
+        }
+
+        loadJobs();
+        loadAnalysisStatus();
+      }
+
+    } catch (err) {
+      console.error('Failed to check analysis status:', err);
+    }
+  }
+
+  // Load analysis status on page load
+  loadAnalysisStatus();
+
+  // Initialize WebSocket for real-time updates
+  wsClient.connect();
+
+  // Subscribe to all job-related events
+  wsClient.subscribe([
+    'job.created',
+    'job.status_changed',
+    'job.progress_updated',
+    'job.completed',
+    'job.failed'
+  ]);
+
+  // Handle job progress updates
+  wsClient.on('job.progress_updated', (data) => {
+    // Update import progress if this is the current import job
+    if (data.job_id === currentJobId) {
+      const percent = data.percent;
+      document.getElementById('importProgressFill').style.width = percent + '%';
+      document.getElementById('importProgressText').textContent =
+        `${data.current}/${data.total} (${percent}%)`;
+    }
+
+    // Update analysis progress if this is the current analysis job
+    if (data.job_id === analysisJobId) {
+      const percent = data.percent;
+      document.getElementById('analysisProgressFill').style.width = percent + '%';
+      document.getElementById('analysisProgressText').textContent =
+        `${data.current}/${data.total} (${percent}%)`;
+    }
+
+    // Refresh jobs table to show updated progress
+    loadJobs();
+  });
+
+  // Handle job status changes
+  wsClient.on('job.status_changed', (data) => {
+    // Handle import job completion
+    if (data.job_id === currentJobId) {
+      if (data.status === 'completed') {
+        document.getElementById('importProgress').style.display = 'none';
+        showMessage('importMessage', 'success', 'Import completed!');
+        currentJobId = null;
+        loadJobs();
+      } else if (data.status === 'failed') {
+        document.getElementById('importProgress').style.display = 'none';
+        showMessage('importMessage', 'error', 'Import failed: ' + (data.error_message || 'Unknown error'));
+        currentJobId = null;
+        loadJobs();
+      }
+    }
+
+    // Handle analysis job completion
+    if (data.job_id === analysisJobId) {
+      if (data.status === 'completed') {
+        hideAnalysisProgress();
+        showMessage('analysisMessage', 'success', 'Analysis completed!');
+        loadJobs();
+        loadAnalysisStatus();
+      } else if (data.status === 'failed') {
+        hideAnalysisProgress();
+        showMessage('analysisMessage', 'error', 'Analysis failed: ' + (data.error_message || 'Unknown error'));
+        loadJobs();
+        loadAnalysisStatus();
+      }
+    }
+
+    // Refresh jobs table for any status change
+    loadJobs();
+  });
+
+  // Handle job creation (refresh table)
+  wsClient.on('job.created', () => {
+    loadJobs();
+  });
+</script>
+{% endblock %}

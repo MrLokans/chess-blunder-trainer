@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Setup - Blunder Tutor{% endblock %}
+
+{% block extra_css %}
+<style>
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .container {
+    max-width: 520px;
+  }
+
+  .footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .footer a:hover {
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+  <div class="card">
+    <h1>Welcome to Blunder Tutor</h1>
+    <p class="subtitle">Configure your chess usernames to get started</p>
+
+    <div class="alert alert-info visible">
+      At least one username is required to train with your games.
+    </div>
+
+    <div class="alert alert-error" id="errorAlert"></div>
+
+    <form id="setupForm">
+      <div class="form-group">
+        <label for="lichess">Lichess Username</label>
+        <input type="text" id="lichess" name="lichess" placeholder="Enter your Lichess username">
+        <div class="help-text">Optional: Leave blank if you don't use Lichess</div>
+      </div>
+
+      <div class="form-group">
+        <label for="chesscom">Chess.com Username</label>
+        <input type="text" id="chesscom" name="chesscom" placeholder="Enter your Chess.com username">
+        <div class="help-text">Optional: Leave blank if you don't use Chess.com</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submitBtn">Get Started</button>
+    </form>
+
+    <div class="footer">
+      Need help? Check the <a href="https://github.com/anthropics/blunder-tutor">documentation</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const form = document.getElementById('setupForm');
+  const errorAlert = document.getElementById('errorAlert');
+  const submitBtn = document.getElementById('submitBtn');
+  const lichessInput = document.getElementById('lichess');
+  const chesscomInput = document.getElementById('chesscom');
+
+  function showError(message) {
+    errorAlert.textContent = message;
+    errorAlert.classList.add('visible');
+  }
+
+  function hideError() {
+    errorAlert.classList.remove('visible');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+
+    const lichess = lichessInput.value.trim();
+    const chesscom = chesscomInput.value.trim();
+
+    // Validate at least one username
+    if (!lichess && !chesscom) {
+      showError('Please provide at least one username (Lichess or Chess.com)');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Setting up...';
+
+    try {
+      const response = await fetch('/api/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lichess, chesscom })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Redirect to trainer
+        window.location.href = '/';
+      } else {
+        showError(data.error || 'Setup failed. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Get Started';
+      }
+    } catch (err) {
+      showError('Network error. Please try again.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Get Started';
+      console.error(err);
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,28 @@
+services:
+  blunder-tutor:
+    build:
+      context: .
+    container_name: blunder-tutor
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      # Optional: Pre-configure usernames to skip setup screen
+      - LICHESS_USERNAME=${LICHESS_USERNAME:-}
+      - CHESSCOM_USERNAME=${CHESSCOM_USERNAME:-}
+
+      # Engine configuration
+      - STOCKFISH_BINARY=/usr/local/bin/stockfish
+      - STOCKFISH_DEPTH=${STOCKFISH_DEPTH:-14}
+
+      # Server configuration
+      - HOST=0.0.0.0
+      - PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

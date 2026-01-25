@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% from "_nav.html" import render_link_nav %}
+
+{% block title %}{{ title }} - Blunder Tutor{% endblock %}
+
+{% block extra_head %}
+<!-- Preload chess piece images for fast initial render -->
+<link rel="preload" href="/static/pieces/wikipedia/wK.png" as="image">
+<link rel="preload" href="/static/pieces/wikipedia/wQ.png" as="image">
+<link rel="preload" href="/static/pieces/wikipedia/wR.png" as="image">
+<link rel="preload" href="/static/pieces/wikipedia/wB.png" as="image">
+<link rel="preload" href="/static/pieces/wikipedia/wN.png" as="image">
+<link rel="preload" href="/static/pieces/wikipedia/wP.png" as="image">
+<link rel="preload" href="/static/pieces/wikipedia/bK.png" as="image">
+<link rel="preload" href="/static/pieces/wikipedia/bQ.png" as="image">
+<link rel="preload" href="/static/pieces/wikipedia/bR.png" as="image">
+<link rel="preload" href="/static/pieces/wikipedia/bB.png" as="image">
+<link rel="preload" href="/static/pieces/wikipedia/bN.png" as="image">
+<link rel="preload" href="/static/pieces/wikipedia/bP.png" as="image">
+
+<!-- HTMX for reactive components -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+<!-- Chessboard CSS -->
+<link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/trainer.css">
+{% endblock %}
+
+{% block body %}
+<div class="container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <h1 style="margin: 0;">Blunder Trainer</h1>
+    {{ render_link_nav() }}
+  </div>
+
+  <!-- Training Stats Section (HTMX-powered) -->
+  <div class="card" style="margin-bottom: 24px; padding: 20px;" id="statsCard">
+    <div
+      id="statsContent"
+      hx-get="/api/stats/training/html"
+      hx-trigger="load, statsUpdate from:body"
+      hx-swap="innerHTML transition:true">
+      <!-- Stats will be loaded here via HTMX on page load and after each submission -->
+      <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+        Loading stats...
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Board column -->
+    <div class="card board-container">
+      <div class="eval-bar-container">
+        <div class="eval-bar">
+          <div class="eval-bar-fill" id="evalBarFill" style="width: 50%"></div>
+        </div>
+        <div class="eval-value" id="evalValue">0.0</div>
+      </div>
+      <div id="boardWrapper" style="position: relative;">
+        <div id="board"></div>
+        <div class="arrow-overlay" id="arrowOverlay"></div>
+      </div>
+      <div class="highlight-legend" id="highlightLegend" style="display: none;">
+        <div class="legend-item" id="legendBlunder">
+          <span class="legend-color blunder"></span>
+          <span>Your blunder</span>
+        </div>
+        <div class="legend-item" id="legendBest">
+          <span class="legend-color best"></span>
+          <span>Best move</span>
+        </div>
+        <div class="legend-item" id="legendUser" style="display: none;">
+          <span class="legend-color user"></span>
+          <span>Your move</span>
+        </div>
+      </div>
+      <div class="arrow-toggle">
+        <input type="checkbox" id="showArrows" checked>
+        <label for="showArrows">Show move arrows</label>
+      </div>
+      <div class="arrow-toggle">
+        <input type="checkbox" id="showThreats" checked>
+        <label for="showThreats">Show threats (hanging pieces, pins, checks)</label>
+      </div>
+    </div>
+
+    <!-- Controls column -->
+    <div class="card">
+      <!-- Phase indicator -->
+      <div class="panel-section">
+        <span class="phase guess" id="phaseIndicator">Find the best move</span>
+        <span class="color-badge white" id="colorBadge" style="margin-left: 10px;">
+          <span class="color-dot white"></span>
+          Playing as White
+        </span>
+      </div>
+
+      <!-- Your blunder section -->
+      <div class="panel-section">
+        <div class="section-title">Your Blunder</div>
+        <div class="blunder-info">
+          <div class="blunder-move">
+            <span class="icon">??</span>
+            <span id="blunderMove">...</span>
+          </div>
+          <div class="blunder-eval">
+            Evaluation: <span id="evalBefore">...</span> &rarr; <span id="evalAfter">...</span>
+            (<span class="loss" id="cpLoss">...</span> lost)
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedback area -->
+      <div class="feedback" id="feedback">
+        <div class="feedback-title" id="feedbackTitle"></div>
+        <div class="feedback-detail" id="feedbackDetail"></div>
+      </div>
+
+      <!-- Move indicator -->
+      <div class="move-indicator">
+        <span class="label">Your move:</span>
+        <span class="move" id="currentMove">-</span>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="panel-section">
+        <div class="btn-row">
+          <button class="btn btn-primary" id="submitBtn">Submit<kbd>Enter</kbd></button>
+          <button class="btn btn-secondary" id="resetBtn">Reset<kbd>R</kbd></button>
+          <button class="btn btn-secondary" id="showBestBtn">Show Best</button>
+          <button class="btn btn-success" id="nextBtn">Next<kbd>N</kbd></button>
+          <button class="btn btn-secondary" id="lichessBtn" title="Analyze on Lichess">
+            <svg width="16" height="16" viewBox="0 0 50 50" fill="currentColor" style="vertical-align: middle;">
+              <path d="M36.7 8.3c-1.1-1.1-2.5-1.6-4-1.6-1.5 0-2.9.6-4 1.6L12.3 24.7c-2.2 2.2-2.2 5.8 0 8s5.8 2.2 8 0l16.4-16.4c1.1-1.1 1.6-2.5 1.6-4s-.5-2.9-1.6-4zm-4 5.7L16.3 30.4c-.8.8-2 .8-2.8 0s-.8-2 0-2.8L29.9 11.2c.4-.4.9-.6 1.4-.6s1 .2 1.4.6.6.9.6 1.4-.2 1-.6 1.4z"/>
+            </svg>
+            Lichess
+          </button>
+        </div>
+      </div>
+
+      <!-- Best move reveal (hidden initially) -->
+      <div class="best-move-info" id="bestMoveInfo">
+        <div class="section-title">Best Move</div>
+        <div class="best-move" id="bestMoveDisplay">...</div>
+        <div class="best-line">Line: <span id="bestLineDisplay">...</span></div>
+        <div class="try-best-move">
+          <button class="btn btn-success" id="tryBestBtn">Play Best Move on Board</button>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div class="panel-section">
+        <div class="section-title">Instructions</div>
+        <div class="instructions">
+          <strong>Goal:</strong> Find a better move than your blunder.<br/>
+          Drag pieces to make a move, then click Submit to check.<br/>
+          Click "Show Best" to reveal the engine's recommendation.
+        </div>
+      </div>
+
+      <!-- Move history for exploration -->
+      <div class="panel-section" id="historySection" style="display: none;">
+        <div class="section-title">Exploration</div>
+        <div class="move-history" id="moveHistory"></div>
+        <div style="margin-top: 10px;">
+          <button class="btn btn-secondary" id="undoBtn" style="padding: 8px 14px; font-size: 0.85rem;">Undo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block base_scripts %}
+<!-- jQuery (required by chessboard.js) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+<!-- Chess.js for move validation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+<!-- Chessboard.js for board display -->
+<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Trainer-specific JavaScript -->
+<script src="/static/js/trainer.js?v=4"></script>
+
+<!-- WebSocket integration for real-time stats updates -->
+<script>
+  // Initialize WebSocket for instant stats updates
+  wsClient.connect();
+  wsClient.subscribe(['stats.updated']);
+
+  // Refresh stats widget when stats update
+  wsClient.on('stats.updated', () => {
+    htmx.trigger('#statsContent', 'statsUpdate');
+  });
+</script>
+{% endblock %}
