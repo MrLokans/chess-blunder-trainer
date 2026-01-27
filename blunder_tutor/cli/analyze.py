@@ -13,7 +13,7 @@ class AnalyzeCommand(CLICommand):
         return args.command == "analyze"
 
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
-        ensure_schema(config.data.data_dir)
+        ensure_schema(config.data.db_path)
 
         analyzer = GameAnalyzer(
             analysis_repo=AnalysisRepository.from_config(config),

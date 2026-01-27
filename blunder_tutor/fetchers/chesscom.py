@@ -1,32 +1,32 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import httpx
 from tqdm import tqdm
 
-from blunder_tutor.storage import index_stored_games, store_pgn
+from blunder_tutor.utils.pgn_utils import (
+    build_game_metadata,
+    compute_game_id,
+    normalize_pgn,
+)
 
 CHESSCOM_BASE_URL = "https://api.chess.com"
 
 
 def fetch(
     username: str,
-    data_dir: Path,
     max_games: int | None = None,
     progress_callback: callable | None = None,
-) -> tuple[int, int]:
+) -> tuple[list[dict[str, object]], set[str]]:
     api_username = username.lower()
     archives_url = f"{CHESSCOM_BASE_URL}/pub/player/{api_username}/games/archives"
     response = httpx.get(archives_url, timeout=60, follow_redirects=True)
     response.raise_for_status()
     archives = response.json().get("archives", [])
 
-    stored = 0
-    skipped = 0
+    games: list[dict[str, object]] = []
+    seen_ids: set[str] = set()
     total_archives = len(archives)
     remaining = max_games
-    metadata_batch: list[dict[str, object]] = []
 
     with (
         tqdm(
@@ -37,31 +37,30 @@ def fetch(
         for archive_url in reversed(archives):
             month_resp = httpx.get(archive_url, timeout=60, follow_redirects=True)
             month_resp.raise_for_status()
-            games = month_resp.json().get("games", [])
-            for game in games:
+            archive_games = month_resp.json().get("games", [])
+            for game in archive_games:
                 pgn_text = game.get("pgn")
                 if not pgn_text:
                     continue
-                result = store_pgn("chesscom", username, pgn_text, data_dir)
-                if result is None:
-                    skipped += 1
-                else:
-                    stored += 1
-                    _path, metadata = result
-                    metadata_batch.append(metadata)
+
+                normalized = normalize_pgn(pgn_text)
+                game_id = compute_game_id(normalized)
+
+                if game_id not in seen_ids:
+                    metadata = build_game_metadata(pgn_text, "chesscom", username)
+                    if metadata:
+                        games.append(metadata)
+                        seen_ids.add(game_id)
+
                 game_bar.update(1)
 
-                # Call progress callback if provided
                 if progress_callback:
-                    progress_callback(stored + skipped, max_games or (stored + skipped))
+                    progress_callback(len(games), max_games or len(games))
+
                 if remaining is not None:
                     remaining -= 1
                     if remaining <= 0:
-                        # Index all games before returning
-                        index_stored_games(data_dir, metadata_batch)
-                        return stored, skipped
+                        return games, seen_ids
             archive_bar.update(1)
 
-    # Index all games at the end
-    index_stored_games(data_dir, metadata_batch)
-    return stored, skipped
+    return games, seen_ids

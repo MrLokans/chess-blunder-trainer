@@ -1,5 +1,7 @@
 import asyncio
+
 import pytest
+
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import EventType, JobEvent
 

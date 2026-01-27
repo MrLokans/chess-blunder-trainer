@@ -4,45 +4,88 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from datetime import datetime
-from pathlib import Path
 
 import chess.pgn
 
-from blunder_tutor.index import read_index
 from blunder_tutor.repositories.base import BaseDbRepository
-from blunder_tutor.utils.pgn_utils import load_game
+from blunder_tutor.utils.pgn_utils import load_game_from_string
 
 
 class GameRepository(BaseDbRepository):
-    def find_game_path(self, game_id: str) -> Path:
-        for record in read_index(self.data_dir):
-            if record.get("id") == game_id:
-                return Path(str(record.get("pgn_path")))
-        raise FileNotFoundError(f"Game not found in index: {game_id}")
+    def get_pgn_content(self, game_id: str) -> str:
+        with self.connection as conn:
+            row = conn.execute(
+                "SELECT pgn_content FROM game_index_cache WHERE game_id = ?",
+                (game_id,),
+            ).fetchone()
+
+        if row is None:
+            raise FileNotFoundError(f"Game not found: {game_id}")
+        return row[0]
 
     def load_game(self, game_id: str) -> chess.pgn.Game:
-        pgn_path = self.find_game_path(game_id)
-        return load_game(pgn_path)
+        pgn_content = self.get_pgn_content(game_id)
+        return load_game_from_string(pgn_content)
+
+    def insert_games(self, games: list[dict[str, object]]) -> int:
+        timestamp = datetime.utcnow().isoformat()
+        inserted = 0
+
+        with self.connection as conn:
+            for game in games:
+                result = conn.execute(
+                    """
+                    INSERT INTO game_index_cache (
+                        game_id, source, username, white, black, result,
+                        date, end_time_utc, time_control, pgn_content,
+                        analyzed, indexed_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+                    ON CONFLICT(game_id) DO NOTHING
+                    """,
+                    (
+                        game.get("id"),
+                        game.get("source"),
+                        game.get("username"),
+                        game.get("white"),
+                        game.get("black"),
+                        game.get("result"),
+                        game.get("date"),
+                        game.get("end_time_utc"),
+                        game.get("time_control"),
+                        game.get("pgn_content"),
+                        timestamp,
+                    ),
+                )
+                if result.rowcount > 0:
+                    inserted += 1
+
+        return inserted
 
     def get_username_side_map(
         self, username: str, source: str | None = None
     ) -> dict[str, int]:
-        """Get mapping of game_id -> side (0=white, 1=black) for username.
-        Returns:
-            Dict mapping game_id to player side
-        """
         username_lower = username.lower()
         game_map: dict[str, int] = {}
 
-        for record in read_index(self.data_dir, source=source):
-            game_id = record.get("id")
-            white = str(record.get("white") or "")
-            black = str(record.get("black") or "")
+        query = """
+            SELECT game_id, white, black FROM game_index_cache
+            WHERE LOWER(white) = ? OR LOWER(black) = ?
+        """
+        params: list[str] = [username_lower, username_lower]
 
-            if white.lower() == username_lower:
-                game_map[str(game_id)] = 0
-            elif black.lower() == username_lower:
-                game_map[str(game_id)] = 1
+        if source:
+            query += " AND source = ?"
+            params.append(source)
+
+        with self.connection as conn:
+            rows = conn.execute(query, params).fetchall()
+
+        for row in rows:
+            game_id, white, black = row
+            if white and white.lower() == username_lower:
+                game_map[game_id] = 0
+            elif black and black.lower() == username_lower:
+                game_map[game_id] = 1
 
         return game_map
 
@@ -52,19 +95,51 @@ class GameRepository(BaseDbRepository):
         username: str | None = None,
         limit: int | None = None,
     ) -> Iterator[dict[str, object]]:
-        for count, record in enumerate(
-            read_index(self.data_dir, source=source, username=username)
-        ):
-            if limit is not None and count >= limit:
-                break
-            yield record
+        query = """
+            SELECT game_id, source, username, white, black, result,
+                   date, end_time_utc, time_control, analyzed
+            FROM game_index_cache
+            WHERE 1=1
+        """
+        params: list[str | int] = []
+
+        if source:
+            query += " AND source = ?"
+            params.append(source)
+
+        if username:
+            query += " AND username = ?"
+            params.append(username)
+
+        query += " ORDER BY end_time_utc DESC"
+
+        if limit is not None:
+            query += " LIMIT ?"
+            params.append(limit)
+
+        with self.connection as conn:
+            rows = conn.execute(query, params).fetchall()
+
+        for row in rows:
+            yield {
+                "id": row[0],
+                "source": row[1],
+                "username": row[2],
+                "white": row[3],
+                "black": row[4],
+                "result": row[5],
+                "date": row[6],
+                "end_time_utc": row[7],
+                "time_control": row[8],
+                "analyzed": row[9],
+            }
 
     def get_game(self, game_id: str) -> dict[str, object] | None:
         with self.connection as conn:
             row = conn.execute(
                 """
                 SELECT game_id, source, username, white, black, result,
-                       date, end_time_utc, time_control, pgn_path, analyzed
+                       date, end_time_utc, time_control, pgn_content, analyzed
                 FROM game_index_cache
                 WHERE game_id = ?
                 """,
@@ -82,14 +157,10 @@ class GameRepository(BaseDbRepository):
                     "date": row[6],
                     "end_time_utc": row[7],
                     "time_control": row[8],
-                    "pgn_path": row[9],
+                    "pgn_content": row[9],
                     "analyzed": row[10],
                 }
 
-        # Fallback to JSONL index
-        for record in read_index(self.data_dir):
-            if record.get("id") == game_id:
-                return record
         return None
 
     def list_games_filtered(
@@ -104,7 +175,7 @@ class GameRepository(BaseDbRepository):
     ) -> tuple[list[dict[str, object]], int]:
         query = """
             SELECT game_id, source, username, white, black, result,
-                   date, end_time_utc, time_control, pgn_path, analyzed
+                   date, end_time_utc, time_control, analyzed
             FROM game_index_cache
             WHERE 1=1
         """
@@ -160,8 +231,7 @@ class GameRepository(BaseDbRepository):
                 "date": row[6],
                 "end_time_utc": row[7],
                 "time_control": row[8],
-                "pgn_path": row[9],
-                "analyzed": row[10],
+                "analyzed": row[9],
             }
             for row in rows
         ]
@@ -214,49 +284,28 @@ class GameRepository(BaseDbRepository):
                 (game_id,),
             )
 
-    def refresh_index_cache(self) -> int:
+    def list_unanalyzed_game_ids(
+        self,
+        source: str | None = None,
+        username: str | None = None,
+    ) -> list[str]:
+        query = """
+            SELECT game_id FROM game_index_cache
+            WHERE analyzed = 0
+        """
+        params: list[str] = []
+
+        if source:
+            query += " AND source = ?"
+            params.append(source)
+
+        if username:
+            query += " AND username = ?"
+            params.append(username)
+
+        query += " ORDER BY end_time_utc DESC"
+
         with self.connection as conn:
-            # Get analyzed game IDs
-            rows = conn.execute("SELECT game_id FROM analysis_games").fetchall()
-            analyzed_games = {row[0] for row in rows}
+            rows = conn.execute(query, params).fetchall()
 
-            count = 0
-            timestamp = datetime.utcnow().isoformat()
-
-            # Process all games with the same connection
-            for record in read_index(self.data_dir):
-                game_id = record.get("id")
-                if not game_id:
-                    continue
-
-                analyzed = 1 if game_id in analyzed_games else 0
-
-                # Reuse the same connection for all inserts
-                conn.execute(
-                    """
-                    INSERT INTO game_index_cache (
-                        game_id, source, username, white, black, result,
-                        date, end_time_utc, time_control, pgn_path,
-                        analyzed, indexed_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(game_id) DO UPDATE SET
-                        analyzed = excluded.analyzed
-                    """,
-                    (
-                        game_id,
-                        record.get("source"),
-                        record.get("username"),
-                        record.get("white"),
-                        record.get("black"),
-                        record.get("result"),
-                        record.get("date"),
-                        record.get("end_time_utc"),
-                        record.get("time_control"),
-                        record.get("pgn_path"),
-                        analyzed,
-                        timestamp,
-                    ),
-                )
-                count += 1
-
-            return count
+        return [row[0] for row in rows]

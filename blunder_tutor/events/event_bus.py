@@ -20,14 +20,6 @@ class EventBus:
         self._lock = asyncio.Lock()
 
     async def subscribe(self, event_type: EventType | None = None) -> asyncio.Queue:
-        """Subscribe to an event type, returns a queue for receiving events.
-
-        Args:
-            event_type: Specific event type to subscribe to, or None for all events
-
-        Returns:
-            Queue that will receive events
-        """
         queue: asyncio.Queue = asyncio.Queue()
 
         async with self._lock:
@@ -39,18 +31,10 @@ class EventBus:
         return queue
 
     async def publish(self, event: Event) -> None:
-        """Publish an event to all subscribers.
-
-        Args:
-            event: Event to publish
-        """
         async with self._lock:
-            # Send to specific event type subscribers
             queues = self._subscribers.get(event.type, []).copy()
-            # Also send to "all events" subscribers
             queues.extend(self._all_subscribers.copy())
 
-        # Put event in all subscriber queues (outside lock)
         for queue in queues:
             # If queue is full, skip this subscriber (they're not consuming fast enough)
             with contextlib.suppress(asyncio.QueueFull):
@@ -59,12 +43,6 @@ class EventBus:
     async def unsubscribe(
         self, queue: asyncio.Queue, event_type: EventType | None = None
     ) -> None:
-        """Unsubscribe a queue from an event type.
-
-        Args:
-            queue: Queue to unsubscribe
-            event_type: Event type to unsubscribe from, or None if subscribed to all
-        """
         async with self._lock:
             if event_type is None:
                 if queue in self._all_subscribers:

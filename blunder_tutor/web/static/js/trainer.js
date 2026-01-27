@@ -43,6 +43,14 @@ const arrowOverlay = document.getElementById('arrowOverlay');
 const showArrowsCheckbox = document.getElementById('showArrows');
 const showThreatsCheckbox = document.getElementById('showThreats');
 
+// Empty state elements
+const emptyState = document.getElementById('emptyState');
+const trainerLayout = document.getElementById('trainerLayout');
+const emptyStateTitle = document.getElementById('emptyStateTitle');
+const emptyStateMessage = document.getElementById('emptyStateMessage');
+const emptyStateAction = document.getElementById('emptyStateAction');
+const statsCard = document.getElementById('statsCard');
+
 // Arrow drawing functions
 function getSquareCenter(square, boardEl, orientation) {
   const files = 'abcdefgh';
@@ -160,6 +168,36 @@ function clearArrows() {
 }
 
 // Threat detection functions
+function showEmptyState(errorType) {
+  // Hide trainer layout, show empty state
+  trainerLayout.style.display = 'none';
+  emptyState.style.display = 'block';
+  statsCard.style.display = 'none';
+
+  if (errorType === 'no_games') {
+    emptyStateTitle.textContent = 'No games imported';
+    emptyStateMessage.textContent = 'Import your games from Lichess or Chess.com to start training on your blunders.';
+    emptyStateAction.textContent = 'Import Games';
+    emptyStateAction.href = '/management';
+  } else if (errorType === 'no_blunders') {
+    emptyStateTitle.textContent = 'No blunders found';
+    emptyStateMessage.textContent = 'Your games have been imported but no blunders were found yet. Run analysis to identify blunders in your games.';
+    emptyStateAction.textContent = 'Run Analysis';
+    emptyStateAction.href = '/management';
+  } else {
+    emptyStateTitle.textContent = 'No puzzles available';
+    emptyStateMessage.textContent = 'Import your games to start training on your blunders.';
+    emptyStateAction.textContent = 'Import Games';
+    emptyStateAction.href = '/management';
+  }
+}
+
+function hideEmptyState() {
+  emptyState.style.display = 'none';
+  trainerLayout.style.display = 'grid';
+  statsCard.style.display = 'block';
+}
+
 function clearThreatHighlights() {
   document.querySelectorAll('.highlight-hanging, .highlight-pinned, .highlight-checking, .highlight-king-danger').forEach(el => {
     el.classList.remove('highlight-hanging', 'highlight-pinned', 'highlight-checking', 'highlight-king-danger');
@@ -479,10 +517,26 @@ async function loadPuzzle() {
     const resp = await fetch('/api/puzzle');
     const data = await resp.json();
 
-    if (data.error) {
-      blunderMove.textContent = 'Error: ' + data.error;
+    if (!resp.ok || data.detail || data.error) {
+      const errorMsg = data.detail || data.error || '';
+
+      // Determine error type from message
+      if (errorMsg.toLowerCase().includes('no games found')) {
+        showEmptyState('no_games');
+      } else if (errorMsg.toLowerCase().includes('no blunders found')) {
+        showEmptyState('no_blunders');
+      } else if (errorMsg.toLowerCase().includes('no username configured')) {
+        // Redirect to setup if no username configured
+        window.location.href = '/setup';
+        return;
+      } else {
+        showEmptyState('unknown');
+      }
       return;
     }
+
+    // Success - ensure trainer layout is visible
+    hideEmptyState();
 
     puzzle = data;
 
@@ -528,8 +582,8 @@ async function loadPuzzle() {
     }, 100);
 
   } catch (err) {
-    blunderMove.textContent = 'Failed to load puzzle';
-    console.error(err);
+    console.error('Failed to load puzzle:', err);
+    showEmptyState('unknown');
   }
 }
 

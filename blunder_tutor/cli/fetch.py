@@ -1,7 +1,9 @@
 import argparse
 
+from blunder_tutor.analysis.db import ensure_schema
 from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.fetchers import chesscom, lichess
+from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.web.config import AppConfig
 
 
@@ -10,23 +12,28 @@ class FetchCommand(CLICommand):
         return args.command == "fetch"
 
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
+        ensure_schema(config.data.db_path)
+        game_repo = GameRepository.from_config(config)
+
         if args.command == "fetch" and args.source == "lichess":
-            stored, skipped = lichess.fetch(
+            games, _seen_ids = lichess.fetch(
                 username=args.username,
-                data_dir=args.data_dir,
                 max_games=args.max,
                 batch_size=args.batch_size,
             )
-            print(f"Lichess: stored {stored}, skipped {skipped}.")
+            inserted = game_repo.insert_games(games)
+            skipped = len(games) - inserted
+            print(f"Lichess: stored {inserted}, skipped {skipped}.")
             return
 
         if args.command == "fetch" and args.source == "chesscom":
-            stored, skipped = chesscom.fetch(
+            games, _seen_ids = chesscom.fetch(
                 username=args.username,
-                data_dir=args.data_dir,
                 max_games=args.max,
             )
-            print(f"Chess.com: stored {stored}, skipped {skipped}.")
+            inserted = game_repo.insert_games(games)
+            skipped = len(games) - inserted
+            print(f"Chess.com: stored {inserted}, skipped {skipped}.")
             return
 
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:

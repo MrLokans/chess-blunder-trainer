@@ -1,0 +1,30 @@
+{% for job in jobs %}
+<tr>
+  <td>{{ job.job_type }}</td>
+  <td><span class="status {{ job.status }}">{{ job.status }}</span></td>
+  <td>{{ job.username or '-' }}</td>
+  <td>{{ job.source or '-' }}</td>
+  <td>
+    {%- if job.progress_total > 0 -%}
+      {{ job.progress_current }}/{{ job.progress_total }}
+    {%- else -%}
+      -
+    {%- endif -%}
+  </td>
+  <td>{{ job.created_at_formatted }}</td>
+  <td>
+    {%- if job.status != 'running' -%}
+      <button class="btn-delete"
+              hx-delete="/api/jobs/{{ job.job_id }}"
+              hx-target="#jobsTableBody"
+              hx-swap="innerHTML"
+              hx-confirm="Are you sure you want to delete this job?"
+              title="Delete job">&times;</button>
+    {%- endif -%}
+  </td>
+</tr>
+{% else %}
+<tr>
+  <td colspan="7" style="text-align: center; color: var(--text-muted);">No jobs found</td>
+</tr>
+{% endfor %}

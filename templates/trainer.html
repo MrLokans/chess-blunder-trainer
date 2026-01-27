@@ -18,9 +18,6 @@
 <link rel="preload" href="/static/pieces/wikipedia/bN.png" as="image">
 <link rel="preload" href="/static/pieces/wikipedia/bP.png" as="image">
 
-<!-- HTMX for reactive components -->
-<script src="https://unpkg.com/htmx.org@1.9.10"></script>
-
 <!-- Chessboard CSS -->
 <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
 {% endblock %}
@@ -50,7 +47,24 @@
     </div>
   </div>
 
-  <div class="layout">
+  <!-- Empty state: shown when no games/blunders are available -->
+  <div class="card empty-state" id="emptyState" style="display: none;">
+    <div class="empty-state-icon">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <h2 class="empty-state-title" id="emptyStateTitle">No puzzles available</h2>
+    <p class="empty-state-message" id="emptyStateMessage">
+      Import your games to start training on your blunders.
+    </p>
+    <div class="empty-state-actions">
+      <a href="/management" class="btn btn-primary" id="emptyStateAction">Import Games</a>
+      <a href="/dashboard" class="btn btn-secondary">View Dashboard</a>
+    </div>
+  </div>
+
+  <div class="layout" id="trainerLayout">
     <!-- Board column -->
     <div class="card board-container">
       <div class="eval-bar-container">

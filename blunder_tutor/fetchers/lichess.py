@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import io
 from collections.abc import Iterable
-from pathlib import Path
 
 import chess.pgn
 import httpx
 from tqdm import tqdm
 
-from blunder_tutor.storage import index_stored_games, store_pgn
 from blunder_tutor.utils.date_utils import parse_pgn_datetime_ms
+from blunder_tutor.utils.pgn_utils import (
+    build_game_metadata,
+    compute_game_id,
+    normalize_pgn,
+)
 
 LICHESS_BASE_URL = "https://lichess.org"
 
@@ -29,19 +32,17 @@ def _split_pgn_stream(pgn_text: str) -> Iterable[tuple[str, int | None]]:
 
 def fetch(
     username: str,
-    data_dir: Path,
     max_games: int | None = None,
     batch_size: int = 200,
     progress_callback: callable | None = None,
-) -> tuple[int, int]:
+) -> tuple[list[dict[str, object]], set[str]]:
     url = f"{LICHESS_BASE_URL}/api/games/user/{username}"
     headers = {"Accept": "application/x-chess-pgn"}
 
-    stored = 0
-    skipped = 0
+    games: list[dict[str, object]] = []
+    seen_ids: set[str] = set()
     remaining = max_games
     until_ms: int | None = None
-    metadata_batch: list[dict[str, object]] = []
 
     with tqdm(desc="Lichess games", total=max_games, unit="game") as progress:
         while True:
@@ -60,18 +61,20 @@ def fetch(
             oldest_time_ms: int | None = None
             for pgn_text, end_ms in _split_pgn_stream(response.text):
                 batch_count += 1
-                result = store_pgn("lichess", username, pgn_text, data_dir)
-                if result is None:
-                    skipped += 1
-                else:
-                    stored += 1
-                    _path, metadata = result
-                    metadata_batch.append(metadata)
+                normalized = normalize_pgn(pgn_text)
+                game_id = compute_game_id(normalized)
+
+                if game_id not in seen_ids:
+                    metadata = build_game_metadata(pgn_text, "lichess", username)
+                    if metadata:
+                        games.append(metadata)
+                        seen_ids.add(game_id)
+
                 progress.update(1)
 
-                # Call progress callback if provided
                 if progress_callback:
-                    progress_callback(stored + skipped, max_games or (stored + skipped))
+                    progress_callback(len(games), max_games or len(games))
+
                 if end_ms is not None:
                     oldest_time_ms = (
                         end_ms
@@ -81,9 +84,7 @@ def fetch(
                 if remaining is not None:
                     remaining -= 1
                     if remaining <= 0:
-                        # Index all games before returning
-                        index_stored_games(data_dir, metadata_batch)
-                        return stored, skipped
+                        return games, seen_ids
 
             if batch_count == 0:
                 break
@@ -92,6 +93,4 @@ def fetch(
                 break
             until_ms = oldest_time_ms - 1
 
-    # Index all games at the end
-    index_stored_games(data_dir, metadata_batch)
-    return stored, skipped
+    return games, seen_ids

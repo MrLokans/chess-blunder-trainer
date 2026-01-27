@@ -52,21 +52,6 @@ class Trainer:
         """Pick a random blunder with optional date filtering and spaced repetition.
 
         FIXME: rewrite it, it's ugly as hell
-
-        Args:
-            data_dir: Data directory path
-            username: Username or list of usernames
-            source: Optional source filter
-            start_date: Optional start date (ISO 8601)
-            end_date: Optional end date (ISO 8601)
-            exclude_recently_solved: Whether to exclude recently solved puzzles
-            spaced_repetition_days: Days to wait before showing solved puzzles again
-
-        Returns:
-            BlunderPuzzle instance
-
-        Raises:
-            ValueError: If no games or blunders found
         """
 
         # Support both single username and list of usernames

@@ -81,37 +81,26 @@ def create_app(
     app.state.connection_manager = connection_manager
 
     # Initialize background scheduler (but don't start yet)
-    scheduler = BackgroundScheduler(config.data.data_dir, config.data.db_path)
+    scheduler = BackgroundScheduler(config.data.db_path)
     app.state.scheduler = scheduler
     app.state.scheduler_settings = settings.get_all_settings()
 
     # Create job dependencies for scheduler
-    job_repo = JobRepository(
-        data_dir=config.data.data_dir,
-        db_path=config.data.db_path,
-    )
+    job_repo = JobRepository(db_path=config.data.db_path)
     job_service = JobService(job_repository=job_repo, event_bus=event_bus)
-    game_repo = GameRepository(
-        data_dir=config.data.data_dir,
-        db_path=config.data.db_path,
-    )
-    analysis_repo = AnalysisRepository(
-        data_dir=config.data.data_dir,
-        db_path=config.data.db_path,
-    )
+    game_repo = GameRepository(db_path=config.data.db_path)
+    analysis_repo = AnalysisRepository(db_path=config.data.db_path)
 
     # Create job instances for scheduler
     analyze_job = AnalyzeGamesJob(
         job_service=job_service,
         game_repo=game_repo,
         analysis_repo=analysis_repo,
-        data_dir=config.data.data_dir,
     )
     sync_job = SyncGamesJob(
         job_service=job_service,
         settings_repo=settings,
         game_repo=game_repo,
-        data_dir=config.data.data_dir,
         analyze_job=analyze_job,
     )
 

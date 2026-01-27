@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
-import pytest
+from datetime import UTC
 
 from blunder_tutor.utils.date_utils import (
     parse_pgn_datetime,

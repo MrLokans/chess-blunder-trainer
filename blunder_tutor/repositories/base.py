@@ -7,8 +7,7 @@ from blunder_tutor.web.config import AppConfig
 
 
 class BaseDbRepository:
-    def __init__(self, data_dir: Path, db_path: Path):
-        self.data_dir = data_dir
+    def __init__(self, db_path: Path):
         self.db_path = db_path
         self.conn = None
 
@@ -23,7 +22,4 @@ class BaseDbRepository:
 
     @classmethod
     def from_config(cls, config: AppConfig) -> Self:
-        return cls(
-            data_dir=config.data.data_dir,
-            db_path=config.data.db_path,
-        )
+        return cls(db_path=config.data.db_path)

@@ -35,37 +35,25 @@ def get_event_bus(request: Request) -> EventBus:
 def get_settings_repository(
     config: Annotated[AppConfig, Depends(get_config)],
 ) -> SettingsRepository:
-    return SettingsRepository(
-        data_dir=config.data.data_dir,
-        db_path=config.data.db_path,
-    )
+    return SettingsRepository(db_path=config.data.db_path)
 
 
 def get_puzzle_attempt_repository(
     config: Annotated[AppConfig, Depends(get_config)],
 ) -> PuzzleAttemptRepository:
-    return PuzzleAttemptRepository(
-        data_dir=config.data.data_dir,
-        db_path=config.data.db_path,
-    )
+    return PuzzleAttemptRepository(db_path=config.data.db_path)
 
 
 def get_stats_repository(
     config: Annotated[AppConfig, Depends(get_config)],
 ) -> StatsRepository:
-    return StatsRepository(
-        data_dir=config.data.data_dir,
-        db_path=config.data.db_path,
-    )
+    return StatsRepository(db_path=config.data.db_path)
 
 
 def get_job_repository(
     config: Annotated[AppConfig, Depends(get_config)],
 ) -> JobRepository:
-    return JobRepository(
-        data_dir=config.data.data_dir,
-        db_path=config.data.db_path,
-    )
+    return JobRepository(db_path=config.data.db_path)
 
 
 async def get_job_service(
@@ -73,7 +61,6 @@ async def get_job_service(
     event_bus: Annotated[EventBus, Depends(get_event_bus)],
 ) -> JobService:
     job_service = JobService(job_repository=job_repository, event_bus=event_bus)
-    # Set the event loop for cross-thread event publishing (e.g., from executor threads)
     job_service.set_event_loop(asyncio.get_running_loop())
     return job_service
 
@@ -81,19 +68,13 @@ async def get_job_service(
 def get_game_repository(
     config: Annotated[AppConfig, Depends(get_config)],
 ) -> GameRepository:
-    return GameRepository(
-        data_dir=config.data.data_dir,
-        db_path=config.data.db_path,
-    )
+    return GameRepository(db_path=config.data.db_path)
 
 
 def get_analysis_repository(
     config: Annotated[AppConfig, Depends(get_config)],
 ) -> AnalysisRepository:
-    return AnalysisRepository(
-        data_dir=config.data.data_dir,
-        db_path=config.data.db_path,
-    )
+    return AnalysisRepository(db_path=config.data.db_path)
 
 
 def get_scheduler(
@@ -145,14 +126,11 @@ def get_analyze_games_job(
     job_service: Annotated[JobService, Depends(get_job_service)],
     game_repo: Annotated[GameRepository, Depends(get_game_repository)],
     analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
-    config: Annotated[AppConfig, Depends(get_config)],
 ) -> AnalyzeGamesJob:
-    """Provide an AnalyzeGamesJob instance."""
     return AnalyzeGamesJob(
         job_service=job_service,
         game_repo=game_repo,
         analysis_repo=analysis_repo,
-        data_dir=config.data.data_dir,
     )
 
 
@@ -160,14 +138,11 @@ def get_import_games_job(
     job_service: Annotated[JobService, Depends(get_job_service)],
     settings_repo: Annotated[SettingsRepository, Depends(get_settings_repository)],
     game_repo: Annotated[GameRepository, Depends(get_game_repository)],
-    config: Annotated[AppConfig, Depends(get_config)],
 ) -> ImportGamesJob:
-    """Provide an ImportGamesJob instance."""
     return ImportGamesJob(
         job_service=job_service,
         settings_repo=settings_repo,
         game_repo=game_repo,
-        data_dir=config.data.data_dir,
     )
 
 
@@ -175,15 +150,12 @@ def get_sync_games_job(
     job_service: Annotated[JobService, Depends(get_job_service)],
     settings_repo: Annotated[SettingsRepository, Depends(get_settings_repository)],
     game_repo: Annotated[GameRepository, Depends(get_game_repository)],
-    config: Annotated[AppConfig, Depends(get_config)],
     analyze_job: Annotated[AnalyzeGamesJob, Depends(get_analyze_games_job)],
 ) -> SyncGamesJob:
-    """Provide a SyncGamesJob instance with optional analyze job for auto-analysis."""
     return SyncGamesJob(
         job_service=job_service,
         settings_repo=settings_repo,
         game_repo=game_repo,
-        data_dir=config.data.data_dir,
         analyze_job=analyze_job,
     )
 

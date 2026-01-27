@@ -9,19 +9,16 @@ from blunder_tutor.repositories.stats_repository import StatsRepository
 
 
 class UnitOfWork:
-    """
-    Unit of Work pattern for managing database transactions and providing access to repositories.
-    """
+    """Unit of Work pattern for managing database transactions and providing access to repositories."""
 
-    def __init__(self, data_dir: Path, db_path: Path):
-        self.data_dir = data_dir
+    def __init__(self, db_path: Path):
         self.db_path = db_path
-        self.games = GameRepository(data_dir, db_path)
-        self.jobs = JobRepository(data_dir, db_path)
-        self.puzzle_attempts = PuzzleAttemptRepository(data_dir, db_path)
-        self.stats = StatsRepository(data_dir, db_path)
-        self.settings = SettingsRepository(data_dir, db_path)
-        self.analysis = AnalysisRepository(data_dir, db_path)
+        self.games = GameRepository(db_path)
+        self.jobs = JobRepository(db_path)
+        self.puzzle_attempts = PuzzleAttemptRepository(db_path)
+        self.stats = StatsRepository(db_path)
+        self.settings = SettingsRepository(db_path)
+        self.analysis = AnalysisRepository(db_path)
         self.conn = None
 
     def __enter__(self):

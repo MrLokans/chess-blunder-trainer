@@ -142,7 +142,7 @@ def ensure_schema(db_path: Path) -> None:
                 date TEXT,
                 end_time_utc TEXT,
                 time_control TEXT,
-                pgn_path TEXT NOT NULL,
+                pgn_content TEXT NOT NULL,
                 analyzed INTEGER DEFAULT 0,
                 indexed_at TEXT NOT NULL,
                 UNIQUE(game_id)
@@ -202,3 +202,12 @@ def ensure_schema(db_path: Path) -> None:
             conn.execute("ALTER TABLE analysis_moves ADD COLUMN best_line TEXT")
         if "best_move_eval" not in columns:
             conn.execute("ALTER TABLE analysis_moves ADD COLUMN best_move_eval INTEGER")
+
+        # Migration: Rename pgn_path to pgn_content if needed
+        cursor = conn.execute("PRAGMA table_info(game_index_cache)")
+        cache_columns = {row[1] for row in cursor.fetchall()}
+
+        if "pgn_path" in cache_columns and "pgn_content" not in cache_columns:
+            conn.execute(
+                "ALTER TABLE game_index_cache RENAME COLUMN pgn_path TO pgn_content"
+            )

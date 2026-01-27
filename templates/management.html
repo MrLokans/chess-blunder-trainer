@@ -86,7 +86,14 @@
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="jobsTableBody"
+           hx-get="/api/jobs/html"
+           hx-trigger="load, jobsRefresh from:body"
+           hx-swap="innerHTML">
+      <tr>
+        <td colspan="7" style="text-align: center; color: var(--text-muted);">Loading...</td>
+      </tr>
+    </tbody>
   </table>
 </div>
 {% endblock %}
@@ -94,7 +101,6 @@
 {% block extra_scripts %}
 <script>
   let currentJobId = null;
-  let jobCheckInterval = null;
   let configuredUsernames = {};
 
   // LocalStorage keys
@@ -103,6 +109,11 @@
     username: 'blunder_import_username',
     maxGames: 'blunder_import_maxGames'
   };
+
+  // Trigger HTMX refresh of jobs table
+  function refreshJobsTable() {
+    htmx.trigger(document.body, 'jobsRefresh');
+  }
 
   // Load configured usernames from settings
   async function loadConfiguredUsernames() {
@@ -202,8 +213,6 @@
       document.getElementById('importProgress').style.display = 'block';
       showMessage('importMessage', 'success', 'Import job started!');
 
-      // WebSocket will handle updates - no polling needed!
-
     } catch (err) {
       showMessage('importMessage', 'error', 'Failed to start import: ' + err.message);
     }
@@ -217,50 +226,11 @@
       document.getElementById('syncStatus').innerHTML =
         '<div class="message success">Sync started! Check Recent Jobs for progress.</div>';
 
-      setTimeout(loadJobs, 1000);
+      // HTMX will auto-refresh via WebSocket event
 
     } catch (err) {
       document.getElementById('syncStatus').innerHTML =
         '<div class="message error">Failed to start sync: ' + err.message + '</div>';
-    }
-  }
-
-  async function loadJobs() {
-    try {
-      const resp = await fetch('/api/jobs?limit=20');
-      const jobs = await resp.json();
-
-      const tbody = document.querySelector('#jobsTable tbody');
-      tbody.innerHTML = '';
-
-      jobs.forEach(job => {
-        const progress = job.progress_total > 0
-          ? `${job.progress_current}/${job.progress_total}`
-          : '-';
-
-        const created = new Date(job.created_at).toLocaleString();
-
-        // Show delete button for all jobs except running ones
-        const canDelete = job.status !== 'running';
-        const deleteButton = canDelete
-          ? `<button class="btn-delete" onclick="deleteJob('${job.job_id}')" title="Delete job">&times;</button>`
-          : '';
-
-        tbody.innerHTML += `
-          <tr>
-            <td>${job.job_type}</td>
-            <td><span class="status ${job.status}">${job.status}</span></td>
-            <td>${job.username || '-'}</td>
-            <td>${job.source || '-'}</td>
-            <td>${progress}</td>
-            <td>${created}</td>
-            <td>${deleteButton}</td>
-          </tr>
-        `;
-      });
-
-    } catch (err) {
-      console.error('Failed to load jobs:', err);
     }
   }
 
@@ -275,33 +245,8 @@
     }, 5000);
   }
 
-  async function deleteJob(jobId) {
-    if (!confirm('Are you sure you want to delete this job?')) {
-      return;
-    }
-
-    try {
-      const resp = await fetch(`/api/jobs/${jobId}`, {
-        method: 'DELETE'
-      });
-
-      if (resp.ok) {
-        // Reload the jobs table
-        loadJobs();
-      } else {
-        const data = await resp.json();
-        alert('Failed to delete job: ' + (data.detail || 'Unknown error'));
-      }
-    } catch (err) {
-      alert('Failed to delete job: ' + err.message);
-    }
-  }
-
   // Initialize on page load
   initialize();
-
-  // Load jobs on page load
-  loadJobs();
 
   // Analysis management
   let analysisJobId = null;
@@ -462,9 +407,19 @@
     'job.failed'
   ]);
 
+  // Debounced HTMX refresh (at most once per second)
+  let jobsRefreshTimeout = null;
+  function debouncedRefreshJobsTable() {
+    if (jobsRefreshTimeout) return;
+    jobsRefreshTimeout = setTimeout(() => {
+      refreshJobsTable();
+      jobsRefreshTimeout = null;
+    }, 1000);
+  }
+
   // Handle job progress updates
   wsClient.on('job.progress_updated', (data) => {
-    // Update import progress if this is the current import job
+    // Update import progress bar directly (no table refresh needed)
     if (data.job_id === currentJobId) {
       const percent = data.percent;
       document.getElementById('importProgressFill').style.width = percent + '%';
@@ -472,7 +427,7 @@
         `${data.current}/${data.total} (${percent}%)`;
     }
 
-    // Update analysis progress if this is the current analysis job
+    // Update analysis progress bar directly
     if (data.job_id === analysisJobId) {
       const percent = data.percent;
       document.getElementById('analysisProgressFill').style.width = percent + '%';
@@ -480,8 +435,8 @@
         `${data.current}/${data.total} (${percent}%)`;
     }
 
-    // Refresh jobs table to show updated progress
-    loadJobs();
+    // Debounced table refresh for progress column
+    debouncedRefreshJobsTable();
   });
 
   // Handle job status changes
@@ -492,12 +447,10 @@
         document.getElementById('importProgress').style.display = 'none';
         showMessage('importMessage', 'success', 'Import completed!');
         currentJobId = null;
-        loadJobs();
       } else if (data.status === 'failed') {
         document.getElementById('importProgress').style.display = 'none';
         showMessage('importMessage', 'error', 'Import failed: ' + (data.error_message || 'Unknown error'));
         currentJobId = null;
-        loadJobs();
       }
     }
 
@@ -506,23 +459,21 @@
       if (data.status === 'completed') {
         hideAnalysisProgress();
         showMessage('analysisMessage', 'success', 'Analysis completed!');
-        loadJobs();
         loadAnalysisStatus();
       } else if (data.status === 'failed') {
         hideAnalysisProgress();
         showMessage('analysisMessage', 'error', 'Analysis failed: ' + (data.error_message || 'Unknown error'));
-        loadJobs();
         loadAnalysisStatus();
       }
     }
 
-    // Refresh jobs table for any status change
-    loadJobs();
+    // Always refresh jobs table on status change (HTMX handles it efficiently)
+    refreshJobsTable();
   });
 
-  // Handle job creation (refresh table)
+  // Handle job creation (trigger HTMX refresh)
   wsClient.on('job.created', () => {
-    loadJobs();
+    refreshJobsTable();
   });
 </script>
 {% endblock %}

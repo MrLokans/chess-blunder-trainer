@@ -4,7 +4,6 @@ import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from pathlib import Path
 
 import chess
 import chess.engine
@@ -12,11 +11,9 @@ import chess.pgn
 from tqdm import tqdm
 
 from blunder_tutor.constants import MATE_SCORE_ANALYSIS
-from blunder_tutor.index import read_index
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.utils.chess_utils import score_to_cp
-from blunder_tutor.utils.pgn_utils import load_game
 
 
 @dataclass(frozen=True)
@@ -27,7 +24,6 @@ class Thresholds:
 
 
 def _is_mate_score(score: chess.engine.PovScore, side: chess.Color) -> bool:
-    """Check if the score represents a forced mate."""
     pov = score.pov(side)
     return pov.is_mate()
 
@@ -77,8 +73,7 @@ class GameAnalyzer:
         thresholds: Thresholds | None = None,
     ) -> None:
         thresholds = thresholds or Thresholds()
-        pgn_path = self.games_repo.find_game_path(game_id)
-        game = load_game(pgn_path)
+        game = self.games_repo.load_game(game_id)
 
         analyzed_at = datetime.now(UTC).isoformat()
         moves: list[dict[str, object]] = []
@@ -99,7 +94,6 @@ class GameAnalyzer:
                     1 if player == chess.WHITE else 2
                 )
 
-                # Extract best move and line from engine analysis
                 pv = info_before.get("pv", [])
                 best_move_uci = None
                 best_move_san = None
@@ -110,13 +104,11 @@ class GameAnalyzer:
                     best_move_uci = pv[0].uci()
                     best_move_san = board.san(pv[0])
 
-                    # Build best line in SAN notation (up to 5 moves)
                     temp_board = board.copy()
                     for pv_move in pv[:5]:
                         best_line.append(temp_board.san(pv_move))
                         temp_board.push(pv_move)
 
-                    # Compute evaluation after playing the best move (for caching)
                     best_move_board = board.copy()
                     best_move_board.push(pv[0])
                     info_best = engine.analyse(best_move_board, limit)
@@ -125,9 +117,8 @@ class GameAnalyzer:
                 board_after = board.copy(stack=False)
                 board_after.push(move)
 
-                # Check if move delivers checkmate - this is never a blunder
                 if board_after.is_checkmate():
-                    eval_after = MATE_SCORE_ANALYSIS  # Winning mate
+                    eval_after = MATE_SCORE_ANALYSIS
                     delta = 0
                     cp_loss = 0
                     class_label = "good"
@@ -138,13 +129,10 @@ class GameAnalyzer:
                     delta = eval_before - eval_after
                     cp_loss = max(0, delta)
 
-                    # If we had a winning mate before and still have a winning position,
-                    # don't penalize for "missing" the fastest mate
                     if (
                         _is_mate_score(info_before["score"], player)
                         and eval_after > 500
                     ):
-                        # Still winning significantly, not a real blunder
                         cp_loss = min(cp_loss, thresholds.inaccuracy - 1)
 
                     class_label = _classify(cp_loss, thresholds)
@@ -170,7 +158,7 @@ class GameAnalyzer:
 
         self.analysis_repo.write_analysis(
             game_id=game_id,
-            pgn_path=str(pgn_path),
+            pgn_path="",
             analyzed_at=analyzed_at,
             engine_path=self.engine_path,
             depth=depth,
@@ -186,7 +174,6 @@ class GameAnalyzer:
 
     def analyze_bulk(
         self,
-        data_dir: Path,
         depth: int | None = 14,
         time_limit: float | None = None,
         source: str | None = None,
@@ -198,14 +185,13 @@ class GameAnalyzer:
         skipped = 0
         analyzed = 0
 
-        records = list(read_index(data_dir, source=source, username=username))
+        game_ids = self.games_repo.list_unanalyzed_game_ids(source, username)
         if limit is not None:
-            records = records[:limit]
+            game_ids = game_ids[:limit]
 
-        self._log.info("Processing games in %s", data_dir)
-        with tqdm(total=len(records), desc="Analyze games", unit="game") as progress:
-            for record in records:
-                game_id = str(record.get("id"))
+        self._log.info("Processing %d games", len(game_ids))
+        with tqdm(total=len(game_ids), desc="Analyze games", unit="game") as progress:
+            for game_id in game_ids:
                 if self.analysis_repo.analysis_exists(game_id) and not force:
                     skipped += 1
                     processed += 1

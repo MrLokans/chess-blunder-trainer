@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 from typing import Any
 
 from fastapi import HTTPException, Path, Query
 from fastapi.requests import Request
+from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
-    AnalysisRepoDep,
     AnalyzeGamesJobDep,
-    ConfigDep,
+    GameRepoDep,
     ImportGamesJobDep,
     JobServiceDep,
     SyncGamesJobDep,
@@ -151,6 +152,38 @@ def list_jobs(
     return jobs
 
 
+@jobs_router.get(
+    "/api/jobs/html",
+    response_class=HTMLResponse,
+    summary="Get jobs table HTML",
+    description="Returns jobs table rows as HTML partial for HTMX.",
+)
+def get_jobs_html(
+    request: Request,
+    job_service: JobServiceDep,
+    limit: int = Query(
+        20, ge=1, le=100, description="Maximum number of jobs to return"
+    ),
+) -> HTMLResponse:
+    jobs = job_service.list_jobs(limit=limit)
+
+    # Format dates for display
+    for job in jobs:
+        if job.get("created_at"):
+            try:
+                dt = datetime.fromisoformat(job["created_at"])
+                job["created_at_formatted"] = dt.strftime("%Y-%m-%d %H:%M")
+            except (ValueError, TypeError):
+                job["created_at_formatted"] = job["created_at"]
+        else:
+            job["created_at_formatted"] = "-"
+
+    return request.app.state.templates.TemplateResponse(
+        "_jobs_partial.html",
+        {"request": request, "jobs": jobs},
+    )
+
+
 @jobs_router.post(
     "/api/analysis/start",
     response_model=JobResponse,
@@ -159,33 +192,21 @@ def list_jobs(
 )
 async def start_analysis_job(
     request: Request,
-    config: ConfigDep,
     job_service: JobServiceDep,
-    analysis_repo: AnalysisRepoDep,
+    game_repo: GameRepoDep,
     analyze_job: AnalyzeGamesJobDep,
 ) -> dict[str, str]:
     """POST /api/analysis/start - Start bulk game analysis."""
-    from blunder_tutor.index import read_index
-
-    data_dir = config.data.data_dir
-
-    # Find all unanalyzed games
-    unanalyzed_game_ids = []
-    for record in read_index(data_dir):
-        game_id = str(record.get("id"))
-        if not analysis_repo.analysis_exists(game_id):
-            unanalyzed_game_ids.append(game_id)
+    unanalyzed_game_ids = game_repo.list_unanalyzed_game_ids()
 
     if not unanalyzed_game_ids:
         raise HTTPException(status_code=400, detail="No unanalyzed games found")
 
-    # Create job
     job_id = job_service.create_job(
         job_type="analyze",
         max_games=len(unanalyzed_game_ids),
     )
 
-    # Start analysis in background
     asyncio.create_task(
         analyze_job.execute(job_id=job_id, game_ids=unanalyzed_game_ids)
     )
@@ -250,9 +271,10 @@ def get_analysis_status(job_service: JobServiceDep) -> dict[str, Any]:
     },
 )
 def delete_job(
+    request: Request,
     job_service: JobServiceDep,
     job_id: str = Path(description="Job ID to delete"),
-) -> dict[str, str]:
+) -> HTMLResponse:
     job = job_service.get_job(job_id)
 
     if not job:
@@ -270,4 +292,20 @@ def delete_job(
     if not deleted:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    return {"status": "deleted", "job_id": job_id}
+    # Return updated jobs table for HTMX
+    jobs = job_service.list_jobs(limit=20)
+
+    for j in jobs:
+        if j.get("created_at"):
+            try:
+                dt = datetime.fromisoformat(j["created_at"])
+                j["created_at_formatted"] = dt.strftime("%Y-%m-%d %H:%M")
+            except (ValueError, TypeError):
+                j["created_at_formatted"] = j["created_at"]
+        else:
+            j["created_at_formatted"] = "-"
+
+    return request.app.state.templates.TemplateResponse(
+        "_jobs_partial.html",
+        {"request": request, "jobs": jobs},
+    )

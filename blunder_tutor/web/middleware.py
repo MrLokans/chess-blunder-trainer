@@ -18,10 +18,7 @@ class SetupCheckMiddleware(BaseHTTPMiddleware):
         # Check if setup is completed (with caching to reduce DB load)
         if not hasattr(request.app.state, "_setup_completed_cache"):
             config = request.app.state.config
-            settings_repo = SettingsRepository(
-                data_dir=config.data.data_dir,
-                db_path=config.data.db_path,
-            )
+            settings_repo = SettingsRepository(db_path=config.data.db_path)
             try:
                 request.app.state._setup_completed_cache = (
                     settings_repo.is_setup_completed()

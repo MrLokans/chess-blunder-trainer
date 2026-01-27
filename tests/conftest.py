@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
-
-from unittest.mock import AsyncMock, MagicMock
 
 from blunder_tutor.analysis.db import ensure_schema
 from blunder_tutor.repositories.analysis import AnalysisRepository
@@ -21,17 +20,10 @@ from blunder_tutor.web.config import AppConfig, DataConfig, EngineConfig
 
 
 @pytest.fixture
-def temp_dir() -> Generator[Path, None, None]:
+def temp_dir() -> Generator[Path]:
     """Provide a temporary directory that cleans up after the test."""
     with tempfile.TemporaryDirectory() as tmp:
         yield Path(tmp)
-
-
-@pytest.fixture
-def data_dir(temp_dir: Path) -> Path:
-    data_path = temp_dir / "data"
-    data_path.mkdir(parents=True, exist_ok=True)
-    return data_path
 
 
 @pytest.fixture
@@ -42,7 +34,7 @@ def db_path(temp_dir: Path) -> Path:
 
 
 @pytest.fixture
-def test_config(data_dir: Path, db_path: Path) -> AppConfig:
+def test_config(db_path: Path) -> AppConfig:
     """Provide a test configuration object.
 
     Note: This config uses a mock engine path. Tests that require
@@ -57,7 +49,6 @@ def test_config(data_dir: Path, db_path: Path) -> AppConfig:
             time_limit=1.0,
         ),
         data=DataConfig(
-            data_dir=data_dir,
             db_path=db_path,
             template_dir=Path(__file__).parent.parent / "templates",
         ),
@@ -65,18 +56,18 @@ def test_config(data_dir: Path, db_path: Path) -> AppConfig:
 
 
 @pytest.fixture
-def analysis_repo(data_dir: Path, db_path: Path) -> AnalysisRepository:
-    return AnalysisRepository(data_dir, db_path)
+def analysis_repo(db_path: Path) -> AnalysisRepository:
+    return AnalysisRepository(db_path)
 
 
 @pytest.fixture
-def game_repo(data_dir: Path, db_path: Path) -> GameRepository:
-    return GameRepository(data_dir, db_path)
+def game_repo(db_path: Path) -> GameRepository:
+    return GameRepository(db_path)
 
 
 @pytest.fixture
-def puzzle_attempt_repo(data_dir: Path, db_path: Path) -> PuzzleAttemptRepository:
-    return PuzzleAttemptRepository(data_dir, db_path)
+def puzzle_attempt_repo(db_path: Path) -> PuzzleAttemptRepository:
+    return PuzzleAttemptRepository(db_path)
 
 
 @pytest.fixture

@@ -1,12 +1,9 @@
 import argparse
 import os
-from pathlib import Path
 
-from blunder_tutor import constants
 from blunder_tutor.cli.analyze import AnalyzeCommand
 from blunder_tutor.cli.analyze_bulk import AnalyzeBulkCommand
 from blunder_tutor.cli.fetch import FetchCommand
-from blunder_tutor.cli.index import IndexCommand
 from blunder_tutor.cli.list import ListCommand
 from blunder_tutor.cli.train_ui import TrainUICommand
 from blunder_tutor.web.config import config_factory
@@ -14,7 +11,6 @@ from blunder_tutor.web.config import config_factory
 COMMANDS = [
     FetchCommand(),
     ListCommand(),
-    IndexCommand(),
     AnalyzeCommand(),
     AnalyzeBulkCommand(),
     TrainUICommand(),
@@ -23,12 +19,6 @@ COMMANDS = [
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="blunder-tutor")
-    parser.add_argument(
-        "--data-dir",
-        type=Path,
-        default=constants.DEFAULT_DATA_PATH,
-        help="Local storage directory",
-    )
     parser.add_argument(
         "--engine-path",
         type=str,

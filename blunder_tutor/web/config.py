@@ -9,7 +9,6 @@ from blunder_tutor import constants
 
 
 class DataConfig(BaseModel):
-    data_dir: Path = constants.DEFAULT_DATA_PATH
     db_path: Path = constants.DEFAULT_DB_PATH
     template_dir: Path = constants.TEMPLATES_PATH
 

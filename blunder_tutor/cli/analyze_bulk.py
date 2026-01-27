@@ -21,7 +21,6 @@ class AnalyzeBulkCommand(CLICommand):
             engine_path=config.engine_path,
         )
         result = analyzer.analyze_bulk(
-            data_dir=config.data.data_dir,
             depth=args.depth,
             time_limit=args.time,
             source=args.source,
