@@ -46,7 +46,6 @@ def get_engine_path(environ: typing.Mapping) -> str:
 def config_factory(
     parsed_args: argparse.Namespace, environ: typing.Mapping
 ) -> AppConfig:
-
     final_engine_path = (
         parsed_args and parsed_args.engine_path or get_engine_path(environ)
     )
