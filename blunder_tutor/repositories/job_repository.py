@@ -2,21 +2,14 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import uuid
 from datetime import datetime
 
-from blunder_tutor.events.event_bus import EventBus
-from blunder_tutor.events.event_types import JobEvent, StatsEvent
 from blunder_tutor.repositories.base import BaseDbRepository
 
 
 class JobRepository(BaseDbRepository):
-    def __init__(self, data_dir, db_path, event_bus: EventBus | None = None):
-        super().__init__(data_dir, db_path)
-        self.event_bus = event_bus
-
     def create_job(
         self,
         job_type: str,
@@ -49,11 +42,6 @@ class JobRepository(BaseDbRepository):
                     created_at,
                 ),
             )
-
-        # Emit job created event
-        if self.event_bus:
-            event = JobEvent.create_status_changed(job_id, job_type, "pending")
-            asyncio.create_task(self.event_bus.publish(event))
 
         return job_id
 
@@ -91,23 +79,6 @@ class JobRepository(BaseDbRepository):
                     (status, error_message, job_id),
                 )
 
-        # Emit status change event
-        if self.event_bus:
-            job = self.get_job(job_id)
-            if job:
-                event = JobEvent.create_status_changed(
-                    job_id=job_id,
-                    job_type=job["job_type"],
-                    status=status,
-                    error_message=error_message,
-                )
-                asyncio.create_task(self.event_bus.publish(event))
-
-                # Emit stats updated event when job completes
-                if status == "completed":
-                    stats_event = StatsEvent.create_stats_updated()
-                    asyncio.create_task(self.event_bus.publish(stats_event))
-
     def update_job_progress(
         self,
         job_id: str,
@@ -123,18 +94,6 @@ class JobRepository(BaseDbRepository):
                 """,
                 (current, total, job_id),
             )
-
-        # Emit progress update event
-        if self.event_bus:
-            job = self.get_job(job_id)
-            if job:
-                event = JobEvent.create_progress_updated(
-                    job_id=job_id,
-                    job_type=job["job_type"],
-                    current=current,
-                    total=total,
-                )
-                asyncio.create_task(self.event_bus.publish(event))
 
     def complete_job(
         self,
@@ -153,19 +112,6 @@ class JobRepository(BaseDbRepository):
                 """,
                 (result_json, completed_at, job_id),
             )
-
-        # Emit completion event
-        if self.event_bus:
-            job = self.get_job(job_id)
-            if job:
-                event = JobEvent.create_status_changed(
-                    job_id=job_id, job_type=job["job_type"], status="completed"
-                )
-                asyncio.create_task(self.event_bus.publish(event))
-
-                # Emit stats updated event
-                stats_event = StatsEvent.create_stats_updated()
-                asyncio.create_task(self.event_bus.publish(stats_event))
 
     def get_job(self, job_id: str) -> dict[str, object] | None:
         with self.connection as conn:

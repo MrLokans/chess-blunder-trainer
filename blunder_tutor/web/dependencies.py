@@ -14,6 +14,7 @@ from blunder_tutor.repositories.puzzle_attempt_repository import (
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.repositories.stats_repository import StatsRepository
 from blunder_tutor.services.analysis_service import AnalysisService
+from blunder_tutor.services.job_service import JobService
 from blunder_tutor.services.puzzle_service import PuzzleService
 from blunder_tutor.trainer import Trainer
 from blunder_tutor.web.config import AppConfig
@@ -56,13 +57,18 @@ def get_stats_repository(
 
 def get_job_repository(
     config: Annotated[AppConfig, Depends(get_config)],
-    event_bus: Annotated[EventBus, Depends(get_event_bus)],
 ) -> JobRepository:
     return JobRepository(
         data_dir=config.data.data_dir,
         db_path=config.data.db_path,
-        event_bus=event_bus,
     )
+
+
+def get_job_service(
+    job_repository: Annotated[JobRepository, Depends(get_job_repository)],
+    event_bus: Annotated[EventBus, Depends(get_event_bus)],
+) -> JobService:
+    return JobService(job_repository=job_repository, event_bus=event_bus)
 
 
 def get_game_repository(
@@ -134,6 +140,7 @@ PuzzleAttemptRepoDep = Annotated[
 ]
 StatsRepoDep = Annotated[StatsRepository, Depends(get_stats_repository)]
 JobRepoDep = Annotated[JobRepository, Depends(get_job_repository)]
+JobServiceDep = Annotated[JobService, Depends(get_job_service)]
 GameRepoDep = Annotated[GameRepository, Depends(get_game_repository)]
 AnalysisRepoDep = Annotated[AnalysisRepository, Depends(get_analysis_repository)]
 SchedulerDep = Annotated[BackgroundScheduler, Depends(get_scheduler)]
