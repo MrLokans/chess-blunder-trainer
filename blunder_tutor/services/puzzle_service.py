@@ -19,7 +19,7 @@ class PuzzleService:
         self.trainer = trainer
         self.analysis_service = analysis_service
 
-    def get_puzzle_with_analysis(
+    async def get_puzzle_with_analysis(
         self,
         username: str | list[str],
         source: str | None = None,
@@ -50,7 +50,7 @@ class PuzzleService:
             )
         else:
             # Fallback to engine analysis for legacy data (slow)
-            analysis = self.analysis_service.analyze_position(
+            analysis = await self.analysis_service.analyze_position(
                 fen=puzzle.fen, player_color=puzzle.player_color
             )
 

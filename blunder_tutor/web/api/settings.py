@@ -144,8 +144,7 @@ async def settings_submit(
 
     # Update scheduler jobs without restarting
     scheduler = request.app.state.scheduler
-    event_bus = request.app.state.event_bus
     settings = settings_repo.get_all_settings()
-    scheduler.update_jobs(settings, event_bus)
+    scheduler.update_jobs(settings)
 
     return {"success": True}

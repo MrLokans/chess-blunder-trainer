@@ -25,15 +25,15 @@ class MoveEvaluation:
 
 
 class AnalysisService:
-    def __init__(self, engine: chess.engine.SimpleEngine, limit: chess.engine.Limit):
+    def __init__(self, engine: chess.engine.UciProtocol, limit: chess.engine.Limit):
         self.engine = engine
         self.limit = limit
 
-    def analyze_position(
+    async def analyze_position(
         self, fen: str, player_color: str | None = None
     ) -> PositionAnalysis:
         board = chess.Board(fen)
-        info = self.engine.analyse(board, self.limit)
+        info = await self.engine.analyse(board, self.limit)
 
         score = info.get("score")
         eval_cp = score.white().score(mate_score=MATE_SCORE_WEB) if score else 0
@@ -65,7 +65,7 @@ class AnalysisService:
             best_line=best_line,
         )
 
-    def evaluate_move(
+    async def evaluate_move(
         self, fen: str, move_uci: str, player_color: str | None = None
     ) -> MoveEvaluation:
         board = board_from_fen(fen)
@@ -80,7 +80,7 @@ class AnalysisService:
 
         # Make the move and evaluate
         board.push(move)
-        info = self.engine.analyse(board, self.limit)
+        info = await self.engine.analyse(board, self.limit)
 
         score = info.get("score")
         eval_cp = score.white().score(mate_score=MATE_SCORE_WEB) if score else 0

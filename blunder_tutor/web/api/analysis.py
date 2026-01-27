@@ -98,7 +98,7 @@ analysis_router = APIRouter()
     summary="Get a puzzle",
     description="Returns a random blunder puzzle for the user to solve, with optional date filtering.",
 )
-def puzzle(
+async def puzzle(
     config: ConfigDep,
     settings_repo: SettingsRepoDep,
     puzzle_service: PuzzleServiceDep,
@@ -146,7 +146,7 @@ def puzzle(
     )
 
     try:
-        puzzle_with_analysis = puzzle_service.get_puzzle_with_analysis(
+        puzzle_with_analysis = await puzzle_service.get_puzzle_with_analysis(
             username=username,
             source=source,
             start_date=start_date_str,
@@ -195,7 +195,7 @@ def puzzle(
     summary="Submit puzzle move",
     description="Submit a move attempt for the current puzzle and receive evaluation feedback.",
 )
-def submit(
+async def submit(
     payload: SubmitMoveRequest,
     attempt_repo: PuzzleAttemptRepoDep,
     analysis_service: AnalysisServiceDep,
@@ -220,7 +220,7 @@ def submit(
     else:
         # Unknown move - must use engine (fallback for edge cases)
         try:
-            user_eval = analysis_service.evaluate_move(
+            user_eval = await analysis_service.evaluate_move(
                 payload.fen, payload.move, payload.player_color
             )
             user_eval_cp = user_eval.eval_cp
@@ -263,12 +263,12 @@ def submit(
     summary="Analyze position",
     description="Analyze a specific chess position and return evaluation with best move.",
 )
-def analyze_move(
+async def analyze_move(
     payload: AnalyzeMoveRequest, analysis_service: AnalysisServiceDep
 ) -> dict[str, Any]:
     """Analyze a specific position and return evaluation + best continuation."""
     try:
-        analysis = analysis_service.analyze_position(payload.fen)
+        analysis = await analysis_service.analyze_position(payload.fen)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid FEN") from None
 

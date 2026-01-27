@@ -1,8 +1,12 @@
+import asyncio
 from typing import Annotated
 
 import chess.engine
 from fastapi import Depends, Request
 
+from blunder_tutor.background.jobs.analyze_games import AnalyzeGamesJob
+from blunder_tutor.background.jobs.import_games import ImportGamesJob
+from blunder_tutor.background.jobs.sync_games import SyncGamesJob
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
@@ -64,11 +68,14 @@ def get_job_repository(
     )
 
 
-def get_job_service(
+async def get_job_service(
     job_repository: Annotated[JobRepository, Depends(get_job_repository)],
     event_bus: Annotated[EventBus, Depends(get_event_bus)],
 ) -> JobService:
-    return JobService(job_repository=job_repository, event_bus=event_bus)
+    job_service = JobService(job_repository=job_repository, event_bus=event_bus)
+    # Set the event loop for cross-thread event publishing (e.g., from executor threads)
+    job_service.set_event_loop(asyncio.get_running_loop())
+    return job_service
 
 
 def get_game_repository(
@@ -95,7 +102,7 @@ def get_scheduler(
     return request.app.state.scheduler
 
 
-def get_engine(request: Request) -> chess.engine.SimpleEngine:
+def get_engine(request: Request) -> chess.engine.UciProtocol:
     return request.app.state.engine
 
 
@@ -104,7 +111,7 @@ def get_engine_limit(request: Request) -> chess.engine.Limit:
 
 
 def get_analysis_service(
-    engine: Annotated[chess.engine.SimpleEngine, Depends(get_engine)],
+    engine: Annotated[chess.engine.UciProtocol, Depends(get_engine)],
     limit: Annotated[chess.engine.Limit, Depends(get_engine_limit)],
 ) -> AnalysisService:
     return AnalysisService(engine=engine, limit=limit)
@@ -131,6 +138,56 @@ def get_puzzle_service(
     return PuzzleService(trainer=trainer, analysis_service=analysis_service)
 
 
+# Job class dependency providers
+
+
+def get_analyze_games_job(
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
+    config: Annotated[AppConfig, Depends(get_config)],
+) -> AnalyzeGamesJob:
+    """Provide an AnalyzeGamesJob instance."""
+    return AnalyzeGamesJob(
+        job_service=job_service,
+        game_repo=game_repo,
+        analysis_repo=analysis_repo,
+        data_dir=config.data.data_dir,
+    )
+
+
+def get_import_games_job(
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    settings_repo: Annotated[SettingsRepository, Depends(get_settings_repository)],
+    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+    config: Annotated[AppConfig, Depends(get_config)],
+) -> ImportGamesJob:
+    """Provide an ImportGamesJob instance."""
+    return ImportGamesJob(
+        job_service=job_service,
+        settings_repo=settings_repo,
+        game_repo=game_repo,
+        data_dir=config.data.data_dir,
+    )
+
+
+def get_sync_games_job(
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    settings_repo: Annotated[SettingsRepository, Depends(get_settings_repository)],
+    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+    config: Annotated[AppConfig, Depends(get_config)],
+    analyze_job: Annotated[AnalyzeGamesJob, Depends(get_analyze_games_job)],
+) -> SyncGamesJob:
+    """Provide a SyncGamesJob instance with optional analyze job for auto-analysis."""
+    return SyncGamesJob(
+        job_service=job_service,
+        settings_repo=settings_repo,
+        game_repo=game_repo,
+        data_dir=config.data.data_dir,
+        analyze_job=analyze_job,
+    )
+
+
 # Type annotations for dependency injection in route handlers
 ConfigDep = Annotated[AppConfig, Depends(get_config)]
 EventBusDep = Annotated[EventBus, Depends(get_event_bus)]
@@ -144,8 +201,13 @@ JobServiceDep = Annotated[JobService, Depends(get_job_service)]
 GameRepoDep = Annotated[GameRepository, Depends(get_game_repository)]
 AnalysisRepoDep = Annotated[AnalysisRepository, Depends(get_analysis_repository)]
 SchedulerDep = Annotated[BackgroundScheduler, Depends(get_scheduler)]
-EngineDep = Annotated[chess.engine.SimpleEngine, Depends(get_engine)]
+EngineDep = Annotated[chess.engine.UciProtocol, Depends(get_engine)]
 LimitDep = Annotated[chess.engine.Limit, Depends(get_engine_limit)]
 AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]
 TrainerDep = Annotated[Trainer, Depends(get_trainer)]
 PuzzleServiceDep = Annotated[PuzzleService, Depends(get_puzzle_service)]
+
+# Job class type annotations
+AnalyzeGamesJobDep = Annotated[AnalyzeGamesJob, Depends(get_analyze_games_job)]
+ImportGamesJobDep = Annotated[ImportGamesJob, Depends(get_import_games_job)]
+SyncGamesJobDep = Annotated[SyncGamesJob, Depends(get_sync_games_job)]

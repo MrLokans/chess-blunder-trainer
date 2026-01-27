@@ -9,7 +9,7 @@ from typing import Generator
 import pytest
 from fastapi.testclient import TestClient
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from blunder_tutor.analysis.db import ensure_schema
 from blunder_tutor.repositories.analysis import AnalysisRepository
@@ -94,12 +94,23 @@ def trainer(
 
 @pytest.fixture
 def app(test_config: AppConfig, monkeypatch) -> TestClient:
+    import chess
+    import chess.engine
+
     mock_engine = MagicMock()
+    mock_engine.analyse = AsyncMock(
+        return_value={
+            "score": chess.engine.PovScore(chess.engine.Cp(50), chess.WHITE),
+            "pv": [],
+        }
+    )
+    mock_engine.quit = AsyncMock()
+    mock_transport = MagicMock()
 
-    def mock_popen_uci(path):
-        return mock_engine
+    async def mock_popen_uci(path):
+        return (mock_transport, mock_engine)
 
-    monkeypatch.setattr("chess.engine.SimpleEngine.popen_uci", mock_popen_uci)
+    monkeypatch.setattr("chess.engine.popen_uci", mock_popen_uci)
     fastapi_app = create_app(test_config)
     return TestClient(fastapi_app)
 

@@ -11,9 +11,11 @@ from pydantic import BaseModel, Field
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     AnalysisRepoDep,
+    AnalyzeGamesJobDep,
     ConfigDep,
-    EventBusDep,
-    JobRepoDep,
+    ImportGamesJobDep,
+    JobServiceDep,
+    SyncGamesJobDep,
 )
 
 
@@ -56,24 +58,24 @@ jobs_router = APIRouter()
 async def start_import_job(
     request: Request,
     payload: StartImportRequest,
-    config: ConfigDep,
-    job_repo: JobRepoDep,
-    event_bus: EventBusDep,
+    job_service: JobServiceDep,
+    import_job: ImportGamesJobDep,
 ) -> dict[str, str]:
-    from blunder_tutor.background.jobs import _sync_single_source
-
     # Create job and get the job_id
-    job_id = job_repo.create_job(
+    job_id = job_service.create_job(
         job_type="import",
         username=payload.username,
         source=payload.source,
         max_games=payload.max_games,
     )
 
-    # Start job in background with the correct job_id
+    # Start job in background
     asyncio.create_task(
-        _sync_single_source(
-            config.data.data_dir, job_id, payload.source, payload.username, event_bus
+        import_job.execute(
+            job_id=job_id,
+            source=payload.source,
+            username=payload.username,
+            max_games=payload.max_games,
         )
     )
 
@@ -88,10 +90,10 @@ async def start_import_job(
     description="Check the status of a specific import job.",
 )
 def get_import_status(
-    job_repo: JobRepoDep,
+    job_service: JobServiceDep,
     job_id: str = Path(description="Job ID to check status for"),
 ) -> dict[str, Any]:
-    job = job_repo.get_job(job_id)
+    job = job_service.get_job(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -105,12 +107,10 @@ def get_import_status(
     summary="Start sync job",
     description="Trigger a manual game synchronization.",
 )
-async def start_sync_job(config: ConfigDep, event_bus: EventBusDep) -> dict[str, str]:
+async def start_sync_job(sync_job: SyncGamesJobDep) -> dict[str, str]:
     """POST /api/sync/start - Trigger manual sync."""
-    from blunder_tutor.background.jobs import sync_games_job
-
-    # Run sync in background
-    asyncio.create_task(sync_games_job(config.data.data_dir, event_bus))
+    # Run sync in background (job_id is created per-source inside execute)
+    asyncio.create_task(sync_job.execute(job_id=""))
 
     return {"status": "sync started"}
 
@@ -120,9 +120,9 @@ async def start_sync_job(config: ConfigDep, event_bus: EventBusDep) -> dict[str,
     summary="Get sync status",
     description="Get the status of the most recent sync job.",
 )
-def get_sync_status(job_repo: JobRepoDep) -> dict[str, Any]:
+def get_sync_status(job_service: JobServiceDep) -> dict[str, Any]:
     # Get most recent sync job
-    jobs = job_repo.list_jobs(job_type="sync", limit=1)
+    jobs = job_service.list_jobs(job_type="sync", limit=1)
 
     if not jobs:
         return {"status": "no sync jobs"}
@@ -136,7 +136,7 @@ def get_sync_status(job_repo: JobRepoDep) -> dict[str, Any]:
     description="List recent jobs with optional filtering by type and status.",
 )
 def list_jobs(
-    job_repo: JobRepoDep,
+    job_service: JobServiceDep,
     type: str | None = Query(
         None, description="Filter by job type (import, sync, analysis)", alias="type"
     ),
@@ -147,7 +147,7 @@ def list_jobs(
         50, ge=1, le=500, description="Maximum number of jobs to return"
     ),
 ) -> list[dict[str, Any]]:
-    jobs = job_repo.list_jobs(job_type=type, status=status, limit=limit)
+    jobs = job_service.list_jobs(job_type=type, status=status, limit=limit)
     return jobs
 
 
@@ -160,12 +160,11 @@ def list_jobs(
 async def start_analysis_job(
     request: Request,
     config: ConfigDep,
-    job_repo: JobRepoDep,
+    job_service: JobServiceDep,
     analysis_repo: AnalysisRepoDep,
-    event_bus: EventBusDep,
+    analyze_job: AnalyzeGamesJobDep,
 ) -> dict[str, str]:
     """POST /api/analysis/start - Start bulk game analysis."""
-    from blunder_tutor.background.jobs import analyze_games_job
     from blunder_tutor.index import read_index
 
     data_dir = config.data.data_dir
@@ -181,14 +180,14 @@ async def start_analysis_job(
         raise HTTPException(status_code=400, detail="No unanalyzed games found")
 
     # Create job
-    job_id = job_repo.create_job(
+    job_id = job_service.create_job(
         job_type="analyze",
         max_games=len(unanalyzed_game_ids),
     )
 
     # Start analysis in background
     asyncio.create_task(
-        analyze_games_job(data_dir, job_id, unanalyzed_game_ids, event_bus)
+        analyze_job.execute(job_id=job_id, game_ids=unanalyzed_game_ids)
     )
 
     return {"job_id": job_id}
@@ -201,11 +200,11 @@ async def start_analysis_job(
     responses={404: {"model": ErrorResponse, "description": "Job not found"}},
 )
 def stop_analysis_job(
-    job_repo: JobRepoDep,
+    job_service: JobServiceDep,
     job_id: str = Path(description="Job ID to stop"),
 ) -> dict[str, str]:
     """POST /api/analysis/stop/{job_id} - Stop an analysis job."""
-    job = job_repo.get_job(job_id)
+    job = job_service.get_job(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -216,7 +215,7 @@ def stop_analysis_job(
         )
 
     # Mark job as failed with cancellation message
-    job_repo.update_job_status(job_id, "failed", "Cancelled by user")
+    job_service.update_job_status(job_id, "failed", "Cancelled by user")
 
     return {"status": "stopped", "job_id": job_id}
 
@@ -226,14 +225,14 @@ def stop_analysis_job(
     summary="Get current analysis status",
     description="Get the status of the most recent or currently running analysis job.",
 )
-def get_analysis_status(job_repo: JobRepoDep) -> dict[str, Any]:
-    running_jobs = job_repo.list_jobs(job_type="analyze", status="running", limit=1)
+def get_analysis_status(job_service: JobServiceDep) -> dict[str, Any]:
+    running_jobs = job_service.list_jobs(job_type="analyze", status="running", limit=1)
 
     if running_jobs:
         return running_jobs[0]
 
     # Otherwise, get the most recent analyze job
-    recent_jobs = job_repo.list_jobs(job_type="analyze", limit=1)
+    recent_jobs = job_service.list_jobs(job_type="analyze", limit=1)
 
     if not recent_jobs:
         return {"status": "no_jobs"}
@@ -251,10 +250,10 @@ def get_analysis_status(job_repo: JobRepoDep) -> dict[str, Any]:
     },
 )
 def delete_job(
-    job_repo: JobRepoDep,
+    job_service: JobServiceDep,
     job_id: str = Path(description="Job ID to delete"),
 ) -> dict[str, str]:
-    job = job_repo.get_job(job_id)
+    job = job_service.get_job(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -266,7 +265,7 @@ def delete_job(
         )
 
     # Delete the job
-    deleted = job_repo.delete_job(job_id)
+    deleted = job_service.delete_job(job_id)
 
     if not deleted:
         raise HTTPException(status_code=404, detail="Job not found")
