@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 
 from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.repositories.game_repository import GameRepository
@@ -10,12 +11,18 @@ class ShowCommand(CLICommand):
         return args.command == "show"
 
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
+        asyncio.run(self._run_async(args, config))
+
+    async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
         repo = GameRepository.from_config(config=config)
-        record = repo.get_game(args.game_id)
-        if record:
-            print(record)
-        else:
-            print(f"Game not found: {args.game_id}")
+        try:
+            record = await repo.get_game(args.game_id)
+            if record:
+                print(record)
+            else:
+                print(f"Game not found: {args.game_id}")
+        finally:
+            await repo.close()
 
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
         show_parser = subparsers.add_parser("show", help="Show stored game metadata")

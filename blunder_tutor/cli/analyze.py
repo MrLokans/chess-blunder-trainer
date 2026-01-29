@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 
 from blunder_tutor.analysis.db import ensure_schema
 from blunder_tutor.analysis.logic import GameAnalyzer
@@ -13,20 +14,29 @@ class AnalyzeCommand(CLICommand):
         return args.command == "analyze"
 
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
+        asyncio.run(self._run_async(args, config))
+
+    async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
         ensure_schema(config.data.db_path)
 
-        analyzer = GameAnalyzer(
-            analysis_repo=AnalysisRepository.from_config(config),
-            games_repo=GameRepository.from_config(config),
-            engine_path=config.engine_path,
-        )
+        analysis_repo = AnalysisRepository.from_config(config)
+        games_repo = GameRepository.from_config(config)
+        try:
+            analyzer = GameAnalyzer(
+                analysis_repo=analysis_repo,
+                games_repo=games_repo,
+                engine_path=config.engine_path,
+            )
 
-        analyzer.analyze_game(
-            game_id=args.game_id,
-            depth=args.depth,
-            time_limit=args.time,
-        )
-        print(f"Analysis complete for game {args.game_id}")
+            await analyzer.analyze_game(
+                game_id=args.game_id,
+                depth=args.depth,
+                time_limit=args.time,
+            )
+            print(f"Analysis complete for game {args.game_id}")
+        finally:
+            await analysis_repo.close()
+            await games_repo.close()
 
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
         analyze_parser = subparsers.add_parser("analyze", help="Analyze a stored game")

@@ -65,7 +65,7 @@ class GameAnalyzer:
         self.engine_path = engine_path
         self._log = logging.getLogger("GameAnalyzer")
 
-    def analyze_game(
+    async def analyze_game(
         self,
         game_id: str,
         depth: int | None = 14,
@@ -73,7 +73,7 @@ class GameAnalyzer:
         thresholds: Thresholds | None = None,
     ) -> None:
         thresholds = thresholds or Thresholds()
-        game = self.games_repo.load_game(game_id)
+        game = await self.games_repo.load_game(game_id)
 
         analyzed_at = datetime.now(UTC).isoformat()
         moves: list[dict[str, object]] = []
@@ -84,10 +84,11 @@ class GameAnalyzer:
             else chess.engine.Limit(time=time_limit)
         )
 
-        with chess.engine.SimpleEngine.popen_uci(self.engine_path) as engine:
+        transport, engine = await chess.engine.popen_uci(self.engine_path)
+        try:
             for move_number, move, board in _iter_moves(game):
                 player = board.turn
-                info_before = engine.analyse(board, limit)
+                info_before = await engine.analyse(board, limit)
                 eval_before = score_to_cp(info_before["score"], player)
                 san = board.san(move)
                 ply = (board.fullmove_number - 1) * 2 + (
@@ -111,7 +112,7 @@ class GameAnalyzer:
 
                     best_move_board = board.copy()
                     best_move_board.push(pv[0])
-                    info_best = engine.analyse(best_move_board, limit)
+                    info_best = await engine.analyse(best_move_board, limit)
                     best_move_eval = score_to_cp(info_best["score"], player)
 
                 board_after = board.copy(stack=False)
@@ -123,7 +124,7 @@ class GameAnalyzer:
                     cp_loss = 0
                     class_label = "good"
                 else:
-                    info_after = engine.analyse(board_after, limit)
+                    info_after = await engine.analyse(board_after, limit)
                     eval_after = score_to_cp(info_after["score"], player)
 
                     delta = eval_before - eval_after
@@ -155,8 +156,10 @@ class GameAnalyzer:
                         "best_move_eval": best_move_eval,
                     }
                 )
+        finally:
+            await engine.quit()
 
-        self.analysis_repo.write_analysis(
+        await self.analysis_repo.write_analysis(
             game_id=game_id,
             pgn_path="",
             analyzed_at=analyzed_at,
@@ -172,7 +175,7 @@ class GameAnalyzer:
         )
         return
 
-    def analyze_bulk(
+    async def analyze_bulk(
         self,
         depth: int | None = 14,
         time_limit: float | None = None,
@@ -185,19 +188,19 @@ class GameAnalyzer:
         skipped = 0
         analyzed = 0
 
-        game_ids = self.games_repo.list_unanalyzed_game_ids(source, username)
+        game_ids = await self.games_repo.list_unanalyzed_game_ids(source, username)
         if limit is not None:
             game_ids = game_ids[:limit]
 
         self._log.info("Processing %d games", len(game_ids))
         with tqdm(total=len(game_ids), desc="Analyze games", unit="game") as progress:
             for game_id in game_ids:
-                if self.analysis_repo.analysis_exists(game_id) and not force:
+                if await self.analysis_repo.analysis_exists(game_id) and not force:
                     skipped += 1
                     processed += 1
                     progress.update(1)
                     continue
-                self.analyze_game(
+                await self.analyze_game(
                     game_id=game_id,
                     depth=depth,
                     time_limit=time_limit,

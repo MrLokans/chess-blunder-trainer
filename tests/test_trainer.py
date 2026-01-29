@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import chess
 import chess.pgn
@@ -41,17 +41,17 @@ class TestBlunderPuzzle:
 
 
 class TestPickRandomBlunder:
-    def test_pick_blunder_basic(self, trainer):
+    async def test_pick_blunder_basic(self, trainer):
         # Mock game repository methods
-        trainer.games.get_username_side_map = MagicMock(
+        trainer.games.get_username_side_map = AsyncMock(
             return_value={"game1": 0}  # white
         )
 
         # Mock puzzle attempt repository
-        trainer.attempts.get_recently_solved_puzzles = MagicMock(return_value=set())
+        trainer.attempts.get_recently_solved_puzzles = AsyncMock(return_value=set())
 
         # Mock analysis repository
-        trainer.analysis.fetch_blunders = MagicMock(
+        trainer.analysis.fetch_blunders = AsyncMock(
             return_value=[
                 {
                     "game_id": "game1",
@@ -88,9 +88,9 @@ class TestPickRandomBlunder:
             chess.Move.from_uci("d7d6"),
         ]
         mock_game.mainline_moves.return_value = moves
-        trainer.games.load_game = MagicMock(return_value=mock_game)
+        trainer.games.load_game = AsyncMock(return_value=mock_game)
 
-        puzzle = trainer.pick_random_blunder("testuser")
+        puzzle = await trainer.pick_random_blunder("testuser")
 
         assert puzzle.game_id == "game1"
         assert puzzle.ply == 10
@@ -98,36 +98,36 @@ class TestPickRandomBlunder:
         assert puzzle.player_color == "white"
         assert puzzle.username == "testuser"
 
-    def test_no_games_found(self, trainer):
+    async def test_no_games_found(self, trainer):
         # No games found for user
-        trainer.games.get_username_side_map = MagicMock(return_value={})
+        trainer.games.get_username_side_map = AsyncMock(return_value={})
 
         with pytest.raises(ValueError, match="No games found"):
-            trainer.pick_random_blunder("testuser")
+            await trainer.pick_random_blunder("testuser")
 
-    def test_no_blunders_found(self, trainer):
+    async def test_no_blunders_found(self, trainer):
         # Mock get_username_side_map
-        trainer.games.get_username_side_map = MagicMock(
+        trainer.games.get_username_side_map = AsyncMock(
             return_value={"game1": 0}  # white
         )
 
         # No blunders
-        trainer.analysis.fetch_blunders = MagicMock(return_value=[])
+        trainer.analysis.fetch_blunders = AsyncMock(return_value=[])
 
         with pytest.raises(ValueError, match="No blunders found"):
-            trainer.pick_random_blunder("testuser")
+            await trainer.pick_random_blunder("testuser")
 
-    def test_filters_mate_situations(self, trainer):
+    async def test_filters_mate_situations(self, trainer):
         # Mock game repository
-        trainer.games.get_username_side_map = MagicMock(
+        trainer.games.get_username_side_map = AsyncMock(
             return_value={"game1": 0}  # white
         )
 
         # Mock puzzle attempt repository
-        trainer.attempts.get_recently_solved_puzzles = MagicMock(return_value=set())
+        trainer.attempts.get_recently_solved_puzzles = AsyncMock(return_value=set())
 
         # One real blunder, one mate situation (should be filtered)
-        trainer.analysis.fetch_blunders = MagicMock(
+        trainer.analysis.fetch_blunders = AsyncMock(
             return_value=[
                 {
                     "game_id": "game1",
@@ -177,9 +177,9 @@ class TestPickRandomBlunder:
             chess.Move.from_uci("d7d6"),
         ]
         mock_game.mainline_moves.return_value = moves
-        trainer.games.load_game = MagicMock(return_value=mock_game)
+        trainer.games.load_game = AsyncMock(return_value=mock_game)
 
-        puzzle = trainer.pick_random_blunder("testuser")
+        puzzle = await trainer.pick_random_blunder("testuser")
 
         # Should get the second blunder (non-mate situation)
         assert puzzle.ply == 10

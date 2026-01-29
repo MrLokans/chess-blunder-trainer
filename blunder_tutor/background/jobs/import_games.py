@@ -1,12 +1,5 @@
-"""Import games job implementation.
-
-This module contains the ImportGamesJob class which imports games
-from a single platform source.
-"""
-
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -47,14 +40,14 @@ class ImportGamesJob(BaseJob):
 
         max_games = kwargs.get("max_games")
         if max_games is None:
-            max_games_str = self.settings_repo.get_setting("sync_max_games")
+            max_games_str = await self.settings_repo.get_setting("sync_max_games")
             max_games = int(max_games_str) if max_games_str else 1000
 
-        self.job_service.update_job_status(job_id, "running")
-        self.job_service.update_job_progress(job_id, 0, max_games)
+        await self.job_service.update_job_status(job_id, "running")
+        await self.job_service.update_job_progress(job_id, 0, max_games)
 
-        def update_progress(current: int, total: int) -> None:
-            self.job_service.update_job_progress(job_id, current, total)
+        async def update_progress(current: int, total: int) -> None:
+            await self.job_service.update_job_progress(job_id, current, total)
 
         try:
             if source == "lichess":
@@ -72,23 +65,20 @@ class ImportGamesJob(BaseJob):
             else:
                 raise ValueError(f"Unknown source: {source}")
 
-            loop = asyncio.get_event_loop()
-            inserted = await loop.run_in_executor(
-                None, self.game_repo.insert_games, games
-            )
+            inserted = await self.game_repo.insert_games(games)
             skipped = len(games) - inserted
 
             total_processed = len(games)
-            self.job_service.update_job_progress(
+            await self.job_service.update_job_progress(
                 job_id, total_processed, total_processed
             )
 
             result = {"stored": inserted, "skipped": skipped}
-            self.job_service.complete_job(job_id, result)
+            await self.job_service.complete_job(job_id, result)
 
             return result
 
         except Exception as e:
             logger.error(f"Error in import job {job_id}: {e}")
-            self.job_service.update_job_status(job_id, "failed", str(e))
+            await self.job_service.update_job_status(job_id, "failed", str(e))
             raise

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import tempfile
-from collections.abc import Generator
+from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
@@ -56,22 +56,28 @@ def test_config(db_path: Path) -> AppConfig:
 
 
 @pytest.fixture
-def analysis_repo(db_path: Path) -> AnalysisRepository:
-    return AnalysisRepository(db_path)
+async def analysis_repo(db_path: Path) -> AsyncGenerator[AnalysisRepository]:
+    repo = AnalysisRepository(db_path)
+    yield repo
+    await repo.close()
 
 
 @pytest.fixture
-def game_repo(db_path: Path) -> GameRepository:
-    return GameRepository(db_path)
+async def game_repo(db_path: Path) -> AsyncGenerator[GameRepository]:
+    repo = GameRepository(db_path)
+    yield repo
+    await repo.close()
 
 
 @pytest.fixture
-def puzzle_attempt_repo(db_path: Path) -> PuzzleAttemptRepository:
-    return PuzzleAttemptRepository(db_path)
+async def puzzle_attempt_repo(db_path: Path) -> AsyncGenerator[PuzzleAttemptRepository]:
+    repo = PuzzleAttemptRepository(db_path)
+    yield repo
+    await repo.close()
 
 
 @pytest.fixture
-def trainer(
+async def trainer(
     game_repo: GameRepository,
     puzzle_attempt_repo: PuzzleAttemptRepository,
     analysis_repo: AnalysisRepository,

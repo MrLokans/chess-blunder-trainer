@@ -21,7 +21,7 @@ class SetupCheckMiddleware(BaseHTTPMiddleware):
             settings_repo = SettingsRepository(db_path=config.data.db_path)
             try:
                 request.app.state._setup_completed_cache = (
-                    settings_repo.is_setup_completed()
+                    await settings_repo.is_setup_completed()
                 )
             except Exception:
                 # If we can't check setup status, allow the request through

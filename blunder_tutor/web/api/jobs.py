@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime
 from typing import Any
 
@@ -10,13 +9,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
+from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
-    AnalyzeGamesJobDep,
+    EventBusDep,
     GameRepoDep,
-    ImportGamesJobDep,
     JobServiceDep,
-    SyncGamesJobDep,
 )
 
 
@@ -28,7 +26,6 @@ class StartImportRequest(BaseModel):
     )
 
 
-# Response schemas
 class JobResponse(BaseModel):
     job_id: str = Field(description="Unique job identifier")
 
@@ -57,28 +54,25 @@ jobs_router = APIRouter()
     description="Start a background job to import games from a chess platform.",
 )
 async def start_import_job(
-    request: Request,
     payload: StartImportRequest,
     job_service: JobServiceDep,
-    import_job: ImportGamesJobDep,
+    event_bus: EventBusDep,
 ) -> dict[str, str]:
-    # Create job and get the job_id
-    job_id = job_service.create_job(
+    job_id = await job_service.create_job(
         job_type="import",
         username=payload.username,
         source=payload.source,
         max_games=payload.max_games,
     )
 
-    # Start job in background
-    asyncio.create_task(
-        import_job.execute(
-            job_id=job_id,
-            source=payload.source,
-            username=payload.username,
-            max_games=payload.max_games,
-        )
+    event = JobExecutionRequestEvent.create(
+        job_id=job_id,
+        job_type="import",
+        source=payload.source,
+        username=payload.username,
+        max_games=payload.max_games,
     )
+    await event_bus.publish(event)
 
     return {"job_id": job_id}
 
@@ -90,11 +84,11 @@ async def start_import_job(
     summary="Get import status",
     description="Check the status of a specific import job.",
 )
-def get_import_status(
+async def get_import_status(
     job_service: JobServiceDep,
     job_id: str = Path(description="Job ID to check status for"),
 ) -> dict[str, Any]:
-    job = job_service.get_job(job_id)
+    job = await job_service.get_job(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -108,10 +102,14 @@ def get_import_status(
     summary="Start sync job",
     description="Trigger a manual game synchronization.",
 )
-async def start_sync_job(sync_job: SyncGamesJobDep) -> dict[str, str]:
-    """POST /api/sync/start - Trigger manual sync."""
-    # Run sync in background (job_id is created per-source inside execute)
-    asyncio.create_task(sync_job.execute(job_id=""))
+async def start_sync_job(
+    job_service: JobServiceDep,
+    event_bus: EventBusDep,
+) -> dict[str, str]:
+    job_id = await job_service.create_job(job_type="sync")
+
+    event = JobExecutionRequestEvent.create(job_id=job_id, job_type="sync")
+    await event_bus.publish(event)
 
     return {"status": "sync started"}
 
@@ -121,9 +119,8 @@ async def start_sync_job(sync_job: SyncGamesJobDep) -> dict[str, str]:
     summary="Get sync status",
     description="Get the status of the most recent sync job.",
 )
-def get_sync_status(job_service: JobServiceDep) -> dict[str, Any]:
-    # Get most recent sync job
-    jobs = job_service.list_jobs(job_type="sync", limit=1)
+async def get_sync_status(job_service: JobServiceDep) -> dict[str, Any]:
+    jobs = await job_service.list_jobs(job_type="sync", limit=1)
 
     if not jobs:
         return {"status": "no sync jobs"}
@@ -136,7 +133,7 @@ def get_sync_status(job_service: JobServiceDep) -> dict[str, Any]:
     summary="List jobs",
     description="List recent jobs with optional filtering by type and status.",
 )
-def list_jobs(
+async def list_jobs(
     job_service: JobServiceDep,
     type: str | None = Query(
         None, description="Filter by job type (import, sync, analysis)", alias="type"
@@ -148,7 +145,7 @@ def list_jobs(
         50, ge=1, le=500, description="Maximum number of jobs to return"
     ),
 ) -> list[dict[str, Any]]:
-    jobs = job_service.list_jobs(job_type=type, status=status, limit=limit)
+    jobs = await job_service.list_jobs(job_type=type, status=status, limit=limit)
     return jobs
 
 
@@ -158,16 +155,15 @@ def list_jobs(
     summary="Get jobs table HTML",
     description="Returns jobs table rows as HTML partial for HTMX.",
 )
-def get_jobs_html(
+async def get_jobs_html(
     request: Request,
     job_service: JobServiceDep,
     limit: int = Query(
         20, ge=1, le=100, description="Maximum number of jobs to return"
     ),
 ) -> HTMLResponse:
-    jobs = job_service.list_jobs(limit=limit)
+    jobs = await job_service.list_jobs(limit=limit)
 
-    # Format dates for display
     for job in jobs:
         if job.get("created_at"):
             try:
@@ -191,25 +187,26 @@ def get_jobs_html(
     description="Start a background job to analyze all unanalyzed games.",
 )
 async def start_analysis_job(
-    request: Request,
     job_service: JobServiceDep,
     game_repo: GameRepoDep,
-    analyze_job: AnalyzeGamesJobDep,
+    event_bus: EventBusDep,
 ) -> dict[str, str]:
-    """POST /api/analysis/start - Start bulk game analysis."""
-    unanalyzed_game_ids = game_repo.list_unanalyzed_game_ids()
+    unanalyzed_game_ids = await game_repo.list_unanalyzed_game_ids()
 
     if not unanalyzed_game_ids:
         raise HTTPException(status_code=400, detail="No unanalyzed games found")
 
-    job_id = job_service.create_job(
+    job_id = await job_service.create_job(
         job_type="analyze",
         max_games=len(unanalyzed_game_ids),
     )
 
-    asyncio.create_task(
-        analyze_job.execute(job_id=job_id, game_ids=unanalyzed_game_ids)
+    event = JobExecutionRequestEvent.create(
+        job_id=job_id,
+        job_type="analyze",
+        game_ids=unanalyzed_game_ids,
     )
+    await event_bus.publish(event)
 
     return {"job_id": job_id}
 
@@ -220,12 +217,11 @@ async def start_analysis_job(
     description="Stop a running analysis job.",
     responses={404: {"model": ErrorResponse, "description": "Job not found"}},
 )
-def stop_analysis_job(
+async def stop_analysis_job(
     job_service: JobServiceDep,
     job_id: str = Path(description="Job ID to stop"),
 ) -> dict[str, str]:
-    """POST /api/analysis/stop/{job_id} - Stop an analysis job."""
-    job = job_service.get_job(job_id)
+    job = await job_service.get_job(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -235,8 +231,7 @@ def stop_analysis_job(
             status_code=400, detail=f"Cannot stop job with status: {job['status']}"
         )
 
-    # Mark job as failed with cancellation message
-    job_service.update_job_status(job_id, "failed", "Cancelled by user")
+    await job_service.update_job_status(job_id, "failed", "Cancelled by user")
 
     return {"status": "stopped", "job_id": job_id}
 
@@ -246,14 +241,15 @@ def stop_analysis_job(
     summary="Get current analysis status",
     description="Get the status of the most recent or currently running analysis job.",
 )
-def get_analysis_status(job_service: JobServiceDep) -> dict[str, Any]:
-    running_jobs = job_service.list_jobs(job_type="analyze", status="running", limit=1)
+async def get_analysis_status(job_service: JobServiceDep) -> dict[str, Any]:
+    running_jobs = await job_service.list_jobs(
+        job_type="analyze", status="running", limit=1
+    )
 
     if running_jobs:
         return running_jobs[0]
 
-    # Otherwise, get the most recent analyze job
-    recent_jobs = job_service.list_jobs(job_type="analyze", limit=1)
+    recent_jobs = await job_service.list_jobs(job_type="analyze", limit=1)
 
     if not recent_jobs:
         return {"status": "no_jobs"}
@@ -270,30 +266,27 @@ def get_analysis_status(job_service: JobServiceDep) -> dict[str, Any]:
         400: {"model": ErrorResponse, "description": "Cannot delete running job"},
     },
 )
-def delete_job(
+async def delete_job(
     request: Request,
     job_service: JobServiceDep,
     job_id: str = Path(description="Job ID to delete"),
 ) -> HTMLResponse:
-    job = job_service.get_job(job_id)
+    job = await job_service.get_job(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    # Prevent deletion of running jobs only
     if job["status"] == "running":
         raise HTTPException(
             status_code=400, detail="Cannot delete running jobs. Stop the job first."
         )
 
-    # Delete the job
-    deleted = job_service.delete_job(job_id)
+    deleted = await job_service.delete_job(job_id)
 
     if not deleted:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    # Return updated jobs table for HTMX
-    jobs = job_service.list_jobs(limit=20)
+    jobs = await job_service.list_jobs(limit=20)
 
     for j in jobs:
         if j.get("created_at"):

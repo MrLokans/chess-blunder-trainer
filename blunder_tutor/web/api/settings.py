@@ -35,7 +35,6 @@ class SettingsRequest(BaseModel):
     )
 
 
-# Response schemas
 class UsernamesResponse(BaseModel):
     lichess_username: str | None = Field(
         None, description="Configured Lichess username"
@@ -60,25 +59,22 @@ settings_router = APIRouter()
     summary="Complete initial setup",
     description="Configure usernames for Lichess and/or Chess.com accounts.",
 )
-def setup_submit(
+async def setup_submit(
     request: Request, payload: SetupRequest, settings_repo: SettingsRepoDep
 ) -> dict[str, bool]:
     lichess = payload.lichess.strip()
     chesscom = payload.chesscom.strip()
 
-    # Validate at least one username
     if not lichess and not chesscom:
         raise HTTPException(
             status_code=400,
             detail="At least one username is required (Lichess or Chess.com)",
         )
 
-    # Save settings
-    settings_repo.set_setting("lichess_username", lichess if lichess else None)
-    settings_repo.set_setting("chesscom_username", chesscom if chesscom else None)
-    settings_repo.mark_setup_completed()
+    await settings_repo.set_setting("lichess_username", lichess if lichess else None)
+    await settings_repo.set_setting("chesscom_username", chesscom if chesscom else None)
+    await settings_repo.mark_setup_completed()
 
-    # Invalidate setup cache so middleware picks up the change
     if hasattr(request.app.state, "_setup_completed_cache"):
         delattr(request.app.state, "_setup_completed_cache")
 
@@ -91,8 +87,8 @@ def setup_submit(
     summary="Get configured usernames",
     description="Retrieve the currently configured usernames for Lichess and Chess.com.",
 )
-def get_settings(settings_repo: SettingsRepoDep) -> dict[str, Any]:
-    usernames = settings_repo.get_configured_usernames()
+async def get_settings(settings_repo: SettingsRepoDep) -> dict[str, Any]:
+    usernames = await settings_repo.get_configured_usernames()
 
     return {
         "lichess_username": usernames.get("lichess"),
@@ -118,33 +114,29 @@ async def settings_submit(
     lichess = payload.lichess.strip()
     chesscom = payload.chesscom.strip()
 
-    # Validate at least one username
     if not lichess and not chesscom:
         raise HTTPException(
             status_code=400,
             detail="At least one username is required (Lichess or Chess.com)",
         )
 
-    # Update usernames
-    settings_repo.set_setting("lichess_username", lichess if lichess else None)
-    settings_repo.set_setting("chesscom_username", chesscom if chesscom else None)
+    await settings_repo.set_setting("lichess_username", lichess if lichess else None)
+    await settings_repo.set_setting("chesscom_username", chesscom if chesscom else None)
 
-    # Update sync settings
-    settings_repo.set_setting(
+    await settings_repo.set_setting(
         "auto_sync_enabled", "true" if payload.auto_sync else "false"
     )
-    settings_repo.set_setting("sync_interval_hours", str(payload.sync_interval))
-    settings_repo.set_setting("sync_max_games", str(payload.max_games))
-    settings_repo.set_setting(
+    await settings_repo.set_setting("sync_interval_hours", str(payload.sync_interval))
+    await settings_repo.set_setting("sync_max_games", str(payload.max_games))
+    await settings_repo.set_setting(
         "analyze_new_games_automatically", "true" if payload.auto_analyze else "false"
     )
-    settings_repo.set_setting(
+    await settings_repo.set_setting(
         "spaced_repetition_days", str(payload.spaced_repetition_days)
     )
 
-    # Update scheduler jobs without restarting
     scheduler = request.app.state.scheduler
-    settings = settings_repo.get_all_settings()
+    settings = await settings_repo.get_all_settings()
     scheduler.update_jobs(settings)
 
     return {"success": True}

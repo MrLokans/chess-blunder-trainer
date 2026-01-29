@@ -12,6 +12,7 @@ class EventType(str, Enum):
     JOB_PROGRESS_UPDATED = "job.progress_updated"
     JOB_COMPLETED = "job.completed"
     JOB_FAILED = "job.failed"
+    JOB_EXECUTION_REQUESTED = "job.execution_requested"
     STATS_UPDATED = "stats.updated"
 
 
@@ -76,5 +77,25 @@ class StatsEvent(Event):
         return cls(
             type=EventType.STATS_UPDATED,
             data={"trigger": "job_completed"},
+            timestamp=datetime.utcnow().isoformat(),
+        )
+
+
+@dataclass
+class JobExecutionRequestEvent(Event):
+    @classmethod
+    def create(
+        cls,
+        job_id: str,
+        job_type: str,
+        **kwargs: Any,
+    ) -> "JobExecutionRequestEvent":
+        return cls(
+            type=EventType.JOB_EXECUTION_REQUESTED,
+            data={
+                "job_id": job_id,
+                "job_type": job_type,
+                "kwargs": kwargs,
+            },
             timestamp=datetime.utcnow().isoformat(),
         )

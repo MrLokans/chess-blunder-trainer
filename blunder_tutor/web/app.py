@@ -11,16 +11,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from blunder_tutor.analysis.db import ensure_schema
-from blunder_tutor.background.jobs.analyze_games import AnalyzeGamesJob
-from blunder_tutor.background.jobs.sync_games import SyncGamesJob
+from blunder_tutor.background.executor import JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.websocket_manager import ConnectionManager
-from blunder_tutor.repositories.analysis import AnalysisRepository
-from blunder_tutor.repositories.game_repository import GameRepository
-from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.settings import SettingsRepository
-from blunder_tutor.services.job_service import JobService
 from blunder_tutor.web import routes
 from blunder_tutor.web.config import AppConfig, config_factory
 from blunder_tutor.web.middleware import SetupCheckMiddleware
@@ -36,21 +31,26 @@ async def lifespan(app: FastAPI):
     app.state.transport = transport
     app.state.engine = engine
 
-    # Set event loop on job service for cross-thread event publishing
-    loop = asyncio.get_running_loop()
-    app.state.job_service.set_event_loop(loop)
+    # Load scheduler settings asynchronously
+    settings_repo = app.state.settings_repo
+    scheduler_settings = await settings_repo.get_all_settings()
 
     # Start scheduler in async context
-    app.state.scheduler.start(app.state.scheduler_settings)
+    app.state.scheduler.start(scheduler_settings)
 
     # Start WebSocket broadcasting task
     asyncio.create_task(app.state.connection_manager.start_broadcasting())
 
+    # Start JobExecutor to handle job execution requests
+    asyncio.create_task(app.state.job_executor.start())
+
     yield
 
     # Shutdown
+    await app.state.job_executor.shutdown()
     app.state.scheduler.shutdown()
     await app.state.engine.quit()
+    await settings_repo.close()
 
 
 def create_app(
@@ -80,35 +80,22 @@ def create_app(
     connection_manager = ConnectionManager(event_bus)
     app.state.connection_manager = connection_manager
 
+    # Initialize JobExecutor for handling job execution requests
+    job_executor = JobExecutor(
+        event_bus=event_bus,
+        db_path=config.data.db_path,
+        engine_path=config.engine_path,
+    )
+    app.state.job_executor = job_executor
+
     # Initialize background scheduler (but don't start yet)
-    scheduler = BackgroundScheduler(config.data.db_path)
+    scheduler = BackgroundScheduler(
+        db_path=config.data.db_path,
+        event_bus=event_bus,
+        engine_path=config.engine_path,
+    )
     app.state.scheduler = scheduler
-    app.state.scheduler_settings = settings.get_all_settings()
-
-    # Create job dependencies for scheduler
-    job_repo = JobRepository(db_path=config.data.db_path)
-    job_service = JobService(job_repository=job_repo, event_bus=event_bus)
-    game_repo = GameRepository(db_path=config.data.db_path)
-    analysis_repo = AnalysisRepository(db_path=config.data.db_path)
-
-    # Create job instances for scheduler
-    analyze_job = AnalyzeGamesJob(
-        job_service=job_service,
-        game_repo=game_repo,
-        analysis_repo=analysis_repo,
-    )
-    sync_job = SyncGamesJob(
-        job_service=job_service,
-        settings_repo=settings,
-        game_repo=game_repo,
-        analyze_job=analyze_job,
-    )
-
-    # Configure scheduler with sync job
-    scheduler.configure_sync_job(sync_job)
-
-    # Store job_service for event loop setup
-    app.state.job_service = job_service
+    app.state.settings_repo = settings
 
     # Mount static files directory
     static_dir = Path(__file__).parent / "static"

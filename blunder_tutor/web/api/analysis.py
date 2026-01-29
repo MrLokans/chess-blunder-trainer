@@ -17,8 +17,6 @@ from blunder_tutor.web.dependencies import (
 
 
 class SubmitMoveRequest(BaseModel):
-    """Request to submit a puzzle move attempt."""
-
     move: str = Field(description="Move in UCI notation (e.g., 'e2e4')")
     fen: str = Field(description="Position FEN before the move")
     game_id: str = Field(description="Game ID of the puzzle")
@@ -35,15 +33,10 @@ class SubmitMoveRequest(BaseModel):
 
 
 class AnalyzeMoveRequest(BaseModel):
-    """Request to analyze a specific position."""
-
     fen: str = Field(description="FEN string of the position to analyze")
 
 
-# Response schemas
 class PuzzleResponse(BaseModel):
-    """Response containing a puzzle position."""
-
     game_id: str = Field(description="Unique game identifier")
     ply: int = Field(description="Move number (half-move)")
     blunder_uci: str = Field(description="The blunder move in UCI notation")
@@ -63,8 +56,6 @@ class PuzzleResponse(BaseModel):
 
 
 class SubmitMoveResponse(BaseModel):
-    """Response to a submitted move attempt."""
-
     user_san: str = Field(description="User's move in SAN notation")
     user_uci: str = Field(description="User's move in UCI notation")
     user_eval: int = Field(description="Evaluation after user's move")
@@ -78,8 +69,6 @@ class SubmitMoveResponse(BaseModel):
 
 
 class AnalyzeMoveResponse(BaseModel):
-    """Response with position analysis."""
-
     eval: int = Field(description="Position evaluation in centipawns")
     eval_display: str = Field(description="Formatted evaluation display")
     best_move_uci: str | None = Field(description="Best move in UCI notation")
@@ -87,7 +76,6 @@ class AnalyzeMoveResponse(BaseModel):
     best_line: list[str] = Field(description="Best continuation line (up to 5 moves)")
 
 
-# Puzzle/Training API
 analysis_router = APIRouter()
 
 
@@ -111,13 +99,11 @@ async def puzzle(
         Query(description="End date for puzzle filtering (YYYY-MM-DD)"),
     ] = None,
 ) -> dict[str, Any]:
-    # Load username from config or settings
     username = config.username
     source = None
 
     if not username:
-        # Load from database settings
-        usernames = settings_repo.get_configured_usernames()
+        usernames = await settings_repo.get_configured_usernames()
 
         if not usernames:
             raise HTTPException(
@@ -125,22 +111,20 @@ async def puzzle(
                 detail="No username configured. Please configure your username in Settings.",
             )
 
-        # If multiple usernames, merge them by passing a list
         if len(usernames) > 1:
             username = list(usernames.values())
-            source = None  # Multi-source mode
+            source = None
         else:
-            # Single username
             platform, uname = next(iter(usernames.items()))
             username = uname
             source = platform
 
-    # Convert date objects to strings if needed by the repository
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
 
-    # Get spaced repetition settings
-    spaced_repetition_days_str = settings_repo.get_setting("spaced_repetition_days")
+    spaced_repetition_days_str = await settings_repo.get_setting(
+        "spaced_repetition_days"
+    )
     spaced_repetition_days = (
         int(spaced_repetition_days_str) if spaced_repetition_days_str else 30
     )
@@ -200,25 +184,19 @@ async def submit(
     attempt_repo: PuzzleAttemptRepoDep,
     analysis_service: AnalysisServiceDep,
 ) -> dict[str, Any]:
-    # Get user move in SAN notation
     try:
         user_san = analysis_service.get_move_san(payload.fen, payload.move)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid move") from None
 
-    # Compare with best move and blunder
     is_best = payload.best_move_uci and payload.move == payload.best_move_uci
     is_blunder = payload.move == payload.blunder_uci
 
-    # Use cached evaluation if available, otherwise use engine
     if is_blunder:
-        # User repeated the blunder - use cached eval_after
         user_eval_cp = payload.eval_after
     elif is_best and payload.best_move_eval is not None:
-        # User played best move - use cached best_move_eval
         user_eval_cp = payload.best_move_eval
     else:
-        # Unknown move - must use engine (fallback for edge cases)
         try:
             user_eval = await analysis_service.evaluate_move(
                 payload.fen, payload.move, payload.player_color
@@ -227,13 +205,11 @@ async def submit(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    # Format the evaluation for display
     from blunder_tutor.utils.chess_utils import format_eval
 
     user_eval_display = format_eval(user_eval_cp, payload.player_color)
 
-    # Record the attempt
-    attempt_repo.record_attempt(
+    await attempt_repo.record_attempt(
         game_id=payload.game_id,
         ply=payload.ply,
         username=payload.username,
@@ -266,7 +242,6 @@ async def submit(
 async def analyze_move(
     payload: AnalyzeMoveRequest, analysis_service: AnalysisServiceDep
 ) -> dict[str, Any]:
-    """Analyze a specific position and return evaluation + best continuation."""
     try:
         analysis = await analysis_service.analyze_position(payload.fen)
     except ValueError:

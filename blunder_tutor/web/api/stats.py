@@ -16,7 +16,6 @@ from blunder_tutor.web.dependencies import (
 )
 
 
-# Response schemas
 class DashboardStats(BaseModel):
     total_games: int = Field(description="Total number of games")
     analyzed_games: int = Field(description="Number of analyzed games")
@@ -62,8 +61,8 @@ stats_router = APIRouter()
     summary="Get dashboard statistics",
     description="Returns overall dashboard statistics including total games, analyzed games, blunders, and pending analysis.",
 )
-def get_dashboard_stats(stats_repo: StatsRepoDep) -> dict[str, Any]:
-    return stats_repo.get_overview_stats()
+async def get_dashboard_stats(stats_repo: StatsRepoDep) -> dict[str, Any]:
+    return await stats_repo.get_overview_stats()
 
 
 @stats_router.get(
@@ -72,7 +71,7 @@ def get_dashboard_stats(stats_repo: StatsRepoDep) -> dict[str, Any]:
     summary="Get game breakdown",
     description="Returns game statistics grouped by source and/or username with optional filtering.",
 )
-def get_game_breakdown(
+async def get_game_breakdown(
     stats_repo: StatsRepoDep,
     source: Annotated[
         str | None,
@@ -83,7 +82,7 @@ def get_game_breakdown(
         Query(max_length=100, description="Filter by username"),
     ] = None,
 ) -> dict[str, Any]:
-    breakdown = stats_repo.get_game_breakdown(source=source, username=username)
+    breakdown = await stats_repo.get_game_breakdown(source=source, username=username)
     return {"items": breakdown}
 
 
@@ -93,7 +92,7 @@ def get_game_breakdown(
     summary="Get blunder breakdown",
     description="Returns blunder statistics with optional filtering by username and date range.",
 )
-def get_blunder_breakdown(
+async def get_blunder_breakdown(
     stats_repo: StatsRepoDep,
     username: Annotated[
         str | None,
@@ -111,7 +110,7 @@ def get_blunder_breakdown(
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
 
-    return stats_repo.get_blunder_breakdown(
+    return await stats_repo.get_blunder_breakdown(
         username=username,
         start_date=start_date_str,
         end_date=end_date_str,
@@ -124,8 +123,8 @@ def get_blunder_breakdown(
     summary="Get analysis progress",
     description="Returns metrics about analysis job progress including completed, failed, and in-progress jobs.",
 )
-def get_analysis_progress(stats_repo: StatsRepoDep) -> dict[str, Any]:
-    return stats_repo.get_analysis_progress()
+async def get_analysis_progress(stats_repo: StatsRepoDep) -> dict[str, Any]:
+    return await stats_repo.get_analysis_progress()
 
 
 @stats_router.get(
@@ -135,18 +134,17 @@ def get_analysis_progress(stats_repo: StatsRepoDep) -> dict[str, Any]:
     summary="Get training statistics",
     description="Returns puzzle training statistics for the configured user including attempts and accuracy.",
 )
-def get_training_stats(
+async def get_training_stats(
     settings_repo: SettingsRepoDep,
     attempt_repo: PuzzleAttemptRepoDep,
 ) -> TrainingStats:
-    usernames = settings_repo.get_configured_usernames()
+    usernames = await settings_repo.get_configured_usernames()
     if not usernames:
         raise HTTPException(status_code=400, detail="No username configured")
 
-    # Use "multi" if multiple usernames (matching trainer.py logic)
     username = "multi" if len(usernames) > 1 else next(iter(usernames.values()))
 
-    stats = attempt_repo.get_user_stats(username)
+    stats = await attempt_repo.get_user_stats(username)
 
     return TrainingStats(**stats)
 
@@ -157,12 +155,12 @@ def get_training_stats(
     summary="Get training statistics HTML",
     description="Returns training statistics as an HTML partial for HTMX.",
 )
-def get_training_stats_html(
+async def get_training_stats_html(
     request: Request,
     settings_repo: SettingsRepoDep,
     attempt_repo: PuzzleAttemptRepoDep,
 ) -> HTMLResponse:
-    usernames = settings_repo.get_configured_usernames()
+    usernames = await settings_repo.get_configured_usernames()
     if not usernames:
         stats = {
             "total_attempts": 0,
@@ -172,9 +170,8 @@ def get_training_stats_html(
             "accuracy": 0.0,
         }
     else:
-        # Use "multi" if multiple usernames (matching trainer.py logic)
         username = "multi" if len(usernames) > 1 else next(iter(usernames.values()))
-        stats = attempt_repo.get_user_stats(username)
+        stats = await attempt_repo.get_user_stats(username)
 
     return request.app.state.templates.TemplateResponse(
         "_stats_partial.html",

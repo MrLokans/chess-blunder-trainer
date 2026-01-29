@@ -137,7 +137,7 @@ class TestLichessFetch:
 
         callback_calls: list[tuple[int, int]] = []
 
-        def progress_callback(current: int, total: int) -> None:
+        async def progress_callback(current: int, total: int) -> None:
             callback_calls.append((current, total))
 
         await lichess.fetch(
@@ -161,7 +161,7 @@ class TestLichessFetch:
 
         callback_calls: list[tuple[int, int]] = []
 
-        def progress_callback(current: int, total: int) -> None:
+        async def progress_callback(current: int, total: int) -> None:
             callback_calls.append((current, total))
 
         await lichess.fetch(
@@ -294,7 +294,7 @@ class TestChesscomFetch:
 
         callback_calls: list[tuple[int, int]] = []
 
-        def progress_callback(current: int, total: int) -> None:
+        async def progress_callback(current: int, total: int) -> None:
             callback_calls.append((current, total))
 
         await chesscom.fetch(
@@ -329,7 +329,7 @@ class TestChesscomFetch:
 
         callback_calls: list[tuple[int, int]] = []
 
-        def progress_callback(current: int, total: int) -> None:
+        async def progress_callback(current: int, total: int) -> None:
             callback_calls.append((current, total))
 
         await chesscom.fetch(
@@ -421,7 +421,7 @@ class TestProgressCallbackBehavior:
 
         callback_calls: list[tuple[int, int]] = []
 
-        def progress_callback(current: int, total: int) -> None:
+        async def progress_callback(current: int, total: int) -> None:
             callback_calls.append((current, total))
 
         await lichess.fetch(
@@ -455,7 +455,7 @@ class TestProgressCallbackBehavior:
 
         callback_calls: list[tuple[int, int]] = []
 
-        def progress_callback(current: int, total: int) -> None:
+        async def progress_callback(current: int, total: int) -> None:
             callback_calls.append((current, total))
 
         await chesscom.fetch(
@@ -489,7 +489,7 @@ class TestProgressCallbackBehavior:
 
         callback_calls: list[tuple[int, int]] = []
 
-        def progress_callback(current: int, total: int) -> None:
+        async def progress_callback(current: int, total: int) -> None:
             callback_calls.append((current, total))
 
         await lichess.fetch(

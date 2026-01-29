@@ -19,14 +19,14 @@ class BlunderPuzzle:
     fen: str
     source: str
     username: str
-    eval_before: int  # centipawns before the blunder
-    eval_after: int  # centipawns after the blunder
-    cp_loss: int  # centipawn loss from the blunder
-    player_color: str  # "white" or "black"
-    best_move_uci: str | None  # cached best move from analysis
-    best_move_san: str | None  # cached best move SAN
-    best_line: str | None  # cached best line (space-separated SAN moves)
-    best_move_eval: int | None  # cached evaluation after best move
+    eval_before: int
+    eval_after: int
+    cp_loss: int
+    player_color: str
+    best_move_uci: str | None
+    best_move_san: str | None
+    best_line: str | None
+    best_move_eval: int | None
 
 
 class Trainer:
@@ -40,7 +40,7 @@ class Trainer:
         self.attempts = attempts
         self.analysis = analysis
 
-    def pick_random_blunder(
+    async def pick_random_blunder(
         self,
         username: str | list[str],
         source: str | None = None,
@@ -49,35 +49,27 @@ class Trainer:
         exclude_recently_solved: bool = True,
         spaced_repetition_days: int = 30,
     ) -> BlunderPuzzle:
-        """Pick a random blunder with optional date filtering and spaced repetition.
-
-        FIXME: rewrite it, it's ugly as hell
-        """
-
-        # Support both single username and list of usernames
         usernames = [username] if isinstance(username, str) else username
 
-        # Merge game_side_maps from all usernames
         merged_game_side_map = {}
         actual_source = source
         actual_username = username if isinstance(username, str) else usernames[0]
 
         for uname in usernames:
-            game_side_map = self.games.get_username_side_map(uname, source)
+            game_side_map = await self.games.get_username_side_map(uname, source)
             merged_game_side_map.update(game_side_map)
 
         if not merged_game_side_map:
             raise ValueError("No games found for the requested user/source.")
 
-        blunders = self.analysis.fetch_blunders()
+        blunders = await self.analysis.fetch_blunders()
         candidates = filter_blunders(blunders, merged_game_side_map)
 
-        # Apply date filtering if specified
         if (start_date or end_date) and candidates:
             filtered_candidates = []
             for blunder in candidates:
                 game_id = blunder["game_id"]
-                game = self.games.get_game(game_id)
+                game = await self.games.get_game(game_id)
                 if not game:
                     continue
 
@@ -85,7 +77,6 @@ class Trainer:
                 if not game_date:
                     continue
 
-                # Check date range
                 if start_date and game_date < start_date:
                     continue
                 if end_date and game_date > end_date:
@@ -95,9 +86,8 @@ class Trainer:
 
             candidates = filtered_candidates
 
-        # Filter out recently solved puzzles (spaced repetition)
         if exclude_recently_solved and candidates:
-            recently_solved = self.attempts.get_recently_solved_puzzles(
+            recently_solved = await self.attempts.get_recently_solved_puzzles(
                 actual_username, days=spaced_repetition_days
             )
 
@@ -122,21 +112,17 @@ class Trainer:
         player = int(blunder["player"])
         player_color = "white" if player == 0 else "black"
 
-        # Extract cached best move data
         best_move_uci = blunder.get("best_move_uci")
         best_move_san = blunder.get("best_move_san")
         best_line = blunder.get("best_line")
         best_move_eval = blunder.get("best_move_eval")
 
-        game = self.games.load_game(game_id)
+        game = await self.games.load_game(game_id)
         board = board_before_ply(game, ply)
 
-        # Determine actual source from game metadata
-        game_metadata = self.games.get_game(game_id)
+        game_metadata = await self.games.get_game(game_id)
         if game_metadata:
             actual_source = game_metadata.get("source", "any")
-            # For multi-username, we don't know which username without checking the game
-            # Use the first username as a placeholder
             actual_username = username if isinstance(username, str) else "multi"
 
         return BlunderPuzzle(

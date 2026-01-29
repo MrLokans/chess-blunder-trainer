@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import io
-from collections.abc import Callable, Iterable
+from collections.abc import Awaitable, Callable, Iterable
 
 import chess.pgn
 import httpx
@@ -34,7 +34,7 @@ async def fetch(
     username: str,
     max_games: int | None = None,
     batch_size: int = 200,
-    progress_callback: Callable[[int, int], None] | None = None,
+    progress_callback: Callable[[int, int], Awaitable[None]] | None = None,
 ) -> tuple[list[dict[str, object]], set[str]]:
     url = f"{LICHESS_BASE_URL}/api/games/user/{username}"
     headers = {"Accept": "application/x-chess-pgn"}
@@ -74,7 +74,7 @@ async def fetch(
                     progress.update(1)
 
                     if progress_callback:
-                        progress_callback(len(games), max_games or len(games))
+                        await progress_callback(len(games), max_games or len(games))
 
                     if end_ms is not None:
                         oldest_time_ms = (

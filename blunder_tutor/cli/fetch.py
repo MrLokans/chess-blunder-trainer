@@ -13,33 +13,35 @@ class FetchCommand(CLICommand):
         return args.command == "fetch"
 
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
+        asyncio.run(self._run_async(args, config))
+
+    async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
         ensure_schema(config.data.db_path)
         game_repo = GameRepository.from_config(config)
 
-        if args.command == "fetch" and args.source == "lichess":
-            games, _seen_ids = asyncio.run(
-                lichess.fetch(
+        try:
+            if args.source == "lichess":
+                games, _seen_ids = await lichess.fetch(
                     username=args.username,
                     max_games=args.max,
                     batch_size=args.batch_size,
                 )
-            )
-            inserted = game_repo.insert_games(games)
-            skipped = len(games) - inserted
-            print(f"Lichess: stored {inserted}, skipped {skipped}.")
-            return
+                inserted = await game_repo.insert_games(games)
+                skipped = len(games) - inserted
+                print(f"Lichess: stored {inserted}, skipped {skipped}.")
+                return
 
-        if args.command == "fetch" and args.source == "chesscom":
-            games, _seen_ids = asyncio.run(
-                chesscom.fetch(
+            if args.source == "chesscom":
+                games, _seen_ids = await chesscom.fetch(
                     username=args.username,
                     max_games=args.max,
                 )
-            )
-            inserted = game_repo.insert_games(games)
-            skipped = len(games) - inserted
-            print(f"Chess.com: stored {inserted}, skipped {skipped}.")
-            return
+                inserted = await game_repo.insert_games(games)
+                skipped = len(games) - inserted
+                print(f"Chess.com: stored {inserted}, skipped {skipped}.")
+                return
+        finally:
+            await game_repo.close()
 
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
         fetch_parser = subparsers.add_parser("fetch", help="Fetch games by username")

@@ -4,29 +4,29 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from blunder_tutor.web.dependencies import SettingsRepoDep
 
 
-def home(request: Request) -> HTMLResponse:
+async def home(request: Request) -> HTMLResponse:
     return request.app.state.templates.TemplateResponse(
         "trainer.html",
         {"request": request, "title": "Blunder Trainer"},
     )
 
 
-def dashboard(request: Request) -> HTMLResponse:
+async def dashboard(request: Request) -> HTMLResponse:
     return request.app.state.templates.TemplateResponse(
         "dashboard.html",
         {"request": request, "title": "Dashboard"},
     )
 
 
-def management(request: Request) -> HTMLResponse:
+async def management(request: Request) -> HTMLResponse:
     return request.app.state.templates.TemplateResponse(
         "management.html",
         {"request": request, "title": "Management"},
     )
 
 
-def settings(request: Request, settings_repo: SettingsRepoDep) -> HTMLResponse:
-    usernames = settings_repo.get_configured_usernames()
+async def settings(request: Request, settings_repo: SettingsRepoDep) -> HTMLResponse:
+    usernames = await settings_repo.get_configured_usernames()
 
     return request.app.state.templates.TemplateResponse(
         "settings.html",
@@ -38,9 +38,8 @@ def settings(request: Request, settings_repo: SettingsRepoDep) -> HTMLResponse:
     )
 
 
-def setup(request: Request, settings_repo: SettingsRepoDep) -> HTMLResponse:
-    # If already completed, redirect to home
-    if settings_repo.is_setup_completed():
+async def setup(request: Request, settings_repo: SettingsRepoDep) -> HTMLResponse:
+    if await settings_repo.is_setup_completed():
         return RedirectResponse(url="/", status_code=303)
 
     return request.app.state.templates.TemplateResponse(

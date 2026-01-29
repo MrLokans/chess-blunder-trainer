@@ -1,12 +1,10 @@
 import asyncio
+from collections.abc import AsyncGenerator
 from typing import Annotated
 
 import chess.engine
 from fastapi import Depends, Request
 
-from blunder_tutor.background.jobs.analyze_games import AnalyzeGamesJob
-from blunder_tutor.background.jobs.import_games import ImportGamesJob
-from blunder_tutor.background.jobs.sync_games import SyncGamesJob
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
@@ -32,28 +30,44 @@ def get_event_bus(request: Request) -> EventBus:
     return request.app.state.event_bus
 
 
-def get_settings_repository(
+async def get_settings_repository(
     config: Annotated[AppConfig, Depends(get_config)],
-) -> SettingsRepository:
-    return SettingsRepository(db_path=config.data.db_path)
+) -> AsyncGenerator[SettingsRepository]:
+    repo = SettingsRepository(db_path=config.data.db_path)
+    try:
+        yield repo
+    finally:
+        await repo.close()
 
 
-def get_puzzle_attempt_repository(
+async def get_puzzle_attempt_repository(
     config: Annotated[AppConfig, Depends(get_config)],
-) -> PuzzleAttemptRepository:
-    return PuzzleAttemptRepository(db_path=config.data.db_path)
+) -> AsyncGenerator[PuzzleAttemptRepository]:
+    repo = PuzzleAttemptRepository(db_path=config.data.db_path)
+    try:
+        yield repo
+    finally:
+        await repo.close()
 
 
-def get_stats_repository(
+async def get_stats_repository(
     config: Annotated[AppConfig, Depends(get_config)],
-) -> StatsRepository:
-    return StatsRepository(db_path=config.data.db_path)
+) -> AsyncGenerator[StatsRepository]:
+    repo = StatsRepository(db_path=config.data.db_path)
+    try:
+        yield repo
+    finally:
+        await repo.close()
 
 
-def get_job_repository(
+async def get_job_repository(
     config: Annotated[AppConfig, Depends(get_config)],
-) -> JobRepository:
-    return JobRepository(db_path=config.data.db_path)
+) -> AsyncGenerator[JobRepository]:
+    repo = JobRepository(db_path=config.data.db_path)
+    try:
+        yield repo
+    finally:
+        await repo.close()
 
 
 async def get_job_service(
@@ -65,16 +79,24 @@ async def get_job_service(
     return job_service
 
 
-def get_game_repository(
+async def get_game_repository(
     config: Annotated[AppConfig, Depends(get_config)],
-) -> GameRepository:
-    return GameRepository(db_path=config.data.db_path)
+) -> AsyncGenerator[GameRepository]:
+    repo = GameRepository(db_path=config.data.db_path)
+    try:
+        yield repo
+    finally:
+        await repo.close()
 
 
-def get_analysis_repository(
+async def get_analysis_repository(
     config: Annotated[AppConfig, Depends(get_config)],
-) -> AnalysisRepository:
-    return AnalysisRepository(db_path=config.data.db_path)
+) -> AsyncGenerator[AnalysisRepository]:
+    repo = AnalysisRepository(db_path=config.data.db_path)
+    try:
+        yield repo
+    finally:
+        await repo.close()
 
 
 def get_scheduler(
@@ -98,7 +120,7 @@ def get_analysis_service(
     return AnalysisService(engine=engine, limit=limit)
 
 
-def get_trainer(
+async def get_trainer(
     games: Annotated[GameRepository, Depends(get_game_repository)],
     attempts: Annotated[
         PuzzleAttemptRepository, Depends(get_puzzle_attempt_repository)
@@ -112,52 +134,11 @@ def get_trainer(
     )
 
 
-def get_puzzle_service(
+async def get_puzzle_service(
     trainer: Annotated[Trainer, Depends(get_trainer)],
     analysis_service: Annotated[AnalysisService, Depends(get_analysis_service)],
 ) -> PuzzleService:
     return PuzzleService(trainer=trainer, analysis_service=analysis_service)
-
-
-# Job class dependency providers
-
-
-def get_analyze_games_job(
-    job_service: Annotated[JobService, Depends(get_job_service)],
-    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
-    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
-) -> AnalyzeGamesJob:
-    return AnalyzeGamesJob(
-        job_service=job_service,
-        game_repo=game_repo,
-        analysis_repo=analysis_repo,
-    )
-
-
-def get_import_games_job(
-    job_service: Annotated[JobService, Depends(get_job_service)],
-    settings_repo: Annotated[SettingsRepository, Depends(get_settings_repository)],
-    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
-) -> ImportGamesJob:
-    return ImportGamesJob(
-        job_service=job_service,
-        settings_repo=settings_repo,
-        game_repo=game_repo,
-    )
-
-
-def get_sync_games_job(
-    job_service: Annotated[JobService, Depends(get_job_service)],
-    settings_repo: Annotated[SettingsRepository, Depends(get_settings_repository)],
-    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
-    analyze_job: Annotated[AnalyzeGamesJob, Depends(get_analyze_games_job)],
-) -> SyncGamesJob:
-    return SyncGamesJob(
-        job_service=job_service,
-        settings_repo=settings_repo,
-        game_repo=game_repo,
-        analyze_job=analyze_job,
-    )
 
 
 # Type annotations for dependency injection in route handlers
@@ -178,8 +159,3 @@ LimitDep = Annotated[chess.engine.Limit, Depends(get_engine_limit)]
 AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]
 TrainerDep = Annotated[Trainer, Depends(get_trainer)]
 PuzzleServiceDep = Annotated[PuzzleService, Depends(get_puzzle_service)]
-
-# Job class type annotations
-AnalyzeGamesJobDep = Annotated[AnalyzeGamesJob, Depends(get_analyze_games_job)]
-ImportGamesJobDep = Annotated[ImportGamesJob, Depends(get_import_games_job)]
-SyncGamesJobDep = Annotated[SyncGamesJob, Depends(get_sync_games_job)]

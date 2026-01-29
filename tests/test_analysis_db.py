@@ -20,12 +20,12 @@ class TestEnsureSchema:
 
 
 class TestAnalysisExists:
-    def test_analysis_not_exists(self, analysis_repo):
-        exists = analysis_repo.analysis_exists("game123")
+    async def test_analysis_not_exists(self, analysis_repo):
+        exists = await analysis_repo.analysis_exists("game123")
         assert not exists
 
-    def test_analysis_exists_after_write(self, analysis_repo):
-        analysis_repo.write_analysis(
+    async def test_analysis_exists_after_write(self, analysis_repo):
+        await analysis_repo.write_analysis(
             game_id="game123",
             pgn_path="/tmp/test.pgn",
             analyzed_at="2023-12-25T00:00:00Z",
@@ -36,12 +36,12 @@ class TestAnalysisExists:
             moves=[],
         )
 
-        exists = analysis_repo.analysis_exists("game123")
+        exists = await analysis_repo.analysis_exists("game123")
         assert exists
 
 
 class TestWriteAnalysis:
-    def test_write_basic_analysis(self, analysis_repo):
+    async def test_write_basic_analysis(self, analysis_repo):
         moves = [
             {
                 "ply": 1,
@@ -69,7 +69,7 @@ class TestWriteAnalysis:
             },
         ]
 
-        analysis_repo.write_analysis(
+        await analysis_repo.write_analysis(
             game_id="game123",
             pgn_path="/tmp/test.pgn",
             analyzed_at="2023-12-25T00:00:00Z",
@@ -79,9 +79,9 @@ class TestWriteAnalysis:
             thresholds={"inaccuracy": 50, "mistake": 100, "blunder": 200},
             moves=moves,
         )
-        assert analysis_repo.analysis_exists("game123")
+        assert await analysis_repo.analysis_exists("game123")
 
-    def test_write_replaces_existing(self, analysis_repo):
+    async def test_write_replaces_existing(self, analysis_repo):
         moves1 = [
             {
                 "ply": 1,
@@ -112,7 +112,7 @@ class TestWriteAnalysis:
             }
         ]
 
-        analysis_repo.write_analysis(
+        await analysis_repo.write_analysis(
             game_id="game123",
             pgn_path="/tmp/test1.pgn",
             analyzed_at="2023-12-25T00:00:00Z",
@@ -124,7 +124,7 @@ class TestWriteAnalysis:
         )
 
         # Write second analysis (should replace)
-        analysis_repo.write_analysis(
+        await analysis_repo.write_analysis(
             game_id="game123",
             pgn_path="/tmp/test2.pgn",
             analyzed_at="2023-12-26T00:00:00Z",
@@ -135,17 +135,17 @@ class TestWriteAnalysis:
             moves=moves2,
         )
 
-        game_moves = analysis_repo.fetch_moves("game123")
+        game_moves = await analysis_repo.fetch_moves("game123")
         assert len(game_moves) == 1
         assert game_moves[0]["uci"] == "d2d4"
 
 
 class TestFetchBlunders:
-    def test_fetch_empty(self, analysis_repo):
-        blunders = analysis_repo.fetch_blunders()
+    async def test_fetch_empty(self, analysis_repo):
+        blunders = await analysis_repo.fetch_blunders()
         assert blunders == []
 
-    def test_fetch_only_blunders(self, analysis_repo):
+    async def test_fetch_only_blunders(self, analysis_repo):
         moves = [
             {
                 "ply": 1,
@@ -185,7 +185,7 @@ class TestFetchBlunders:
             },
         ]
 
-        analysis_repo.write_analysis(
+        await analysis_repo.write_analysis(
             game_id="game123",
             pgn_path="/tmp/test.pgn",
             analyzed_at="2023-12-25T00:00:00Z",
@@ -196,14 +196,14 @@ class TestFetchBlunders:
             moves=moves,
         )
 
-        blunders = analysis_repo.fetch_blunders()
+        blunders = await analysis_repo.fetch_blunders()
         assert len(blunders) == 1
         assert blunders[0]["uci"] == "e7e6"
         assert blunders[0]["cp_loss"] == 200
 
 
 class TestFetchGameMoves:
-    def test_fetch_game_moves(self, analysis_repo):
+    async def test_fetch_game_moves(self, analysis_repo):
         moves = [
             {
                 "ply": 1,
@@ -231,7 +231,7 @@ class TestFetchGameMoves:
             },
         ]
 
-        analysis_repo.write_analysis(
+        await analysis_repo.write_analysis(
             game_id="game123",
             pgn_path="/tmp/test.pgn",
             analyzed_at="2023-12-25T00:00:00Z",
@@ -242,11 +242,11 @@ class TestFetchGameMoves:
             moves=moves,
         )
 
-        game_moves = analysis_repo.fetch_moves("game123")
+        game_moves = await analysis_repo.fetch_moves("game123")
         assert len(game_moves) == 2
         assert game_moves[0]["uci"] == "e2e4"
         assert game_moves[1]["uci"] == "e7e5"
 
-    def test_fetch_nonexistent_game(self, analysis_repo):
-        game_moves = analysis_repo.fetch_moves("nonexistent")
+    async def test_fetch_nonexistent_game(self, analysis_repo):
+        game_moves = await analysis_repo.fetch_moves("nonexistent")
         assert game_moves == []

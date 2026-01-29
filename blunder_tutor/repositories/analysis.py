@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Iterable
 
 from blunder_tutor.constants import CLASSIFICATION_BLUNDER
@@ -5,15 +7,16 @@ from blunder_tutor.repositories.base import BaseDbRepository
 
 
 class AnalysisRepository(BaseDbRepository):
-    def analysis_exists(self, game_id: str) -> bool:
-        with self.connection as conn:
-            row = conn.execute(
-                "SELECT 1 FROM analysis_games WHERE game_id = ? LIMIT 1",
-                (game_id,),
-            ).fetchone()
-            return row is not None
+    async def analysis_exists(self, game_id: str) -> bool:
+        conn = await self.get_connection()
+        async with conn.execute(
+            "SELECT 1 FROM analysis_games WHERE game_id = ? LIMIT 1",
+            (game_id,),
+        ) as cursor:
+            row = await cursor.fetchone()
+        return row is not None
 
-    def write_analysis(
+    async def write_analysis(
         self,
         *,
         game_id: str,
@@ -25,69 +28,71 @@ class AnalysisRepository(BaseDbRepository):
         thresholds: dict[str, int],
         moves: Iterable[dict[str, object]],
     ) -> None:
-        with self.connection as conn:
-            conn.execute(
-                """
-                INSERT OR REPLACE INTO analysis_games (
-                    game_id, pgn_path, analyzed_at, engine_path, depth, time_limit,
-                    inaccuracy, mistake, blunder
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
+        conn = await self.get_connection()
+        await conn.execute(
+            """
+            INSERT OR REPLACE INTO analysis_games (
+                game_id, pgn_path, analyzed_at, engine_path, depth, time_limit,
+                inaccuracy, mistake, blunder
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                game_id,
+                pgn_path,
+                analyzed_at,
+                engine_path,
+                depth,
+                time_limit,
+                thresholds["inaccuracy"],
+                thresholds["mistake"],
+                thresholds["blunder"],
+            ),
+        )
+
+        await conn.execute("DELETE FROM analysis_moves WHERE game_id = ?", (game_id,))
+        await conn.executemany(
+            """
+            INSERT INTO analysis_moves (
+                game_id, ply, move_number, player, uci, san,
+                eval_before, eval_after, delta, cp_loss, classification,
+                best_move_uci, best_move_san, best_line, best_move_eval
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
                 (
                     game_id,
-                    pgn_path,
-                    analyzed_at,
-                    engine_path,
-                    depth,
-                    time_limit,
-                    thresholds["inaccuracy"],
-                    thresholds["mistake"],
-                    thresholds["blunder"],
-                ),
-            )
+                    int(move["ply"]),
+                    int(move["move_number"]),
+                    0 if move["player"] == "white" else 1,
+                    str(move["uci"]),
+                    move.get("san"),
+                    int(move["eval_before"]),
+                    int(move["eval_after"]),
+                    int(move["delta"]),
+                    int(move["cp_loss"]),
+                    int(move["classification"]),
+                    move.get("best_move_uci"),
+                    move.get("best_move_san"),
+                    move.get("best_line"),
+                    move.get("best_move_eval"),
+                )
+                for move in moves
+            ],
+        )
+        await conn.commit()
 
-            conn.execute("DELETE FROM analysis_moves WHERE game_id = ?", (game_id,))
-            conn.executemany(
-                """
-                INSERT INTO analysis_moves (
-                    game_id, ply, move_number, player, uci, san,
-                    eval_before, eval_after, delta, cp_loss, classification,
-                    best_move_uci, best_move_san, best_line, best_move_eval
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                [
-                    (
-                        game_id,
-                        int(move["ply"]),
-                        int(move["move_number"]),
-                        0 if move["player"] == "white" else 1,
-                        str(move["uci"]),
-                        move.get("san"),
-                        int(move["eval_before"]),
-                        int(move["eval_after"]),
-                        int(move["delta"]),
-                        int(move["cp_loss"]),
-                        int(move["classification"]),
-                        move.get("best_move_uci"),
-                        move.get("best_move_san"),
-                        move.get("best_line"),
-                        move.get("best_move_eval"),
-                    )
-                    for move in moves
-                ],
-            )
-
-    def fetch_blunders(self) -> list[dict[str, object]]:
-        with self.connection as conn:
-            rows = conn.execute(
-                """
-                SELECT game_id, ply, player, uci, san, eval_before, eval_after, cp_loss,
-                       best_move_uci, best_move_san, best_line, best_move_eval
-                FROM analysis_moves
-                WHERE classification = ?
-                """,
-                (CLASSIFICATION_BLUNDER,),
-            ).fetchall()
+    async def fetch_blunders(self) -> list[dict[str, object]]:
+        conn = await self.get_connection()
+        async with conn.execute(
+            """
+            SELECT game_id, ply, player, uci, san, eval_before, eval_after, cp_loss,
+                   best_move_uci, best_move_san, best_line, best_move_eval
+            FROM analysis_moves
+            WHERE classification = ?
+            """,
+            (CLASSIFICATION_BLUNDER,),
+        ) as cursor:
+            rows = await cursor.fetchall()
         return [
             {
                 "game_id": row[0],
@@ -106,18 +111,19 @@ class AnalysisRepository(BaseDbRepository):
             for row in rows
         ]
 
-    def fetch_moves(self, game_id: str) -> list[dict[str, object]]:
-        with self.connection as conn:
-            rows = conn.execute(
-                """
-                SELECT ply, move_number, player, uci, san, eval_before, eval_after,
-                    delta, cp_loss, classification
-                FROM analysis_moves
-                WHERE game_id = ?
-                ORDER BY ply
-                """,
-                (game_id,),
-            ).fetchall()
+    async def fetch_moves(self, game_id: str) -> list[dict[str, object]]:
+        conn = await self.get_connection()
+        async with conn.execute(
+            """
+            SELECT ply, move_number, player, uci, san, eval_before, eval_after,
+                delta, cp_loss, classification
+            FROM analysis_moves
+            WHERE game_id = ?
+            ORDER BY ply
+            """,
+            (game_id,),
+        ) as cursor:
+            rows = await cursor.fetchall()
         return [
             {
                 "ply": row[0],

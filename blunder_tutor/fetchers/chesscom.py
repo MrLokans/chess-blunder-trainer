@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 
 import httpx
 from tqdm import tqdm
@@ -17,7 +17,7 @@ CHESSCOM_BASE_URL = "https://api.chess.com"
 async def fetch(
     username: str,
     max_games: int | None = None,
-    progress_callback: Callable[[int, int], None] | None = None,
+    progress_callback: Callable[[int, int], Awaitable[None]] | None = None,
 ) -> tuple[list[dict[str, object]], set[str]]:
     api_username = username.lower()
     archives_url = f"{CHESSCOM_BASE_URL}/pub/player/{api_username}/games/archives"
@@ -59,7 +59,7 @@ async def fetch(
                     game_bar.update(1)
 
                     if progress_callback:
-                        progress_callback(len(games), max_games or len(games))
+                        await progress_callback(len(games), max_games or len(games))
 
                     if remaining is not None:
                         remaining -= 1
