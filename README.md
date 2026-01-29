@@ -4,6 +4,8 @@
 
 Load your games from chess.com or lichess.org, run stockfish analysis and train over your past blunders.
 
+![Blunder Tutor Screenshot](images/blunder-screenshot.png)
+
 ## Self-Hosting with Docker
 
 ### Quick Start
