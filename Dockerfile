@@ -4,7 +4,7 @@
 
 # Stage 1: Build Stockfish from source
 # This stage is independent of app code - changes to Python code won't invalidate this cache
-FROM ubuntu:22.04 AS stockfish-builder
+FROM ubuntu:24.04 AS stockfish-builder
 
 ARG TARGETARCH
 ARG STOCKFISH_VERSION=sf_17
