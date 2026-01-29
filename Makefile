@@ -33,10 +33,11 @@ FORCE :=
 .PHONY: fetch-lichess fetch-chesscom list show index
 .PHONY: analyze analyze-bulk train-ui
 .PHONY: format lint check test download-pieces
+.PHONY: docker/build docker/run docker/stop
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*##"; print "Available targets:"} \
-		/^[a-zA-Z_-]+:.*##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+		/^[a-zA-Z_\/-]+:.*##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 install: ## Install dependencies
 	$(UV) sync $(UV_SYNC_FLAGS)
@@ -116,6 +117,30 @@ fix: ## Auto-fix linting issues
 
 test: ## Run tests with pytest
 	$(UV) run pytest tests/ -v
+
+# Docker
+DOCKER_IMAGE := blunder-tutor
+DOCKER_TAG := dev
+DOCKER_PLATFORM :=
+
+docker/build: ## Build Docker image (optional: DOCKER_TAG=dev, DOCKER_PLATFORM=linux/amd64)
+	DOCKER_BUILDKIT=1 docker build \
+		$(if $(DOCKER_PLATFORM),--platform $(DOCKER_PLATFORM)) \
+		-t $(DOCKER_IMAGE):$(DOCKER_TAG) \
+		--build-arg STOCKFISH_VERSION=sf_17 \
+		--progress=plain \
+		.
+
+docker/run: ## Run Docker container (optional: DOCKER_TAG=dev)
+	docker run --rm -it \
+		-p $(PORT):8000 \
+		-v $(PWD)/data:/app/data \
+		$(if $(LICHESS_USERNAME),-e LICHESS_USERNAME=$(LICHESS_USERNAME)) \
+		$(if $(CHESSCOM_USERNAME),-e CHESSCOM_USERNAME=$(CHESSCOM_USERNAME)) \
+		$(DOCKER_IMAGE):$(DOCKER_TAG)
+
+docker/stop: ## Stop running container
+	-docker stop $$(docker ps -q --filter ancestor=$(DOCKER_IMAGE):$(DOCKER_TAG))
 
 # Cleanup
 clean: ## Remove Python cache files

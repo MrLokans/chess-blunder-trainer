@@ -57,5 +57,13 @@ jobs:
           build-args: |
             VERSION=${{ github.ref_name }}
             COMMIT=${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            STOCKFISH_VERSION=sf_17
+          # Use both GHA cache and registry cache for maximum cache hits
+          # Registry cache persists longer and works better for multi-platform builds
+          # GHA cache is faster for same-workflow rebuilds
+          cache-from: |
+            type=gha
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
