@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 
 from blunder_tutor.analysis.db import ensure_schema
 from blunder_tutor.cli.base import CLICommand
@@ -16,10 +17,12 @@ class FetchCommand(CLICommand):
         game_repo = GameRepository.from_config(config)
 
         if args.command == "fetch" and args.source == "lichess":
-            games, _seen_ids = lichess.fetch(
-                username=args.username,
-                max_games=args.max,
-                batch_size=args.batch_size,
+            games, _seen_ids = asyncio.run(
+                lichess.fetch(
+                    username=args.username,
+                    max_games=args.max,
+                    batch_size=args.batch_size,
+                )
             )
             inserted = game_repo.insert_games(games)
             skipped = len(games) - inserted
@@ -27,9 +30,11 @@ class FetchCommand(CLICommand):
             return
 
         if args.command == "fetch" and args.source == "chesscom":
-            games, _seen_ids = chesscom.fetch(
-                username=args.username,
-                max_games=args.max,
+            games, _seen_ids = asyncio.run(
+                chesscom.fetch(
+                    username=args.username,
+                    max_games=args.max,
+                )
             )
             inserted = game_repo.insert_games(games)
             skipped = len(games) - inserted

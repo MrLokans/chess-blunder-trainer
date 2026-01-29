@@ -8,11 +8,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from functools import partial
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from blunder_tutor.background.base import BaseJob
 from blunder_tutor.background.registry import register_job
+from blunder_tutor.fetchers import chesscom, lichess
 
 if TYPE_CHECKING:
     from blunder_tutor.repositories.game_repository import GameRepository
@@ -50,37 +50,29 @@ class ImportGamesJob(BaseJob):
             max_games_str = self.settings_repo.get_setting("sync_max_games")
             max_games = int(max_games_str) if max_games_str else 1000
 
-        from blunder_tutor.fetchers.chesscom import fetch as fetch_chesscom
-        from blunder_tutor.fetchers.lichess import fetch as fetch_lichess
-
         self.job_service.update_job_status(job_id, "running")
         self.job_service.update_job_progress(job_id, 0, max_games)
 
         def update_progress(current: int, total: int) -> None:
             self.job_service.update_job_progress(job_id, current, total)
 
-        loop = asyncio.get_event_loop()
-
         try:
             if source == "lichess":
-                fetch_func = partial(
-                    fetch_lichess,
+                games, _seen_ids = await lichess.fetch(
                     username,
                     max_games,
                     progress_callback=update_progress,
                 )
-                games, _seen_ids = await loop.run_in_executor(None, fetch_func)
             elif source == "chesscom":
-                fetch_func = partial(
-                    fetch_chesscom,
+                games, _seen_ids = await chesscom.fetch(
                     username,
                     max_games,
                     progress_callback=update_progress,
                 )
-                games, _seen_ids = await loop.run_in_executor(None, fetch_func)
             else:
                 raise ValueError(f"Unknown source: {source}")
 
+            loop = asyncio.get_event_loop()
             inserted = await loop.run_in_executor(
                 None, self.game_repo.insert_games, games
             )
