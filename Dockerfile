@@ -82,12 +82,13 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Stage 4: Final runtime image
 FROM python:3.13-slim
 
-# Install runtime dependencies with cache mount
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y --no-install-recommends \
+# Install runtime dependencies
+# Note: cache mounts don't help in final stage since we need to clean up apt lists
+# to keep the image small, and cleanup negates the cache benefit
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libstdc++6 \
-    wget
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy Stockfish binary from builder
 COPY --from=stockfish-builder /stockfish/src/stockfish /usr/local/bin/stockfish

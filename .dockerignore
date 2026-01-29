@@ -1,62 +1,50 @@
-# Python
-.venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-
 # Git
-.git/
+.git
 .gitignore
 
-# Data and logs
-data/
-*.log
-
-# Tests
-tests/
-.coverage
-htmlcov/
-
-# Documentation (keep README.md for package metadata)
-CLEANUP.md
-RESEARCH.md
-ROADMAP.md
-DOCKER.md
-
-# Environment files
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.venv
+venv
 .env
-.env.*
-.envrc
+*.egg-info
+dist
+build
 
 # IDE
-.vscode/
-.idea/
+.idea
+.vscode
 *.swp
 *.swo
-*~
 
-# OS
-.DS_Store
-Thumbs.db
+# Project specific
+data/
+*.db
+*.sqlite
+
+# CI/CD
+.github
+
+# Documentation (not needed in image)
+*.md
+!README.md
+
+# Tests (not needed in runtime image)
+tests/
+pytest.ini
+.pytest_cache
+.coverage
+coverage.xml
+htmlcov/
 
 # Docker
-Dockerfile*
+Dockerfile
 docker-compose*.yml
 .dockerignore
-.env
 
-*.pgn
-*.sqlite3
-*.sqlite
-*.db
-*.jsonl
+# Misc
+.DS_Store
+*.log
