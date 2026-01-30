@@ -37,5 +37,6 @@ COLOR_FROM_STRING = {"white": 0, "black": 1}
 
 ROOT_DIR = pathlib.Path(__file__).parent.parent
 DEFAULT_DATA_PATH = ROOT_DIR / "data"
+DEFAULT_FIXTURES_PATH = ROOT_DIR / "fixtures"
 TEMPLATES_PATH = ROOT_DIR / "templates"
 DEFAULT_DB_PATH = DEFAULT_DATA_PATH / "main.sqlite3"

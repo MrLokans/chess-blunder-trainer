@@ -7,7 +7,7 @@ from pathlib import Path
 
 import chess
 
-from blunder_tutor.constants import DEFAULT_DATA_PATH
+from blunder_tutor.constants import DEFAULT_FIXTURES_PATH
 
 
 @dataclass(frozen=True)
@@ -73,7 +73,7 @@ def _load_eco_entries(path: Path) -> list[tuple[str, ECOClassification]]:
 @lru_cache(maxsize=1)
 def get_eco_database(path: Path | None = None) -> ECODatabase:
     if path is None:
-        path = DEFAULT_DATA_PATH / "eco.tsv"
+        path = DEFAULT_FIXTURES_PATH / "eco.tsv"
     entries = _load_eco_entries(path)
     return ECODatabase(entries)
 
