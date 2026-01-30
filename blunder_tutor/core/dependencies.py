@@ -16,12 +16,15 @@ from fast_depends import Depends
 
 # Runtime imports needed for FastDepends/Pydantic validation
 from blunder_tutor.analysis.logic import GameAnalyzer
+from blunder_tutor.analysis.pipeline import PipelineExecutor
 from blunder_tutor.events import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.settings import SettingsRepository
+from blunder_tutor.services.eco_backfill_service import ECOBackfillService
 from blunder_tutor.services.job_service import JobService
+from blunder_tutor.services.phase_backfill_service import PhaseBackfillService
 
 
 @dataclass
@@ -119,5 +122,37 @@ def get_game_analyzer(
     return GameAnalyzer(
         analysis_repo=analysis_repo,
         games_repo=game_repo,
+        engine_path=ctx.engine_path,
+    )
+
+
+def get_phase_backfill_service(
+    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
+    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+) -> PhaseBackfillService:
+    return PhaseBackfillService(
+        analysis_repo=analysis_repo,
+        game_repo=game_repo,
+    )
+
+
+def get_eco_backfill_service(
+    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
+    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+) -> ECOBackfillService:
+    return ECOBackfillService(
+        analysis_repo=analysis_repo,
+        game_repo=game_repo,
+    )
+
+
+def get_pipeline_executor(
+    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
+    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+) -> PipelineExecutor:
+    ctx = get_context()
+    return PipelineExecutor(
+        analysis_repo=analysis_repo,
+        game_repo=game_repo,
         engine_path=ctx.engine_path,
     )

@@ -35,6 +35,7 @@ class AnalyzeGamesJob(BaseJob):
         game_ids = kwargs.get("game_ids")
         source = kwargs.get("source")
         username = kwargs.get("username")
+        steps = kwargs.get("steps")
 
         if game_ids is None:
             game_ids = await self.game_repo.list_unanalyzed_game_ids(source, username)
@@ -43,9 +44,11 @@ class AnalyzeGamesJob(BaseJob):
             await self.job_service.complete_job(job_id, {"analyzed": 0, "skipped": 0})
             return {"analyzed": 0, "skipped": 0}
 
-        return await self._analyze_games(job_id, game_ids)
+        return await self._analyze_games(job_id, game_ids, steps)
 
-    async def _analyze_games(self, job_id: str, game_ids: list[str]) -> dict[str, Any]:
+    async def _analyze_games(
+        self, job_id: str, game_ids: list[str], steps: list[str] | None = None
+    ) -> dict[str, Any]:
         await self.job_service.update_job_status(job_id, "running")
         await self.job_service.update_job_progress(job_id, 0, len(game_ids))
 
@@ -65,7 +68,7 @@ class AnalyzeGamesJob(BaseJob):
                     )
                     continue
 
-                await self.analyzer.analyze_game(game_id)
+                await self.analyzer.analyze_game(game_id, steps=steps)
                 await self.game_repo.mark_game_analyzed(game_id)
 
                 analyzed += 1

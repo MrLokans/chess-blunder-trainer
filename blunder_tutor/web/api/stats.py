@@ -52,6 +52,61 @@ class TrainingStats(BaseModel):
     accuracy: float = Field(description="Success rate (0.0 to 1.0)")
 
 
+class PhaseBlunderItem(BaseModel):
+    phase: str = Field(description="Game phase name (opening, middlegame, endgame)")
+    phase_id: int | None = Field(description="Game phase ID")
+    count: int = Field(description="Number of blunders in this phase")
+    percentage: float = Field(description="Percentage of total blunders")
+    avg_cp_loss: float = Field(description="Average centipawn loss for this phase")
+
+
+class BlundersByPhase(BaseModel):
+    total_blunders: int = Field(description="Total number of blunders")
+    by_phase: list[PhaseBlunderItem] = Field(
+        description="Blunders grouped by game phase"
+    )
+
+
+class ECOBlunderItem(BaseModel):
+    eco_code: str = Field(description="ECO opening code (e.g., B20, C50)")
+    eco_name: str = Field(description="Opening name")
+    count: int = Field(description="Number of blunders in this opening")
+    percentage: float = Field(description="Percentage of total blunders")
+    avg_cp_loss: float = Field(description="Average centipawn loss")
+    game_count: int = Field(description="Number of games with this opening")
+
+
+class BlundersByECO(BaseModel):
+    total_blunders: int = Field(description="Total number of blunders")
+    by_opening: list[ECOBlunderItem] = Field(
+        description="Blunders grouped by ECO opening code"
+    )
+
+
+class ColorBlunderItem(BaseModel):
+    color: str = Field(description="Player color (white or black)")
+    color_id: int | None = Field(description="Color ID (0=white, 1=black)")
+    count: int = Field(description="Number of blunders when playing this color")
+    percentage: float = Field(description="Percentage of total blunders")
+    avg_cp_loss: float = Field(description="Average centipawn loss")
+
+
+class ColorDateBlunderItem(BaseModel):
+    date: str = Field(description="Date (YYYY-MM-DD)")
+    color: str = Field(description="Player color (white or black)")
+    count: int = Field(description="Number of blunders on this date with this color")
+
+
+class BlundersByColor(BaseModel):
+    total_blunders: int = Field(description="Total number of blunders by the user")
+    by_color: list[ColorBlunderItem] = Field(
+        description="Blunders grouped by player color"
+    )
+    blunders_by_date: list[ColorDateBlunderItem] = Field(
+        description="Blunders grouped by date and color"
+    )
+
+
 stats_router = APIRouter()
 
 
@@ -176,4 +231,102 @@ async def get_training_stats_html(
     return request.app.state.templates.TemplateResponse(
         "_stats_partial.html",
         {"request": request, **stats},
+    )
+
+
+@stats_router.get(
+    "/api/stats/blunders/by-phase",
+    response_model=BlundersByPhase,
+    summary="Get blunders by game phase",
+    description="Returns blunder statistics grouped by game phase (opening, middlegame, endgame).",
+)
+async def get_blunders_by_phase(
+    stats_repo: StatsRepoDep,
+    username: Annotated[
+        str | None,
+        Query(max_length=100, description="Filter by username"),
+    ] = None,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+) -> dict[str, Any]:
+    start_date_str = start_date.isoformat() if start_date else None
+    end_date_str = end_date.isoformat() if end_date else None
+
+    return await stats_repo.get_blunders_by_phase(
+        username=username,
+        start_date=start_date_str,
+        end_date=end_date_str,
+    )
+
+
+@stats_router.get(
+    "/api/stats/blunders/by-eco",
+    response_model=BlundersByECO,
+    summary="Get blunders by ECO opening code",
+    description="Returns blunder statistics grouped by ECO opening code.",
+)
+async def get_blunders_by_eco(
+    stats_repo: StatsRepoDep,
+    username: Annotated[
+        str | None,
+        Query(max_length=100, description="Filter by username"),
+    ] = None,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    limit: Annotated[
+        int,
+        Query(ge=1, le=50, description="Maximum number of openings to return"),
+    ] = 10,
+) -> dict[str, Any]:
+    start_date_str = start_date.isoformat() if start_date else None
+    end_date_str = end_date.isoformat() if end_date else None
+
+    return await stats_repo.get_blunders_by_eco(
+        username=username,
+        start_date=start_date_str,
+        end_date=end_date_str,
+        limit=limit,
+    )
+
+
+@stats_router.get(
+    "/api/stats/blunders/by-color",
+    response_model=BlundersByColor,
+    summary="Get blunders by player color",
+    description="Returns blunder statistics grouped by the color the user was playing (white/black). Only counts the user's own blunders, not opponent blunders.",
+)
+async def get_blunders_by_color(
+    stats_repo: StatsRepoDep,
+    username: Annotated[
+        str | None,
+        Query(max_length=100, description="Filter by username (required)"),
+    ] = None,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+) -> dict[str, Any]:
+    start_date_str = start_date.isoformat() if start_date else None
+    end_date_str = end_date.isoformat() if end_date else None
+
+    return await stats_repo.get_blunders_by_color(
+        username=username,
+        start_date=start_date_str,
+        end_date=end_date_str,
     )

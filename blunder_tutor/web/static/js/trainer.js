@@ -7,6 +7,7 @@ let puzzle = null;
 let submitted = false;
 let bestRevealed = false;
 let moveHistory = [];
+let currentPhaseFilters = [];
 
 // DOM elements
 const evalBarFill = document.getElementById('evalBarFill');
@@ -42,6 +43,8 @@ const legendUser = document.getElementById('legendUser');
 const arrowOverlay = document.getElementById('arrowOverlay');
 const showArrowsCheckbox = document.getElementById('showArrows');
 const showThreatsCheckbox = document.getElementById('showThreats');
+const phaseFilterCheckboxes = document.querySelectorAll('.phase-filter-checkbox');
+const phaseBadge = document.getElementById('phaseBadge');
 
 // Empty state elements
 const emptyState = document.getElementById('emptyState');
@@ -514,7 +517,13 @@ async function loadPuzzle() {
   legendBlunder.style.display = 'flex';
 
   try {
-    const resp = await fetch('/api/puzzle');
+    let url = '/api/puzzle';
+    if (currentPhaseFilters.length > 0) {
+      const params = new URLSearchParams();
+      currentPhaseFilters.forEach(phase => params.append('game_phases', phase));
+      url += '?' + params.toString();
+    }
+    const resp = await fetch(url);
     const data = await resp.json();
 
     if (!resp.ok || data.detail || data.error) {
@@ -561,6 +570,7 @@ async function loadPuzzle() {
 
     // Update UI
     updateColorBadge(puzzle.player_color);
+    updatePhaseBadge(puzzle.game_phase);
     blunderMove.textContent = puzzle.blunder_san;
     evalBefore.textContent = puzzle.eval_before_display;
     evalAfter.textContent = puzzle.eval_after_display;
@@ -795,6 +805,47 @@ function openLichessAnalysis() {
   window.open(url, '_blank');
 }
 
+// Phase filter functions
+const PHASE_FILTER_STORAGE_KEY = 'blunder-tutor-phase-filters';
+
+function updatePhaseFilters() {
+  currentPhaseFilters = [];
+  phaseFilterCheckboxes.forEach(checkbox => {
+    if (checkbox.checked) {
+      currentPhaseFilters.push(checkbox.value);
+    }
+  });
+  localStorage.setItem(PHASE_FILTER_STORAGE_KEY, JSON.stringify(currentPhaseFilters));
+}
+
+function loadPhaseFiltersFromStorage() {
+  const stored = localStorage.getItem(PHASE_FILTER_STORAGE_KEY);
+  if (stored) {
+    try {
+      const phases = JSON.parse(stored);
+      if (Array.isArray(phases)) {
+        phaseFilterCheckboxes.forEach(checkbox => {
+          checkbox.checked = phases.includes(checkbox.value);
+        });
+        currentPhaseFilters = phases;
+      }
+    } catch (e) {
+      console.warn('Failed to parse stored phase filters:', e);
+    }
+  }
+}
+
+function updatePhaseBadge(phase) {
+  if (!phaseBadge) return;
+  if (phase) {
+    phaseBadge.textContent = phase.charAt(0).toUpperCase() + phase.slice(1);
+    phaseBadge.className = 'phase-badge ' + phase;
+    phaseBadge.style.display = 'inline-block';
+  } else {
+    phaseBadge.style.display = 'none';
+  }
+}
+
 // Event listeners
 submitBtn.addEventListener('click', submitMove);
 resetBtn.addEventListener('click', resetPosition);
@@ -808,6 +859,12 @@ undoBtn.addEventListener('click', undoMove);
 lichessBtn.addEventListener('click', openLichessAnalysis);
 showArrowsCheckbox.addEventListener('change', drawArrows);
 showThreatsCheckbox.addEventListener('change', drawThreatHighlights);
+phaseFilterCheckboxes.forEach(checkbox => {
+  checkbox.addEventListener('change', () => {
+    updatePhaseFilters();
+    loadPuzzle();
+  });
+});
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
@@ -823,5 +880,6 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Initialize
+loadPhaseFiltersFromStorage();
 loadPuzzle();
 // Stats are loaded automatically via HTMX on page load

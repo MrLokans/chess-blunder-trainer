@@ -20,6 +20,21 @@ PLY_BLACK_OFFSET = 1
 DEFAULT_ENGINE_DEPTH = 14
 DEFAULT_ENGINE_TIME_LIMIT = 3.0
 
+# Game phase constants
+PHASE_OPENING = 0
+PHASE_MIDDLEGAME = 1
+PHASE_ENDGAME = 2
+
+PHASE_LABELS = {0: "opening", 1: "middlegame", 2: "endgame"}
+PHASE_FROM_STRING = {"opening": 0, "middlegame": 1, "endgame": 2}
+
+# Player color constants (as stored in analysis_moves.player)
+COLOR_WHITE = 0
+COLOR_BLACK = 1
+
+COLOR_LABELS = {0: "white", 1: "black"}
+COLOR_FROM_STRING = {"white": 0, "black": 1}
+
 ROOT_DIR = pathlib.Path(__file__).parent.parent
 DEFAULT_DATA_PATH = ROOT_DIR / "data"
 TEMPLATES_PATH = ROOT_DIR / "templates"

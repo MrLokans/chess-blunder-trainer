@@ -3,6 +3,8 @@ import os
 
 from blunder_tutor.cli.analyze import AnalyzeCommand
 from blunder_tutor.cli.analyze_bulk import AnalyzeBulkCommand
+from blunder_tutor.cli.backfill_eco import BackfillECOCommand
+from blunder_tutor.cli.backfill_phases import BackfillPhasesCommand
 from blunder_tutor.cli.fetch import FetchCommand
 from blunder_tutor.cli.list import ListCommand
 from blunder_tutor.cli.train_ui import TrainUICommand
@@ -13,6 +15,8 @@ COMMANDS = [
     ListCommand(),
     AnalyzeCommand(),
     AnalyzeBulkCommand(),
+    BackfillECOCommand(),
+    BackfillPhasesCommand(),
     TrainUICommand(),
 ]
 

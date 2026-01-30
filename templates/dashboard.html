@@ -46,12 +46,380 @@
     font-weight: 600;
     margin-bottom: 16px;
   }
+
+  .phase-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .phase-card {
+    background: #f8f9fa;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .phase-card.opening {
+    border-left: 4px solid #0ea5e9;
+  }
+
+  .phase-card.middlegame {
+    border-left: 4px solid #f59e0b;
+  }
+
+  .phase-card.endgame {
+    border-left: 4px solid #8b5cf6;
+  }
+
+  .phase-card.unknown {
+    border-left: 4px solid #9ca3af;
+  }
+
+  .phase-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .phase-count {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .phase-percent {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .phase-cpl {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+
+  .phase-bar-container {
+    margin-top: 16px;
+  }
+
+  .phase-bar {
+    display: flex;
+    height: 24px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #e9ecef;
+  }
+
+  .phase-bar-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    transition: width 0.3s ease;
+  }
+
+  .phase-bar-segment.opening {
+    background: #0ea5e9;
+  }
+
+  .phase-bar-segment.middlegame {
+    background: #f59e0b;
+  }
+
+  .phase-bar-segment.endgame {
+    background: #8b5cf6;
+  }
+
+  .phase-bar-segment.unknown {
+    background: #9ca3af;
+  }
+
+  .phase-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .phase-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .phase-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+
+  .phase-legend-color.opening {
+    background: #0ea5e9;
+  }
+
+  .phase-legend-color.middlegame {
+    background: #f59e0b;
+  }
+
+  .phase-legend-color.endgame {
+    background: #8b5cf6;
+  }
+
+  /* Color breakdown styles */
+  .color-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .color-card {
+    background: #f8f9fa;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .color-card.white {
+    border-left: 4px solid #e9ecef;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  }
+
+  .color-card.white::before {
+    content: '♔';
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    font-size: 1.5rem;
+    opacity: 0.2;
+  }
+
+  .color-card.black {
+    border-left: 4px solid #374151;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  }
+
+  .color-card.black::before {
+    content: '♚';
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    font-size: 1.5rem;
+    opacity: 0.3;
+  }
+
+  .color-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .color-count {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .color-percent {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .color-cpl {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+
+  .color-bar {
+    display: flex;
+    height: 32px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #e9ecef;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .color-bar-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: width 0.3s ease;
+  }
+
+  .color-bar-segment.white {
+    background: linear-gradient(180deg, #ffffff 0%, #e5e7eb 100%);
+    color: #374151;
+    border-right: 1px solid #d1d5db;
+  }
+
+  .color-bar-segment.black {
+    background: linear-gradient(180deg, #4b5563 0%, #374151 100%);
+    color: #ffffff;
+  }
+
+  .color-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 12px;
+  }
+
+  .color-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .color-legend-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .color-legend-swatch.white {
+    background: linear-gradient(180deg, #ffffff 0%, #e5e7eb 100%);
+  }
+
+  .color-legend-swatch.black {
+    background: linear-gradient(180deg, #4b5563 0%, #374151 100%);
+  }
+
+  .dashboard-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 24px;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .filter-group label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .filter-group input[type="date"] {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.875rem;
+  }
+
+  .filter-presets {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .filter-presets button {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filter-presets button:hover {
+    background: #e9ecef;
+  }
+
+  .filter-presets button.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  .eco-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .eco-table th,
+  .eco-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .eco-table th {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .eco-code {
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    background: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.75rem;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <h1>Blunder Tutor Dashboard</h1>
 {{ render_nav('dashboard') }}
+
+<div class="dashboard-filters">
+  <div class="filter-group">
+    <label for="dateFrom">From:</label>
+    <input type="date" id="dateFrom" name="date_from">
+  </div>
+  <div class="filter-group">
+    <label for="dateTo">To:</label>
+    <input type="date" id="dateTo" name="date_to">
+  </div>
+  <div class="filter-group">
+    <button class="btn" onclick="applyDateFilter()">Apply</button>
+    <button class="btn btn-secondary" onclick="clearDateFilter()">Clear</button>
+  </div>
+  <div class="filter-presets">
+    <button data-preset="7d" onclick="setPreset('7d')">Last 7 days</button>
+    <button data-preset="30d" onclick="setPreset('30d')">Last 30 days</button>
+    <button data-preset="90d" onclick="setPreset('90d')">Last 90 days</button>
+    <button data-preset="1y" onclick="setPreset('1y')">Last year</button>
+    <button data-preset="all" onclick="setPreset('all')" class="active">All time</button>
+  </div>
+</div>
 
 <div class="stats-grid">
   <div class="stat-card">
@@ -73,6 +441,66 @@
       <div class="progress-fill" id="progressFill" style="width: 0%"></div>
     </div>
     <div id="analysisJobStatus" style="margin-top: 8px; font-size: 0.875rem; color: var(--text-muted);"></div>
+  </div>
+</div>
+
+<div class="chart-container">
+  <div class="chart-title">Blunders by Game Phase</div>
+  <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 16px;">
+    Understand where in your games you tend to make mistakes.
+  </p>
+  <div class="phase-bar-container" id="phaseBarContainer" style="display: none;">
+    <div class="phase-bar" id="phaseBar"></div>
+    <div class="phase-legend">
+      <div class="phase-legend-item">
+        <span class="phase-legend-color opening"></span>
+        <span>Opening</span>
+      </div>
+      <div class="phase-legend-item">
+        <span class="phase-legend-color middlegame"></span>
+        <span>Middlegame</span>
+      </div>
+      <div class="phase-legend-item">
+        <span class="phase-legend-color endgame"></span>
+        <span>Endgame</span>
+      </div>
+    </div>
+  </div>
+  <div class="phase-breakdown" id="phaseBreakdown">
+    <div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading...</div>
+  </div>
+</div>
+
+<div class="chart-container">
+  <div class="chart-title">Blunders by Color</div>
+  <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 16px;">
+    Compare your blunder rate when playing as white versus black.
+  </p>
+  <div class="phase-bar-container" id="colorBarContainer" style="display: none;">
+    <div class="color-bar" id="colorBar"></div>
+    <div class="color-legend">
+      <div class="color-legend-item">
+        <span class="color-legend-swatch white"></span>
+        <span>White</span>
+      </div>
+      <div class="color-legend-item">
+        <span class="color-legend-swatch black"></span>
+        <span>Black</span>
+      </div>
+    </div>
+  </div>
+  <div class="color-breakdown" id="colorBreakdown">
+    <div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading...</div>
+  </div>
+</div>
+
+<div class="chart-container">
+  <div class="chart-title">Blunders by Opening</div>
+  <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 16px;">
+    See which openings give you the most trouble.
+  </p>
+  <div id="ecoBreakdown">
+    <div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading...</div>
   </div>
 </div>
 
@@ -114,9 +542,99 @@
 
 {% block extra_scripts %}
 <script>
+  let currentDateFrom = null;
+  let currentDateTo = null;
+  let configuredUsernames = {};
+
+  async function loadConfiguredUsernames() {
+    try {
+      const resp = await fetch('/api/settings/usernames');
+      if (resp.ok) {
+        configuredUsernames = await resp.json();
+      }
+    } catch (err) {
+      console.error('Failed to load configured usernames:', err);
+    }
+  }
+
+  function getFirstUsername() {
+    return configuredUsernames.lichess_username || configuredUsernames.chesscom_username || null;
+  }
+
+  function getPresetDates(preset) {
+    const now = new Date();
+    const to = now.toISOString().split('T')[0];
+    let from = null;
+
+    switch (preset) {
+      case '7d':
+        from = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        break;
+      case '30d':
+        from = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        break;
+      case '90d':
+        from = new Date(now - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        break;
+      case '1y':
+        from = new Date(now - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        break;
+      case 'all':
+        return { from: null, to: null };
+    }
+    return { from, to };
+  }
+
+  function setPreset(preset) {
+    const dates = getPresetDates(preset);
+    document.getElementById('dateFrom').value = dates.from || '';
+    document.getElementById('dateTo').value = dates.to || '';
+    currentDateFrom = dates.from;
+    currentDateTo = dates.to;
+
+    // Update active button
+    document.querySelectorAll('.filter-presets button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.preset === preset);
+    });
+
+    loadStats();
+  }
+
+  function applyDateFilter() {
+    currentDateFrom = document.getElementById('dateFrom').value || null;
+    currentDateTo = document.getElementById('dateTo').value || null;
+
+    // Clear preset buttons active state
+    document.querySelectorAll('.filter-presets button').forEach(btn => btn.classList.remove('active'));
+
+    loadStats();
+  }
+
+  function clearDateFilter() {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    currentDateFrom = null;
+    currentDateTo = null;
+
+    // Set "All time" as active
+    document.querySelectorAll('.filter-presets button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.preset === 'all');
+    });
+
+    loadStats();
+  }
+
+  function buildUrl(baseUrl) {
+    const params = new URLSearchParams();
+    if (currentDateFrom) params.set('start_date', currentDateFrom);
+    if (currentDateTo) params.set('end_date', currentDateTo);
+    const queryString = params.toString();
+    return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+  }
+
   async function loadStats() {
     try {
-      // Load overview stats
+      // Load overview stats (no date filter for overview)
       const overviewResp = await fetch('/api/stats');
       const overview = await overviewResp.json();
 
@@ -153,13 +671,113 @@
         statusEl.textContent = '';
       }
 
+      // Load blunders by phase (with date filter)
+      const phaseResp = await fetch(buildUrl('/api/stats/blunders/by-phase'));
+      const phaseData = await phaseResp.json();
+
+      const phaseBreakdown = document.getElementById('phaseBreakdown');
+      const phaseBarContainer = document.getElementById('phaseBarContainer');
+      const phaseBar = document.getElementById('phaseBar');
+
+      if (phaseData.total_blunders > 0 && phaseData.by_phase.length > 0) {
+        phaseBarContainer.style.display = 'block';
+
+        // Build the stacked bar
+        phaseBar.innerHTML = phaseData.by_phase
+          .filter(p => p.percentage > 0)
+          .map(p => `<div class="phase-bar-segment ${p.phase}" style="width: ${p.percentage}%">${p.percentage > 10 ? p.percentage + '%' : ''}</div>`)
+          .join('');
+
+        // Build the phase cards
+        phaseBreakdown.innerHTML = phaseData.by_phase.map(p => `
+          <div class="phase-card ${p.phase}">
+            <div class="phase-name">${p.phase}</div>
+            <div class="phase-count">${p.count}</div>
+            <div class="phase-percent">${p.percentage}% of blunders</div>
+            <div class="phase-cpl">Avg. loss: ${(p.avg_cp_loss / 100).toFixed(1)} pawns</div>
+          </div>
+        `).join('');
+      } else {
+        phaseBarContainer.style.display = 'none';
+        phaseBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No blunder data available yet. Analyze some games to see your phase breakdown.</div>';
+      }
+
+      // Load blunders by color (with date filter and username)
+      const username = getFirstUsername();
+      let colorUrl = buildUrl('/api/stats/blunders/by-color');
+      if (username) {
+        colorUrl += (colorUrl.includes('?') ? '&' : '?') + 'username=' + encodeURIComponent(username);
+      }
+      const colorResp = await fetch(colorUrl);
+      const colorData = await colorResp.json();
+
+      const colorBreakdown = document.getElementById('colorBreakdown');
+      const colorBarContainer = document.getElementById('colorBarContainer');
+      const colorBar = document.getElementById('colorBar');
+
+      if (colorData.total_blunders > 0 && colorData.by_color.length > 0) {
+        colorBarContainer.style.display = 'block';
+
+        // Build the comparison bar
+        colorBar.innerHTML = colorData.by_color
+          .filter(c => c.percentage > 0)
+          .map(c => `<div class="color-bar-segment ${c.color}" style="width: ${c.percentage}%">${c.percentage > 15 ? c.percentage + '%' : ''}</div>`)
+          .join('');
+
+        // Build the color cards
+        colorBreakdown.innerHTML = colorData.by_color.map(c => `
+          <div class="color-card ${c.color}">
+            <div class="color-name">As ${c.color}</div>
+            <div class="color-count">${c.count}</div>
+            <div class="color-percent">${c.percentage}% of blunders</div>
+            <div class="color-cpl">Avg. loss: ${(c.avg_cp_loss / 100).toFixed(1)} pawns</div>
+          </div>
+        `).join('');
+      } else {
+        colorBarContainer.style.display = 'none';
+        colorBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No blunder data available yet. Analyze some games to see your color breakdown.</div>';
+      }
+
+      // Load blunders by ECO opening (with date filter)
+      const ecoResp = await fetch(buildUrl('/api/stats/blunders/by-eco'));
+      const ecoData = await ecoResp.json();
+
+      const ecoBreakdown = document.getElementById('ecoBreakdown');
+
+      if (ecoData.total_blunders > 0 && ecoData.by_opening.length > 0) {
+        ecoBreakdown.innerHTML = `
+          <table class="eco-table">
+            <thead>
+              <tr>
+                <th>Opening</th>
+                <th>Blunders</th>
+                <th>Avg. Loss</th>
+                <th>Games</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ecoData.by_opening.map(item => `
+                <tr>
+                  <td><span class="eco-code">${item.eco_code}</span> ${item.eco_name}</td>
+                  <td>${item.count} <span style="color: var(--text-muted); font-size: 0.75rem;">(${item.percentage}%)</span></td>
+                  <td>${(item.avg_cp_loss / 100).toFixed(2)} pawns</td>
+                  <td>${item.game_count}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } else {
+        ecoBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No opening data available yet. Analyze some games to see your opening breakdown.</div>';
+      }
+
       // Load game breakdown
       const breakdownResp = await fetch('/api/stats/games');
       const breakdown = await breakdownResp.json();
 
       const tbody = document.querySelector('#gameBreakdownTable tbody');
       tbody.innerHTML = '';
-      breakdown.forEach(row => {
+      (breakdown.items || []).forEach(row => {
         tbody.innerHTML += `
           <tr>
             <td>${row.source}</td>
@@ -180,8 +798,8 @@
     }
   }
 
-  // Load stats on page load
-  loadStats();
+  // Load stats on page load (after loading configured usernames)
+  loadConfiguredUsernames().then(() => loadStats());
 
   // Initialize WebSocket for real-time updates
   wsClient.connect();

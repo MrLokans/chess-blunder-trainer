@@ -1,56 +1,26 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
-from dataclasses import dataclass
-from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
-import chess
-import chess.engine
-import chess.pgn
 from tqdm import tqdm
 
-from blunder_tutor.constants import MATE_SCORE_ANALYSIS
-from blunder_tutor.repositories.analysis import AnalysisRepository
-from blunder_tutor.repositories.game_repository import GameRepository
-from blunder_tutor.utils.chess_utils import score_to_cp
+from blunder_tutor.analysis.pipeline import (
+    AnalysisPipeline,
+    PipelineConfig,
+    PipelineExecutor,
+    PipelinePreset,
+)
+from blunder_tutor.analysis.pipeline.steps import get_all_steps
+from blunder_tutor.analysis.thresholds import Thresholds
+
+if TYPE_CHECKING:
+    from blunder_tutor.repositories.analysis import AnalysisRepository
+    from blunder_tutor.repositories.game_repository import GameRepository
 
 
-@dataclass(frozen=True)
-class Thresholds:
-    inaccuracy: int = 50
-    mistake: int = 100
-    blunder: int = 200
-
-
-def _is_mate_score(score: chess.engine.PovScore, side: chess.Color) -> bool:
-    pov = score.pov(side)
-    return pov.is_mate()
-
-
-def _classify(delta: int, thresholds: Thresholds) -> str:
-    if delta >= thresholds.blunder:
-        return "blunder"
-    if delta >= thresholds.mistake:
-        return "mistake"
-    if delta >= thresholds.inaccuracy:
-        return "inaccuracy"
-    return "good"
-
-
-def _class_to_int(label: str) -> int:
-    return {"good": 0, "inaccuracy": 1, "mistake": 2, "blunder": 3}[label]
-
-
-def _iter_moves(game: chess.pgn.Game) -> Iterable[tuple[int, chess.Move, chess.Board]]:
-    board = game.board()
-    move_number = 1
-    for move in game.mainline_moves():
-        board_before = board.copy(stack=False)
-        yield move_number, move, board_before
-        board.push(move)
-        if board.turn == chess.WHITE:
-            move_number += 1
+# Re-export for backward compatibility
+__all__ = ["GameAnalyzer", "Thresholds"]
 
 
 class GameAnalyzer:
@@ -64,6 +34,11 @@ class GameAnalyzer:
         self.games_repo = games_repo
         self.engine_path = engine_path
         self._log = logging.getLogger("GameAnalyzer")
+        self._executor = PipelineExecutor(
+            analysis_repo=analysis_repo,
+            game_repo=games_repo,
+            engine_path=engine_path,
+        )
 
     async def analyze_game(
         self,
@@ -71,109 +46,30 @@ class GameAnalyzer:
         depth: int | None = 14,
         time_limit: float | None = None,
         thresholds: Thresholds | None = None,
+        steps: list[str] | None = None,
+        force_rerun: bool = False,
     ) -> None:
         thresholds = thresholds or Thresholds()
-        game = await self.games_repo.load_game(game_id)
+        available_steps = get_all_steps()
 
-        analyzed_at = datetime.now(UTC).isoformat()
-        moves: list[dict[str, object]] = []
+        if steps is not None:
+            config = PipelineConfig(steps=steps, force_rerun=force_rerun)
+        else:
+            config = PipelineConfig.from_preset(
+                PipelinePreset.FULL, force_rerun=force_rerun
+            )
 
-        limit = (
-            chess.engine.Limit(depth=depth)
-            if time_limit is None
-            else chess.engine.Limit(time=time_limit)
-        )
-
-        transport, engine = await chess.engine.popen_uci(self.engine_path)
-        try:
-            for move_number, move, board in _iter_moves(game):
-                player = board.turn
-                info_before = await engine.analyse(board, limit)
-                eval_before = score_to_cp(info_before["score"], player)
-                san = board.san(move)
-                ply = (board.fullmove_number - 1) * 2 + (
-                    1 if player == chess.WHITE else 2
-                )
-
-                pv = info_before.get("pv", [])
-                best_move_uci = None
-                best_move_san = None
-                best_line = []
-                best_move_eval = None
-
-                if pv:
-                    best_move_uci = pv[0].uci()
-                    best_move_san = board.san(pv[0])
-
-                    temp_board = board.copy()
-                    for pv_move in pv[:5]:
-                        best_line.append(temp_board.san(pv_move))
-                        temp_board.push(pv_move)
-
-                    best_move_board = board.copy()
-                    best_move_board.push(pv[0])
-                    info_best = await engine.analyse(best_move_board, limit)
-                    best_move_eval = score_to_cp(info_best["score"], player)
-
-                board_after = board.copy(stack=False)
-                board_after.push(move)
-
-                if board_after.is_checkmate():
-                    eval_after = MATE_SCORE_ANALYSIS
-                    delta = 0
-                    cp_loss = 0
-                    class_label = "good"
-                else:
-                    info_after = await engine.analyse(board_after, limit)
-                    eval_after = score_to_cp(info_after["score"], player)
-
-                    delta = eval_before - eval_after
-                    cp_loss = max(0, delta)
-
-                    if (
-                        _is_mate_score(info_before["score"], player)
-                        and eval_after > 500
-                    ):
-                        cp_loss = min(cp_loss, thresholds.inaccuracy - 1)
-
-                    class_label = _classify(cp_loss, thresholds)
-
-                moves.append(
-                    {
-                        "ply": ply,
-                        "move_number": move_number,
-                        "player": "white" if player == chess.WHITE else "black",
-                        "uci": move.uci(),
-                        "san": san,
-                        "eval_before": eval_before,
-                        "eval_after": eval_after,
-                        "delta": delta,
-                        "cp_loss": cp_loss,
-                        "classification": _class_to_int(class_label),
-                        "best_move_uci": best_move_uci,
-                        "best_move_san": best_move_san,
-                        "best_line": " ".join(best_line) if best_line else None,
-                        "best_move_eval": best_move_eval,
-                    }
-                )
-        finally:
-            await engine.quit()
-
-        await self.analysis_repo.write_analysis(
+        pipeline = AnalysisPipeline(config, available_steps)
+        report = await self._executor.execute_pipeline(
+            pipeline=pipeline,
             game_id=game_id,
-            pgn_path="",
-            analyzed_at=analyzed_at,
-            engine_path=self.engine_path,
+            thresholds=thresholds,
             depth=depth,
             time_limit=time_limit,
-            thresholds={
-                "inaccuracy": thresholds.inaccuracy,
-                "mistake": thresholds.mistake,
-                "blunder": thresholds.blunder,
-            },
-            moves=moves,
         )
-        return
+
+        if not report.success:
+            raise RuntimeError(f"Pipeline failed: {report.error}")
 
     async def analyze_bulk(
         self,
@@ -183,6 +79,7 @@ class GameAnalyzer:
         username: str | None = None,
         limit: int | None = None,
         force: bool = False,
+        steps: list[str] | None = None,
     ) -> dict[str, int]:
         processed = 0
         skipped = 0
@@ -204,6 +101,8 @@ class GameAnalyzer:
                     game_id=game_id,
                     depth=depth,
                     time_limit=time_limit,
+                    steps=steps,
+                    force_rerun=force,
                 )
                 analyzed += 1
                 processed += 1

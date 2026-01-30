@@ -3,10 +3,13 @@ import asyncio
 
 from blunder_tutor.analysis.db import ensure_schema
 from blunder_tutor.analysis.logic import GameAnalyzer
+from blunder_tutor.analysis.pipeline import PipelinePreset
 from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.repositories import GameRepository
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.web.config import AppConfig
+
+AVAILABLE_STEPS = ["eco", "stockfish", "move_quality", "phase", "write"]
 
 
 class AnalyzeCommand(CLICommand):
@@ -28,10 +31,14 @@ class AnalyzeCommand(CLICommand):
                 engine_path=config.engine_path,
             )
 
+            steps = args.steps if args.steps else None
+
             await analyzer.analyze_game(
                 game_id=args.game_id,
                 depth=args.depth,
                 time_limit=args.time,
+                steps=steps,
+                force_rerun=args.force,
             )
             print(f"Analysis complete for game {args.game_id}")
         finally:
@@ -52,5 +59,18 @@ class AnalyzeCommand(CLICommand):
             type=float,
             default=None,
             help="Time limit per position (seconds)",
+        )
+        analyze_parser.add_argument(
+            "--steps",
+            nargs="+",
+            choices=AVAILABLE_STEPS,
+            default=None,
+            help=f"Pipeline steps to run. Available: {', '.join(AVAILABLE_STEPS)}. "
+            f"Default: full pipeline ({', '.join(PipelinePreset.FULL.value)})",
+        )
+        analyze_parser.add_argument(
+            "--force",
+            action="store_true",
+            help="Force re-run steps even if already completed",
         )
         return

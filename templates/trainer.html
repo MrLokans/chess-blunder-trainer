@@ -110,6 +110,26 @@
           <span class="color-dot white"></span>
           Playing as White
         </span>
+        <span class="phase-badge" id="phaseBadge" style="display: none; margin-left: 10px;"></span>
+      </div>
+
+      <!-- Phase filter -->
+      <div class="panel-section">
+        <div class="section-title">Filter by Game Phase</div>
+        <div class="phase-filter">
+          <label class="phase-filter-label">
+            <input type="checkbox" class="phase-filter-checkbox" value="opening" checked>
+            Opening
+          </label>
+          <label class="phase-filter-label">
+            <input type="checkbox" class="phase-filter-checkbox" value="middlegame" checked>
+            Middlegame
+          </label>
+          <label class="phase-filter-label">
+            <input type="checkbox" class="phase-filter-checkbox" value="endgame" checked>
+            Endgame
+          </label>
+        </div>
       </div>
 
       <!-- Your blunder section -->
@@ -201,7 +221,7 @@
 
 {% block extra_scripts %}
 <!-- Trainer-specific JavaScript -->
-<script src="/static/js/trainer.js?v=4"></script>
+<script src="/static/js/trainer.js?v=5"></script>
 
 <!-- WebSocket integration for real-time stats updates -->
 <script>

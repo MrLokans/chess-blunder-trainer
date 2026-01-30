@@ -96,8 +96,7 @@ analyze-bulk: ## Analyze multiple games (optional: SOURCE, USERNAME, LIMIT, FORC
 
 # Training UI
 train-ui: ## Start training UI (usage: make train-ui USERNAME=player)
-	@test -n "$(USERNAME)" || (echo "Error: USERNAME required" && exit 1)
-	$(UV) run blunder-tutor train-ui --username $(USERNAME) --data-dir $(DATA_DIR) \
+	$(UV) run blunder_tutor train-ui \
 		$(if $(ENGINE_PATH),--engine-path $(ENGINE_PATH)) \
 		$(if $(TIME),--time $(TIME),--depth $(DEPTH)) \
 		--host $(HOST) --port $(PORT) \

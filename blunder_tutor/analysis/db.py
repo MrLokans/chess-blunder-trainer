@@ -154,6 +154,14 @@ def ensure_schema(db_path: Path) -> None:
             CREATE INDEX IF NOT EXISTS idx_game_cache_date ON game_index_cache(end_time_utc);
             CREATE INDEX IF NOT EXISTS idx_game_cache_analyzed ON game_index_cache(analyzed);
             CREATE INDEX IF NOT EXISTS idx_game_cache_composite ON game_index_cache(source, username, end_time_utc);
+
+            CREATE TABLE IF NOT EXISTS analysis_step_status (
+                game_id TEXT NOT NULL,
+                step_id TEXT NOT NULL,
+                completed_at TEXT NOT NULL,
+                PRIMARY KEY (game_id, step_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_step_status_game ON analysis_step_status(game_id);
             """
         )
 
@@ -204,6 +212,23 @@ def ensure_schema(db_path: Path) -> None:
             conn.execute("ALTER TABLE analysis_moves ADD COLUMN best_line TEXT")
         if "best_move_eval" not in columns:
             conn.execute("ALTER TABLE analysis_moves ADD COLUMN best_move_eval INTEGER")
+        if "game_phase" not in columns:
+            conn.execute("ALTER TABLE analysis_moves ADD COLUMN game_phase INTEGER")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_analysis_moves_phase ON analysis_moves(game_phase)"
+        )
+
+        # Migration: Add ECO columns to analysis_games if they don't exist
+        cursor = conn.execute("PRAGMA table_info(analysis_games)")
+        games_columns = {row[1] for row in cursor.fetchall()}
+
+        if "eco_code" not in games_columns:
+            conn.execute("ALTER TABLE analysis_games ADD COLUMN eco_code TEXT")
+        if "eco_name" not in games_columns:
+            conn.execute("ALTER TABLE analysis_games ADD COLUMN eco_name TEXT")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_analysis_games_eco ON analysis_games(eco_code)"
+        )
 
         # Migration: Rename pgn_path to pgn_content if needed
         cursor = conn.execute("PRAGMA table_info(game_index_cache)")
@@ -341,6 +366,14 @@ async def ensure_schema_async(db_path: Path) -> None:
             CREATE INDEX IF NOT EXISTS idx_game_cache_date ON game_index_cache(end_time_utc);
             CREATE INDEX IF NOT EXISTS idx_game_cache_analyzed ON game_index_cache(analyzed);
             CREATE INDEX IF NOT EXISTS idx_game_cache_composite ON game_index_cache(source, username, end_time_utc);
+
+            CREATE TABLE IF NOT EXISTS analysis_step_status (
+                game_id TEXT NOT NULL,
+                step_id TEXT NOT NULL,
+                completed_at TEXT NOT NULL,
+                PRIMARY KEY (game_id, step_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_step_status_game ON analysis_step_status(game_id);
             """
         )
 
@@ -396,6 +429,26 @@ async def ensure_schema_async(db_path: Path) -> None:
             await conn.execute(
                 "ALTER TABLE analysis_moves ADD COLUMN best_move_eval INTEGER"
             )
+        if "game_phase" not in columns:
+            await conn.execute(
+                "ALTER TABLE analysis_moves ADD COLUMN game_phase INTEGER"
+            )
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_analysis_moves_phase ON analysis_moves(game_phase)"
+        )
+
+        # Migration: Add ECO columns to analysis_games if they don't exist
+        async with conn.execute("PRAGMA table_info(analysis_games)") as cursor:
+            rows = await cursor.fetchall()
+            games_columns = {row[1] for row in rows}
+
+        if "eco_code" not in games_columns:
+            await conn.execute("ALTER TABLE analysis_games ADD COLUMN eco_code TEXT")
+        if "eco_name" not in games_columns:
+            await conn.execute("ALTER TABLE analysis_games ADD COLUMN eco_name TEXT")
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_analysis_games_eco ON analysis_games(eco_code)"
+        )
 
         async with conn.execute("PRAGMA table_info(game_index_cache)") as cursor:
             rows = await cursor.fetchall()

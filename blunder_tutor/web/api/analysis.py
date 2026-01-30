@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from datetime import date
+from enum import Enum
 from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from blunder_tutor.constants import PHASE_FROM_STRING, PHASE_LABELS
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     AnalysisServiceDep,
@@ -14,6 +16,12 @@ from blunder_tutor.web.dependencies import (
     PuzzleServiceDep,
     SettingsRepoDep,
 )
+
+
+class GamePhaseEnum(str, Enum):
+    opening = "opening"
+    middlegame = "middlegame"
+    endgame = "endgame"
 
 
 class SubmitMoveRequest(BaseModel):
@@ -53,6 +61,9 @@ class PuzzleResponse(BaseModel):
     best_move_san: str | None = Field(description="Best move in SAN notation")
     best_line: list[str] = Field(description="Best continuation line (up to 5 moves)")
     best_move_eval: int | None = Field(description="Evaluation after best move")
+    game_phase: str | None = Field(
+        description="Game phase (opening, middlegame, endgame)"
+    )
 
 
 class SubmitMoveResponse(BaseModel):
@@ -98,6 +109,10 @@ async def puzzle(
         date | None,
         Query(description="End date for puzzle filtering (YYYY-MM-DD)"),
     ] = None,
+    game_phases: Annotated[
+        list[GamePhaseEnum] | None,
+        Query(description="Filter by game phases (opening, middlegame, endgame)"),
+    ] = None,
 ) -> dict[str, Any]:
     username = config.username
     source = None
@@ -129,6 +144,10 @@ async def puzzle(
         int(spaced_repetition_days_str) if spaced_repetition_days_str else 30
     )
 
+    game_phases_int = (
+        [PHASE_FROM_STRING[p.value] for p in game_phases] if game_phases else None
+    )
+
     try:
         puzzle_with_analysis = await puzzle_service.get_puzzle_with_analysis(
             username=username,
@@ -137,6 +156,7 @@ async def puzzle(
             end_date=end_date_str,
             exclude_recently_solved=True,
             spaced_repetition_days=spaced_repetition_days,
+            game_phases=game_phases_int,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -167,6 +187,9 @@ async def puzzle(
         "best_move_san": analysis.best_move_san or "",
         "best_line": analysis.best_line or [],
         "best_move_eval": puzzle_data.best_move_eval,
+        "game_phase": PHASE_LABELS.get(puzzle_data.game_phase)
+        if puzzle_data.game_phase is not None
+        else None,
     }
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from blunder_tutor.constants import COLOR_LABELS, PHASE_LABELS
 from blunder_tutor.repositories.base import BaseDbRepository
 
 
@@ -209,3 +210,257 @@ class StatsRepository(BaseDbRepository):
             }
             for row in rows
         ]
+
+    async def get_blunders_by_phase(
+        self,
+        username: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, object]:
+        query = """
+            SELECT
+                game_phase,
+                COUNT(*) as count,
+                AVG(cp_loss) as avg_cp_loss
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE am.classification = 3
+        """
+        params: list[str] = []
+
+        if username:
+            query += " AND g.username = ?"
+            params.append(username)
+
+        if start_date:
+            query += " AND g.end_time_utc >= ?"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND g.end_time_utc <= ?"
+            params.append(end_date)
+
+        query += " GROUP BY game_phase ORDER BY game_phase"
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        total = sum(row[1] for row in rows)
+        phases = []
+        for row in rows:
+            phase_int = row[0]
+            count = row[1]
+            avg_cp_loss = row[2] or 0.0
+            phase_label = (
+                PHASE_LABELS.get(phase_int, "unknown")
+                if phase_int is not None
+                else "unknown"
+            )
+            percentage = (count / total * 100) if total > 0 else 0.0
+            phases.append(
+                {
+                    "phase": phase_label,
+                    "phase_id": phase_int,
+                    "count": count,
+                    "percentage": round(percentage, 1),
+                    "avg_cp_loss": round(float(avg_cp_loss), 1),
+                }
+            )
+
+        return {
+            "total_blunders": total,
+            "by_phase": phases,
+        }
+
+    async def get_blunders_by_eco(
+        self,
+        username: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit: int = 10,
+    ) -> dict[str, object]:
+        query = """
+            SELECT
+                ag.eco_code,
+                ag.eco_name,
+                COUNT(*) as blunder_count,
+                AVG(am.cp_loss) as avg_cp_loss,
+                COUNT(DISTINCT ag.game_id) as game_count
+            FROM analysis_moves am
+            JOIN analysis_games ag ON am.game_id = ag.game_id
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE am.classification = 3 AND ag.eco_code IS NOT NULL
+        """
+        params: list[object] = []
+
+        if username:
+            query += " AND g.username = ?"
+            params.append(username)
+
+        if start_date:
+            query += " AND g.end_time_utc >= ?"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND g.end_time_utc <= ?"
+            params.append(end_date)
+
+        query += (
+            " GROUP BY ag.eco_code, ag.eco_name ORDER BY blunder_count DESC LIMIT ?"
+        )
+        params.append(limit)
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        total = sum(row[2] for row in rows)
+        openings = []
+        for row in rows:
+            eco_code = row[0]
+            eco_name = row[1]
+            blunder_count = row[2]
+            avg_cp_loss = row[3] or 0.0
+            game_count = row[4]
+            percentage = (blunder_count / total * 100) if total > 0 else 0.0
+            openings.append(
+                {
+                    "eco_code": eco_code,
+                    "eco_name": eco_name,
+                    "count": blunder_count,
+                    "percentage": round(percentage, 1),
+                    "avg_cp_loss": round(float(avg_cp_loss), 1),
+                    "game_count": game_count,
+                }
+            )
+
+        return {
+            "total_blunders": total,
+            "by_opening": openings,
+        }
+
+    async def get_blunders_by_color(
+        self,
+        username: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, object]:
+        if not username:
+            return {"total_blunders": 0, "by_color": [], "blunders_by_date": []}
+
+        username_lower = username.lower()
+
+        query = """
+            SELECT
+                CASE
+                    WHEN LOWER(g.white) = ? THEN 0
+                    WHEN LOWER(g.black) = ? THEN 1
+                END as user_color,
+                COUNT(*) as count,
+                AVG(am.cp_loss) as avg_cp_loss
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE am.classification = 3
+              AND g.username = ?
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = ? THEN 0
+                    WHEN LOWER(g.black) = ? THEN 1
+                END
+        """
+        params: list[object] = [
+            username_lower,
+            username_lower,
+            username,
+            username_lower,
+            username_lower,
+        ]
+
+        if start_date:
+            query += " AND g.end_time_utc >= ?"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND g.end_time_utc <= ?"
+            params.append(end_date)
+
+        query += " GROUP BY user_color ORDER BY user_color"
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        total = sum(row[1] for row in rows)
+        colors = []
+        for row in rows:
+            color_int = row[0]
+            count = row[1]
+            avg_cp_loss = row[2] or 0.0
+            color_label = (
+                COLOR_LABELS.get(color_int, "unknown")
+                if color_int is not None
+                else "unknown"
+            )
+            percentage = (count / total * 100) if total > 0 else 0.0
+            colors.append(
+                {
+                    "color": color_label,
+                    "color_id": color_int,
+                    "count": count,
+                    "percentage": round(percentage, 1),
+                    "avg_cp_loss": round(float(avg_cp_loss), 1),
+                }
+            )
+
+        date_query = """
+            SELECT
+                DATE(g.end_time_utc) as date,
+                CASE
+                    WHEN LOWER(g.white) = ? THEN 0
+                    WHEN LOWER(g.black) = ? THEN 1
+                END as user_color,
+                COUNT(*) as count
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE am.classification = 3
+              AND g.username = ?
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = ? THEN 0
+                    WHEN LOWER(g.black) = ? THEN 1
+                END
+        """
+        date_params: list[object] = [
+            username_lower,
+            username_lower,
+            username,
+            username_lower,
+            username_lower,
+        ]
+
+        if start_date:
+            date_query += " AND g.end_time_utc >= ?"
+            date_params.append(start_date)
+
+        if end_date:
+            date_query += " AND g.end_time_utc <= ?"
+            date_params.append(end_date)
+
+        date_query += " GROUP BY date, user_color ORDER BY date DESC LIMIT 60"
+
+        async with conn.execute(date_query, date_params) as cursor:
+            date_rows = await cursor.fetchall()
+
+        blunders_by_date = [
+            {
+                "date": row[0],
+                "color": COLOR_LABELS.get(row[1], "unknown"),
+                "count": row[2],
+            }
+            for row in date_rows
+        ]
+
+        return {
+            "total_blunders": total,
+            "by_color": colors,
+            "blunders_by_date": blunders_by_date,
+        }

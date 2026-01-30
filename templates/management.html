@@ -73,6 +73,56 @@
 </div>
 
 <div class="card">
+  <h2>Backfill Game Phases</h2>
+  <div id="backfillMessage" style="display: none;"></div>
+
+  <div id="backfillInfo" style="margin-bottom: 16px;">
+    <p style="color: var(--text-muted); font-size: 0.875rem;">
+      Backfill phase data (opening/middlegame/endgame) for analyzed games.
+      <br>
+      <span id="backfillPendingCount">-</span> games pending phase backfill
+    </p>
+  </div>
+
+  <div id="backfillControls">
+    <button class="btn" id="startBackfillBtn" onclick="startBackfillPhases()">Backfill Phases</button>
+  </div>
+
+  <div id="backfillProgress" style="display: none; margin-top: 24px;">
+    <p><strong>Backfill in progress...</strong></p>
+    <div class="progress-bar">
+      <div class="progress-fill" id="backfillProgressFill" style="width: 0%"></div>
+      <div class="progress-text" id="backfillProgressText">0%</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Backfill ECO Codes</h2>
+  <div id="ecoBackfillMessage" style="display: none;"></div>
+
+  <div id="ecoBackfillInfo" style="margin-bottom: 16px;">
+    <p style="color: var(--text-muted); font-size: 0.875rem;">
+      Backfill ECO opening codes for analyzed games.
+      <br>
+      <span id="ecoBackfillPendingCount">-</span> games pending ECO classification
+    </p>
+  </div>
+
+  <div id="ecoBackfillControls">
+    <button class="btn" id="startEcoBackfillBtn" onclick="startBackfillECO()">Backfill ECO Codes</button>
+  </div>
+
+  <div id="ecoBackfillProgress" style="display: none; margin-top: 24px;">
+    <p><strong>ECO backfill in progress...</strong></p>
+    <div class="progress-bar">
+      <div class="progress-fill" id="ecoBackfillProgressFill" style="width: 0%"></div>
+      <div class="progress-text" id="ecoBackfillProgressText">0%</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
   <h2>Recent Jobs</h2>
   <table id="jobsTable">
     <thead>
@@ -395,6 +445,142 @@
   // Load analysis status on page load
   loadAnalysisStatus();
 
+  // Backfill phases management
+  let backfillJobId = null;
+
+  async function loadBackfillStatus() {
+    try {
+      // Load pending count
+      const pendingResp = await fetch('/api/backfill-phases/pending');
+      const pending = await pendingResp.json();
+      document.getElementById('backfillPendingCount').textContent = pending.pending_count || 0;
+
+      // Load current backfill job status
+      const statusResp = await fetch('/api/backfill-phases/status');
+      const status = await statusResp.json();
+
+      if (status.status === 'running') {
+        backfillJobId = status.job_id;
+        showBackfillProgress(status);
+      } else if (status.status === 'no_jobs' || status.status === 'completed' || status.status === 'failed') {
+        hideBackfillProgress();
+      }
+    } catch (err) {
+      console.error('Failed to load backfill status:', err);
+    }
+  }
+
+  function showBackfillProgress(job) {
+    document.getElementById('backfillProgress').style.display = 'block';
+    document.getElementById('startBackfillBtn').style.display = 'none';
+
+    if (job.progress_total > 0) {
+      const percent = Math.round((job.progress_current / job.progress_total) * 100);
+      document.getElementById('backfillProgressFill').style.width = percent + '%';
+      document.getElementById('backfillProgressText').textContent =
+        `${job.progress_current}/${job.progress_total} (${percent}%)`;
+    }
+  }
+
+  function hideBackfillProgress() {
+    document.getElementById('backfillProgress').style.display = 'none';
+    document.getElementById('startBackfillBtn').style.display = 'inline-block';
+    backfillJobId = null;
+  }
+
+  async function startBackfillPhases() {
+    try {
+      const resp = await fetch('/api/backfill-phases/start', { method: 'POST' });
+      const data = await resp.json();
+
+      if (data.detail) {
+        showMessage('backfillMessage', 'error', 'Error: ' + data.detail);
+        return;
+      }
+
+      backfillJobId = data.job_id;
+      showMessage('backfillMessage', 'success', 'Backfill started!');
+
+      // Show progress UI
+      document.getElementById('backfillProgress').style.display = 'block';
+      document.getElementById('startBackfillBtn').style.display = 'none';
+
+    } catch (err) {
+      showMessage('backfillMessage', 'error', 'Failed to start backfill: ' + err.message);
+    }
+  }
+
+  // Load backfill status on page load
+  loadBackfillStatus();
+
+  // ECO backfill management
+  let ecoBackfillJobId = null;
+
+  async function loadECOBackfillStatus() {
+    try {
+      // Load pending count
+      const pendingResp = await fetch('/api/backfill-eco/pending');
+      const pending = await pendingResp.json();
+      document.getElementById('ecoBackfillPendingCount').textContent = pending.pending_count || 0;
+
+      // Load current backfill job status
+      const statusResp = await fetch('/api/backfill-eco/status');
+      const status = await statusResp.json();
+
+      if (status.status === 'running') {
+        ecoBackfillJobId = status.job_id;
+        showECOBackfillProgress(status);
+      } else if (status.status === 'no_jobs' || status.status === 'completed' || status.status === 'failed') {
+        hideECOBackfillProgress();
+      }
+    } catch (err) {
+      console.error('Failed to load ECO backfill status:', err);
+    }
+  }
+
+  function showECOBackfillProgress(job) {
+    document.getElementById('ecoBackfillProgress').style.display = 'block';
+    document.getElementById('startEcoBackfillBtn').style.display = 'none';
+
+    if (job.progress_total > 0) {
+      const percent = Math.round((job.progress_current / job.progress_total) * 100);
+      document.getElementById('ecoBackfillProgressFill').style.width = percent + '%';
+      document.getElementById('ecoBackfillProgressText').textContent =
+        `${job.progress_current}/${job.progress_total} (${percent}%)`;
+    }
+  }
+
+  function hideECOBackfillProgress() {
+    document.getElementById('ecoBackfillProgress').style.display = 'none';
+    document.getElementById('startEcoBackfillBtn').style.display = 'inline-block';
+    ecoBackfillJobId = null;
+  }
+
+  async function startBackfillECO() {
+    try {
+      const resp = await fetch('/api/backfill-eco/start', { method: 'POST' });
+      const data = await resp.json();
+
+      if (data.detail) {
+        showMessage('ecoBackfillMessage', 'error', 'Error: ' + data.detail);
+        return;
+      }
+
+      ecoBackfillJobId = data.job_id;
+      showMessage('ecoBackfillMessage', 'success', 'ECO backfill started!');
+
+      // Show progress UI
+      document.getElementById('ecoBackfillProgress').style.display = 'block';
+      document.getElementById('startEcoBackfillBtn').style.display = 'none';
+
+    } catch (err) {
+      showMessage('ecoBackfillMessage', 'error', 'Failed to start ECO backfill: ' + err.message);
+    }
+  }
+
+  // Load ECO backfill status on page load
+  loadECOBackfillStatus();
+
   // Initialize WebSocket for real-time updates
   wsClient.connect();
 
@@ -435,6 +621,22 @@
         `${data.current}/${data.total} (${percent}%)`;
     }
 
+    // Update backfill progress bar directly
+    if (data.job_id === backfillJobId) {
+      const percent = data.percent;
+      document.getElementById('backfillProgressFill').style.width = percent + '%';
+      document.getElementById('backfillProgressText').textContent =
+        `${data.current}/${data.total} (${percent}%)`;
+    }
+
+    // Update ECO backfill progress bar directly
+    if (data.job_id === ecoBackfillJobId) {
+      const percent = data.percent;
+      document.getElementById('ecoBackfillProgressFill').style.width = percent + '%';
+      document.getElementById('ecoBackfillProgressText').textContent =
+        `${data.current}/${data.total} (${percent}%)`;
+    }
+
     // Debounced table refresh for progress column
     debouncedRefreshJobsTable();
   });
@@ -464,6 +666,32 @@
         hideAnalysisProgress();
         showMessage('analysisMessage', 'error', 'Analysis failed: ' + (data.error_message || 'Unknown error'));
         loadAnalysisStatus();
+      }
+    }
+
+    // Handle backfill job completion
+    if (data.job_id === backfillJobId) {
+      if (data.status === 'completed') {
+        hideBackfillProgress();
+        showMessage('backfillMessage', 'success', 'Backfill completed!');
+        loadBackfillStatus();
+      } else if (data.status === 'failed') {
+        hideBackfillProgress();
+        showMessage('backfillMessage', 'error', 'Backfill failed: ' + (data.error_message || 'Unknown error'));
+        loadBackfillStatus();
+      }
+    }
+
+    // Handle ECO backfill job completion
+    if (data.job_id === ecoBackfillJobId) {
+      if (data.status === 'completed') {
+        hideECOBackfillProgress();
+        showMessage('ecoBackfillMessage', 'success', 'ECO backfill completed!');
+        loadECOBackfillStatus();
+      } else if (data.status === 'failed') {
+        hideECOBackfillProgress();
+        showMessage('ecoBackfillMessage', 'error', 'ECO backfill failed: ' + (data.error_message || 'Unknown error'));
+        loadECOBackfillStatus();
       }
     }
 

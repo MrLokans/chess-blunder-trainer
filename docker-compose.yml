@@ -21,7 +21,8 @@ services:
       - PORT=8000
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8000/health"]
+      test:
+        ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3

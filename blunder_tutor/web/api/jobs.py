@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
+    AnalysisRepoDep,
     EventBusDep,
     GameRepoDep,
     JobServiceDep,
@@ -302,3 +303,125 @@ async def delete_job(
         "_jobs_partial.html",
         {"request": request, "jobs": jobs},
     )
+
+
+@jobs_router.post(
+    "/api/backfill-phases/start",
+    response_model=JobResponse,
+    summary="Start phase backfill",
+    description="Start a background job to backfill game phase data for analyzed games.",
+)
+async def start_backfill_phases_job(
+    job_service: JobServiceDep,
+    analysis_repo: AnalysisRepoDep,
+    event_bus: EventBusDep,
+) -> dict[str, str]:
+    games_needing_backfill = await analysis_repo.get_game_ids_missing_phase()
+
+    if not games_needing_backfill:
+        raise HTTPException(status_code=400, detail="No games need phase backfill")
+
+    job_id = await job_service.create_job(
+        job_type="backfill_phases",
+        max_games=len(games_needing_backfill),
+    )
+
+    event = JobExecutionRequestEvent.create(
+        job_id=job_id,
+        job_type="backfill_phases",
+    )
+    await event_bus.publish(event)
+
+    return {"job_id": job_id}
+
+
+@jobs_router.get(
+    "/api/backfill-phases/status",
+    summary="Get backfill phases status",
+    description="Get the status of the most recent or currently running phase backfill job.",
+)
+async def get_backfill_phases_status(job_service: JobServiceDep) -> dict[str, Any]:
+    running_jobs = await job_service.list_jobs(
+        job_type="backfill_phases", status="running", limit=1
+    )
+
+    if running_jobs:
+        return running_jobs[0]
+
+    recent_jobs = await job_service.list_jobs(job_type="backfill_phases", limit=1)
+
+    if not recent_jobs:
+        return {"status": "no_jobs"}
+
+    return recent_jobs[0]
+
+
+@jobs_router.get(
+    "/api/backfill-phases/pending",
+    summary="Get pending backfill count",
+    description="Get the number of games that need phase backfill.",
+)
+async def get_backfill_phases_pending(analysis_repo: AnalysisRepoDep) -> dict[str, int]:
+    games_needing_backfill = await analysis_repo.get_game_ids_missing_phase()
+    return {"pending_count": len(games_needing_backfill)}
+
+
+@jobs_router.post(
+    "/api/backfill-eco/start",
+    response_model=JobResponse,
+    summary="Start ECO backfill",
+    description="Start a background job to backfill ECO opening codes for analyzed games.",
+)
+async def start_backfill_eco_job(
+    job_service: JobServiceDep,
+    analysis_repo: AnalysisRepoDep,
+    event_bus: EventBusDep,
+) -> dict[str, str]:
+    games_needing_backfill = await analysis_repo.get_game_ids_missing_eco()
+
+    if not games_needing_backfill:
+        raise HTTPException(status_code=400, detail="No games need ECO backfill")
+
+    job_id = await job_service.create_job(
+        job_type="backfill_eco",
+        max_games=len(games_needing_backfill),
+    )
+
+    event = JobExecutionRequestEvent.create(
+        job_id=job_id,
+        job_type="backfill_eco",
+    )
+    await event_bus.publish(event)
+
+    return {"job_id": job_id}
+
+
+@jobs_router.get(
+    "/api/backfill-eco/status",
+    summary="Get backfill ECO status",
+    description="Get the status of the most recent or currently running ECO backfill job.",
+)
+async def get_backfill_eco_status(job_service: JobServiceDep) -> dict[str, Any]:
+    running_jobs = await job_service.list_jobs(
+        job_type="backfill_eco", status="running", limit=1
+    )
+
+    if running_jobs:
+        return running_jobs[0]
+
+    recent_jobs = await job_service.list_jobs(job_type="backfill_eco", limit=1)
+
+    if not recent_jobs:
+        return {"status": "no_jobs"}
+
+    return recent_jobs[0]
+
+
+@jobs_router.get(
+    "/api/backfill-eco/pending",
+    summary="Get pending ECO backfill count",
+    description="Get the number of games that need ECO backfill.",
+)
+async def get_backfill_eco_pending(analysis_repo: AnalysisRepoDep) -> dict[str, int]:
+    games_needing_backfill = await analysis_repo.get_game_ids_missing_eco()
+    return {"pending_count": len(games_needing_backfill)}

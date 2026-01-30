@@ -14,10 +14,13 @@ from fast_depends import Depends, inject
 
 from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.background.jobs.analyze_games import AnalyzeGamesJob
+from blunder_tutor.background.jobs.backfill_eco import BackfillECOJob
+from blunder_tutor.background.jobs.backfill_phases import BackfillPhasesJob
 from blunder_tutor.background.jobs.import_games import ImportGamesJob
 from blunder_tutor.background.jobs.sync_games import SyncGamesJob
 from blunder_tutor.core.dependencies import (
     get_analysis_repository,
+    get_context,
     get_event_bus,
     get_game_analyzer,
     get_game_repository,
@@ -83,6 +86,7 @@ async def run_analyze_job(
     game_ids: list[str] | None = None,
     source: str | None = None,
     username: str | None = None,
+    steps: list[str] | None = None,
 ) -> dict[str, Any]:
     job = AnalyzeGamesJob(
         job_service=job_service,
@@ -95,7 +99,42 @@ async def run_analyze_job(
         game_ids=game_ids,
         source=source,
         username=username,
+        steps=steps,
     )
+
+
+@inject
+async def run_backfill_phases_job(
+    job_id: str,
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
+    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+) -> dict[str, Any]:
+    ctx = get_context()
+    job = BackfillPhasesJob(
+        job_service=job_service,
+        analysis_repo=analysis_repo,
+        game_repo=game_repo,
+        engine_path=ctx.engine_path,
+    )
+    return await job.execute(job_id=job_id)
+
+
+@inject
+async def run_backfill_eco_job(
+    job_id: str,
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
+    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+) -> dict[str, Any]:
+    ctx = get_context()
+    job = BackfillECOJob(
+        job_service=job_service,
+        analysis_repo=analysis_repo,
+        game_repo=game_repo,
+        engine_path=ctx.engine_path,
+    )
+    return await job.execute(job_id=job_id)
 
 
 # Mapping of job types to runner functions
@@ -103,4 +142,6 @@ JOB_RUNNERS = {
     "import": run_import_job,
     "sync": run_sync_job,
     "analyze": run_analyze_job,
+    "backfill_phases": run_backfill_phases_job,
+    "backfill_eco": run_backfill_eco_job,
 }

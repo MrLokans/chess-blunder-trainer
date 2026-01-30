@@ -27,6 +27,7 @@ class BlunderPuzzle:
     best_move_san: str | None
     best_line: str | None
     best_move_eval: int | None
+    game_phase: int | None = None
 
 
 class Trainer:
@@ -48,6 +49,7 @@ class Trainer:
         end_date: str | None = None,
         exclude_recently_solved: bool = True,
         spaced_repetition_days: int = 30,
+        game_phases: list[int] | None = None,
     ) -> BlunderPuzzle:
         usernames = [username] if isinstance(username, str) else username
 
@@ -62,7 +64,7 @@ class Trainer:
         if not merged_game_side_map:
             raise ValueError("No games found for the requested user/source.")
 
-        blunders = await self.analysis.fetch_blunders()
+        blunders = await self.analysis.fetch_blunders(game_phases=game_phases)
         candidates = filter_blunders(blunders, merged_game_side_map)
 
         if (start_date or end_date) and candidates:
@@ -116,6 +118,7 @@ class Trainer:
         best_move_san = blunder.get("best_move_san")
         best_line = blunder.get("best_line")
         best_move_eval = blunder.get("best_move_eval")
+        blunder_game_phase = blunder.get("game_phase")
 
         game = await self.games.load_game(game_id)
         board = board_before_ply(game, ply)
@@ -141,4 +144,5 @@ class Trainer:
             best_move_san=best_move_san,
             best_line=best_line,
             best_move_eval=best_move_eval,
+            game_phase=blunder_game_phase,
         )

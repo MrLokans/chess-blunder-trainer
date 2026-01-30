@@ -25,6 +25,7 @@ class PuzzleService:
         end_date: str | None = None,
         exclude_recently_solved: bool = True,
         spaced_repetition_days: int = 30,
+        game_phases: list[int] | None = None,
     ) -> PuzzleWithAnalysis:
         puzzle = await self.trainer.pick_random_blunder(
             username=username,
@@ -33,6 +34,7 @@ class PuzzleService:
             end_date=end_date,
             exclude_recently_solved=exclude_recently_solved,
             spaced_repetition_days=spaced_repetition_days,
+            game_phases=game_phases,
         )
 
         if puzzle.best_move_uci and puzzle.best_move_san and puzzle.best_line:
