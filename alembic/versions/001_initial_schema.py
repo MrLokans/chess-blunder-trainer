@@ -8,6 +8,7 @@ This migration creates the complete initial schema including all tables,
 indexes, views, and the inline migrations that were previously applied
 dynamically in ensure_schema().
 """
+
 from __future__ import annotations
 
 import sqlalchemy as sa

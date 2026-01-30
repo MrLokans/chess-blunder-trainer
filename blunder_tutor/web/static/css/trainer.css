@@ -299,6 +299,15 @@
   background: #374151;
 }
 
+/* Legal Move Highlighting */
+.highlight-legal-move {
+  background-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.12) 12%, transparent 13%) !important;
+}
+
+.highlight-legal-capture {
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.12) !important;
+}
+
 /* Square Highlighting */
 .highlight-blunder-from {
   box-shadow: inset 0 0 0 3px var(--accent) !important;

@@ -365,6 +365,26 @@ function clearHighlights() {
   });
 }
 
+function clearLegalMoveHighlights() {
+  document.querySelectorAll('.highlight-legal-move, .highlight-legal-capture').forEach(el => {
+    el.classList.remove('highlight-legal-move', 'highlight-legal-capture');
+  });
+}
+
+function highlightLegalMoves(square) {
+  if (!game) return;
+
+  const moves = game.moves({ square: square, verbose: true });
+  for (const move of moves) {
+    const targetPiece = game.get(move.to);
+    if (targetPiece) {
+      highlightSquare(move.to, 'highlight-legal-capture');
+    } else {
+      highlightSquare(move.to, 'highlight-legal-move');
+    }
+  }
+}
+
 function highlightSquare(square, className) {
   const squareEl = document.querySelector(`.square-${square}`);
   if (squareEl) {
@@ -463,10 +483,16 @@ function onDragStart(source, piece) {
   // Only allow moves for the player's color
   if (puzzle && puzzle.player_color === 'white' && piece.search(/^b/) !== -1) return false;
   if (puzzle && puzzle.player_color === 'black' && piece.search(/^w/) !== -1) return false;
+
+  // Highlight legal moves for this piece
+  highlightLegalMoves(source);
   return true;
 }
 
 function onDrop(source, target) {
+  // Clear legal move highlights
+  clearLegalMoveHighlights();
+
   const move = game.move({
     from: source,
     to: target,
