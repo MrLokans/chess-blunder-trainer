@@ -3,8 +3,8 @@ import asyncio
 
 from tqdm import tqdm
 
-from blunder_tutor.analysis.db import ensure_schema
 from blunder_tutor.cli.base import CLICommand
+from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories import GameRepository
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.services.eco_backfill_service import ECOBackfillService
@@ -20,7 +20,7 @@ class BackfillECOCommand(CLICommand):
 
     async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
         db_path = config.data.db_path
-        ensure_schema(db_path)
+        run_migrations(db_path)
 
         analysis_repo = AnalysisRepository.from_config(config)
         games_repo = GameRepository.from_config(config)

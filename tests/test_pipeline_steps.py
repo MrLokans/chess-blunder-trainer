@@ -6,11 +6,11 @@ from unittest.mock import AsyncMock, MagicMock
 import chess.pgn
 import pytest
 
-from blunder_tutor.analysis.thresholds import Thresholds
 from blunder_tutor.analysis.pipeline.context import StepContext, StepResult
 from blunder_tutor.analysis.pipeline.steps.eco import ECOClassifyStep
 from blunder_tutor.analysis.pipeline.steps.move_quality import MoveQualityStep
 from blunder_tutor.analysis.pipeline.steps.phase import PhaseClassifyStep
+from blunder_tutor.analysis.thresholds import Thresholds
 
 
 @pytest.fixture

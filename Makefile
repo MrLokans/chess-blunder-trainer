@@ -32,7 +32,7 @@ FORCE :=
 .PHONY: help install install-dev cli clean
 .PHONY: fetch-lichess fetch-chesscom list show index
 .PHONY: analyze analyze-bulk train-ui
-.PHONY: format lint check test download-pieces
+.PHONY: format lint check test download-pieces migrate
 .PHONY: docker/build docker/run docker/stop
 
 help: ## Show available targets
@@ -105,6 +105,10 @@ train-ui: ## Start training UI (usage: make train-ui USERNAME=player)
 # Setup
 download-pieces: ## Download chess piece images
 	$(UV) run python blunder_tutor/scripts/download_pieces.py
+
+# Database
+migrate: ## Run database migrations
+	$(UV) run blunder-tutor-db
 
 # Code quality
 lint: ## Lint code with ruff

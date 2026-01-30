@@ -1,9 +1,9 @@
 import argparse
 import asyncio
 
-from blunder_tutor.analysis.db import ensure_schema
 from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.fetchers import chesscom, lichess
+from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.web.config import AppConfig
 
@@ -16,7 +16,7 @@ class FetchCommand(CLICommand):
         asyncio.run(self._run_async(args, config))
 
     async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
-        ensure_schema(config.data.db_path)
+        run_migrations(config.data.db_path)
         game_repo = GameRepository.from_config(config)
 
         try:

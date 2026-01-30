@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
   "aiosqlite>=0.20.0",
+  "alembic>=1.13.0",
   "apscheduler>=3.10.0",
   "fast-depends>=2.4.0",
   "fastapi>=0.116.1",
@@ -29,6 +30,7 @@ dev = [
 
 [project.scripts]
 blunder-tutor = "blunder_tutor.cli:main"
+blunder-tutor-db = "blunder_tutor.migrations:main"
 blunder-tutor-migrate = "blunder_tutor.scripts.migrate_index_to_sqlite:main"
 
 [build-system]

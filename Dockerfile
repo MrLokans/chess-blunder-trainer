@@ -114,6 +114,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -q -O /dev/null http://localhost:8000/health || exit 1
 
-# Start the application
-CMD ["python", "-m", "uvicorn", "blunder_tutor.web.app:create_app_factory", \
-     "--factory", "--host", "0.0.0.0", "--port", "8000"]
+# Start the application (run migrations first, then start uvicorn)
+CMD ["sh", "-c", "python -m blunder_tutor.migrations && exec python -m uvicorn blunder_tutor.web.app:create_app_factory --factory --host 0.0.0.0 --port 8000"]

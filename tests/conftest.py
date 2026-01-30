@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from blunder_tutor.analysis.db import ensure_schema
+from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
@@ -29,7 +29,7 @@ def temp_dir() -> Generator[Path]:
 @pytest.fixture
 def db_path(temp_dir: Path) -> Path:
     path = temp_dir / "test.sqlite"
-    ensure_schema(path)
+    run_migrations(path)
     return path
 
 

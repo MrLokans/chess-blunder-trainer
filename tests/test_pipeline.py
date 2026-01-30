@@ -5,7 +5,6 @@ from unittest.mock import AsyncMock, MagicMock
 import chess.pgn
 import pytest
 
-from blunder_tutor.analysis.thresholds import Thresholds
 from blunder_tutor.analysis.pipeline import (
     AnalysisPipeline,
     PipelineConfig,
@@ -15,6 +14,7 @@ from blunder_tutor.analysis.pipeline import (
 from blunder_tutor.analysis.pipeline.context import StepContext, StepResult
 from blunder_tutor.analysis.pipeline.steps import get_all_steps
 from blunder_tutor.analysis.pipeline.steps.base import AnalysisStep
+from blunder_tutor.analysis.thresholds import Thresholds
 
 
 class DummyStep(AnalysisStep):

@@ -3,8 +3,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from blunder_tutor.analysis.db import ensure_schema
 from blunder_tutor.constants import CLASSIFICATION_BLUNDER
+from blunder_tutor.migrations import run_migrations
 
 
 class TestEnsureSchema:
@@ -12,11 +12,11 @@ class TestEnsureSchema:
         with tempfile.TemporaryDirectory() as temp_dir:
             db_path = Path(temp_dir) / "test.sqlite"
 
-            ensure_schema(db_path)
+            run_migrations(db_path)
 
             assert db_path.exists()
             # Schema creation is idempotent
-            ensure_schema(db_path)
+            run_migrations(db_path)
 
 
 class TestAnalysisExists:

@@ -10,11 +10,11 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from blunder_tutor.analysis.db import ensure_schema
 from blunder_tutor.background.executor import JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.websocket_manager import ConnectionManager
+from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web import routes
 from blunder_tutor.web.config import AppConfig, config_factory
@@ -58,7 +58,7 @@ def create_app(
 ) -> FastAPI:
     app = FastAPI(lifespan=lifespan)
 
-    ensure_schema(config.data.db_path)
+    run_migrations(config.data.db_path)
 
     settings = SettingsRepository.from_config(config=config)
 
