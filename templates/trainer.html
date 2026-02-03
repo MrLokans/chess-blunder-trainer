@@ -90,6 +90,10 @@
           <span class="legend-color user"></span>
           <span>Your move</span>
         </div>
+        <div class="legend-item" id="legendTactic" style="display: none;">
+          <span class="legend-color tactic"></span>
+          <span>Tactical squares</span>
+        </div>
       </div>
       <div class="arrow-toggle">
         <input type="checkbox" id="showArrows" checked>
@@ -98,6 +102,10 @@
       <div class="arrow-toggle">
         <input type="checkbox" id="showThreats" checked>
         <label for="showThreats">Show threats (hanging pieces, pins, checks)</label>
+      </div>
+      <div class="arrow-toggle">
+        <input type="checkbox" id="showTactics">
+        <label for="showTactics">Highlight tactical pattern (after reveal)</label>
       </div>
     </div>
 
@@ -111,6 +119,10 @@
           Playing as White
         </span>
         <span class="phase-badge" id="phaseBadge" style="display: none; margin-left: 10px;"></span>
+        <span class="tactical-badge" id="tacticalBadge" style="display: none; margin-left: 10px;">
+          <span class="icon">⚔️</span>
+          <span id="tacticalPatternName">Fork</span>
+        </span>
       </div>
 
       <!-- Phase filter -->
@@ -129,6 +141,19 @@
             <input type="checkbox" class="phase-filter-checkbox" value="endgame" checked>
             Endgame
           </label>
+        </div>
+      </div>
+
+      <!-- Tactical pattern filter -->
+      <div class="panel-section">
+        <div class="section-title">Filter by Tactical Pattern</div>
+        <div class="tactical-filter" id="tacticalFilter">
+          <button class="tactical-filter-btn active" data-pattern="all">All</button>
+          <button class="tactical-filter-btn" data-pattern="fork">Fork</button>
+          <button class="tactical-filter-btn" data-pattern="pin">Pin</button>
+          <button class="tactical-filter-btn" data-pattern="hanging_piece">Hanging</button>
+          <button class="tactical-filter-btn" data-pattern="skewer">Skewer</button>
+          <button class="tactical-filter-btn" data-pattern="discovered_attack">Discovery</button>
         </div>
       </div>
 
@@ -180,6 +205,14 @@
         <div class="section-title">Best Move</div>
         <div class="best-move" id="bestMoveDisplay">...</div>
         <div class="best-line">Line: <span id="bestLineDisplay">...</span></div>
+        <!-- Tactical explanation -->
+        <div class="tactical-info" id="tacticalInfo" style="display: none;">
+          <div class="tactical-info-title">
+            <span>💡</span>
+            <span id="tacticalInfoTitle">Tactical Pattern</span>
+          </div>
+          <div class="tactical-info-reason" id="tacticalInfoReason">...</div>
+        </div>
         <div class="try-best-move">
           <button class="btn btn-success" id="tryBestBtn">Play Best Move on Board</button>
         </div>

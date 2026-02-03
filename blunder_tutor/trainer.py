@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import contextlib
 import random
 from dataclasses import dataclass
 
+import chess
+
 from blunder_tutor.analysis.filtering import filter_blunders
+from blunder_tutor.analysis.tactics import classify_blunder_tactics
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
@@ -28,6 +32,9 @@ class BlunderPuzzle:
     best_line: str | None
     best_move_eval: int | None
     game_phase: int | None = None
+    tactical_pattern: int | None = None
+    tactical_reason: str | None = None
+    tactical_squares: list[str] | None = None  # Squares involved in the tactic
 
 
 class Trainer:
@@ -50,6 +57,7 @@ class Trainer:
         exclude_recently_solved: bool = True,
         spaced_repetition_days: int = 30,
         game_phases: list[int] | None = None,
+        tactical_patterns: list[int] | None = None,
     ) -> BlunderPuzzle:
         usernames = [username] if isinstance(username, str) else username
 
@@ -64,7 +72,10 @@ class Trainer:
         if not merged_game_side_map:
             raise ValueError("No games found for the requested user/source.")
 
-        blunders = await self.analysis.fetch_blunders(game_phases=game_phases)
+        blunders = await self.analysis.fetch_blunders_with_tactics(
+            game_phases=game_phases,
+            tactical_patterns=tactical_patterns,
+        )
         candidates = filter_blunders(blunders, merged_game_side_map)
 
         if (start_date or end_date) and candidates:
@@ -119,6 +130,8 @@ class Trainer:
         best_line = blunder.get("best_line")
         best_move_eval = blunder.get("best_move_eval")
         blunder_game_phase = blunder.get("game_phase")
+        blunder_tactical_pattern = blunder.get("tactical_pattern")
+        blunder_tactical_reason = blunder.get("tactical_reason")
 
         game = await self.games.load_game(game_id)
         board = board_before_ply(game, ply)
@@ -127,6 +140,11 @@ class Trainer:
         if game_metadata:
             actual_source = game_metadata.get("source", "any")
             actual_username = username if isinstance(username, str) else "multi"
+
+        # Compute tactical squares on-the-fly for highlighting
+        tactical_squares = self._compute_tactical_squares(
+            board, blunder_uci, best_move_uci
+        )
 
         return BlunderPuzzle(
             game_id=game_id,
@@ -145,4 +163,55 @@ class Trainer:
             best_line=best_line,
             best_move_eval=best_move_eval,
             game_phase=blunder_game_phase,
+            tactical_pattern=blunder_tactical_pattern,
+            tactical_reason=blunder_tactical_reason,
+            tactical_squares=tactical_squares,
         )
+
+    def _compute_tactical_squares(
+        self,
+        board: chess.Board,
+        blunder_uci: str,
+        best_move_uci: str | None,
+    ) -> list[str] | None:
+        """Compute squares involved in the tactical pattern for highlighting."""
+        if not best_move_uci:
+            return None
+
+        blunder_move = None
+        best_move = None
+
+        with contextlib.suppress(ValueError):
+            blunder_move = chess.Move.from_uci(blunder_uci)
+
+        with contextlib.suppress(ValueError):
+            best_move = chess.Move.from_uci(best_move_uci)
+
+        if not blunder_move:
+            return None
+
+        # Verify the moves are legal on this board
+        if blunder_move not in board.legal_moves:
+            return None
+
+        try:
+            result = classify_blunder_tactics(board, blunder_move, best_move)
+        except (AssertionError, ValueError):
+            # If tactical analysis fails, return None
+            return None
+
+        squares = []
+
+        # Get squares from missed tactic (best move)
+        if result.missed_tactic and result.missed_tactic.squares:
+            for sq in result.missed_tactic.squares:
+                squares.append(chess.square_name(sq))
+
+        # Get squares from allowed tactic
+        if result.allowed_tactic and result.allowed_tactic.squares:
+            for sq in result.allowed_tactic.squares:
+                sq_name = chess.square_name(sq)
+                if sq_name not in squares:
+                    squares.append(sq_name)
+
+        return squares if squares else None

@@ -16,6 +16,7 @@ from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.background.jobs.analyze_games import AnalyzeGamesJob
 from blunder_tutor.background.jobs.backfill_eco import BackfillECOJob
 from blunder_tutor.background.jobs.backfill_phases import BackfillPhasesJob
+from blunder_tutor.background.jobs.backfill_tactics import BackfillTacticsJob
 from blunder_tutor.background.jobs.delete_all_data import DeleteAllDataJob
 from blunder_tutor.background.jobs.import_games import ImportGamesJob
 from blunder_tutor.background.jobs.sync_games import SyncGamesJob
@@ -157,6 +158,21 @@ async def run_delete_all_data_job(
     return await job.execute(job_id=job_id)
 
 
+@inject
+async def run_backfill_tactics_job(
+    job_id: str,
+    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
+    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+    event_bus: Annotated[EventBus, Depends(get_event_bus)],
+) -> dict[str, Any]:
+    job = BackfillTacticsJob(
+        analysis_repo=analysis_repo,
+        game_repo=game_repo,
+        event_bus=event_bus,
+    )
+    return await job.execute(job_id=job_id)
+
+
 # Mapping of job types to runner functions
 JOB_RUNNERS = {
     "import": run_import_job,
@@ -164,5 +180,6 @@ JOB_RUNNERS = {
     "analyze": run_analyze_job,
     "backfill_phases": run_backfill_phases_job,
     "backfill_eco": run_backfill_eco_job,
+    "backfill_tactics": run_backfill_tactics_job,
     "delete_all_data": run_delete_all_data_job,
 }

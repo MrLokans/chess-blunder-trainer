@@ -7,6 +7,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
+from blunder_tutor.analysis.tactics import PATTERN_LABELS, TacticalPattern
 from blunder_tutor.constants import PHASE_FROM_STRING, PHASE_LABELS
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
@@ -22,6 +23,31 @@ class GamePhaseEnum(str, Enum):
     opening = "opening"
     middlegame = "middlegame"
     endgame = "endgame"
+
+
+class TacticalPatternEnum(str, Enum):
+    fork = "fork"
+    pin = "pin"
+    skewer = "skewer"
+    discovered_attack = "discovered_attack"
+    discovered_check = "discovered_check"
+    double_check = "double_check"
+    back_rank = "back_rank"
+    hanging_piece = "hanging_piece"
+    none = "none"
+
+
+PATTERN_FROM_STRING = {
+    "fork": TacticalPattern.FORK,
+    "pin": TacticalPattern.PIN,
+    "skewer": TacticalPattern.SKEWER,
+    "discovered_attack": TacticalPattern.DISCOVERED_ATTACK,
+    "discovered_check": TacticalPattern.DISCOVERED_CHECK,
+    "double_check": TacticalPattern.DOUBLE_CHECK,
+    "back_rank": TacticalPattern.BACK_RANK_THREAT,
+    "hanging_piece": TacticalPattern.HANGING_PIECE,
+    "none": TacticalPattern.NONE,
+}
 
 
 class SubmitMoveRequest(BaseModel):
@@ -63,6 +89,15 @@ class PuzzleResponse(BaseModel):
     best_move_eval: int | None = Field(description="Evaluation after best move")
     game_phase: str | None = Field(
         description="Game phase (opening, middlegame, endgame)"
+    )
+    tactical_pattern: str | None = Field(
+        description="Tactical pattern involved (Fork, Pin, etc.)"
+    )
+    tactical_reason: str | None = Field(
+        description="Human-readable explanation of why this was a blunder"
+    )
+    tactical_squares: list[str] | None = Field(
+        description="Squares involved in the tactic for highlighting (e.g., ['f7', 'd8', 'h8'])"
     )
 
 
@@ -113,6 +148,10 @@ async def puzzle(
         list[GamePhaseEnum] | None,
         Query(description="Filter by game phases (opening, middlegame, endgame)"),
     ] = None,
+    tactical_patterns: Annotated[
+        list[TacticalPatternEnum] | None,
+        Query(description="Filter by tactical patterns (fork, pin, skewer, etc.)"),
+    ] = None,
 ) -> dict[str, Any]:
     username = config.username
     source = None
@@ -148,6 +187,12 @@ async def puzzle(
         [PHASE_FROM_STRING[p.value] for p in game_phases] if game_phases else None
     )
 
+    tactical_patterns_int = (
+        [PATTERN_FROM_STRING[p.value] for p in tactical_patterns]
+        if tactical_patterns
+        else None
+    )
+
     try:
         puzzle_with_analysis = await puzzle_service.get_puzzle_with_analysis(
             username=username,
@@ -157,6 +202,7 @@ async def puzzle(
             exclude_recently_solved=True,
             spaced_repetition_days=spaced_repetition_days,
             game_phases=game_phases_int,
+            tactical_patterns=tactical_patterns_int,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -190,6 +236,11 @@ async def puzzle(
         "game_phase": PHASE_LABELS.get(puzzle_data.game_phase)
         if puzzle_data.game_phase is not None
         else None,
+        "tactical_pattern": PATTERN_LABELS.get(puzzle_data.tactical_pattern)
+        if puzzle_data.tactical_pattern is not None
+        else None,
+        "tactical_reason": puzzle_data.tactical_reason,
+        "tactical_squares": puzzle_data.tactical_squares,
     }
 
 

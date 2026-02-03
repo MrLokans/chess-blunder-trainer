@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from blunder_tutor.analysis.tactics import PATTERN_LABELS
 from blunder_tutor.constants import COLOR_LABELS, PHASE_LABELS
 from blunder_tutor.repositories.base import BaseDbRepository
 
@@ -570,3 +571,66 @@ class StatsRepository(BaseDbRepository):
             }
             for row in rows
         ]
+
+    async def get_blunders_by_tactical_pattern(
+        self,
+        username: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, object]:
+        """Get blunder statistics grouped by tactical pattern."""
+        query = """
+            SELECT
+                tactical_pattern,
+                COUNT(*) as count,
+                AVG(cp_loss) as avg_cp_loss
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE am.classification = 3
+        """
+        params: list[str] = []
+
+        if username:
+            query += " AND g.username = ?"
+            params.append(username)
+
+        if start_date:
+            query += " AND g.end_time_utc >= ?"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND g.end_time_utc <= ?"
+            params.append(end_date)
+
+        query += " GROUP BY tactical_pattern ORDER BY count DESC"
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        total = sum(row[1] for row in rows)
+        patterns = []
+        for row in rows:
+            pattern_int = row[0]
+            count = row[1]
+            avg_cp_loss = row[2] or 0.0
+            pattern_label = (
+                PATTERN_LABELS.get(pattern_int, "Unknown")
+                if pattern_int is not None
+                else "Not Classified"
+            )
+            percentage = (count / total * 100) if total > 0 else 0.0
+            patterns.append(
+                {
+                    "pattern": pattern_label,
+                    "pattern_id": pattern_int,
+                    "count": count,
+                    "percentage": round(percentage, 1),
+                    "avg_cp_loss": round(float(avg_cp_loss), 1),
+                }
+            )
+
+        return {
+            "total_blunders": total,
+            "by_pattern": patterns,
+        }

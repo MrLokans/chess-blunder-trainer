@@ -51,7 +51,7 @@ class TestPickRandomBlunder:
         trainer.attempts.get_recently_solved_puzzles = AsyncMock(return_value=set())
 
         # Mock analysis repository
-        trainer.analysis.fetch_blunders = AsyncMock(
+        trainer.analysis.fetch_blunders_with_tactics = AsyncMock(
             return_value=[
                 {
                     "game_id": "game1",
@@ -66,6 +66,9 @@ class TestPickRandomBlunder:
                     "best_move_san": "d4",
                     "best_line": "d4 Nf6",
                     "best_move_eval": 30,
+                    "game_phase": None,
+                    "tactical_pattern": None,
+                    "tactical_reason": None,
                 }
             ]
         )
@@ -112,7 +115,7 @@ class TestPickRandomBlunder:
         )
 
         # No blunders
-        trainer.analysis.fetch_blunders = AsyncMock(return_value=[])
+        trainer.analysis.fetch_blunders_with_tactics = AsyncMock(return_value=[])
 
         with pytest.raises(ValueError, match="No blunders found"):
             await trainer.pick_random_blunder("testuser")
@@ -127,7 +130,7 @@ class TestPickRandomBlunder:
         trainer.attempts.get_recently_solved_puzzles = AsyncMock(return_value=set())
 
         # One real blunder, one mate situation (should be filtered)
-        trainer.analysis.fetch_blunders = AsyncMock(
+        trainer.analysis.fetch_blunders_with_tactics = AsyncMock(
             return_value=[
                 {
                     "game_id": "game1",
@@ -142,6 +145,9 @@ class TestPickRandomBlunder:
                     "best_move_san": None,
                     "best_line": None,
                     "best_move_eval": None,
+                    "game_phase": None,
+                    "tactical_pattern": None,
+                    "tactical_reason": None,
                 },
                 {
                     "game_id": "game1",
@@ -156,6 +162,9 @@ class TestPickRandomBlunder:
                     "best_move_san": "e4",
                     "best_line": "e4 e5",
                     "best_move_eval": 30,
+                    "game_phase": None,
+                    "tactical_pattern": None,
+                    "tactical_reason": None,
                 },
             ]
         )

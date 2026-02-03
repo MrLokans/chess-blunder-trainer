@@ -17,7 +17,7 @@ class WriteAnalysisStep(AnalysisStep):
 
     @property
     def depends_on(self) -> frozenset[str]:
-        return frozenset({"move_quality", "phase", "eco"})
+        return frozenset({"move_quality", "phase", "eco", "tactics"})
 
     async def execute(self, ctx: StepContext) -> StepResult:
         move_quality_result = ctx.get_step_result("move_quality")
@@ -41,8 +41,21 @@ class WriteAnalysisStep(AnalysisStep):
         moves = move_quality_result.data.get("moves", [])
         phases = {p["ply"]: p["phase"] for p in phase_result.data.get("phases", [])}
 
+        # Get tactics data if available
+        tactics_result = ctx.get_step_result("tactics")
+        tactics_map = {}
+        if tactics_result and tactics_result.success:
+            for t in tactics_result.data.get("tactics", []):
+                tactics_map[t["ply"]] = {
+                    "tactical_pattern": t.get("primary_pattern"),
+                    "tactical_reason": t.get("blunder_reason"),
+                }
+
         for move in moves:
             move["game_phase"] = phases.get(move["ply"])
+            if move["ply"] in tactics_map:
+                move["tactical_pattern"] = tactics_map[move["ply"]]["tactical_pattern"]
+                move["tactical_reason"] = tactics_map[move["ply"]]["tactical_reason"]
 
         eco_code = None
         eco_name = None

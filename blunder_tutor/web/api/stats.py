@@ -416,3 +416,49 @@ async def get_games_by_hour(
         end_date=end_date_str,
     )
     return {"items": items}
+
+
+class TacticalPatternItem(BaseModel):
+    pattern: str = Field(description="Tactical pattern name (Fork, Pin, etc.)")
+    pattern_id: int | None = Field(description="Tactical pattern ID")
+    count: int = Field(description="Number of blunders with this pattern")
+    percentage: float = Field(description="Percentage of total blunders")
+    avg_cp_loss: float = Field(description="Average centipawn loss")
+
+
+class BlundersByTacticalPattern(BaseModel):
+    total_blunders: int = Field(description="Total number of blunders")
+    by_pattern: list[TacticalPatternItem] = Field(
+        description="Blunders grouped by tactical pattern"
+    )
+
+
+@stats_router.get(
+    "/api/stats/blunders/by-tactical-pattern",
+    response_model=BlundersByTacticalPattern,
+    summary="Get blunders by tactical pattern",
+    description="Returns blunder statistics grouped by tactical pattern (Fork, Pin, Skewer, etc.).",
+)
+async def get_blunders_by_tactical_pattern(
+    stats_repo: StatsRepoDep,
+    username: Annotated[
+        str | None,
+        Query(max_length=100, description="Filter by username"),
+    ] = None,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+) -> dict[str, Any]:
+    start_date_str = start_date.isoformat() if start_date else None
+    end_date_str = end_date.isoformat() if end_date else None
+
+    return await stats_repo.get_blunders_by_tactical_pattern(
+        username=username,
+        start_date=start_date_str,
+        end_date=end_date_str,
+    )

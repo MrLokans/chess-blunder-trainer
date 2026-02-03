@@ -425,3 +425,66 @@ async def get_backfill_eco_status(job_service: JobServiceDep) -> dict[str, Any]:
 async def get_backfill_eco_pending(analysis_repo: AnalysisRepoDep) -> dict[str, int]:
     games_needing_backfill = await analysis_repo.get_game_ids_missing_eco()
     return {"pending_count": len(games_needing_backfill)}
+
+
+@jobs_router.post(
+    "/api/backfill-tactics/start",
+    response_model=JobResponse,
+    summary="Start tactics backfill",
+    description="Start a background job to classify tactical patterns for existing blunders.",
+)
+async def start_backfill_tactics_job(
+    job_service: JobServiceDep,
+    analysis_repo: AnalysisRepoDep,
+    event_bus: EventBusDep,
+) -> dict[str, str]:
+    games_needing_backfill = await analysis_repo.get_game_ids_missing_tactics()
+
+    if not games_needing_backfill:
+        raise HTTPException(status_code=400, detail="No games need tactics backfill")
+
+    job_id = await job_service.create_job(
+        job_type="backfill_tactics",
+        max_games=len(games_needing_backfill),
+    )
+
+    event = JobExecutionRequestEvent.create(
+        job_id=job_id,
+        job_type="backfill_tactics",
+    )
+    await event_bus.publish(event)
+
+    return {"job_id": job_id}
+
+
+@jobs_router.get(
+    "/api/backfill-tactics/status",
+    summary="Get backfill tactics status",
+    description="Get the status of the most recent or currently running tactics backfill job.",
+)
+async def get_backfill_tactics_status(job_service: JobServiceDep) -> dict[str, Any]:
+    running_jobs = await job_service.list_jobs(
+        job_type="backfill_tactics", status="running", limit=1
+    )
+
+    if running_jobs:
+        return running_jobs[0]
+
+    recent_jobs = await job_service.list_jobs(job_type="backfill_tactics", limit=1)
+
+    if not recent_jobs:
+        return {"status": "no_jobs"}
+
+    return recent_jobs[0]
+
+
+@jobs_router.get(
+    "/api/backfill-tactics/pending",
+    summary="Get pending tactics backfill count",
+    description="Get the number of games with blunders that need tactical pattern classification.",
+)
+async def get_backfill_tactics_pending(
+    analysis_repo: AnalysisRepoDep,
+) -> dict[str, int]:
+    games_needing_backfill = await analysis_repo.get_game_ids_missing_tactics()
+    return {"pending_count": len(games_needing_backfill)}

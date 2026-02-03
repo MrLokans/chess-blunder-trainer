@@ -8,6 +8,7 @@ let submitted = false;
 let bestRevealed = false;
 let moveHistory = [];
 let currentPhaseFilters = [];
+let currentTacticalFilter = 'all';
 
 // DOM elements
 const evalBarFill = document.getElementById('evalBarFill');
@@ -45,6 +46,14 @@ const showArrowsCheckbox = document.getElementById('showArrows');
 const showThreatsCheckbox = document.getElementById('showThreats');
 const phaseFilterCheckboxes = document.querySelectorAll('.phase-filter-checkbox');
 const phaseBadge = document.getElementById('phaseBadge');
+const tacticalBadge = document.getElementById('tacticalBadge');
+const tacticalPatternName = document.getElementById('tacticalPatternName');
+const tacticalInfo = document.getElementById('tacticalInfo');
+const tacticalInfoTitle = document.getElementById('tacticalInfoTitle');
+const tacticalInfoReason = document.getElementById('tacticalInfoReason');
+const tacticalFilterBtns = document.querySelectorAll('.tactical-filter-btn');
+const showTacticsCheckbox = document.getElementById('showTactics');
+const legendTactic = document.getElementById('legendTactic');
 
 // Empty state elements
 const emptyState = document.getElementById('emptyState');
@@ -171,17 +180,36 @@ function clearArrows() {
 }
 
 // Threat detection functions
+function hasActiveFilters() {
+  const hasTacticalFilter = currentTacticalFilter && currentTacticalFilter !== 'all';
+  const hasPhaseFilter = currentPhaseFilters.length > 0 && currentPhaseFilters.length < 3;
+  return hasTacticalFilter || hasPhaseFilter;
+}
+
 function showEmptyState(errorType) {
   // Hide trainer layout, show empty state
   trainerLayout.style.display = 'none';
   emptyState.style.display = 'block';
   statsCard.style.display = 'none';
 
+  // Reset onclick handler
+  emptyStateAction.onclick = null;
+
   if (errorType === 'no_games') {
     emptyStateTitle.textContent = 'No games imported';
     emptyStateMessage.textContent = 'Import your games from Lichess or Chess.com to start training on your blunders.';
     emptyStateAction.textContent = 'Import Games';
     emptyStateAction.href = '/management';
+  } else if (errorType === 'no_blunders' && hasActiveFilters()) {
+    // No blunders with current filters - offer to clear
+    emptyStateTitle.textContent = 'No matching blunders';
+    emptyStateMessage.textContent = 'No blunders found with the current filters. Try selecting different filters or clear them to see all blunders.';
+    emptyStateAction.textContent = 'Clear Filters';
+    emptyStateAction.href = '#';
+    emptyStateAction.onclick = (e) => {
+      e.preventDefault();
+      clearAllFilters();
+    };
   } else if (errorType === 'no_blunders') {
     emptyStateTitle.textContent = 'No blunders found';
     emptyStateMessage.textContent = 'Your games have been imported but no blunders were found yet. Run analysis to identify blunders in your games.';
@@ -195,6 +223,29 @@ function showEmptyState(errorType) {
   }
 }
 
+function clearAllFilters() {
+  // Reset tactical filter
+  currentTacticalFilter = 'all';
+  localStorage.removeItem('blunder-tutor-tactical-filter');
+  tacticalFilterBtns.forEach(btn => {
+    if (btn.dataset.pattern === 'all') {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Reset phase filters to all checked
+  currentPhaseFilters = ['opening', 'middlegame', 'endgame'];
+  localStorage.setItem('blunder-tutor-phase-filters', JSON.stringify(currentPhaseFilters));
+  phaseFilterCheckboxes.forEach(checkbox => {
+    checkbox.checked = true;
+  });
+
+  // Reload puzzle
+  loadPuzzle();
+}
+
 function hideEmptyState() {
   emptyState.style.display = 'none';
   trainerLayout.style.display = 'grid';
@@ -205,6 +256,67 @@ function clearThreatHighlights() {
   document.querySelectorAll('.highlight-hanging, .highlight-pinned, .highlight-checking, .highlight-king-danger').forEach(el => {
     el.classList.remove('highlight-hanging', 'highlight-pinned', 'highlight-checking', 'highlight-king-danger');
   });
+}
+
+function clearTacticalHighlights() {
+  document.querySelectorAll('.highlight-tactic-primary, .highlight-tactic-secondary').forEach(el => {
+    el.classList.remove('highlight-tactic-primary', 'highlight-tactic-secondary');
+  });
+}
+
+function drawTacticalHighlights() {
+  clearTacticalHighlights();
+
+  if (!showTacticsCheckbox || !showTacticsCheckbox.checked) {
+    return;
+  }
+
+  if (!bestRevealed || !puzzle || !puzzle.tactical_squares) {
+    return;
+  }
+
+  // Only show at original position
+  const atOriginalPosition = game.fen() === puzzle.fen;
+  if (!atOriginalPosition) {
+    return;
+  }
+
+  const squares = puzzle.tactical_squares;
+  if (squares.length > 0) {
+    // First square is the attacking piece (primary)
+    highlightSquare(squares[0], 'highlight-tactic-primary');
+
+    // Rest are target squares (secondary)
+    for (let i = 1; i < squares.length; i++) {
+      highlightSquare(squares[i], 'highlight-tactic-secondary');
+    }
+
+    // Show legend
+    if (legendTactic) {
+      legendTactic.style.display = 'flex';
+    }
+  }
+}
+
+function updateTacticalBadge(pattern) {
+  if (!tacticalBadge) return;
+  if (pattern && pattern !== 'None') {
+    tacticalPatternName.textContent = pattern;
+    tacticalBadge.style.display = 'inline-flex';
+  } else {
+    tacticalBadge.style.display = 'none';
+  }
+}
+
+function showTacticalInfo(pattern, reason) {
+  if (!tacticalInfo) return;
+  if (pattern && pattern !== 'None' && reason) {
+    tacticalInfoTitle.textContent = pattern;
+    tacticalInfoReason.textContent = reason;
+    tacticalInfo.style.display = 'block';
+  } else {
+    tacticalInfo.style.display = 'none';
+  }
 }
 
 function getAttackers(gameObj, square, byColor) {
@@ -537,16 +649,25 @@ async function loadPuzzle() {
   submitBtn.disabled = false;
   showBestBtn.disabled = false;
   clearHighlights();
+  clearTacticalHighlights();
   highlightLegend.style.display = 'none';
   legendBest.style.display = 'none';
   legendUser.style.display = 'none';
   legendBlunder.style.display = 'flex';
+  if (legendTactic) legendTactic.style.display = 'none';
+  updateTacticalBadge(null);
+  if (tacticalInfo) tacticalInfo.style.display = 'none';
 
   try {
     let url = '/api/puzzle';
+    const params = new URLSearchParams();
     if (currentPhaseFilters.length > 0) {
-      const params = new URLSearchParams();
       currentPhaseFilters.forEach(phase => params.append('game_phases', phase));
+    }
+    if (currentTacticalFilter && currentTacticalFilter !== 'all') {
+      params.append('tactical_patterns', currentTacticalFilter);
+    }
+    if (params.toString()) {
       url += '?' + params.toString();
     }
     const resp = await fetch(url);
@@ -597,6 +718,7 @@ async function loadPuzzle() {
     // Update UI
     updateColorBadge(puzzle.player_color);
     updatePhaseBadge(puzzle.game_phase);
+    updateTacticalBadge(puzzle.tactical_pattern);
     blunderMove.textContent = puzzle.blunder_san;
     evalBefore.textContent = puzzle.eval_before_display;
     evalAfter.textContent = puzzle.eval_after_display;
@@ -733,6 +855,12 @@ function revealBestMove() {
     legendBest.style.display = 'flex';
   }
 
+  // Show tactical info and highlights
+  if (puzzle) {
+    showTacticalInfo(puzzle.tactical_pattern, puzzle.tactical_reason);
+    drawTacticalHighlights();
+  }
+
   // Redraw arrows to include best move arrow
   drawArrows();
 }
@@ -755,6 +883,7 @@ function resetPosition() {
     if (bestRevealed) {
       showBlunderHighlight();
       showBestMoveHighlight();
+      drawTacticalHighlights();
     } else {
       showBlunderHighlight();
     }
@@ -885,12 +1014,44 @@ undoBtn.addEventListener('click', undoMove);
 lichessBtn.addEventListener('click', openLichessAnalysis);
 showArrowsCheckbox.addEventListener('change', drawArrows);
 showThreatsCheckbox.addEventListener('change', drawThreatHighlights);
+if (showTacticsCheckbox) {
+  showTacticsCheckbox.addEventListener('change', drawTacticalHighlights);
+}
 phaseFilterCheckboxes.forEach(checkbox => {
   checkbox.addEventListener('change', () => {
     updatePhaseFilters();
     loadPuzzle();
   });
 });
+
+// Tactical filter event listeners
+tacticalFilterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Update active state
+    tacticalFilterBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Update filter and reload
+    currentTacticalFilter = btn.dataset.pattern;
+    localStorage.setItem('blunder-tutor-tactical-filter', currentTacticalFilter);
+    loadPuzzle();
+  });
+});
+
+// Load tactical filter from storage
+function loadTacticalFilterFromStorage() {
+  const stored = localStorage.getItem('blunder-tutor-tactical-filter');
+  if (stored) {
+    currentTacticalFilter = stored;
+    tacticalFilterBtns.forEach(btn => {
+      if (btn.dataset.pattern === stored) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+}
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
@@ -907,5 +1068,6 @@ document.addEventListener('keydown', (e) => {
 
 // Initialize
 loadPhaseFiltersFromStorage();
+loadTacticalFilterFromStorage();
 loadPuzzle();
 // Stats are loaded automatically via HTMX on page load

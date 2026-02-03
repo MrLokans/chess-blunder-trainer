@@ -60,8 +60,9 @@ class AnalysisRepository(BaseDbRepository):
             INSERT INTO analysis_moves (
                 game_id, ply, move_number, player, uci, san,
                 eval_before, eval_after, delta, cp_loss, classification,
-                best_move_uci, best_move_san, best_line, best_move_eval, game_phase
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                best_move_uci, best_move_san, best_line, best_move_eval, game_phase,
+                tactical_pattern, tactical_reason
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             [
                 (
@@ -81,6 +82,8 @@ class AnalysisRepository(BaseDbRepository):
                     move.get("best_line"),
                     move.get("best_move_eval"),
                     move.get("game_phase"),
+                    move.get("tactical_pattern"),
+                    move.get("tactical_reason"),
                 )
                 for move in moves
             ],
@@ -275,3 +278,119 @@ class AnalysisRepository(BaseDbRepository):
             (game_id,),
         )
         await conn.commit()
+
+    async def get_game_ids_missing_tactics(self) -> list[str]:
+        """Get game IDs where blunders don't have tactical patterns classified."""
+        conn = await self.get_connection()
+        async with conn.execute(
+            """
+            SELECT DISTINCT game_id FROM analysis_moves
+            WHERE classification = 3 AND tactical_pattern IS NULL
+            """
+        ) as cursor:
+            rows = await cursor.fetchall()
+        return [row[0] for row in rows]
+
+    async def fetch_blunders_for_tactics_backfill(
+        self, game_id: str
+    ) -> list[dict[str, object]]:
+        """Fetch blunders that need tactical pattern classification."""
+        conn = await self.get_connection()
+        async with conn.execute(
+            """
+            SELECT ply, uci, best_move_uci
+            FROM analysis_moves
+            WHERE game_id = ? AND classification = 3 AND tactical_pattern IS NULL
+            ORDER BY ply
+            """,
+            (game_id,),
+        ) as cursor:
+            rows = await cursor.fetchall()
+        return [{"ply": row[0], "uci": row[1], "best_move_uci": row[2]} for row in rows]
+
+    async def update_move_tactics(
+        self,
+        game_id: str,
+        ply: int,
+        tactical_pattern: int | None,
+        tactical_reason: str | None,
+    ) -> None:
+        """Update tactical pattern for a specific move."""
+        conn = await self.get_connection()
+        await conn.execute(
+            """
+            UPDATE analysis_moves
+            SET tactical_pattern = ?, tactical_reason = ?
+            WHERE game_id = ? AND ply = ?
+            """,
+            (tactical_pattern, tactical_reason, game_id, ply),
+        )
+        await conn.commit()
+
+    async def update_moves_tactics_batch(
+        self, updates: list[tuple[int | None, str | None, str, int]]
+    ) -> None:
+        """Batch update tactical patterns for multiple moves."""
+        conn = await self.get_connection()
+        await conn.executemany(
+            """
+            UPDATE analysis_moves
+            SET tactical_pattern = ?, tactical_reason = ?
+            WHERE game_id = ? AND ply = ?
+            """,
+            updates,
+        )
+        await conn.commit()
+
+    async def fetch_blunders_with_tactics(
+        self,
+        game_phases: list[int] | None = None,
+        tactical_patterns: list[int] | None = None,
+    ) -> list[dict[str, object]]:
+        """Fetch blunders with optional filtering by phase and tactical pattern."""
+        conn = await self.get_connection()
+        conditions = ["classification = ?"]
+        params: list = [CLASSIFICATION_BLUNDER]
+
+        if game_phases:
+            placeholders = ",".join("?" * len(game_phases))
+            conditions.append(f"game_phase IN ({placeholders})")
+            params.extend(game_phases)
+
+        if tactical_patterns:
+            placeholders = ",".join("?" * len(tactical_patterns))
+            conditions.append(f"tactical_pattern IN ({placeholders})")
+            params.extend(tactical_patterns)
+
+        where_clause = " AND ".join(conditions)
+        query = f"""
+            SELECT game_id, ply, player, uci, san, eval_before, eval_after, cp_loss,
+                   best_move_uci, best_move_san, best_line, best_move_eval,
+                   game_phase, tactical_pattern, tactical_reason
+            FROM analysis_moves
+            WHERE {where_clause}
+        """
+
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        return [
+            {
+                "game_id": row[0],
+                "ply": row[1],
+                "player": row[2],
+                "uci": row[3],
+                "san": row[4],
+                "eval_before": row[5],
+                "eval_after": row[6],
+                "cp_loss": row[7],
+                "best_move_uci": row[8],
+                "best_move_san": row[9],
+                "best_line": row[10],
+                "best_move_eval": row[11],
+                "game_phase": row[12],
+                "tactical_pattern": row[13],
+                "tactical_reason": row[14],
+            }
+            for row in rows
+        ]
