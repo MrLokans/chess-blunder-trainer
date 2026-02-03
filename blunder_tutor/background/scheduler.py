@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Annotated
 
 from apscheduler.executors.asyncio import AsyncIOExecutor
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from fast_depends import Depends, inject
@@ -25,19 +25,31 @@ async def _create_sync_job(
     event_bus: EventBus,
     job_service: Annotated[JobService, Depends(get_job_service)],
 ) -> None:
-    """Create a sync job and publish execution request."""
     job_id = await job_service.create_job(job_type="sync")
     event = JobExecutionRequestEvent.create(job_id=job_id, job_type="sync")
     await event_bus.publish(event)
 
 
+async def _run_scheduled_sync(
+    db_path: Path, event_bus: EventBus, engine_path: str
+) -> None:
+    context = DependencyContext(
+        db_path=db_path,
+        event_bus=event_bus,
+        engine_path=engine_path,
+    )
+    set_context(context)
+    try:
+        await _create_sync_job(event_bus=event_bus)
+    finally:
+        clear_context()
+
+
 class BackgroundScheduler:
     def __init__(self, db_path: Path, event_bus: EventBus, engine_path: str):
-        db_url = f"sqlite:///{str(db_path)}"
-
-        jobstores = {
-            "default": SQLAlchemyJobStore(url=db_url, tablename="apscheduler_jobs")
-        }
+        # Use in-memory job store to avoid serialization issues
+        # Jobs are re-created on startup from settings anyway
+        jobstores = {"default": MemoryJobStore()}
         executors = {"default": AsyncIOExecutor()}
         job_defaults = {"coalesce": True, "max_instances": 1}
 
@@ -48,18 +60,6 @@ class BackgroundScheduler:
         self._event_bus = event_bus
         self._engine_path = engine_path
 
-    async def _run_scheduled_sync(self) -> None:
-        context = DependencyContext(
-            db_path=self._db_path,
-            event_bus=self._event_bus,
-            engine_path=self._engine_path,
-        )
-        set_context(context)
-        try:
-            await _create_sync_job(event_bus=self._event_bus)
-        finally:
-            clear_context()
-
     def start(self, settings: dict[str, str | None]) -> None:
         with contextlib.suppress(Exception):
             self.scheduler.remove_job("auto_sync")
@@ -69,10 +69,11 @@ class BackgroundScheduler:
             interval_hours = int(interval_hours_str) if interval_hours_str else 24
 
             self.scheduler.add_job(
-                func=self._run_scheduled_sync,
+                func=_run_scheduled_sync,
                 trigger=IntervalTrigger(hours=interval_hours),
                 id="auto_sync",
                 replace_existing=True,
+                args=[self._db_path, self._event_bus, self._engine_path],
             )
 
         if not self.scheduler.running:
@@ -91,8 +92,9 @@ class BackgroundScheduler:
             interval_hours = int(interval_hours_str) if interval_hours_str else 24
 
             self.scheduler.add_job(
-                func=self._run_scheduled_sync,
+                func=_run_scheduled_sync,
                 trigger=IntervalTrigger(hours=interval_hours),
                 id="auto_sync",
                 replace_existing=True,
+                args=[self._db_path, self._event_bus, self._engine_path],
             )
