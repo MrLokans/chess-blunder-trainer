@@ -9,6 +9,7 @@ from blunder_tutor.web.api.analysis import analysis_router
 from blunder_tutor.web.api.jobs import jobs_router
 from blunder_tutor.web.api.settings import settings_router
 from blunder_tutor.web.api.stats import stats_router
+from blunder_tutor.web.api.system import system_router
 from blunder_tutor.web.ui.router import ui_router
 
 
@@ -30,5 +31,6 @@ def configure_router(app: FastAPI) -> FastAPI:
     app.include_router(jobs_router)
     app.include_router(stats_router)
     app.include_router(analysis_router)
+    app.include_router(system_router)
     app.include_router(websocket.router)
     return app

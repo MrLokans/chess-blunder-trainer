@@ -205,7 +205,14 @@ class AnalysisRepository(BaseDbRepository):
     async def get_game_ids_missing_eco(self) -> list[str]:
         conn = await self.get_connection()
         async with conn.execute(
-            "SELECT game_id FROM analysis_games WHERE eco_code IS NULL"
+            """
+            SELECT ag.game_id FROM analysis_games ag
+            WHERE ag.eco_code IS NULL
+            AND NOT EXISTS (
+                SELECT 1 FROM analysis_step_status ass
+                WHERE ass.game_id = ag.game_id AND ass.step_id = 'eco'
+            )
+            """
         ) as cursor:
             rows = await cursor.fetchall()
         return [row[0] for row in rows]

@@ -31,7 +31,3 @@ class ECOClassifyStep(AnalysisStep):
             success=True,
             data={"eco_code": eco_code, "eco_name": eco_name},
         )
-
-    async def is_completed(self, ctx: StepContext) -> bool:
-        eco_data = await ctx.analysis_repo.get_game_eco(ctx.game_id)
-        return eco_data.get("eco_code") is not None

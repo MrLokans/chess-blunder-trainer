@@ -464,3 +464,109 @@ class StatsRepository(BaseDbRepository):
             "by_color": colors,
             "blunders_by_date": blunders_by_date,
         }
+
+    async def get_games_by_date(
+        self,
+        username: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> list[dict[str, object]]:
+        query = """
+            SELECT
+                DATE(g.end_time_utc) as game_date,
+                COUNT(DISTINCT g.game_id) as game_count,
+                AVG(game_stats.avg_cpl) as avg_cpl,
+                SUM(game_stats.blunder_count) as total_blunders
+            FROM game_index_cache g
+            LEFT JOIN (
+                SELECT
+                    game_id,
+                    AVG(cp_loss) as avg_cpl,
+                    SUM(CASE WHEN classification = 3 THEN 1 ELSE 0 END) as blunder_count
+                FROM analysis_moves
+                GROUP BY game_id
+            ) game_stats ON g.game_id = game_stats.game_id
+            WHERE g.analyzed = 1
+        """
+        params: list[object] = []
+
+        if username:
+            query += " AND g.username = ?"
+            params.append(username)
+
+        if start_date:
+            query += " AND g.end_time_utc >= ?"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND g.end_time_utc <= ?"
+            params.append(end_date)
+
+        query += " GROUP BY game_date ORDER BY game_date ASC"
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        return [
+            {
+                "date": row[0],
+                "game_count": row[1],
+                "avg_cpl": round(float(row[2]), 1) if row[2] else 0.0,
+                "blunders": int(row[3]) if row[3] else 0,
+            }
+            for row in rows
+        ]
+
+    async def get_games_by_hour(
+        self,
+        username: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> list[dict[str, object]]:
+        query = """
+            SELECT
+                CAST(strftime('%H', g.end_time_utc) AS INTEGER) as hour,
+                COUNT(DISTINCT g.game_id) as game_count,
+                AVG(game_stats.avg_cpl) as avg_cpl,
+                SUM(game_stats.blunder_count) as total_blunders
+            FROM game_index_cache g
+            LEFT JOIN (
+                SELECT
+                    game_id,
+                    AVG(cp_loss) as avg_cpl,
+                    SUM(CASE WHEN classification = 3 THEN 1 ELSE 0 END) as blunder_count
+                FROM analysis_moves
+                GROUP BY game_id
+            ) game_stats ON g.game_id = game_stats.game_id
+            WHERE g.analyzed = 1
+        """
+        params: list[object] = []
+
+        if username:
+            query += " AND g.username = ?"
+            params.append(username)
+
+        if start_date:
+            query += " AND g.end_time_utc >= ?"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND g.end_time_utc <= ?"
+            params.append(end_date)
+
+        query += " GROUP BY hour ORDER BY hour ASC"
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        return [
+            {
+                "hour": row[0],
+                "game_count": row[1],
+                "avg_cpl": round(float(row[2]), 1) if row[2] else 0.0,
+                "blunders": int(row[3]) if row[3] else 0,
+            }
+            for row in rows
+        ]

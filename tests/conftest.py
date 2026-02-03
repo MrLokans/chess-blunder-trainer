@@ -90,11 +90,13 @@ async def trainer(
 
 
 @pytest.fixture
-def app(test_config: AppConfig, monkeypatch) -> TestClient:
+def app(test_config: AppConfig) -> Generator[TestClient]:
     import chess
     import chess.engine
+    from unittest.mock import patch
 
     mock_engine = MagicMock()
+    mock_engine.id = {"name": "Stockfish 17", "author": "T. Romstad, M. Costalba, J. Kiiski, G. Linscott"}
     mock_engine.analyse = AsyncMock(
         return_value={
             "score": chess.engine.PovScore(chess.engine.Cp(50), chess.WHITE),
@@ -107,9 +109,10 @@ def app(test_config: AppConfig, monkeypatch) -> TestClient:
     async def mock_popen_uci(path):
         return (mock_transport, mock_engine)
 
-    monkeypatch.setattr("chess.engine.popen_uci", mock_popen_uci)
-    fastapi_app = create_app(test_config)
-    return TestClient(fastapi_app)
+    with patch("chess.engine.popen_uci", mock_popen_uci):
+        fastapi_app = create_app(test_config)
+        with TestClient(fastapi_app) as client:
+            yield client
 
 
 def pytest_configure(config):

@@ -330,3 +330,89 @@ async def get_blunders_by_color(
         start_date=start_date_str,
         end_date=end_date_str,
     )
+
+
+class GamesByDateItem(BaseModel):
+    date: str = Field(description="Date (YYYY-MM-DD)")
+    game_count: int = Field(description="Number of games played on this date")
+    avg_cpl: float = Field(description="Average centipawn loss")
+    blunders: int = Field(description="Total blunders on this date")
+
+
+class GamesByDate(BaseModel):
+    items: list[GamesByDateItem] = Field(description="Daily game statistics")
+
+
+class GamesByHourItem(BaseModel):
+    hour: int = Field(description="Hour of day (0-23)")
+    game_count: int = Field(description="Number of games played during this hour")
+    avg_cpl: float = Field(description="Average centipawn loss")
+    blunders: int = Field(description="Total blunders during this hour")
+
+
+class GamesByHour(BaseModel):
+    items: list[GamesByHourItem] = Field(description="Hourly game statistics")
+
+
+@stats_router.get(
+    "/api/stats/games/by-date",
+    response_model=GamesByDate,
+    summary="Get game statistics by date",
+    description="Returns daily game counts and quality metrics (average CPL, blunders).",
+)
+async def get_games_by_date(
+    stats_repo: StatsRepoDep,
+    username: Annotated[
+        str | None,
+        Query(max_length=100, description="Filter by username"),
+    ] = None,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+) -> dict[str, Any]:
+    start_date_str = start_date.isoformat() if start_date else None
+    end_date_str = end_date.isoformat() if end_date else None
+
+    items = await stats_repo.get_games_by_date(
+        username=username,
+        start_date=start_date_str,
+        end_date=end_date_str,
+    )
+    return {"items": items}
+
+
+@stats_router.get(
+    "/api/stats/games/by-hour",
+    response_model=GamesByHour,
+    summary="Get game statistics by hour of day",
+    description="Returns hourly game counts and quality metrics aggregated across all days.",
+)
+async def get_games_by_hour(
+    stats_repo: StatsRepoDep,
+    username: Annotated[
+        str | None,
+        Query(max_length=100, description="Filter by username"),
+    ] = None,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+) -> dict[str, Any]:
+    start_date_str = start_date.isoformat() if start_date else None
+    end_date_str = end_date.isoformat() if end_date else None
+
+    items = await stats_repo.get_games_by_hour(
+        username=username,
+        start_date=start_date_str,
+        end_date=end_date_str,
+    )
+    return {"items": items}

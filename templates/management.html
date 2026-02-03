@@ -8,6 +8,13 @@
 {{ render_nav('management') }}
 
 <div class="card">
+  <h2>Chess Engine Status</h2>
+  <div id="engineStatus">
+    <p style="color: var(--text-muted); font-size: 0.875rem;">Loading engine status...</p>
+  </div>
+</div>
+
+<div class="card">
   <h2>Bulk Import Games</h2>
   <div id="importMessage" style="display: none;"></div>
   <form id="importForm">
@@ -179,6 +186,53 @@
     username: 'blunder_import_username',
     maxGames: 'blunder_import_maxGames'
   };
+
+  // Load engine status
+  async function loadEngineStatus() {
+    const container = document.getElementById('engineStatus');
+    try {
+      const resp = await fetch('/api/system/engine');
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+      }
+      const data = await resp.json();
+
+      if (data.available) {
+        container.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--success);"></span>
+            <span style="font-weight: 600; color: var(--success);">Engine Available</span>
+          </div>
+          <table style="font-size: 0.875rem; color: var(--text-muted);">
+            <tr><td style="padding-right: 16px;">Name:</td><td style="font-family: monospace;">${data.name || 'Unknown'}</td></tr>
+            <tr><td style="padding-right: 16px;">Path:</td><td style="font-family: monospace;">${data.path || 'Unknown'}</td></tr>
+          </table>
+        `;
+      } else {
+        container.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--error);"></span>
+            <span style="font-weight: 600; color: var(--error);">Engine Unavailable</span>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.875rem;">
+            Path: <code>${data.path || 'Not configured'}</code><br>
+            Please ensure Stockfish is installed and the path is correct.
+          </p>
+        `;
+      }
+    } catch (err) {
+      container.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--error);"></span>
+          <span style="color: var(--error);">Failed to load engine status: ${err.message}</span>
+        </div>
+      `;
+      console.error('Failed to load engine status:', err);
+    }
+  }
+
+  // Load engine status on page load
+  loadEngineStatus();
 
   // Trigger HTMX refresh of jobs table
   function refreshJobsTable() {
@@ -404,7 +458,7 @@
 
       showMessage('analysisMessage', 'success', 'Analysis stopped!');
       hideAnalysisProgress();
-      loadJobs();
+      refreshJobsTable();
       loadAnalysisStatus();
 
     } catch (err) {
@@ -453,7 +507,7 @@
           showMessage('analysisMessage', 'error', 'Analysis failed: ' + (job.error_message || 'Unknown error'));
         }
 
-        loadJobs();
+        refreshJobsTable();
         loadAnalysisStatus();
       }
 

@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from blunder_tutor.analysis.pipeline.context import StepContext
+from blunder_tutor.analysis.pipeline.context import StepContext, StepResult
 from blunder_tutor.analysis.thresholds import Thresholds
 
 if TYPE_CHECKING:
@@ -78,6 +78,9 @@ class PipelineExecutor:
             if not ctx.force_rerun and await step.is_completed(ctx):
                 self._log.debug("Step %s already completed, skipping", step.step_id)
                 report.steps_skipped.append(step.step_id)
+                ctx.add_step_result(
+                    StepResult(step_id=step.step_id, success=True, data={})
+                )
                 continue
 
             missing_deps = self._check_dependencies(step, ctx)
