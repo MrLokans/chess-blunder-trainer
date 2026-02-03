@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# Multi-stage Dockerfile for Blunder Tutor with Stockfish 17
+# Multi-stage Dockerfile for Blunder Tutor with Stockfish 18
 # Compiles Stockfish from source with architecture-specific optimizations
 
 # Stage 1: Build Stockfish from source
@@ -7,7 +7,7 @@
 FROM ubuntu:24.04 AS stockfish-builder
 
 ARG TARGETARCH
-ARG STOCKFISH_VERSION=sf_17
+ARG STOCKFISH_VERSION=sf_18
 
 # Install build dependencies with cache mount for apt
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
