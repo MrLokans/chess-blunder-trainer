@@ -137,7 +137,7 @@ class AnalysisRepository(BaseDbRepository):
         async with conn.execute(
             """
             SELECT ply, move_number, player, uci, san, eval_before, eval_after,
-                delta, cp_loss, classification
+                delta, cp_loss, classification, game_phase
             FROM analysis_moves
             WHERE game_id = ?
             ORDER BY ply
@@ -157,6 +157,7 @@ class AnalysisRepository(BaseDbRepository):
                 "delta": row[7],
                 "cp_loss": row[8],
                 "classification": row[9],
+                "game_phase": row[10],
             }
             for row in rows
         ]
