@@ -1,9 +1,11 @@
-/* Trainer-specific styles */
+/* ==========================================================================
+   Trainer Page Layout
+   ========================================================================== */
 
 .layout {
   display: grid;
   grid-template-columns: 420px 1fr;
-  gap: 32px;
+  gap: var(--space-8);
   align-items: start;
 }
 
@@ -13,61 +15,73 @@
   }
 }
 
+/* ==========================================================================
+   Board Container
+   ========================================================================== */
+
 .board-container {
   position: relative;
 }
 
 #board {
   width: 100%;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
 
-/* Evaluation Bar */
+/* ==========================================================================
+   Evaluation Bar
+   ========================================================================== */
+
 .eval-bar-container {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .eval-bar {
   flex: 1;
   height: 8px;
-  background: #e9ecef;
-  border-radius: 4px;
+  background: var(--color-slate-200);
+  border-radius: var(--radius);
   overflow: hidden;
   position: relative;
 }
 
 .eval-bar-fill {
   height: 100%;
-  background: var(--text);
+  background: var(--color-slate-700);
   transition: width 0.3s ease;
   position: absolute;
   left: 0;
-  border-radius: 4px;
+  border-radius: var(--radius);
 }
 
 .eval-value {
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   min-width: 50px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
 }
 
 .eval-value.positive {
-  color: var(--success);
+  color: var(--color-success);
 }
 
 .eval-value.negative {
-  color: var(--accent);
+  color: var(--color-error);
 }
 
-/* Control Panel */
+/* ==========================================================================
+   Control Panel
+   ========================================================================== */
+
 .panel-section {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .panel-section:last-child {
@@ -75,55 +89,62 @@
 }
 
 .section-title {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   font-weight: 600;
 }
 
-/* Blunder Info */
+/* ==========================================================================
+   Blunder Info
+   ========================================================================== */
+
 .blunder-info {
-  background: #fff5f5;
-  border: 1px solid #fecaca;
-  border-radius: 12px;
-  padding: 16px;
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
 }
 
 .blunder-move {
-  font-size: 1.25rem;
+  font-size: var(--text-xl);
   font-weight: 700;
-  color: var(--accent);
+  color: var(--color-error);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
 }
 
 .blunder-move .icon {
-  font-size: 1rem;
+  font-size: var(--text-base);
   opacity: 0.8;
 }
 
 .blunder-eval {
-  margin-top: 8px;
-  font-size: 0.875rem;
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
 .blunder-eval .loss {
-  color: var(--accent);
+  color: var(--color-error);
   font-weight: 600;
 }
 
-/* Best Move Info */
+/* ==========================================================================
+   Best Move Info
+   ========================================================================== */
+
 .best-move-info {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 12px;
-  padding: 16px;
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
   display: none;
-  margin-top: 16px;
+  margin-top: var(--space-4);
 }
 
 .best-move-info.visible {
@@ -131,23 +152,27 @@
 }
 
 .best-move {
-  font-size: 1.25rem;
+  font-size: var(--text-xl);
   font-weight: 700;
-  color: var(--success);
+  color: var(--color-success);
+  font-family: var(--font-mono);
 }
 
 .best-line {
-  margin-top: 8px;
-  font-size: 0.875rem;
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
   color: var(--text-muted);
-  font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+  font-family: var(--font-mono);
 }
 
-/* Feedback Area */
+/* ==========================================================================
+   Feedback Area
+   ========================================================================== */
+
 .feedback {
-  padding: 14px 16px;
-  border-radius: 12px;
-  margin-bottom: 16px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
   display: none;
 }
 
@@ -156,41 +181,44 @@
 }
 
 .feedback.correct {
-  background: #f0fdf4;
-  border: 1px solid #86efac;
-  color: #166534;
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success);
 }
 
 .feedback.incorrect {
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
-  color: #92400e;
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  color: var(--color-warning);
 }
 
 .feedback.blunder-repeat {
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
-  color: #991b1b;
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
+  color: var(--color-error);
 }
 
 .feedback-title {
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   margin-bottom: 2px;
 }
 
 .feedback-detail {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   opacity: 0.85;
 }
 
-/* Move Indicator */
+/* ==========================================================================
+   Move Indicator
+   ========================================================================== */
+
 .move-indicator {
-  padding: 12px 16px;
-  background: #f8f9fa;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-slate-50);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -198,21 +226,24 @@
 
 .move-indicator .label {
   color: var(--text-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .move-indicator .move {
   font-weight: 600;
-  font-size: 1rem;
-  font-family: "SF Mono", Monaco, monospace;
+  font-size: var(--text-base);
+  font-family: var(--font-mono);
 }
 
-/* Phase Indicator */
+/* ==========================================================================
+   Phase Indicator
+   ========================================================================== */
+
 .phase {
   display: inline-block;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -220,21 +251,24 @@
 }
 
 .phase.guess {
-  background: var(--accent);
+  background: var(--color-primary);
 }
 
 .phase.explore {
-  background: var(--success);
+  background: var(--color-success);
 }
 
-/* Instructions */
+/* ==========================================================================
+   Instructions
+   ========================================================================== */
+
 .instructions {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   line-height: 1.6;
-  background: #f8f9fa;
-  padding: 12px 16px;
-  border-radius: 10px;
+  background: var(--color-slate-50);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
 }
 
@@ -243,45 +277,46 @@
   font-weight: 600;
 }
 
-/* Move History */
+/* ==========================================================================
+   Move History
+   ========================================================================== */
+
 .move-history {
-  font-family: "SF Mono", Monaco, monospace;
-  font-size: 0.875rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
   max-height: 80px;
   overflow-y: auto;
-  background: #f8f9fa;
+  background: var(--color-slate-50);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-top: 8px;
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-top: var(--space-2);
 }
 
-/* Try Best Move Button */
-.try-best-move {
-  margin-top: 12px;
-}
+/* ==========================================================================
+   Color Badge
+   ========================================================================== */
 
-/* Color Badge */
 .color-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-size: 0.8rem;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--text-xs);
   font-weight: 500;
   border: 1px solid var(--border);
 }
 
 .color-badge.white {
-  background: #fff;
-  color: #333;
+  background: var(--bg-elevated);
+  color: var(--text);
 }
 
 .color-badge.black {
-  background: #374151;
-  color: #fff;
-  border-color: #374151;
+  background: var(--color-slate-700);
+  color: white;
+  border-color: var(--color-slate-700);
 }
 
 .color-dot {
@@ -291,105 +326,121 @@
 }
 
 .color-dot.white {
-  background: #fff;
-  border: 2px solid #d1d5db;
+  background: var(--bg-elevated);
+  border: 2px solid var(--border-strong);
 }
 
 .color-dot.black {
-  background: #374151;
+  background: var(--color-slate-700);
 }
 
-/* Legal Move Highlighting */
+/* ==========================================================================
+   Square Highlighting
+   ========================================================================== */
+
 .highlight-legal-move {
-  background-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.12) 12%, transparent 13%) !important;
+  background-image: radial-gradient(circle at center, rgba(79, 109, 122, 0.2) 12%, transparent 13%) !important;
 }
 
 .highlight-legal-capture {
-  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: inset 0 0 0 3px rgba(79, 109, 122, 0.25) !important;
 }
 
-/* Square Highlighting */
 .highlight-blunder-from {
-  box-shadow: inset 0 0 0 3px var(--accent) !important;
-  background-color: rgba(220, 53, 69, 0.35) !important;
+  box-shadow: inset 0 0 0 3px var(--color-error) !important;
+  background-color: rgba(194, 84, 80, 0.3) !important;
 }
 
 .highlight-blunder-to {
-  box-shadow: inset 0 0 0 3px var(--accent) !important;
-  background-color: rgba(220, 53, 69, 0.5) !important;
+  box-shadow: inset 0 0 0 3px var(--color-error) !important;
+  background-color: rgba(194, 84, 80, 0.45) !important;
 }
 
 .highlight-best-from {
-  box-shadow: inset 0 0 0 3px var(--success) !important;
-  background-color: rgba(25, 135, 84, 0.35) !important;
+  box-shadow: inset 0 0 0 3px var(--color-success) !important;
+  background-color: rgba(61, 139, 110, 0.3) !important;
 }
 
 .highlight-best-to {
-  box-shadow: inset 0 0 0 3px var(--success) !important;
-  background-color: rgba(25, 135, 84, 0.5) !important;
+  box-shadow: inset 0 0 0 3px var(--color-success) !important;
+  background-color: rgba(61, 139, 110, 0.45) !important;
 }
 
 .highlight-user-from {
-  box-shadow: inset 0 0 0 3px var(--warning) !important;
-  background-color: rgba(253, 126, 20, 0.35) !important;
+  box-shadow: inset 0 0 0 3px var(--color-warning) !important;
+  background-color: rgba(184, 134, 11, 0.3) !important;
 }
 
 .highlight-user-to {
-  box-shadow: inset 0 0 0 3px var(--warning) !important;
-  background-color: rgba(253, 126, 20, 0.5) !important;
+  box-shadow: inset 0 0 0 3px var(--color-warning) !important;
+  background-color: rgba(184, 134, 11, 0.45) !important;
 }
 
-/* Highlight Legend */
+/* ==========================================================================
+   Highlight Legend
+   ========================================================================== */
+
 .highlight-legend {
   display: flex;
-  gap: 16px;
-  margin-top: 14px;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
   flex-wrap: wrap;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
 .legend-color {
   width: 14px;
   height: 14px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .legend-color.blunder {
-  background-color: rgba(220, 53, 69, 0.5);
-  border: 2px solid var(--accent);
+  background-color: rgba(194, 84, 80, 0.45);
+  border: 2px solid var(--color-error);
 }
 
 .legend-color.best {
-  background-color: rgba(25, 135, 84, 0.5);
-  border: 2px solid var(--success);
+  background-color: rgba(61, 139, 110, 0.45);
+  border: 2px solid var(--color-success);
 }
 
 .legend-color.user {
-  background-color: rgba(253, 126, 20, 0.5);
-  border: 2px solid var(--warning);
+  background-color: rgba(184, 134, 11, 0.45);
+  border: 2px solid var(--color-warning);
 }
 
-/* Keyboard Shortcuts */
-kbd {
-  display: inline-block;
-  padding: 2px 6px;
-  font-size: 0.7rem;
-  font-family: inherit;
-  background: #e9ecef;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  color: var(--text-muted);
-  margin-left: 4px;
+/* ==========================================================================
+   Threat Highlighting
+   ========================================================================== */
+
+.highlight-hanging {
+  background: radial-gradient(circle, rgba(194, 84, 80, 0.5) 20%, transparent 70%) !important;
 }
 
-/* Arrow Overlay */
+.highlight-pinned {
+  background: radial-gradient(circle, rgba(122, 91, 154, 0.45) 20%, transparent 70%) !important;
+}
+
+.highlight-checking {
+  background: radial-gradient(circle, rgba(184, 134, 11, 0.5) 20%, transparent 70%) !important;
+}
+
+.highlight-king-danger {
+  box-shadow: inset 0 0 0 3px var(--color-warning) !important;
+  background: radial-gradient(circle, rgba(184, 134, 11, 0.35) 30%, transparent 80%) !important;
+}
+
+/* ==========================================================================
+   Arrow Overlay
+   ========================================================================== */
+
 .arrow-overlay {
   position: absolute;
   top: 0;
@@ -405,19 +456,20 @@ kbd {
   height: 100%;
 }
 
-/* Arrow Toggle */
+/* ==========================================================================
+   Arrow Toggle
+   ========================================================================== */
+
 .arrow-toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  font-size: 0.8rem;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
 .arrow-toggle input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
   cursor: pointer;
 }
 
@@ -427,106 +479,103 @@ kbd {
   margin-bottom: 0;
 }
 
-/* Threat Highlighting */
-.highlight-hanging {
-  background: radial-gradient(circle, rgba(220, 53, 69, 0.6) 20%, transparent 70%) !important;
-}
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
 
-.highlight-pinned {
-  background: radial-gradient(circle, rgba(156, 39, 176, 0.5) 20%, transparent 70%) !important;
-}
-
-.highlight-checking {
-  background: radial-gradient(circle, rgba(255, 193, 7, 0.6) 20%, transparent 70%) !important;
-}
-
-.highlight-king-danger {
-  box-shadow: inset 0 0 0 3px #ffc107 !important;
-  background: radial-gradient(circle, rgba(255, 193, 7, 0.4) 30%, transparent 80%) !important;
-}
-
-/* Empty State */
 .empty-state {
   text-align: center;
-  padding: 60px 40px;
+  padding: var(--space-12) var(--space-8);
   max-width: 500px;
   margin: 0 auto;
 }
 
 .empty-state-icon {
-  color: var(--text-muted);
-  margin-bottom: 24px;
+  color: var(--text-faint);
+  margin-bottom: var(--space-6);
   opacity: 0.5;
 }
 
 .empty-state-title {
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
   font-weight: 600;
   color: var(--text);
-  margin: 0 0 12px 0;
+  margin: 0 0 var(--space-3) 0;
 }
 
 .empty-state-message {
-  font-size: 1rem;
+  font-size: var(--text-base);
   color: var(--text-muted);
-  margin: 0 0 28px 0;
+  margin: 0 0 var(--space-6) 0;
   line-height: 1.6;
 }
 
 .empty-state-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   justify-content: center;
   flex-wrap: wrap;
 }
 
-/* Phase Badge */
+/* ==========================================================================
+   Phase Badge
+   ========================================================================== */
+
 .phase-badge {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.75rem;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--text-xs);
   font-weight: 600;
   text-transform: capitalize;
 }
 
 .phase-badge.opening {
-  background: #e0f2fe;
-  color: #0369a1;
-  border: 1px solid #7dd3fc;
+  background: rgba(91, 138, 154, 0.15);
+  color: var(--color-phase-opening);
+  border: 1px solid rgba(91, 138, 154, 0.3);
 }
 
 .phase-badge.middlegame {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fcd34d;
+  background: rgba(154, 123, 91, 0.15);
+  color: var(--color-phase-middlegame);
+  border: 1px solid rgba(154, 123, 91, 0.3);
 }
 
 .phase-badge.endgame {
-  background: #f3e8ff;
-  color: #7c3aed;
-  border: 1px solid #c4b5fd;
+  background: rgba(122, 91, 154, 0.15);
+  color: var(--color-phase-endgame);
+  border: 1px solid rgba(122, 91, 154, 0.3);
 }
 
-/* Phase Filter */
+/* ==========================================================================
+   Phase Filter
+   ========================================================================== */
+
 .phase-filter {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 
 .phase-filter-label {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.875rem;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
   color: var(--text);
   cursor: pointer;
   user-select: none;
 }
 
 .phase-filter-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
   cursor: pointer;
+}
+
+/* ==========================================================================
+   Try Best Move Button
+   ========================================================================== */
+
+.try-best-move {
+  margin-top: var(--space-3);
 }

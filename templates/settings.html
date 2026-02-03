@@ -11,7 +11,198 @@
   }
 
   .container {
-    max-width: 520px;
+    max-width: 580px;
+  }
+
+  .theme-section-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: var(--space-5) 0 var(--space-3) 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .theme-section-title:first-child {
+    margin-top: 0;
+  }
+
+  .preset-selector {
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .preset-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-2);
+  }
+
+  .preset-card {
+    padding: var(--space-2);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    background: var(--bg-elevated);
+    text-align: center;
+  }
+
+  .preset-card:hover {
+    border-color: var(--color-primary-muted);
+    transform: translateY(-1px);
+  }
+
+  .preset-card.active {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(79, 109, 122, 0.2);
+  }
+
+  .preset-colors {
+    display: flex;
+    gap: 2px;
+    margin-bottom: var(--space-1);
+    justify-content: center;
+  }
+
+  .preset-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+
+  .preset-name {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .preset-desc {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+    display: none;
+  }
+
+  @media (max-width: 500px) {
+    .preset-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3) var(--space-4);
+  }
+
+  .color-grid .form-group {
+    margin-bottom: 0;
+  }
+
+  .color-grid .help-text {
+    font-size: 0.7rem;
+  }
+
+  .color-input-row {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+  }
+
+  .color-input-row input[type="color"] {
+    width: 40px;
+    height: 32px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    background: var(--bg-elevated);
+  }
+
+  .color-input-row input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 2px;
+  }
+
+  .color-input-row input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 3px;
+  }
+
+  .color-hex-input {
+    width: 80px !important;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    padding: var(--space-2) !important;
+  }
+
+  .theme-preview {
+    margin-top: var(--space-5);
+    padding: var(--space-4);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+
+  .preview-label {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: var(--space-3);
+  }
+
+  .preview-buttons {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: var(--space-3);
+  }
+
+  .preview-phases {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+
+  .phase-pill {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: white;
+  }
+
+  .phase-pill.opening {
+    background: var(--color-phase-opening);
+  }
+
+  .phase-pill.middlegame {
+    background: var(--color-phase-middlegame);
+  }
+
+  .phase-pill.endgame {
+    background: var(--color-phase-endgame);
+  }
+
+  .preview-primary {
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+  }
+
+  .preview-success {
+    background: var(--color-success) !important;
+    border-color: var(--color-success) !important;
+  }
+
+  .preview-error {
+    background: var(--color-error) !important;
+    border-color: var(--color-error) !important;
   }
 </style>
 {% endblock %}
@@ -90,7 +281,139 @@
         <div class="help-text">Don't show correctly solved puzzles again for this many days</div>
       </div>
 
-      <div class="btn-row">
+      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
+
+      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">Theme Colors</h2>
+      <p class="help-text" style="margin-bottom: 16px;">Choose a preset or customize individual colors.</p>
+
+      <div class="theme-colors">
+        <div class="preset-selector">
+          <label class="theme-section-title" style="margin-top: 0;">Presets</label>
+          <div class="preset-grid" id="presetGrid">
+            <!-- Presets will be loaded dynamically -->
+          </div>
+        </div>
+
+        <h3 class="theme-section-title">Accent Colors</h3>
+        <div class="color-grid">
+          <div class="form-group">
+            <label for="themePrimary">Primary</label>
+            <div class="color-input-row">
+              <input type="color" id="themePrimary" value="#4f6d7a">
+              <input type="text" id="themePrimaryHex" value="#4f6d7a" maxlength="7" class="color-hex-input">
+            </div>
+            <div class="help-text">Buttons, links, navigation</div>
+          </div>
+
+          <div class="form-group">
+            <label for="themeSuccess">Success</label>
+            <div class="color-input-row">
+              <input type="color" id="themeSuccess" value="#3d8b6e">
+              <input type="text" id="themeSuccessHex" value="#3d8b6e" maxlength="7" class="color-hex-input">
+            </div>
+            <div class="help-text">Positive feedback, completed</div>
+          </div>
+
+          <div class="form-group">
+            <label for="themeError">Error</label>
+            <div class="color-input-row">
+              <input type="color" id="themeError" value="#c25450">
+              <input type="text" id="themeErrorHex" value="#c25450" maxlength="7" class="color-hex-input">
+            </div>
+            <div class="help-text">Errors, blunder highlighting</div>
+          </div>
+
+          <div class="form-group">
+            <label for="themeWarning">Warning</label>
+            <div class="color-input-row">
+              <input type="color" id="themeWarning" value="#b8860b">
+              <input type="text" id="themeWarningHex" value="#b8860b" maxlength="7" class="color-hex-input">
+            </div>
+            <div class="help-text">Warnings, user moves</div>
+          </div>
+        </div>
+
+        <h3 class="theme-section-title">Game Phase Colors</h3>
+        <div class="color-grid">
+          <div class="form-group">
+            <label for="themePhaseOpening">Opening</label>
+            <div class="color-input-row">
+              <input type="color" id="themePhaseOpening" value="#5b8a9a">
+              <input type="text" id="themePhaseOpeningHex" value="#5b8a9a" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="themePhaseMiddlegame">Middlegame</label>
+            <div class="color-input-row">
+              <input type="color" id="themePhaseMiddlegame" value="#9a7b5b">
+              <input type="text" id="themePhaseMiddlegameHex" value="#9a7b5b" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="themePhaseEndgame">Endgame</label>
+            <div class="color-input-row">
+              <input type="color" id="themePhaseEndgame" value="#7a5b9a">
+              <input type="text" id="themePhaseEndgameHex" value="#7a5b9a" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+        </div>
+
+        <h3 class="theme-section-title">Background & Text</h3>
+        <div class="color-grid">
+          <div class="form-group">
+            <label for="themeBg">Page Background</label>
+            <div class="color-input-row">
+              <input type="color" id="themeBg" value="#f1f5f9">
+              <input type="text" id="themeBgHex" value="#f1f5f9" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="themeBgCard">Card Background</label>
+            <div class="color-input-row">
+              <input type="color" id="themeBgCard" value="#ffffff">
+              <input type="text" id="themeBgCardHex" value="#ffffff" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="themeText">Text</label>
+            <div class="color-input-row">
+              <input type="color" id="themeText" value="#1e293b">
+              <input type="text" id="themeTextHex" value="#1e293b" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="themeTextMuted">Muted Text</label>
+            <div class="color-input-row">
+              <input type="color" id="themeTextMuted" value="#64748b">
+              <input type="text" id="themeTextMutedHex" value="#64748b" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+        </div>
+
+        <div class="theme-preview">
+          <div class="preview-label">Preview</div>
+          <div class="preview-buttons">
+            <button type="button" class="btn preview-primary">Primary</button>
+            <button type="button" class="btn btn-success preview-success">Success</button>
+            <button type="button" class="btn btn-danger preview-error">Error</button>
+            <span class="status preview-warning" style="background: var(--color-warning-bg); color: var(--color-warning);">Warning</span>
+          </div>
+          <div class="preview-phases">
+            <span class="phase-pill opening">Opening</span>
+            <span class="phase-pill middlegame">Middlegame</span>
+            <span class="phase-pill endgame">Endgame</span>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="resetThemeBtn" style="margin-top: 12px;">Reset to Defaults</button>
+      </div>
+
+      <div class="btn-row" style="margin-top: 32px;">
         <button type="button" class="btn btn-secondary" onclick="window.location.href='/'">Cancel</button>
         <button type="submit" class="btn btn-primary" id="submitBtn">Save Changes</button>
       </div>
@@ -125,18 +448,225 @@
     successAlert.classList.remove('visible');
   }
 
-  // Load sync settings
+  // Theme color inputs - maps to API field names
+  const themeInputs = {
+    primary: { color: document.getElementById('themePrimary'), hex: document.getElementById('themePrimaryHex') },
+    success: { color: document.getElementById('themeSuccess'), hex: document.getElementById('themeSuccessHex') },
+    error: { color: document.getElementById('themeError'), hex: document.getElementById('themeErrorHex') },
+    warning: { color: document.getElementById('themeWarning'), hex: document.getElementById('themeWarningHex') },
+    phase_opening: { color: document.getElementById('themePhaseOpening'), hex: document.getElementById('themePhaseOpeningHex') },
+    phase_middlegame: { color: document.getElementById('themePhaseMiddlegame'), hex: document.getElementById('themePhaseMiddlegameHex') },
+    phase_endgame: { color: document.getElementById('themePhaseEndgame'), hex: document.getElementById('themePhaseEndgameHex') },
+    bg: { color: document.getElementById('themeBg'), hex: document.getElementById('themeBgHex') },
+    bg_card: { color: document.getElementById('themeBgCard'), hex: document.getElementById('themeBgCardHex') },
+    text: { color: document.getElementById('themeText'), hex: document.getElementById('themeTextHex') },
+    text_muted: { color: document.getElementById('themeTextMuted'), hex: document.getElementById('themeTextMutedHex') }
+  };
+
+  const defaultTheme = {
+    primary: '#4f6d7a',
+    success: '#3d8b6e',
+    error: '#c25450',
+    warning: '#b8860b',
+    phase_opening: '#5b8a9a',
+    phase_middlegame: '#9a7b5b',
+    phase_endgame: '#7a5b9a',
+    bg: '#f1f5f9',
+    bg_card: '#ffffff',
+    text: '#1e293b',
+    text_muted: '#64748b'
+  };
+
+  let themePresets = [];
+  let activePresetId = null;
+
+  // Sync color picker with hex input and update preview
+  function setupColorSync(name) {
+    const { color, hex } = themeInputs[name];
+    
+    color.addEventListener('input', () => {
+      hex.value = color.value.toUpperCase();
+      updateThemePreview();
+      clearActivePreset();
+    });
+    
+    hex.addEventListener('input', () => {
+      const val = hex.value;
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        color.value = val;
+        updateThemePreview();
+        clearActivePreset();
+      }
+    });
+
+    hex.addEventListener('blur', () => {
+      let val = hex.value.trim();
+      if (!val.startsWith('#')) val = '#' + val;
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        hex.value = val.toUpperCase();
+        color.value = val;
+      } else {
+        hex.value = color.value.toUpperCase();
+      }
+    });
+  }
+
+  function clearActivePreset() {
+    activePresetId = null;
+    document.querySelectorAll('.preset-card').forEach(card => {
+      card.classList.remove('active');
+    });
+  }
+
+  // Update live preview
+  function updateThemePreview() {
+    const root = document.documentElement;
+    const theme = getCurrentTheme();
+    
+    // Core colors
+    root.style.setProperty('--color-primary', theme.primary);
+    root.style.setProperty('--color-success', theme.success);
+    root.style.setProperty('--color-error', theme.error);
+    root.style.setProperty('--color-warning', theme.warning);
+    
+    // Phase colors
+    root.style.setProperty('--color-phase-opening', theme.phase_opening);
+    root.style.setProperty('--color-phase-middlegame', theme.phase_middlegame);
+    root.style.setProperty('--color-phase-endgame', theme.phase_endgame);
+    
+    // Background and text
+    root.style.setProperty('--bg', theme.bg);
+    root.style.setProperty('--bg-elevated', theme.bg_card);
+    root.style.setProperty('--text', theme.text);
+    root.style.setProperty('--text-muted', theme.text_muted);
+    
+    // Update derived colors
+    if (window.adjustColor) {
+      root.style.setProperty('--color-primary-hover', window.adjustColor(theme.primary, -15));
+      root.style.setProperty('--color-primary-muted', window.adjustColor(theme.primary, 20));
+      root.style.setProperty('--color-success-bg', window.adjustColor(theme.success, 85, 0.15));
+      root.style.setProperty('--color-success-border', window.adjustColor(theme.success, 50, 0.4));
+      root.style.setProperty('--color-error-bg', window.adjustColor(theme.error, 85, 0.15));
+      root.style.setProperty('--color-error-border', window.adjustColor(theme.error, 50, 0.4));
+      root.style.setProperty('--color-warning-bg', window.adjustColor(theme.warning, 85, 0.15));
+      root.style.setProperty('--color-warning-border', window.adjustColor(theme.warning, 50, 0.4));
+    }
+  }
+
+  function getCurrentTheme() {
+    return {
+      primary: themeInputs.primary.hex.value,
+      success: themeInputs.success.hex.value,
+      error: themeInputs.error.hex.value,
+      warning: themeInputs.warning.hex.value
+    };
+  }
+
+  function setThemeInputs(theme) {
+    for (const [name, value] of Object.entries(theme)) {
+      if (themeInputs[name]) {
+        themeInputs[name].color.value = value;
+        themeInputs[name].hex.value = value.toUpperCase();
+      }
+    }
+    updateThemePreview();
+  }
+
+  // Setup color syncing
+  Object.keys(themeInputs).forEach(setupColorSync);
+
+  // Load and render presets
+  async function loadPresets() {
+    try {
+      const resp = await fetch('/api/settings/theme/presets');
+      if (resp.ok) {
+        const data = await resp.json();
+        themePresets = data.presets;
+        renderPresets();
+      }
+    } catch (err) {
+      console.error('Failed to load presets:', err);
+    }
+  }
+
+  function renderPresets() {
+    const grid = document.getElementById('presetGrid');
+    grid.innerHTML = themePresets.map(preset => `
+      <div class="preset-card ${activePresetId === preset.id ? 'active' : ''}" data-preset-id="${preset.id}">
+        <div class="preset-colors">
+          <span class="preset-color-dot" style="background: ${preset.colors.primary}"></span>
+          <span class="preset-color-dot" style="background: ${preset.colors.success}"></span>
+          <span class="preset-color-dot" style="background: ${preset.colors.error}"></span>
+          <span class="preset-color-dot" style="background: ${preset.colors.bg}"></span>
+        </div>
+        <div class="preset-name">${preset.name}</div>
+      </div>
+    `).join('');
+
+    // Add click handlers
+    grid.querySelectorAll('.preset-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const presetId = card.dataset.presetId;
+        applyPreset(presetId);
+      });
+    });
+  }
+
+  function applyPreset(presetId) {
+    const preset = themePresets.find(p => p.id === presetId);
+    if (!preset) return;
+
+    activePresetId = presetId;
+    setThemeInputs(preset.colors);
+    
+    // Update active state in UI
+    document.querySelectorAll('.preset-card').forEach(card => {
+      card.classList.toggle('active', card.dataset.presetId === presetId);
+    });
+  }
+
+  function checkIfMatchesPreset() {
+    const currentTheme = getCurrentTheme();
+    for (const preset of themePresets) {
+      const matches = Object.keys(currentTheme).every(
+        key => currentTheme[key].toLowerCase() === preset.colors[key].toLowerCase()
+      );
+      if (matches) {
+        activePresetId = preset.id;
+        return;
+      }
+    }
+    activePresetId = null;
+  }
+
+  // Reset theme button
+  document.getElementById('resetThemeBtn').addEventListener('click', async () => {
+    applyPreset('default');
+  });
+
+  // Load sync settings and theme
   async function loadSyncSettings() {
     try {
-      // This would load from API in full implementation
-      // For now, use defaults
+      // Load presets first
+      await loadPresets();
+
+      // Load theme colors
+      const themeResp = await fetch('/api/settings/theme');
+      if (themeResp.ok) {
+        const theme = await themeResp.json();
+        setThemeInputs(theme);
+        checkIfMatchesPreset();
+        renderPresets(); // Re-render to show active state
+      }
+
+      // For sync settings, use defaults for now
       document.getElementById('autoSync').checked = false;
       document.getElementById('syncInterval').value = '24';
       document.getElementById('maxGames').value = '1000';
       document.getElementById('autoAnalyze').checked = true;
       document.getElementById('spacedRepetitionDays').value = '30';
     } catch (err) {
-      console.error('Failed to load sync settings:', err);
+      console.error('Failed to load settings:', err);
     }
   }
 
@@ -164,6 +694,8 @@
     submitBtn.textContent = 'Saving...';
 
     try {
+      const theme = getCurrentTheme();
+      
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -174,9 +706,13 @@
           sync_interval: syncInterval,
           max_games: maxGames,
           auto_analyze: autoAnalyze,
-          spaced_repetition_days: spacedRepetitionDays
+          spaced_repetition_days: spacedRepetitionDays,
+          theme
         })
       });
+      
+      // Update localStorage with new theme
+      localStorage.setItem('theme', JSON.stringify(theme));
 
       const data = await response.json();
 

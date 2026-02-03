@@ -18,6 +18,26 @@ class SetupRequest(BaseModel):
     )
 
 
+class ThemeColors(BaseModel):
+    # Core accent colors
+    primary: str = Field(default="#4f6d7a", description="Primary accent color")
+    success: str = Field(default="#3d8b6e", description="Success/positive color")
+    error: str = Field(default="#c25450", description="Error/danger color")
+    warning: str = Field(default="#b8860b", description="Warning color")
+    # Game phase colors
+    phase_opening: str = Field(default="#5b8a9a", description="Opening phase color")
+    phase_middlegame: str = Field(
+        default="#9a7b5b", description="Middlegame phase color"
+    )
+    phase_endgame: str = Field(default="#7a5b9a", description="Endgame phase color")
+    # Background colors
+    bg: str = Field(default="#f1f5f9", description="Page background color")
+    bg_card: str = Field(default="#ffffff", description="Card background color")
+    # Text colors
+    text: str = Field(default="#1e293b", description="Primary text color")
+    text_muted: str = Field(default="#64748b", description="Muted/secondary text color")
+
+
 class SettingsRequest(BaseModel):
     lichess: str = Field(default="", description="Lichess username")
     chesscom: str = Field(default="", description="Chess.com username")
@@ -34,6 +54,7 @@ class SettingsRequest(BaseModel):
     spaced_repetition_days: int = Field(
         default=30, ge=1, le=365, description="Days before repeating solved puzzles"
     )
+    theme: ThemeColors | None = Field(default=None, description="Theme color settings")
 
 
 class UsernamesResponse(BaseModel):
@@ -97,6 +118,207 @@ async def get_settings(settings_repo: SettingsRepoDep) -> dict[str, Any]:
     }
 
 
+DEFAULT_THEME = {
+    "primary": "#4f6d7a",
+    "success": "#3d8b6e",
+    "error": "#c25450",
+    "warning": "#b8860b",
+    "phase_opening": "#5b8a9a",
+    "phase_middlegame": "#9a7b5b",
+    "phase_endgame": "#7a5b9a",
+    "bg": "#f1f5f9",
+    "bg_card": "#ffffff",
+    "text": "#1e293b",
+    "text_muted": "#64748b",
+}
+
+THEME_PRESETS = {
+    "default": {
+        "name": "Default",
+        "description": "Muted slate tones for a calm, professional look",
+        "colors": DEFAULT_THEME,
+    },
+    "ocean": {
+        "name": "Ocean",
+        "description": "Cool blue tones inspired by the sea",
+        "colors": {
+            "primary": "#0077b6",
+            "success": "#2a9d8f",
+            "error": "#e63946",
+            "warning": "#e9c46a",
+            "phase_opening": "#48cae4",
+            "phase_middlegame": "#0096c7",
+            "phase_endgame": "#023e8a",
+            "bg": "#f0f9ff",
+            "bg_card": "#ffffff",
+            "text": "#03045e",
+            "text_muted": "#4a6fa5",
+        },
+    },
+    "forest": {
+        "name": "Forest",
+        "description": "Natural greens and earth tones",
+        "colors": {
+            "primary": "#2d6a4f",
+            "success": "#40916c",
+            "error": "#9b2226",
+            "warning": "#bc6c25",
+            "phase_opening": "#52b788",
+            "phase_middlegame": "#8b5e3c",
+            "phase_endgame": "#6c584c",
+            "bg": "#f5f5f0",
+            "bg_card": "#fefefe",
+            "text": "#1b4332",
+            "text_muted": "#5c7a5c",
+        },
+    },
+    "sunset": {
+        "name": "Sunset",
+        "description": "Warm oranges and reds",
+        "colors": {
+            "primary": "#d35400",
+            "success": "#27ae60",
+            "error": "#c0392b",
+            "warning": "#f39c12",
+            "phase_opening": "#e67e22",
+            "phase_middlegame": "#d35400",
+            "phase_endgame": "#a04000",
+            "bg": "#fdf6e9",
+            "bg_card": "#ffffff",
+            "text": "#2c1810",
+            "text_muted": "#7f6855",
+        },
+    },
+    "lavender": {
+        "name": "Lavender",
+        "description": "Soft purples and gentle tones",
+        "colors": {
+            "primary": "#7c3aed",
+            "success": "#059669",
+            "error": "#dc2626",
+            "warning": "#d97706",
+            "phase_opening": "#8b5cf6",
+            "phase_middlegame": "#a78bfa",
+            "phase_endgame": "#6d28d9",
+            "bg": "#f5f3ff",
+            "bg_card": "#ffffff",
+            "text": "#1e1b4b",
+            "text_muted": "#6b7280",
+        },
+    },
+    "monochrome": {
+        "name": "Monochrome",
+        "description": "Clean grayscale aesthetic",
+        "colors": {
+            "primary": "#374151",
+            "success": "#4b5563",
+            "error": "#6b7280",
+            "warning": "#9ca3af",
+            "phase_opening": "#6b7280",
+            "phase_middlegame": "#4b5563",
+            "phase_endgame": "#374151",
+            "bg": "#f3f4f6",
+            "bg_card": "#ffffff",
+            "text": "#111827",
+            "text_muted": "#6b7280",
+        },
+    },
+    "dark": {
+        "name": "Dark",
+        "description": "Easy on the eyes in low light",
+        "colors": {
+            "primary": "#60a5fa",
+            "success": "#34d399",
+            "error": "#f87171",
+            "warning": "#fbbf24",
+            "phase_opening": "#38bdf8",
+            "phase_middlegame": "#fb923c",
+            "phase_endgame": "#a78bfa",
+            "bg": "#0f172a",
+            "bg_card": "#1e293b",
+            "text": "#f1f5f9",
+            "text_muted": "#94a3b8",
+        },
+    },
+    "high_contrast": {
+        "name": "High Contrast",
+        "description": "Maximum readability and accessibility",
+        "colors": {
+            "primary": "#0000ee",
+            "success": "#008000",
+            "error": "#cc0000",
+            "warning": "#cc8800",
+            "phase_opening": "#0066cc",
+            "phase_middlegame": "#cc6600",
+            "phase_endgame": "#6600cc",
+            "bg": "#ffffff",
+            "bg_card": "#ffffff",
+            "text": "#000000",
+            "text_muted": "#333333",
+        },
+    },
+}
+
+THEME_KEYS = list(DEFAULT_THEME.keys())
+
+
+class ThemePreset(BaseModel):
+    id: str = Field(description="Preset identifier")
+    name: str = Field(description="Display name")
+    description: str = Field(description="Short description")
+    colors: ThemeColors = Field(description="Theme colors")
+
+
+class ThemePresetsResponse(BaseModel):
+    presets: list[ThemePreset] = Field(description="Available theme presets")
+
+
+@settings_router.get(
+    "/api/settings/theme/presets",
+    response_model=ThemePresetsResponse,
+    summary="Get available theme presets",
+    description="Returns a list of predefined theme presets.",
+)
+async def get_theme_presets() -> dict[str, list[dict[str, Any]]]:
+    presets = [
+        {
+            "id": preset_id,
+            "name": data["name"],
+            "description": data["description"],
+            "colors": data["colors"],
+        }
+        for preset_id, data in THEME_PRESETS.items()
+    ]
+    return {"presets": presets}
+
+
+@settings_router.get(
+    "/api/settings/theme",
+    response_model=ThemeColors,
+    summary="Get theme colors",
+    description="Retrieve the current theme color settings.",
+)
+async def get_theme(settings_repo: SettingsRepoDep) -> dict[str, str]:
+    result = {}
+    for key in THEME_KEYS:
+        db_key = f"theme_{key}"
+        value = await settings_repo.get_setting(db_key)
+        result[key] = value or DEFAULT_THEME[key]
+    return result
+
+
+@settings_router.post(
+    "/api/settings/theme/reset",
+    response_model=SuccessResponse,
+    summary="Reset theme to defaults",
+    description="Reset all theme colors to their default values.",
+)
+async def reset_theme(settings_repo: SettingsRepoDep) -> dict[str, bool]:
+    for key in THEME_KEYS:
+        await settings_repo.set_setting(f"theme_{key}", None)
+    return {"success": True}
+
+
 @settings_router.post(
     "/api/settings",
     response_model=SuccessResponse,
@@ -135,6 +357,11 @@ async def settings_submit(
     await settings_repo.set_setting(
         "spaced_repetition_days", str(payload.spaced_repetition_days)
     )
+
+    if payload.theme:
+        theme_dict = payload.theme.model_dump()
+        for key, value in theme_dict.items():
+            await settings_repo.set_setting(f"theme_{key}", value)
 
     scheduler = request.app.state.scheduler
     settings = await settings_repo.get_all_settings()

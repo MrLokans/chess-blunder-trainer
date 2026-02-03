@@ -96,7 +96,10 @@ def app(test_config: AppConfig) -> Generator[TestClient]:
     from unittest.mock import patch
 
     mock_engine = MagicMock()
-    mock_engine.id = {"name": "Stockfish 17", "author": "T. Romstad, M. Costalba, J. Kiiski, G. Linscott"}
+    mock_engine.id = {
+        "name": "Stockfish 17",
+        "author": "T. Romstad, M. Costalba, J. Kiiski, G. Linscott",
+    }
     mock_engine.analyse = AsyncMock(
         return_value={
             "score": chess.engine.PovScore(chess.engine.Cp(50), chess.WHITE),
