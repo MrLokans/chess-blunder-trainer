@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+import chess.engine
+
 from blunder_tutor.analysis.pipeline.context import StepContext, StepResult
 from blunder_tutor.analysis.thresholds import Thresholds
 
@@ -45,6 +47,7 @@ class PipelineExecutor:
         thresholds: Thresholds | None = None,
         depth: int | None = 14,
         time_limit: float | None = None,
+        engine: chess.engine.UciProtocol | None = None,
     ) -> PipelineReport:
         report = PipelineReport(
             game_id=game_id,
@@ -70,6 +73,7 @@ class PipelineExecutor:
             depth=depth,
             time_limit=time_limit,
             force_rerun=pipeline.config.force_rerun,
+            engine=engine,
         )
 
         ordered_steps = pipeline.get_ordered_steps()

@@ -98,7 +98,9 @@ class JobExecutor:
             )
 
         if self._running_tasks:
-            logger.info(f"Waiting for {len(self._running_tasks)} running tasks...")
+            logger.info(f"Cancelling {len(self._running_tasks)} running tasks...")
+            for task in self._running_tasks.values():
+                task.cancel()
             await asyncio.gather(*self._running_tasks.values(), return_exceptions=True)
 
         logger.info("JobExecutor shutdown complete")

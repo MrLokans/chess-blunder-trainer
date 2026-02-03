@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
+import chess.engine
+
+from blunder_tutor.analysis.logic import DEFAULT_CONCURRENCY
 from blunder_tutor.background.base import BaseJob
 from blunder_tutor.background.registry import register_job
 
@@ -36,6 +40,7 @@ class AnalyzeGamesJob(BaseJob):
         source = kwargs.get("source")
         username = kwargs.get("username")
         steps = kwargs.get("steps")
+        concurrency = kwargs.get("concurrency", DEFAULT_CONCURRENCY)
 
         if game_ids is None:
             game_ids = await self.game_repo.list_unanalyzed_game_ids(source, username)
@@ -44,39 +49,84 @@ class AnalyzeGamesJob(BaseJob):
             await self.job_service.complete_job(job_id, {"analyzed": 0, "skipped": 0})
             return {"analyzed": 0, "skipped": 0}
 
-        return await self._analyze_games(job_id, game_ids, steps)
+        return await self._analyze_games(job_id, game_ids, steps, concurrency)
 
     async def _analyze_games(
-        self, job_id: str, game_ids: list[str], steps: list[str] | None = None
+        self,
+        job_id: str,
+        game_ids: list[str],
+        steps: list[str] | None = None,
+        concurrency: int = DEFAULT_CONCURRENCY,
     ) -> dict[str, Any]:
         await self.job_service.update_job_status(job_id, "running")
         await self.job_service.update_job_progress(job_id, 0, len(game_ids))
 
-        analyzed = 0
-        skipped = 0
+        results = {"analyzed": 0, "skipped": 0, "failed": 0}
+        processed = 0
+        semaphore = asyncio.Semaphore(concurrency)
+        lock = asyncio.Lock()
+
+        async def process_game(game_id: str) -> None:
+            nonlocal processed
+
+            job = await self.job_service.get_job(job_id)
+            if job and job.get("status") == "failed":
+                return
+
+            async with semaphore:
+                if await self.analysis_repo.analysis_exists(game_id):
+                    async with lock:
+                        results["skipped"] += 1
+                        processed += 1
+                        await self.job_service.update_job_progress(
+                            job_id, processed, len(game_ids)
+                        )
+                    return
+
+                engine = None
+                try:
+                    _, engine = await chess.engine.popen_uci(self.analyzer.engine_path)
+                    await self.analyzer.analyze_game(
+                        game_id, steps=steps, engine=engine
+                    )
+                    await self.game_repo.mark_game_analyzed(game_id)
+
+                    async with lock:
+                        results["analyzed"] += 1
+                        processed += 1
+                        await self.job_service.update_job_progress(
+                            job_id, processed, len(game_ids)
+                        )
+                except Exception as e:
+                    logger.error(f"Failed to analyze game {game_id}: {e}")
+                    async with lock:
+                        results["failed"] += 1
+                        processed += 1
+                        await self.job_service.update_job_progress(
+                            job_id, processed, len(game_ids)
+                        )
+                finally:
+                    if engine is not None:
+                        await engine.quit()
 
         try:
-            for i, game_id in enumerate(game_ids):
-                job = await self.job_service.get_job(job_id)
-                if job and job.get("status") == "failed":
-                    return {"analyzed": analyzed, "skipped": skipped}
+            logger.info(
+                f"Starting parallel analysis of {len(game_ids)} games "
+                f"with concurrency={concurrency}"
+            )
+            tasks = [asyncio.create_task(process_game(gid)) for gid in game_ids]
+            await asyncio.gather(*tasks)
 
-                if await self.analysis_repo.analysis_exists(game_id):
-                    skipped += 1
-                    await self.job_service.update_job_progress(
-                        job_id, i + 1, len(game_ids)
-                    )
-                    continue
+            await self.job_service.complete_job(job_id, results)
+            return results
 
-                await self.analyzer.analyze_game(game_id, steps=steps)
-                await self.game_repo.mark_game_analyzed(game_id)
-
-                analyzed += 1
-                await self.job_service.update_job_progress(job_id, i + 1, len(game_ids))
-
-            result = {"analyzed": analyzed, "skipped": skipped}
-            await self.job_service.complete_job(job_id, result)
-            return result
+        except asyncio.CancelledError:
+            logger.info(f"Analysis job {job_id} cancelled, cleaning up...")
+            for task in tasks:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise
 
         except Exception as e:
             logger.error(f"Error in analysis job {job_id}: {e}")

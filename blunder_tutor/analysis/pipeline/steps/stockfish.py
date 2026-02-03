@@ -41,7 +41,11 @@ class StockfishAnalysisStep(AnalysisStep):
 
         move_evals: list[dict] = []
 
-        transport, engine = await chess.engine.popen_uci(ctx.engine_path)
+        engine = ctx.engine
+        owns_engine = engine is None
+        if owns_engine:
+            _, engine = await chess.engine.popen_uci(ctx.engine_path)
+
         try:
             for move_number, move, board in _iter_moves(ctx.game):
                 player = board.turn
@@ -99,7 +103,8 @@ class StockfishAnalysisStep(AnalysisStep):
                     }
                 )
         finally:
-            await engine.quit()
+            if owns_engine:
+                await engine.quit()
 
         return StepResult(
             step_id=self.step_id,

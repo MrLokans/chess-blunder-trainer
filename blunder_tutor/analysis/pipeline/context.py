@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+import chess.engine
 import chess.pgn
 
 if TYPE_CHECKING:
@@ -31,6 +32,7 @@ class StepContext:
     time_limit: float | None = None
     step_results: dict[str, StepResult] = field(default_factory=dict)
     force_rerun: bool = False
+    engine: chess.engine.UciProtocol | None = None
 
     def get_step_result(self, step_id: str) -> StepResult | None:
         return self.step_results.get(step_id)

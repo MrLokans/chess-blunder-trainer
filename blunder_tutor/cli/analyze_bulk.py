@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 
-from blunder_tutor.analysis.logic import GameAnalyzer
+from blunder_tutor.analysis.logic import DEFAULT_CONCURRENCY, GameAnalyzer
 from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories import GameRepository
@@ -35,6 +35,7 @@ class AnalyzeBulkCommand(CLICommand):
                 username=args.username,
                 limit=args.limit,
                 force=args.force,
+                concurrency=args.concurrency,
             )
             print(
                 "Bulk analysis complete: "
@@ -78,5 +79,12 @@ class AnalyzeBulkCommand(CLICommand):
             "--force",
             action="store_true",
             help="Re-analyze already analyzed games",
+        )
+        analyze_bulk_parser.add_argument(
+            "--concurrency",
+            "-j",
+            type=int,
+            default=DEFAULT_CONCURRENCY,
+            help=f"Number of parallel engine processes (default: {DEFAULT_CONCURRENCY})",
         )
         return

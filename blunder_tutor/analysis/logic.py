@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import logging
+import os
 from typing import TYPE_CHECKING
 
+import chess.engine
 from tqdm import tqdm
 
 from blunder_tutor.analysis.pipeline import (
@@ -13,11 +16,14 @@ from blunder_tutor.analysis.pipeline import (
 )
 from blunder_tutor.analysis.pipeline.steps import get_all_steps
 from blunder_tutor.analysis.thresholds import Thresholds
+from blunder_tutor.constants import DEFAULT_ENGINE_CONCURRENCY
 
 if TYPE_CHECKING:
     from blunder_tutor.repositories.analysis import AnalysisRepository
     from blunder_tutor.repositories.game_repository import GameRepository
 
+
+DEFAULT_CONCURRENCY = min(DEFAULT_ENGINE_CONCURRENCY, os.cpu_count() or 1)
 
 # Re-export for backward compatibility
 __all__ = ["GameAnalyzer", "Thresholds"]
@@ -48,6 +54,7 @@ class GameAnalyzer:
         thresholds: Thresholds | None = None,
         steps: list[str] | None = None,
         force_rerun: bool = False,
+        engine: chess.engine.UciProtocol | None = None,
     ) -> None:
         thresholds = thresholds or Thresholds()
         available_steps = get_all_steps()
@@ -66,6 +73,7 @@ class GameAnalyzer:
             thresholds=thresholds,
             depth=depth,
             time_limit=time_limit,
+            engine=engine,
         )
 
         if not report.success:
@@ -80,32 +88,70 @@ class GameAnalyzer:
         limit: int | None = None,
         force: bool = False,
         steps: list[str] | None = None,
+        concurrency: int = DEFAULT_CONCURRENCY,
     ) -> dict[str, int]:
-        processed = 0
-        skipped = 0
-        analyzed = 0
-
         game_ids = await self.games_repo.list_unanalyzed_game_ids(source, username)
         if limit is not None:
             game_ids = game_ids[:limit]
 
-        self._log.info("Processing %d games", len(game_ids))
-        with tqdm(total=len(game_ids), desc="Analyze games", unit="game") as progress:
-            for game_id in game_ids:
-                if await self.analysis_repo.analysis_exists(game_id) and not force:
-                    skipped += 1
-                    processed += 1
-                    progress.update(1)
-                    continue
-                await self.analyze_game(
-                    game_id=game_id,
-                    depth=depth,
-                    time_limit=time_limit,
-                    steps=steps,
-                    force_rerun=force,
-                )
-                analyzed += 1
-                processed += 1
-                progress.update(1)
+        if not game_ids:
+            return {"processed": 0, "analyzed": 0, "skipped": 0}
 
-        return {"processed": processed, "analyzed": analyzed, "skipped": skipped}
+        self._log.info(
+            "Processing %d games with concurrency=%d", len(game_ids), concurrency
+        )
+
+        results = {"processed": 0, "analyzed": 0, "skipped": 0, "failed": 0}
+        semaphore = asyncio.Semaphore(concurrency)
+        lock = asyncio.Lock()
+
+        async def process_game(game_id: str, progress: tqdm) -> None:
+            async with semaphore:
+                skip = await self.analysis_repo.analysis_exists(game_id) and not force
+                if skip:
+                    async with lock:
+                        results["skipped"] += 1
+                        results["processed"] += 1
+                        progress.update(1)
+                    return
+
+                engine = None
+                try:
+                    _, engine = await chess.engine.popen_uci(self.engine_path)
+                    await self.analyze_game(
+                        game_id=game_id,
+                        depth=depth,
+                        time_limit=time_limit,
+                        steps=steps,
+                        force_rerun=force,
+                        engine=engine,
+                    )
+                    async with lock:
+                        results["analyzed"] += 1
+                        results["processed"] += 1
+                        progress.update(1)
+                except Exception as e:
+                    self._log.error("Failed to analyze game %s: %s", game_id, e)
+                    async with lock:
+                        results["failed"] += 1
+                        results["processed"] += 1
+                        progress.update(1)
+                finally:
+                    if engine is not None:
+                        await engine.quit()
+
+        with tqdm(total=len(game_ids), desc="Analyze games", unit="game") as progress:
+            tasks = [
+                asyncio.create_task(process_game(gid, progress)) for gid in game_ids
+            ]
+            try:
+                await asyncio.gather(*tasks)
+            except asyncio.CancelledError:
+                self._log.info("Bulk analysis cancelled, cleaning up...")
+                for task in tasks:
+                    if not task.done():
+                        task.cancel()
+                await asyncio.gather(*tasks, return_exceptions=True)
+                raise
+
+        return results
