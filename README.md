@@ -23,11 +23,10 @@ Most chess players make the same types of mistakes repeatedly. Generic puzzle tr
 
 ## Quick Start
 
+### Using Docker directly
+
 ```bash
-# Clone and run with Docker
-git clone https://github.com/MrLokans/chess-blunder-trainer.git
-cd chess-blunder-trainer
-docker-compose up -d
+docker run blunder-tutor-1 -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/mrlokans/blunder-tutor:latest
 ```
 
 Open http://localhost:8000 and enter your Lichess or Chess.com username to get started.
