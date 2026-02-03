@@ -19,6 +19,7 @@ from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.analysis.pipeline import PipelineExecutor
 from blunder_tutor.events import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
+from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.settings import SettingsRepository
@@ -91,6 +92,15 @@ async def get_game_repository() -> AsyncGenerator[GameRepository]:
 async def get_analysis_repository() -> AsyncGenerator[AnalysisRepository]:
     ctx = get_context()
     repo = AnalysisRepository(db_path=ctx.db_path)
+    try:
+        yield repo
+    finally:
+        await repo.close()
+
+
+async def get_data_management_repository() -> AsyncGenerator[DataManagementRepository]:
+    ctx = get_context()
+    repo = DataManagementRepository(db_path=ctx.db_path)
     try:
         yield repo
     finally:

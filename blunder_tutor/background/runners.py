@@ -16,11 +16,13 @@ from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.background.jobs.analyze_games import AnalyzeGamesJob
 from blunder_tutor.background.jobs.backfill_eco import BackfillECOJob
 from blunder_tutor.background.jobs.backfill_phases import BackfillPhasesJob
+from blunder_tutor.background.jobs.delete_all_data import DeleteAllDataJob
 from blunder_tutor.background.jobs.import_games import ImportGamesJob
 from blunder_tutor.background.jobs.sync_games import SyncGamesJob
 from blunder_tutor.core.dependencies import (
     get_analysis_repository,
     get_context,
+    get_data_management_repository,
     get_event_bus,
     get_game_analyzer,
     get_game_repository,
@@ -29,6 +31,7 @@ from blunder_tutor.core.dependencies import (
 )
 from blunder_tutor.events import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
+from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.services.job_service import JobService
@@ -45,11 +48,13 @@ async def run_import_job(
     job_service: Annotated[JobService, Depends(get_job_service)],
     settings_repo: Annotated[SettingsRepository, Depends(get_settings_repository)],
     game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+    event_bus: Annotated[EventBus, Depends(get_event_bus)],
 ) -> dict[str, Any]:
     job = ImportGamesJob(
         job_service=job_service,
         settings_repo=settings_repo,
         game_repo=game_repo,
+        event_bus=event_bus,
     )
     return await job.execute(
         job_id=job_id,
@@ -137,6 +142,21 @@ async def run_backfill_eco_job(
     return await job.execute(job_id=job_id)
 
 
+@inject
+async def run_delete_all_data_job(
+    job_id: str,
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    data_management_repo: Annotated[
+        DataManagementRepository, Depends(get_data_management_repository)
+    ],
+) -> dict[str, Any]:
+    job = DeleteAllDataJob(
+        job_service=job_service,
+        data_management_repo=data_management_repo,
+    )
+    return await job.execute(job_id=job_id)
+
+
 # Mapping of job types to runner functions
 JOB_RUNNERS = {
     "import": run_import_job,
@@ -144,4 +164,5 @@ JOB_RUNNERS = {
     "analyze": run_analyze_job,
     "backfill_phases": run_backfill_phases_job,
     "backfill_eco": run_backfill_eco_job,
+    "delete_all_data": run_delete_all_data_job,
 }

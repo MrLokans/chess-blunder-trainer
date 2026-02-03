@@ -146,6 +146,26 @@
     </tbody>
   </table>
 </div>
+
+<div class="card" style="border-color: var(--error);">
+  <h2 style="color: var(--error);">Danger Zone</h2>
+  <div id="deleteAllMessage" style="display: none;"></div>
+  <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
+    Delete all imported games, analysis results, puzzle attempts, and job history.
+    <strong>This action cannot be undone.</strong> Your settings will be preserved.
+  </p>
+  <button class="btn" id="deleteAllBtn" onclick="confirmDeleteAll()" style="background: var(--error);">
+    Delete All Data
+  </button>
+
+  <div id="deleteAllProgress" style="display: none; margin-top: 24px;">
+    <p><strong>Deleting data...</strong></p>
+    <div class="progress-bar">
+      <div class="progress-fill" id="deleteAllProgressFill" style="width: 0%; background: var(--error);"></div>
+      <div class="progress-text" id="deleteAllProgressText">0%</div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -581,6 +601,86 @@
   // Load ECO backfill status on page load
   loadECOBackfillStatus();
 
+  // Delete all data
+  let deleteAllJobId = null;
+
+  async function loadDeleteAllStatus() {
+    try {
+      const statusResp = await fetch('/api/data/delete-status');
+      const status = await statusResp.json();
+
+      if (status.status === 'running') {
+        deleteAllJobId = status.job_id;
+        showDeleteAllProgress(status);
+      } else if (status.status === 'no_jobs' || status.status === 'completed' || status.status === 'failed') {
+        hideDeleteAllProgress();
+      }
+    } catch (err) {
+      console.error('Failed to load delete all status:', err);
+    }
+  }
+
+  function showDeleteAllProgress(job) {
+    document.getElementById('deleteAllProgress').style.display = 'block';
+    document.getElementById('deleteAllBtn').style.display = 'none';
+
+    if (job.progress_total > 0) {
+      const percent = Math.round((job.progress_current / job.progress_total) * 100);
+      document.getElementById('deleteAllProgressFill').style.width = percent + '%';
+      document.getElementById('deleteAllProgressText').textContent =
+        `${job.progress_current}/${job.progress_total} tables (${percent}%)`;
+    }
+  }
+
+  function hideDeleteAllProgress() {
+    document.getElementById('deleteAllProgress').style.display = 'none';
+    document.getElementById('deleteAllBtn').style.display = 'inline-block';
+    deleteAllJobId = null;
+  }
+
+  async function confirmDeleteAll() {
+    const confirmed = confirm(
+      'Are you sure you want to delete ALL data?\n\n' +
+      'This will permanently remove:\n' +
+      '• All imported games\n' +
+      '• All analysis results\n' +
+      '• All puzzle attempts\n' +
+      '• All job history\n\n' +
+      'This action cannot be undone!'
+    );
+
+    if (!confirmed) return;
+
+    // Double confirmation for safety
+    const doubleConfirmed = confirm(
+      'This is your final warning!\n\n' +
+      'Click OK to permanently delete all data.'
+    );
+
+    if (!doubleConfirmed) return;
+
+    try {
+      const resp = await fetch('/api/data/all', { method: 'DELETE' });
+      const data = await resp.json();
+
+      if (data.job_id) {
+        deleteAllJobId = data.job_id;
+        showMessage('deleteAllMessage', 'success', 'Delete job started!');
+
+        // Show progress UI
+        document.getElementById('deleteAllProgress').style.display = 'block';
+        document.getElementById('deleteAllBtn').style.display = 'none';
+      } else {
+        showMessage('deleteAllMessage', 'error', 'Failed to start delete job');
+      }
+    } catch (err) {
+      showMessage('deleteAllMessage', 'error', 'Failed to delete data: ' + err.message);
+    }
+  }
+
+  // Load delete all status on page load
+  loadDeleteAllStatus();
+
   // Initialize WebSocket for real-time updates
   wsClient.connect();
 
@@ -635,6 +735,14 @@
       document.getElementById('ecoBackfillProgressFill').style.width = percent + '%';
       document.getElementById('ecoBackfillProgressText').textContent =
         `${data.current}/${data.total} (${percent}%)`;
+    }
+
+    // Update delete all progress bar directly
+    if (data.job_id === deleteAllJobId) {
+      const percent = data.percent;
+      document.getElementById('deleteAllProgressFill').style.width = percent + '%';
+      document.getElementById('deleteAllProgressText').textContent =
+        `${data.current}/${data.total} tables (${percent}%)`;
     }
 
     // Debounced table refresh for progress column
@@ -692,6 +800,19 @@
         hideECOBackfillProgress();
         showMessage('ecoBackfillMessage', 'error', 'ECO backfill failed: ' + (data.error_message || 'Unknown error'));
         loadECOBackfillStatus();
+      }
+    }
+
+    // Handle delete all job completion
+    if (data.job_id === deleteAllJobId) {
+      if (data.status === 'completed') {
+        hideDeleteAllProgress();
+        showMessage('deleteAllMessage', 'success', 'All data deleted! Refreshing page...');
+        // Refresh page to show updated state
+        setTimeout(() => window.location.reload(), 2000);
+      } else if (data.status === 'failed') {
+        hideDeleteAllProgress();
+        showMessage('deleteAllMessage', 'error', 'Delete failed: ' + (data.error_message || 'Unknown error'));
       }
     }
 

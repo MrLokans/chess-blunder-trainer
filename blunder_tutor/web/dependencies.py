@@ -8,6 +8,7 @@ from fastapi import Depends, Request
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
+from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import (
@@ -99,6 +100,16 @@ async def get_analysis_repository(
         await repo.close()
 
 
+async def get_data_management_repository(
+    config: Annotated[AppConfig, Depends(get_config)],
+) -> AsyncGenerator[DataManagementRepository]:
+    repo = DataManagementRepository(db_path=config.data.db_path)
+    try:
+        yield repo
+    finally:
+        await repo.close()
+
+
 def get_scheduler(
     request: Request,
 ) -> BackgroundScheduler:
@@ -159,3 +170,6 @@ LimitDep = Annotated[chess.engine.Limit, Depends(get_engine_limit)]
 AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]
 TrainerDep = Annotated[Trainer, Depends(get_trainer)]
 PuzzleServiceDep = Annotated[PuzzleService, Depends(get_puzzle_service)]
+DataManagementRepoDep = Annotated[
+    DataManagementRepository, Depends(get_data_management_repository)
+]

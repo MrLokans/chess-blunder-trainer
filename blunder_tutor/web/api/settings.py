@@ -6,8 +6,9 @@ from fastapi import HTTPException, Request
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
+from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.web.api.schemas import ErrorResponse, SuccessResponse
-from blunder_tutor.web.dependencies import SettingsRepoDep
+from blunder_tutor.web.dependencies import EventBusDep, JobServiceDep, SettingsRepoDep
 
 
 class SetupRequest(BaseModel):
@@ -140,3 +141,49 @@ async def settings_submit(
     scheduler.update_jobs(settings)
 
     return {"success": True}
+
+
+class DeleteAllResponse(BaseModel):
+    job_id: str = Field(description="Job ID for tracking the delete operation")
+
+
+@settings_router.delete(
+    "/api/data/all",
+    response_model=DeleteAllResponse,
+    summary="Delete all data",
+    description="Start a background job to delete all imported games, analysis results, puzzle attempts, and job history. Settings are preserved.",
+)
+async def delete_all_data(
+    job_service: JobServiceDep,
+    event_bus: EventBusDep,
+) -> dict[str, Any]:
+    job_id = await job_service.create_job(job_type="delete_all_data")
+
+    event = JobExecutionRequestEvent.create(
+        job_id=job_id,
+        job_type="delete_all_data",
+    )
+    await event_bus.publish(event)
+
+    return {"job_id": job_id}
+
+
+@settings_router.get(
+    "/api/data/delete-status",
+    summary="Get delete all status",
+    description="Get the status of the most recent or currently running delete all job.",
+)
+async def get_delete_all_status(job_service: JobServiceDep) -> dict[str, Any]:
+    running_jobs = await job_service.list_jobs(
+        job_type="delete_all_data", status="running", limit=1
+    )
+
+    if running_jobs:
+        return running_jobs[0]
+
+    recent_jobs = await job_service.list_jobs(job_type="delete_all_data", limit=1)
+
+    if not recent_jobs:
+        return {"status": "no_jobs"}
+
+    return recent_jobs[0]
