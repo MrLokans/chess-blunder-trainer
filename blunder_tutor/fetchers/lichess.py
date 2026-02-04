@@ -7,6 +7,8 @@ import chess.pgn
 import httpx
 from tqdm import tqdm
 
+from blunder_tutor.fetchers import USER_AGENT
+from blunder_tutor.fetchers.resilience import fetch_with_retry
 from blunder_tutor.utils.date_utils import parse_pgn_datetime_ms
 from blunder_tutor.utils.pgn_utils import (
     build_game_metadata,
@@ -37,7 +39,7 @@ async def fetch(
     progress_callback: Callable[[int, int], Awaitable[None]] | None = None,
 ) -> tuple[list[dict[str, object]], set[str]]:
     url = f"{LICHESS_BASE_URL}/api/games/user/{username}"
-    headers = {"Accept": "application/x-chess-pgn"}
+    headers = {"Accept": "application/x-chess-pgn", "User-Agent": USER_AGENT}
 
     games: list[dict[str, object]] = []
     seen_ids: set[str] = set()
@@ -55,8 +57,9 @@ async def fetch(
                 if until_ms is not None:
                     params["until"] = until_ms
 
-                response = await client.get(url, params=params, headers=headers)
-                response.raise_for_status()
+                response = await fetch_with_retry(
+                    client, url, params=params, headers=headers
+                )
 
                 batch_count = 0
                 oldest_time_ms: int | None = None

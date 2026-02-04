@@ -6,7 +6,10 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
+from hyx.retry.exceptions import MaxAttemptsExceeded
+
 from blunder_tutor.fetchers import chesscom, lichess
+from blunder_tutor.fetchers.resilience import RetryableHTTPError, fetch_with_retry
 
 SAMPLE_PGN_1 = """[Event "Rated Blitz game"]
 [Site "https://lichess.org/abcd1234"]
@@ -406,6 +409,34 @@ class TestChesscomFetch:
         assert "testuser" in captured_urls[0]
         assert "TestUser" not in captured_urls[0]
 
+    async def test_max_games_returns_most_recent(self, monkeypatch: pytest.MonkeyPatch):
+        """With max_games, should return the most recent games, not oldest."""
+        archives_response = {
+            "archives": ["https://api.chess.com/pub/player/test/games/2024/01"]
+        }
+        # Games ordered oldest to newest (as Chess.com API returns them)
+        games_response = {
+            "games": [
+                {"pgn": SAMPLE_PGN_3},  # 2024.01.13 - oldest
+                {"pgn": SAMPLE_PGN_2},  # 2024.01.14
+                {"pgn": SAMPLE_PGN_1},  # 2024.01.15 - newest
+            ]
+        }
+
+        def handler(url: str) -> MagicMock:
+            if "archives" in url:
+                return create_mock_response(json_data=archives_response)
+            return create_mock_response(json_data=games_response)
+
+        mock_client = create_mock_client(handler)
+        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+
+        games, _ = await chesscom.fetch("testuser", max_games=1)
+
+        assert len(games) == 1
+        # Should get the newest game (2024.01.15), not the oldest
+        assert games[0]["date"] == "2024.01.15"
+
 
 class TestProgressCallbackBehavior:
     async def test_lichess_callback_increments_correctly(
@@ -498,3 +529,73 @@ class TestProgressCallbackBehavior:
 
         for current, total in callback_calls:
             assert total == 2
+
+
+class TestRetryBehavior:
+    async def test_retries_on_500_error(self, monkeypatch: pytest.MonkeyPatch):
+        call_count = 0
+
+        async def mock_get(url: str, **kwargs: Any) -> MagicMock:
+            nonlocal call_count
+            call_count += 1
+            return create_mock_response(status_code=500, text="Server Error")
+
+        client = MagicMock()
+        client.get = mock_get
+
+        with pytest.raises(MaxAttemptsExceeded):
+            await fetch_with_retry(client, "https://example.com")
+
+        assert call_count == 4  # 1 initial + 3 retries
+
+    async def test_retries_on_429_error(self, monkeypatch: pytest.MonkeyPatch):
+        call_count = 0
+
+        async def mock_get(url: str, **kwargs: Any) -> MagicMock:
+            nonlocal call_count
+            call_count += 1
+            return create_mock_response(status_code=429, text="Rate Limited")
+
+        client = MagicMock()
+        client.get = mock_get
+
+        with pytest.raises(MaxAttemptsExceeded):
+            await fetch_with_retry(client, "https://example.com")
+
+        assert call_count == 4  # 1 initial + 3 retries
+
+    async def test_no_retry_on_404_error(self, monkeypatch: pytest.MonkeyPatch):
+        call_count = 0
+
+        async def mock_get(url: str, **kwargs: Any) -> MagicMock:
+            nonlocal call_count
+            call_count += 1
+            return create_mock_response(status_code=404, text="Not Found")
+
+        client = MagicMock()
+        client.get = mock_get
+
+        with pytest.raises(httpx.HTTPStatusError):
+            await fetch_with_retry(client, "https://example.com")
+
+        assert call_count == 1  # No retries for 4xx
+
+    async def test_succeeds_after_transient_failure(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        call_count = 0
+
+        async def mock_get(url: str, **kwargs: Any) -> MagicMock:
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:
+                return create_mock_response(status_code=500, text="Server Error")
+            return create_mock_response(status_code=200, text="OK")
+
+        client = MagicMock()
+        client.get = mock_get
+
+        response = await fetch_with_retry(client, "https://example.com")
+
+        assert response.status_code == 200
+        assert call_count == 3  # Failed twice, succeeded on third

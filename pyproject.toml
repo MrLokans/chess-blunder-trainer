@@ -11,6 +11,7 @@ dependencies = [
   "fast-depends>=2.4.0",
   "fastapi>=0.116.1",
   "httpx>=0.28.1",
+  "hyx>=0.0.2",
   "jinja2>=3.1.4",
   "python-chess>=1.999",
   "python-multipart>=0.0.21",

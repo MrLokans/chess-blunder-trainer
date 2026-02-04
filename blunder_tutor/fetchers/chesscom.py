@@ -5,6 +5,8 @@ from collections.abc import Awaitable, Callable
 import httpx
 from tqdm import tqdm
 
+from blunder_tutor.fetchers import USER_AGENT
+from blunder_tutor.fetchers.resilience import fetch_with_retry
 from blunder_tutor.utils.pgn_utils import (
     build_game_metadata,
     compute_game_id,
@@ -22,9 +24,12 @@ async def fetch(
     api_username = username.lower()
     archives_url = f"{CHESSCOM_BASE_URL}/pub/player/{api_username}/games/archives"
 
-    async with httpx.AsyncClient(timeout=60, follow_redirects=True) as client:
-        response = await client.get(archives_url)
-        response.raise_for_status()
+    headers = {"User-Agent": USER_AGENT}
+
+    async with httpx.AsyncClient(
+        timeout=60, follow_redirects=True, headers=headers
+    ) as client:
+        response = await fetch_with_retry(client, archives_url)
         archives = response.json().get("archives", [])
 
         games: list[dict[str, object]] = []
@@ -39,10 +44,9 @@ async def fetch(
             tqdm(desc="Chess.com games", total=max_games, unit="game") as game_bar,
         ):
             for archive_url in reversed(archives):
-                month_resp = await client.get(archive_url)
-                month_resp.raise_for_status()
+                month_resp = await fetch_with_retry(client, archive_url)
                 archive_games = month_resp.json().get("games", [])
-                for game in archive_games:
+                for game in reversed(archive_games):
                     pgn_text = game.get("pgn")
                     if not pgn_text:
                         continue

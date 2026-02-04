@@ -78,6 +78,7 @@ dependencies = [
     { name = "fast-depends" },
     { name = "fastapi" },
     { name = "httpx" },
+    { name = "hyx" },
     { name = "jinja2" },
     { name = "python-chess" },
     { name = "python-multipart" },
@@ -103,6 +104,7 @@ requires-dist = [
     { name = "fast-depends", specifier = ">=2.4.0" },
     { name = "fastapi", specifier = ">=0.116.1" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "hyx", specifier = ">=0.0.2" },
     { name = "jinja2", specifier = ">=3.1.4" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24.0" },
@@ -305,6 +307,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc", size = 141406, upload-time = "2024-12-06T15:37:23.222Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad", size = 73517, upload-time = "2024-12-06T15:37:21.509Z" },
+]
+
+[[package]]
+name = "hyx"
+version = "0.0.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/e6/b08ae91bd0f8dd1caf76670308904b8577b538a87cf78ca764c5faf82459/hyx-0.0.2.tar.gz", hash = "sha256:7f356299770e73b3fa8faf22d62e9cba5a1bb40b87b3ae77b97a425f6802c64e", size = 20381, upload-time = "2023-02-19T13:13:13.508Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/60/0f1f8f1e308a193143872de11ec0519ea9cab1ee808dd48886d19b2d7359/hyx-0.0.2-py3-none-any.whl", hash = "sha256:6a422f1c84c31575ac42affa3aa3ced43a23036fc1fab64941355d1cefbd1997", size = 27680, upload-time = "2023-02-19T13:13:11.786Z" },
 ]
 
 [[package]]
