@@ -531,6 +531,129 @@ class TestProgressCallbackBehavior:
             assert total == 2
 
 
+class TestIncrementalFetch:
+    async def test_lichess_since_parameter_passed(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Test that since parameter is converted to milliseconds and passed to API."""
+        from datetime import UTC, datetime
+
+        captured_params: list[dict] = []
+
+        async def mock_get(url: str, **kwargs: Any) -> MagicMock:
+            captured_params.append(kwargs.get("params", {}))
+            return create_mock_response(text="")
+
+        client = MagicMock()
+        client.get = mock_get
+        mock_client = MagicMock()
+        mock_client.__aenter__ = AsyncMock(return_value=client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+
+        since_dt = datetime(2024, 1, 15, 12, 0, 0, tzinfo=UTC)
+        await lichess.fetch("testuser", since=since_dt)
+
+        assert len(captured_params) > 0
+        assert "since" in captured_params[0]
+        expected_ms = int(since_dt.timestamp() * 1000)
+        assert captured_params[0]["since"] == expected_ms
+
+    async def test_lichess_without_since_no_param(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Test that without since parameter, no since is passed to API."""
+        captured_params: list[dict] = []
+
+        async def mock_get(url: str, **kwargs: Any) -> MagicMock:
+            captured_params.append(kwargs.get("params", {}))
+            return create_mock_response(text="")
+
+        client = MagicMock()
+        client.get = mock_get
+        mock_client = MagicMock()
+        mock_client.__aenter__ = AsyncMock(return_value=client)
+        mock_client.__aexit__ = AsyncMock(return_value=None)
+        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+
+        await lichess.fetch("testuser")
+
+        assert len(captured_params) > 0
+        assert "since" not in captured_params[0]
+
+    async def test_chesscom_since_filters_archives(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Test that Chess.com filters out archives before since date."""
+        from datetime import UTC, datetime
+
+        archives_response = {
+            "archives": [
+                "https://api.chess.com/pub/player/test/games/2023/11",
+                "https://api.chess.com/pub/player/test/games/2023/12",
+                "https://api.chess.com/pub/player/test/games/2024/01",
+                "https://api.chess.com/pub/player/test/games/2024/02",
+            ]
+        }
+        games_response = {"games": [{"pgn": SAMPLE_PGN_1, "end_time": 1706000000}]}
+        fetched_urls: list[str] = []
+
+        def handler(url: str) -> MagicMock:
+            fetched_urls.append(url)
+            if "archives" in url:
+                return create_mock_response(json_data=archives_response)
+            return create_mock_response(json_data=games_response)
+
+        mock_client = create_mock_client(handler)
+        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+
+        # Since January 2024 - should skip 2023 archives
+        since_dt = datetime(2024, 1, 1, tzinfo=UTC)
+        await chesscom.fetch("testuser", since=since_dt)
+
+        # Should only fetch 2024/01 and 2024/02, not 2023 archives
+        archive_fetches = [u for u in fetched_urls if "archives" not in u]
+        assert len(archive_fetches) == 2
+        assert all("2024" in u for u in archive_fetches)
+        assert not any("2023" in u for u in archive_fetches)
+
+    async def test_chesscom_since_filters_games_within_archive(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        """Test that Chess.com filters out games before since timestamp."""
+        from datetime import UTC, datetime
+
+        archives_response = {
+            "archives": ["https://api.chess.com/pub/player/test/games/2024/01"]
+        }
+        # Games with different timestamps
+        games_response = {
+            "games": [
+                {
+                    "pgn": SAMPLE_PGN_3,
+                    "end_time": 1704100000,
+                },  # Early Jan - before since
+                {"pgn": SAMPLE_PGN_2, "end_time": 1705000000},  # Mid Jan - before since
+                {"pgn": SAMPLE_PGN_1, "end_time": 1706000000},  # Late Jan - after since
+            ]
+        }
+
+        def handler(url: str) -> MagicMock:
+            if "archives" in url:
+                return create_mock_response(json_data=archives_response)
+            return create_mock_response(json_data=games_response)
+
+        mock_client = create_mock_client(handler)
+        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+
+        # Since timestamp between game 2 and game 3
+        since_dt = datetime(2024, 1, 20, tzinfo=UTC)  # 1705708800
+        games, _ = await chesscom.fetch("testuser", since=since_dt)
+
+        # Should only get the one game after since
+        assert len(games) == 1
+
+
 class TestRetryBehavior:
     async def test_retries_on_500_error(self, monkeypatch: pytest.MonkeyPatch):
         call_count = 0

@@ -75,6 +75,11 @@ class SyncGamesJob(BaseJob):
         max_games_str = await self.settings_repo.get_setting("sync_max_games")
         max_games = int(max_games_str) if max_games_str else 1000
 
+        # Get the timestamp of the latest game we already have
+        since = await self.game_repo.get_latest_game_time(source, username)
+        if since:
+            logger.info(f"Incremental sync for {source}/{username} since {since}")
+
         await self.job_service.update_job_progress(job_id, 0, max_games)
 
         async def update_progress(current: int, total: int) -> None:
@@ -84,12 +89,14 @@ class SyncGamesJob(BaseJob):
             games, _seen_ids = await lichess.fetch(
                 username,
                 max_games,
+                since=since,
                 progress_callback=update_progress,
             )
         elif source == "chesscom":
             games, _seen_ids = await chesscom.fetch(
                 username,
                 max_games,
+                since=since,
                 progress_callback=update_progress,
             )
         else:

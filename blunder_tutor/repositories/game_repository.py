@@ -313,3 +313,23 @@ class GameRepository(BaseDbRepository):
             rows = await cursor.fetchall()
 
         return [row[0] for row in rows]
+
+    async def get_latest_game_time(
+        self,
+        source: str,
+        username: str,
+    ) -> datetime | None:
+        """Get the end_time_utc of the most recent game for a source/username."""
+        query = """
+            SELECT end_time_utc FROM game_index_cache
+            WHERE source = ? AND username = ?
+            ORDER BY end_time_utc DESC
+            LIMIT 1
+        """
+        conn = await self.get_connection()
+        async with conn.execute(query, (source, username)) as cursor:
+            row = await cursor.fetchone()
+
+        if row and row[0]:
+            return datetime.fromisoformat(row[0])
+        return None

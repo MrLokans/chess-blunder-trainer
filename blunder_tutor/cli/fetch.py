@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+from datetime import datetime
 
 from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.fetchers import chesscom, lichess
@@ -20,10 +21,15 @@ class FetchCommand(CLICommand):
         game_repo = GameRepository.from_config(config)
 
         try:
+            since = await self._resolve_since(args, game_repo)
+            if since:
+                print(f"Incremental fetch: only games after {since.isoformat()}")
+
             if args.source == "lichess":
                 games, _seen_ids = await lichess.fetch(
                     username=args.username,
                     max_games=args.max,
+                    since=since,
                     batch_size=args.batch_size,
                 )
                 inserted = await game_repo.insert_games(games)
@@ -35,6 +41,7 @@ class FetchCommand(CLICommand):
                 games, _seen_ids = await chesscom.fetch(
                     username=args.username,
                     max_games=args.max,
+                    since=since,
                 )
                 inserted = await game_repo.insert_games(games)
                 skipped = len(games) - inserted
@@ -42,6 +49,15 @@ class FetchCommand(CLICommand):
                 return
         finally:
             await game_repo.close()
+
+    async def _resolve_since(
+        self, args: argparse.Namespace, game_repo: GameRepository
+    ) -> datetime | None:
+        if getattr(args, "incremental", False):
+            return await game_repo.get_latest_game_time(args.source, args.username)
+        if getattr(args, "since", None):
+            return datetime.fromisoformat(args.since)
+        return None
 
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
         fetch_parser = subparsers.add_parser("fetch", help="Fetch games by username")
@@ -63,6 +79,17 @@ class FetchCommand(CLICommand):
             default=200,
             help="Lichess pagination batch size",
         )
+        lichess_parser.add_argument(
+            "--incremental",
+            action="store_true",
+            help="Only fetch games newer than the latest in database",
+        )
+        lichess_parser.add_argument(
+            "--since",
+            type=str,
+            default=None,
+            help="Only fetch games after this ISO datetime (e.g., 2024-01-15T00:00:00)",
+        )
 
         chesscom_parser = fetch_subparsers.add_parser(
             "chesscom", help="Fetch from Chess.com"
@@ -73,6 +100,17 @@ class FetchCommand(CLICommand):
             type=int,
             default=None,
             help="Max number of games to fetch",
+        )
+        chesscom_parser.add_argument(
+            "--incremental",
+            action="store_true",
+            help="Only fetch games newer than the latest in database",
+        )
+        chesscom_parser.add_argument(
+            "--since",
+            type=str,
+            default=None,
+            help="Only fetch games after this ISO datetime (e.g., 2024-01-15T00:00:00)",
         )
 
         return

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Awaitable, Callable
+from datetime import datetime
 
 import httpx
 from tqdm import tqdm
@@ -14,11 +16,39 @@ from blunder_tutor.utils.pgn_utils import (
 )
 
 CHESSCOM_BASE_URL = "https://api.chess.com"
+ARCHIVE_URL_PATTERN = re.compile(r"/games/(\d{4})/(\d{2})$")
+
+
+def _parse_archive_month(archive_url: str) -> tuple[int, int] | None:
+    """Extract (year, month) from archive URL like '.../games/2024/01'."""
+    match = ARCHIVE_URL_PATTERN.search(archive_url)
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    return None
+
+
+def _filter_archives_since(archives: list[str], since: datetime | None) -> list[str]:
+    """Filter archives to only include those that may contain games after `since`."""
+    if since is None:
+        return archives
+
+    since_year, since_month = since.year, since.month
+    filtered = []
+    for url in archives:
+        parsed = _parse_archive_month(url)
+        if parsed is None:
+            filtered.append(url)
+            continue
+        year, month = parsed
+        if (year, month) >= (since_year, since_month):
+            filtered.append(url)
+    return filtered
 
 
 async def fetch(
     username: str,
     max_games: int | None = None,
+    since: datetime | None = None,
     progress_callback: Callable[[int, int], Awaitable[None]] | None = None,
 ) -> tuple[list[dict[str, object]], set[str]]:
     api_username = username.lower()
@@ -26,11 +56,16 @@ async def fetch(
 
     headers = {"User-Agent": USER_AGENT}
 
+    since_ts: int | None = None
+    if since is not None:
+        since_ts = int(since.timestamp())
+
     async with httpx.AsyncClient(
         timeout=60, follow_redirects=True, headers=headers
     ) as client:
         response = await fetch_with_retry(client, archives_url)
-        archives = response.json().get("archives", [])
+        all_archives = response.json().get("archives", [])
+        archives = _filter_archives_since(all_archives, since)
 
         games: list[dict[str, object]] = []
         seen_ids: set[str] = set()
@@ -47,6 +82,12 @@ async def fetch(
                 month_resp = await fetch_with_retry(client, archive_url)
                 archive_games = month_resp.json().get("games", [])
                 for game in reversed(archive_games):
+                    # Filter by timestamp if since is specified
+                    if since_ts is not None:
+                        end_time = game.get("end_time", 0)
+                        if end_time < since_ts:
+                            continue
+
                     pgn_text = game.get("pgn")
                     if not pgn_text:
                         continue

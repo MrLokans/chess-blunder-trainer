@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 from collections.abc import Awaitable, Callable, Iterable
+from datetime import datetime
 
 import chess.pgn
 import httpx
@@ -35,6 +36,7 @@ def _split_pgn_stream(pgn_text: str) -> Iterable[tuple[str, int | None]]:
 async def fetch(
     username: str,
     max_games: int | None = None,
+    since: datetime | None = None,
     batch_size: int = 200,
     progress_callback: Callable[[int, int], Awaitable[None]] | None = None,
 ) -> tuple[list[dict[str, object]], set[str]]:
@@ -45,6 +47,9 @@ async def fetch(
     seen_ids: set[str] = set()
     remaining = max_games
     until_ms: int | None = None
+    since_ms: int | None = None
+    if since is not None:
+        since_ms = int(since.timestamp() * 1000)
 
     async with httpx.AsyncClient(timeout=60) as client:
         with tqdm(desc="Lichess games", total=max_games, unit="game") as progress:
@@ -54,6 +59,8 @@ async def fetch(
                     page_max = min(page_max, remaining)
 
                 params: dict[str, int] = {"max": page_max}
+                if since_ms is not None:
+                    params["since"] = since_ms
                 if until_ms is not None:
                     params["until"] = until_ms
 
