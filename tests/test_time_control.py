@@ -22,6 +22,13 @@ class TestParseTimeControl:
         assert parse_time_control("60+0") == (60, 0)
         assert parse_time_control("120+1") == (120, 1)
 
+    def test_parse_chesscom_format(self):
+        # Chess.com often uses just seconds without increment
+        assert parse_time_control("600") == (600, 0)
+        assert parse_time_control("180") == (180, 0)
+        assert parse_time_control("60") == (60, 0)
+        assert parse_time_control("300") == (300, 0)
+
     def test_parse_none(self):
         assert parse_time_control(None) is None
         assert parse_time_control("") is None
@@ -29,6 +36,7 @@ class TestParseTimeControl:
     def test_parse_invalid_format(self):
         assert parse_time_control("invalid") is None
         assert parse_time_control("1/86400") is None  # Correspondence format
+        assert parse_time_control("-") is None  # Daily game marker
 
 
 class TestEstimateGameDuration:
@@ -47,18 +55,25 @@ class TestClassifyGameType:
         # < 29 seconds
         assert classify_game_type("15+0") == GameType.ULTRABULLET
         assert classify_game_type("20+0") == GameType.ULTRABULLET
+        assert classify_game_type("15") == GameType.ULTRABULLET  # Chess.com format
 
     def test_bullet(self):
         # >= 29s and < 180s
         assert classify_game_type("60+0") == GameType.BULLET
         assert classify_game_type("120+0") == GameType.BULLET
         assert classify_game_type("60+1") == GameType.BULLET  # 60 + 40 = 100
+        # Chess.com format (no increment)
+        assert classify_game_type("60") == GameType.BULLET
+        assert classify_game_type("120") == GameType.BULLET
 
     def test_blitz(self):
         # >= 180s and < 480s
         assert classify_game_type("180+0") == GameType.BLITZ
         assert classify_game_type("300+0") == GameType.BLITZ
         assert classify_game_type("180+2") == GameType.BLITZ  # 180 + 80 = 260
+        # Chess.com format (no increment)
+        assert classify_game_type("180") == GameType.BLITZ
+        assert classify_game_type("300") == GameType.BLITZ
 
     def test_rapid(self):
         # >= 480s and < 1500s
@@ -66,15 +81,22 @@ class TestClassifyGameType:
         assert classify_game_type("900+0") == GameType.RAPID
         assert classify_game_type("600+5") == GameType.RAPID  # 600 + 200 = 800
         assert classify_game_type("900+10") == GameType.RAPID  # 900 + 400 = 1300
+        # Chess.com format (no increment)
+        assert classify_game_type("600") == GameType.RAPID
+        assert classify_game_type("900") == GameType.RAPID
 
     def test_classical(self):
         # >= 1500s
         assert classify_game_type("1800+0") == GameType.CLASSICAL
         assert classify_game_type("1800+30") == GameType.CLASSICAL
         assert classify_game_type("900+15") == GameType.CLASSICAL  # 900 + 600 = 1500
+        # Chess.com format (no increment)
+        assert classify_game_type("1800") == GameType.CLASSICAL
 
     def test_correspondence(self):
         assert classify_game_type("1/86400") == GameType.CORRESPONDENCE
+        # Chess.com uses "-" for daily games
+        assert classify_game_type("-") == GameType.CORRESPONDENCE
 
     def test_unknown(self):
         assert classify_game_type(None) == GameType.UNKNOWN

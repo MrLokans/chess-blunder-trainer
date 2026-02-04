@@ -8,7 +8,10 @@ from enum import IntEnum
 # Time control patterns
 # Format: "base+increment" where base is seconds and increment is seconds
 # Examples: "180+0" (3 min), "600+5" (10 min + 5 sec), "1/86400" (correspondence)
-TIME_CONTROL_PATTERN = re.compile(r"^(\d+)\+(\d+)$")
+TIME_CONTROL_WITH_INCREMENT = re.compile(r"^(\d+)\+(\d+)$")
+# Chess.com often uses just seconds without increment: "600", "180"
+TIME_CONTROL_SECONDS_ONLY = re.compile(r"^(\d+)$")
+# Correspondence format: "1/86400" (1 move per day)
 CORRESPONDENCE_PATTERN = re.compile(r"^1/(\d+)$")
 
 
@@ -38,14 +41,24 @@ GAME_TYPE_FROM_STRING: dict[str, int] = {v: k for k, v in GAME_TYPE_LABELS.items
 def parse_time_control(time_control: str | None) -> tuple[int, int] | None:
     """Parse time control string into (base_seconds, increment_seconds).
 
+    Handles multiple formats:
+    - "180+0", "600+5" (Lichess style: base+increment)
+    - "600", "180" (Chess.com style: just seconds, no increment)
+
     Returns None if the format is not recognized.
     """
     if not time_control:
         return None
 
-    match = TIME_CONTROL_PATTERN.match(time_control)
+    # Try base+increment format first (e.g., "180+0", "600+5")
+    match = TIME_CONTROL_WITH_INCREMENT.match(time_control)
     if match:
         return int(match.group(1)), int(match.group(2))
+
+    # Try seconds-only format (e.g., "600", "180" - common in Chess.com)
+    match = TIME_CONTROL_SECONDS_ONLY.match(time_control)
+    if match:
+        return int(match.group(1)), 0
 
     return None
 
@@ -73,7 +86,12 @@ def classify_game_type(time_control: str | None) -> GameType:
     if not time_control:
         return GameType.UNKNOWN
 
-    # Check for correspondence format
+    # Handle special cases
+    if time_control == "-":
+        # Chess.com uses "-" for daily/correspondence games
+        return GameType.CORRESPONDENCE
+
+    # Check for correspondence format (e.g., "1/86400")
     if CORRESPONDENCE_PATTERN.match(time_control):
         return GameType.CORRESPONDENCE
 
