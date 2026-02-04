@@ -27,6 +27,8 @@ class PuzzleService:
         spaced_repetition_days: int = 30,
         game_phases: list[int] | None = None,
         tactical_patterns: list[int] | None = None,
+        game_types: list[int] | None = None,
+        player_colors: list[int] | None = None,
     ) -> PuzzleWithAnalysis:
         puzzle = await self.trainer.pick_random_blunder(
             username=username,
@@ -37,6 +39,8 @@ class PuzzleService:
             spaced_repetition_days=spaced_repetition_days,
             game_phases=game_phases,
             tactical_patterns=tactical_patterns,
+            game_types=game_types,
+            player_colors=player_colors,
         )
 
         if puzzle.best_move_uci and puzzle.best_move_san and puzzle.best_line:

@@ -9,6 +9,9 @@ let bestRevealed = false;
 let moveHistory = [];
 let currentPhaseFilters = [];
 let currentTacticalFilter = 'all';
+let currentGameTypeFilters = [];
+let currentColorFilter = 'both';
+let filtersCollapsed = false;
 
 // DOM elements
 const evalBarFill = document.getElementById('evalBarFill');
@@ -54,6 +57,14 @@ const tacticalInfoReason = document.getElementById('tacticalInfoReason');
 const tacticalFilterBtns = document.querySelectorAll('.tactical-filter-btn');
 const showTacticsCheckbox = document.getElementById('showTactics');
 const legendTactic = document.getElementById('legendTactic');
+
+// New filter elements
+const gameTypeCheckboxes = document.querySelectorAll('.game-type-checkbox');
+const colorFilterRadios = document.querySelectorAll('input[name="colorFilter"]');
+const filtersHeader = document.getElementById('filtersHeader');
+const filtersToggleBtn = document.getElementById('filtersToggleBtn');
+const filtersContent = document.getElementById('filtersContent');
+const filtersChevron = document.getElementById('filtersChevron');
 
 // Empty state elements
 const emptyState = document.getElementById('emptyState');
@@ -183,7 +194,9 @@ function clearArrows() {
 function hasActiveFilters() {
   const hasTacticalFilter = currentTacticalFilter && currentTacticalFilter !== 'all';
   const hasPhaseFilter = currentPhaseFilters.length > 0 && currentPhaseFilters.length < 3;
-  return hasTacticalFilter || hasPhaseFilter;
+  const hasGameTypeFilter = currentGameTypeFilters.length > 0 && currentGameTypeFilters.length < 4;
+  const hasColorFilter = currentColorFilter && currentColorFilter !== 'both';
+  return hasTacticalFilter || hasPhaseFilter || hasGameTypeFilter || hasColorFilter;
 }
 
 function showEmptyState(errorType) {
@@ -240,6 +253,20 @@ function clearAllFilters() {
   localStorage.setItem('blunder-tutor-phase-filters', JSON.stringify(currentPhaseFilters));
   phaseFilterCheckboxes.forEach(checkbox => {
     checkbox.checked = true;
+  });
+
+  // Reset game type filters to default selection
+  currentGameTypeFilters = ['bullet', 'blitz', 'rapid'];
+  localStorage.setItem('blunder-tutor-game-type-filters', JSON.stringify(currentGameTypeFilters));
+  gameTypeCheckboxes.forEach(checkbox => {
+    checkbox.checked = currentGameTypeFilters.includes(checkbox.value);
+  });
+
+  // Reset color filter to both
+  currentColorFilter = 'both';
+  localStorage.removeItem('blunder-tutor-color-filter');
+  colorFilterRadios.forEach(radio => {
+    radio.checked = radio.value === 'both';
   });
 
   // Reload puzzle
@@ -667,6 +694,12 @@ async function loadPuzzle() {
     if (currentTacticalFilter && currentTacticalFilter !== 'all') {
       params.append('tactical_patterns', currentTacticalFilter);
     }
+    if (currentGameTypeFilters.length > 0) {
+      currentGameTypeFilters.forEach(gameType => params.append('game_types', gameType));
+    }
+    if (currentColorFilter && currentColorFilter !== 'both') {
+      params.append('colors', currentColorFilter);
+    }
     if (params.toString()) {
       url += '?' + params.toString();
     }
@@ -1038,6 +1071,33 @@ tacticalFilterBtns.forEach(btn => {
   });
 });
 
+// Game type filter event listeners
+gameTypeCheckboxes.forEach(checkbox => {
+  checkbox.addEventListener('change', () => {
+    updateGameTypeFilters();
+    loadPuzzle();
+  });
+});
+
+// Color filter event listeners
+colorFilterRadios.forEach(radio => {
+  radio.addEventListener('change', () => {
+    updateColorFilter();
+    loadPuzzle();
+  });
+});
+
+// Collapsible filter panel event listeners
+if (filtersHeader) {
+  filtersHeader.addEventListener('click', toggleFiltersPanel);
+}
+if (filtersToggleBtn) {
+  filtersToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleFiltersPanel();
+  });
+}
+
 // Load tactical filter from storage
 function loadTacticalFilterFromStorage() {
   const stored = localStorage.getItem('blunder-tutor-tactical-filter');
@@ -1050,6 +1110,109 @@ function loadTacticalFilterFromStorage() {
         btn.classList.remove('active');
       }
     });
+  }
+}
+
+// Game type filter functions
+const GAME_TYPE_FILTER_STORAGE_KEY = 'blunder-tutor-game-type-filters';
+
+function updateGameTypeFilters() {
+  currentGameTypeFilters = [];
+  gameTypeCheckboxes.forEach(checkbox => {
+    if (checkbox.checked) {
+      currentGameTypeFilters.push(checkbox.value);
+    }
+  });
+  localStorage.setItem(GAME_TYPE_FILTER_STORAGE_KEY, JSON.stringify(currentGameTypeFilters));
+}
+
+function loadGameTypeFiltersFromStorage() {
+  const stored = localStorage.getItem(GAME_TYPE_FILTER_STORAGE_KEY);
+  if (stored) {
+    try {
+      const gameTypes = JSON.parse(stored);
+      if (Array.isArray(gameTypes)) {
+        gameTypeCheckboxes.forEach(checkbox => {
+          checkbox.checked = gameTypes.includes(checkbox.value);
+        });
+        currentGameTypeFilters = gameTypes;
+      }
+    } catch (e) {
+      console.warn('Failed to parse stored game type filters:', e);
+      // Set defaults
+      currentGameTypeFilters = ['bullet', 'blitz', 'rapid'];
+      gameTypeCheckboxes.forEach(checkbox => {
+        checkbox.checked = currentGameTypeFilters.includes(checkbox.value);
+      });
+    }
+  } else {
+    // Set defaults if nothing stored
+    currentGameTypeFilters = ['bullet', 'blitz', 'rapid'];
+    gameTypeCheckboxes.forEach(checkbox => {
+      checkbox.checked = currentGameTypeFilters.includes(checkbox.value);
+    });
+  }
+}
+
+// Color filter functions
+const COLOR_FILTER_STORAGE_KEY = 'blunder-tutor-color-filter';
+
+function updateColorFilter() {
+  colorFilterRadios.forEach(radio => {
+    if (radio.checked) {
+      currentColorFilter = radio.value;
+    }
+  });
+  if (currentColorFilter === 'both') {
+    localStorage.removeItem(COLOR_FILTER_STORAGE_KEY);
+  } else {
+    localStorage.setItem(COLOR_FILTER_STORAGE_KEY, currentColorFilter);
+  }
+}
+
+function loadColorFilterFromStorage() {
+  const stored = localStorage.getItem(COLOR_FILTER_STORAGE_KEY);
+  if (stored && (stored === 'white' || stored === 'black')) {
+    currentColorFilter = stored;
+    colorFilterRadios.forEach(radio => {
+      radio.checked = radio.value === stored;
+    });
+  } else {
+    currentColorFilter = 'both';
+    colorFilterRadios.forEach(radio => {
+      radio.checked = radio.value === 'both';
+    });
+  }
+}
+
+// Collapsible filter panel functions
+const FILTERS_COLLAPSED_KEY = 'blunder-tutor-filters-collapsed';
+
+function toggleFiltersPanel() {
+  filtersCollapsed = !filtersCollapsed;
+  updateFiltersPanelState();
+  localStorage.setItem(FILTERS_COLLAPSED_KEY, JSON.stringify(filtersCollapsed));
+}
+
+function updateFiltersPanelState() {
+  if (filtersCollapsed) {
+    filtersContent.classList.add('collapsed');
+    filtersChevron.classList.add('collapsed');
+  } else {
+    filtersContent.classList.remove('collapsed');
+    filtersChevron.classList.remove('collapsed');
+  }
+}
+
+function loadFiltersPanelState() {
+  const stored = localStorage.getItem(FILTERS_COLLAPSED_KEY);
+  if (stored) {
+    try {
+      filtersCollapsed = JSON.parse(stored);
+      updateFiltersPanelState();
+    } catch (e) {
+      filtersCollapsed = false;
+    }
   }
 }
 
@@ -1069,5 +1232,8 @@ document.addEventListener('keydown', (e) => {
 // Initialize
 loadPhaseFiltersFromStorage();
 loadTacticalFilterFromStorage();
+loadGameTypeFiltersFromStorage();
+loadColorFilterFromStorage();
+loadFiltersPanelState();
 loadPuzzle();
 // Stats are loaded automatically via HTMX on page load

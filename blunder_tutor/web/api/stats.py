@@ -433,6 +433,21 @@ class BlundersByTacticalPattern(BaseModel):
     )
 
 
+class GameTypeBlunderItem(BaseModel):
+    game_type: str = Field(description="Game type (bullet, blitz, rapid, classical)")
+    game_type_id: int = Field(description="Game type ID")
+    count: int = Field(description="Number of blunders in this game type")
+    percentage: float = Field(description="Percentage of total blunders")
+    avg_cp_loss: float = Field(description="Average centipawn loss")
+
+
+class BlundersByGameType(BaseModel):
+    total_blunders: int = Field(description="Total number of blunders")
+    by_game_type: list[GameTypeBlunderItem] = Field(
+        description="Blunders grouped by game type"
+    )
+
+
 @stats_router.get(
     "/api/stats/blunders/by-tactical-pattern",
     response_model=BlundersByTacticalPattern,
@@ -458,6 +473,37 @@ async def get_blunders_by_tactical_pattern(
     end_date_str = end_date.isoformat() if end_date else None
 
     return await stats_repo.get_blunders_by_tactical_pattern(
+        username=username,
+        start_date=start_date_str,
+        end_date=end_date_str,
+    )
+
+
+@stats_router.get(
+    "/api/stats/blunders/by-game-type",
+    response_model=BlundersByGameType,
+    summary="Get blunders by game type",
+    description="Returns blunder statistics grouped by game type (bullet, blitz, rapid, classical).",
+)
+async def get_blunders_by_game_type(
+    stats_repo: StatsRepoDep,
+    username: Annotated[
+        str | None,
+        Query(max_length=100, description="Filter by username"),
+    ] = None,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+) -> dict[str, Any]:
+    start_date_str = start_date.isoformat() if start_date else None
+    end_date_str = end_date.isoformat() if end_date else None
+
+    return await stats_repo.get_blunders_by_game_type(
         username=username,
         start_date=start_date_str,
         end_date=end_date_str,

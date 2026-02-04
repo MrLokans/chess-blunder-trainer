@@ -3,6 +3,10 @@ from __future__ import annotations
 from blunder_tutor.analysis.tactics import PATTERN_LABELS
 from blunder_tutor.constants import COLOR_LABELS, PHASE_LABELS
 from blunder_tutor.repositories.base import BaseDbRepository
+from blunder_tutor.utils.time_control import (
+    GAME_TYPE_LABELS,
+    classify_game_type,
+)
 
 
 class StatsRepository(BaseDbRepository):
@@ -633,4 +637,168 @@ class StatsRepository(BaseDbRepository):
         return {
             "total_blunders": total,
             "by_pattern": patterns,
+        }
+
+    async def get_blunders_by_game_type(
+        self,
+        username: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, object]:
+        """Get blunder statistics grouped by game type (bullet, blitz, rapid, etc.)."""
+        query = """
+            SELECT
+                g.time_control,
+                am.cp_loss
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE am.classification = 3
+        """
+        params: list[str] = []
+
+        if username:
+            query += " AND g.username = ?"
+            params.append(username)
+
+        if start_date:
+            query += " AND g.end_time_utc >= ?"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND g.end_time_utc <= ?"
+            params.append(end_date)
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        # Group by game type in Python
+        game_type_stats: dict[int, dict[str, float]] = {}
+        for row in rows:
+            time_control = row[0]
+            cp_loss = row[1] or 0
+
+            game_type = int(classify_game_type(time_control))
+
+            if game_type not in game_type_stats:
+                game_type_stats[game_type] = {"count": 0, "total_cp_loss": 0.0}
+
+            game_type_stats[game_type]["count"] += 1
+            game_type_stats[game_type]["total_cp_loss"] += cp_loss
+
+        total = sum(stats["count"] for stats in game_type_stats.values())
+
+        game_types = []
+        for game_type_int in sorted(game_type_stats.keys()):
+            stats = game_type_stats[game_type_int]
+            count = int(stats["count"])
+            avg_cp_loss = stats["total_cp_loss"] / count if count > 0 else 0.0
+            game_type_label = GAME_TYPE_LABELS.get(game_type_int, "unknown")
+            percentage = (count / total * 100) if total > 0 else 0.0
+            game_types.append(
+                {
+                    "game_type": game_type_label,
+                    "game_type_id": game_type_int,
+                    "count": count,
+                    "percentage": round(percentage, 1),
+                    "avg_cp_loss": round(avg_cp_loss, 1),
+                }
+            )
+
+        return {
+            "total_blunders": int(total),
+            "by_game_type": game_types,
+        }
+
+    async def get_blunders_by_phase_filtered(
+        self,
+        username: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        game_types: list[int] | None = None,
+        player_colors: list[int] | None = None,
+    ) -> dict[str, object]:
+        """Get blunders by phase with additional game type and color filters."""
+        query = """
+            SELECT
+                am.game_phase,
+                am.cp_loss,
+                g.time_control,
+                am.player
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE am.classification = 3
+        """
+        params: list[object] = []
+
+        if username:
+            query += " AND g.username = ?"
+            params.append(username)
+
+        if start_date:
+            query += " AND g.end_time_utc >= ?"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND g.end_time_utc <= ?"
+            params.append(end_date)
+
+        if player_colors:
+            placeholders = ",".join("?" * len(player_colors))
+            query += f" AND am.player IN ({placeholders})"
+            params.extend(player_colors)
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        # Filter by game type in Python and group by phase
+        game_types_set = set(game_types) if game_types else None
+        phase_stats: dict[int | None, dict[str, float]] = {}
+
+        for row in rows:
+            game_phase = row[0]
+            cp_loss = row[1] or 0
+            time_control = row[2]
+
+            # Filter by game type if specified
+            if game_types_set:
+                game_type = int(classify_game_type(time_control))
+                if game_type not in game_types_set:
+                    continue
+
+            if game_phase not in phase_stats:
+                phase_stats[game_phase] = {"count": 0, "total_cp_loss": 0.0}
+
+            phase_stats[game_phase]["count"] += 1
+            phase_stats[game_phase]["total_cp_loss"] += cp_loss
+
+        total = sum(int(stats["count"]) for stats in phase_stats.values())
+
+        phases = []
+        for phase_int in sorted(
+            phase_stats.keys(), key=lambda x: x if x is not None else 999
+        ):
+            stats = phase_stats[phase_int]
+            count = int(stats["count"])
+            avg_cp_loss = stats["total_cp_loss"] / count if count > 0 else 0.0
+            phase_label = (
+                PHASE_LABELS.get(phase_int, "unknown")
+                if phase_int is not None
+                else "unknown"
+            )
+            percentage = (count / total * 100) if total > 0 else 0.0
+            phases.append(
+                {
+                    "phase": phase_label,
+                    "phase_id": phase_int,
+                    "count": count,
+                    "percentage": round(percentage, 1),
+                    "avg_cp_loss": round(avg_cp_loss, 1),
+                }
+            )
+
+        return {
+            "total_blunders": total,
+            "by_phase": phases,
         }

@@ -680,3 +680,178 @@
   background-color: rgba(139, 92, 246, 0.45);
   border: 2px solid #8b5cf6;
 }
+
+/* ==========================================================================
+   Filters Panel (Collapsible)
+   ========================================================================== */
+
+.filters-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-slate-50);
+  margin-bottom: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.filters-header:hover {
+  background: var(--color-slate-100);
+}
+
+.filters-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-1);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.filters-toggle-btn:hover {
+  color: var(--text);
+}
+
+.chevron-icon {
+  transition: transform 0.2s ease;
+}
+
+.chevron-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.filters-content {
+  padding: var(--space-4);
+  border-top: 1px solid var(--border);
+  display: block;
+}
+
+.filters-content.collapsed {
+  display: none;
+}
+
+.filter-group {
+  margin-bottom: var(--space-4);
+}
+
+.filter-group:last-child {
+  margin-bottom: 0;
+}
+
+.filter-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Game Type Filter
+   ========================================================================== */
+
+.game-type-filter {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.filter-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+  transition: background 0.15s ease;
+}
+
+.filter-checkbox-label:hover {
+  background: var(--color-slate-50);
+}
+
+.filter-checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.game-type-icon {
+  font-size: var(--text-base);
+}
+
+/* ==========================================================================
+   Color Filter
+   ========================================================================== */
+
+.color-filter {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.filter-radio-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+  user-select: none;
+}
+
+.filter-radio-label input[type="radio"] {
+  display: none;
+}
+
+.color-option {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border: 2px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.color-option:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.filter-radio-label input[type="radio"]:checked + .color-option {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(14, 165, 233, 0.08);
+}
+
+.color-option.white {
+  /* White piece styling */
+}
+
+.color-option.black {
+  /* Black piece styling */
+}
+
+.filter-radio-label input[type="radio"]:checked + .color-option.white {
+  border-color: var(--color-slate-400);
+  color: var(--text);
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.filter-radio-label input[type="radio"]:checked + .color-option.black {
+  border-color: var(--color-slate-700);
+  color: white;
+  background: var(--color-slate-700);
+}

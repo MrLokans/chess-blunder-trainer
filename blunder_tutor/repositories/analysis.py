@@ -347,51 +347,85 @@ class AnalysisRepository(BaseDbRepository):
         self,
         game_phases: list[int] | None = None,
         tactical_patterns: list[int] | None = None,
+        player_colors: list[int] | None = None,
+        game_types: list[int] | None = None,
     ) -> list[dict[str, object]]:
-        """Fetch blunders with optional filtering by phase and tactical pattern."""
+        """Fetch blunders with optional filtering by phase, tactical pattern, color, and game type.
+
+        Args:
+            game_phases: Filter by game phase (0=opening, 1=middlegame, 2=endgame)
+            tactical_patterns: Filter by tactical pattern
+            player_colors: Filter by player color (0=white, 1=black)
+            game_types: Filter by game type - requires post-fetch filtering since
+                        game_type is computed from time_control
+        """
+        from blunder_tutor.utils.time_control import classify_game_type
+
         conn = await self.get_connection()
-        conditions = ["classification = ?"]
+        conditions = ["am.classification = ?"]
         params: list = [CLASSIFICATION_BLUNDER]
 
         if game_phases:
             placeholders = ",".join("?" * len(game_phases))
-            conditions.append(f"game_phase IN ({placeholders})")
+            conditions.append(f"am.game_phase IN ({placeholders})")
             params.extend(game_phases)
 
         if tactical_patterns:
             placeholders = ",".join("?" * len(tactical_patterns))
-            conditions.append(f"tactical_pattern IN ({placeholders})")
+            conditions.append(f"am.tactical_pattern IN ({placeholders})")
             params.extend(tactical_patterns)
+
+        if player_colors:
+            placeholders = ",".join("?" * len(player_colors))
+            conditions.append(f"am.player IN ({placeholders})")
+            params.extend(player_colors)
 
         where_clause = " AND ".join(conditions)
         query = f"""
-            SELECT game_id, ply, player, uci, san, eval_before, eval_after, cp_loss,
-                   best_move_uci, best_move_san, best_line, best_move_eval,
-                   game_phase, tactical_pattern, tactical_reason
-            FROM analysis_moves
+            SELECT am.game_id, am.ply, am.player, am.uci, am.san,
+                   am.eval_before, am.eval_after, am.cp_loss,
+                   am.best_move_uci, am.best_move_san, am.best_line, am.best_move_eval,
+                   am.game_phase, am.tactical_pattern, am.tactical_reason,
+                   g.time_control
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE {where_clause}
         """
 
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        return [
-            {
-                "game_id": row[0],
-                "ply": row[1],
-                "player": row[2],
-                "uci": row[3],
-                "san": row[4],
-                "eval_before": row[5],
-                "eval_after": row[6],
-                "cp_loss": row[7],
-                "best_move_uci": row[8],
-                "best_move_san": row[9],
-                "best_line": row[10],
-                "best_move_eval": row[11],
-                "game_phase": row[12],
-                "tactical_pattern": row[13],
-                "tactical_reason": row[14],
-            }
-            for row in rows
-        ]
+        results = []
+        game_types_set = set(game_types) if game_types else None
+
+        for row in rows:
+            time_control = row[15]
+            game_type = int(classify_game_type(time_control))
+
+            # Filter by game type if specified
+            if game_types_set and game_type not in game_types_set:
+                continue
+
+            results.append(
+                {
+                    "game_id": row[0],
+                    "ply": row[1],
+                    "player": row[2],
+                    "uci": row[3],
+                    "san": row[4],
+                    "eval_before": row[5],
+                    "eval_after": row[6],
+                    "cp_loss": row[7],
+                    "best_move_uci": row[8],
+                    "best_move_san": row[9],
+                    "best_line": row[10],
+                    "best_move_eval": row[11],
+                    "game_phase": row[12],
+                    "tactical_pattern": row[13],
+                    "tactical_reason": row[14],
+                    "time_control": time_control,
+                    "game_type": game_type,
+                }
+            )
+
+        return results

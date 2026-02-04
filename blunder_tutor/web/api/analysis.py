@@ -37,6 +37,20 @@ class TacticalPatternEnum(str, Enum):
     none = "none"
 
 
+class GameTypeEnum(str, Enum):
+    ultrabullet = "ultrabullet"
+    bullet = "bullet"
+    blitz = "blitz"
+    rapid = "rapid"
+    classical = "classical"
+    correspondence = "correspondence"
+
+
+class ColorEnum(str, Enum):
+    white = "white"
+    black = "black"
+
+
 PATTERN_FROM_STRING = {
     "fork": TacticalPattern.FORK,
     "pin": TacticalPattern.PIN,
@@ -47,6 +61,20 @@ PATTERN_FROM_STRING = {
     "back_rank": TacticalPattern.BACK_RANK_THREAT,
     "hanging_piece": TacticalPattern.HANGING_PIECE,
     "none": TacticalPattern.NONE,
+}
+
+GAME_TYPE_FROM_STRING = {
+    "ultrabullet": 0,
+    "bullet": 1,
+    "blitz": 2,
+    "rapid": 3,
+    "classical": 4,
+    "correspondence": 5,
+}
+
+COLOR_FROM_STRING = {
+    "white": 0,
+    "black": 1,
 }
 
 
@@ -130,7 +158,7 @@ analysis_router = APIRouter()
     response_model=PuzzleResponse,
     responses={400: {"model": ErrorResponse, "description": "No username configured"}},
     summary="Get a puzzle",
-    description="Returns a random blunder puzzle for the user to solve, with optional date filtering.",
+    description="Returns a random blunder puzzle for the user to solve, with optional filtering.",
 )
 async def puzzle(
     config: ConfigDep,
@@ -151,6 +179,14 @@ async def puzzle(
     tactical_patterns: Annotated[
         list[TacticalPatternEnum] | None,
         Query(description="Filter by tactical patterns (fork, pin, skewer, etc.)"),
+    ] = None,
+    game_types: Annotated[
+        list[GameTypeEnum] | None,
+        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
+    ] = None,
+    colors: Annotated[
+        list[ColorEnum] | None,
+        Query(description="Filter by player color (white, black)"),
     ] = None,
 ) -> dict[str, Any]:
     username = config.username
@@ -193,6 +229,12 @@ async def puzzle(
         else None
     )
 
+    game_types_int = (
+        [GAME_TYPE_FROM_STRING[g.value] for g in game_types] if game_types else None
+    )
+
+    colors_int = [COLOR_FROM_STRING[c.value] for c in colors] if colors else None
+
     try:
         puzzle_with_analysis = await puzzle_service.get_puzzle_with_analysis(
             username=username,
@@ -203,6 +245,8 @@ async def puzzle(
             spaced_repetition_days=spaced_repetition_days,
             game_phases=game_phases_int,
             tactical_patterns=tactical_patterns_int,
+            game_types=game_types_int,
+            player_colors=colors_int,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

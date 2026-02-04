@@ -58,6 +58,8 @@ class Trainer:
         spaced_repetition_days: int = 30,
         game_phases: list[int] | None = None,
         tactical_patterns: list[int] | None = None,
+        game_types: list[int] | None = None,
+        player_colors: list[int] | None = None,
     ) -> BlunderPuzzle:
         usernames = [username] if isinstance(username, str) else username
 
@@ -75,6 +77,8 @@ class Trainer:
         blunders = await self.analysis.fetch_blunders_with_tactics(
             game_phases=game_phases,
             tactical_patterns=tactical_patterns,
+            player_colors=player_colors,
+            game_types=game_types,
         )
         candidates = filter_blunders(blunders, merged_game_side_map)
 
