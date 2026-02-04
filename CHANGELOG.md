@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-02-04
+
+### Added
+- **Game type filtering**: Filter blunders by time control (bullet, blitz, rapid, classical, correspondence)
+- **Color filtering**: Filter blunders by player color (white/black) in trainer
+- **Blunders by Game Type chart**: New dashboard visualization showing blunder distribution across time controls
+- **Collapsible filter panel**: Reorganized trainer UI with all filters in a clean, collapsible panel
+
 ## [0.7.0] - 2026-02-03
 
 ### Added
