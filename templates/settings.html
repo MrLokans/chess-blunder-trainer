@@ -659,12 +659,16 @@
         renderPresets(); // Re-render to show active state
       }
 
-      // For sync settings, use defaults for now
-      document.getElementById('autoSync').checked = false;
-      document.getElementById('syncInterval').value = '24';
-      document.getElementById('maxGames').value = '1000';
-      document.getElementById('autoAnalyze').checked = true;
-      document.getElementById('spacedRepetitionDays').value = '30';
+      // Load all settings from API
+      const settingsResp = await fetch('/api/settings');
+      if (settingsResp.ok) {
+        const settings = await settingsResp.json();
+        document.getElementById('autoSync').checked = settings.auto_sync;
+        document.getElementById('syncInterval').value = String(settings.sync_interval);
+        document.getElementById('maxGames').value = String(settings.max_games);
+        document.getElementById('autoAnalyze').checked = settings.auto_analyze;
+        document.getElementById('spacedRepetitionDays').value = String(settings.spaced_repetition_days);
+      }
     } catch (err) {
       console.error('Failed to load settings:', err);
     }

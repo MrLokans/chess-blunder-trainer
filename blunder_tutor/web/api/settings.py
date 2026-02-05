@@ -66,6 +66,18 @@ class UsernamesResponse(BaseModel):
     )
 
 
+class SettingsResponse(BaseModel):
+    lichess_username: str | None = Field(None, description="Lichess username")
+    chesscom_username: str | None = Field(None, description="Chess.com username")
+    auto_sync: bool = Field(default=False, description="Auto sync enabled")
+    sync_interval: int = Field(default=24, description="Sync interval in hours")
+    max_games: int = Field(default=1000, description="Max games to sync")
+    auto_analyze: bool = Field(default=True, description="Auto analyze new games")
+    spaced_repetition_days: int = Field(
+        default=30, description="Spaced repetition days"
+    )
+
+
 settings_router = APIRouter()
 
 
@@ -109,12 +121,33 @@ async def setup_submit(
     summary="Get configured usernames",
     description="Retrieve the currently configured usernames for Lichess and Chess.com.",
 )
-async def get_settings(settings_repo: SettingsRepoDep) -> dict[str, Any]:
+async def get_usernames(settings_repo: SettingsRepoDep) -> dict[str, Any]:
     usernames = await settings_repo.get_configured_usernames()
 
     return {
         "lichess_username": usernames.get("lichess"),
         "chesscom_username": usernames.get("chesscom"),
+    }
+
+
+@settings_router.get(
+    "/api/settings",
+    response_model=SettingsResponse,
+    summary="Get all settings",
+    description="Retrieve all application settings including usernames, sync config, and training preferences.",
+)
+async def get_settings(settings_repo: SettingsRepoDep) -> dict[str, Any]:
+    settings = await settings_repo.get_all_settings()
+
+    return {
+        "lichess_username": settings.get("lichess_username"),
+        "chesscom_username": settings.get("chesscom_username"),
+        "auto_sync": settings.get("auto_sync_enabled") == "true",
+        "sync_interval": int(settings.get("sync_interval_hours", "24")),
+        "max_games": int(settings.get("sync_max_games", "1000")),
+        "auto_analyze": settings.get("analyze_new_games_automatically", "true")
+        == "true",
+        "spaced_repetition_days": int(settings.get("spaced_repetition_days", "30")),
     }
 
 
