@@ -284,14 +284,15 @@ class StatsRepository(BaseDbRepository):
         start_date: str | None = None,
         end_date: str | None = None,
         limit: int = 10,
+        game_types: list[int] | None = None,
     ) -> dict[str, object]:
         query = """
             SELECT
                 ag.eco_code,
                 ag.eco_name,
-                COUNT(*) as blunder_count,
-                AVG(am.cp_loss) as avg_cp_loss,
-                COUNT(DISTINCT ag.game_id) as game_count
+                am.cp_loss,
+                ag.game_id,
+                g.time_control
             FROM analysis_moves am
             JOIN analysis_games ag ON am.game_id = ag.game_id
             JOIN game_index_cache g ON am.game_id = g.game_id
@@ -311,29 +312,55 @@ class StatsRepository(BaseDbRepository):
             query += " AND g.end_time_utc <= ?"
             params.append(end_date)
 
-        query += (
-            " GROUP BY ag.eco_code, ag.eco_name ORDER BY blunder_count DESC LIMIT ?"
-        )
-        params.append(limit)
-
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        total = sum(row[2] for row in rows)
-        openings = []
+        # Filter by game type and aggregate in Python
+        game_types_set = set(game_types) if game_types else None
+        eco_stats: dict[tuple[str, str], dict[str, object]] = {}
+
         for row in rows:
             eco_code = row[0]
             eco_name = row[1]
-            blunder_count = row[2]
-            avg_cp_loss = row[3] or 0.0
-            game_count = row[4]
-            percentage = (blunder_count / total * 100) if total > 0 else 0.0
+            cp_loss = row[2] or 0
+            game_id = row[3]
+            time_control = row[4]
+
+            if game_types_set:
+                game_type = int(classify_game_type(time_control))
+                if game_type not in game_types_set:
+                    continue
+
+            key = (eco_code, eco_name)
+            if key not in eco_stats:
+                eco_stats[key] = {
+                    "count": 0,
+                    "total_cp_loss": 0.0,
+                    "game_ids": set(),
+                }
+
+            eco_stats[key]["count"] += 1
+            eco_stats[key]["total_cp_loss"] += cp_loss
+            eco_stats[key]["game_ids"].add(game_id)
+
+        # Sort by count and limit
+        sorted_ecos = sorted(
+            eco_stats.items(), key=lambda x: x[1]["count"], reverse=True
+        )[:limit]
+
+        total = sum(stats["count"] for _, stats in sorted_ecos)
+        openings = []
+        for (eco_code, eco_name), stats in sorted_ecos:
+            count = stats["count"]
+            avg_cp_loss = stats["total_cp_loss"] / count if count > 0 else 0.0
+            game_count = len(stats["game_ids"])
+            percentage = (count / total * 100) if total > 0 else 0.0
             openings.append(
                 {
                     "eco_code": eco_code,
                     "eco_name": eco_name,
-                    "count": blunder_count,
+                    "count": count,
                     "percentage": round(percentage, 1),
                     "avg_cp_loss": round(float(avg_cp_loss), 1),
                     "game_count": game_count,
@@ -581,13 +608,14 @@ class StatsRepository(BaseDbRepository):
         username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        game_types: list[int] | None = None,
     ) -> dict[str, object]:
         """Get blunder statistics grouped by tactical pattern."""
         query = """
             SELECT
                 tactical_pattern,
-                COUNT(*) as count,
-                AVG(cp_loss) as avg_cp_loss
+                cp_loss,
+                g.time_control
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
@@ -606,18 +634,38 @@ class StatsRepository(BaseDbRepository):
             query += " AND g.end_time_utc <= ?"
             params.append(end_date)
 
-        query += " GROUP BY tactical_pattern ORDER BY count DESC"
-
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        total = sum(row[1] for row in rows)
-        patterns = []
+        # Filter by game type and aggregate in Python
+        game_types_set = set(game_types) if game_types else None
+        pattern_stats: dict[int | None, dict[str, float]] = {}
+
         for row in rows:
             pattern_int = row[0]
-            count = row[1]
-            avg_cp_loss = row[2] or 0.0
+            cp_loss = row[1] or 0
+            time_control = row[2]
+
+            if game_types_set:
+                game_type = int(classify_game_type(time_control))
+                if game_type not in game_types_set:
+                    continue
+
+            if pattern_int not in pattern_stats:
+                pattern_stats[pattern_int] = {"count": 0, "total_cp_loss": 0.0}
+
+            pattern_stats[pattern_int]["count"] += 1
+            pattern_stats[pattern_int]["total_cp_loss"] += cp_loss
+
+        total = sum(int(stats["count"]) for stats in pattern_stats.values())
+        patterns = []
+        for pattern_int in sorted(
+            pattern_stats.keys(), key=lambda x: pattern_stats[x]["count"], reverse=True
+        ):
+            stats = pattern_stats[pattern_int]
+            count = int(stats["count"])
+            avg_cp_loss = stats["total_cp_loss"] / count if count > 0 else 0.0
             pattern_label = (
                 PATTERN_LABELS.get(pattern_int, "Unknown")
                 if pattern_int is not None

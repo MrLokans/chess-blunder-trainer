@@ -34,6 +34,26 @@
     color: var(--text-muted);
   }
 
+  /* Game type filter styles */
+  .game-type-filters {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    cursor: pointer;
+    font-size: var(--text-sm);
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: auto;
+    cursor: pointer;
+  }
+
   /* Tactical pattern styles */
   .tactical-bar-container {
     margin-bottom: var(--space-4);
@@ -399,6 +419,26 @@
   </div>
 </div>
 
+<div class="dashboard-filters" style="margin-top: var(--space-2);">
+  <div class="filter-group">
+    <label>Time Control:</label>
+    <div class="game-type-filters">
+      <label class="checkbox-label">
+        <input type="checkbox" class="game-type-filter" value="bullet" checked> Bullet
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" class="game-type-filter" value="blitz" checked> Blitz
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" class="game-type-filter" value="rapid" checked> Rapid
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" class="game-type-filter" value="classical" checked> Classical
+      </label>
+    </div>
+  </div>
+</div>
+
 <div class="stats-grid">
   <div class="stat-card">
     <div class="stat-label">Total Games</div>
@@ -559,6 +599,32 @@
   let configuredUsernames = {};
   let dateChart = null;
   let hourChart = null;
+  let currentGameTypeFilters = ['bullet', 'blitz', 'rapid', 'classical'];
+
+  const GAME_TYPE_STORAGE_KEY = 'dashboard-game-type-filters';
+
+  function loadGameTypeFiltersFromStorage() {
+    try {
+      const stored = localStorage.getItem(GAME_TYPE_STORAGE_KEY);
+      if (stored) {
+        currentGameTypeFilters = JSON.parse(stored);
+      }
+    } catch (err) {
+      console.error('Failed to load game type filters:', err);
+    }
+    // Update checkboxes to match state
+    document.querySelectorAll('.game-type-filter').forEach(checkbox => {
+      checkbox.checked = currentGameTypeFilters.includes(checkbox.value);
+    });
+  }
+
+  function saveGameTypeFilters() {
+    currentGameTypeFilters = [];
+    document.querySelectorAll('.game-type-filter:checked').forEach(checkbox => {
+      currentGameTypeFilters.push(checkbox.value);
+    });
+    localStorage.setItem(GAME_TYPE_STORAGE_KEY, JSON.stringify(currentGameTypeFilters));
+  }
 
   async function loadConfiguredUsernames() {
     try {
@@ -638,10 +704,13 @@
     loadStats();
   }
 
-  function buildUrl(baseUrl) {
+  function buildUrl(baseUrl, includeGameTypes = false) {
     const params = new URLSearchParams();
     if (currentDateFrom) params.set('start_date', currentDateFrom);
     if (currentDateTo) params.set('end_date', currentDateTo);
+    if (includeGameTypes && currentGameTypeFilters.length > 0 && currentGameTypeFilters.length < 4) {
+      currentGameTypeFilters.forEach(gt => params.append('game_types', gt));
+    }
     const queryString = params.toString();
     return queryString ? `${baseUrl}?${queryString}` : baseUrl;
   }
@@ -691,8 +760,8 @@
       // Load and render games by hour chart
       await loadHourChart();
 
-      // Load blunders by phase (with date filter)
-      const phaseResp = await fetch(buildUrl('/api/stats/blunders/by-phase'));
+      // Load blunders by phase (with date and game type filters)
+      const phaseResp = await fetch(buildUrl('/api/stats/blunders/by-phase', true));
       const phaseData = await phaseResp.json();
 
       const phaseBreakdown = document.getElementById('phaseBreakdown');
@@ -811,8 +880,8 @@
         gameTypeBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No game type data available yet. Analyze some games to see your blunders by time control.</div>';
       }
 
-      // Load blunders by ECO opening (with date filter)
-      const ecoResp = await fetch(buildUrl('/api/stats/blunders/by-eco'));
+      // Load blunders by ECO opening (with date and game type filters)
+      const ecoResp = await fetch(buildUrl('/api/stats/blunders/by-eco', true));
       const ecoData = await ecoResp.json();
 
       const ecoBreakdown = document.getElementById('ecoBreakdown');
@@ -845,7 +914,7 @@
       }
 
       // Load blunders by tactical pattern (with date filter)
-      const tacticalResp = await fetch(buildUrl('/api/stats/blunders/by-tactical-pattern'));
+      const tacticalResp = await fetch(buildUrl('/api/stats/blunders/by-tactical-pattern', true));
       const tacticalData = await tacticalResp.json();
 
       const tacticalBreakdown = document.getElementById('tacticalBreakdown');
@@ -1202,6 +1271,17 @@
       alert('Failed to start analysis');
     }
   }
+
+  // Load game type filters from localStorage
+  loadGameTypeFiltersFromStorage();
+
+  // Add event listeners for game type filter checkboxes
+  document.querySelectorAll('.game-type-filter').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      saveGameTypeFilters();
+      loadStats();
+    });
+  });
 
   // Load stats on page load (after loading configured usernames)
   loadConfiguredUsernames().then(() => loadStats());

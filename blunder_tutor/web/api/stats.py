@@ -306,14 +306,26 @@ async def get_blunders_by_phase(
         date | None,
         Query(description="End date for filtering (YYYY-MM-DD)"),
     ] = None,
+    game_types: Annotated[
+        list[str] | None,
+        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
+    ] = None,
 ) -> dict[str, Any]:
+    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
+
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
 
-    return await stats_repo.get_blunders_by_phase(
+    game_type_ids = None
+    if game_types:
+        game_type_ids = [GAME_TYPE_FROM_STRING.get(gt.lower()) for gt in game_types]
+        game_type_ids = [gt for gt in game_type_ids if gt is not None]
+
+    return await stats_repo.get_blunders_by_phase_filtered(
         username=username,
         start_date=start_date_str,
         end_date=end_date_str,
+        game_types=game_type_ids if game_type_ids else None,
     )
 
 
@@ -341,15 +353,27 @@ async def get_blunders_by_eco(
         int,
         Query(ge=1, le=50, description="Maximum number of openings to return"),
     ] = 10,
+    game_types: Annotated[
+        list[str] | None,
+        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
+    ] = None,
 ) -> dict[str, Any]:
+    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
+
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
+
+    game_type_ids = None
+    if game_types:
+        game_type_ids = [GAME_TYPE_FROM_STRING.get(gt.lower()) for gt in game_types]
+        game_type_ids = [gt for gt in game_type_ids if gt is not None]
 
     return await stats_repo.get_blunders_by_eco(
         username=username,
         start_date=start_date_str,
         end_date=end_date_str,
         limit=limit,
+        game_types=game_type_ids if game_type_ids else None,
     )
 
 
@@ -520,14 +544,26 @@ async def get_blunders_by_tactical_pattern(
         date | None,
         Query(description="End date for filtering (YYYY-MM-DD)"),
     ] = None,
+    game_types: Annotated[
+        list[str] | None,
+        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
+    ] = None,
 ) -> dict[str, Any]:
+    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
+
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
+
+    game_type_ids = None
+    if game_types:
+        game_type_ids = [GAME_TYPE_FROM_STRING.get(gt.lower()) for gt in game_types]
+        game_type_ids = [gt for gt in game_type_ids if gt is not None]
 
     return await stats_repo.get_blunders_by_tactical_pattern(
         username=username,
         start_date=start_date_str,
         end_date=end_date_str,
+        game_types=game_type_ids if game_type_ids else None,
     )
 
 
