@@ -565,24 +565,24 @@
 </div>
 
 <div class="chart-container">
-  <div class="chart-title">Games & Quality by Date</div>
-  <p class="chart-description">Track your game volume and quality over time. Lower CPL = better play.</p>
+  <div class="chart-title">Game Accuracy by Date</div>
+  <p class="chart-description">Track your game accuracy over time. Higher = better play (0–100 scale).</p>
   <div id="dateChartContainer" class="chart-canvas-container">
     <canvas id="dateChart"></canvas>
   </div>
   <div id="dateChartEmpty" class="chart-empty-state">
-    No game data available yet. Import and analyze some games to see your trends.
+    No game data available yet. Import and analyze some games to see your accuracy trends.
   </div>
 </div>
 
 <div class="chart-container">
-  <div class="chart-title">Performance by Hour of Day</div>
-  <p class="chart-description">Discover when you play your best chess.</p>
+  <div class="chart-title">Game Accuracy by Hour of Day</div>
+  <p class="chart-description">Discover when you play your most accurate chess.</p>
   <div id="hourChartContainer" class="chart-canvas-container">
     <canvas id="hourChart"></canvas>
   </div>
   <div id="hourChartEmpty" class="chart-empty-state">
-    No game data available yet. Import and analyze some games to see your hourly patterns.
+    No game data available yet. Import and analyze some games to see your hourly accuracy patterns.
   </div>
 </div>
 
@@ -1017,7 +1017,7 @@
 
   async function loadDateChart() {
     try {
-      const resp = await fetch(buildUrl('/api/stats/games/by-date'));
+      const resp = await fetch(buildUrl('/api/stats/games/by-date', true));
       const data = await resp.json();
 
       const container = document.getElementById('dateChartContainer');
@@ -1034,7 +1034,7 @@
 
       const labels = data.items.map(d => d.date);
       const gameCounts = data.items.map(d => d.game_count);
-      const avgCpls = data.items.map(d => d.avg_cpl);
+      const accuracies = data.items.map(d => d.avg_accuracy);
 
       if (dateChart) {
         dateChart.destroy();
@@ -1056,11 +1056,11 @@
               order: 2
             },
             {
-              label: 'Avg CPL',
-              data: avgCpls,
+              label: 'Accuracy',
+              data: accuracies,
               type: 'line',
-              borderColor: 'rgba(239, 68, 68, 1)',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              borderColor: 'rgba(34, 197, 94, 1)',
+              backgroundColor: 'rgba(34, 197, 94, 0.1)',
               borderWidth: 2,
               fill: false,
               tension: 0.3,
@@ -1084,8 +1084,8 @@
             tooltip: {
               callbacks: {
                 label: function(context) {
-                  if (context.dataset.label === 'Avg CPL') {
-                    return `Avg CPL: ${context.raw.toFixed(1)} (${(context.raw / 100).toFixed(2)} pawns)`;
+                  if (context.dataset.label === 'Accuracy') {
+                    return `Accuracy: ${context.raw.toFixed(1)}%`;
                   }
                   return `${context.dataset.label}: ${context.raw}`;
                 }
@@ -1116,9 +1116,10 @@
               position: 'right',
               title: {
                 display: true,
-                text: 'Avg CPL'
+                text: 'Accuracy %'
               },
-              beginAtZero: true,
+              min: 0,
+              max: 100,
               grid: {
                 drawOnChartArea: false
               }
@@ -1133,7 +1134,7 @@
 
   async function loadHourChart() {
     try {
-      const resp = await fetch(buildUrl('/api/stats/games/by-hour'));
+      const resp = await fetch(buildUrl('/api/stats/games/by-hour', true));
       const data = await resp.json();
 
       const container = document.getElementById('hourChartContainer');
@@ -1155,13 +1156,13 @@
         if (hourMap.has(h)) {
           fullData.push(hourMap.get(h));
         } else {
-          fullData.push({ hour: h, game_count: 0, avg_cpl: 0, blunders: 0 });
+          fullData.push({ hour: h, game_count: 0, avg_accuracy: 0 });
         }
       }
 
       const labels = fullData.map(d => `${d.hour.toString().padStart(2, '0')}:00`);
       const gameCounts = fullData.map(d => d.game_count);
-      const avgCpls = fullData.map(d => d.avg_cpl);
+      const accuracies = fullData.map(d => d.avg_accuracy);
 
       if (hourChart) {
         hourChart.destroy();
@@ -1183,11 +1184,11 @@
               order: 2
             },
             {
-              label: 'Avg CPL',
-              data: avgCpls,
+              label: 'Accuracy',
+              data: accuracies,
               type: 'line',
-              borderColor: 'rgba(239, 68, 68, 1)',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              borderColor: 'rgba(34, 197, 94, 1)',
+              backgroundColor: 'rgba(34, 197, 94, 0.1)',
               borderWidth: 2,
               fill: false,
               tension: 0.3,
@@ -1211,8 +1212,8 @@
             tooltip: {
               callbacks: {
                 label: function(context) {
-                  if (context.dataset.label === 'Avg CPL') {
-                    return `Avg CPL: ${context.raw.toFixed(1)} (${(context.raw / 100).toFixed(2)} pawns)`;
+                  if (context.dataset.label === 'Accuracy') {
+                    return `Accuracy: ${context.raw.toFixed(1)}%`;
                   }
                   return `${context.dataset.label}: ${context.raw}`;
                 }
@@ -1242,9 +1243,10 @@
               position: 'right',
               title: {
                 display: true,
-                text: 'Avg CPL'
+                text: 'Accuracy %'
               },
-              beginAtZero: true,
+              min: 0,
+              max: 100,
               grid: {
                 drawOnChartArea: false
               }

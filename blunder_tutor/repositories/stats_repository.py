@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from collections import defaultdict
+
 from blunder_tutor.analysis.tactics import PATTERN_LABELS
 from blunder_tutor.constants import COLOR_LABELS, PHASE_LABELS
 from blunder_tutor.repositories.base import BaseDbRepository
+from blunder_tutor.utils.accuracy import game_accuracy
 from blunder_tutor.utils.time_control import (
     GAME_TYPE_LABELS,
     classify_game_type,
@@ -502,29 +505,28 @@ class StatsRepository(BaseDbRepository):
         username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        game_types: list[int] | None = None,
     ) -> list[dict[str, object]]:
+        if not username:
+            return []
+
+        username_lower = username.lower()
         query = """
             SELECT
+                g.game_id,
                 DATE(g.end_time_utc) as game_date,
-                COUNT(DISTINCT g.game_id) as game_count,
-                AVG(game_stats.avg_cpl) as avg_cpl,
-                SUM(game_stats.blunder_count) as total_blunders
-            FROM game_index_cache g
-            LEFT JOIN (
-                SELECT
-                    game_id,
-                    AVG(cp_loss) as avg_cpl,
-                    SUM(CASE WHEN classification = 3 THEN 1 ELSE 0 END) as blunder_count
-                FROM analysis_moves
-                GROUP BY game_id
-            ) game_stats ON g.game_id = game_stats.game_id
+                am.cp_loss,
+                g.time_control
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
+              AND g.username = ?
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = ? THEN 0
+                    WHEN LOWER(g.black) = ? THEN 1
+                END
         """
-        params: list[object] = []
-
-        if username:
-            query += " AND g.username = ?"
-            params.append(username)
+        params: list[object] = [username, username_lower, username_lower]
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -534,20 +536,35 @@ class StatsRepository(BaseDbRepository):
             query += " AND g.end_time_utc <= ?"
             params.append(end_date)
 
-        query += " GROUP BY game_date ORDER BY game_date ASC"
+        query += " ORDER BY game_date ASC"
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
+        game_types_set = set(game_types) if game_types else None
+
+        # Group cp_losses by (game_id, date), filtering by game type
+        game_date_losses: dict[tuple[str, str], list[int]] = defaultdict(list)
+        for game_id, game_date, cp_loss, time_control in rows:
+            if game_types_set:
+                gt = int(classify_game_type(time_control))
+                if gt not in game_types_set:
+                    continue
+            game_date_losses[(game_id, game_date)].append(cp_loss)
+
+        # Compute per-game accuracy, then average per date
+        date_accuracies: dict[str, list[float]] = defaultdict(list)
+        for (_, game_date), losses in game_date_losses.items():
+            date_accuracies[game_date].append(game_accuracy(losses))
+
         return [
             {
-                "date": row[0],
-                "game_count": row[1],
-                "avg_cpl": round(float(row[2]), 1) if row[2] else 0.0,
-                "blunders": int(row[3]) if row[3] else 0,
+                "date": d,
+                "game_count": len(accs),
+                "avg_accuracy": round(sum(accs) / len(accs), 1),
             }
-            for row in rows
+            for d, accs in sorted(date_accuracies.items())
         ]
 
     async def get_games_by_hour(
@@ -555,29 +572,28 @@ class StatsRepository(BaseDbRepository):
         username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
+        game_types: list[int] | None = None,
     ) -> list[dict[str, object]]:
+        if not username:
+            return []
+
+        username_lower = username.lower()
         query = """
             SELECT
+                g.game_id,
                 CAST(strftime('%H', g.end_time_utc) AS INTEGER) as hour,
-                COUNT(DISTINCT g.game_id) as game_count,
-                AVG(game_stats.avg_cpl) as avg_cpl,
-                SUM(game_stats.blunder_count) as total_blunders
-            FROM game_index_cache g
-            LEFT JOIN (
-                SELECT
-                    game_id,
-                    AVG(cp_loss) as avg_cpl,
-                    SUM(CASE WHEN classification = 3 THEN 1 ELSE 0 END) as blunder_count
-                FROM analysis_moves
-                GROUP BY game_id
-            ) game_stats ON g.game_id = game_stats.game_id
+                am.cp_loss,
+                g.time_control
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
+              AND g.username = ?
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = ? THEN 0
+                    WHEN LOWER(g.black) = ? THEN 1
+                END
         """
-        params: list[object] = []
-
-        if username:
-            query += " AND g.username = ?"
-            params.append(username)
+        params: list[object] = [username, username_lower, username_lower]
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -587,20 +603,33 @@ class StatsRepository(BaseDbRepository):
             query += " AND g.end_time_utc <= ?"
             params.append(end_date)
 
-        query += " GROUP BY hour ORDER BY hour ASC"
-
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
+        game_types_set = set(game_types) if game_types else None
+
+        # Group cp_losses by (game_id, hour), filtering by game type
+        game_hour_losses: dict[tuple[str, int], list[int]] = defaultdict(list)
+        for game_id, hour, cp_loss, time_control in rows:
+            if game_types_set:
+                gt = int(classify_game_type(time_control))
+                if gt not in game_types_set:
+                    continue
+            game_hour_losses[(game_id, hour)].append(cp_loss)
+
+        # Compute per-game accuracy, then average per hour
+        hour_accuracies: dict[int, list[float]] = defaultdict(list)
+        for (_, hour), losses in game_hour_losses.items():
+            hour_accuracies[hour].append(game_accuracy(losses))
+
         return [
             {
-                "hour": row[0],
-                "game_count": row[1],
-                "avg_cpl": round(float(row[2]), 1) if row[2] else 0.0,
-                "blunders": int(row[3]) if row[3] else 0,
+                "hour": h,
+                "game_count": len(accs),
+                "avg_accuracy": round(sum(accs) / len(accs), 1),
             }
-            for row in rows
+            for h, accs in sorted(hour_accuracies.items())
         ]
 
     async def get_blunders_by_tactical_pattern(

@@ -8,12 +8,30 @@ from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
+from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     PuzzleAttemptRepoDep,
     SettingsRepoDep,
     StatsRepoDep,
 )
+
+
+async def _resolve_username(settings_repo: SettingsRepository) -> str | None:
+    usernames = await settings_repo.get_configured_usernames()
+    if not usernames:
+        return None
+    return next(iter(usernames.values()))
+
+
+def _parse_game_types(
+    game_types: list[str] | None, mapping: dict[str, int]
+) -> list[int] | None:
+    if not game_types:
+        return None
+    ids = [mapping.get(gt.lower()) for gt in game_types]
+    filtered = [gt for gt in ids if gt is not None]
+    return filtered or None
 
 
 class DashboardStats(BaseModel):
@@ -411,8 +429,7 @@ async def get_blunders_by_color(
 class GamesByDateItem(BaseModel):
     date: str = Field(description="Date (YYYY-MM-DD)")
     game_count: int = Field(description="Number of games played on this date")
-    avg_cpl: float = Field(description="Average centipawn loss")
-    blunders: int = Field(description="Total blunders on this date")
+    avg_accuracy: float = Field(description="Average game accuracy (0-100)")
 
 
 class GamesByDate(BaseModel):
@@ -422,8 +439,7 @@ class GamesByDate(BaseModel):
 class GamesByHourItem(BaseModel):
     hour: int = Field(description="Hour of day (0-23)")
     game_count: int = Field(description="Number of games played during this hour")
-    avg_cpl: float = Field(description="Average centipawn loss")
-    blunders: int = Field(description="Total blunders during this hour")
+    avg_accuracy: float = Field(description="Average game accuracy (0-100)")
 
 
 class GamesByHour(BaseModel):
@@ -433,11 +449,12 @@ class GamesByHour(BaseModel):
 @stats_router.get(
     "/api/stats/games/by-date",
     response_model=GamesByDate,
-    summary="Get game statistics by date",
-    description="Returns daily game counts and quality metrics (average CPL, blunders).",
+    summary="Get game accuracy by date",
+    description="Returns daily game counts and average accuracy for the user's moves.",
 )
 async def get_games_by_date(
     stats_repo: StatsRepoDep,
+    settings_repo: SettingsRepoDep,
     username: Annotated[
         str | None,
         Query(max_length=100, description="Filter by username"),
@@ -450,14 +467,24 @@ async def get_games_by_date(
         date | None,
         Query(description="End date for filtering (YYYY-MM-DD)"),
     ] = None,
+    game_types: Annotated[
+        list[str] | None,
+        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
+    ] = None,
 ) -> dict[str, Any]:
+    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
+
+    resolved = username or await _resolve_username(settings_repo)
+
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
+    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
 
     items = await stats_repo.get_games_by_date(
-        username=username,
+        username=resolved,
         start_date=start_date_str,
         end_date=end_date_str,
+        game_types=game_type_ids,
     )
     return {"items": items}
 
@@ -465,11 +492,12 @@ async def get_games_by_date(
 @stats_router.get(
     "/api/stats/games/by-hour",
     response_model=GamesByHour,
-    summary="Get game statistics by hour of day",
-    description="Returns hourly game counts and quality metrics aggregated across all days.",
+    summary="Get game accuracy by hour of day",
+    description="Returns hourly game counts and average accuracy for the user's moves.",
 )
 async def get_games_by_hour(
     stats_repo: StatsRepoDep,
+    settings_repo: SettingsRepoDep,
     username: Annotated[
         str | None,
         Query(max_length=100, description="Filter by username"),
@@ -482,14 +510,24 @@ async def get_games_by_hour(
         date | None,
         Query(description="End date for filtering (YYYY-MM-DD)"),
     ] = None,
+    game_types: Annotated[
+        list[str] | None,
+        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
+    ] = None,
 ) -> dict[str, Any]:
+    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
+
+    resolved = username or await _resolve_username(settings_repo)
+
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
+    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
 
     items = await stats_repo.get_games_by_hour(
-        username=username,
+        username=resolved,
         start_date=start_date_str,
         end_date=end_date_str,
+        game_types=game_type_ids,
     )
     return {"items": items}
 
