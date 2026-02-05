@@ -107,6 +107,21 @@ class BlundersByColor(BaseModel):
     )
 
 
+class DailyActivityItem(BaseModel):
+    total: int = Field(description="Total puzzle attempts")
+    correct: int = Field(description="Correct attempts")
+    incorrect: int = Field(description="Incorrect attempts")
+
+
+class ActivityHeatmapResponse(BaseModel):
+    daily_counts: dict[str, DailyActivityItem] = Field(
+        description="Puzzle attempts per day (date string -> {total, correct, incorrect})"
+    )
+    max_count: int = Field(description="Maximum daily count for scaling")
+    total_days: int = Field(description="Number of days with activity")
+    total_attempts: int = Field(description="Total attempts in period")
+
+
 stats_router = APIRouter()
 
 
@@ -232,6 +247,43 @@ async def get_training_stats_html(
         "_stats_partial.html",
         {"request": request, **stats},
     )
+
+
+@stats_router.get(
+    "/api/stats/activity-heatmap",
+    response_model=ActivityHeatmapResponse,
+    summary="Get puzzle activity heatmap data",
+    description="Returns daily puzzle attempt counts for rendering a GitHub-style activity heatmap.",
+)
+async def get_activity_heatmap(
+    settings_repo: SettingsRepoDep,
+    attempt_repo: PuzzleAttemptRepoDep,
+    days: Annotated[
+        int,
+        Query(ge=30, le=365, description="Number of days to include"),
+    ] = 365,
+) -> dict[str, Any]:
+    usernames = await settings_repo.get_configured_usernames()
+    if not usernames:
+        return {
+            "daily_counts": {},
+            "max_count": 0,
+            "total_days": 0,
+            "total_attempts": 0,
+        }
+
+    username = "multi" if len(usernames) > 1 else next(iter(usernames.values()))
+    daily_counts = await attempt_repo.get_daily_attempt_counts(username, days)
+
+    max_count = max((d["total"] for d in daily_counts.values()), default=0)
+    total_attempts = sum(d["total"] for d in daily_counts.values())
+
+    return {
+        "daily_counts": daily_counts,
+        "max_count": max_count,
+        "total_days": len(daily_counts),
+        "total_attempts": total_attempts,
+    }
 
 
 @stats_router.get(

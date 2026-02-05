@@ -241,6 +241,135 @@
     font-size: var(--text-xs);
     color: var(--text-muted);
   }
+
+  /* Heatmap styles */
+  .heatmap-wrapper {
+    padding: var(--space-4);
+  }
+
+  .heatmap-summary {
+    display: flex;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+    font-size: var(--text-sm);
+  }
+
+  .heatmap-total {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .heatmap-days {
+    color: var(--text-muted);
+  }
+
+  .heatmap-container {
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+  }
+
+  .heatmap-days-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding-top: 20px;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .heatmap-grid-wrapper {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .heatmap-months {
+    display: grid;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    height: 16px;
+  }
+
+  .heatmap-grid {
+    display: grid;
+    gap: 3px;
+  }
+
+  .heatmap-week {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .heatmap-cell {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+
+  .heatmap-cell.empty {
+    visibility: hidden;
+  }
+
+  .heatmap-cell.level-0 { background: var(--heatmap-empty, #ebedf0); }
+  .heatmap-cell.level-1 { background: var(--heatmap-l1, #9be9a8); }
+  .heatmap-cell.level-2 { background: var(--heatmap-l2, #40c463); }
+  .heatmap-cell.level-3 { background: var(--heatmap-l3, #30a14e); }
+  .heatmap-cell.level-4 { background: var(--heatmap-l4, #216e39); }
+
+  .heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-top: var(--space-3);
+    font-size: 10px;
+    color: var(--text-muted);
+    justify-content: flex-end;
+  }
+
+  .heatmap-legend .heatmap-cell {
+    cursor: default;
+  }
+
+  .heatmap-error {
+    text-align: center;
+    padding: var(--space-5);
+    color: var(--text-muted);
+  }
+
+  /* Custom instant tooltip */
+  .heatmap-cell[data-tooltip] {
+    position: relative;
+  }
+
+  .heatmap-cell[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background: var(--text, #1e293b);
+    color: var(--bg-card, #fff);
+    font-size: 11px;
+    white-space: nowrap;
+    border-radius: 4px;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .heatmap-cell[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: var(--text, #1e293b);
+    z-index: 100;
+  }
 </style>
 {% endblock %}
 
@@ -290,6 +419,14 @@
       <div class="progress-fill" id="progressFill" style="width: 0%"></div>
     </div>
     <div id="analysisJobStatus" class="text-sm text-muted mt-2"></div>
+  </div>
+</div>
+
+<div class="chart-container">
+  <div class="chart-title">Puzzle Activity</div>
+  <p class="chart-description">Your puzzle solving activity over the past year.</p>
+  <div id="activityHeatmap">
+    <div class="loading-placeholder">Loading activity data...</div>
   </div>
 </div>
 
@@ -415,6 +552,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="/static/js/heatmap.js"></script>
 <script>
   let currentDateFrom = null;
   let currentDateTo = null;
@@ -1067,6 +1205,9 @@
 
   // Load stats on page load (after loading configured usernames)
   loadConfiguredUsernames().then(() => loadStats());
+
+  // Load activity heatmap
+  loadHeatmap('activityHeatmap');
 
   // Initialize WebSocket for real-time updates
   wsClient.connect();

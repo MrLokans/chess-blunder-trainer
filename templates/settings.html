@@ -178,6 +178,39 @@
     color: white;
   }
 
+  .preview-heatmap {
+    margin-top: var(--space-3);
+  }
+
+  .preview-heatmap-label {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    margin-bottom: var(--space-2);
+  }
+
+  .preview-heatmap-grid {
+    display: flex;
+    gap: 3px;
+  }
+
+  .preview-heatmap-week {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .preview-heatmap-cell {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  .preview-heatmap-cell.level-0 { background: var(--heatmap-empty, #ebedf0); }
+  .preview-heatmap-cell.level-1 { background: var(--heatmap-l1, #9be9a8); }
+  .preview-heatmap-cell.level-2 { background: var(--heatmap-l2, #40c463); }
+  .preview-heatmap-cell.level-3 { background: var(--heatmap-l3, #30a14e); }
+  .preview-heatmap-cell.level-4 { background: var(--heatmap-l4, #216e39); }
+
   .phase-pill.opening {
     background: var(--color-phase-opening);
   }
@@ -395,6 +428,49 @@
           </div>
         </div>
 
+        <h3 class="theme-section-title">Activity Heatmap</h3>
+        <div class="color-grid">
+          <div class="form-group">
+            <label for="themeHeatmapEmpty">Empty</label>
+            <div class="color-input-row">
+              <input type="color" id="themeHeatmapEmpty" value="#ebedf0">
+              <input type="text" id="themeHeatmapEmptyHex" value="#ebedf0" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="themeHeatmapL1">Level 1</label>
+            <div class="color-input-row">
+              <input type="color" id="themeHeatmapL1" value="#9be9a8">
+              <input type="text" id="themeHeatmapL1Hex" value="#9be9a8" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="themeHeatmapL2">Level 2</label>
+            <div class="color-input-row">
+              <input type="color" id="themeHeatmapL2" value="#40c463">
+              <input type="text" id="themeHeatmapL2Hex" value="#40c463" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="themeHeatmapL3">Level 3</label>
+            <div class="color-input-row">
+              <input type="color" id="themeHeatmapL3" value="#30a14e">
+              <input type="text" id="themeHeatmapL3Hex" value="#30a14e" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="themeHeatmapL4">Level 4</label>
+            <div class="color-input-row">
+              <input type="color" id="themeHeatmapL4" value="#216e39">
+              <input type="text" id="themeHeatmapL4Hex" value="#216e39" maxlength="7" class="color-hex-input">
+            </div>
+          </div>
+        </div>
+
         <div class="theme-preview">
           <div class="preview-label">Preview</div>
           <div class="preview-buttons">
@@ -407,6 +483,65 @@
             <span class="phase-pill opening">Opening</span>
             <span class="phase-pill middlegame">Middlegame</span>
             <span class="phase-pill endgame">Endgame</span>
+          </div>
+          <div class="preview-heatmap">
+            <div class="preview-heatmap-label">Activity Heatmap</div>
+            <div class="preview-heatmap-grid">
+              <div class="preview-heatmap-week">
+                <div class="preview-heatmap-cell level-0"></div>
+                <div class="preview-heatmap-cell level-1"></div>
+                <div class="preview-heatmap-cell level-0"></div>
+                <div class="preview-heatmap-cell level-2"></div>
+                <div class="preview-heatmap-cell level-0"></div>
+                <div class="preview-heatmap-cell level-1"></div>
+                <div class="preview-heatmap-cell level-0"></div>
+              </div>
+              <div class="preview-heatmap-week">
+                <div class="preview-heatmap-cell level-1"></div>
+                <div class="preview-heatmap-cell level-2"></div>
+                <div class="preview-heatmap-cell level-3"></div>
+                <div class="preview-heatmap-cell level-1"></div>
+                <div class="preview-heatmap-cell level-0"></div>
+                <div class="preview-heatmap-cell level-2"></div>
+                <div class="preview-heatmap-cell level-1"></div>
+              </div>
+              <div class="preview-heatmap-week">
+                <div class="preview-heatmap-cell level-0"></div>
+                <div class="preview-heatmap-cell level-3"></div>
+                <div class="preview-heatmap-cell level-4"></div>
+                <div class="preview-heatmap-cell level-3"></div>
+                <div class="preview-heatmap-cell level-2"></div>
+                <div class="preview-heatmap-cell level-1"></div>
+                <div class="preview-heatmap-cell level-0"></div>
+              </div>
+              <div class="preview-heatmap-week">
+                <div class="preview-heatmap-cell level-2"></div>
+                <div class="preview-heatmap-cell level-4"></div>
+                <div class="preview-heatmap-cell level-3"></div>
+                <div class="preview-heatmap-cell level-4"></div>
+                <div class="preview-heatmap-cell level-2"></div>
+                <div class="preview-heatmap-cell level-3"></div>
+                <div class="preview-heatmap-cell level-1"></div>
+              </div>
+              <div class="preview-heatmap-week">
+                <div class="preview-heatmap-cell level-1"></div>
+                <div class="preview-heatmap-cell level-2"></div>
+                <div class="preview-heatmap-cell level-1"></div>
+                <div class="preview-heatmap-cell level-3"></div>
+                <div class="preview-heatmap-cell level-2"></div>
+                <div class="preview-heatmap-cell level-0"></div>
+                <div class="preview-heatmap-cell level-1"></div>
+              </div>
+              <div class="preview-heatmap-week">
+                <div class="preview-heatmap-cell level-0"></div>
+                <div class="preview-heatmap-cell level-1"></div>
+                <div class="preview-heatmap-cell level-0"></div>
+                <div class="preview-heatmap-cell level-2"></div>
+                <div class="preview-heatmap-cell level-1"></div>
+                <div class="preview-heatmap-cell level-0"></div>
+                <div class="preview-heatmap-cell level-0"></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -460,7 +595,12 @@
     bg: { color: document.getElementById('themeBg'), hex: document.getElementById('themeBgHex') },
     bg_card: { color: document.getElementById('themeBgCard'), hex: document.getElementById('themeBgCardHex') },
     text: { color: document.getElementById('themeText'), hex: document.getElementById('themeTextHex') },
-    text_muted: { color: document.getElementById('themeTextMuted'), hex: document.getElementById('themeTextMutedHex') }
+    text_muted: { color: document.getElementById('themeTextMuted'), hex: document.getElementById('themeTextMutedHex') },
+    heatmap_empty: { color: document.getElementById('themeHeatmapEmpty'), hex: document.getElementById('themeHeatmapEmptyHex') },
+    heatmap_l1: { color: document.getElementById('themeHeatmapL1'), hex: document.getElementById('themeHeatmapL1Hex') },
+    heatmap_l2: { color: document.getElementById('themeHeatmapL2'), hex: document.getElementById('themeHeatmapL2Hex') },
+    heatmap_l3: { color: document.getElementById('themeHeatmapL3'), hex: document.getElementById('themeHeatmapL3Hex') },
+    heatmap_l4: { color: document.getElementById('themeHeatmapL4'), hex: document.getElementById('themeHeatmapL4Hex') }
   };
 
   const defaultTheme = {
@@ -474,7 +614,12 @@
     bg: '#f1f5f9',
     bg_card: '#ffffff',
     text: '#1e293b',
-    text_muted: '#64748b'
+    text_muted: '#64748b',
+    heatmap_empty: '#ebedf0',
+    heatmap_l1: '#9be9a8',
+    heatmap_l2: '#40c463',
+    heatmap_l3: '#30a14e',
+    heatmap_l4: '#216e39'
   };
 
   let themePresets = [];
@@ -540,6 +685,13 @@
     root.style.setProperty('--text', theme.text);
     root.style.setProperty('--text-muted', theme.text_muted);
     
+    // Heatmap colors
+    root.style.setProperty('--heatmap-empty', theme.heatmap_empty);
+    root.style.setProperty('--heatmap-l1', theme.heatmap_l1);
+    root.style.setProperty('--heatmap-l2', theme.heatmap_l2);
+    root.style.setProperty('--heatmap-l3', theme.heatmap_l3);
+    root.style.setProperty('--heatmap-l4', theme.heatmap_l4);
+    
     // Update derived colors
     if (window.adjustColor) {
       root.style.setProperty('--color-primary-hover', window.adjustColor(theme.primary, -15));
@@ -554,12 +706,11 @@
   }
 
   function getCurrentTheme() {
-    return {
-      primary: themeInputs.primary.hex.value,
-      success: themeInputs.success.hex.value,
-      error: themeInputs.error.hex.value,
-      warning: themeInputs.warning.hex.value
-    };
+    const theme = {};
+    for (const [name, inputs] of Object.entries(themeInputs)) {
+      theme[name] = inputs.hex.value;
+    }
+    return theme;
   }
 
   function setThemeInputs(theme) {

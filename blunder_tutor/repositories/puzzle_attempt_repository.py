@@ -152,3 +152,33 @@ class PuzzleAttemptRepository(BaseDbRepository):
             "unique_puzzles": row[2] or 0,
             "accuracy": round((correct / total * 100), 1) if total > 0 else 0.0,
         }
+
+    async def get_daily_attempt_counts(
+        self, username: str, days: int = 365
+    ) -> dict[str, dict[str, int]]:
+        cutoff_date = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
+
+        conn = await self.get_connection()
+        async with conn.execute(
+            """
+            SELECT
+                DATE(attempted_at) as date,
+                COUNT(*) as total,
+                SUM(CASE WHEN was_correct = 1 THEN 1 ELSE 0 END) as correct
+            FROM puzzle_attempts
+            WHERE username = ? AND DATE(attempted_at) >= ?
+            GROUP BY DATE(attempted_at)
+            ORDER BY date
+            """,
+            (username, cutoff_date),
+        ) as cursor:
+            rows = await cursor.fetchall()
+
+        return {
+            row[0]: {
+                "total": row[1],
+                "correct": row[2] or 0,
+                "incorrect": row[1] - (row[2] or 0),
+            }
+            for row in rows
+        }

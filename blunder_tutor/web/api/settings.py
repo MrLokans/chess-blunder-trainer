@@ -36,6 +36,12 @@ class ThemeColors(BaseModel):
     # Text colors
     text: str = Field(default="#1e293b", description="Primary text color")
     text_muted: str = Field(default="#64748b", description="Muted/secondary text color")
+    # Heatmap colors (GitHub-style activity levels)
+    heatmap_empty: str = Field(default="#ebedf0", description="Heatmap empty cell")
+    heatmap_l1: str = Field(default="#9be9a8", description="Heatmap level 1 (low)")
+    heatmap_l2: str = Field(default="#40c463", description="Heatmap level 2")
+    heatmap_l3: str = Field(default="#30a14e", description="Heatmap level 3")
+    heatmap_l4: str = Field(default="#216e39", description="Heatmap level 4 (high)")
 
 
 class SettingsRequest(BaseModel):
@@ -163,6 +169,11 @@ DEFAULT_THEME = {
     "bg_card": "#ffffff",
     "text": "#1e293b",
     "text_muted": "#64748b",
+    "heatmap_empty": "#ebedf0",
+    "heatmap_l1": "#9be9a8",
+    "heatmap_l2": "#40c463",
+    "heatmap_l3": "#30a14e",
+    "heatmap_l4": "#216e39",
 }
 
 THEME_PRESETS = {
@@ -186,6 +197,11 @@ THEME_PRESETS = {
             "bg_card": "#ffffff",
             "text": "#03045e",
             "text_muted": "#4a6fa5",
+            "heatmap_empty": "#e0f2fe",
+            "heatmap_l1": "#7dd3fc",
+            "heatmap_l2": "#38bdf8",
+            "heatmap_l3": "#0284c7",
+            "heatmap_l4": "#0369a1",
         },
     },
     "forest": {
@@ -203,6 +219,11 @@ THEME_PRESETS = {
             "bg_card": "#fefefe",
             "text": "#1b4332",
             "text_muted": "#5c7a5c",
+            "heatmap_empty": "#d8f3dc",
+            "heatmap_l1": "#95d5b2",
+            "heatmap_l2": "#52b788",
+            "heatmap_l3": "#2d6a4f",
+            "heatmap_l4": "#1b4332",
         },
     },
     "sunset": {
@@ -220,6 +241,11 @@ THEME_PRESETS = {
             "bg_card": "#ffffff",
             "text": "#2c1810",
             "text_muted": "#7f6855",
+            "heatmap_empty": "#fef3c7",
+            "heatmap_l1": "#fcd34d",
+            "heatmap_l2": "#f59e0b",
+            "heatmap_l3": "#d97706",
+            "heatmap_l4": "#b45309",
         },
     },
     "lavender": {
@@ -237,6 +263,11 @@ THEME_PRESETS = {
             "bg_card": "#ffffff",
             "text": "#1e1b4b",
             "text_muted": "#6b7280",
+            "heatmap_empty": "#ede9fe",
+            "heatmap_l1": "#c4b5fd",
+            "heatmap_l2": "#a78bfa",
+            "heatmap_l3": "#7c3aed",
+            "heatmap_l4": "#5b21b6",
         },
     },
     "monochrome": {
@@ -254,6 +285,11 @@ THEME_PRESETS = {
             "bg_card": "#ffffff",
             "text": "#111827",
             "text_muted": "#6b7280",
+            "heatmap_empty": "#e5e7eb",
+            "heatmap_l1": "#9ca3af",
+            "heatmap_l2": "#6b7280",
+            "heatmap_l3": "#4b5563",
+            "heatmap_l4": "#1f2937",
         },
     },
     "dark": {
@@ -271,6 +307,11 @@ THEME_PRESETS = {
             "bg_card": "#1e293b",
             "text": "#f1f5f9",
             "text_muted": "#94a3b8",
+            "heatmap_empty": "#1e293b",
+            "heatmap_l1": "#064e3b",
+            "heatmap_l2": "#047857",
+            "heatmap_l3": "#10b981",
+            "heatmap_l4": "#34d399",
         },
     },
     "high_contrast": {
@@ -286,6 +327,11 @@ THEME_PRESETS = {
             "phase_endgame": "#6600cc",
             "bg": "#ffffff",
             "bg_card": "#ffffff",
+            "heatmap_empty": "#d4d4d4",
+            "heatmap_l1": "#a3e635",
+            "heatmap_l2": "#65a30d",
+            "heatmap_l3": "#3f6212",
+            "heatmap_l4": "#1a2e05",
             "text": "#000000",
             "text_muted": "#333333",
         },
