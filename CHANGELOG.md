@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-02-05
+
+### Added
+- **Puzzle completion heatmap**: New GitHub-style activity heatmap on the dashboard showing daily puzzle practice
+- **Dashboard time control filter**: Filter all dashboard statistics by time control (bullet, blitz, rapid, classical, correspondence)
+- **Chessboard styling**: Customize board colors and piece sets in settings
+  - 6 board color presets (Brown, Blue, Green, Purple, Gray, Wood)
+  - 6 piece sets (Wikipedia, Alpha, California, Cardinal, CBurnett, Merida)
+  - Custom color picker for light and dark squares
+  - Live preview in settings page
+
+### Fixed
+- Settings page now correctly saves and loads user preferences
+
 ## [0.8.0] - 2026-02-04
 
 ### Added
