@@ -75,6 +75,7 @@ class TestPickRandomBlunder:
 
         # Mock game with enough moves for ply 10
         mock_game = MagicMock(spec=chess.pgn.Game)
+        mock_game.headers = {"Site": "https://lichess.org/abc123"}
         mock_board = chess.Board()
         mock_game.board.return_value = mock_board
         # Generate 10 moves (5 white, 5 black)
@@ -100,6 +101,7 @@ class TestPickRandomBlunder:
         assert puzzle.blunder_uci == "e2e4"
         assert puzzle.player_color == "white"
         assert puzzle.username == "testuser"
+        assert puzzle.game_url == "https://lichess.org/abc123"
 
     async def test_no_games_found(self, trainer):
         # No games found for user
@@ -170,6 +172,7 @@ class TestPickRandomBlunder:
         )
 
         mock_game = MagicMock(spec=chess.pgn.Game)
+        mock_game.headers = {}
         mock_board = chess.Board()
         mock_game.board.return_value = mock_board
         # Generate enough moves for ply 10

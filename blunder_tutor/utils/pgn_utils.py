@@ -64,6 +64,19 @@ def build_game_metadata(
     }
 
 
+def extract_game_url(game: chess.pgn.Game) -> str | None:
+    headers = game.headers
+    # Chess.com stores the URL in the "Link" header
+    link = headers.get("Link")
+    if link and link.startswith("https://"):
+        return link
+    # Lichess stores the URL in the "Site" header
+    site = headers.get("Site")
+    if site and site.startswith("https://"):
+        return site
+    return None
+
+
 def board_before_ply(game: chess.pgn.Game, target_ply: int) -> chess.Board:
     """Get the board state before a specific ply.
 

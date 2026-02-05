@@ -127,6 +127,9 @@ class PuzzleResponse(BaseModel):
     tactical_squares: list[str] | None = Field(
         description="Squares involved in the tactic for highlighting (e.g., ['f7', 'd8', 'h8'])"
     )
+    game_url: str | None = Field(
+        description="URL to the original game on Lichess or Chess.com"
+    )
 
 
 class SubmitMoveResponse(BaseModel):
@@ -285,6 +288,7 @@ async def puzzle(
         else None,
         "tactical_reason": puzzle_data.tactical_reason,
         "tactical_squares": puzzle_data.tactical_squares,
+        "game_url": puzzle_data.game_url,
     }
 
 

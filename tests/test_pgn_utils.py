@@ -9,6 +9,7 @@ import pytest
 from blunder_tutor.utils.pgn_utils import (
     build_game_metadata,
     compute_game_id,
+    extract_game_url,
     load_game,
     load_game_from_string,
     normalize_pgn,
@@ -172,6 +173,38 @@ class TestComputeGameId:
         pgn1 = '[Event "Test1"]\n'
         pgn2 = '[Event "Test2"]\n'
         assert compute_game_id(pgn1) != compute_game_id(pgn2)
+
+
+class TestExtractGameUrl:
+    def test_lichess_site_header(self):
+        game = load_game_from_string(
+            '[Site "https://lichess.org/3bsmejYN"]\n[White "A"]\n[Black "B"]\n[Result "*"]\n\n*\n'
+        )
+        assert extract_game_url(game) == "https://lichess.org/3bsmejYN"
+
+    def test_chesscom_link_header(self):
+        game = load_game_from_string(
+            '[Site "Chess.com"]\n[Link "https://www.chess.com/game/live/123"]\n'
+            '[White "A"]\n[Black "B"]\n[Result "*"]\n\n*\n'
+        )
+        assert extract_game_url(game) == "https://www.chess.com/game/live/123"
+
+    def test_chesscom_link_takes_priority_over_non_url_site(self):
+        game = load_game_from_string(
+            '[Site "Chess.com"]\n[Link "https://www.chess.com/game/live/456"]\n'
+            '[White "A"]\n[Black "B"]\n[Result "*"]\n\n*\n'
+        )
+        assert extract_game_url(game) == "https://www.chess.com/game/live/456"
+
+    def test_no_url_headers(self):
+        game = load_game_from_string(
+            '[Site "Local Club"]\n[White "A"]\n[Black "B"]\n[Result "*"]\n\n*\n'
+        )
+        assert extract_game_url(game) is None
+
+    def test_missing_both_headers(self):
+        game = load_game_from_string('[White "A"]\n[Black "B"]\n[Result "*"]\n\n*\n')
+        assert extract_game_url(game) is None
 
 
 class TestBuildGameMetadata:

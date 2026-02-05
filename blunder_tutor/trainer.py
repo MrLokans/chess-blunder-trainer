@@ -11,7 +11,7 @@ from blunder_tutor.analysis.tactics import classify_blunder_tactics
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
-from blunder_tutor.utils.pgn_utils import board_before_ply
+from blunder_tutor.utils.pgn_utils import board_before_ply, extract_game_url
 
 
 @dataclass(frozen=True)
@@ -35,6 +35,7 @@ class BlunderPuzzle:
     tactical_pattern: int | None = None
     tactical_reason: str | None = None
     tactical_squares: list[str] | None = None  # Squares involved in the tactic
+    game_url: str | None = None
 
 
 class Trainer:
@@ -139,6 +140,7 @@ class Trainer:
 
         game = await self.games.load_game(game_id)
         board = board_before_ply(game, ply)
+        game_url = extract_game_url(game)
 
         game_metadata = await self.games.get_game(game_id)
         if game_metadata:
@@ -170,6 +172,7 @@ class Trainer:
             tactical_pattern=blunder_tactical_pattern,
             tactical_reason=blunder_tactical_reason,
             tactical_squares=tactical_squares,
+            game_url=game_url,
         )
 
     def _compute_tactical_squares(

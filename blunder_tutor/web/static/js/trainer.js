@@ -759,6 +759,7 @@ async function loadPuzzle() {
     updateColorBadge(puzzle.player_color);
     updatePhaseBadge(puzzle.game_phase);
     updateTacticalBadge(puzzle.tactical_pattern);
+    updateGameLink(puzzle.game_url);
     blunderMove.textContent = puzzle.blunder_san;
     evalBefore.textContent = puzzle.eval_before_display;
     evalAfter.textContent = puzzle.eval_after_display;
@@ -1038,6 +1039,17 @@ function updatePhaseBadge(phase) {
     phaseBadge.style.display = 'inline-block';
   } else {
     phaseBadge.style.display = 'none';
+  }
+}
+
+function updateGameLink(url) {
+  const el = document.getElementById('gameLink');
+  if (!el) return;
+  if (url) {
+    el.href = url;
+    el.style.display = 'inline';
+  } else {
+    el.style.display = 'none';
   }
 }
 
