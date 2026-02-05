@@ -53,7 +53,7 @@ For advanced Docker options, see [DOCKER.md](DOCKER.md).
 make install-dev    # Install dependencies
 make test           # Run tests
 make lint           # Check code style
-uv run python main.py  # Start dev server
+make train-ui       # Start dev server
 ```
 
 Requires Stockfish on your PATH or set `STOCKFISH_BINARY`.
@@ -66,9 +66,7 @@ Requires Stockfish on your PATH or set `STOCKFISH_BINARY`.
 
 ## Links
 
-- [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
-- [Docker Documentation](DOCKER.md)
 
 ## Glossary
 
