@@ -30,6 +30,21 @@
   box-shadow: var(--shadow-md);
 }
 
+/* Board square color customization via CSS variables */
+:root {
+  --board-light: #f0d9b5;
+  --board-dark: #b58863;
+}
+
+/* Override chessboard.js default square colors */
+#board .white-1e1d7 {
+  background-color: var(--board-light) !important;
+}
+
+#board .black-3c85d {
+  background-color: var(--board-dark) !important;
+}
+
 /* ==========================================================================
    Evaluation Bar
    ========================================================================== */

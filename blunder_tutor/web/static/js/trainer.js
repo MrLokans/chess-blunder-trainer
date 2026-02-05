@@ -13,6 +13,13 @@ let currentGameTypeFilters = [];
 let currentColorFilter = 'both';
 let filtersCollapsed = false;
 
+// Board styling settings
+let boardSettings = {
+  piece_set: 'wikipedia',
+  board_light: '#f0d9b5',
+  board_dark: '#b58863'
+};
+
 // DOM elements
 const evalBarFill = document.getElementById('evalBarFill');
 const evalValue = document.getElementById('evalValue');
@@ -742,7 +749,7 @@ async function loadPuzzle() {
       position: puzzle.fen,
       orientation: orientation,
       draggable: true,
-      pieceTheme: '/static/pieces/wikipedia/{piece}.png',
+      pieceTheme: getPieceTheme(),
       onDragStart: onDragStart,
       onDrop: onDrop,
       onSnapEnd: onSnapEnd
@@ -1229,11 +1236,45 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// Board settings functions
+async function loadBoardSettings() {
+  try {
+    const resp = await fetch('/api/settings/board');
+    if (resp.ok) {
+      const data = await resp.json();
+      boardSettings = data;
+      applyBoardColors();
+    }
+  } catch (err) {
+    console.warn('Failed to load board settings:', err);
+  }
+}
+
+function applyBoardColors() {
+  const root = document.documentElement;
+  root.style.setProperty('--board-light', boardSettings.board_light);
+  root.style.setProperty('--board-dark', boardSettings.board_dark);
+}
+
+function getPieceTheme() {
+  const pieceSet = boardSettings.piece_set || 'wikipedia';
+  // Wikipedia uses PNG, others use SVG
+  const format = pieceSet === 'wikipedia' ? 'png' : 'svg';
+  return `/static/pieces/${pieceSet}/{piece}.${format}`;
+}
+
 // Initialize
-loadPhaseFiltersFromStorage();
-loadTacticalFilterFromStorage();
-loadGameTypeFiltersFromStorage();
-loadColorFilterFromStorage();
-loadFiltersPanelState();
-loadPuzzle();
+async function init() {
+  loadPhaseFiltersFromStorage();
+  loadTacticalFilterFromStorage();
+  loadGameTypeFiltersFromStorage();
+  loadColorFilterFromStorage();
+  loadFiltersPanelState();
+
+  // Load board settings before loading puzzle
+  await loadBoardSettings();
+  loadPuzzle();
+}
+
+init();
 // Stats are loaded automatically via HTMX on page load

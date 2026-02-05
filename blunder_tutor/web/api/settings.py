@@ -340,6 +340,65 @@ THEME_PRESETS = {
 
 THEME_KEYS = list(DEFAULT_THEME.keys())
 
+# Board styling constants
+PIECE_SETS = [
+    {"id": "wikipedia", "name": "Wikipedia", "format": "png"},
+    {"id": "alpha", "name": "Alpha", "format": "svg"},
+    {"id": "california", "name": "California", "format": "svg"},
+    {"id": "cardinal", "name": "Cardinal", "format": "svg"},
+    {"id": "cburnett", "name": "CBurnett", "format": "svg"},
+    {"id": "chessnut", "name": "Chessnut", "format": "svg"},
+    {"id": "companion", "name": "Companion", "format": "svg"},
+    {"id": "fresca", "name": "Fresca", "format": "svg"},
+    {"id": "gioco", "name": "Gioco", "format": "svg"},
+    {"id": "kosal", "name": "Kosal", "format": "svg"},
+    {"id": "leipzig", "name": "Leipzig", "format": "svg"},
+    {"id": "letter", "name": "Letter", "format": "svg"},
+    {"id": "maestro", "name": "Maestro", "format": "svg"},
+    {"id": "merida", "name": "Merida", "format": "svg"},
+    {"id": "shapes", "name": "Shapes", "format": "svg"},
+    {"id": "staunty", "name": "Staunty", "format": "svg"},
+    {"id": "tatiana", "name": "Tatiana", "format": "svg"},
+]
+
+DEFAULT_PIECE_SET = "wikipedia"
+
+BOARD_COLOR_PRESETS = {
+    "brown": {
+        "name": "Brown",
+        "light": "#f0d9b5",
+        "dark": "#b58863",
+    },
+    "blue": {
+        "name": "Blue",
+        "light": "#dee3e6",
+        "dark": "#8ca2ad",
+    },
+    "green": {
+        "name": "Green",
+        "light": "#ffffdd",
+        "dark": "#86a666",
+    },
+    "purple": {
+        "name": "Purple",
+        "light": "#e8e0f0",
+        "dark": "#9070a0",
+    },
+    "gray": {
+        "name": "Gray",
+        "light": "#e0e0e0",
+        "dark": "#a0a0a0",
+    },
+    "wood": {
+        "name": "Wood",
+        "light": "#e6d3ac",
+        "dark": "#b88b4a",
+    },
+}
+
+DEFAULT_BOARD_LIGHT = "#f0d9b5"
+DEFAULT_BOARD_DARK = "#b58863"
+
 
 class ThemePreset(BaseModel):
     id: str = Field(description="Preset identifier")
@@ -369,6 +428,130 @@ async def get_theme_presets() -> dict[str, list[dict[str, Any]]]:
         for preset_id, data in THEME_PRESETS.items()
     ]
     return {"presets": presets}
+
+
+# Board styling models
+class PieceSetInfo(BaseModel):
+    id: str = Field(description="Piece set identifier")
+    name: str = Field(description="Display name")
+    format: str = Field(description="Image format (png or svg)")
+
+
+class BoardColorPreset(BaseModel):
+    id: str = Field(description="Preset identifier")
+    name: str = Field(description="Display name")
+    light: str = Field(description="Light square color")
+    dark: str = Field(description="Dark square color")
+
+
+class BoardSettingsResponse(BaseModel):
+    piece_set: str = Field(description="Current piece set ID")
+    board_light: str = Field(description="Light square color")
+    board_dark: str = Field(description="Dark square color")
+
+
+class BoardSettingsRequest(BaseModel):
+    piece_set: str | None = Field(default=None, description="Piece set ID")
+    board_light: str | None = Field(default=None, description="Light square color")
+    board_dark: str | None = Field(default=None, description="Dark square color")
+
+
+class PieceSetsResponse(BaseModel):
+    piece_sets: list[PieceSetInfo] = Field(description="Available piece sets")
+
+
+class BoardColorPresetsResponse(BaseModel):
+    presets: list[BoardColorPreset] = Field(description="Available board color presets")
+
+
+@settings_router.get(
+    "/api/settings/board/piece-sets",
+    response_model=PieceSetsResponse,
+    summary="Get available piece sets",
+    description="Returns a list of available chess piece sets.",
+)
+async def get_piece_sets() -> dict[str, list[dict[str, str]]]:
+    return {"piece_sets": PIECE_SETS}
+
+
+@settings_router.get(
+    "/api/settings/board/color-presets",
+    response_model=BoardColorPresetsResponse,
+    summary="Get board color presets",
+    description="Returns a list of predefined board color combinations.",
+)
+async def get_board_color_presets() -> dict[str, list[dict[str, str]]]:
+    presets = [
+        {"id": preset_id, **data} for preset_id, data in BOARD_COLOR_PRESETS.items()
+    ]
+    return {"presets": presets}
+
+
+@settings_router.get(
+    "/api/settings/board",
+    response_model=BoardSettingsResponse,
+    summary="Get board settings",
+    description="Retrieve current board styling settings.",
+)
+async def get_board_settings(settings_repo: SettingsRepoDep) -> dict[str, str]:
+    piece_set = await settings_repo.get_setting("board_piece_set")
+    board_light = await settings_repo.get_setting("board_light_color")
+    board_dark = await settings_repo.get_setting("board_dark_color")
+
+    return {
+        "piece_set": piece_set or DEFAULT_PIECE_SET,
+        "board_light": board_light or DEFAULT_BOARD_LIGHT,
+        "board_dark": board_dark or DEFAULT_BOARD_DARK,
+    }
+
+
+@settings_router.post(
+    "/api/settings/board",
+    response_model=SuccessResponse,
+    summary="Update board settings",
+    description="Update board styling settings (piece set, board colors).",
+)
+async def update_board_settings(
+    payload: BoardSettingsRequest, settings_repo: SettingsRepoDep
+) -> dict[str, bool]:
+    if payload.piece_set is not None:
+        valid_sets = {ps["id"] for ps in PIECE_SETS}
+        if payload.piece_set not in valid_sets:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid piece set. Valid options: {', '.join(valid_sets)}",
+            )
+        await settings_repo.set_setting("board_piece_set", payload.piece_set)
+
+    if payload.board_light is not None:
+        if not payload.board_light.startswith("#") or len(payload.board_light) != 7:
+            raise HTTPException(
+                status_code=400,
+                detail="board_light must be a valid hex color (#RRGGBB)",
+            )
+        await settings_repo.set_setting("board_light_color", payload.board_light)
+
+    if payload.board_dark is not None:
+        if not payload.board_dark.startswith("#") or len(payload.board_dark) != 7:
+            raise HTTPException(
+                status_code=400, detail="board_dark must be a valid hex color (#RRGGBB)"
+            )
+        await settings_repo.set_setting("board_dark_color", payload.board_dark)
+
+    return {"success": True}
+
+
+@settings_router.post(
+    "/api/settings/board/reset",
+    response_model=SuccessResponse,
+    summary="Reset board settings",
+    description="Reset board styling to defaults.",
+)
+async def reset_board_settings(settings_repo: SettingsRepoDep) -> dict[str, bool]:
+    await settings_repo.set_setting("board_piece_set", None)
+    await settings_repo.set_setting("board_light_color", None)
+    await settings_repo.set_setting("board_dark_color", None)
+    return {"success": True}
 
 
 @settings_router.get(

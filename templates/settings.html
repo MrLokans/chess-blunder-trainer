@@ -237,6 +237,133 @@
     background: var(--color-error) !important;
     border-color: var(--color-error) !important;
   }
+
+  /* Board styling */
+  .board-preview-container {
+    display: flex;
+    gap: var(--space-4);
+    align-items: flex-start;
+  }
+
+  .board-preview {
+    width: 160px;
+    height: 160px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    flex-shrink: 0;
+  }
+
+  .board-preview .square {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .board-preview .square img {
+    width: 80%;
+    height: 80%;
+    object-fit: contain;
+  }
+
+  .board-preview .square.light {
+    background: var(--preview-board-light, #f0d9b5);
+  }
+
+  .board-preview .square.dark {
+    background: var(--preview-board-dark, #b58863);
+  }
+
+  .board-settings-controls {
+    flex: 1;
+  }
+
+  .piece-set-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+
+  .piece-set-card {
+    padding: var(--space-2) var(--space-3);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    background: var(--bg-elevated);
+    text-align: center;
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  .piece-set-card:hover {
+    border-color: var(--color-primary-muted);
+    transform: translateY(-1px);
+  }
+
+  .piece-set-card.active {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(79, 109, 122, 0.2);
+  }
+
+  .board-color-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+  }
+
+  .board-color-preset {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    border: 2px solid var(--border);
+    overflow: hidden;
+    transition: all 0.15s ease;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  .board-color-preset:hover {
+    transform: scale(1.1);
+  }
+
+  .board-color-preset.active {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(79, 109, 122, 0.2);
+  }
+
+  .board-color-preset .light {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .board-color-preset .dark {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .board-color-preset .light-alt {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .board-color-preset .dark-alt {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .board-custom-colors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
 </style>
 {% endblock %}
 
@@ -312,6 +439,48 @@
         <label for="spacedRepetitionDays">Spaced Repetition Interval (days)</label>
         <input type="number" id="spacedRepetitionDays" min="1" max="365" value="30" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
         <div class="help-text">Don't show correctly solved puzzles again for this many days</div>
+      </div>
+
+      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
+
+      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">Board Appearance</h2>
+      <p class="help-text" style="margin-bottom: 16px;">Customize the chessboard colors and piece set.</p>
+
+      <div class="board-preview-container">
+        <div class="board-preview" id="boardPreview">
+          <!-- 4x4 preview board, will be populated dynamically -->
+        </div>
+
+        <div class="board-settings-controls">
+          <label class="theme-section-title" style="margin-top: 0;">Piece Set</label>
+          <div class="piece-set-grid" id="pieceSetGrid">
+            <!-- Piece sets will be loaded dynamically -->
+          </div>
+
+          <label class="theme-section-title">Board Colors</label>
+          <div class="board-color-presets" id="boardColorPresets">
+            <!-- Color presets will be loaded dynamically -->
+          </div>
+
+          <div class="board-custom-colors">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="boardLightColor">Light Squares</label>
+              <div class="color-input-row">
+                <input type="color" id="boardLightColor" value="#f0d9b5">
+                <input type="text" id="boardLightHex" value="#f0d9b5" maxlength="7" class="color-hex-input">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="boardDarkColor">Dark Squares</label>
+              <div class="color-input-row">
+                <input type="color" id="boardDarkColor" value="#b58863">
+                <input type="text" id="boardDarkHex" value="#b58863" maxlength="7" class="color-hex-input">
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-secondary" id="resetBoardBtn" style="margin-top: 12px;">Reset to Defaults</button>
+        </div>
       </div>
 
       <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
@@ -889,7 +1058,251 @@
     }
   });
 
+  // ==================== Board Settings ====================
+  
+  // Board settings state
+  let pieceSets = [];
+  let boardColorPresets = [];
+  let currentPieceSet = 'wikipedia';
+  let currentBoardLight = '#f0d9b5';
+  let currentBoardDark = '#b58863';
+  let activeBoardColorPreset = null;
+
+  // Board settings DOM elements
+  const boardPreview = document.getElementById('boardPreview');
+  const pieceSetGrid = document.getElementById('pieceSetGrid');
+  const boardColorPresetsEl = document.getElementById('boardColorPresets');
+  const boardLightColor = document.getElementById('boardLightColor');
+  const boardLightHex = document.getElementById('boardLightHex');
+  const boardDarkColor = document.getElementById('boardDarkColor');
+  const boardDarkHex = document.getElementById('boardDarkHex');
+  const resetBoardBtn = document.getElementById('resetBoardBtn');
+
+  // Preview board pieces (simplified 4x4)
+  const previewPieces = [
+    ['bR', null, 'bB', 'bK'],
+    [null, 'bP', null, 'bP'],
+    ['wP', null, 'wN', null],
+    ['wR', null, 'wB', 'wK']
+  ];
+
+  function getPieceImageUrl(piece) {
+    if (!piece) return null;
+    const format = currentPieceSet === 'wikipedia' ? 'png' : 'svg';
+    return `/static/pieces/${currentPieceSet}/${piece}.${format}`;
+  }
+
+  function renderBoardPreview() {
+    const root = document.documentElement;
+    root.style.setProperty('--preview-board-light', currentBoardLight);
+    root.style.setProperty('--preview-board-dark', currentBoardDark);
+
+    let html = '';
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 4; col++) {
+        const isLight = (row + col) % 2 === 0;
+        const piece = previewPieces[row][col];
+        const pieceImg = piece ? `<img src="${getPieceImageUrl(piece)}" alt="${piece}">` : '';
+        html += `<div class="square ${isLight ? 'light' : 'dark'}">${pieceImg}</div>`;
+      }
+    }
+    boardPreview.innerHTML = html;
+  }
+
+  function renderPieceSetGrid() {
+    pieceSetGrid.innerHTML = pieceSets.map(ps => `
+      <div class="piece-set-card ${currentPieceSet === ps.id ? 'active' : ''}" data-piece-set="${ps.id}">
+        ${ps.name}
+      </div>
+    `).join('');
+
+    pieceSetGrid.querySelectorAll('.piece-set-card').forEach(card => {
+      card.addEventListener('click', () => {
+        currentPieceSet = card.dataset.pieceSet;
+        renderPieceSetGrid();
+        renderBoardPreview();
+      });
+    });
+  }
+
+  function renderBoardColorPresets() {
+    boardColorPresetsEl.innerHTML = boardColorPresets.map(preset => `
+      <div class="board-color-preset ${activeBoardColorPreset === preset.id ? 'active' : ''}" 
+           data-preset-id="${preset.id}" 
+           data-light="${preset.light}" 
+           data-dark="${preset.dark}"
+           title="${preset.name}">
+        <div class="light" style="background: ${preset.light};"></div>
+        <div class="light-alt" style="background: ${preset.dark};"></div>
+        <div class="dark-alt" style="background: ${preset.light};"></div>
+        <div class="dark" style="background: ${preset.dark};"></div>
+      </div>
+    `).join('');
+
+    boardColorPresetsEl.querySelectorAll('.board-color-preset').forEach(preset => {
+      preset.addEventListener('click', () => {
+        const light = preset.dataset.light;
+        const dark = preset.dataset.dark;
+        const presetId = preset.dataset.presetId;
+        
+        currentBoardLight = light;
+        currentBoardDark = dark;
+        activeBoardColorPreset = presetId;
+        
+        boardLightColor.value = light;
+        boardLightHex.value = light.toUpperCase();
+        boardDarkColor.value = dark;
+        boardDarkHex.value = dark.toUpperCase();
+        
+        renderBoardColorPresets();
+        renderBoardPreview();
+      });
+    });
+  }
+
+  function clearActiveBoardColorPreset() {
+    activeBoardColorPreset = null;
+    boardColorPresetsEl.querySelectorAll('.board-color-preset').forEach(el => {
+      el.classList.remove('active');
+    });
+  }
+
+  function checkIfMatchesBoardColorPreset() {
+    for (const preset of boardColorPresets) {
+      if (preset.light.toLowerCase() === currentBoardLight.toLowerCase() &&
+          preset.dark.toLowerCase() === currentBoardDark.toLowerCase()) {
+        activeBoardColorPreset = preset.id;
+        return;
+      }
+    }
+    activeBoardColorPreset = null;
+  }
+
+  // Setup board color inputs sync
+  function setupBoardColorSync(colorInput, hexInput, isLight) {
+    colorInput.addEventListener('input', () => {
+      hexInput.value = colorInput.value.toUpperCase();
+      if (isLight) {
+        currentBoardLight = colorInput.value;
+      } else {
+        currentBoardDark = colorInput.value;
+      }
+      clearActiveBoardColorPreset();
+      renderBoardPreview();
+    });
+
+    hexInput.addEventListener('input', () => {
+      const val = hexInput.value;
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        colorInput.value = val;
+        if (isLight) {
+          currentBoardLight = val;
+        } else {
+          currentBoardDark = val;
+        }
+        clearActiveBoardColorPreset();
+        renderBoardPreview();
+      }
+    });
+
+    hexInput.addEventListener('blur', () => {
+      let val = hexInput.value.trim();
+      if (!val.startsWith('#')) val = '#' + val;
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        hexInput.value = val.toUpperCase();
+        colorInput.value = val;
+      } else {
+        hexInput.value = colorInput.value.toUpperCase();
+      }
+    });
+  }
+
+  setupBoardColorSync(boardLightColor, boardLightHex, true);
+  setupBoardColorSync(boardDarkColor, boardDarkHex, false);
+
+  // Reset board settings
+  resetBoardBtn.addEventListener('click', async () => {
+    currentPieceSet = 'wikipedia';
+    currentBoardLight = '#f0d9b5';
+    currentBoardDark = '#b58863';
+    
+    boardLightColor.value = currentBoardLight;
+    boardLightHex.value = currentBoardLight.toUpperCase();
+    boardDarkColor.value = currentBoardDark;
+    boardDarkHex.value = currentBoardDark.toUpperCase();
+    
+    checkIfMatchesBoardColorPreset();
+    renderPieceSetGrid();
+    renderBoardColorPresets();
+    renderBoardPreview();
+  });
+
+  // Load board settings
+  async function loadBoardSettings() {
+    try {
+      // Load piece sets
+      const pieceSetsResp = await fetch('/api/settings/board/piece-sets');
+      if (pieceSetsResp.ok) {
+        const data = await pieceSetsResp.json();
+        pieceSets = data.piece_sets;
+      }
+
+      // Load color presets
+      const colorPresetsResp = await fetch('/api/settings/board/color-presets');
+      if (colorPresetsResp.ok) {
+        const data = await colorPresetsResp.json();
+        boardColorPresets = data.presets;
+      }
+
+      // Load current settings
+      const boardResp = await fetch('/api/settings/board');
+      if (boardResp.ok) {
+        const settings = await boardResp.json();
+        currentPieceSet = settings.piece_set;
+        currentBoardLight = settings.board_light;
+        currentBoardDark = settings.board_dark;
+        
+        boardLightColor.value = currentBoardLight;
+        boardLightHex.value = currentBoardLight.toUpperCase();
+        boardDarkColor.value = currentBoardDark;
+        boardDarkHex.value = currentBoardDark.toUpperCase();
+      }
+
+      checkIfMatchesBoardColorPreset();
+      renderPieceSetGrid();
+      renderBoardColorPresets();
+      renderBoardPreview();
+    } catch (err) {
+      console.error('Failed to load board settings:', err);
+    }
+  }
+
+  // Save board settings (called from form submit)
+  async function saveBoardSettings() {
+    try {
+      await fetch('/api/settings/board', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          piece_set: currentPieceSet,
+          board_light: currentBoardLight,
+          board_dark: currentBoardDark
+        })
+      });
+    } catch (err) {
+      console.error('Failed to save board settings:', err);
+    }
+  }
+
+  // Modify the form submit to also save board settings
+  const originalFormSubmit = form.onsubmit;
+  form.addEventListener('submit', async (e) => {
+    // Board settings are saved separately
+    await saveBoardSettings();
+  });
+
   // Load settings on page load
   loadSyncSettings();
+  loadBoardSettings();
 </script>
 {% endblock %}
