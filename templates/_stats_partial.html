@@ -1,22 +1,22 @@
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px;">
-  <div style="text-align: center;">
-    <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px;">Accuracy</div>
-    <div style="font-size: 1.75rem; font-weight: 700; color: var(--success);">{{ accuracy }}%</div>
+<div class="training-stats-grid">
+  <div class="training-stat-item">
+    <div class="training-stat-label">Accuracy</div>
+    <div class="training-stat-value training-stat-success">{{ accuracy }}%</div>
   </div>
-  <div style="text-align: center;">
-    <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px;">Total Attempts</div>
-    <div style="font-size: 1.75rem; font-weight: 700;">{{ total_attempts }}</div>
+  <div class="training-stat-item">
+    <div class="training-stat-label">Total Attempts</div>
+    <div class="training-stat-value">{{ total_attempts }}</div>
   </div>
-  <div style="text-align: center;">
-    <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px;">Correct</div>
-    <div style="font-size: 1.75rem; font-weight: 700; color: var(--success);">{{ correct_attempts }}</div>
+  <div class="training-stat-item">
+    <div class="training-stat-label">Correct</div>
+    <div class="training-stat-value training-stat-success">{{ correct_attempts }}</div>
   </div>
-  <div style="text-align: center;">
-    <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px;">Incorrect</div>
-    <div style="font-size: 1.75rem; font-weight: 700; color: var(--accent);">{{ incorrect_attempts }}</div>
+  <div class="training-stat-item">
+    <div class="training-stat-label">Incorrect</div>
+    <div class="training-stat-value training-stat-accent">{{ incorrect_attempts }}</div>
   </div>
-  <div style="text-align: center;">
-    <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px;">Unique Puzzles</div>
-    <div style="font-size: 1.75rem; font-weight: 700;">{{ unique_puzzles }}</div>
+  <div class="training-stat-item">
+    <div class="training-stat-label">Unique Puzzles</div>
+    <div class="training-stat-value">{{ unique_puzzles }}</div>
   </div>
 </div>

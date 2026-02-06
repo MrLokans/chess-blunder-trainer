@@ -1084,3 +1084,32 @@ kbd {
 .mt-4 { margin-top: var(--space-4); }
 .mb-2 { margin-bottom: var(--space-2); }
 .mb-4 { margin-bottom: var(--space-4); }
+
+/* ==========================================================================
+   Compact Link Navigation
+   ========================================================================== */
+
+.nav-link-compact {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.nav-link-compact-item {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.nav-link-compact-item:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}

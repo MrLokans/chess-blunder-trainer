@@ -870,3 +870,38 @@
   color: white;
   background: var(--color-slate-700);
 }
+
+/* ==========================================================================
+   Training Stats
+   ========================================================================== */
+
+.training-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.training-stat-item {
+  text-align: center;
+}
+
+.training-stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.training-stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.training-stat-success {
+  color: var(--success);
+}
+
+.training-stat-accent {
+  color: var(--accent);
+}
