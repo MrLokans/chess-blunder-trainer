@@ -11,6 +11,13 @@
   <!-- Theme loader - applies cached colors before page renders -->
   <script src="/static/js/theme-loader.js"></script>
 
+  <!-- i18n: inject translations for client-side JS -->
+  <script>
+    window.__i18n__ = {{ translations_json|default('{}')|safe }};
+    window.__locale__ = "{{ locale|default('en') }}";
+  </script>
+  <script src="/static/js/i18n.js"></script>
+
   <!-- HTMX for reactive components -->
   <script src="/static/vendor/htmx-1.9.10.min.js"></script>
 

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Settings - Blunder Tutor{% endblock %}
+{% block title %}{{ t('nav.settings') }} - Blunder Tutor{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/settings.css">
@@ -8,14 +8,14 @@
 
 {% block body %}
 <div class="container">
-  <a href="/" class="back-link">&larr; Back to Trainer</a>
+  <a href="/" class="back-link">{{ t('common.back_to_trainer') }}</a>
 
   <div class="card">
-    <h1>Settings</h1>
-    <p class="subtitle">Manage your chess usernames</p>
+    <h1>{{ t('settings.title') }}</h1>
+    <p class="subtitle">{{ t('settings.subtitle') }}</p>
 
     <div class="alert alert-info visible">
-      At least one username is required to continue training.
+      {{ t('settings.username_required') }}
     </div>
 
     <div class="alert alert-error" id="errorAlert"></div>
@@ -23,88 +23,104 @@
 
     <form id="settingsForm">
       <div class="form-group">
-        <label for="lichess">Lichess Username</label>
-        <input type="text" id="lichess" name="lichess" placeholder="Enter your Lichess username" value="{{ lichess_username or '' }}">
-        <div class="help-text">Optional: Leave blank if you don't use Lichess</div>
+        <label for="lichess">{{ t('settings.lichess_label') }}</label>
+        <input type="text" id="lichess" name="lichess" placeholder="{{ t('settings.lichess_placeholder') }}" value="{{ lichess_username or '' }}">
+        <div class="help-text">{{ t('settings.lichess_help') }}</div>
       </div>
 
       <div class="form-group">
-        <label for="chesscom">Chess.com Username</label>
-        <input type="text" id="chesscom" name="chesscom" placeholder="Enter your Chess.com username" value="{{ chesscom_username or '' }}">
-        <div class="help-text">Optional: Leave blank if you don't use Chess.com</div>
+        <label for="chesscom">{{ t('settings.chesscom_label') }}</label>
+        <input type="text" id="chesscom" name="chesscom" placeholder="{{ t('settings.chesscom_placeholder') }}" value="{{ chesscom_username or '' }}">
+        <div class="help-text">{{ t('settings.chesscom_help') }}</div>
       </div>
 
       <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
 
-      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">Automatic Sync</h2>
+      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.locale.label') }}</h2>
+
+      <div class="form-group">
+        <label for="localeSelect">{{ t('settings.locale.label') }}</label>
+        <select id="localeSelect" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
+          {% for code in available_locales() %}
+          <option value="{{ code }}" {% if code == locale %}selected{% endif %}>
+            {{ locale_display_names.get(code, code) }}
+          </option>
+          {% endfor %}
+        </select>
+        <div class="help-text">{{ t('settings.locale.description') }}</div>
+      </div>
+
+      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
+
+      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.auto_sync.title') }}</h2>
 
       <div class="form-group">
         <label style="display: flex; align-items: center; gap: 8px;">
           <input type="checkbox" id="autoSync" name="autoSync" style="width: auto;">
-          Enable automatic sync
+          {{ t('settings.auto_sync.enable') }}
         </label>
-        <div class="help-text">Automatically fetch new games at regular intervals</div>
+        <div class="help-text">{{ t('settings.auto_sync.help') }}</div>
       </div>
 
       <div class="form-group">
-        <label for="syncInterval">Sync Interval</label>
+        <label for="syncInterval">{{ t('settings.sync_interval.label') }}</label>
         <select id="syncInterval" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
-          <option value="6">Every 6 hours</option>
-          <option value="12">Every 12 hours</option>
-          <option value="24" selected>Every 24 hours</option>
-          <option value="48">Every 48 hours</option>
+          <option value="6">{{ t('settings.sync_interval.6h') }}</option>
+          <option value="12">{{ t('settings.sync_interval.12h') }}</option>
+          <option value="24" selected>{{ t('settings.sync_interval.24h') }}</option>
+          <option value="48">{{ t('settings.sync_interval.48h') }}</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label for="maxGames">Max Games per Sync</label>
+        <label for="maxGames">{{ t('settings.max_games.label') }}</label>
         <input type="number" id="maxGames" min="100" max="10000" value="1000" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
-        <div class="help-text">Maximum number of games to fetch during each sync</div>
+        <div class="help-text">{{ t('settings.max_games.help') }}</div>
       </div>
 
       <div class="form-group">
         <label style="display: flex; align-items: center; gap: 8px;">
           <input type="checkbox" id="autoAnalyze" name="autoAnalyze" checked style="width: auto;">
-          Automatically analyze new games
+          {{ t('settings.auto_analyze.enable') }}
         </label>
-        <div class="help-text">Run analysis on newly fetched games</div>
+        <div class="help-text">{{ t('settings.auto_analyze.help') }}</div>
       </div>
 
       <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
 
-      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">Training Settings</h2>
+      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.training.title') }}</h2>
 
       <div class="form-group">
-        <label for="spacedRepetitionDays">Spaced Repetition Interval (days)</label>
+        <label for="spacedRepetitionDays">{{ t('settings.spaced_repetition.label') }}</label>
         <input type="number" id="spacedRepetitionDays" min="1" max="365" value="30" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
-        <div class="help-text">Don't show correctly solved puzzles again for this many days</div>
+        <div class="help-text">{{ t('settings.spaced_repetition.help') }}</div>
       </div>
 
       <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
 
-      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">Board Appearance</h2>
-      <p class="help-text" style="margin-bottom: 16px;">Customize the chessboard colors and piece set.</p>
+      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.board.title') }}</h2>
+      <p class="help-text" style="margin-bottom: 16px;">{{ t('settings.board.description') }}</p>
 
       <div class="board-preview-container">
         <div class="board-preview" id="boardPreview"></div>
 
         <div class="board-settings-controls">
-          <label class="theme-section-title" style="margin-top: 0;">Piece Set</label>
+          <label class="theme-section-title" style="margin-top: 0;">{{ t('settings.board.piece_set') }}</label>
           <div class="piece-set-grid" id="pieceSetGrid"></div>
 
-          <label class="theme-section-title">Board Colors</label>
+          <label class="theme-section-title">{{ t('settings.board.colors') }}</label>
           <div class="board-color-presets" id="boardColorPresets"></div>
 
           <div class="board-custom-colors">
             <div class="form-group" style="margin-bottom: 0;">
-              <label for="boardLightColor">Light Squares</label>
+              <label for="boardLightColor">{{ t('settings.board.light_squares') }}</label>
               <div class="color-input-row">
                 <input type="color" id="boardLightColor" value="#f0d9b5">
                 <input type="text" id="boardLightHex" value="#f0d9b5" maxlength="7" class="color-hex-input">
               </div>
             </div>
             <div class="form-group" style="margin-bottom: 0;">
-              <label for="boardDarkColor">Dark Squares</label>
+              <label for="boardDarkColor">{{ t('settings.board.dark_squares') }}</label>
               <div class="color-input-row">
                 <input type="color" id="boardDarkColor" value="#b58863">
                 <input type="text" id="boardDarkHex" value="#b58863" maxlength="7" class="color-hex-input">
@@ -112,64 +128,64 @@
             </div>
           </div>
 
-          <button type="button" class="btn btn-secondary" id="resetBoardBtn" style="margin-top: 12px;">Reset to Defaults</button>
+          <button type="button" class="btn btn-secondary" id="resetBoardBtn" style="margin-top: 12px;">{{ t('settings.board.reset') }}</button>
         </div>
       </div>
 
       <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
 
-      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">Theme Colors</h2>
-      <p class="help-text" style="margin-bottom: 16px;">Choose a preset or customize individual colors.</p>
+      <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.theme.title') }}</h2>
+      <p class="help-text" style="margin-bottom: 16px;">{{ t('settings.theme.description') }}</p>
 
       <div class="theme-colors">
         <div class="preset-selector">
-          <label class="theme-section-title" style="margin-top: 0;">Presets</label>
+          <label class="theme-section-title" style="margin-top: 0;">{{ t('settings.theme.presets') }}</label>
           <div class="preset-grid" id="presetGrid"></div>
         </div>
 
-        <h3 class="theme-section-title">Accent Colors</h3>
+        <h3 class="theme-section-title">{{ t('settings.theme.accent') }}</h3>
         <div class="color-grid">
           <div class="form-group">
-            <label for="themePrimary">Primary</label>
+            <label for="themePrimary">{{ t('settings.theme.primary') }}</label>
             <div class="color-input-row">
               <input type="color" id="themePrimary" value="#4f6d7a">
               <input type="text" id="themePrimaryHex" value="#4f6d7a" maxlength="7" class="color-hex-input">
             </div>
-            <div class="help-text">Buttons, links, navigation</div>
+            <div class="help-text">{{ t('settings.theme.primary_help') }}</div>
           </div>
 
           <div class="form-group">
-            <label for="themeSuccess">Success</label>
+            <label for="themeSuccess">{{ t('settings.theme.success') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeSuccess" value="#3d8b6e">
               <input type="text" id="themeSuccessHex" value="#3d8b6e" maxlength="7" class="color-hex-input">
             </div>
-            <div class="help-text">Positive feedback, completed</div>
+            <div class="help-text">{{ t('settings.theme.success_help') }}</div>
           </div>
 
           <div class="form-group">
-            <label for="themeError">Error</label>
+            <label for="themeError">{{ t('settings.theme.error_label') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeError" value="#c25450">
               <input type="text" id="themeErrorHex" value="#c25450" maxlength="7" class="color-hex-input">
             </div>
-            <div class="help-text">Errors, blunder highlighting</div>
+            <div class="help-text">{{ t('settings.theme.error_help') }}</div>
           </div>
 
           <div class="form-group">
-            <label for="themeWarning">Warning</label>
+            <label for="themeWarning">{{ t('settings.theme.warning') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeWarning" value="#b8860b">
               <input type="text" id="themeWarningHex" value="#b8860b" maxlength="7" class="color-hex-input">
             </div>
-            <div class="help-text">Warnings, user moves</div>
+            <div class="help-text">{{ t('settings.theme.warning_help') }}</div>
           </div>
         </div>
 
-        <h3 class="theme-section-title">Game Phase Colors</h3>
+        <h3 class="theme-section-title">{{ t('settings.theme.phases') }}</h3>
         <div class="color-grid">
           <div class="form-group">
-            <label for="themePhaseOpening">Opening</label>
+            <label for="themePhaseOpening">{{ t('chess.phase.opening') }}</label>
             <div class="color-input-row">
               <input type="color" id="themePhaseOpening" value="#5b8a9a">
               <input type="text" id="themePhaseOpeningHex" value="#5b8a9a" maxlength="7" class="color-hex-input">
@@ -177,7 +193,7 @@
           </div>
 
           <div class="form-group">
-            <label for="themePhaseMiddlegame">Middlegame</label>
+            <label for="themePhaseMiddlegame">{{ t('chess.phase.middlegame') }}</label>
             <div class="color-input-row">
               <input type="color" id="themePhaseMiddlegame" value="#9a7b5b">
               <input type="text" id="themePhaseMiddlegameHex" value="#9a7b5b" maxlength="7" class="color-hex-input">
@@ -185,7 +201,7 @@
           </div>
 
           <div class="form-group">
-            <label for="themePhaseEndgame">Endgame</label>
+            <label for="themePhaseEndgame">{{ t('chess.phase.endgame') }}</label>
             <div class="color-input-row">
               <input type="color" id="themePhaseEndgame" value="#7a5b9a">
               <input type="text" id="themePhaseEndgameHex" value="#7a5b9a" maxlength="7" class="color-hex-input">
@@ -193,10 +209,10 @@
           </div>
         </div>
 
-        <h3 class="theme-section-title">Background & Text</h3>
+        <h3 class="theme-section-title">{{ t('settings.theme.bg_text') }}</h3>
         <div class="color-grid">
           <div class="form-group">
-            <label for="themeBg">Page Background</label>
+            <label for="themeBg">{{ t('settings.theme.bg') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeBg" value="#f1f5f9">
               <input type="text" id="themeBgHex" value="#f1f5f9" maxlength="7" class="color-hex-input">
@@ -204,7 +220,7 @@
           </div>
 
           <div class="form-group">
-            <label for="themeBgCard">Card Background</label>
+            <label for="themeBgCard">{{ t('settings.theme.bg_card') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeBgCard" value="#ffffff">
               <input type="text" id="themeBgCardHex" value="#ffffff" maxlength="7" class="color-hex-input">
@@ -212,7 +228,7 @@
           </div>
 
           <div class="form-group">
-            <label for="themeText">Text</label>
+            <label for="themeText">{{ t('settings.theme.text') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeText" value="#1e293b">
               <input type="text" id="themeTextHex" value="#1e293b" maxlength="7" class="color-hex-input">
@@ -220,7 +236,7 @@
           </div>
 
           <div class="form-group">
-            <label for="themeTextMuted">Muted Text</label>
+            <label for="themeTextMuted">{{ t('settings.theme.text_muted') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeTextMuted" value="#64748b">
               <input type="text" id="themeTextMutedHex" value="#64748b" maxlength="7" class="color-hex-input">
@@ -228,10 +244,10 @@
           </div>
         </div>
 
-        <h3 class="theme-section-title">Activity Heatmap</h3>
+        <h3 class="theme-section-title">{{ t('settings.theme.heatmap') }}</h3>
         <div class="color-grid">
           <div class="form-group">
-            <label for="themeHeatmapEmpty">Empty</label>
+            <label for="themeHeatmapEmpty">{{ t('settings.theme.heatmap_empty') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeHeatmapEmpty" value="#ebedf0">
               <input type="text" id="themeHeatmapEmptyHex" value="#ebedf0" maxlength="7" class="color-hex-input">
@@ -239,7 +255,7 @@
           </div>
 
           <div class="form-group">
-            <label for="themeHeatmapL1">Level 1</label>
+            <label for="themeHeatmapL1">{{ t('settings.theme.heatmap_l1') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeHeatmapL1" value="#9be9a8">
               <input type="text" id="themeHeatmapL1Hex" value="#9be9a8" maxlength="7" class="color-hex-input">
@@ -247,7 +263,7 @@
           </div>
 
           <div class="form-group">
-            <label for="themeHeatmapL2">Level 2</label>
+            <label for="themeHeatmapL2">{{ t('settings.theme.heatmap_l2') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeHeatmapL2" value="#40c463">
               <input type="text" id="themeHeatmapL2Hex" value="#40c463" maxlength="7" class="color-hex-input">
@@ -255,7 +271,7 @@
           </div>
 
           <div class="form-group">
-            <label for="themeHeatmapL3">Level 3</label>
+            <label for="themeHeatmapL3">{{ t('settings.theme.heatmap_l3') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeHeatmapL3" value="#30a14e">
               <input type="text" id="themeHeatmapL3Hex" value="#30a14e" maxlength="7" class="color-hex-input">
@@ -263,7 +279,7 @@
           </div>
 
           <div class="form-group">
-            <label for="themeHeatmapL4">Level 4</label>
+            <label for="themeHeatmapL4">{{ t('settings.theme.heatmap_l4') }}</label>
             <div class="color-input-row">
               <input type="color" id="themeHeatmapL4" value="#216e39">
               <input type="text" id="themeHeatmapL4Hex" value="#216e39" maxlength="7" class="color-hex-input">
@@ -272,20 +288,20 @@
         </div>
 
         <div class="theme-preview">
-          <div class="preview-label">Preview</div>
+          <div class="preview-label">{{ t('settings.theme.preview') }}</div>
           <div class="preview-buttons">
-            <button type="button" class="btn preview-primary">Primary</button>
-            <button type="button" class="btn btn-success preview-success">Success</button>
-            <button type="button" class="btn btn-danger preview-error">Error</button>
-            <span class="status preview-warning" style="background: var(--color-warning-bg); color: var(--color-warning);">Warning</span>
+            <button type="button" class="btn preview-primary">{{ t('settings.theme.primary') }}</button>
+            <button type="button" class="btn btn-success preview-success">{{ t('settings.theme.success') }}</button>
+            <button type="button" class="btn btn-danger preview-error">{{ t('settings.theme.error_label') }}</button>
+            <span class="status preview-warning" style="background: var(--color-warning-bg); color: var(--color-warning);">{{ t('settings.theme.warning') }}</span>
           </div>
           <div class="preview-phases">
-            <span class="phase-pill opening">Opening</span>
-            <span class="phase-pill middlegame">Middlegame</span>
-            <span class="phase-pill endgame">Endgame</span>
+            <span class="phase-pill opening">{{ t('chess.phase.opening') }}</span>
+            <span class="phase-pill middlegame">{{ t('chess.phase.middlegame') }}</span>
+            <span class="phase-pill endgame">{{ t('chess.phase.endgame') }}</span>
           </div>
           <div class="preview-heatmap">
-            <div class="preview-heatmap-label">Activity Heatmap</div>
+            <div class="preview-heatmap-label">{{ t('settings.theme.heatmap') }}</div>
             <div class="preview-heatmap-grid">
               <div class="preview-heatmap-week">
                 <div class="preview-heatmap-cell level-0"></div>
@@ -345,12 +361,12 @@
           </div>
         </div>
 
-        <button type="button" class="btn btn-secondary" id="resetThemeBtn" style="margin-top: 12px;">Reset to Defaults</button>
+        <button type="button" class="btn btn-secondary" id="resetThemeBtn" style="margin-top: 12px;">{{ t('settings.theme.reset') }}</button>
       </div>
 
       <div class="btn-row" style="margin-top: 32px;">
-        <a class="btn btn-secondary" href="/">Cancel</a>
-        <button type="submit" class="btn btn-primary" id="submitBtn">Save Changes</button>
+        <a class="btn btn-secondary" href="/">{{ t('common.cancel') }}</a>
+        <button type="submit" class="btn btn-primary" id="submitBtn">{{ t('settings.save') }}</button>
       </div>
     </form>
   </div>

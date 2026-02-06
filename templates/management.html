@@ -1,44 +1,44 @@
 {% extends "base.html" %}
 {% from "_nav.html" import render_nav %}
 
-{% block title %}Management - Blunder Tutor{% endblock %}
+{% block title %}{{ t('nav.management') }} - Blunder Tutor{% endblock %}
 
 {% block content %}
-<h1>Management</h1>
+<h1>{{ t('management.title') }}</h1>
 {{ render_nav('management') }}
 
 <div class="card">
-  <h2>Chess Engine Status</h2>
+  <h2>{{ t('management.engine.title') }}</h2>
   <div id="engineStatus">
-    <p style="color: var(--text-muted); font-size: 0.875rem;">Loading engine status...</p>
+    <p style="color: var(--text-muted); font-size: 0.875rem;">{{ t('management.engine.loading') }}</p>
   </div>
 </div>
 
 <div class="card">
-  <h2>Bulk Import Games</h2>
+  <h2>{{ t('management.import.title') }}</h2>
   <div id="importMessage" style="display: none;"></div>
   <form id="importForm">
     <div class="form-group">
-      <label for="source">Source</label>
+      <label for="source">{{ t('management.import.source') }}</label>
       <select id="source" required>
-        <option value="">Select source...</option>
-        <option value="lichess">Lichess</option>
-        <option value="chesscom">Chess.com</option>
+        <option value="">{{ t('management.import.select_source') }}</option>
+        <option value="lichess">{{ t('management.import.lichess') }}</option>
+        <option value="chesscom">{{ t('management.import.chesscom') }}</option>
       </select>
     </div>
     <div class="form-group">
-      <label for="username">Username</label>
-      <input type="text" id="username" required placeholder="Enter username">
+      <label for="username">{{ t('management.import.username') }}</label>
+      <input type="text" id="username" required placeholder="{{ t('management.import.username_placeholder') }}">
     </div>
     <div class="form-group">
-      <label for="maxGames">Maximum Games</label>
+      <label for="maxGames">{{ t('management.import.max_games') }}</label>
       <input type="number" id="maxGames" value="1000" min="1" max="10000">
     </div>
-    <button type="submit" class="btn">Start Import</button>
+    <button type="submit" class="btn">{{ t('management.import.start') }}</button>
   </form>
 
   <div id="importProgress" style="display: none; margin-top: 24px;">
-    <p><strong>Import in progress...</strong></p>
+    <p><strong>{{ t('management.import.in_progress') }}</strong></p>
     <div class="progress-bar">
       <div class="progress-fill" id="importProgressFill" style="width: 0%"></div>
       <div class="progress-text" id="importProgressText">0%</div>
@@ -47,31 +47,31 @@
 </div>
 
 <div class="card">
-  <h2>Sync Games</h2>
+  <h2>{{ t('management.sync.title') }}</h2>
   <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
-    Fetch new games from all configured sources.
+    {{ t('management.sync.description') }}
   </p>
-  <button class="btn" id="syncBtn">Sync Now</button>
+  <button class="btn" id="syncBtn">{{ t('management.sync.button') }}</button>
   <div id="syncStatus" style="margin-top: 16px;"></div>
 </div>
 
 <div class="card">
-  <h2>Analyze Games</h2>
+  <h2>{{ t('management.analysis.title') }}</h2>
   <div id="analysisMessage" style="display: none;"></div>
 
   <div id="analysisInfo" style="margin-bottom: 16px;">
     <p style="color: var(--text-muted); font-size: 0.875rem;">
-      <span id="unanalyzedCount">-</span> games pending analysis
+      <span id="unanalyzedCount">-</span> {{ t('management.analysis.pending', count='') }}
     </p>
   </div>
 
   <div id="analysisControls">
-    <button class="btn" id="startAnalysisBtn">Analyze All Games</button>
-    <button class="btn" id="stopAnalysisBtn" style="display: none; background: var(--error);">Stop Analysis</button>
+    <button class="btn" id="startAnalysisBtn">{{ t('management.analysis.start') }}</button>
+    <button class="btn" id="stopAnalysisBtn" style="display: none; background: var(--error);">{{ t('management.analysis.stop') }}</button>
   </div>
 
   <div id="analysisProgress" style="display: none; margin-top: 24px;">
-    <p><strong>Analysis in progress...</strong></p>
+    <p><strong>{{ t('management.analysis.in_progress') }}</strong></p>
     <div class="progress-bar">
       <div class="progress-fill" id="analysisProgressFill" style="width: 0%"></div>
       <div class="progress-text" id="analysisProgressText">0%</div>
@@ -80,23 +80,23 @@
 </div>
 
 <div class="card">
-  <h2>Backfill Game Phases</h2>
+  <h2>{{ t('management.backfill_phases.title') }}</h2>
   <div id="backfillMessage" style="display: none;"></div>
 
   <div id="backfillInfo" style="margin-bottom: 16px;">
     <p style="color: var(--text-muted); font-size: 0.875rem;">
-      Backfill phase data (opening/middlegame/endgame) for analyzed games.
+      {{ t('management.backfill_phases.description') }}
       <br>
-      <span id="backfillPendingCount">-</span> games pending phase backfill
+      <span id="backfillPendingCount">-</span> {{ t('management.backfill_phases.pending', count='') }}
     </p>
   </div>
 
   <div id="backfillControls">
-    <button class="btn" id="startBackfillBtn">Backfill Phases</button>
+    <button class="btn" id="startBackfillBtn">{{ t('management.backfill_phases.start') }}</button>
   </div>
 
   <div id="backfillProgress" style="display: none; margin-top: 24px;">
-    <p><strong>Backfill in progress...</strong></p>
+    <p><strong>{{ t('management.backfill_phases.in_progress') }}</strong></p>
     <div class="progress-bar">
       <div class="progress-fill" id="backfillProgressFill" style="width: 0%"></div>
       <div class="progress-text" id="backfillProgressText">0%</div>
@@ -105,23 +105,23 @@
 </div>
 
 <div class="card">
-  <h2>Backfill ECO Codes</h2>
+  <h2>{{ t('management.backfill_eco.title') }}</h2>
   <div id="ecoBackfillMessage" style="display: none;"></div>
 
   <div id="ecoBackfillInfo" style="margin-bottom: 16px;">
     <p style="color: var(--text-muted); font-size: 0.875rem;">
-      Backfill ECO opening codes for analyzed games.
+      {{ t('management.backfill_eco.description') }}
       <br>
-      <span id="ecoBackfillPendingCount">-</span> games pending ECO classification
+      <span id="ecoBackfillPendingCount">-</span> {{ t('management.backfill_eco.pending', count='') }}
     </p>
   </div>
 
   <div id="ecoBackfillControls">
-    <button class="btn" id="startEcoBackfillBtn">Backfill ECO Codes</button>
+    <button class="btn" id="startEcoBackfillBtn">{{ t('management.backfill_eco.start') }}</button>
   </div>
 
   <div id="ecoBackfillProgress" style="display: none; margin-top: 24px;">
-    <p><strong>ECO backfill in progress...</strong></p>
+    <p><strong>{{ t('management.backfill_eco.in_progress') }}</strong></p>
     <div class="progress-bar">
       <div class="progress-fill" id="ecoBackfillProgressFill" style="width: 0%"></div>
       <div class="progress-text" id="ecoBackfillProgressText">0%</div>
@@ -130,17 +130,17 @@
 </div>
 
 <div class="card">
-  <h2>Recent Jobs</h2>
+  <h2>{{ t('management.jobs.title') }}</h2>
   <table id="jobsTable">
     <thead>
       <tr>
-        <th>Type</th>
-        <th>Status</th>
-        <th>Username</th>
-        <th>Source</th>
-        <th>Progress</th>
-        <th>Created</th>
-        <th>Actions</th>
+        <th>{{ t('management.jobs.type') }}</th>
+        <th>{{ t('management.jobs.status') }}</th>
+        <th>{{ t('management.jobs.username') }}</th>
+        <th>{{ t('management.jobs.source') }}</th>
+        <th>{{ t('management.jobs.progress') }}</th>
+        <th>{{ t('management.jobs.created') }}</th>
+        <th>{{ t('management.jobs.actions') }}</th>
       </tr>
     </thead>
     <tbody id="jobsTableBody"
@@ -148,25 +148,25 @@
            hx-trigger="load, jobsRefresh from:body"
            hx-swap="innerHTML">
       <tr>
-        <td colspan="7" style="text-align: center; color: var(--text-muted);">Loading...</td>
+        <td colspan="7" style="text-align: center; color: var(--text-muted);">{{ t('common.loading') }}</td>
       </tr>
     </tbody>
   </table>
 </div>
 
 <div class="card" style="border-color: var(--error);">
-  <h2 style="color: var(--error);">Danger Zone</h2>
+  <h2 style="color: var(--error);">{{ t('management.danger.title') }}</h2>
   <div id="deleteAllMessage" style="display: none;"></div>
   <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
-    Delete all imported games, analysis results, puzzle attempts, and job history.
-    <strong>This action cannot be undone.</strong> Your settings will be preserved.
+    {{ t('management.danger.description') }}
+    <strong>{{ t('management.danger.warning') }}</strong> {{ t('management.danger.settings_preserved') }}
   </p>
   <button class="btn" id="deleteAllBtn" style="background: var(--error);">
-    Delete All Data
+    {{ t('management.danger.button') }}
   </button>
 
   <div id="deleteAllProgress" style="display: none; margin-top: 24px;">
-    <p><strong>Deleting data...</strong></p>
+    <p><strong>{{ t('management.danger.deleting') }}</strong></p>
     <div class="progress-bar">
       <div class="progress-fill" id="deleteAllProgressFill" style="width: 0%; background: var(--error);"></div>
       <div class="progress-text" id="deleteAllProgressText">0%</div>

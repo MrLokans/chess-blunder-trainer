@@ -120,13 +120,13 @@ async function loadStats() {
       const percent = analysisStatus.progress_total > 0
         ? Math.round((analysisStatus.progress_current / analysisStatus.progress_total) * 100)
         : 0;
-      statusEl.textContent = `Analysis running: ${analysisStatus.progress_current || 0}/${analysisStatus.progress_total || 0} (${percent}%)`;
+      statusEl.textContent = t('dashboard.analysis.running', { current: analysisStatus.progress_current || 0, total: analysisStatus.progress_total || 0, percent });
       statusEl.style.color = 'var(--primary)';
     } else if (analysisStatus.status === 'completed') {
-      statusEl.textContent = 'Last analysis: completed';
+      statusEl.textContent = t('dashboard.analysis.completed');
       statusEl.style.color = 'var(--success)';
     } else if (analysisStatus.status === 'failed') {
-      statusEl.innerHTML = 'Last analysis: failed <button class="btn btn-sm" id="retryAnalysisBtn" style="margin-left: 8px; padding: 4px 10px; font-size: 0.75rem;">Retry</button>';
+      statusEl.innerHTML = t('dashboard.analysis.failed') + ' <button class="btn btn-sm" id="retryAnalysisBtn" style="margin-left: 8px; padding: 4px 10px; font-size: 0.75rem;">' + t('dashboard.analysis.retry') + '</button>';
       statusEl.style.color = 'var(--error)';
       document.getElementById('retryAnalysisBtn').addEventListener('click', retryAnalysis);
     } else {
@@ -153,15 +153,15 @@ async function loadStats() {
 
       phaseBreakdown.innerHTML = phaseData.by_phase.map(p => `
         <div class="phase-card ${p.phase}">
-          <div class="phase-name">${p.phase}</div>
+          <div class="phase-name">${t('chess.phase.' + p.phase)}</div>
           <div class="phase-count">${p.count}</div>
-          <div class="phase-percent">${p.percentage}% of blunders</div>
-          <div class="phase-cpl">Avg. loss: ${(p.avg_cp_loss / 100).toFixed(1)} pawns</div>
+          <div class="phase-percent">${t('dashboard.chart.phase_percent', { percentage: p.percentage })}</div>
+          <div class="phase-cpl">${t('dashboard.chart.avg_loss', { loss: (p.avg_cp_loss / 100).toFixed(1) })}</div>
         </div>
       `).join('');
     } else {
       phaseBarContainer.style.display = 'none';
-      phaseBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No blunder data available yet. Analyze some games to see your phase breakdown.</div>';
+      phaseBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_phase_data') + '</div>';
     }
 
     // Blunders by color
@@ -184,15 +184,15 @@ async function loadStats() {
 
       colorBreakdown.innerHTML = colorData.by_color.map(c => `
         <div class="color-card ${c.color}">
-          <div class="color-name">As ${c.color}</div>
+          <div class="color-name">${t('dashboard.chart.as_color', { color: t('chess.color.' + c.color) })}</div>
           <div class="color-count">${c.count}</div>
-          <div class="color-percent">${c.percentage}% of blunders</div>
-          <div class="color-cpl">Avg. loss: ${(c.avg_cp_loss / 100).toFixed(1)} pawns</div>
+          <div class="color-percent">${t('dashboard.chart.phase_percent', { percentage: c.percentage })}</div>
+          <div class="color-cpl">${t('dashboard.chart.avg_loss', { loss: (c.avg_cp_loss / 100).toFixed(1) })}</div>
         </div>
       `).join('');
     } else {
       colorBarContainer.style.display = 'none';
-      colorBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No blunder data available yet. Analyze some games to see your color breakdown.</div>';
+      colorBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_color_data') + '</div>';
     }
 
     // Blunders by game type
@@ -204,13 +204,13 @@ async function loadStats() {
     const gameTypeLegend = document.getElementById('gameTypeLegend');
 
     const gameTypeLabels = {
-      'ultrabullet': 'UltraBullet',
-      'bullet': 'Bullet',
-      'blitz': 'Blitz',
-      'rapid': 'Rapid',
-      'classical': 'Classical',
-      'correspondence': 'Correspondence',
-      'unknown': 'Unknown'
+      'ultrabullet': t('dashboard.game_type.ultrabullet'),
+      'bullet': t('dashboard.game_type.bullet'),
+      'blitz': t('dashboard.game_type.blitz'),
+      'rapid': t('dashboard.game_type.rapid'),
+      'classical': t('dashboard.game_type.classical'),
+      'correspondence': t('dashboard.game_type.correspondence'),
+      'unknown': t('dashboard.game_type.unknown')
     };
 
     if (gameTypeData.total_blunders > 0 && gameTypeData.by_game_type.length > 0) {
@@ -240,7 +240,7 @@ async function loadStats() {
         `).join('');
     } else {
       gameTypeBarContainer.style.display = 'none';
-      gameTypeBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No game type data available yet. Analyze some games to see your blunders by time control.</div>';
+      gameTypeBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_game_type_data') + '</div>';
     }
 
     // Blunders by ECO opening
@@ -253,10 +253,10 @@ async function loadStats() {
         <table class="eco-table">
           <thead>
             <tr>
-              <th>Opening</th>
-              <th>Blunders</th>
-              <th>Avg. Loss</th>
-              <th>Games</th>
+              <th>${t('dashboard.chart.eco_opening')}</th>
+              <th>${t('dashboard.chart.eco_blunders')}</th>
+              <th>${t('dashboard.chart.eco_avg_loss')}</th>
+              <th>${t('dashboard.chart.eco_games')}</th>
             </tr>
           </thead>
           <tbody>
@@ -272,7 +272,7 @@ async function loadStats() {
         </table>
       `;
     } else {
-      ecoBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No opening data available yet. Analyze some games to see your opening breakdown.</div>';
+      ecoBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_opening_data') + '</div>';
     }
 
     // Blunders by tactical pattern
@@ -297,16 +297,16 @@ async function loadStats() {
     };
 
     const patternLabels = {
-      'Fork': 'Fork',
-      'Pin': 'Pin',
-      'Skewer': 'Skewer',
-      'Discovered Attack': 'Discovery',
-      'Discovered Check': 'Disc. Check',
-      'Double Check': 'Double Check',
-      'Hanging Piece': 'Hanging',
-      'Back Rank Threat': 'Back Rank',
-      'Trapped Piece': 'Trapped',
-      'None': 'Other'
+      'Fork': t('dashboard.tactical.fork'),
+      'Pin': t('dashboard.tactical.pin'),
+      'Skewer': t('dashboard.tactical.skewer'),
+      'Discovered Attack': t('dashboard.tactical.discovery'),
+      'Discovered Check': t('dashboard.tactical.disc_check'),
+      'Double Check': t('dashboard.tactical.double_check'),
+      'Hanging Piece': t('dashboard.tactical.hanging'),
+      'Back Rank Threat': t('dashboard.tactical.back_rank'),
+      'Trapped Piece': t('dashboard.tactical.trapped'),
+      'None': t('dashboard.tactical.other')
     };
 
     if (tacticalData.total_blunders > 0 && tacticalData.by_pattern.length > 0) {
@@ -346,7 +346,7 @@ async function loadStats() {
         }).join('');
     } else {
       tacticalBarContainer.style.display = 'none';
-      tacticalBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No tactical pattern data available yet. Run a backfill to analyze existing blunders for tactical patterns.</div>';
+      tacticalBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_tactical_data') + '</div>';
     }
 
     // Game breakdown
@@ -402,7 +402,7 @@ async function loadDateChart() {
         labels: labels,
         datasets: [
           {
-            label: 'Games Played',
+            label: t('dashboard.chart.games_played'),
             data: gameCounts,
             backgroundColor: 'rgba(14, 165, 233, 0.7)',
             borderColor: 'rgba(14, 165, 233, 1)',
@@ -411,7 +411,7 @@ async function loadDateChart() {
             order: 2
           },
           {
-            label: 'Accuracy',
+            label: t('dashboard.chart.accuracy'),
             data: accuracies,
             type: 'line',
             borderColor: 'rgba(34, 197, 94, 1)',
@@ -439,8 +439,8 @@ async function loadDateChart() {
           tooltip: {
             callbacks: {
               label: function(context) {
-                if (context.dataset.label === 'Accuracy') {
-                  return `Accuracy: ${context.raw.toFixed(1)}%`;
+                if (context.dataset.yAxisID === 'y1') {
+                  return `${t('dashboard.chart.accuracy')}: ${context.raw.toFixed(1)}%`;
                 }
                 return `${context.dataset.label}: ${context.raw}`;
               }
@@ -461,7 +461,7 @@ async function loadDateChart() {
             position: 'left',
             title: {
               display: true,
-              text: 'Games'
+              text: t('dashboard.chart.games_axis')
             },
             beginAtZero: true
           },
@@ -471,7 +471,7 @@ async function loadDateChart() {
             position: 'right',
             title: {
               display: true,
-              text: 'Accuracy %'
+              text: t('dashboard.chart.accuracy_axis')
             },
             min: 0,
             max: 100,
@@ -528,7 +528,7 @@ async function loadHourChart() {
         labels: labels,
         datasets: [
           {
-            label: 'Games Played',
+            label: t('dashboard.chart.games_played'),
             data: gameCounts,
             backgroundColor: 'rgba(139, 92, 246, 0.7)',
             borderColor: 'rgba(139, 92, 246, 1)',
@@ -537,7 +537,7 @@ async function loadHourChart() {
             order: 2
           },
           {
-            label: 'Accuracy',
+            label: t('dashboard.chart.accuracy'),
             data: accuracies,
             type: 'line',
             borderColor: 'rgba(34, 197, 94, 1)',
@@ -565,8 +565,8 @@ async function loadHourChart() {
           tooltip: {
             callbacks: {
               label: function(context) {
-                if (context.dataset.label === 'Accuracy') {
-                  return `Accuracy: ${context.raw.toFixed(1)}%`;
+                if (context.dataset.yAxisID === 'y1') {
+                  return `${t('dashboard.chart.accuracy')}: ${context.raw.toFixed(1)}%`;
                 }
                 return `${context.dataset.label}: ${context.raw}`;
               }
@@ -577,7 +577,7 @@ async function loadHourChart() {
           x: {
             title: {
               display: true,
-              text: 'Hour of Day (UTC)'
+              text: t('dashboard.chart.hour_axis')
             }
           },
           y: {
@@ -586,7 +586,7 @@ async function loadHourChart() {
             position: 'left',
             title: {
               display: true,
-              text: 'Games'
+              text: t('dashboard.chart.games_axis')
             },
             beginAtZero: true
           },
@@ -596,7 +596,7 @@ async function loadHourChart() {
             position: 'right',
             title: {
               display: true,
-              text: 'Accuracy %'
+              text: t('dashboard.chart.accuracy_axis')
             },
             min: 0,
             max: 100,

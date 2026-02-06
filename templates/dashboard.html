@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_nav.html" import render_nav %}
 
-{% block title %}Dashboard - Blunder Tutor{% endblock %}
+{% block title %}{{ t('nav.dashboard') }} - Blunder Tutor{% endblock %}
 
 {% block extra_head %}
 <script src="/static/vendor/chart-4.4.1.umd.min.js"></script>
@@ -12,46 +12,46 @@
 {% endblock %}
 
 {% block content %}
-<h1>Blunder Tutor Dashboard</h1>
+<h1>{{ t('dashboard.title') }}</h1>
 {{ render_nav('dashboard') }}
 
 <div class="dashboard-filters">
   <div class="filter-group">
-    <label for="dateFrom">From:</label>
+    <label for="dateFrom">{{ t('dashboard.filter.from') }}</label>
     <input type="date" id="dateFrom" name="date_from">
   </div>
   <div class="filter-group">
-    <label for="dateTo">To:</label>
+    <label for="dateTo">{{ t('dashboard.filter.to') }}</label>
     <input type="date" id="dateTo" name="date_to">
   </div>
   <div class="filter-group">
-    <button class="btn" id="applyDateBtn">Apply</button>
-    <button class="btn btn-secondary" id="clearDateBtn">Clear</button>
+    <button class="btn" id="applyDateBtn">{{ t('common.apply') }}</button>
+    <button class="btn btn-secondary" id="clearDateBtn">{{ t('common.clear') }}</button>
   </div>
   <div class="filter-presets">
-    <button data-preset="7d">Last 7 days</button>
-    <button data-preset="30d">Last 30 days</button>
-    <button data-preset="90d">Last 90 days</button>
-    <button data-preset="1y">Last year</button>
-    <button data-preset="all" class="active">All time</button>
+    <button data-preset="7d">{{ t('dashboard.filter.last_7d') }}</button>
+    <button data-preset="30d">{{ t('dashboard.filter.last_30d') }}</button>
+    <button data-preset="90d">{{ t('dashboard.filter.last_90d') }}</button>
+    <button data-preset="1y">{{ t('dashboard.filter.last_1y') }}</button>
+    <button data-preset="all" class="active">{{ t('dashboard.filter.all_time') }}</button>
   </div>
 </div>
 
 <div class="dashboard-filters" style="margin-top: var(--space-2);">
   <div class="filter-group">
-    <label>Time Control:</label>
+    <label>{{ t('dashboard.filter.time_control') }}</label>
     <div class="game-type-filters">
       <label class="checkbox-label">
-        <input type="checkbox" class="game-type-filter" value="bullet" checked> Bullet
+        <input type="checkbox" class="game-type-filter" value="bullet" checked> {{ t('trainer.game_type.bullet') }}
       </label>
       <label class="checkbox-label">
-        <input type="checkbox" class="game-type-filter" value="blitz" checked> Blitz
+        <input type="checkbox" class="game-type-filter" value="blitz" checked> {{ t('trainer.game_type.blitz') }}
       </label>
       <label class="checkbox-label">
-        <input type="checkbox" class="game-type-filter" value="rapid" checked> Rapid
+        <input type="checkbox" class="game-type-filter" value="rapid" checked> {{ t('trainer.game_type.rapid') }}
       </label>
       <label class="checkbox-label">
-        <input type="checkbox" class="game-type-filter" value="classical" checked> Classical
+        <input type="checkbox" class="game-type-filter" value="classical" checked> {{ t('trainer.game_type.classical') }}
       </label>
     </div>
   </div>
@@ -59,19 +59,19 @@
 
 <div class="stats-grid">
   <div class="stat-card">
-    <div class="stat-label">Total Games</div>
+    <div class="stat-label">{{ t('dashboard.stat.total_games') }}</div>
     <div class="stat-value" id="totalGames">-</div>
   </div>
   <div class="stat-card">
-    <div class="stat-label">Analyzed Games</div>
+    <div class="stat-label">{{ t('dashboard.stat.analyzed_games') }}</div>
     <div class="stat-value" id="analyzedGames">-</div>
   </div>
   <div class="stat-card">
-    <div class="stat-label">Total Blunders</div>
+    <div class="stat-label">{{ t('dashboard.stat.total_blunders') }}</div>
     <div class="stat-value" id="totalBlunders">-</div>
   </div>
   <div class="stat-card">
-    <div class="stat-label">Analysis Progress</div>
+    <div class="stat-label">{{ t('dashboard.stat.analysis_progress') }}</div>
     <div class="stat-value" id="progressPercent">-</div>
     <div class="progress-bar">
       <div class="progress-fill" id="progressFill" style="width: 0%"></div>
@@ -81,101 +81,101 @@
 </div>
 
 <div class="chart-container">
-  <div class="chart-title">Puzzle Activity</div>
-  <p class="chart-description">Your puzzle solving activity over the past year.</p>
+  <div class="chart-title">{{ t('dashboard.chart.puzzle_activity') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.puzzle_activity_desc') }}</p>
   <div id="activityHeatmap">
-    <div class="loading-placeholder">Loading activity data...</div>
+    <div class="loading-placeholder">{{ t('dashboard.chart.loading_activity') }}</div>
   </div>
 </div>
 
 <div class="chart-container">
-  <div class="chart-title">Blunders by Game Phase</div>
-  <p class="chart-description">Understand where in your games you tend to make mistakes.</p>
+  <div class="chart-title">{{ t('dashboard.chart.blunders_by_phase') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.blunders_by_phase_desc') }}</p>
   <div class="phase-bar-container" id="phaseBarContainer" style="display: none;">
     <div class="phase-bar" id="phaseBar"></div>
     <div class="phase-legend">
       <div class="phase-legend-item">
         <span class="phase-legend-color opening"></span>
-        <span>Opening</span>
+        <span>{{ t('chess.phase.opening') }}</span>
       </div>
       <div class="phase-legend-item">
         <span class="phase-legend-color middlegame"></span>
-        <span>Middlegame</span>
+        <span>{{ t('chess.phase.middlegame') }}</span>
       </div>
       <div class="phase-legend-item">
         <span class="phase-legend-color endgame"></span>
-        <span>Endgame</span>
+        <span>{{ t('chess.phase.endgame') }}</span>
       </div>
     </div>
   </div>
   <div class="phase-breakdown" id="phaseBreakdown">
-    <div class="loading-placeholder">Loading...</div>
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
   </div>
 </div>
 
 <div class="chart-container">
-  <div class="chart-title">Blunders by Color</div>
-  <p class="chart-description">Compare your blunder rate when playing as white versus black.</p>
+  <div class="chart-title">{{ t('dashboard.chart.blunders_by_color') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.blunders_by_color_desc') }}</p>
   <div class="phase-bar-container" id="colorBarContainer" style="display: none;">
     <div class="color-bar" id="colorBar"></div>
     <div class="color-legend">
       <div class="color-legend-item">
         <span class="color-legend-swatch white"></span>
-        <span>White</span>
+        <span>{{ t('chess.color.white') }}</span>
       </div>
       <div class="color-legend-item">
         <span class="color-legend-swatch black"></span>
-        <span>Black</span>
+        <span>{{ t('chess.color.black') }}</span>
       </div>
     </div>
   </div>
   <div class="color-breakdown" id="colorBreakdown">
-    <div class="loading-placeholder">Loading...</div>
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
   </div>
 </div>
 
 <div class="chart-container">
-  <div class="chart-title">Blunders by Game Type</div>
-  <p class="chart-description">Compare your blunder rate across different time controls.</p>
+  <div class="chart-title">{{ t('dashboard.chart.blunders_by_game_type') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.blunders_by_game_type_desc') }}</p>
   <div class="game-type-bar-container" id="gameTypeBarContainer" style="display: none;">
     <div class="game-type-bar" id="gameTypeBar"></div>
     <div class="game-type-legend" id="gameTypeLegend"></div>
   </div>
   <div class="game-type-breakdown" id="gameTypeBreakdown">
-    <div class="loading-placeholder">Loading...</div>
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
   </div>
 </div>
 
 <div class="chart-container">
-  <div class="chart-title">Blunders by Opening</div>
-  <p class="chart-description">See which openings give you the most trouble.</p>
+  <div class="chart-title">{{ t('dashboard.chart.blunders_by_opening') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.blunders_by_opening_desc') }}</p>
   <div id="ecoBreakdown">
-    <div class="loading-placeholder">Loading...</div>
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
   </div>
 </div>
 
 <div class="chart-container">
-  <div class="chart-title">Blunders by Tactical Pattern</div>
-  <p class="chart-description">Understand what types of tactical mistakes you make most often.</p>
+  <div class="chart-title">{{ t('dashboard.chart.blunders_by_tactical') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.blunders_by_tactical_desc') }}</p>
   <div class="tactical-bar-container" id="tacticalBarContainer" style="display: none;">
     <div class="tactical-bar" id="tacticalBar"></div>
     <div class="tactical-legend" id="tacticalLegend"></div>
   </div>
   <div class="tactical-breakdown" id="tacticalBreakdown">
-    <div class="loading-placeholder">Loading...</div>
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
   </div>
 </div>
 
 <div class="chart-container">
-  <div class="chart-title">Game Breakdown by Source</div>
+  <div class="chart-title">{{ t('dashboard.chart.game_breakdown') }}</div>
   <table id="gameBreakdownTable">
     <thead>
       <tr>
-        <th>Source</th>
-        <th>Username</th>
-        <th>Total Games</th>
-        <th>Analyzed</th>
-        <th>Pending</th>
+        <th>{{ t('dashboard.chart.source') }}</th>
+        <th>{{ t('dashboard.chart.username') }}</th>
+        <th>{{ t('dashboard.chart.total_games') }}</th>
+        <th>{{ t('dashboard.chart.analyzed') }}</th>
+        <th>{{ t('dashboard.chart.pending') }}</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -183,29 +183,29 @@
 </div>
 
 <div class="chart-container">
-  <div class="chart-title">Game Accuracy by Date</div>
-  <p class="chart-description">Track your game accuracy over time. Higher = better play (0–100 scale).</p>
+  <div class="chart-title">{{ t('dashboard.chart.accuracy_by_date') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.accuracy_by_date_desc') }}</p>
   <div id="dateChartContainer" class="chart-canvas-container">
     <canvas id="dateChart"></canvas>
   </div>
   <div id="dateChartEmpty" class="chart-empty-state">
-    No game data available yet. Import and analyze some games to see your accuracy trends.
+    {{ t('dashboard.chart.no_accuracy_data') }}
   </div>
 </div>
 
 <div class="chart-container">
-  <div class="chart-title">Game Accuracy by Hour of Day</div>
-  <p class="chart-description">Discover when you play your most accurate chess.</p>
+  <div class="chart-title">{{ t('dashboard.chart.accuracy_by_hour') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.accuracy_by_hour_desc') }}</p>
   <div id="hourChartContainer" class="chart-canvas-container">
     <canvas id="hourChart"></canvas>
   </div>
   <div id="hourChartEmpty" class="chart-empty-state">
-    No game data available yet. Import and analyze some games to see your hourly accuracy patterns.
+    {{ t('dashboard.chart.no_hourly_data') }}
   </div>
 </div>
 
 <div class="mt-4">
-  <a class="btn" href="/management">Manage Imports & Sync</a>
+  <a class="btn" href="/management">{{ t('dashboard.link.manage_imports') }}</a>
 </div>
 {% endblock %}
 

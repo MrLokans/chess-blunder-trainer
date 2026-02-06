@@ -1,10 +1,22 @@
 from __future__ import annotations
 
+import json
+
 from fastapi import Request
 from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.repositories.settings import SettingsRepository
+
+LOCALE_DISPLAY_NAMES = {
+    "en": "English",
+    "ru": "Русский",
+    "uk": "Українська",
+    "de": "Deutsch",
+    "fr": "Français",
+    "es": "Español",
+    "pl": "Polski",
+}
 
 
 class SetupCheckMiddleware(BaseHTTPMiddleware):
@@ -32,3 +44,44 @@ class SetupCheckMiddleware(BaseHTTPMiddleware):
             return RedirectResponse(url="/setup", status_code=303)
 
         return await call_next(request)
+
+
+class LocaleMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        locale = self._detect_locale(request)
+        request.state.locale = locale
+
+        i18n = getattr(request.app.state, "i18n", None)
+        if i18n:
+            templates = request.app.state.templates
+            translations = i18n.get_all(locale)
+            templates.env.globals["t"] = lambda key, **kwargs: i18n.t(
+                locale, key, **kwargs
+            )
+            templates.env.globals["locale"] = locale
+            templates.env.globals["translations_json"] = json.dumps(
+                translations, ensure_ascii=False
+            )
+            templates.env.globals["locale_display_names"] = LOCALE_DISPLAY_NAMES
+
+        return await call_next(request)
+
+    def _detect_locale(self, request: Request) -> str:
+        cookie_locale = request.cookies.get("locale")
+        if cookie_locale:
+            i18n = getattr(request.app.state, "i18n", None)
+            if i18n and cookie_locale in i18n.available_locales():
+                return cookie_locale
+
+        cached = getattr(request.app.state, "_locale_cache", None)
+        if cached:
+            return cached
+
+        accept = request.headers.get("accept-language", "")
+        for part in accept.split(","):
+            lang = part.split(";")[0].strip().split("-")[0].lower()
+            i18n = getattr(request.app.state, "i18n", None)
+            if i18n and lang in i18n.available_locales():
+                return lang
+
+        return "en"

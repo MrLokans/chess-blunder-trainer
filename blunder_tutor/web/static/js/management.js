@@ -25,22 +25,22 @@ async function loadEngineStatus() {
       container.innerHTML = `
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
           <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--success);"></span>
-          <span style="font-weight: 600; color: var(--success);">Engine Available</span>
+          <span style="font-weight: 600; color: var(--success);">${t('management.engine.available')}</span>
         </div>
         <table style="font-size: 0.875rem; color: var(--text-muted);">
-          <tr><td style="padding-right: 16px;">Name:</td><td style="font-family: monospace;">${data.name || 'Unknown'}</td></tr>
-          <tr><td style="padding-right: 16px;">Path:</td><td style="font-family: monospace;">${data.path || 'Unknown'}</td></tr>
+          <tr><td style="padding-right: 16px;">${t('management.engine.name')}</td><td style="font-family: monospace;">${data.name || 'Unknown'}</td></tr>
+          <tr><td style="padding-right: 16px;">${t('management.engine.path')}</td><td style="font-family: monospace;">${data.path || 'Unknown'}</td></tr>
         </table>
       `;
     } else {
       container.innerHTML = `
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
           <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--error);"></span>
-          <span style="font-weight: 600; color: var(--error);">Engine Unavailable</span>
+          <span style="font-weight: 600; color: var(--error);">${t('management.engine.unavailable')}</span>
         </div>
         <p style="color: var(--text-muted); font-size: 0.875rem;">
-          Path: <code>${data.path || 'Not configured'}</code><br>
-          Please ensure Stockfish is installed and the path is correct.
+          ${t('management.engine.path')} <code>${data.path || t('management.engine.not_configured')}</code><br>
+          ${t('management.engine.install_hint')}
         </p>
       `;
     }
@@ -48,7 +48,7 @@ async function loadEngineStatus() {
     container.innerHTML = `
       <div style="display: flex; align-items: center; gap: 8px;">
         <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--error);"></span>
-        <span style="color: var(--error);">Failed to load engine status: ${err.message}</span>
+        <span style="color: var(--error);">${t('management.engine.load_failed', { error: err.message })}</span>
       </div>
     `;
     console.error('Failed to load engine status:', err);
@@ -137,9 +137,9 @@ document.getElementById('importForm').addEventListener('submit', async (e) => {
     const data = await client.jobs.startImport(source, username, maxGames);
     currentJobId = data.job_id;
     document.getElementById('importProgress').style.display = 'block';
-    showMessage('importMessage', 'success', 'Import job started!');
+    showMessage('importMessage', 'success', t('management.import.started'));
   } catch (err) {
-    showMessage('importMessage', 'error', 'Failed to start import: ' + err.message);
+    showMessage('importMessage', 'error', t('management.import.start_failed', { error: err.message }));
   }
 });
 
@@ -149,10 +149,10 @@ async function startSync() {
   try {
     await client.jobs.startSync();
     document.getElementById('syncStatus').innerHTML =
-      '<div class="message success">Sync started! Check Recent Jobs for progress.</div>';
+      '<div class="message success">' + t('management.sync.started') + '</div>';
   } catch (err) {
     document.getElementById('syncStatus').innerHTML =
-      '<div class="message error">Failed to start sync: ' + err.message + '</div>';
+      '<div class="message error">' + t('management.sync.failed', { error: err.message }) + '</div>';
   }
 }
 
@@ -174,9 +174,9 @@ const analysisCard = new JobCard({
   fetchStatus: () => client.analysis.status(),
   startJob: () => client.analysis.start(),
   stopJob: (jobId) => client.analysis.stop(jobId),
-  startedMessage: 'Analysis started!',
-  completedMessage: 'Analysis completed!',
-  failedPrefix: 'Analysis failed: ',
+  startedMessage: t('management.analysis.started'),
+  completedMessage: t('management.analysis.completed'),
+  failedPrefix: t('management.analysis.failed', { error: '' }),
 });
 
 const backfillCard = new JobCard({
@@ -190,9 +190,9 @@ const backfillCard = new JobCard({
   fetchPending: () => client.backfill.phasesPending(),
   fetchStatus: () => client.backfill.phasesStatus(),
   startJob: () => client.backfill.startPhases(),
-  startedMessage: 'Backfill started!',
-  completedMessage: 'Backfill completed!',
-  failedPrefix: 'Backfill failed: ',
+  startedMessage: t('management.backfill_phases.started'),
+  completedMessage: t('management.backfill_phases.completed'),
+  failedPrefix: t('management.backfill_phases.failed', { error: '' }),
 });
 
 const ecoBackfillCard = new JobCard({
@@ -206,9 +206,9 @@ const ecoBackfillCard = new JobCard({
   fetchPending: () => client.backfill.ecoPending(),
   fetchStatus: () => client.backfill.ecoStatus(),
   startJob: () => client.backfill.startEco(),
-  startedMessage: 'ECO backfill started!',
-  completedMessage: 'ECO backfill completed!',
-  failedPrefix: 'ECO backfill failed: ',
+  startedMessage: t('management.backfill_eco.started'),
+  completedMessage: t('management.backfill_eco.completed'),
+  failedPrefix: t('management.backfill_eco.failed', { error: '' }),
 });
 
 const deleteAllCard = new JobCard({
@@ -221,9 +221,9 @@ const deleteAllCard = new JobCard({
   textFormat: (current, total, percent) => `${current}/${total} tables (${percent}%)`,
   fetchStatus: () => client.data.deleteStatus(),
   startJob: () => client.data.deleteAll(),
-  startedMessage: 'Delete job started!',
-  completedMessage: 'All data deleted! Refreshing page...',
-  failedPrefix: 'Delete failed: ',
+  startedMessage: t('management.danger.started'),
+  completedMessage: t('management.danger.completed'),
+  failedPrefix: t('management.danger.failed', { error: '' }),
   onComplete: () => setTimeout(() => window.location.reload(), 2000),
 });
 
@@ -234,20 +234,8 @@ jobCards.forEach(card => card.loadStatus());
 
 // Delete requires double confirmation before starting
 async function confirmDeleteAll() {
-  if (!confirm(
-    'Are you sure you want to delete ALL data?\n\n' +
-    'This will permanently remove:\n' +
-    '• All imported games\n' +
-    '• All analysis results\n' +
-    '• All puzzle attempts\n' +
-    '• All job history\n\n' +
-    'This action cannot be undone!'
-  )) return;
-
-  if (!confirm(
-    'This is your final warning!\n\n' +
-    'Click OK to permanently delete all data.'
-  )) return;
+  if (!confirm(t('management.danger.confirm1'))) return;
+  if (!confirm(t('management.danger.confirm2'))) return;
 
   await deleteAllCard.start();
 }
@@ -292,11 +280,11 @@ wsClient.on('job.status_changed', (data) => {
   if (data.job_id === currentJobId) {
     if (data.status === 'completed') {
       document.getElementById('importProgress').style.display = 'none';
-      showMessage('importMessage', 'success', 'Import completed!');
+      showMessage('importMessage', 'success', t('management.import.completed'));
       currentJobId = null;
     } else if (data.status === 'failed') {
       document.getElementById('importProgress').style.display = 'none';
-      showMessage('importMessage', 'error', 'Import failed: ' + (data.error_message || 'Unknown error'));
+      showMessage('importMessage', 'error', t('management.import.failed', { error: data.error_message || 'Unknown error' }));
       currentJobId = null;
     }
   }

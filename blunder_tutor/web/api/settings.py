@@ -632,6 +632,27 @@ async def settings_submit(
     return {"success": True}
 
 
+class LocaleRequest(BaseModel):
+    locale: str = Field(description="Locale code (e.g., 'en', 'ru')")
+
+
+@settings_router.post(
+    "/api/settings/locale",
+    response_model=SuccessResponse,
+    summary="Set display locale",
+    description="Update the application display language.",
+)
+async def set_locale(
+    request: Request, payload: LocaleRequest, settings_repo: SettingsRepoDep
+) -> dict[str, bool]:
+    i18n = getattr(request.app.state, "i18n", None)
+    if i18n and payload.locale not in i18n.available_locales():
+        raise HTTPException(status_code=400, detail="Unsupported locale")
+    await settings_repo.set_setting("locale", payload.locale)
+    request.app.state._locale_cache = payload.locale
+    return {"success": True}
+
+
 class DeleteAllResponse(BaseModel):
     job_id: str = Field(description="Job ID for tracking the delete operation")
 

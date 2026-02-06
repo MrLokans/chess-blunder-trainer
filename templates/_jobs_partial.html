@@ -18,13 +18,13 @@
               hx-delete="/api/jobs/{{ job.job_id }}"
               hx-target="#jobsTableBody"
               hx-swap="innerHTML"
-              hx-confirm="Are you sure you want to delete this job?"
+              hx-confirm="{{ t('management.jobs.delete_confirm') }}"
               title="Delete job">&times;</button>
     {%- endif -%}
   </td>
 </tr>
 {% else %}
 <tr>
-  <td colspan="7" style="text-align: center; color: var(--text-muted);">No jobs found</td>
+  <td colspan="7" style="text-align: center; color: var(--text-muted);">{{ t('management.jobs.none') }}</td>
 </tr>
 {% endfor %}

@@ -13,6 +13,9 @@ export default [
         Chess: 'readonly',
         htmx: 'readonly',
         Chart: 'readonly',
+        t: 'readonly',
+        formatNumber: 'readonly',
+        formatDate: 'readonly',
       },
     },
     rules: {
@@ -29,7 +32,7 @@ export default [
     },
   },
   {
-    files: ['blunder_tutor/web/static/js/theme-loader.js'],
+    files: ['blunder_tutor/web/static/js/theme-loader.js', 'blunder_tutor/web/static/js/i18n.js'],
     languageOptions: {
       sourceType: 'script',
     },

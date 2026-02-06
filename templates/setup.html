@@ -9,33 +9,33 @@
 {% block body %}
 <div class="container">
   <div class="card">
-    <h1>Welcome to Blunder Tutor</h1>
-    <p class="subtitle">Configure your chess usernames to get started</p>
+    <h1>{{ t('setup.title') }}</h1>
+    <p class="subtitle">{{ t('setup.subtitle') }}</p>
 
     <div class="alert alert-info visible">
-      At least one username is required to train with your games.
+      {{ t('setup.username_required') }}
     </div>
 
     <div class="alert alert-error" id="errorAlert"></div>
 
     <form id="setupForm">
       <div class="form-group">
-        <label for="lichess">Lichess Username</label>
-        <input type="text" id="lichess" name="lichess" placeholder="Enter your Lichess username">
-        <div class="help-text">Optional: Leave blank if you don't use Lichess</div>
+        <label for="lichess">{{ t('setup.lichess_label') }}</label>
+        <input type="text" id="lichess" name="lichess" placeholder="{{ t('setup.lichess_placeholder') }}">
+        <div class="help-text">{{ t('setup.lichess_help') }}</div>
       </div>
 
       <div class="form-group">
-        <label for="chesscom">Chess.com Username</label>
-        <input type="text" id="chesscom" name="chesscom" placeholder="Enter your Chess.com username">
-        <div class="help-text">Optional: Leave blank if you don't use Chess.com</div>
+        <label for="chesscom">{{ t('setup.chesscom_label') }}</label>
+        <input type="text" id="chesscom" name="chesscom" placeholder="{{ t('setup.chesscom_placeholder') }}">
+        <div class="help-text">{{ t('setup.chesscom_help') }}</div>
       </div>
 
-      <button type="submit" class="btn btn-primary" id="submitBtn">Get Started</button>
+      <button type="submit" class="btn btn-primary" id="submitBtn">{{ t('setup.submit') }}</button>
     </form>
 
     <div class="footer">
-      Need help? Check the <a href="https://github.com/anthropics/blunder-tutor">documentation</a>
+      {{ t('setup.help', link='<a href="https://github.com/anthropics/blunder-tutor">' + t('setup.documentation') + '</a>')|safe }}
     </div>
   </div>
 </div>

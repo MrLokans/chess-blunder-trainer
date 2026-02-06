@@ -3,9 +3,7 @@ import { client } from './api.js';
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function pluralize(count, singular, plural) {
-  return count === 1 ? singular : plural;
-}
+
 
 // Fixed thresholds for activity levels
 const ACTIVITY_THRESHOLDS = {
@@ -93,8 +91,8 @@ function renderHeatmap(containerId, data) {
   container.innerHTML = `
     <div class="heatmap-wrapper">
       <div class="heatmap-summary">
-        <span class="heatmap-total">${total_attempts.toLocaleString()} ${pluralize(total_attempts, 'puzzle', 'puzzles')}</span>
-        <span class="heatmap-days">${total_days} active ${pluralize(total_days, 'day', 'days')}</span>
+        <span class="heatmap-total">${t('heatmap.total', { count: total_attempts })}</span>
+        <span class="heatmap-days">${t('heatmap.days', { count: total_days })}</span>
       </div>
       <div class="heatmap-container">
         <div class="heatmap-days-labels">
@@ -111,8 +109,8 @@ function renderHeatmap(containerId, data) {
                   const day = week.find(d => d.dayOfWeek === dayIndex);
                   if (!day) return '<div class="heatmap-cell empty"></div>';
                   const tooltip = day.total === 0 
-                    ? `${day.date}: No activity`
-                    : `${day.date}: ${day.total} ${pluralize(day.total, 'puzzle', 'puzzles')} (✓${day.correct} ✗${day.incorrect})`;
+                    ? t('common.no_activity', { date: day.date })
+                    : t('heatmap.tooltip', { date: day.date, total: day.total, correct: day.correct, incorrect: day.incorrect });
                   return `<div class="heatmap-cell level-${day.level}" 
                     data-tooltip="${tooltip}"
                     data-date="${day.date}" data-total="${day.total}"></div>`;
@@ -123,13 +121,13 @@ function renderHeatmap(containerId, data) {
         </div>
       </div>
       <div class="heatmap-legend">
-        <span>Less</span>
+        <span>${t('common.less')}</span>
         <div class="heatmap-cell level-0"></div>
         <div class="heatmap-cell level-1"></div>
         <div class="heatmap-cell level-2"></div>
         <div class="heatmap-cell level-3"></div>
         <div class="heatmap-cell level-4"></div>
-        <span>More</span>
+        <span>${t('common.more')}</span>
       </div>
     </div>
   `;
@@ -143,7 +141,7 @@ async function loadHeatmap(containerId) {
     console.error('Failed to load heatmap:', err);
     const container = document.getElementById(containerId);
     if (container) {
-      container.innerHTML = '<div class="heatmap-error">Failed to load activity data</div>';
+      container.innerHTML = '<div class="heatmap-error">' + t('heatmap.error') + '</div>';
     }
   }
 }

@@ -17,7 +17,7 @@
 <div class="container">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
     <div style="display: flex; align-items: center; gap: 12px;">
-      <h1 style="margin: 0;">Blunder Trainer</h1>
+      <h1 style="margin: 0;">{{ t('trainer.title') }}</h1>
       <button class="shortcuts-hint-btn" id="shortcutsHintBtn" title="Keyboard shortcuts (?)"><kbd>?</kbd></button>
     </div>
     {{ render_link_nav() }}
@@ -32,7 +32,7 @@
       hx-swap="innerHTML transition:true">
       <!-- Stats will be loaded here via HTMX on page load and after each submission -->
       <div style="text-align: center; padding: 20px; color: var(--text-muted);">
-        Loading stats...
+        {{ t('trainer.loading_stats') }}
       </div>
     </div>
   </div>
@@ -44,13 +44,13 @@
         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
       </svg>
     </div>
-    <h2 class="empty-state-title" id="emptyStateTitle">No puzzles available</h2>
+    <h2 class="empty-state-title" id="emptyStateTitle">{{ t('trainer.empty.default_title') }}</h2>
     <p class="empty-state-message" id="emptyStateMessage">
-      Import your games to start training on your blunders.
+      {{ t('trainer.empty.default_message') }}
     </p>
     <div class="empty-state-actions">
-      <a href="/management" class="btn btn-primary" id="emptyStateAction">Import Games</a>
-      <a href="/dashboard" class="btn btn-secondary">View Dashboard</a>
+      <a href="/management" class="btn btn-primary" id="emptyStateAction">{{ t('trainer.empty.default_action') }}</a>
+      <a href="/dashboard" class="btn btn-secondary">{{ t('trainer.button.view_dashboard') }}</a>
     </div>
   </div>
 
@@ -69,32 +69,32 @@
       <div class="highlight-legend" id="highlightLegend" style="display: none;">
         <div class="legend-item" id="legendBlunder">
           <span class="legend-color blunder"></span>
-          <span>Your blunder</span>
+          <span>{{ t('trainer.legend.your_blunder') }}</span>
         </div>
         <div class="legend-item" id="legendBest">
           <span class="legend-color best"></span>
-          <span>Best move</span>
+          <span>{{ t('trainer.legend.best_move') }}</span>
         </div>
         <div class="legend-item" id="legendUser" style="display: none;">
           <span class="legend-color user"></span>
-          <span>Your move</span>
+          <span>{{ t('trainer.legend.your_move') }}</span>
         </div>
         <div class="legend-item" id="legendTactic" style="display: none;">
           <span class="legend-color tactic"></span>
-          <span>Tactical squares</span>
+          <span>{{ t('trainer.legend.tactical_squares') }}</span>
         </div>
       </div>
       <div class="arrow-toggle">
         <input type="checkbox" id="showArrows" checked>
-        <label for="showArrows">Show move arrows</label>
+        <label for="showArrows">{{ t('trainer.toggle.show_arrows') }}</label>
       </div>
       <div class="arrow-toggle">
         <input type="checkbox" id="showThreats" checked>
-        <label for="showThreats">Show threats (hanging pieces, pins, checks)</label>
+        <label for="showThreats">{{ t('trainer.toggle.show_threats') }}</label>
       </div>
       <div class="arrow-toggle">
         <input type="checkbox" id="showTactics">
-        <label for="showTactics">Highlight tactical pattern (after reveal)</label>
+        <label for="showTactics">{{ t('trainer.toggle.show_tactics') }}</label>
       </div>
     </div>
 
@@ -102,25 +102,25 @@
     <div class="card">
       <!-- Phase indicator -->
       <div class="panel-section">
-        <span class="phase guess" id="phaseIndicator">Find the best move</span>
+        <span class="phase guess" id="phaseIndicator">{{ t('trainer.phase.guess') }}</span>
         <span class="color-badge white" id="colorBadge" style="margin-left: 10px;">
           <span class="color-dot white"></span>
-          Playing as White
+          {{ t('trainer.color.playing_as_white') }}
         </span>
         <span class="phase-badge" id="phaseBadge" style="display: none; margin-left: 10px;"></span>
         <span class="tactical-badge" id="tacticalBadge" style="display: none; margin-left: 10px;">
           <span class="icon">⚔️</span>
           <span id="tacticalPatternName">Fork</span>
         </span>
-        <a id="gameLink" href="#" target="_blank" rel="noopener noreferrer" style="display: none; margin-left: 10px; font-size: var(--text-sm); color: var(--primary); text-decoration: none; white-space: nowrap;" title="View original game">
-          🔗 Original game
+        <a id="gameLink" href="#" target="_blank" rel="noopener noreferrer" style="display: none; margin-left: 10px; font-size: var(--text-sm); color: var(--primary); text-decoration: none; white-space: nowrap;" title="{{ t('trainer.link.original_game') }}">
+          🔗 {{ t('trainer.link.original_game') }}
         </a>
       </div>
 
       <!-- Filters Panel (collapsible) -->
       <div class="panel-section filters-panel">
         <div class="section-title filters-header" id="filtersHeader">
-          <span>Puzzle Filters</span>
+          <span>{{ t('trainer.filters.title') }}</span>
           <button class="filters-toggle-btn" id="filtersToggleBtn" title="Toggle filters">
             <svg class="chevron-icon" id="filtersChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"></polyline>
@@ -131,75 +131,75 @@
         <div class="filters-content" id="filtersContent">
           <!-- Game Type filter -->
           <div class="filter-group">
-            <div class="filter-label">Game Type</div>
+            <div class="filter-label">{{ t('trainer.filters.game_type') }}</div>
             <div class="game-type-filter">
               <label class="filter-checkbox-label">
                 <input type="checkbox" class="game-type-checkbox" value="bullet" checked>
-                <span class="game-type-icon">🔫</span> Bullet
+                <span class="game-type-icon">🔫</span> {{ t('trainer.game_type.bullet') }}
               </label>
               <label class="filter-checkbox-label">
                 <input type="checkbox" class="game-type-checkbox" value="blitz" checked>
-                <span class="game-type-icon">⚡</span> Blitz
+                <span class="game-type-icon">⚡</span> {{ t('trainer.game_type.blitz') }}
               </label>
               <label class="filter-checkbox-label">
                 <input type="checkbox" class="game-type-checkbox" value="rapid" checked>
-                <span class="game-type-icon">🕐</span> Rapid
+                <span class="game-type-icon">🕐</span> {{ t('trainer.game_type.rapid') }}
               </label>
               <label class="filter-checkbox-label">
                 <input type="checkbox" class="game-type-checkbox" value="classical">
-                <span class="game-type-icon">🏛️</span> Classical
+                <span class="game-type-icon">🏛️</span> {{ t('trainer.game_type.classical') }}
               </label>
             </div>
           </div>
 
           <!-- Color filter -->
           <div class="filter-group">
-            <div class="filter-label">Play as Color</div>
+            <div class="filter-label">{{ t('trainer.filters.color') }}</div>
             <div class="color-filter">
               <label class="filter-radio-label">
                 <input type="radio" name="colorFilter" value="both" checked>
-                <span class="color-option both">Both</span>
+                <span class="color-option both">{{ t('chess.color.both') }}</span>
               </label>
               <label class="filter-radio-label">
                 <input type="radio" name="colorFilter" value="white">
-                <span class="color-option white">♔ White</span>
+                <span class="color-option white">♔ {{ t('chess.color.white') }}</span>
               </label>
               <label class="filter-radio-label">
                 <input type="radio" name="colorFilter" value="black">
-                <span class="color-option black">♚ Black</span>
+                <span class="color-option black">♚ {{ t('chess.color.black') }}</span>
               </label>
             </div>
           </div>
 
           <!-- Phase filter -->
           <div class="filter-group">
-            <div class="filter-label">Game Phase</div>
+            <div class="filter-label">{{ t('trainer.filters.phase') }}</div>
             <div class="phase-filter">
               <label class="filter-checkbox-label">
                 <input type="checkbox" class="phase-filter-checkbox" value="opening" checked>
-                Opening
+                {{ t('chess.phase.opening') }}
               </label>
               <label class="filter-checkbox-label">
                 <input type="checkbox" class="phase-filter-checkbox" value="middlegame" checked>
-                Middlegame
+                {{ t('chess.phase.middlegame') }}
               </label>
               <label class="filter-checkbox-label">
                 <input type="checkbox" class="phase-filter-checkbox" value="endgame" checked>
-                Endgame
+                {{ t('chess.phase.endgame') }}
               </label>
             </div>
           </div>
 
           <!-- Tactical pattern filter -->
           <div class="filter-group">
-            <div class="filter-label">Tactical Pattern</div>
+            <div class="filter-label">{{ t('trainer.filters.tactical') }}</div>
             <div class="tactical-filter" id="tacticalFilter">
-              <button class="tactical-filter-btn active" data-pattern="all">All</button>
-              <button class="tactical-filter-btn" data-pattern="fork">Fork</button>
-              <button class="tactical-filter-btn" data-pattern="pin">Pin</button>
-              <button class="tactical-filter-btn" data-pattern="hanging_piece">Hanging</button>
-              <button class="tactical-filter-btn" data-pattern="skewer">Skewer</button>
-              <button class="tactical-filter-btn" data-pattern="discovered_attack">Discovery</button>
+              <button class="tactical-filter-btn active" data-pattern="all">{{ t('trainer.filters.tactical_all') }}</button>
+              <button class="tactical-filter-btn" data-pattern="fork">{{ t('trainer.filters.tactical_fork') }}</button>
+              <button class="tactical-filter-btn" data-pattern="pin">{{ t('trainer.filters.tactical_pin') }}</button>
+              <button class="tactical-filter-btn" data-pattern="hanging_piece">{{ t('trainer.filters.tactical_hanging') }}</button>
+              <button class="tactical-filter-btn" data-pattern="skewer">{{ t('trainer.filters.tactical_skewer') }}</button>
+              <button class="tactical-filter-btn" data-pattern="discovered_attack">{{ t('trainer.filters.tactical_discovery') }}</button>
             </div>
           </div>
         </div>
@@ -207,15 +207,15 @@
 
       <!-- Your blunder section -->
       <div class="panel-section">
-        <div class="section-title">Your Blunder</div>
+        <div class="section-title">{{ t('trainer.section.your_blunder') }}</div>
         <div class="blunder-info">
           <div class="blunder-move">
             <span class="icon">??</span>
             <span id="blunderMove">...</span>
           </div>
           <div class="blunder-eval">
-            Evaluation: <span id="evalBefore">...</span> &rarr; <span id="evalAfter">...</span>
-            (<span class="loss" id="cpLoss">...</span> lost)
+            {{ t('trainer.blunder.eval_label') }} <span id="evalBefore">...</span> &rarr; <span id="evalAfter">...</span>
+            (<span class="loss" id="cpLoss">...</span>)
           </div>
         </div>
       </div>
@@ -228,17 +228,17 @@
 
       <!-- Move indicator -->
       <div class="move-indicator">
-        <span class="label">Your move:</span>
+        <span class="label">{{ t('trainer.move_indicator.label') }}</span>
         <span class="move" id="currentMove">-</span>
       </div>
 
       <!-- Action buttons -->
       <div class="panel-section">
         <div class="btn-row">
-          <button class="btn btn-primary" id="submitBtn">Submit<kbd>Enter</kbd></button>
-          <button class="btn btn-secondary" id="resetBtn">Reset<kbd>R</kbd></button>
-          <button class="btn btn-secondary" id="showBestBtn">Show Best<kbd>B</kbd></button>
-          <button class="btn btn-success" id="nextBtn">Next<kbd>N</kbd></button>
+          <button class="btn btn-primary" id="submitBtn">{{ t('trainer.button.submit') }}<kbd>Enter</kbd></button>
+          <button class="btn btn-secondary" id="resetBtn">{{ t('trainer.button.reset') }}<kbd>R</kbd></button>
+          <button class="btn btn-secondary" id="showBestBtn">{{ t('trainer.button.show_best') }}<kbd>B</kbd></button>
+          <button class="btn btn-success" id="nextBtn">{{ t('trainer.button.next') }}<kbd>N</kbd></button>
           <button class="btn btn-secondary" id="lichessBtn" title="Analyze on Lichess (L)">
             <svg width="16" height="16" viewBox="0 0 50 50" fill="currentColor" style="vertical-align: middle;">
               <path d="M36.7 8.3c-1.1-1.1-2.5-1.6-4-1.6-1.5 0-2.9.6-4 1.6L12.3 24.7c-2.2 2.2-2.2 5.8 0 8s5.8 2.2 8 0l16.4-16.4c1.1-1.1 1.6-2.5 1.6-4s-.5-2.9-1.6-4zm-4 5.7L16.3 30.4c-.8.8-2 .8-2.8 0s-.8-2 0-2.8L29.9 11.2c.4-.4.9-.6 1.4-.6s1 .2 1.4.6.6.9.6 1.4-.2 1-.6 1.4z"/>
@@ -250,9 +250,9 @@
 
       <!-- Best move reveal (hidden initially) -->
       <div class="best-move-info" id="bestMoveInfo">
-        <div class="section-title">Best Move</div>
+        <div class="section-title">{{ t('trainer.section.best_move') }}</div>
         <div class="best-move" id="bestMoveDisplay">...</div>
-        <div class="best-line">Line: <span id="bestLineDisplay">...</span></div>
+        <div class="best-line">{{ t('trainer.best_move.line_label') }} <span id="bestLineDisplay">...</span></div>
         <!-- Tactical explanation -->
         <div class="tactical-info" id="tacticalInfo" style="display: none;">
           <div class="tactical-info-title">
@@ -262,26 +262,26 @@
           <div class="tactical-info-reason" id="tacticalInfoReason">...</div>
         </div>
         <div class="try-best-move">
-          <button class="btn btn-success" id="tryBestBtn">Play Best Move<kbd>P</kbd></button>
+          <button class="btn btn-success" id="tryBestBtn">{{ t('trainer.button.play_best') }}<kbd>P</kbd></button>
         </div>
       </div>
 
       <!-- Instructions -->
       <div class="panel-section">
-        <div class="section-title">Instructions</div>
+        <div class="section-title">{{ t('trainer.section.instructions') }}</div>
         <div class="instructions">
-          <strong>Goal:</strong> Find a better move than your blunder.<br/>
-          Drag pieces to make a move, then click Submit to check.<br/>
-          Click "Show Best" to reveal the engine's recommendation.
+          <strong>{{ t('trainer.instructions.goal') }}</strong> {{ t('trainer.instructions.text') }}<br/>
+          {{ t('trainer.instructions.drag') }}<br/>
+          {{ t('trainer.instructions.show_best') }}
         </div>
       </div>
 
       <!-- Move history for exploration -->
       <div class="panel-section" id="historySection" style="display: none;">
-        <div class="section-title">Exploration</div>
+        <div class="section-title">{{ t('trainer.section.exploration') }}</div>
         <div class="move-history" id="moveHistory"></div>
         <div style="margin-top: 10px;">
-          <button class="btn btn-secondary" id="undoBtn" style="padding: 8px 14px; font-size: 0.85rem;">Undo<kbd>⌘Z</kbd></button>
+          <button class="btn btn-secondary" id="undoBtn" style="padding: 8px 14px; font-size: 0.85rem;">{{ t('trainer.button.undo') }}<kbd>⌘Z</kbd></button>
         </div>
       </div>
     </div>
@@ -291,23 +291,23 @@
   <div class="shortcuts-overlay" id="shortcutsOverlay">
     <div class="shortcuts-modal">
       <div class="shortcuts-header">
-        <h3>Keyboard Shortcuts</h3>
+        <h3>{{ t('trainer.shortcuts.title') }}</h3>
         <button class="shortcuts-close" id="shortcutsClose">&times;</button>
       </div>
       <table class="shortcuts-table">
         <tbody>
-          <tr><td><kbd>Enter</kbd></td><td>Submit move</td></tr>
-          <tr><td><kbd>N</kbd></td><td>Next puzzle</td></tr>
-          <tr><td><kbd>R</kbd></td><td>Reset position</td></tr>
-          <tr><td><kbd>B</kbd></td><td>Show best move</td></tr>
-          <tr><td><kbd>P</kbd></td><td>Play best move on board</td></tr>
-          <tr><td><kbd>F</kbd></td><td>Flip board</td></tr>
-          <tr><td><kbd>A</kbd></td><td>Toggle arrows</td></tr>
-          <tr><td><kbd>T</kbd></td><td>Toggle threats</td></tr>
-          <tr><td><kbd>L</kbd></td><td>Analyze on Lichess</td></tr>
-          <tr><td><kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd></td><td>Undo move</td></tr>
-          <tr><td><kbd>?</kbd></td><td>Show this help</td></tr>
-          <tr><td><kbd>Esc</kbd></td><td>Close this help</td></tr>
+          <tr><td><kbd>Enter</kbd></td><td>{{ t('trainer.shortcuts.submit') }}</td></tr>
+          <tr><td><kbd>N</kbd></td><td>{{ t('trainer.shortcuts.next') }}</td></tr>
+          <tr><td><kbd>R</kbd></td><td>{{ t('trainer.shortcuts.reset') }}</td></tr>
+          <tr><td><kbd>B</kbd></td><td>{{ t('trainer.shortcuts.show_best') }}</td></tr>
+          <tr><td><kbd>P</kbd></td><td>{{ t('trainer.shortcuts.play_best') }}</td></tr>
+          <tr><td><kbd>F</kbd></td><td>{{ t('trainer.shortcuts.flip') }}</td></tr>
+          <tr><td><kbd>A</kbd></td><td>{{ t('trainer.shortcuts.arrows') }}</td></tr>
+          <tr><td><kbd>T</kbd></td><td>{{ t('trainer.shortcuts.threats') }}</td></tr>
+          <tr><td><kbd>L</kbd></td><td>{{ t('trainer.shortcuts.lichess') }}</td></tr>
+          <tr><td><kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd></td><td>{{ t('trainer.shortcuts.undo') }}</td></tr>
+          <tr><td><kbd>?</kbd></td><td>{{ t('trainer.shortcuts.show_help') }}</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>{{ t('trainer.shortcuts.close_help') }}</td></tr>
         </tbody>
       </table>
     </div>

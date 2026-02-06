@@ -224,28 +224,28 @@ function showEmptyState(errorType) {
   emptyStateAction.onclick = null;
 
   if (errorType === 'no_games') {
-    emptyStateTitle.textContent = 'No games imported';
-    emptyStateMessage.textContent = 'Import your games from Lichess or Chess.com to start training on your blunders.';
-    emptyStateAction.textContent = 'Import Games';
+    emptyStateTitle.textContent = t('trainer.empty.no_games_title');
+    emptyStateMessage.textContent = t('trainer.empty.no_games_message');
+    emptyStateAction.textContent = t('trainer.empty.no_games_action');
     emptyStateAction.href = '/management';
   } else if (errorType === 'no_blunders' && hasActiveFilters()) {
-    emptyStateTitle.textContent = 'No matching blunders';
-    emptyStateMessage.textContent = 'No blunders found with the current filters. Try selecting different filters or clear them to see all blunders.';
-    emptyStateAction.textContent = 'Clear Filters';
+    emptyStateTitle.textContent = t('trainer.empty.no_matching_title');
+    emptyStateMessage.textContent = t('trainer.empty.no_matching_message');
+    emptyStateAction.textContent = t('trainer.empty.no_matching_action');
     emptyStateAction.href = '#';
     emptyStateAction.onclick = (e) => {
       e.preventDefault();
       clearAllFilters();
     };
   } else if (errorType === 'no_blunders') {
-    emptyStateTitle.textContent = 'No blunders found';
-    emptyStateMessage.textContent = 'Your games have been imported but no blunders were found yet. Run analysis to identify blunders in your games.';
-    emptyStateAction.textContent = 'Run Analysis';
+    emptyStateTitle.textContent = t('trainer.empty.no_blunders_title');
+    emptyStateMessage.textContent = t('trainer.empty.no_blunders_message');
+    emptyStateAction.textContent = t('trainer.empty.no_blunders_action');
     emptyStateAction.href = '/management';
   } else {
-    emptyStateTitle.textContent = 'No puzzles available';
-    emptyStateMessage.textContent = 'Import your games to start training on your blunders.';
-    emptyStateAction.textContent = 'Import Games';
+    emptyStateTitle.textContent = t('trainer.empty.default_title');
+    emptyStateMessage.textContent = t('trainer.empty.default_message');
+    emptyStateAction.textContent = t('trainer.empty.default_action');
     emptyStateAction.href = '/management';
   }
 }
@@ -256,9 +256,9 @@ function hideEmptyState() {
   statsCard.style.display = 'block';
 }
 
-function showFeedback(type, title, detail) {
+function showFeedback(type, titleText, detail) {
   feedback.className = 'feedback visible ' + type;
-  feedbackTitle.textContent = title;
+  feedbackTitle.textContent = titleText;
   feedbackDetail.textContent = detail;
 }
 
@@ -269,10 +269,10 @@ function hideFeedback() {
 function updateColorBadge(color) {
   if (color === 'white') {
     colorBadge.className = 'color-badge white';
-    colorBadge.innerHTML = '<span class="color-dot white"></span> Playing as White';
+    colorBadge.innerHTML = '<span class="color-dot white"></span> ' + t('trainer.color.playing_as_white');
   } else {
     colorBadge.className = 'color-badge black';
-    colorBadge.innerHTML = '<span class="color-dot black"></span> Playing as Black';
+    colorBadge.innerHTML = '<span class="color-dot black"></span> ' + t('trainer.color.playing_as_black');
   }
 }
 
@@ -357,7 +357,7 @@ async function loadPuzzle() {
   historySection.style.display = 'none';
   moveHistoryEl.textContent = '';
   currentMoveEl.textContent = '-';
-  phaseIndicator.textContent = 'Find the best move';
+  phaseIndicator.textContent = t('trainer.phase.guess');
   phaseIndicator.className = 'phase guess';
   submitBtn.disabled = false;
   showBestBtn.disabled = false;
@@ -400,7 +400,7 @@ async function loadPuzzle() {
     blunderMove.textContent = puzzle.blunder_san;
     evalBefore.textContent = puzzle.eval_before_display;
     evalAfter.textContent = puzzle.eval_after_display;
-    cpLoss.textContent = (puzzle.cp_loss / 100).toFixed(1) + ' pawns';
+    cpLoss.textContent = t('trainer.blunder.cp_loss', { loss: (puzzle.cp_loss / 100).toFixed(1) });
 
     updateEvalBar(puzzle.eval_before, puzzle.player_color, evalBarFill, evalValue);
 
@@ -437,7 +437,7 @@ async function submitMoveAction() {
 
   const lastMove = getLastMove();
   if (!lastMove) {
-    showFeedback('incorrect', 'No move made', 'Drag a piece to make a move first.');
+    showFeedback('incorrect', t('common.no_move_made'), t('trainer.feedback.no_move'));
     return;
   }
 
@@ -465,19 +465,19 @@ async function submitMoveAction() {
     submitted = true;
 
     if (data.is_best) {
-      showFeedback('correct', 'Excellent!', 'You found the best move: ' + data.user_san);
-      phaseIndicator.textContent = 'Correct!';
+      showFeedback('correct', t('trainer.feedback.excellent'), t('trainer.feedback.found_best', { move: data.user_san }));
+      phaseIndicator.textContent = t('trainer.phase.correct');
       phaseIndicator.className = 'phase explore';
       legendUser.style.display = 'none';
     } else if (data.is_blunder) {
-      showFeedback('blunder-repeat', 'Same blunder!', 'You played the same blunder again: ' + data.user_san + '. The best move was ' + data.best_san);
+      showFeedback('blunder-repeat', t('trainer.feedback.same_blunder'), t('trainer.feedback.same_blunder_detail', { userMove: data.user_san, bestMove: data.best_san }));
       legendUser.style.display = 'none';
     } else {
       const evalDiff = Math.abs(data.user_eval - puzzle.eval_before);
       if (evalDiff < 50) {
-        showFeedback('correct', 'Good move!', 'Your move ' + data.user_san + ' is solid. Best was ' + data.best_san);
+        showFeedback('correct', t('trainer.feedback.good_move'), t('trainer.feedback.good_move_detail', { userMove: data.user_san, bestMove: data.best_san }));
       } else {
-        showFeedback('incorrect', 'Not quite', 'Your move: ' + data.user_san + ' (' + data.user_eval_display + '). Best was ' + data.best_san);
+        showFeedback('incorrect', t('trainer.feedback.not_quite'), t('trainer.feedback.not_quite_detail', { userMove: data.user_san, userEval: data.user_eval_display, bestMove: data.best_san }));
       }
       legendUser.style.display = 'flex';
       redrawAllHighlightsWithUser(data.user_uci);
@@ -497,7 +497,7 @@ async function submitMoveAction() {
     }
 
   } catch (err) {
-    showFeedback('incorrect', 'Error', err.message || 'Failed to submit move');
+    showFeedback('incorrect', t('trainer.feedback.error'), err.message || t('trainer.feedback.submit_failed'));
     console.error(err);
   }
 }
@@ -507,7 +507,7 @@ function revealBestMove() {
   bestMoveInfo.classList.add('visible');
   submitBtn.disabled = true;
   showBestBtn.disabled = true;
-  phaseIndicator.textContent = 'Explore the position';
+  phaseIndicator.textContent = t('trainer.phase.explore');
   phaseIndicator.className = 'phase explore';
 
   if (!submitted) {
@@ -714,7 +714,7 @@ submitBtn.addEventListener('click', submitMoveAction);
 resetBtn.addEventListener('click', resetPosition);
 showBestBtn.addEventListener('click', () => {
   revealBestMove();
-  showFeedback('incorrect', 'Best move revealed', 'The best move was ' + puzzle.best_move_san);
+  showFeedback('incorrect', t('trainer.feedback.best_revealed'), t('trainer.feedback.best_revealed_detail', { move: puzzle.best_move_san }));
 });
 nextBtn.addEventListener('click', loadPuzzle);
 tryBestBtn.addEventListener('click', playBestMove);
@@ -812,7 +812,7 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === 'b' || e.key === 'B') {
     if (!bestRevealed) {
       revealBestMove();
-      showFeedback('incorrect', 'Best move revealed', 'The best move was ' + puzzle.best_move_san);
+      showFeedback('incorrect', t('trainer.feedback.best_revealed'), t('trainer.feedback.best_revealed_detail', { move: puzzle.best_move_san }));
     }
   } else if (e.key === 'p' || e.key === 'P') {
     playBestMove();

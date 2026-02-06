@@ -1,10 +1,10 @@
 {# Navigation macro for consistent navigation across pages #}
 {% macro render_nav(active_page='') %}
 <nav>
-  <a href="/" {% if active_page == 'trainer' %}class="active"{% endif %}>Trainer</a>
-  <a href="/dashboard" {% if active_page == 'dashboard' %}class="active"{% endif %}>Dashboard</a>
-  <a href="/management" {% if active_page == 'management' %}class="active"{% endif %}>Management</a>
-  <a href="/settings" {% if active_page == 'settings' %}class="active"{% endif %}>Settings</a>
+  <a href="/" {% if active_page == 'trainer' %}class="active"{% endif %}>{{ t('nav.trainer') }}</a>
+  <a href="/dashboard" {% if active_page == 'dashboard' %}class="active"{% endif %}>{{ t('nav.dashboard') }}</a>
+  <a href="/management" {% if active_page == 'management' %}class="active"{% endif %}>{{ t('nav.management') }}</a>
+  <a href="/settings" {% if active_page == 'settings' %}class="active"{% endif %}>{{ t('nav.settings') }}</a>
 </nav>
 {% endmacro %}
 
@@ -18,14 +18,14 @@
       <rect x="14" y="14" width="7" height="7"></rect>
       <rect x="3" y="14" width="7" height="7"></rect>
     </svg>
-    Dashboard
+    {{ t('nav.dashboard') }}
   </a>
   <a href="/settings" class="nav-link-compact-item">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"></circle>
       <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M23 12h-6m-6 0H1m18.2-5.2l-4.2 4.2m0-6l4.2-4.2"></path>
     </svg>
-    Settings
+    {{ t('nav.settings') }}
   </a>
 </div>
 {% endmacro %}

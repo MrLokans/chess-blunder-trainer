@@ -23,20 +23,20 @@ form.addEventListener('submit', async (e) => {
   const chesscom = chesscomInput.value.trim();
 
   if (!lichess && !chesscom) {
-    showError('Please provide at least one username (Lichess or Chess.com)');
+    showError(t('setup.username_error'));
     return;
   }
 
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Setting up...';
+  submitBtn.textContent = t('setup.submitting');
 
   try {
     await client.setup.complete({ lichess, chesscom });
     window.location.href = '/';
   } catch (err) {
-    showError(err.message || 'Setup failed. Please try again.');
+    showError(err.message || t('setup.failed'));
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Get Started';
+    submitBtn.textContent = t('setup.submit');
     console.error(err);
   }
 });

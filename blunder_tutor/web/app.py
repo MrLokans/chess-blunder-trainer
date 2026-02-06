@@ -14,11 +14,12 @@ from blunder_tutor.background.executor import JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.websocket_manager import ConnectionManager
+from blunder_tutor.i18n import TranslationManager
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web import routes
 from blunder_tutor.web.config import AppConfig, config_factory
-from blunder_tutor.web.middleware import SetupCheckMiddleware
+from blunder_tutor.web.middleware import LocaleMiddleware, SetupCheckMiddleware
 
 
 @asynccontextmanager
@@ -64,6 +65,17 @@ def create_app(
 
     templates = Jinja2Templates(directory=str(config.data.template_dir))
 
+    # Initialize i18n
+    locales_dir = Path(__file__).parent.parent.parent / "locales"
+    i18n = TranslationManager(locales_dir)
+    app.state.i18n = i18n
+
+    # Register Jinja2 global for translations
+    templates.env.globals["t"] = (
+        lambda key, **kwargs: key
+    )  # placeholder, overridden per-request
+    templates.env.globals["available_locales"] = i18n.available_locales
+
     limit = (
         chess.engine.Limit(time=config.engine.time_limit)
         if config.engine.time_limit is not None
@@ -101,8 +113,9 @@ def create_app(
     static_dir = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
-    # Add setup check middleware
+    # Add middleware (order matters: last added = first executed)
     app.add_middleware(SetupCheckMiddleware)
+    app.add_middleware(LocaleMiddleware)
     app = routes.configure_router(app)
     return app
 

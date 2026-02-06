@@ -8,6 +8,7 @@ const successAlert = document.getElementById('successAlert');
 const submitBtn = document.getElementById('submitBtn');
 const lichessInput = document.getElementById('lichess');
 const chesscomInput = document.getElementById('chesscom');
+const localeSelect = document.getElementById('localeSelect');
 
 function showError(message) {
   errorAlert.textContent = message;
@@ -49,7 +50,7 @@ form.addEventListener('submit', async (e) => {
   const chesscom = chesscomInput.value.trim();
 
   if (!lichess && !chesscom) {
-    showError('Please provide at least one username (Lichess or Chess.com)');
+    showError(t('settings.username_error'));
     return;
   }
 
@@ -79,17 +80,29 @@ form.addEventListener('submit', async (e) => {
     await saveBoardSettings();
     localStorage.setItem('theme', JSON.stringify(theme));
 
-    showSuccess('Settings saved successfully!');
+    showSuccess(t('settings.saved'));
     setTimeout(() => {
       window.location.href = '/';
     }, 1500);
   } catch (err) {
-    showError('Network error. Please try again.');
+    showError(t('settings.save_error'));
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Save Changes';
+    submitBtn.textContent = t('settings.save');
     console.error(err);
   }
 });
+
+if (localeSelect) {
+  localeSelect.addEventListener('change', () => {
+    const locale = localeSelect.value;
+    document.cookie = `locale=${locale};path=/;max-age=${365 * 24 * 3600};SameSite=Lax`;
+    client.settings.setLocale(locale).then(() => {
+      window.location.reload();
+    }).catch(() => {
+      window.location.reload();
+    });
+  });
+}
 
 loadSyncSettings();
 initBoardEditor();
