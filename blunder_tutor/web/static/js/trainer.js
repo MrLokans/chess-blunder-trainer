@@ -256,18 +256,10 @@ function clearAllFilters() {
   });
 
   // Reset phase filters to all checked
-  currentPhaseFilters = ['opening', 'middlegame', 'endgame'];
-  localStorage.setItem('blunder-tutor-phase-filters', JSON.stringify(currentPhaseFilters));
-  phaseFilterCheckboxes.forEach(checkbox => {
-    checkbox.checked = true;
-  });
+  currentPhaseFilters = phaseFilter.reset(['opening', 'middlegame', 'endgame']);
 
   // Reset game type filters to default selection
-  currentGameTypeFilters = ['bullet', 'blitz', 'rapid'];
-  localStorage.setItem('blunder-tutor-game-type-filters', JSON.stringify(currentGameTypeFilters));
-  gameTypeCheckboxes.forEach(checkbox => {
-    checkbox.checked = currentGameTypeFilters.includes(checkbox.value);
-  });
+  currentGameTypeFilters = gameTypeFilter.reset(['bullet', 'blitz', 'rapid']);
 
   // Reset color filter to both
   currentColorFilter = 'both';
@@ -1001,34 +993,15 @@ function openLichessAnalysis() {
   window.open(url, '_blank');
 }
 
-// Phase filter functions
-const PHASE_FILTER_STORAGE_KEY = 'blunder-tutor-phase-filters';
+// Phase filter persistence
+const phaseFilter = new FilterPersistence({
+  storageKey: 'blunder-tutor-phase-filters',
+  checkboxSelector: '.phase-filter-checkbox',
+  defaultValues: []
+});
 
 function updatePhaseFilters() {
-  currentPhaseFilters = [];
-  phaseFilterCheckboxes.forEach(checkbox => {
-    if (checkbox.checked) {
-      currentPhaseFilters.push(checkbox.value);
-    }
-  });
-  localStorage.setItem(PHASE_FILTER_STORAGE_KEY, JSON.stringify(currentPhaseFilters));
-}
-
-function loadPhaseFiltersFromStorage() {
-  const stored = localStorage.getItem(PHASE_FILTER_STORAGE_KEY);
-  if (stored) {
-    try {
-      const phases = JSON.parse(stored);
-      if (Array.isArray(phases)) {
-        phaseFilterCheckboxes.forEach(checkbox => {
-          checkbox.checked = phases.includes(checkbox.value);
-        });
-        currentPhaseFilters = phases;
-      }
-    } catch (e) {
-      console.warn('Failed to parse stored phase filters:', e);
-    }
-  }
+  currentPhaseFilters = phaseFilter.save();
 }
 
 function updatePhaseBadge(phase) {
@@ -1132,45 +1105,15 @@ function loadTacticalFilterFromStorage() {
   }
 }
 
-// Game type filter functions
-const GAME_TYPE_FILTER_STORAGE_KEY = 'blunder-tutor-game-type-filters';
+// Game type filter persistence
+const gameTypeFilter = new FilterPersistence({
+  storageKey: 'blunder-tutor-game-type-filters',
+  checkboxSelector: '.game-type-checkbox',
+  defaultValues: ['bullet', 'blitz', 'rapid']
+});
 
 function updateGameTypeFilters() {
-  currentGameTypeFilters = [];
-  gameTypeCheckboxes.forEach(checkbox => {
-    if (checkbox.checked) {
-      currentGameTypeFilters.push(checkbox.value);
-    }
-  });
-  localStorage.setItem(GAME_TYPE_FILTER_STORAGE_KEY, JSON.stringify(currentGameTypeFilters));
-}
-
-function loadGameTypeFiltersFromStorage() {
-  const stored = localStorage.getItem(GAME_TYPE_FILTER_STORAGE_KEY);
-  if (stored) {
-    try {
-      const gameTypes = JSON.parse(stored);
-      if (Array.isArray(gameTypes)) {
-        gameTypeCheckboxes.forEach(checkbox => {
-          checkbox.checked = gameTypes.includes(checkbox.value);
-        });
-        currentGameTypeFilters = gameTypes;
-      }
-    } catch (e) {
-      console.warn('Failed to parse stored game type filters:', e);
-      // Set defaults
-      currentGameTypeFilters = ['bullet', 'blitz', 'rapid'];
-      gameTypeCheckboxes.forEach(checkbox => {
-        checkbox.checked = currentGameTypeFilters.includes(checkbox.value);
-      });
-    }
-  } else {
-    // Set defaults if nothing stored
-    currentGameTypeFilters = ['bullet', 'blitz', 'rapid'];
-    gameTypeCheckboxes.forEach(checkbox => {
-      checkbox.checked = currentGameTypeFilters.includes(checkbox.value);
-    });
-  }
+  currentGameTypeFilters = gameTypeFilter.save();
 }
 
 // Color filter functions
@@ -1277,9 +1220,9 @@ function getPieceTheme() {
 
 // Initialize
 async function init() {
-  loadPhaseFiltersFromStorage();
+  currentPhaseFilters = phaseFilter.load();
   loadTacticalFilterFromStorage();
-  loadGameTypeFiltersFromStorage();
+  currentGameTypeFilters = gameTypeFilter.load();
   loadColorFilterFromStorage();
   loadFiltersPanelState();
 

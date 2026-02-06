@@ -5,41 +5,11 @@
   let hourChart = null;
   let currentGameTypeFilters = ['bullet', 'blitz', 'rapid', 'classical'];
 
-  const GAME_TYPE_STORAGE_KEY = 'dashboard-game-type-filters';
-
-  function loadGameTypeFiltersFromStorage() {
-    try {
-      const stored = localStorage.getItem(GAME_TYPE_STORAGE_KEY);
-      if (stored) {
-        currentGameTypeFilters = JSON.parse(stored);
-      }
-    } catch (err) {
-      console.error('Failed to load game type filters:', err);
-    }
-    // Update checkboxes to match state
-    document.querySelectorAll('.game-type-filter').forEach(checkbox => {
-      checkbox.checked = currentGameTypeFilters.includes(checkbox.value);
-    });
-  }
-
-  function saveGameTypeFilters() {
-    currentGameTypeFilters = [];
-    document.querySelectorAll('.game-type-filter:checked').forEach(checkbox => {
-      currentGameTypeFilters.push(checkbox.value);
-    });
-    localStorage.setItem(GAME_TYPE_STORAGE_KEY, JSON.stringify(currentGameTypeFilters));
-  }
-
-  async function loadConfiguredUsernames() {
-    try {
-      const resp = await fetch('/api/settings/usernames');
-      if (resp.ok) {
-        configuredUsernames = await resp.json();
-      }
-    } catch (err) {
-      console.error('Failed to load configured usernames:', err);
-    }
-  }
+  const gameTypeFilter = new FilterPersistence({
+    storageKey: 'dashboard-game-type-filters',
+    checkboxSelector: '.game-type-filter',
+    defaultValues: ['bullet', 'blitz', 'rapid', 'classical']
+  });
 
   function getFirstUsername() {
     return configuredUsernames.lichess_username || configuredUsernames.chesscom_username || null;
@@ -679,18 +649,21 @@
   }
 
   // Load game type filters from localStorage
-  loadGameTypeFiltersFromStorage();
+  currentGameTypeFilters = gameTypeFilter.load();
 
   // Add event listeners for game type filter checkboxes
   document.querySelectorAll('.game-type-filter').forEach(checkbox => {
     checkbox.addEventListener('change', () => {
-      saveGameTypeFilters();
+      currentGameTypeFilters = gameTypeFilter.save();
       loadStats();
     });
   });
 
   // Load stats on page load (after loading configured usernames)
-  loadConfiguredUsernames().then(() => loadStats());
+  loadConfiguredUsernames().then((usernames) => {
+    configuredUsernames = usernames;
+    loadStats();
+  });
 
   // Load activity heatmap
   loadHeatmap('activityHeatmap');

@@ -64,34 +64,11 @@
   let themePresets = [];
   let activePresetId = null;
 
-  // Sync color picker with hex input and update preview
   function setupColorSync(name) {
     const { color, hex } = themeInputs[name];
-    
-    color.addEventListener('input', () => {
-      hex.value = color.value.toUpperCase();
+    setupColorInput(color, hex, () => {
       updateThemePreview();
       clearActivePreset();
-    });
-    
-    hex.addEventListener('input', () => {
-      const val = hex.value;
-      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-        color.value = val;
-        updateThemePreview();
-        clearActivePreset();
-      }
-    });
-
-    hex.addEventListener('blur', () => {
-      let val = hex.value.trim();
-      if (!val.startsWith('#')) val = '#' + val;
-      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-        hex.value = val.toUpperCase();
-        color.value = val;
-      } else {
-        hex.value = color.value.toUpperCase();
-      }
     });
   }
 
@@ -448,47 +425,17 @@
     activeBoardColorPreset = null;
   }
 
-  // Setup board color inputs sync
-  function setupBoardColorSync(colorInput, hexInput, isLight) {
-    colorInput.addEventListener('input', () => {
-      hexInput.value = colorInput.value.toUpperCase();
-      if (isLight) {
-        currentBoardLight = colorInput.value;
-      } else {
-        currentBoardDark = colorInput.value;
-      }
-      clearActiveBoardColorPreset();
-      renderBoardPreview();
-    });
+  setupColorInput(boardLightColor, boardLightHex, (val) => {
+    currentBoardLight = val;
+    clearActiveBoardColorPreset();
+    renderBoardPreview();
+  });
 
-    hexInput.addEventListener('input', () => {
-      const val = hexInput.value;
-      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-        colorInput.value = val;
-        if (isLight) {
-          currentBoardLight = val;
-        } else {
-          currentBoardDark = val;
-        }
-        clearActiveBoardColorPreset();
-        renderBoardPreview();
-      }
-    });
-
-    hexInput.addEventListener('blur', () => {
-      let val = hexInput.value.trim();
-      if (!val.startsWith('#')) val = '#' + val;
-      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-        hexInput.value = val.toUpperCase();
-        colorInput.value = val;
-      } else {
-        hexInput.value = colorInput.value.toUpperCase();
-      }
-    });
-  }
-
-  setupBoardColorSync(boardLightColor, boardLightHex, true);
-  setupBoardColorSync(boardDarkColor, boardDarkHex, false);
+  setupColorInput(boardDarkColor, boardDarkHex, (val) => {
+    currentBoardDark = val;
+    clearActiveBoardColorPreset();
+    renderBoardPreview();
+  });
 
   // Reset board settings
   resetBoardBtn.addEventListener('click', async () => {

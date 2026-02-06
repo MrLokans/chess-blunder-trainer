@@ -60,18 +60,6 @@
     htmx.trigger(document.body, 'jobsRefresh');
   }
 
-  // Load configured usernames from settings
-  async function loadConfiguredUsernames() {
-    try {
-      const resp = await fetch('/api/settings/usernames');
-      if (resp.ok) {
-        configuredUsernames = await resp.json();
-      }
-    } catch (err) {
-      console.error('Failed to load configured usernames:', err);
-    }
-  }
-
   // Prefill username based on selected source
   function prefillUsername(source) {
     const usernameInput = document.getElementById('username');
@@ -113,7 +101,7 @@
 
   // Initialize: Load configured usernames and restore form values
   async function initialize() {
-    await loadConfiguredUsernames();
+    configuredUsernames = await loadConfiguredUsernames();
     restoreFormValues();
 
     // Prefill username based on restored source
@@ -132,6 +120,15 @@
   // Add event listeners to save form values on change
   document.getElementById('username').addEventListener('input', saveFormValues);
   document.getElementById('maxGames').addEventListener('input', saveFormValues);
+
+  // Import progress tracker (no stop button, default text format)
+  const importTracker = new ProgressTracker({
+    progressContainerId: 'importProgress',
+    fillId: 'importProgressFill',
+    textId: 'importProgressText',
+    startBtnId: 'source',
+    messageId: 'importMessage'
+  });
 
   document.getElementById('importForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -171,8 +168,6 @@
       document.getElementById('syncStatus').innerHTML =
         '<div class="message success">Sync started! Check Recent Jobs for progress.</div>';
 
-      // HTMX will auto-refresh via WebSocket event
-
     } catch (err) {
       document.getElementById('syncStatus').innerHTML =
         '<div class="message error">Failed to start sync: ' + err.message + '</div>';
@@ -190,59 +185,42 @@
     }, 5000);
   }
 
+  // Make showMessage globally accessible for ProgressTracker
+  window.showMessage = showMessage;
+
   // Initialize on page load
   initialize();
 
-  // Analysis management
+  // Analysis progress tracker
   let analysisJobId = null;
-  let analysisCheckInterval = null;
+
+  const analysisTracker = new ProgressTracker({
+    progressContainerId: 'analysisProgress',
+    fillId: 'analysisProgressFill',
+    textId: 'analysisProgressText',
+    startBtnId: 'startAnalysisBtn',
+    stopBtnId: 'stopAnalysisBtn',
+    messageId: 'analysisMessage'
+  });
 
   async function loadAnalysisStatus() {
     try {
-      // Load stats to get unanalyzed count
       const statsResp = await fetch('/api/stats');
       const stats = await statsResp.json();
       document.getElementById('unanalyzedCount').textContent = stats.pending_analysis || 0;
 
-      // Load current analysis job status
       const statusResp = await fetch('/api/analysis/status');
       const status = await statusResp.json();
 
       if (status.status === 'running') {
         analysisJobId = status.job_id;
-        showAnalysisProgress(status);
-      } else if (status.status === 'no_jobs' || status.status === 'completed' || status.status === 'failed') {
-        hideAnalysisProgress();
+        analysisTracker.show(status);
+      } else {
+        analysisTracker.hide();
       }
     } catch (err) {
       console.error('Failed to load analysis status:', err);
     }
-  }
-
-  function showAnalysisProgress(job) {
-    document.getElementById('analysisProgress').style.display = 'block';
-    document.getElementById('startAnalysisBtn').style.display = 'none';
-    document.getElementById('stopAnalysisBtn').style.display = 'inline-block';
-
-    if (job.progress_total > 0) {
-      const percent = Math.round((job.progress_current / job.progress_total) * 100);
-      document.getElementById('analysisProgressFill').style.width = percent + '%';
-      document.getElementById('analysisProgressText').textContent =
-        `${job.progress_current}/${job.progress_total} (${percent}%)`;
-    }
-  }
-
-  function hideAnalysisProgress() {
-    document.getElementById('analysisProgress').style.display = 'none';
-    document.getElementById('startAnalysisBtn').style.display = 'inline-block';
-    document.getElementById('stopAnalysisBtn').style.display = 'none';
-
-    if (analysisCheckInterval) {
-      clearInterval(analysisCheckInterval);
-      analysisCheckInterval = null;
-    }
-
-    analysisJobId = null;
   }
 
   async function startAnalysis() {
@@ -257,14 +235,7 @@
 
       analysisJobId = data.job_id;
       showMessage('analysisMessage', 'success', 'Analysis started!');
-
-      // Show progress UI
-      document.getElementById('analysisProgress').style.display = 'block';
-      document.getElementById('startAnalysisBtn').style.display = 'none';
-      document.getElementById('stopAnalysisBtn').style.display = 'inline-block';
-
-      // WebSocket will handle progress updates
-
+      analysisTracker.show(null);
     } catch (err) {
       showMessage('analysisMessage', 'error', 'Failed to start analysis: ' + err.message);
     }
@@ -278,109 +249,46 @@
       const data = await resp.json();
 
       showMessage('analysisMessage', 'success', 'Analysis stopped!');
-      hideAnalysisProgress();
+      analysisTracker.hide();
+      analysisJobId = null;
       refreshJobsTable();
       loadAnalysisStatus();
-
     } catch (err) {
       showMessage('analysisMessage', 'error', 'Failed to stop analysis: ' + err.message);
     }
   }
 
-  async function checkAnalysisStatus(jobId) {
-    try {
-      const resp = await fetch(`/api/import/status/${jobId}`);
-      const job = await resp.json();
-
-      if (job.error) {
-        clearInterval(analysisCheckInterval);
-        analysisCheckInterval = null;
-        return;
-      }
-
-      // Update progress
-      if (job.progress_total > 0) {
-        const percent = Math.round((job.progress_current / job.progress_total) * 100);
-        document.getElementById('analysisProgressFill').style.width = percent + '%';
-        document.getElementById('analysisProgressText').textContent =
-          `${job.progress_current}/${job.progress_total} (${percent}%)`;
-      }
-
-      // Show progress UI if running
-      if (job.status === 'running') {
-        document.getElementById('analysisProgress').style.display = 'block';
-        document.getElementById('startAnalysisBtn').style.display = 'none';
-        document.getElementById('stopAnalysisBtn').style.display = 'inline-block';
-      }
-
-      // Check if completed
-      if (job.status === 'completed' || job.status === 'failed') {
-        clearInterval(analysisCheckInterval);
-        analysisCheckInterval = null;
-
-        hideAnalysisProgress();
-
-        if (job.status === 'completed') {
-          const result = job.result || {};
-          showMessage('analysisMessage', 'success',
-            `Analysis completed! Analyzed: ${result.analyzed || 0}, Skipped: ${result.skipped || 0}`);
-        } else {
-          showMessage('analysisMessage', 'error', 'Analysis failed: ' + (job.error_message || 'Unknown error'));
-        }
-
-        refreshJobsTable();
-        loadAnalysisStatus();
-      }
-
-    } catch (err) {
-      console.error('Failed to check analysis status:', err);
-    }
-  }
-
-  // Load analysis status on page load
   loadAnalysisStatus();
 
-  // Backfill phases management
+  // Backfill phases progress tracker
   let backfillJobId = null;
+
+  const backfillTracker = new ProgressTracker({
+    progressContainerId: 'backfillProgress',
+    fillId: 'backfillProgressFill',
+    textId: 'backfillProgressText',
+    startBtnId: 'startBackfillBtn',
+    messageId: 'backfillMessage'
+  });
 
   async function loadBackfillStatus() {
     try {
-      // Load pending count
       const pendingResp = await fetch('/api/backfill-phases/pending');
       const pending = await pendingResp.json();
       document.getElementById('backfillPendingCount').textContent = pending.pending_count || 0;
 
-      // Load current backfill job status
       const statusResp = await fetch('/api/backfill-phases/status');
       const status = await statusResp.json();
 
       if (status.status === 'running') {
         backfillJobId = status.job_id;
-        showBackfillProgress(status);
-      } else if (status.status === 'no_jobs' || status.status === 'completed' || status.status === 'failed') {
-        hideBackfillProgress();
+        backfillTracker.show(status);
+      } else {
+        backfillTracker.hide();
       }
     } catch (err) {
       console.error('Failed to load backfill status:', err);
     }
-  }
-
-  function showBackfillProgress(job) {
-    document.getElementById('backfillProgress').style.display = 'block';
-    document.getElementById('startBackfillBtn').style.display = 'none';
-
-    if (job.progress_total > 0) {
-      const percent = Math.round((job.progress_current / job.progress_total) * 100);
-      document.getElementById('backfillProgressFill').style.width = percent + '%';
-      document.getElementById('backfillProgressText').textContent =
-        `${job.progress_current}/${job.progress_total} (${percent}%)`;
-    }
-  }
-
-  function hideBackfillProgress() {
-    document.getElementById('backfillProgress').style.display = 'none';
-    document.getElementById('startBackfillBtn').style.display = 'inline-block';
-    backfillJobId = null;
   }
 
   async function startBackfillPhases() {
@@ -395,60 +303,43 @@
 
       backfillJobId = data.job_id;
       showMessage('backfillMessage', 'success', 'Backfill started!');
-
-      // Show progress UI
-      document.getElementById('backfillProgress').style.display = 'block';
-      document.getElementById('startBackfillBtn').style.display = 'none';
-
+      backfillTracker.show(null);
     } catch (err) {
       showMessage('backfillMessage', 'error', 'Failed to start backfill: ' + err.message);
     }
   }
 
-  // Load backfill status on page load
   loadBackfillStatus();
 
-  // ECO backfill management
+  // ECO backfill progress tracker
   let ecoBackfillJobId = null;
+
+  const ecoBackfillTracker = new ProgressTracker({
+    progressContainerId: 'ecoBackfillProgress',
+    fillId: 'ecoBackfillProgressFill',
+    textId: 'ecoBackfillProgressText',
+    startBtnId: 'startEcoBackfillBtn',
+    messageId: 'ecoBackfillMessage'
+  });
 
   async function loadECOBackfillStatus() {
     try {
-      // Load pending count
       const pendingResp = await fetch('/api/backfill-eco/pending');
       const pending = await pendingResp.json();
       document.getElementById('ecoBackfillPendingCount').textContent = pending.pending_count || 0;
 
-      // Load current backfill job status
       const statusResp = await fetch('/api/backfill-eco/status');
       const status = await statusResp.json();
 
       if (status.status === 'running') {
         ecoBackfillJobId = status.job_id;
-        showECOBackfillProgress(status);
-      } else if (status.status === 'no_jobs' || status.status === 'completed' || status.status === 'failed') {
-        hideECOBackfillProgress();
+        ecoBackfillTracker.show(status);
+      } else {
+        ecoBackfillTracker.hide();
       }
     } catch (err) {
       console.error('Failed to load ECO backfill status:', err);
     }
-  }
-
-  function showECOBackfillProgress(job) {
-    document.getElementById('ecoBackfillProgress').style.display = 'block';
-    document.getElementById('startEcoBackfillBtn').style.display = 'none';
-
-    if (job.progress_total > 0) {
-      const percent = Math.round((job.progress_current / job.progress_total) * 100);
-      document.getElementById('ecoBackfillProgressFill').style.width = percent + '%';
-      document.getElementById('ecoBackfillProgressText').textContent =
-        `${job.progress_current}/${job.progress_total} (${percent}%)`;
-    }
-  }
-
-  function hideECOBackfillProgress() {
-    document.getElementById('ecoBackfillProgress').style.display = 'none';
-    document.getElementById('startEcoBackfillBtn').style.display = 'inline-block';
-    ecoBackfillJobId = null;
   }
 
   async function startBackfillECO() {
@@ -463,21 +354,25 @@
 
       ecoBackfillJobId = data.job_id;
       showMessage('ecoBackfillMessage', 'success', 'ECO backfill started!');
-
-      // Show progress UI
-      document.getElementById('ecoBackfillProgress').style.display = 'block';
-      document.getElementById('startEcoBackfillBtn').style.display = 'none';
-
+      ecoBackfillTracker.show(null);
     } catch (err) {
       showMessage('ecoBackfillMessage', 'error', 'Failed to start ECO backfill: ' + err.message);
     }
   }
 
-  // Load ECO backfill status on page load
   loadECOBackfillStatus();
 
-  // Delete all data
+  // Delete all data progress tracker
   let deleteAllJobId = null;
+
+  const deleteAllTracker = new ProgressTracker({
+    progressContainerId: 'deleteAllProgress',
+    fillId: 'deleteAllProgressFill',
+    textId: 'deleteAllProgressText',
+    startBtnId: 'deleteAllBtn',
+    messageId: 'deleteAllMessage',
+    textFormat: (current, total, percent) => `${current}/${total} tables (${percent}%)`
+  });
 
   async function loadDeleteAllStatus() {
     try {
@@ -486,31 +381,13 @@
 
       if (status.status === 'running') {
         deleteAllJobId = status.job_id;
-        showDeleteAllProgress(status);
-      } else if (status.status === 'no_jobs' || status.status === 'completed' || status.status === 'failed') {
-        hideDeleteAllProgress();
+        deleteAllTracker.show(status);
+      } else {
+        deleteAllTracker.hide();
       }
     } catch (err) {
       console.error('Failed to load delete all status:', err);
     }
-  }
-
-  function showDeleteAllProgress(job) {
-    document.getElementById('deleteAllProgress').style.display = 'block';
-    document.getElementById('deleteAllBtn').style.display = 'none';
-
-    if (job.progress_total > 0) {
-      const percent = Math.round((job.progress_current / job.progress_total) * 100);
-      document.getElementById('deleteAllProgressFill').style.width = percent + '%';
-      document.getElementById('deleteAllProgressText').textContent =
-        `${job.progress_current}/${job.progress_total} tables (${percent}%)`;
-    }
-  }
-
-  function hideDeleteAllProgress() {
-    document.getElementById('deleteAllProgress').style.display = 'none';
-    document.getElementById('deleteAllBtn').style.display = 'inline-block';
-    deleteAllJobId = null;
   }
 
   async function confirmDeleteAll() {
@@ -526,7 +403,6 @@
 
     if (!confirmed) return;
 
-    // Double confirmation for safety
     const doubleConfirmed = confirm(
       'This is your final warning!\n\n' +
       'Click OK to permanently delete all data.'
@@ -541,10 +417,7 @@
       if (data.job_id) {
         deleteAllJobId = data.job_id;
         showMessage('deleteAllMessage', 'success', 'Delete job started!');
-
-        // Show progress UI
-        document.getElementById('deleteAllProgress').style.display = 'block';
-        document.getElementById('deleteAllBtn').style.display = 'none';
+        deleteAllTracker.show(null);
       } else {
         showMessage('deleteAllMessage', 'error', 'Failed to start delete job');
       }
@@ -553,13 +426,11 @@
     }
   }
 
-  // Load delete all status on page load
   loadDeleteAllStatus();
 
   // Initialize WebSocket for real-time updates
   wsClient.connect();
 
-  // Subscribe to all job-related events
   wsClient.subscribe([
     'job.created',
     'job.status_changed',
@@ -578,53 +449,24 @@
     }, 1000);
   }
 
-  // Handle job progress updates
+  // Job ID to tracker mapping for progress updates
+  function getTrackerForJob(jobId) {
+    if (jobId === currentJobId) return { tracker: importTracker, fillId: 'importProgressFill', textId: 'importProgressText' };
+    if (jobId === analysisJobId) return { tracker: analysisTracker };
+    if (jobId === backfillJobId) return { tracker: backfillTracker };
+    if (jobId === ecoBackfillJobId) return { tracker: ecoBackfillTracker };
+    if (jobId === deleteAllJobId) return { tracker: deleteAllTracker };
+    return null;
+  }
+
   wsClient.on('job.progress_updated', (data) => {
-    // Update import progress bar directly (no table refresh needed)
-    if (data.job_id === currentJobId) {
-      const percent = data.percent;
-      document.getElementById('importProgressFill').style.width = percent + '%';
-      document.getElementById('importProgressText').textContent =
-        `${data.current}/${data.total} (${percent}%)`;
+    const match = getTrackerForJob(data.job_id);
+    if (match) {
+      match.tracker.updateProgress(data.current, data.total, data.percent);
     }
-
-    // Update analysis progress bar directly
-    if (data.job_id === analysisJobId) {
-      const percent = data.percent;
-      document.getElementById('analysisProgressFill').style.width = percent + '%';
-      document.getElementById('analysisProgressText').textContent =
-        `${data.current}/${data.total} (${percent}%)`;
-    }
-
-    // Update backfill progress bar directly
-    if (data.job_id === backfillJobId) {
-      const percent = data.percent;
-      document.getElementById('backfillProgressFill').style.width = percent + '%';
-      document.getElementById('backfillProgressText').textContent =
-        `${data.current}/${data.total} (${percent}%)`;
-    }
-
-    // Update ECO backfill progress bar directly
-    if (data.job_id === ecoBackfillJobId) {
-      const percent = data.percent;
-      document.getElementById('ecoBackfillProgressFill').style.width = percent + '%';
-      document.getElementById('ecoBackfillProgressText').textContent =
-        `${data.current}/${data.total} (${percent}%)`;
-    }
-
-    // Update delete all progress bar directly
-    if (data.job_id === deleteAllJobId) {
-      const percent = data.percent;
-      document.getElementById('deleteAllProgressFill').style.width = percent + '%';
-      document.getElementById('deleteAllProgressText').textContent =
-        `${data.current}/${data.total} tables (${percent}%)`;
-    }
-
-    // Debounced table refresh for progress column
     debouncedRefreshJobsTable();
   });
 
-  // Handle job status changes
   wsClient.on('job.status_changed', (data) => {
     // Handle import job completion
     if (data.job_id === currentJobId) {
@@ -642,11 +484,13 @@
     // Handle analysis job completion
     if (data.job_id === analysisJobId) {
       if (data.status === 'completed') {
-        hideAnalysisProgress();
+        analysisTracker.hide();
+        analysisJobId = null;
         showMessage('analysisMessage', 'success', 'Analysis completed!');
         loadAnalysisStatus();
       } else if (data.status === 'failed') {
-        hideAnalysisProgress();
+        analysisTracker.hide();
+        analysisJobId = null;
         showMessage('analysisMessage', 'error', 'Analysis failed: ' + (data.error_message || 'Unknown error'));
         loadAnalysisStatus();
       }
@@ -655,11 +499,13 @@
     // Handle backfill job completion
     if (data.job_id === backfillJobId) {
       if (data.status === 'completed') {
-        hideBackfillProgress();
+        backfillTracker.hide();
+        backfillJobId = null;
         showMessage('backfillMessage', 'success', 'Backfill completed!');
         loadBackfillStatus();
       } else if (data.status === 'failed') {
-        hideBackfillProgress();
+        backfillTracker.hide();
+        backfillJobId = null;
         showMessage('backfillMessage', 'error', 'Backfill failed: ' + (data.error_message || 'Unknown error'));
         loadBackfillStatus();
       }
@@ -668,11 +514,13 @@
     // Handle ECO backfill job completion
     if (data.job_id === ecoBackfillJobId) {
       if (data.status === 'completed') {
-        hideECOBackfillProgress();
+        ecoBackfillTracker.hide();
+        ecoBackfillJobId = null;
         showMessage('ecoBackfillMessage', 'success', 'ECO backfill completed!');
         loadECOBackfillStatus();
       } else if (data.status === 'failed') {
-        hideECOBackfillProgress();
+        ecoBackfillTracker.hide();
+        ecoBackfillJobId = null;
         showMessage('ecoBackfillMessage', 'error', 'ECO backfill failed: ' + (data.error_message || 'Unknown error'));
         loadECOBackfillStatus();
       }
@@ -681,21 +529,20 @@
     // Handle delete all job completion
     if (data.job_id === deleteAllJobId) {
       if (data.status === 'completed') {
-        hideDeleteAllProgress();
+        deleteAllTracker.hide();
+        deleteAllJobId = null;
         showMessage('deleteAllMessage', 'success', 'All data deleted! Refreshing page...');
-        // Refresh page to show updated state
         setTimeout(() => window.location.reload(), 2000);
       } else if (data.status === 'failed') {
-        hideDeleteAllProgress();
+        deleteAllTracker.hide();
+        deleteAllJobId = null;
         showMessage('deleteAllMessage', 'error', 'Delete failed: ' + (data.error_message || 'Unknown error'));
       }
     }
 
-    // Always refresh jobs table on status change (HTMX handles it efficiently)
     refreshJobsTable();
   });
 
-  // Handle job creation (trigger HTMX refresh)
   wsClient.on('job.created', () => {
     refreshJobsTable();
   });
