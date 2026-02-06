@@ -4,22 +4,9 @@
 {% block title %}{{ title }} - Blunder Tutor{% endblock %}
 
 {% block extra_head %}
-<!-- Preload chess piece images for fast initial render -->
-<link rel="preload" href="/static/pieces/wikipedia/wK.png" as="image">
-<link rel="preload" href="/static/pieces/wikipedia/wQ.png" as="image">
-<link rel="preload" href="/static/pieces/wikipedia/wR.png" as="image">
-<link rel="preload" href="/static/pieces/wikipedia/wB.png" as="image">
-<link rel="preload" href="/static/pieces/wikipedia/wN.png" as="image">
-<link rel="preload" href="/static/pieces/wikipedia/wP.png" as="image">
-<link rel="preload" href="/static/pieces/wikipedia/bK.png" as="image">
-<link rel="preload" href="/static/pieces/wikipedia/bQ.png" as="image">
-<link rel="preload" href="/static/pieces/wikipedia/bR.png" as="image">
-<link rel="preload" href="/static/pieces/wikipedia/bB.png" as="image">
-<link rel="preload" href="/static/pieces/wikipedia/bN.png" as="image">
-<link rel="preload" href="/static/pieces/wikipedia/bP.png" as="image">
-
-<!-- Chessboard CSS -->
-<link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+<!-- Chessground CSS -->
+<link rel="stylesheet" href="/static/vendor/chessground-9.1.1.base.css">
+<link rel="stylesheet" href="/static/css/chessground-theme.css">
 {% endblock %}
 
 {% block extra_css %}
@@ -73,9 +60,8 @@
         </div>
         <div class="eval-value" id="evalValue">0.0</div>
       </div>
-      <div id="boardWrapper" style="position: relative;">
+      <div id="boardWrapper">
         <div id="board"></div>
-        <div class="arrow-overlay" id="arrowOverlay"></div>
       </div>
       <div class="highlight-legend" id="highlightLegend" style="display: none;">
         <div class="legend-item" id="legendBlunder">
@@ -301,16 +287,10 @@
 {% endblock %}
 
 {% block base_scripts %}
-<!-- jQuery (required by chessboard.js) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-
 <!-- Chess.js for move validation -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-
-<!-- Chessboard.js for board display -->
-<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 {% endblock %}
 
 {% block extra_scripts %}
-<script type="module" src="/static/js/trainer.js?v=8"></script>
+<script type="module" src="/static/js/trainer.js?v=9"></script>
 {% endblock %}

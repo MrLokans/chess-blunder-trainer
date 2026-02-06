@@ -11,7 +11,6 @@ export default [
       globals: {
         ...globals.browser,
         Chess: 'readonly',
-        Chessboard: 'readonly',
         htmx: 'readonly',
         Chart: 'readonly',
       },

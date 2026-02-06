@@ -36,13 +36,13 @@
   --board-dark: #b58863;
 }
 
-/* Override chessboard.js default square colors */
-#board .white-1e1d7 {
-  background-color: var(--board-light) !important;
+#board {
+  aspect-ratio: 1 / 1;
 }
 
-#board .black-3c85d {
-  background-color: var(--board-dark) !important;
+#board .cg-wrap {
+  width: 100%;
+  height: 100%;
 }
 
 /* ==========================================================================
@@ -349,47 +349,7 @@
   background: var(--color-slate-700);
 }
 
-/* ==========================================================================
-   Square Highlighting
-   ========================================================================== */
-
-.highlight-legal-move {
-  background-image: radial-gradient(circle at center, rgba(79, 109, 122, 0.2) 12%, transparent 13%) !important;
-}
-
-.highlight-legal-capture {
-  box-shadow: inset 0 0 0 3px rgba(79, 109, 122, 0.25) !important;
-}
-
-.highlight-blunder-from {
-  box-shadow: inset 0 0 0 3px var(--color-error) !important;
-  background-color: rgba(194, 84, 80, 0.3) !important;
-}
-
-.highlight-blunder-to {
-  box-shadow: inset 0 0 0 3px var(--color-error) !important;
-  background-color: rgba(194, 84, 80, 0.45) !important;
-}
-
-.highlight-best-from {
-  box-shadow: inset 0 0 0 3px var(--color-success) !important;
-  background-color: rgba(61, 139, 110, 0.3) !important;
-}
-
-.highlight-best-to {
-  box-shadow: inset 0 0 0 3px var(--color-success) !important;
-  background-color: rgba(61, 139, 110, 0.45) !important;
-}
-
-.highlight-user-from {
-  box-shadow: inset 0 0 0 3px var(--color-warning) !important;
-  background-color: rgba(184, 134, 11, 0.3) !important;
-}
-
-.highlight-user-to {
-  box-shadow: inset 0 0 0 3px var(--color-warning) !important;
-  background-color: rgba(184, 134, 11, 0.45) !important;
-}
+/* Square highlighting is now handled via chessground-theme.css */
 
 /* ==========================================================================
    Highlight Legend
@@ -431,45 +391,7 @@
   border: 2px solid var(--color-warning);
 }
 
-/* ==========================================================================
-   Threat Highlighting
-   ========================================================================== */
-
-.highlight-hanging {
-  background: radial-gradient(circle, rgba(194, 84, 80, 0.5) 20%, transparent 70%) !important;
-}
-
-.highlight-pinned {
-  background: radial-gradient(circle, rgba(122, 91, 154, 0.45) 20%, transparent 70%) !important;
-}
-
-.highlight-checking {
-  background: radial-gradient(circle, rgba(184, 134, 11, 0.5) 20%, transparent 70%) !important;
-}
-
-.highlight-king-danger {
-  box-shadow: inset 0 0 0 3px var(--color-warning) !important;
-  background: radial-gradient(circle, rgba(184, 134, 11, 0.35) 30%, transparent 80%) !important;
-}
-
-/* ==========================================================================
-   Arrow Overlay
-   ========================================================================== */
-
-.arrow-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 100;
-}
-
-.arrow-overlay svg {
-  width: 100%;
-  height: 100%;
-}
+/* Threat highlighting is now handled via chessground-theme.css */
 
 /* ==========================================================================
    Arrow Toggle
@@ -595,18 +517,7 @@
   margin-top: var(--space-3);
 }
 
-/* ==========================================================================
-   Tactical Pattern Highlighting
-   ========================================================================== */
-
-.highlight-tactic-primary {
-  box-shadow: inset 0 0 0 3px #8b5cf6 !important;
-  background-color: rgba(139, 92, 246, 0.35) !important;
-}
-
-.highlight-tactic-secondary {
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.45) 25%, transparent 70%) !important;
-}
+/* Tactical pattern highlighting is now handled via chessground-theme.css */
 
 /* ==========================================================================
    Tactical Filter

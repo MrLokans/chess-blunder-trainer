@@ -1,84 +1,48 @@
-export function highlightSquare(square, className) {
-  const squareEl = document.querySelector(`.square-${square}`);
-  if (squareEl) {
-    squareEl.classList.add(className);
-  }
+export function buildBlunderHighlight(puzzle) {
+  if (!puzzle || !puzzle.blunder_uci || puzzle.blunder_uci.length < 4) return new Map();
+  const from = puzzle.blunder_uci.slice(0, 2);
+  const to = puzzle.blunder_uci.slice(2, 4);
+  return new Map([[from, 'highlight-blunder'], [to, 'highlight-blunder']]);
 }
 
-export function highlightMove(uci, type) {
-  if (!uci || uci.length < 4) return;
+export function buildBestMoveHighlight(puzzle) {
+  if (!puzzle || !puzzle.best_move_uci || puzzle.best_move_uci.length < 4) return new Map();
+  const from = puzzle.best_move_uci.slice(0, 2);
+  const to = puzzle.best_move_uci.slice(2, 4);
+  return new Map([[from, 'highlight-best'], [to, 'highlight-best']]);
+}
+
+export function buildUserMoveHighlight(uci) {
+  if (!uci || uci.length < 4) return new Map();
   const from = uci.slice(0, 2);
   const to = uci.slice(2, 4);
-  highlightSquare(from, `highlight-${type}-from`);
-  highlightSquare(to, `highlight-${type}-to`);
+  return new Map([[from, 'highlight-user'], [to, 'highlight-user']]);
 }
 
-export function clearHighlights() {
-  document.querySelectorAll('.highlight-blunder-from, .highlight-blunder-to, .highlight-best-from, .highlight-best-to, .highlight-user-from, .highlight-user-to').forEach(el => {
-    el.classList.remove('highlight-blunder-from', 'highlight-blunder-to', 'highlight-best-from', 'highlight-best-to', 'highlight-user-from', 'highlight-user-to');
-  });
-}
-
-export function clearLegalMoveHighlights() {
-  document.querySelectorAll('.highlight-legal-move, .highlight-legal-capture').forEach(el => {
-    el.classList.remove('highlight-legal-move', 'highlight-legal-capture');
-  });
-}
-
-export function highlightLegalMoves(game, square) {
-  if (!game) return;
-
-  const moves = game.moves({ square: square, verbose: true });
-  for (const move of moves) {
-    const targetPiece = game.get(move.to);
-    if (targetPiece) {
-      highlightSquare(move.to, 'highlight-legal-capture');
-    } else {
-      highlightSquare(move.to, 'highlight-legal-move');
-    }
-  }
-}
-
-export function showBlunderHighlight(puzzle) {
-  if (!puzzle || !puzzle.blunder_uci) return;
-  highlightMove(puzzle.blunder_uci, 'blunder');
-}
-
-export function showBestMoveHighlight(puzzle) {
-  if (!puzzle || !puzzle.best_move_uci) return;
-  highlightMove(puzzle.best_move_uci, 'best');
-}
-
-export function showUserMoveHighlight(uci) {
-  if (!uci) return;
-  highlightMove(uci, 'user');
-}
-
-export function clearTacticalHighlights() {
-  document.querySelectorAll('.highlight-tactic-primary, .highlight-tactic-secondary').forEach(el => {
-    el.classList.remove('highlight-tactic-primary', 'highlight-tactic-secondary');
-  });
-}
-
-export function drawTacticalHighlights(puzzle, game, bestRevealed, showTactics, legendTactic) {
-  clearTacticalHighlights();
-
-  if (!showTactics) return;
-  if (!bestRevealed || !puzzle || !puzzle.tactical_squares) return;
+export function buildTacticalHighlights(puzzle, game, bestRevealed, showTactics) {
+  if (!showTactics || !bestRevealed || !puzzle || !puzzle.tactical_squares) return new Map();
 
   const atOriginalPosition = game.fen() === puzzle.fen;
-  if (!atOriginalPosition) return;
+  if (!atOriginalPosition) return new Map();
 
   const squares = puzzle.tactical_squares;
+  const highlights = new Map();
   if (squares.length > 0) {
-    highlightSquare(squares[0], 'highlight-tactic-primary');
-
+    highlights.set(squares[0], 'highlight-tactic-primary');
     for (let i = 1; i < squares.length; i++) {
-      highlightSquare(squares[i], 'highlight-tactic-secondary');
-    }
-
-    if (legendTactic) {
-      legendTactic.style.display = 'flex';
+      highlights.set(squares[i], 'highlight-tactic-secondary');
     }
   }
+  return highlights;
+}
+
+export function mergeHighlights(...maps) {
+  const merged = new Map();
+  for (const map of maps) {
+    for (const [key, value] of map) {
+      const existing = merged.get(key);
+      merged.set(key, existing ? existing + ' ' + value : value);
+    }
+  }
+  return merged;
 }

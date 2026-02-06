@@ -1,5 +1,3 @@
-import { highlightSquare } from './highlights.js';
-
 function getAttackers(gameObj, square, byColor) {
   const attackers = [];
   const testGame = new Chess(gameObj.fen());
@@ -110,29 +108,24 @@ function findCheckableKing(gameObj) {
   return null;
 }
 
-export function clearThreatHighlights() {
-  document.querySelectorAll('.highlight-hanging, .highlight-pinned, .highlight-checking, .highlight-king-danger').forEach(el => {
-    el.classList.remove('highlight-hanging', 'highlight-pinned', 'highlight-checking', 'highlight-king-danger');
-  });
-}
-
-export function drawThreatHighlights(game, showThreats) {
-  clearThreatHighlights();
-
-  if (!showThreats || !game) return;
+export function buildThreatHighlights(game, showThreats) {
+  const highlights = new Map();
+  if (!showThreats || !game) return highlights;
 
   const hanging = findHangingPieces(game);
   for (const sq of hanging) {
-    highlightSquare(sq, 'highlight-hanging');
+    highlights.set(sq, 'highlight-hanging');
   }
 
   const kingInCheck = findKingInCheck(game);
   if (kingInCheck) {
-    highlightSquare(kingInCheck, 'highlight-king-danger');
+    highlights.set(kingInCheck, 'highlight-king-danger');
   }
 
   const checkableKing = findCheckableKing(game);
   if (checkableKing && checkableKing !== kingInCheck) {
-    highlightSquare(checkableKing, 'highlight-checking');
+    highlights.set(checkableKing, 'highlight-checking');
   }
+
+  return highlights;
 }

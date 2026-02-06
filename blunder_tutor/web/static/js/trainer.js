@@ -1,13 +1,12 @@
 import { WebSocketClient } from './websocket-client.js';
 import { FilterPersistence } from './filter-persistence.js';
 import { client, ApiError } from './api.js';
-import { drawArrows, clearArrows } from './trainer/arrows.js';
-import { drawThreatHighlights } from './trainer/threats.js';
+import { BoardAdapter } from './trainer/board-adapter.js';
+import { buildThreatHighlights } from './trainer/threats.js';
 import { updateEvalBar } from './trainer/eval-bar.js';
 import {
-  clearHighlights, clearLegalMoveHighlights, highlightLegalMoves,
-  showBlunderHighlight, showBestMoveHighlight, showUserMoveHighlight,
-  drawTacticalHighlights, clearTacticalHighlights
+  buildBlunderHighlight, buildBestMoveHighlight, buildUserMoveHighlight,
+  buildTacticalHighlights, mergeHighlights
 } from './trainer/highlights.js';
 
 const wsClient = new WebSocketClient();
@@ -61,7 +60,6 @@ const highlightLegend = document.getElementById('highlightLegend');
 const legendBlunder = document.getElementById('legendBlunder');
 const legendBest = document.getElementById('legendBest');
 const legendUser = document.getElementById('legendUser');
-const arrowOverlay = document.getElementById('arrowOverlay');
 const showArrowsCheckbox = document.getElementById('showArrows');
 const showThreatsCheckbox = document.getElementById('showThreats');
 const phaseFilterCheckboxes = document.querySelectorAll('.phase-filter-checkbox');
@@ -87,19 +85,123 @@ const emptyStateMessage = document.getElementById('emptyStateMessage');
 const emptyStateAction = document.getElementById('emptyStateAction');
 const statsCard = document.getElementById('statsCard');
 
-// Convenience wrappers that pass current state to extracted modules
+// Board background SVG generation
+let boardStyleEl = null;
+
+function applyBoardBackground(light, dark) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" shape-rendering="crispEdges">` +
+    `<rect width="8" height="8" fill="${light}"/>` +
+    Array.from({ length: 64 }, (_, i) => {
+      const x = i % 8, y = Math.floor(i / 8);
+      return (x + y) % 2 === 1 ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${dark}"/>` : '';
+    }).join('') +
+    `</svg>`;
+
+  const encoded = 'data:image/svg+xml;base64,' + btoa(svg);
+  const css = `cg-board { background-image: url("${encoded}") !important; }`;
+
+  if (!boardStyleEl) {
+    boardStyleEl = document.createElement('style');
+    boardStyleEl.id = 'cg-board-bg';
+    document.head.appendChild(boardStyleEl);
+  }
+  boardStyleEl.textContent = css;
+}
+
+// Piece set style injection
+let pieceStyleEl = null;
+
+function applyPieceSet(pieceSet) {
+  const format = pieceSet === 'wikipedia' ? 'png' : 'svg';
+  const pieces = ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king'];
+  const colorMap = { white: 'w', black: 'b' };
+  const pieceMap = { pawn: 'P', rook: 'R', knight: 'N', bishop: 'B', queen: 'Q', king: 'K' };
+
+  let css = '';
+  for (const color of ['white', 'black']) {
+    for (const role of pieces) {
+      const file = `${colorMap[color]}${pieceMap[role]}`;
+      const url = `/static/pieces/${pieceSet}/${file}.${format}`;
+      css += `.cg-wrap piece.${role}.${color} { background-image: url(${url}); }\n`;
+      css += `.cg-wrap piece.ghost.${role}.${color} { background-image: url(${url}); }\n`;
+    }
+  }
+
+  if (!pieceStyleEl) {
+    pieceStyleEl = document.createElement('style');
+    pieceStyleEl.id = 'cg-piece-set';
+    document.head.appendChild(pieceStyleEl);
+  }
+  pieceStyleEl.textContent = css;
+}
+
+function redrawAllHighlights() {
+  if (!board || !puzzle) return;
+
+  const blunder = buildBlunderHighlight(puzzle);
+  const best = bestRevealed ? buildBestMoveHighlight(puzzle) : new Map();
+  const threats = buildThreatHighlights(game, showThreatsCheckbox.checked);
+  const tactical = buildTacticalHighlights(puzzle, game, bestRevealed,
+    showTacticsCheckbox && showTacticsCheckbox.checked);
+
+  if (bestRevealed && tactical.size > 0 && legendTactic) {
+    legendTactic.style.display = 'flex';
+  }
+
+  const merged = mergeHighlights(blunder, best, threats, tactical);
+  board.setCustomHighlight(merged.size > 0 ? merged : undefined);
+}
+
+function redrawAllHighlightsWithUser(userUci) {
+  if (!board || !puzzle) return;
+
+  const blunder = buildBlunderHighlight(puzzle);
+  const best = buildBestMoveHighlight(puzzle);
+  const user = buildUserMoveHighlight(userUci);
+  const threats = buildThreatHighlights(game, showThreatsCheckbox.checked);
+  const tactical = buildTacticalHighlights(puzzle, game, bestRevealed,
+    showTacticsCheckbox && showTacticsCheckbox.checked);
+
+  if (bestRevealed && tactical.size > 0 && legendTactic) {
+    legendTactic.style.display = 'flex';
+  }
+
+  const merged = mergeHighlights(blunder, best, user, threats, tactical);
+  board.setCustomHighlight(merged.size > 0 ? merged : undefined);
+}
+
 function redrawArrows() {
-  drawArrows(puzzle, game, bestRevealed, showArrowsCheckbox.checked,
-    document.getElementById('board'), arrowOverlay);
-}
+  if (!board || !puzzle) return;
+  if (!showArrowsCheckbox.checked) {
+    board.clearArrows();
+    return;
+  }
 
-function redrawThreats() {
-  drawThreatHighlights(game, showThreatsCheckbox.checked);
-}
+  const atOriginalPosition = game.fen() === puzzle.fen;
+  const arrows = [];
 
-function redrawTactical() {
-  drawTacticalHighlights(puzzle, game, bestRevealed,
-    showTacticsCheckbox && showTacticsCheckbox.checked, legendTactic);
+  if (atOriginalPosition) {
+    if (puzzle.blunder_uci && puzzle.blunder_uci.length >= 4) {
+      arrows.push({
+        from: puzzle.blunder_uci.slice(0, 2),
+        to: puzzle.blunder_uci.slice(2, 4),
+        color: 'red'
+      });
+    }
+    if (bestRevealed && puzzle.best_move_uci && puzzle.best_move_uci.length >= 4) {
+      arrows.push({
+        from: puzzle.best_move_uci.slice(0, 2),
+        to: puzzle.best_move_uci.slice(2, 4),
+        color: 'green'
+      });
+    }
+  }
+
+  if (arrows.length > 0) {
+    board.drawArrows(arrows);
+  } else {
+    board.clearArrows();
+  }
 }
 
 // UI helpers
@@ -227,39 +329,17 @@ function updateMoveHistory() {
   moveHistoryEl.textContent = moveHistory.join(' ');
 }
 
-// Board event handlers
-function onDragStart(source, piece) {
-  if (puzzle && puzzle.player_color === 'white' && piece.search(/^b/) !== -1) return false;
-  if (puzzle && puzzle.player_color === 'black' && piece.search(/^w/) !== -1) return false;
-
-  highlightLegalMoves(game, source);
-  return true;
-}
-
-function onDrop(source, target) {
-  clearLegalMoveHighlights();
-
-  const move = game.move({
-    from: source,
-    to: target,
-    promotion: 'q'
-  });
-
-  if (move === null) return 'snapback';
-
+// Board move handler
+function onBoardMove(_orig, _dest, move) {
   updateCurrentMove();
-  clearArrows(arrowOverlay);
-  setTimeout(() => redrawThreats(), 50);
+  board.clearArrows();
+  setTimeout(() => redrawAllHighlights(), 50);
 
   if (bestRevealed) {
     moveHistory.push(move.san);
     updateMoveHistory();
     historySection.style.display = 'block';
   }
-}
-
-function onSnapEnd() {
-  board.position(game.fen());
 }
 
 // Core actions
@@ -276,8 +356,6 @@ async function loadPuzzle() {
   phaseIndicator.className = 'phase guess';
   submitBtn.disabled = false;
   showBestBtn.disabled = false;
-  clearHighlights();
-  clearTacticalHighlights();
   highlightLegend.style.display = 'none';
   legendBest.style.display = 'none';
   legendUser.style.display = 'none';
@@ -303,14 +381,11 @@ async function loadPuzzle() {
 
     if (board) board.destroy();
 
-    board = Chessboard('board', {
-      position: puzzle.fen,
+    board = new BoardAdapter('board', {
+      fen: puzzle.fen,
       orientation: orientation,
-      draggable: true,
-      pieceTheme: getPieceTheme(),
-      onDragStart: onDragStart,
-      onDrop: onDrop,
-      onSnapEnd: onSnapEnd
+      game: game,
+      onMove: onBoardMove
     });
 
     updateColorBadge(puzzle.player_color);
@@ -328,10 +403,9 @@ async function loadPuzzle() {
     bestLineDisplay.textContent = puzzle.best_line ? puzzle.best_line.join(' ') : '...';
 
     setTimeout(() => {
-      showBlunderHighlight(puzzle);
       highlightLegend.style.display = 'flex';
+      redrawAllHighlights();
       redrawArrows();
-      redrawThreats();
     }, 100);
 
   } catch (err) {
@@ -384,18 +458,14 @@ async function submitMoveAction() {
     const data = await client.trainer.submitMove(payload);
 
     submitted = true;
-    clearHighlights();
 
     if (data.is_best) {
       showFeedback('correct', 'Excellent!', 'You found the best move: ' + data.user_san);
       phaseIndicator.textContent = 'Correct!';
       phaseIndicator.className = 'phase explore';
-      showBestMoveHighlight(puzzle);
       legendUser.style.display = 'none';
     } else if (data.is_blunder) {
       showFeedback('blunder-repeat', 'Same blunder!', 'You played the same blunder again: ' + data.user_san + '. The best move was ' + data.best_san);
-      showBlunderHighlight(puzzle);
-      showBestMoveHighlight(puzzle);
       legendUser.style.display = 'none';
     } else {
       const evalDiff = Math.abs(data.user_eval - puzzle.eval_before);
@@ -404,13 +474,18 @@ async function submitMoveAction() {
       } else {
         showFeedback('incorrect', 'Not quite', 'Your move: ' + data.user_san + ' (' + data.user_eval_display + '). Best was ' + data.best_san);
       }
-      showUserMoveHighlight(data.user_uci);
-      showBestMoveHighlight(puzzle);
       legendUser.style.display = 'flex';
+      redrawAllHighlightsWithUser(data.user_uci);
     }
 
     legendBest.style.display = 'flex';
     revealBestMove();
+
+    if (!data.is_best && !data.is_blunder) {
+      // User highlight already applied above
+    } else {
+      redrawAllHighlights();
+    }
 
     if (typeof htmx !== 'undefined') {
       htmx.trigger(document.body, 'statsUpdate');
@@ -431,15 +506,12 @@ function revealBestMove() {
   phaseIndicator.className = 'phase explore';
 
   if (!submitted) {
-    clearHighlights();
-    showBlunderHighlight(puzzle);
-    showBestMoveHighlight(puzzle);
-    legendBest.style.display = 'flex';
+    redrawAllHighlights();
   }
 
   if (puzzle) {
     showTacticalInfo(puzzle.tactical_pattern, puzzle.tactical_reason);
-    redrawTactical();
+    redrawAllHighlights();
   }
 
   redrawArrows();
@@ -448,7 +520,7 @@ function revealBestMove() {
 function resetPosition() {
   if (!puzzle) return;
   game = new Chess(puzzle.fen);
-  board.position(puzzle.fen);
+  board.setPosition(puzzle.fen, game);
   currentMoveEl.textContent = '-';
   moveHistory = [];
   updateMoveHistory();
@@ -458,16 +530,8 @@ function resetPosition() {
   }
 
   setTimeout(() => {
-    clearHighlights();
-    if (bestRevealed) {
-      showBlunderHighlight(puzzle);
-      showBestMoveHighlight(puzzle);
-      redrawTactical();
-    } else {
-      showBlunderHighlight(puzzle);
-    }
+    redrawAllHighlights();
     redrawArrows();
-    redrawThreats();
   }, 50);
 }
 
@@ -482,7 +546,7 @@ function playBestMove() {
 
   const move = game.move({ from, to, promotion });
   if (move) {
-    board.position(game.fen());
+    board.setPosition(game.fen(), game);
     moveHistory = [move.san];
     updateMoveHistory();
     updateCurrentMove();
@@ -493,7 +557,7 @@ function playBestMove() {
 function undoMove() {
   if (game.history().length === 0) return;
   game.undo();
-  board.position(game.fen());
+  board.setPosition(game.fen(), game);
   moveHistory.pop();
   updateMoveHistory();
   updateCurrentMove();
@@ -614,6 +678,7 @@ async function loadBoardSettings() {
   try {
     boardSettings = await client.settings.getBoard();
     applyBoardColors();
+    applyPieceSet(boardSettings.piece_set || 'wikipedia');
   } catch (err) {
     console.warn('Failed to load board settings:', err);
   }
@@ -623,12 +688,7 @@ function applyBoardColors() {
   const root = document.documentElement;
   root.style.setProperty('--board-light', boardSettings.board_light);
   root.style.setProperty('--board-dark', boardSettings.board_dark);
-}
-
-function getPieceTheme() {
-  const pieceSet = boardSettings.piece_set || 'wikipedia';
-  const format = pieceSet === 'wikipedia' ? 'png' : 'svg';
-  return `/static/pieces/${pieceSet}/{piece}.${format}`;
+  applyBoardBackground(boardSettings.board_light, boardSettings.board_dark);
 }
 
 // Event listeners
@@ -643,9 +703,9 @@ tryBestBtn.addEventListener('click', playBestMove);
 undoBtn.addEventListener('click', undoMove);
 lichessBtn.addEventListener('click', openLichessAnalysis);
 showArrowsCheckbox.addEventListener('change', redrawArrows);
-showThreatsCheckbox.addEventListener('change', redrawThreats);
+showThreatsCheckbox.addEventListener('change', () => redrawAllHighlights());
 if (showTacticsCheckbox) {
-  showTacticsCheckbox.addEventListener('change', redrawTactical);
+  showTacticsCheckbox.addEventListener('change', () => redrawAllHighlights());
 }
 
 phaseFilterCheckboxes.forEach(checkbox => {

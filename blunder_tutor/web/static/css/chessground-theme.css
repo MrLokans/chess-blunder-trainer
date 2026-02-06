@@ -1,0 +1,120 @@
+/* ==========================================================================
+   Chessground Board Colors
+   
+   The board background SVG is generated dynamically in JS
+   (applyBoardBackground in trainer.js) because CSS variables
+   can't be used inside SVG data URLs.
+   ========================================================================== */
+
+/* ==========================================================================
+   Chessground Square Highlights
+   Square elements are transparent overlays; these classes are applied
+   by chessground's highlight.custom API.
+   ========================================================================== */
+
+cg-board square.last-move {
+  background-color: rgba(155, 199, 0, 0.41);
+}
+
+cg-board square.selected {
+  background-color: rgba(20, 85, 176, 0.5);
+}
+
+cg-board square.check {
+  background: radial-gradient(ellipse at center, rgba(255, 0, 0, 0.9) 0%, rgba(231, 0, 0, 0.8) 25%, rgba(169, 0, 0, 0) 89%, rgba(158, 0, 0, 0) 100%);
+}
+
+cg-board square.move-dest {
+  background: radial-gradient(rgba(20, 85, 30, 0.5) 22%, transparent 22%);
+}
+
+cg-board square.move-dest.oc {
+  background: radial-gradient(transparent 0%, transparent 80%, rgba(20, 85, 0, 0.3) 80%);
+}
+
+cg-board square.highlight-blunder {
+  background-color: rgba(194, 84, 80, 0.45) !important;
+  box-shadow: inset 0 0 0 3px var(--color-error);
+}
+
+cg-board square.highlight-best {
+  background-color: rgba(61, 139, 110, 0.45) !important;
+  box-shadow: inset 0 0 0 3px var(--color-success);
+}
+
+cg-board square.highlight-user {
+  background-color: rgba(184, 134, 11, 0.45) !important;
+  box-shadow: inset 0 0 0 3px var(--color-warning);
+}
+
+cg-board square.highlight-hanging {
+  background: radial-gradient(circle, rgba(194, 84, 80, 0.5) 20%, transparent 70%) !important;
+}
+
+cg-board square.highlight-king-danger {
+  box-shadow: inset 0 0 0 3px var(--color-warning) !important;
+  background: radial-gradient(circle, rgba(184, 134, 11, 0.35) 30%, transparent 80%) !important;
+}
+
+cg-board square.highlight-checking {
+  background: radial-gradient(circle, rgba(184, 134, 11, 0.5) 20%, transparent 70%) !important;
+}
+
+cg-board square.highlight-tactic-primary {
+  box-shadow: inset 0 0 0 3px #8b5cf6 !important;
+  background-color: rgba(139, 92, 246, 0.35) !important;
+}
+
+cg-board square.highlight-tactic-secondary {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.45) 25%, transparent 70%) !important;
+}
+
+/* ==========================================================================
+   Coordinate Labels
+   ========================================================================== */
+
+.cg-wrap coords:nth-child(odd) coord:nth-child(even),
+.cg-wrap coords.squares:nth-child(even) coord:nth-child(odd),
+.cg-wrap.orientation-black coords.files:nth-child(even) coord:nth-child(odd),
+.cg-wrap coords.files:nth-child(even) coord:nth-child(even) {
+  color: var(--board-dark);
+}
+
+.cg-wrap coords:nth-child(odd) coord:nth-child(odd),
+.cg-wrap coords.squares:nth-child(even) coord:nth-child(even),
+.cg-wrap.orientation-black coords.files:nth-child(even) coord:nth-child(even),
+.cg-wrap coords.files:nth-child(even) coord:nth-child(odd) {
+  color: var(--board-light);
+}
+
+/* ==========================================================================
+   Piece Images
+   Default fallback (wikipedia/png). Overridden dynamically via
+   injected <style id="cg-piece-set"> in trainer.js.
+   ========================================================================== */
+
+.cg-wrap piece.pawn.white   { background-image: url(/static/pieces/wikipedia/wP.png); }
+.cg-wrap piece.rook.white   { background-image: url(/static/pieces/wikipedia/wR.png); }
+.cg-wrap piece.knight.white { background-image: url(/static/pieces/wikipedia/wN.png); }
+.cg-wrap piece.bishop.white { background-image: url(/static/pieces/wikipedia/wB.png); }
+.cg-wrap piece.queen.white  { background-image: url(/static/pieces/wikipedia/wQ.png); }
+.cg-wrap piece.king.white   { background-image: url(/static/pieces/wikipedia/wK.png); }
+.cg-wrap piece.pawn.black   { background-image: url(/static/pieces/wikipedia/bP.png); }
+.cg-wrap piece.rook.black   { background-image: url(/static/pieces/wikipedia/bR.png); }
+.cg-wrap piece.knight.black { background-image: url(/static/pieces/wikipedia/bN.png); }
+.cg-wrap piece.bishop.black { background-image: url(/static/pieces/wikipedia/bB.png); }
+.cg-wrap piece.queen.black  { background-image: url(/static/pieces/wikipedia/bQ.png); }
+.cg-wrap piece.king.black   { background-image: url(/static/pieces/wikipedia/bK.png); }
+
+.cg-wrap piece.ghost.pawn.white   { background-image: url(/static/pieces/wikipedia/wP.png); }
+.cg-wrap piece.ghost.rook.white   { background-image: url(/static/pieces/wikipedia/wR.png); }
+.cg-wrap piece.ghost.knight.white { background-image: url(/static/pieces/wikipedia/wN.png); }
+.cg-wrap piece.ghost.bishop.white { background-image: url(/static/pieces/wikipedia/wB.png); }
+.cg-wrap piece.ghost.queen.white  { background-image: url(/static/pieces/wikipedia/wQ.png); }
+.cg-wrap piece.ghost.king.white   { background-image: url(/static/pieces/wikipedia/wK.png); }
+.cg-wrap piece.ghost.pawn.black   { background-image: url(/static/pieces/wikipedia/bP.png); }
+.cg-wrap piece.ghost.rook.black   { background-image: url(/static/pieces/wikipedia/bR.png); }
+.cg-wrap piece.ghost.knight.black { background-image: url(/static/pieces/wikipedia/bN.png); }
+.cg-wrap piece.ghost.bishop.black { background-image: url(/static/pieces/wikipedia/bB.png); }
+.cg-wrap piece.ghost.queen.black  { background-image: url(/static/pieces/wikipedia/bQ.png); }
+.cg-wrap piece.ghost.king.black   { background-image: url(/static/pieces/wikipedia/bK.png); }
