@@ -816,3 +816,97 @@
 .training-stat-accent {
   color: var(--accent);
 }
+
+/* ==========================================================================
+   Keyboard Shortcuts Overlay
+   ========================================================================== */
+
+.shortcuts-hint-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.shortcuts-hint-btn:hover {
+  opacity: 1;
+}
+
+.shortcuts-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.shortcuts-overlay.visible {
+  display: flex;
+}
+
+.shortcuts-modal {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  min-width: 320px;
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
+}
+
+.shortcuts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.shortcuts-header h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.shortcuts-close {
+  background: none;
+  border: none;
+  font-size: var(--text-2xl);
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0 var(--space-1);
+  line-height: 1;
+}
+
+.shortcuts-close:hover {
+  color: var(--text);
+}
+
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.shortcuts-table td {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  border-bottom: 1px solid var(--border);
+}
+
+.shortcuts-table tr:last-child td {
+  border-bottom: none;
+}
+
+.shortcuts-table td:first-child {
+  text-align: right;
+  white-space: nowrap;
+  width: 110px;
+}
+
+.shortcuts-table td:last-child {
+  color: var(--text-muted);
+}

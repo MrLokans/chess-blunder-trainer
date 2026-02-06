@@ -23,6 +23,7 @@ let currentTacticalFilter = 'all';
 let currentGameTypeFilters = [];
 let currentColorFilter = 'both';
 let filtersCollapsed = false;
+let boardFlipped = false;
 
 let boardSettings = {
   piece_set: 'wikipedia',
@@ -84,6 +85,9 @@ const emptyStateTitle = document.getElementById('emptyStateTitle');
 const emptyStateMessage = document.getElementById('emptyStateMessage');
 const emptyStateAction = document.getElementById('emptyStateAction');
 const statsCard = document.getElementById('statsCard');
+const shortcutsOverlay = document.getElementById('shortcutsOverlay');
+const shortcutsClose = document.getElementById('shortcutsClose');
+const shortcutsHintBtn = document.getElementById('shortcutsHintBtn');
 
 // Board background SVG generation
 let boardStyleEl = null;
@@ -346,6 +350,7 @@ function onBoardMove(_orig, _dest, move) {
 async function loadPuzzle() {
   submitted = false;
   bestRevealed = false;
+  boardFlipped = false;
   moveHistory = [];
   hideFeedback();
   bestMoveInfo.classList.remove('visible');
@@ -586,6 +591,19 @@ function openLichessAnalysis() {
   window.open(url, '_blank');
 }
 
+function flipBoard() {
+  if (!board || !puzzle) return;
+  boardFlipped = !boardFlipped;
+  const orientation = puzzle.player_color === 'black' ? 'black' : 'white';
+  board.setOrientation(boardFlipped ? (orientation === 'white' ? 'black' : 'white') : orientation);
+}
+
+function toggleShortcutsOverlay() {
+  if (!shortcutsOverlay) return;
+  const visible = shortcutsOverlay.classList.contains('visible');
+  shortcutsOverlay.classList.toggle('visible', !visible);
+}
+
 // Filter persistence
 const phaseFilter = new FilterPersistence({
   storageKey: 'blunder-tutor-phase-filters',
@@ -702,6 +720,18 @@ nextBtn.addEventListener('click', loadPuzzle);
 tryBestBtn.addEventListener('click', playBestMove);
 undoBtn.addEventListener('click', undoMove);
 lichessBtn.addEventListener('click', openLichessAnalysis);
+
+if (shortcutsClose) {
+  shortcutsClose.addEventListener('click', toggleShortcutsOverlay);
+}
+if (shortcutsOverlay) {
+  shortcutsOverlay.addEventListener('click', (e) => {
+    if (e.target === shortcutsOverlay) toggleShortcutsOverlay();
+  });
+}
+if (shortcutsHintBtn) {
+  shortcutsHintBtn.addEventListener('click', toggleShortcutsOverlay);
+}
 showArrowsCheckbox.addEventListener('change', redrawArrows);
 showThreatsCheckbox.addEventListener('change', () => redrawAllHighlights());
 if (showTacticsCheckbox) {
@@ -755,14 +785,45 @@ if (filtersToggleBtn) {
 }
 
 document.addEventListener('keydown', (e) => {
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  if (e.key === 'Escape') {
+    if (shortcutsOverlay && shortcutsOverlay.classList.contains('visible')) {
+      toggleShortcutsOverlay();
+    }
+    return;
+  }
+
+  if (e.key === '?') { toggleShortcutsOverlay(); return; }
+
   if (e.key === 'Enter' && !submitted) {
+    e.preventDefault();
     submitMoveAction();
   } else if (e.key === 'n' || e.key === 'N') {
     loadPuzzle();
   } else if (e.key === 'r' || e.key === 'R') {
     resetPosition();
   } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault();
     undoMove();
+  } else if (e.key === 'f' || e.key === 'F') {
+    flipBoard();
+  } else if (e.key === 'b' || e.key === 'B') {
+    if (!bestRevealed) {
+      revealBestMove();
+      showFeedback('incorrect', 'Best move revealed', 'The best move was ' + puzzle.best_move_san);
+    }
+  } else if (e.key === 'p' || e.key === 'P') {
+    playBestMove();
+  } else if (e.key === 'a' || e.key === 'A') {
+    showArrowsCheckbox.checked = !showArrowsCheckbox.checked;
+    showArrowsCheckbox.dispatchEvent(new Event('change'));
+  } else if (e.key === 't' || e.key === 'T') {
+    showThreatsCheckbox.checked = !showThreatsCheckbox.checked;
+    showThreatsCheckbox.dispatchEvent(new Event('change'));
+  } else if (e.key === 'l' || e.key === 'L') {
+    openLichessAnalysis();
   }
 });
 

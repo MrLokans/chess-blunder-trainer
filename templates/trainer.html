@@ -16,7 +16,10 @@
 {% block body %}
 <div class="container">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <h1 style="margin: 0;">Blunder Trainer</h1>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <h1 style="margin: 0;">Blunder Trainer</h1>
+      <button class="shortcuts-hint-btn" id="shortcutsHintBtn" title="Keyboard shortcuts (?)"><kbd>?</kbd></button>
+    </div>
     {{ render_link_nav() }}
   </div>
 
@@ -234,13 +237,13 @@
         <div class="btn-row">
           <button class="btn btn-primary" id="submitBtn">Submit<kbd>Enter</kbd></button>
           <button class="btn btn-secondary" id="resetBtn">Reset<kbd>R</kbd></button>
-          <button class="btn btn-secondary" id="showBestBtn">Show Best</button>
+          <button class="btn btn-secondary" id="showBestBtn">Show Best<kbd>B</kbd></button>
           <button class="btn btn-success" id="nextBtn">Next<kbd>N</kbd></button>
-          <button class="btn btn-secondary" id="lichessBtn" title="Analyze on Lichess">
+          <button class="btn btn-secondary" id="lichessBtn" title="Analyze on Lichess (L)">
             <svg width="16" height="16" viewBox="0 0 50 50" fill="currentColor" style="vertical-align: middle;">
               <path d="M36.7 8.3c-1.1-1.1-2.5-1.6-4-1.6-1.5 0-2.9.6-4 1.6L12.3 24.7c-2.2 2.2-2.2 5.8 0 8s5.8 2.2 8 0l16.4-16.4c1.1-1.1 1.6-2.5 1.6-4s-.5-2.9-1.6-4zm-4 5.7L16.3 30.4c-.8.8-2 .8-2.8 0s-.8-2 0-2.8L29.9 11.2c.4-.4.9-.6 1.4-.6s1 .2 1.4.6.6.9.6 1.4-.2 1-.6 1.4z"/>
             </svg>
-            Lichess
+            <kbd>L</kbd>
           </button>
         </div>
       </div>
@@ -259,7 +262,7 @@
           <div class="tactical-info-reason" id="tacticalInfoReason">...</div>
         </div>
         <div class="try-best-move">
-          <button class="btn btn-success" id="tryBestBtn">Play Best Move on Board</button>
+          <button class="btn btn-success" id="tryBestBtn">Play Best Move<kbd>P</kbd></button>
         </div>
       </div>
 
@@ -278,12 +281,37 @@
         <div class="section-title">Exploration</div>
         <div class="move-history" id="moveHistory"></div>
         <div style="margin-top: 10px;">
-          <button class="btn btn-secondary" id="undoBtn" style="padding: 8px 14px; font-size: 0.85rem;">Undo</button>
+          <button class="btn btn-secondary" id="undoBtn" style="padding: 8px 14px; font-size: 0.85rem;">Undo<kbd>⌘Z</kbd></button>
         </div>
       </div>
     </div>
   </div>
 </div>
+  <!-- Keyboard shortcuts help overlay -->
+  <div class="shortcuts-overlay" id="shortcutsOverlay">
+    <div class="shortcuts-modal">
+      <div class="shortcuts-header">
+        <h3>Keyboard Shortcuts</h3>
+        <button class="shortcuts-close" id="shortcutsClose">&times;</button>
+      </div>
+      <table class="shortcuts-table">
+        <tbody>
+          <tr><td><kbd>Enter</kbd></td><td>Submit move</td></tr>
+          <tr><td><kbd>N</kbd></td><td>Next puzzle</td></tr>
+          <tr><td><kbd>R</kbd></td><td>Reset position</td></tr>
+          <tr><td><kbd>B</kbd></td><td>Show best move</td></tr>
+          <tr><td><kbd>P</kbd></td><td>Play best move on board</td></tr>
+          <tr><td><kbd>F</kbd></td><td>Flip board</td></tr>
+          <tr><td><kbd>A</kbd></td><td>Toggle arrows</td></tr>
+          <tr><td><kbd>T</kbd></td><td>Toggle threats</td></tr>
+          <tr><td><kbd>L</kbd></td><td>Analyze on Lichess</td></tr>
+          <tr><td><kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd></td><td>Undo move</td></tr>
+          <tr><td><kbd>?</kbd></td><td>Show this help</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Close this help</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 {% endblock %}
 
 {% block base_scripts %}
@@ -292,5 +320,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script type="module" src="/static/js/trainer.js?v=9"></script>
+<script type="module" src="/static/js/trainer.js?v=10"></script>
 {% endblock %}
