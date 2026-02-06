@@ -136,5 +136,4 @@ class WebSocketClient {
     }
 }
 
-// Create global instance
-window.wsClient = new WebSocketClient();
+export { WebSocketClient };

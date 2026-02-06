@@ -1,4 +1,4 @@
-window.FilterPersistence = class FilterPersistence {
+export class FilterPersistence {
   constructor({ storageKey, checkboxSelector, defaultValues = [] }) {
     this.storageKey = storageKey;
     this.checkboxSelector = checkboxSelector;
@@ -53,4 +53,4 @@ window.FilterPersistence = class FilterPersistence {
     });
     return values;
   }
-};
+}

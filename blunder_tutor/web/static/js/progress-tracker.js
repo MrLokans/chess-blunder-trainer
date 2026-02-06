@@ -1,4 +1,4 @@
-window.ProgressTracker = class ProgressTracker {
+export class ProgressTracker {
   constructor({
     progressContainerId,
     fillId,
@@ -6,6 +6,7 @@ window.ProgressTracker = class ProgressTracker {
     startBtnId,
     stopBtnId = null,
     messageId,
+    showMessage,
     textFormat = null
   }) {
     this.progressContainer = document.getElementById(progressContainerId);
@@ -14,6 +15,7 @@ window.ProgressTracker = class ProgressTracker {
     this.startBtn = document.getElementById(startBtnId);
     this.stopBtn = stopBtnId ? document.getElementById(stopBtnId) : null;
     this.messageId = messageId;
+    this._showMessage = showMessage;
     this.textFormat = textFormat || ((current, total, percent) => `${current}/${total} (${percent}%)`);
   }
 
@@ -40,6 +42,6 @@ window.ProgressTracker = class ProgressTracker {
   }
 
   showMessage(type, text) {
-    window.showMessage(this.messageId, type, text);
+    this._showMessage(this.messageId, type, text);
   }
-};
+}

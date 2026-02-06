@@ -1,4 +1,4 @@
-window.setupColorInput = function setupColorInput(colorInputEl, hexInputEl, onChange) {
+export function setupColorInput(colorInputEl, hexInputEl, onChange) {
   colorInputEl.addEventListener('input', () => {
     hexInputEl.value = colorInputEl.value.toUpperCase();
     if (onChange) onChange(colorInputEl.value);
@@ -22,4 +22,4 @@ window.setupColorInput = function setupColorInput(colorInputEl, hexInputEl, onCh
       hexInputEl.value = colorInputEl.value.toUpperCase();
     }
   });
-};
+}

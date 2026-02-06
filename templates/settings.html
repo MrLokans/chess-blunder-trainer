@@ -349,7 +349,7 @@
       </div>
 
       <div class="btn-row" style="margin-top: 32px;">
-        <button type="button" class="btn btn-secondary" onclick="window.location.href='/'">Cancel</button>
+        <a class="btn btn-secondary" href="/">Cancel</a>
         <button type="submit" class="btn btn-primary" id="submitBtn">Save Changes</button>
       </div>
     </form>
@@ -358,5 +358,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="/static/js/settings.js"></script>
+<script type="module" src="/static/js/settings.js"></script>
 {% endblock %}

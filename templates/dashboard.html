@@ -25,15 +25,15 @@
     <input type="date" id="dateTo" name="date_to">
   </div>
   <div class="filter-group">
-    <button class="btn" onclick="applyDateFilter()">Apply</button>
-    <button class="btn btn-secondary" onclick="clearDateFilter()">Clear</button>
+    <button class="btn" id="applyDateBtn">Apply</button>
+    <button class="btn btn-secondary" id="clearDateBtn">Clear</button>
   </div>
   <div class="filter-presets">
-    <button data-preset="7d" onclick="setPreset('7d')">Last 7 days</button>
-    <button data-preset="30d" onclick="setPreset('30d')">Last 30 days</button>
-    <button data-preset="90d" onclick="setPreset('90d')">Last 90 days</button>
-    <button data-preset="1y" onclick="setPreset('1y')">Last year</button>
-    <button data-preset="all" onclick="setPreset('all')" class="active">All time</button>
+    <button data-preset="7d">Last 7 days</button>
+    <button data-preset="30d">Last 30 days</button>
+    <button data-preset="90d">Last 90 days</button>
+    <button data-preset="1y">Last year</button>
+    <button data-preset="all" class="active">All time</button>
   </div>
 </div>
 
@@ -205,11 +205,10 @@
 </div>
 
 <div class="mt-4">
-  <button class="btn" onclick="location.href='/management'">Manage Imports & Sync</button>
+  <a class="btn" href="/management">Manage Imports & Sync</a>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="/static/js/heatmap.js"></script>
-<script src="/static/js/dashboard.js"></script>
+<script type="module" src="/static/js/dashboard.js"></script>
 {% endblock %}

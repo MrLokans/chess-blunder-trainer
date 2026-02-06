@@ -1,4 +1,7 @@
-// Trainer application JavaScript
+import { WebSocketClient } from './websocket-client.js';
+import { FilterPersistence } from './filter-persistence.js';
+
+const wsClient = new WebSocketClient();
 
 // State
 let board = null;

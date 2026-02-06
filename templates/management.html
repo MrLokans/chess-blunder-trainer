@@ -51,7 +51,7 @@
   <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
     Fetch new games from all configured sources.
   </p>
-  <button class="btn" onclick="startSync()">Sync Now</button>
+  <button class="btn" id="syncBtn">Sync Now</button>
   <div id="syncStatus" style="margin-top: 16px;"></div>
 </div>
 
@@ -66,8 +66,8 @@
   </div>
 
   <div id="analysisControls">
-    <button class="btn" id="startAnalysisBtn" onclick="startAnalysis()">Analyze All Games</button>
-    <button class="btn" id="stopAnalysisBtn" onclick="stopAnalysis()" style="display: none; background: var(--error);">Stop Analysis</button>
+    <button class="btn" id="startAnalysisBtn">Analyze All Games</button>
+    <button class="btn" id="stopAnalysisBtn" style="display: none; background: var(--error);">Stop Analysis</button>
   </div>
 
   <div id="analysisProgress" style="display: none; margin-top: 24px;">
@@ -92,7 +92,7 @@
   </div>
 
   <div id="backfillControls">
-    <button class="btn" id="startBackfillBtn" onclick="startBackfillPhases()">Backfill Phases</button>
+    <button class="btn" id="startBackfillBtn">Backfill Phases</button>
   </div>
 
   <div id="backfillProgress" style="display: none; margin-top: 24px;">
@@ -117,7 +117,7 @@
   </div>
 
   <div id="ecoBackfillControls">
-    <button class="btn" id="startEcoBackfillBtn" onclick="startBackfillECO()">Backfill ECO Codes</button>
+    <button class="btn" id="startEcoBackfillBtn">Backfill ECO Codes</button>
   </div>
 
   <div id="ecoBackfillProgress" style="display: none; margin-top: 24px;">
@@ -161,7 +161,7 @@
     Delete all imported games, analysis results, puzzle attempts, and job history.
     <strong>This action cannot be undone.</strong> Your settings will be preserved.
   </p>
-  <button class="btn" id="deleteAllBtn" onclick="confirmDeleteAll()" style="background: var(--error);">
+  <button class="btn" id="deleteAllBtn" style="background: var(--error);">
     Delete All Data
   </button>
 
@@ -176,5 +176,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="/static/js/management.js"></script>
+<script type="module" src="/static/js/management.js"></script>
 {% endblock %}

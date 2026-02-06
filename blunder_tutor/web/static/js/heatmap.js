@@ -152,6 +152,4 @@ async function loadHeatmap(containerId) {
   }
 }
 
-// Export for use
-window.loadHeatmap = loadHeatmap;
-window.renderHeatmap = renderHeatmap;
+export { loadHeatmap, renderHeatmap };

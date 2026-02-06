@@ -1,4 +1,4 @@
-window.loadConfiguredUsernames = async function loadConfiguredUsernames() {
+export async function loadConfiguredUsernames() {
   try {
     const resp = await fetch('/api/settings/usernames');
     if (resp.ok) {
@@ -8,4 +8,4 @@ window.loadConfiguredUsernames = async function loadConfiguredUsernames() {
     console.error('Failed to load configured usernames:', err);
   }
   return {};
-};
+}
