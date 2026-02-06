@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1]
+
+### Added
+
+- **Polish locale**: Full Polish (Polski) translation with proper chess terminology and ICU plural rules (one/few/many)
+- **Ukrainian locale**: Full Ukrainian (Українська) translation with chess terms (дебют, мітельшпіль, вилка, зв'язка) and one/few/many/other plurals
+- **Belarusian locale**: Full Belarusian (Беларуская) translation with chess terms (дэбют, мітэльшпіль, відэлец, звязка) and one/few/many/other plurals
+- **Spanish locale**: Full Spanish (Español) translation with chess terms (apertura, medio juego, horquilla, clavada, enfilada) and one/other plurals
+- **Chinese locale**: Full Simplified Chinese (中文) translation with chess terms (开局, 中局, 残局, 捉双, 牵制, 串打)
+
 ## [1.0.0] - 2026-02-06
 
 
