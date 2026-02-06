@@ -141,7 +141,7 @@ docker/build: ## Build Docker image (optional: DOCKER_TAG=dev, DOCKER_PLATFORM=l
 	DOCKER_BUILDKIT=1 docker build \
 		$(if $(DOCKER_PLATFORM),--platform $(DOCKER_PLATFORM)) \
 		-t $(DOCKER_IMAGE):$(DOCKER_TAG) \
-		--build-arg STOCKFISH_VERSION=sf_17 \
+		--build-arg STOCKFISH_VERSION=sf_18 \
 		--progress=plain \
 		.
 
