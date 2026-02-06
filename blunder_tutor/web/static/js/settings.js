@@ -45,7 +45,7 @@ const themeInputs = {
   heatmap_l4: { color: document.getElementById('themeHeatmapL4'), hex: document.getElementById('themeHeatmapL4Hex') }
 };
 
-const defaultTheme = {
+const _defaultTheme = {
   primary: '#4f6d7a',
   success: '#3d8b6e',
   error: '#c25450',
@@ -475,8 +475,7 @@ async function saveBoardSettings() {
 }
 
 // Modify the form submit to also save board settings
-const originalFormSubmit = form.onsubmit;
-form.addEventListener('submit', async (e) => {
+form.addEventListener('submit', async (_e) => {
   // Board settings are saved separately
   await saveBoardSettings();
 });

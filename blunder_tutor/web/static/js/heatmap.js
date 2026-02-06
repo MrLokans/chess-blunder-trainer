@@ -15,7 +15,7 @@ const ACTIVITY_THRESHOLDS = {
   L4: 20   // 20+ puzzles
 };
 
-function getActivityLevel(count) {
+export function getActivityLevel(count) {
   if (count === 0) return 0;
   if (count < ACTIVITY_THRESHOLDS.L2) return 1;
   if (count < ACTIVITY_THRESHOLDS.L3) return 2;
@@ -31,7 +31,7 @@ function renderHeatmap(containerId, data) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  const { daily_counts, max_count, total_days, total_attempts } = data;
+  const { daily_counts, total_days, total_attempts } = data;
 
   // Calculate date range (52 weeks ending today, aligned to start on Sunday)
   const today = new Date();
@@ -47,7 +47,7 @@ function renderHeatmap(containerId, data) {
 
   // Build grid data
   const weeks = [];
-  let currentDate = new Date(startDate);
+  const currentDate = new Date(startDate);
   let currentWeek = [];
   
   while (currentDate <= endDate) {

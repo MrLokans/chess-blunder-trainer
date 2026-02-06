@@ -505,7 +505,7 @@ function openLichessAnalysis() {
   const encodedFen = fen.replace(/ /g, '_');
   const color = puzzle.player_color;
 
-  let arrows = [];
+  const arrows = [];
   const atOriginalPosition = game.fen() === puzzle.fen;
 
   if (atOriginalPosition) {
@@ -603,7 +603,7 @@ function loadFiltersPanelState() {
         filtersContent.classList.add('collapsed');
         filtersChevron.classList.add('collapsed');
       }
-    } catch (e) {
+    } catch {
       filtersCollapsed = false;
     }
   }

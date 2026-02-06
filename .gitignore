@@ -14,3 +14,6 @@ wheels/
 *.sqlite
 *.db
 *.jsonl
+
+# Node
+node_modules/

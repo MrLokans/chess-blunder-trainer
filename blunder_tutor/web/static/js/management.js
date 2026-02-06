@@ -1,5 +1,6 @@
 import { WebSocketClient } from './websocket-client.js';
 import { ProgressTracker } from './progress-tracker.js';
+import { JobCard } from './job-card.js';
 import { loadConfiguredUsernames } from './usernames.js';
 import { client } from './api.js';
 
@@ -14,6 +15,7 @@ const STORAGE_KEYS = {
   maxGames: 'blunder_import_maxGames'
 };
 
+// Engine status (unique, not a job card)
 async function loadEngineStatus() {
   const container = document.getElementById('engineStatus');
   try {
@@ -58,6 +60,16 @@ loadEngineStatus();
 function refreshJobsTable() {
   htmx.trigger(document.body, 'jobsRefresh');
 }
+
+function showMessage(elementId, type, text) {
+  const el = document.getElementById(elementId);
+  el.className = 'message ' + type;
+  el.textContent = text;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+// --- Import (form-driven, not a JobCard) ---
 
 function prefillUsername(source) {
   const usernameInput = document.getElementById('username');
@@ -105,18 +117,6 @@ document.getElementById('source').addEventListener('change', (e) => {
 document.getElementById('username').addEventListener('input', saveFormValues);
 document.getElementById('maxGames').addEventListener('input', saveFormValues);
 
-function showMessage(elementId, type, text) {
-  const el = document.getElementById(elementId);
-  el.className = 'message ' + type;
-  el.textContent = text;
-  el.style.display = 'block';
-
-  setTimeout(() => {
-    el.style.display = 'none';
-  }, 5000);
-}
-
-// Import progress tracker
 const importTracker = new ProgressTracker({
   progressContainerId: 'importProgress',
   fillId: 'importProgressFill',
@@ -143,6 +143,8 @@ document.getElementById('importForm').addEventListener('submit', async (e) => {
   }
 });
 
+// --- Sync (one-shot, not a JobCard) ---
+
 async function startSync() {
   try {
     await client.jobs.startSync();
@@ -156,181 +158,83 @@ async function startSync() {
 
 initialize();
 
-// Analysis
-let analysisJobId = null;
+// --- Job Cards ---
 
-const analysisTracker = new ProgressTracker({
+const analysisCard = new JobCard({
   progressContainerId: 'analysisProgress',
   fillId: 'analysisProgressFill',
   textId: 'analysisProgressText',
   startBtnId: 'startAnalysisBtn',
   stopBtnId: 'stopAnalysisBtn',
   messageId: 'analysisMessage',
-  showMessage
+  showMessage,
+  pendingCountId: 'unanalyzedCount',
+  fetchPending: () => client.stats.overview(),
+  pendingField: 'pending_analysis',
+  fetchStatus: () => client.analysis.status(),
+  startJob: () => client.analysis.start(),
+  stopJob: (jobId) => client.analysis.stop(jobId),
+  startedMessage: 'Analysis started!',
+  completedMessage: 'Analysis completed!',
+  failedPrefix: 'Analysis failed: ',
 });
 
-async function loadAnalysisStatus() {
-  try {
-    const stats = await client.stats.overview();
-    document.getElementById('unanalyzedCount').textContent = stats.pending_analysis || 0;
-
-    const status = await client.analysis.status();
-
-    if (status.status === 'running') {
-      analysisJobId = status.job_id;
-      analysisTracker.show(status);
-    } else {
-      analysisTracker.hide();
-    }
-  } catch (err) {
-    console.error('Failed to load analysis status:', err);
-  }
-}
-
-async function startAnalysis() {
-  try {
-    const data = await client.analysis.start();
-    analysisJobId = data.job_id;
-    showMessage('analysisMessage', 'success', 'Analysis started!');
-    analysisTracker.show(null);
-  } catch (err) {
-    showMessage('analysisMessage', 'error', 'Failed to start analysis: ' + err.message);
-  }
-}
-
-async function stopAnalysis() {
-  if (!analysisJobId) return;
-
-  try {
-    await client.analysis.stop(analysisJobId);
-    showMessage('analysisMessage', 'success', 'Analysis stopped!');
-    analysisTracker.hide();
-    analysisJobId = null;
-    refreshJobsTable();
-    loadAnalysisStatus();
-  } catch (err) {
-    showMessage('analysisMessage', 'error', 'Failed to stop analysis: ' + err.message);
-  }
-}
-
-loadAnalysisStatus();
-
-// Backfill phases
-let backfillJobId = null;
-
-const backfillTracker = new ProgressTracker({
+const backfillCard = new JobCard({
   progressContainerId: 'backfillProgress',
   fillId: 'backfillProgressFill',
   textId: 'backfillProgressText',
   startBtnId: 'startBackfillBtn',
   messageId: 'backfillMessage',
-  showMessage
+  showMessage,
+  pendingCountId: 'backfillPendingCount',
+  fetchPending: () => client.backfill.phasesPending(),
+  fetchStatus: () => client.backfill.phasesStatus(),
+  startJob: () => client.backfill.startPhases(),
+  startedMessage: 'Backfill started!',
+  completedMessage: 'Backfill completed!',
+  failedPrefix: 'Backfill failed: ',
 });
 
-async function loadBackfillStatus() {
-  try {
-    const pending = await client.backfill.phasesPending();
-    document.getElementById('backfillPendingCount').textContent = pending.pending_count || 0;
-
-    const status = await client.backfill.phasesStatus();
-
-    if (status.status === 'running') {
-      backfillJobId = status.job_id;
-      backfillTracker.show(status);
-    } else {
-      backfillTracker.hide();
-    }
-  } catch (err) {
-    console.error('Failed to load backfill status:', err);
-  }
-}
-
-async function startBackfillPhases() {
-  try {
-    const data = await client.backfill.startPhases();
-    backfillJobId = data.job_id;
-    showMessage('backfillMessage', 'success', 'Backfill started!');
-    backfillTracker.show(null);
-  } catch (err) {
-    showMessage('backfillMessage', 'error', 'Failed to start backfill: ' + err.message);
-  }
-}
-
-loadBackfillStatus();
-
-// ECO backfill
-let ecoBackfillJobId = null;
-
-const ecoBackfillTracker = new ProgressTracker({
+const ecoBackfillCard = new JobCard({
   progressContainerId: 'ecoBackfillProgress',
   fillId: 'ecoBackfillProgressFill',
   textId: 'ecoBackfillProgressText',
   startBtnId: 'startEcoBackfillBtn',
   messageId: 'ecoBackfillMessage',
-  showMessage
+  showMessage,
+  pendingCountId: 'ecoBackfillPendingCount',
+  fetchPending: () => client.backfill.ecoPending(),
+  fetchStatus: () => client.backfill.ecoStatus(),
+  startJob: () => client.backfill.startEco(),
+  startedMessage: 'ECO backfill started!',
+  completedMessage: 'ECO backfill completed!',
+  failedPrefix: 'ECO backfill failed: ',
 });
 
-async function loadECOBackfillStatus() {
-  try {
-    const pending = await client.backfill.ecoPending();
-    document.getElementById('ecoBackfillPendingCount').textContent = pending.pending_count || 0;
-
-    const status = await client.backfill.ecoStatus();
-
-    if (status.status === 'running') {
-      ecoBackfillJobId = status.job_id;
-      ecoBackfillTracker.show(status);
-    } else {
-      ecoBackfillTracker.hide();
-    }
-  } catch (err) {
-    console.error('Failed to load ECO backfill status:', err);
-  }
-}
-
-async function startBackfillECO() {
-  try {
-    const data = await client.backfill.startEco();
-    ecoBackfillJobId = data.job_id;
-    showMessage('ecoBackfillMessage', 'success', 'ECO backfill started!');
-    ecoBackfillTracker.show(null);
-  } catch (err) {
-    showMessage('ecoBackfillMessage', 'error', 'Failed to start ECO backfill: ' + err.message);
-  }
-}
-
-loadECOBackfillStatus();
-
-// Delete all data
-let deleteAllJobId = null;
-
-const deleteAllTracker = new ProgressTracker({
+const deleteAllCard = new JobCard({
   progressContainerId: 'deleteAllProgress',
   fillId: 'deleteAllProgressFill',
   textId: 'deleteAllProgressText',
   startBtnId: 'deleteAllBtn',
   messageId: 'deleteAllMessage',
   showMessage,
-  textFormat: (current, total, percent) => `${current}/${total} tables (${percent}%)`
+  textFormat: (current, total, percent) => `${current}/${total} tables (${percent}%)`,
+  fetchStatus: () => client.data.deleteStatus(),
+  startJob: () => client.data.deleteAll(),
+  startedMessage: 'Delete job started!',
+  completedMessage: 'All data deleted! Refreshing page...',
+  failedPrefix: 'Delete failed: ',
+  onComplete: () => setTimeout(() => window.location.reload(), 2000),
 });
 
-async function loadDeleteAllStatus() {
-  try {
-    const status = await client.data.deleteStatus();
+const jobCards = [analysisCard, backfillCard, ecoBackfillCard, deleteAllCard];
 
-    if (status.status === 'running') {
-      deleteAllJobId = status.job_id;
-      deleteAllTracker.show(status);
-    } else {
-      deleteAllTracker.hide();
-    }
-  } catch (err) {
-    console.error('Failed to load delete all status:', err);
-  }
-}
+// Load all statuses on page load
+jobCards.forEach(card => card.loadStatus());
 
+// Delete requires double confirmation before starting
 async function confirmDeleteAll() {
-  const confirmed = confirm(
+  if (!confirm(
     'Are you sure you want to delete ALL data?\n\n' +
     'This will permanently remove:\n' +
     '• All imported games\n' +
@@ -338,34 +242,18 @@ async function confirmDeleteAll() {
     '• All puzzle attempts\n' +
     '• All job history\n\n' +
     'This action cannot be undone!'
-  );
+  )) return;
 
-  if (!confirmed) return;
-
-  const doubleConfirmed = confirm(
+  if (!confirm(
     'This is your final warning!\n\n' +
     'Click OK to permanently delete all data.'
-  );
+  )) return;
 
-  if (!doubleConfirmed) return;
-
-  try {
-    const data = await client.data.deleteAll();
-    if (data.job_id) {
-      deleteAllJobId = data.job_id;
-      showMessage('deleteAllMessage', 'success', 'Delete job started!');
-      deleteAllTracker.show(null);
-    } else {
-      showMessage('deleteAllMessage', 'error', 'Failed to start delete job');
-    }
-  } catch (err) {
-    showMessage('deleteAllMessage', 'error', 'Failed to delete data: ' + err.message);
-  }
+  await deleteAllCard.start();
 }
 
-loadDeleteAllStatus();
+// --- WebSocket ---
 
-// WebSocket
 wsClient.connect();
 
 wsClient.subscribe([
@@ -385,24 +273,22 @@ function debouncedRefreshJobsTable() {
   }, 1000);
 }
 
-function getTrackerForJob(jobId) {
-  if (jobId === currentJobId) return importTracker;
-  if (jobId === analysisJobId) return analysisTracker;
-  if (jobId === backfillJobId) return backfillTracker;
-  if (jobId === ecoBackfillJobId) return ecoBackfillTracker;
-  if (jobId === deleteAllJobId) return deleteAllTracker;
-  return null;
-}
-
 wsClient.on('job.progress_updated', (data) => {
-  const tracker = getTrackerForJob(data.job_id);
-  if (tracker) {
-    tracker.updateProgress(data.current, data.total, data.percent);
+  // Import tracker (not a JobCard)
+  if (data.job_id === currentJobId) {
+    importTracker.updateProgress(data.current, data.total, data.percent);
   }
+
+  // Job cards
+  for (const card of jobCards) {
+    if (card.handleProgress(data)) break;
+  }
+
   debouncedRefreshJobsTable();
 });
 
 wsClient.on('job.status_changed', (data) => {
+  // Import (not a JobCard)
   if (data.job_id === currentJobId) {
     if (data.status === 'completed') {
       document.getElementById('importProgress').style.display = 'none';
@@ -415,59 +301,9 @@ wsClient.on('job.status_changed', (data) => {
     }
   }
 
-  if (data.job_id === analysisJobId) {
-    if (data.status === 'completed') {
-      analysisTracker.hide();
-      analysisJobId = null;
-      showMessage('analysisMessage', 'success', 'Analysis completed!');
-      loadAnalysisStatus();
-    } else if (data.status === 'failed') {
-      analysisTracker.hide();
-      analysisJobId = null;
-      showMessage('analysisMessage', 'error', 'Analysis failed: ' + (data.error_message || 'Unknown error'));
-      loadAnalysisStatus();
-    }
-  }
-
-  if (data.job_id === backfillJobId) {
-    if (data.status === 'completed') {
-      backfillTracker.hide();
-      backfillJobId = null;
-      showMessage('backfillMessage', 'success', 'Backfill completed!');
-      loadBackfillStatus();
-    } else if (data.status === 'failed') {
-      backfillTracker.hide();
-      backfillJobId = null;
-      showMessage('backfillMessage', 'error', 'Backfill failed: ' + (data.error_message || 'Unknown error'));
-      loadBackfillStatus();
-    }
-  }
-
-  if (data.job_id === ecoBackfillJobId) {
-    if (data.status === 'completed') {
-      ecoBackfillTracker.hide();
-      ecoBackfillJobId = null;
-      showMessage('ecoBackfillMessage', 'success', 'ECO backfill completed!');
-      loadECOBackfillStatus();
-    } else if (data.status === 'failed') {
-      ecoBackfillTracker.hide();
-      ecoBackfillJobId = null;
-      showMessage('ecoBackfillMessage', 'error', 'ECO backfill failed: ' + (data.error_message || 'Unknown error'));
-      loadECOBackfillStatus();
-    }
-  }
-
-  if (data.job_id === deleteAllJobId) {
-    if (data.status === 'completed') {
-      deleteAllTracker.hide();
-      deleteAllJobId = null;
-      showMessage('deleteAllMessage', 'success', 'All data deleted! Refreshing page...');
-      setTimeout(() => window.location.reload(), 2000);
-    } else if (data.status === 'failed') {
-      deleteAllTracker.hide();
-      deleteAllJobId = null;
-      showMessage('deleteAllMessage', 'error', 'Delete failed: ' + (data.error_message || 'Unknown error'));
-    }
+  // Job cards
+  for (const card of jobCards) {
+    if (card.handleStatusChange(data)) break;
   }
 
   refreshJobsTable();
@@ -477,10 +313,11 @@ wsClient.on('job.created', () => {
   refreshJobsTable();
 });
 
-// Wire up button event listeners
+// --- Button wiring ---
+
 document.getElementById('syncBtn').addEventListener('click', startSync);
-document.getElementById('startAnalysisBtn').addEventListener('click', startAnalysis);
-document.getElementById('stopAnalysisBtn').addEventListener('click', stopAnalysis);
-document.getElementById('startBackfillBtn').addEventListener('click', startBackfillPhases);
-document.getElementById('startEcoBackfillBtn').addEventListener('click', startBackfillECO);
+document.getElementById('startAnalysisBtn').addEventListener('click', () => analysisCard.start());
+document.getElementById('stopAnalysisBtn').addEventListener('click', () => analysisCard.stop(refreshJobsTable));
+document.getElementById('startBackfillBtn').addEventListener('click', () => backfillCard.start());
+document.getElementById('startEcoBackfillBtn').addEventListener('click', () => ecoBackfillCard.start());
 document.getElementById('deleteAllBtn').addEventListener('click', confirmDeleteAll);

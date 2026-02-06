@@ -92,7 +92,7 @@
   // Apply cached theme immediately to prevent FOUC
   const cached = localStorage.getItem('theme');
   if (cached) {
-    try { applyTheme(JSON.parse(cached)); } catch (e) {}
+    try { applyTheme(JSON.parse(cached)); } catch { }
   }
 
   window.adjustColor = adjustColor;

@@ -322,7 +322,7 @@ async function loadStats() {
 
       const uniqueClasses = [...new Set(tacticalData.by_pattern.map(p => patternToClass[p.pattern] || 'other'))];
       tacticalLegend.innerHTML = uniqueClasses.map(cls => {
-        const label = Object.entries(patternToClass).find(([k, v]) => v === cls)?.[0] || cls;
+        const label = Object.entries(patternToClass).find(([_k, v]) => v === cls)?.[0] || cls;
         return `
           <div class="tactical-legend-item">
             <span class="tactical-legend-color ${cls}"></span>
