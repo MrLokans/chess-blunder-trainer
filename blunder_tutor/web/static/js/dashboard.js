@@ -2,6 +2,7 @@ import { WebSocketClient } from './websocket-client.js';
 import { FilterPersistence } from './filter-persistence.js';
 import { loadConfiguredUsernames } from './usernames.js';
 import { loadHeatmap } from './heatmap.js';
+import { client } from './api.js';
 
 const wsClient = new WebSocketClient();
 
@@ -53,7 +54,6 @@ function setPreset(preset) {
   currentDateFrom = dates.from;
   currentDateTo = dates.to;
 
-  // Update active button
   document.querySelectorAll('.filter-presets button').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.preset === preset);
   });
@@ -65,7 +65,6 @@ function applyDateFilter() {
   currentDateFrom = document.getElementById('dateFrom').value || null;
   currentDateTo = document.getElementById('dateTo').value || null;
 
-  // Clear preset buttons active state
   document.querySelectorAll('.filter-presets button').forEach(btn => btn.classList.remove('active'));
 
   loadStats();
@@ -77,7 +76,6 @@ function clearDateFilter() {
   currentDateFrom = null;
   currentDateTo = null;
 
-  // Set "All time" as active
   document.querySelectorAll('.filter-presets button').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.preset === 'all');
   });
@@ -85,28 +83,29 @@ function clearDateFilter() {
   loadStats();
 }
 
-function buildUrl(baseUrl, includeGameTypes = false) {
-  const params = new URLSearchParams();
-  if (currentDateFrom) params.set('start_date', currentDateFrom);
-  if (currentDateTo) params.set('end_date', currentDateTo);
-  if (includeGameTypes && currentGameTypeFilters.length > 0 && currentGameTypeFilters.length < 4) {
-    currentGameTypeFilters.forEach(gt => params.append('game_types', gt));
+function dateParams() {
+  const params = {};
+  if (currentDateFrom) params.start_date = currentDateFrom;
+  if (currentDateTo) params.end_date = currentDateTo;
+  return params;
+}
+
+function dateAndGameTypeParams() {
+  const params = dateParams();
+  if (currentGameTypeFilters.length > 0 && currentGameTypeFilters.length < 4) {
+    params.game_types = currentGameTypeFilters;
   }
-  const queryString = params.toString();
-  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+  return params;
 }
 
 async function loadStats() {
   try {
-    // Load overview stats (no date filter for overview)
-    const overviewResp = await fetch('/api/stats');
-    const overview = await overviewResp.json();
+    const overview = await client.stats.overview();
 
     document.getElementById('totalGames').textContent = overview.total_games || 0;
     document.getElementById('analyzedGames').textContent = overview.analyzed_games || 0;
     document.getElementById('totalBlunders').textContent = overview.total_blunders || 0;
 
-    // Calculate progress percentage
     const totalGames = overview.total_games || 0;
     const analyzedGames = overview.analyzed_games || 0;
     const progressPercent = totalGames > 0 ? Math.round((analyzedGames / totalGames) * 100) : 0;
@@ -114,9 +113,7 @@ async function loadStats() {
     document.getElementById('progressPercent').textContent = progressPercent + '%';
     document.getElementById('progressFill').style.width = progressPercent + '%';
 
-    // Check for running analysis job
-    const analysisStatusResp = await fetch('/api/analysis/status');
-    const analysisStatus = await analysisStatusResp.json();
+    const analysisStatus = await client.analysis.status();
 
     const statusEl = document.getElementById('analysisJobStatus');
     if (analysisStatus.status === 'running') {
@@ -136,15 +133,11 @@ async function loadStats() {
       statusEl.textContent = '';
     }
 
-    // Load and render games by date chart
     await loadDateChart();
-
-    // Load and render games by hour chart
     await loadHourChart();
 
-    // Load blunders by phase (with date and game type filters)
-    const phaseResp = await fetch(buildUrl('/api/stats/blunders/by-phase', true));
-    const phaseData = await phaseResp.json();
+    // Blunders by phase
+    const phaseData = await client.stats.blundersByPhase(dateAndGameTypeParams());
 
     const phaseBreakdown = document.getElementById('phaseBreakdown');
     const phaseBarContainer = document.getElementById('phaseBarContainer');
@@ -153,13 +146,11 @@ async function loadStats() {
     if (phaseData.total_blunders > 0 && phaseData.by_phase.length > 0) {
       phaseBarContainer.style.display = 'block';
 
-      // Build the stacked bar
       phaseBar.innerHTML = phaseData.by_phase
         .filter(p => p.percentage > 0)
         .map(p => `<div class="phase-bar-segment ${p.phase}" style="width: ${p.percentage}%">${p.percentage > 10 ? p.percentage + '%' : ''}</div>`)
         .join('');
 
-      // Build the phase cards
       phaseBreakdown.innerHTML = phaseData.by_phase.map(p => `
         <div class="phase-card ${p.phase}">
           <div class="phase-name">${p.phase}</div>
@@ -173,14 +164,11 @@ async function loadStats() {
       phaseBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No blunder data available yet. Analyze some games to see your phase breakdown.</div>';
     }
 
-    // Load blunders by color (with date filter and username)
+    // Blunders by color
     const username = getFirstUsername();
-    let colorUrl = buildUrl('/api/stats/blunders/by-color');
-    if (username) {
-      colorUrl += (colorUrl.includes('?') ? '&' : '?') + 'username=' + encodeURIComponent(username);
-    }
-    const colorResp = await fetch(colorUrl);
-    const colorData = await colorResp.json();
+    const colorParams = { ...dateParams() };
+    if (username) colorParams.username = username;
+    const colorData = await client.stats.blundersByColor(colorParams);
 
     const colorBreakdown = document.getElementById('colorBreakdown');
     const colorBarContainer = document.getElementById('colorBarContainer');
@@ -189,13 +177,11 @@ async function loadStats() {
     if (colorData.total_blunders > 0 && colorData.by_color.length > 0) {
       colorBarContainer.style.display = 'block';
 
-      // Build the comparison bar
       colorBar.innerHTML = colorData.by_color
         .filter(c => c.percentage > 0)
         .map(c => `<div class="color-bar-segment ${c.color}" style="width: ${c.percentage}%">${c.percentage > 15 ? c.percentage + '%' : ''}</div>`)
         .join('');
 
-      // Build the color cards
       colorBreakdown.innerHTML = colorData.by_color.map(c => `
         <div class="color-card ${c.color}">
           <div class="color-name">As ${c.color}</div>
@@ -209,16 +195,14 @@ async function loadStats() {
       colorBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No blunder data available yet. Analyze some games to see your color breakdown.</div>';
     }
 
-    // Load blunders by game type (with date filter)
-    const gameTypeResp = await fetch(buildUrl('/api/stats/blunders/by-game-type'));
-    const gameTypeData = await gameTypeResp.json();
+    // Blunders by game type
+    const gameTypeData = await client.stats.blundersByGameType(dateParams());
 
     const gameTypeBreakdown = document.getElementById('gameTypeBreakdown');
     const gameTypeBarContainer = document.getElementById('gameTypeBarContainer');
     const gameTypeBar = document.getElementById('gameTypeBar');
     const gameTypeLegend = document.getElementById('gameTypeLegend');
 
-    // Map for display labels
     const gameTypeLabels = {
       'ultrabullet': 'UltraBullet',
       'bullet': 'Bullet',
@@ -232,13 +216,11 @@ async function loadStats() {
     if (gameTypeData.total_blunders > 0 && gameTypeData.by_game_type.length > 0) {
       gameTypeBarContainer.style.display = 'block';
 
-      // Build the stacked bar
       gameTypeBar.innerHTML = gameTypeData.by_game_type
         .filter(g => g.percentage > 0)
         .map(g => `<div class="game-type-bar-segment ${g.game_type}" style="flex: ${g.percentage}">${g.percentage > 8 ? g.percentage + '%' : ''}</div>`)
         .join('');
 
-      // Build the legend
       const usedTypes = gameTypeData.by_game_type.filter(g => g.count > 0).map(g => g.game_type);
       gameTypeLegend.innerHTML = usedTypes.map(type => `
         <div class="game-type-legend-item">
@@ -247,7 +229,6 @@ async function loadStats() {
         </div>
       `).join('');
 
-      // Build the game type cards
       gameTypeBreakdown.innerHTML = gameTypeData.by_game_type
         .filter(g => g.count > 0)
         .map(g => `
@@ -262,9 +243,8 @@ async function loadStats() {
       gameTypeBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No game type data available yet. Analyze some games to see your blunders by time control.</div>';
     }
 
-    // Load blunders by ECO opening (with date and game type filters)
-    const ecoResp = await fetch(buildUrl('/api/stats/blunders/by-eco', true));
-    const ecoData = await ecoResp.json();
+    // Blunders by ECO opening
+    const ecoData = await client.stats.blundersByEco(dateAndGameTypeParams());
 
     const ecoBreakdown = document.getElementById('ecoBreakdown');
 
@@ -295,16 +275,14 @@ async function loadStats() {
       ecoBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No opening data available yet. Analyze some games to see your opening breakdown.</div>';
     }
 
-    // Load blunders by tactical pattern (with date filter)
-    const tacticalResp = await fetch(buildUrl('/api/stats/blunders/by-tactical-pattern', true));
-    const tacticalData = await tacticalResp.json();
+    // Blunders by tactical pattern
+    const tacticalData = await client.stats.blundersByTacticalPattern(dateAndGameTypeParams());
 
     const tacticalBreakdown = document.getElementById('tacticalBreakdown');
     const tacticalBarContainer = document.getElementById('tacticalBarContainer');
     const tacticalBar = document.getElementById('tacticalBar');
     const tacticalLegend = document.getElementById('tacticalLegend');
 
-    // Map pattern names to CSS class names
     const patternToClass = {
       'Fork': 'fork',
       'Pin': 'pin',
@@ -334,7 +312,6 @@ async function loadStats() {
     if (tacticalData.total_blunders > 0 && tacticalData.by_pattern.length > 0) {
       tacticalBarContainer.style.display = 'block';
 
-      // Build the stacked bar
       tacticalBar.innerHTML = tacticalData.by_pattern
         .filter(p => p.percentage > 0)
         .map(p => {
@@ -343,7 +320,6 @@ async function loadStats() {
         })
         .join('');
 
-      // Build the legend
       const uniqueClasses = [...new Set(tacticalData.by_pattern.map(p => patternToClass[p.pattern] || 'other'))];
       tacticalLegend.innerHTML = uniqueClasses.map(cls => {
         const label = Object.entries(patternToClass).find(([k, v]) => v === cls)?.[0] || cls;
@@ -355,7 +331,6 @@ async function loadStats() {
         `;
       }).join('');
 
-      // Build the tactical cards
       tacticalBreakdown.innerHTML = tacticalData.by_pattern
         .filter(p => p.count > 0)
         .map(p => {
@@ -374,9 +349,8 @@ async function loadStats() {
       tacticalBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No tactical pattern data available yet. Run a backfill to analyze existing blunders for tactical patterns.</div>';
     }
 
-    // Load game breakdown
-    const breakdownResp = await fetch('/api/stats/games');
-    const breakdown = await breakdownResp.json();
+    // Game breakdown
+    const breakdown = await client.stats.gameBreakdown();
 
     const tbody = document.querySelector('#gameBreakdownTable tbody');
     tbody.innerHTML = '';
@@ -399,8 +373,7 @@ async function loadStats() {
 
 async function loadDateChart() {
   try {
-    const resp = await fetch(buildUrl('/api/stats/games/by-date', true));
-    const data = await resp.json();
+    const data = await client.stats.gamesByDate(dateAndGameTypeParams());
 
     const container = document.getElementById('dateChartContainer');
     const emptyMsg = document.getElementById('dateChartEmpty');
@@ -516,8 +489,7 @@ async function loadDateChart() {
 
 async function loadHourChart() {
   try {
-    const resp = await fetch(buildUrl('/api/stats/games/by-hour', true));
-    const data = await resp.json();
+    const data = await client.stats.gamesByHour(dateAndGameTypeParams());
 
     const container = document.getElementById('hourChartContainer');
     const emptyMsg = document.getElementById('hourChartEmpty');
@@ -531,7 +503,6 @@ async function loadHourChart() {
     container.style.display = 'block';
     emptyMsg.style.display = 'none';
 
-    // Fill in missing hours with zeros
     const hourMap = new Map(data.items.map(d => [d.hour, d]));
     const fullData = [];
     for (let h = 0; h < 24; h++) {
@@ -643,16 +614,11 @@ async function loadHourChart() {
 
 async function retryAnalysis() {
   try {
-    const resp = await fetch('/api/analysis/start', { method: 'POST' });
-    if (resp.ok) {
-      loadStats();
-    } else {
-      const data = await resp.json();
-      alert(data.detail || 'Failed to start analysis');
-    }
+    await client.analysis.start();
+    loadStats();
   } catch (err) {
     console.error('Failed to retry analysis:', err);
-    alert('Failed to start analysis');
+    alert('Failed to start analysis: ' + err.message);
   }
 }
 
@@ -673,33 +639,16 @@ loadConfiguredUsernames().then((usernames) => {
   loadStats();
 });
 
-// Load activity heatmap
 loadHeatmap('activityHeatmap');
 
-// Initialize WebSocket for real-time updates
+// WebSocket
 wsClient.connect();
 wsClient.subscribe(['stats.updated', 'job.completed', 'job.progress_updated', 'job.status_changed']);
 
-// Handle stats updates
-wsClient.on('stats.updated', () => {
-  // Reload all dashboard data
-  loadStats();
-});
-
-wsClient.on('job.completed', () => {
-  // Reload dashboard when any job completes
-  loadStats();
-});
-
-wsClient.on('job.progress_updated', () => {
-  // Update analysis status in real-time
-  loadStats();
-});
-
-wsClient.on('job.status_changed', () => {
-  // Update when job status changes
-  loadStats();
-});
+wsClient.on('stats.updated', () => loadStats());
+wsClient.on('job.completed', () => loadStats());
+wsClient.on('job.progress_updated', () => loadStats());
+wsClient.on('job.status_changed', () => loadStats());
 
 // Wire up date filter buttons
 document.getElementById('applyDateBtn').addEventListener('click', applyDateFilter);

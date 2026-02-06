@@ -1,6 +1,4 @@
-/**
- * GitHub-style activity heatmap component
- */
+import { client } from './api.js';
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -139,9 +137,7 @@ function renderHeatmap(containerId, data) {
 
 async function loadHeatmap(containerId) {
   try {
-    const response = await fetch('/api/stats/activity-heatmap?days=365');
-    if (!response.ok) throw new Error('Failed to load heatmap data');
-    const data = await response.json();
+    const data = await client.stats.activityHeatmap();
     renderHeatmap(containerId, data);
   } catch (err) {
     console.error('Failed to load heatmap:', err);

@@ -1,3 +1,5 @@
+import { client } from './api.js';
+
 const form = document.getElementById('setupForm');
 const errorAlert = document.getElementById('errorAlert');
 const submitBtn = document.getElementById('submitBtn');
@@ -29,23 +31,10 @@ form.addEventListener('submit', async (e) => {
   submitBtn.textContent = 'Setting up...';
 
   try {
-    const response = await fetch('/api/setup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lichess, chesscom })
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      window.location.href = '/';
-    } else {
-      showError(data.error || 'Setup failed. Please try again.');
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Get Started';
-    }
+    await client.setup.complete({ lichess, chesscom });
+    window.location.href = '/';
   } catch (err) {
-    showError('Network error. Please try again.');
+    showError(err.message || 'Setup failed. Please try again.');
     submitBtn.disabled = false;
     submitBtn.textContent = 'Get Started';
     console.error(err);

@@ -1,5 +1,6 @@
 import { WebSocketClient } from './websocket-client.js';
 import { FilterPersistence } from './filter-persistence.js';
+import { client, ApiError } from './api.js';
 
 const wsClient = new WebSocketClient();
 
@@ -688,43 +689,13 @@ async function loadPuzzle() {
   if (tacticalInfo) tacticalInfo.style.display = 'none';
 
   try {
-    let url = '/api/puzzle';
-    const params = new URLSearchParams();
-    if (currentPhaseFilters.length > 0) {
-      currentPhaseFilters.forEach(phase => params.append('game_phases', phase));
-    }
-    if (currentTacticalFilter && currentTacticalFilter !== 'all') {
-      params.append('tactical_patterns', currentTacticalFilter);
-    }
-    if (currentGameTypeFilters.length > 0) {
-      currentGameTypeFilters.forEach(gameType => params.append('game_types', gameType));
-    }
-    if (currentColorFilter && currentColorFilter !== 'both') {
-      params.append('colors', currentColorFilter);
-    }
-    if (params.toString()) {
-      url += '?' + params.toString();
-    }
-    const resp = await fetch(url);
-    const data = await resp.json();
+    const params = {};
+    if (currentPhaseFilters.length > 0) params.game_phases = currentPhaseFilters;
+    if (currentTacticalFilter && currentTacticalFilter !== 'all') params.tactical_patterns = currentTacticalFilter;
+    if (currentGameTypeFilters.length > 0) params.game_types = currentGameTypeFilters;
+    if (currentColorFilter && currentColorFilter !== 'both') params.colors = currentColorFilter;
 
-    if (!resp.ok || data.detail || data.error) {
-      const errorMsg = data.detail || data.error || '';
-
-      // Determine error type from message
-      if (errorMsg.toLowerCase().includes('no games found')) {
-        showEmptyState('no_games');
-      } else if (errorMsg.toLowerCase().includes('no blunders found')) {
-        showEmptyState('no_blunders');
-      } else if (errorMsg.toLowerCase().includes('no username configured')) {
-        // Redirect to setup if no username configured
-        window.location.href = '/setup';
-        return;
-      } else {
-        showEmptyState('unknown');
-      }
-      return;
-    }
+    const data = await client.trainer.getPuzzle(params);
 
     // Success - ensure trainer layout is visible
     hideEmptyState();
@@ -776,8 +747,21 @@ async function loadPuzzle() {
     }, 100);
 
   } catch (err) {
-    console.error('Failed to load puzzle:', err);
-    showEmptyState('unknown');
+    if (err instanceof ApiError) {
+      const errorMsg = err.message.toLowerCase();
+      if (errorMsg.includes('no games found')) {
+        showEmptyState('no_games');
+      } else if (errorMsg.includes('no blunders found')) {
+        showEmptyState('no_blunders');
+      } else if (errorMsg.includes('no username configured')) {
+        window.location.href = '/setup';
+      } else {
+        showEmptyState('unknown');
+      }
+    } else {
+      console.error('Failed to load puzzle:', err);
+      showEmptyState('unknown');
+    }
   }
 }
 
@@ -808,20 +792,8 @@ async function submitMove() {
     best_move_eval: puzzle.best_move_eval || null
   };
 
-  console.log('Submitting move with payload:', payload);
-
   try {
-    const resp = await fetch('/api/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await resp.json();
-
-    if (data.error) {
-      showFeedback('incorrect', 'Error', data.error);
-      return;
-    }
+    const data = await client.trainer.submitMove(payload);
 
     submitted = true;
 
@@ -870,7 +842,7 @@ async function submitMove() {
     }
 
   } catch (err) {
-    showFeedback('incorrect', 'Error', 'Failed to submit move');
+    showFeedback('incorrect', 'Error', err.message || 'Failed to submit move');
     console.error(err);
   }
 }
@@ -1197,12 +1169,8 @@ document.addEventListener('keydown', (e) => {
 // Board settings functions
 async function loadBoardSettings() {
   try {
-    const resp = await fetch('/api/settings/board');
-    if (resp.ok) {
-      const data = await resp.json();
-      boardSettings = data;
-      applyBoardColors();
-    }
+    boardSettings = await client.settings.getBoard();
+    applyBoardColors();
   } catch (err) {
     console.warn('Failed to load board settings:', err);
   }

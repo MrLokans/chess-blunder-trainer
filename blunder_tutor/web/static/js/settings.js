@@ -1,4 +1,5 @@
 import { setupColorInput } from './color-input.js';
+import { client } from './api.js';
 
 const form = document.getElementById('settingsForm');
 const errorAlert = document.getElementById('errorAlert');
@@ -147,12 +148,9 @@ Object.keys(themeInputs).forEach(setupColorSync);
 // Load and render presets
 async function loadPresets() {
   try {
-    const resp = await fetch('/api/settings/theme/presets');
-    if (resp.ok) {
-      const data = await resp.json();
-      themePresets = data.presets;
-      renderPresets();
-    }
+    const data = await client.settings.getThemePresets();
+    themePresets = data.presets;
+    renderPresets();
   } catch (err) {
     console.error('Failed to load presets:', err);
   }
@@ -219,25 +217,17 @@ async function loadSyncSettings() {
     // Load presets first
     await loadPresets();
 
-    // Load theme colors
-    const themeResp = await fetch('/api/settings/theme');
-    if (themeResp.ok) {
-      const theme = await themeResp.json();
-      setThemeInputs(theme);
-      checkIfMatchesPreset();
-      renderPresets(); // Re-render to show active state
-    }
+    const theme = await client.settings.getTheme();
+    setThemeInputs(theme);
+    checkIfMatchesPreset();
+    renderPresets();
 
-    // Load all settings from API
-    const settingsResp = await fetch('/api/settings');
-    if (settingsResp.ok) {
-      const settings = await settingsResp.json();
-      document.getElementById('autoSync').checked = settings.auto_sync;
-      document.getElementById('syncInterval').value = String(settings.sync_interval);
-      document.getElementById('maxGames').value = String(settings.max_games);
-      document.getElementById('autoAnalyze').checked = settings.auto_analyze;
-      document.getElementById('spacedRepetitionDays').value = String(settings.spaced_repetition_days);
-    }
+    const settings = await client.settings.get();
+    document.getElementById('autoSync').checked = settings.auto_sync;
+    document.getElementById('syncInterval').value = String(settings.sync_interval);
+    document.getElementById('maxGames').value = String(settings.max_games);
+    document.getElementById('autoAnalyze').checked = settings.auto_analyze;
+    document.getElementById('spacedRepetitionDays').value = String(settings.spaced_repetition_days);
   } catch (err) {
     console.error('Failed to load settings:', err);
   }
@@ -269,36 +259,23 @@ form.addEventListener('submit', async (e) => {
   try {
     const theme = getCurrentTheme();
     
-    const response = await fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        lichess,
-        chesscom,
-        auto_sync: autoSync,
-        sync_interval: syncInterval,
-        max_games: maxGames,
-        auto_analyze: autoAnalyze,
-        spaced_repetition_days: spacedRepetitionDays,
-        theme
-      })
+    await client.settings.save({
+      lichess,
+      chesscom,
+      auto_sync: autoSync,
+      sync_interval: syncInterval,
+      max_games: maxGames,
+      auto_analyze: autoAnalyze,
+      spaced_repetition_days: spacedRepetitionDays,
+      theme
     });
     
-    // Update localStorage with new theme
     localStorage.setItem('theme', JSON.stringify(theme));
 
-    const data = await response.json();
-
-    if (response.ok) {
-      showSuccess('Settings saved successfully!');
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1500);
-    } else {
-      showError(data.error || 'Failed to save settings. Please try again.');
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Save Changes';
-    }
+    showSuccess('Settings saved successfully!');
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1500);
   } catch (err) {
     showError('Network error. Please try again.');
     submitBtn.disabled = false;
@@ -459,33 +436,21 @@ resetBoardBtn.addEventListener('click', async () => {
 // Load board settings
 async function loadBoardSettings() {
   try {
-    // Load piece sets
-    const pieceSetsResp = await fetch('/api/settings/board/piece-sets');
-    if (pieceSetsResp.ok) {
-      const data = await pieceSetsResp.json();
-      pieceSets = data.piece_sets;
-    }
+    const pieceSetsData = await client.settings.getPieceSets();
+    pieceSets = pieceSetsData.piece_sets;
 
-    // Load color presets
-    const colorPresetsResp = await fetch('/api/settings/board/color-presets');
-    if (colorPresetsResp.ok) {
-      const data = await colorPresetsResp.json();
-      boardColorPresets = data.presets;
-    }
+    const colorPresetsData = await client.settings.getBoardColorPresets();
+    boardColorPresets = colorPresetsData.presets;
 
-    // Load current settings
-    const boardResp = await fetch('/api/settings/board');
-    if (boardResp.ok) {
-      const settings = await boardResp.json();
-      currentPieceSet = settings.piece_set;
-      currentBoardLight = settings.board_light;
-      currentBoardDark = settings.board_dark;
-      
-      boardLightColor.value = currentBoardLight;
-      boardLightHex.value = currentBoardLight.toUpperCase();
-      boardDarkColor.value = currentBoardDark;
-      boardDarkHex.value = currentBoardDark.toUpperCase();
-    }
+    const settings = await client.settings.getBoard();
+    currentPieceSet = settings.piece_set;
+    currentBoardLight = settings.board_light;
+    currentBoardDark = settings.board_dark;
+    
+    boardLightColor.value = currentBoardLight;
+    boardLightHex.value = currentBoardLight.toUpperCase();
+    boardDarkColor.value = currentBoardDark;
+    boardDarkHex.value = currentBoardDark.toUpperCase();
 
     checkIfMatchesBoardColorPreset();
     renderPieceSetGrid();
@@ -499,14 +464,10 @@ async function loadBoardSettings() {
 // Save board settings (called from form submit)
 async function saveBoardSettings() {
   try {
-    await fetch('/api/settings/board', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        piece_set: currentPieceSet,
-        board_light: currentBoardLight,
-        board_dark: currentBoardDark
-      })
+    await client.settings.saveBoard({
+      piece_set: currentPieceSet,
+      board_light: currentBoardLight,
+      board_dark: currentBoardDark
     });
   } catch (err) {
     console.error('Failed to save board settings:', err);

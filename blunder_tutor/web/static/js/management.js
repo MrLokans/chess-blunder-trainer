@@ -1,28 +1,23 @@
 import { WebSocketClient } from './websocket-client.js';
 import { ProgressTracker } from './progress-tracker.js';
 import { loadConfiguredUsernames } from './usernames.js';
+import { client } from './api.js';
 
 const wsClient = new WebSocketClient();
 
 let currentJobId = null;
 let configuredUsernames = {};
 
-// LocalStorage keys
 const STORAGE_KEYS = {
   source: 'blunder_import_source',
   username: 'blunder_import_username',
   maxGames: 'blunder_import_maxGames'
 };
 
-// Load engine status
 async function loadEngineStatus() {
   const container = document.getElementById('engineStatus');
   try {
-    const resp = await fetch('/api/system/engine');
-    if (!resp.ok) {
-      throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-    }
-    const data = await resp.json();
+    const data = await client.system.engineStatus();
 
     if (data.available) {
       container.innerHTML = `
@@ -58,20 +53,16 @@ async function loadEngineStatus() {
   }
 }
 
-// Load engine status on page load
 loadEngineStatus();
 
-// Trigger HTMX refresh of jobs table
 function refreshJobsTable() {
   htmx.trigger(document.body, 'jobsRefresh');
 }
 
-// Prefill username based on selected source
 function prefillUsername(source) {
   const usernameInput = document.getElementById('username');
   const currentValue = usernameInput.value.trim();
 
-  // Only prefill if field is empty
   if (!currentValue && source) {
     if (source === 'lichess' && configuredUsernames.lichess_username) {
       usernameInput.value = configuredUsernames.lichess_username;
@@ -81,53 +72,51 @@ function prefillUsername(source) {
   }
 }
 
-// Save form values to localStorage
 function saveFormValues() {
   localStorage.setItem(STORAGE_KEYS.source, document.getElementById('source').value);
   localStorage.setItem(STORAGE_KEYS.username, document.getElementById('username').value);
   localStorage.setItem(STORAGE_KEYS.maxGames, document.getElementById('maxGames').value);
 }
 
-// Restore form values from localStorage
 function restoreFormValues() {
   const savedSource = localStorage.getItem(STORAGE_KEYS.source);
   const savedUsername = localStorage.getItem(STORAGE_KEYS.username);
   const savedMaxGames = localStorage.getItem(STORAGE_KEYS.maxGames);
 
-  if (savedSource) {
-    document.getElementById('source').value = savedSource;
-  }
-  if (savedUsername) {
-    document.getElementById('username').value = savedUsername;
-  }
-  if (savedMaxGames) {
-    document.getElementById('maxGames').value = savedMaxGames;
-  }
+  if (savedSource) document.getElementById('source').value = savedSource;
+  if (savedUsername) document.getElementById('username').value = savedUsername;
+  if (savedMaxGames) document.getElementById('maxGames').value = savedMaxGames;
 }
 
-// Initialize: Load configured usernames and restore form values
 async function initialize() {
   configuredUsernames = await loadConfiguredUsernames();
   restoreFormValues();
 
-  // Prefill username based on restored source
   const restoredSource = document.getElementById('source').value;
   if (restoredSource && !document.getElementById('username').value) {
     prefillUsername(restoredSource);
   }
 }
 
-// Add event listener for source change
 document.getElementById('source').addEventListener('change', (e) => {
   prefillUsername(e.target.value);
   saveFormValues();
 });
-
-// Add event listeners to save form values on change
 document.getElementById('username').addEventListener('input', saveFormValues);
 document.getElementById('maxGames').addEventListener('input', saveFormValues);
 
-// Import progress tracker (no stop button, default text format)
+function showMessage(elementId, type, text) {
+  const el = document.getElementById(elementId);
+  el.className = 'message ' + type;
+  el.textContent = text;
+  el.style.display = 'block';
+
+  setTimeout(() => {
+    el.style.display = 'none';
+  }, 5000);
+}
+
+// Import progress tracker
 const importTracker = new ProgressTracker({
   progressContainerId: 'importProgress',
   fillId: 'importProgressFill',
@@ -145,23 +134,10 @@ document.getElementById('importForm').addEventListener('submit', async (e) => {
   const maxGames = parseInt(document.getElementById('maxGames').value);
 
   try {
-    const resp = await fetch('/api/import/start', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source, username, max_games: maxGames })
-    });
-
-    const data = await resp.json();
-
-    if (data.error) {
-      showMessage('importMessage', 'error', 'Error: ' + data.error);
-      return;
-    }
-
+    const data = await client.jobs.startImport(source, username, maxGames);
     currentJobId = data.job_id;
     document.getElementById('importProgress').style.display = 'block';
     showMessage('importMessage', 'success', 'Import job started!');
-
   } catch (err) {
     showMessage('importMessage', 'error', 'Failed to start import: ' + err.message);
   }
@@ -169,35 +145,18 @@ document.getElementById('importForm').addEventListener('submit', async (e) => {
 
 async function startSync() {
   try {
-    const resp = await fetch('/api/sync/start', { method: 'POST' });
-    const data = await resp.json();
-
+    await client.jobs.startSync();
     document.getElementById('syncStatus').innerHTML =
       '<div class="message success">Sync started! Check Recent Jobs for progress.</div>';
-
   } catch (err) {
     document.getElementById('syncStatus').innerHTML =
       '<div class="message error">Failed to start sync: ' + err.message + '</div>';
   }
 }
 
-function showMessage(elementId, type, text) {
-  const el = document.getElementById(elementId);
-  el.className = 'message ' + type;
-  el.textContent = text;
-  el.style.display = 'block';
-
-  setTimeout(() => {
-    el.style.display = 'none';
-  }, 5000);
-}
-
-
-
-// Initialize on page load
 initialize();
 
-// Analysis progress tracker
+// Analysis
 let analysisJobId = null;
 
 const analysisTracker = new ProgressTracker({
@@ -212,12 +171,10 @@ const analysisTracker = new ProgressTracker({
 
 async function loadAnalysisStatus() {
   try {
-    const statsResp = await fetch('/api/stats');
-    const stats = await statsResp.json();
+    const stats = await client.stats.overview();
     document.getElementById('unanalyzedCount').textContent = stats.pending_analysis || 0;
 
-    const statusResp = await fetch('/api/analysis/status');
-    const status = await statusResp.json();
+    const status = await client.analysis.status();
 
     if (status.status === 'running') {
       analysisJobId = status.job_id;
@@ -232,14 +189,7 @@ async function loadAnalysisStatus() {
 
 async function startAnalysis() {
   try {
-    const resp = await fetch('/api/analysis/start', { method: 'POST' });
-    const data = await resp.json();
-
-    if (data.error) {
-      showMessage('analysisMessage', 'error', 'Error: ' + data.error);
-      return;
-    }
-
+    const data = await client.analysis.start();
     analysisJobId = data.job_id;
     showMessage('analysisMessage', 'success', 'Analysis started!');
     analysisTracker.show(null);
@@ -252,9 +202,7 @@ async function stopAnalysis() {
   if (!analysisJobId) return;
 
   try {
-    const resp = await fetch(`/api/analysis/stop/${analysisJobId}`, { method: 'POST' });
-    const data = await resp.json();
-
+    await client.analysis.stop(analysisJobId);
     showMessage('analysisMessage', 'success', 'Analysis stopped!');
     analysisTracker.hide();
     analysisJobId = null;
@@ -267,7 +215,7 @@ async function stopAnalysis() {
 
 loadAnalysisStatus();
 
-// Backfill phases progress tracker
+// Backfill phases
 let backfillJobId = null;
 
 const backfillTracker = new ProgressTracker({
@@ -281,12 +229,10 @@ const backfillTracker = new ProgressTracker({
 
 async function loadBackfillStatus() {
   try {
-    const pendingResp = await fetch('/api/backfill-phases/pending');
-    const pending = await pendingResp.json();
+    const pending = await client.backfill.phasesPending();
     document.getElementById('backfillPendingCount').textContent = pending.pending_count || 0;
 
-    const statusResp = await fetch('/api/backfill-phases/status');
-    const status = await statusResp.json();
+    const status = await client.backfill.phasesStatus();
 
     if (status.status === 'running') {
       backfillJobId = status.job_id;
@@ -301,14 +247,7 @@ async function loadBackfillStatus() {
 
 async function startBackfillPhases() {
   try {
-    const resp = await fetch('/api/backfill-phases/start', { method: 'POST' });
-    const data = await resp.json();
-
-    if (data.detail) {
-      showMessage('backfillMessage', 'error', 'Error: ' + data.detail);
-      return;
-    }
-
+    const data = await client.backfill.startPhases();
     backfillJobId = data.job_id;
     showMessage('backfillMessage', 'success', 'Backfill started!');
     backfillTracker.show(null);
@@ -319,7 +258,7 @@ async function startBackfillPhases() {
 
 loadBackfillStatus();
 
-// ECO backfill progress tracker
+// ECO backfill
 let ecoBackfillJobId = null;
 
 const ecoBackfillTracker = new ProgressTracker({
@@ -333,12 +272,10 @@ const ecoBackfillTracker = new ProgressTracker({
 
 async function loadECOBackfillStatus() {
   try {
-    const pendingResp = await fetch('/api/backfill-eco/pending');
-    const pending = await pendingResp.json();
+    const pending = await client.backfill.ecoPending();
     document.getElementById('ecoBackfillPendingCount').textContent = pending.pending_count || 0;
 
-    const statusResp = await fetch('/api/backfill-eco/status');
-    const status = await statusResp.json();
+    const status = await client.backfill.ecoStatus();
 
     if (status.status === 'running') {
       ecoBackfillJobId = status.job_id;
@@ -353,14 +290,7 @@ async function loadECOBackfillStatus() {
 
 async function startBackfillECO() {
   try {
-    const resp = await fetch('/api/backfill-eco/start', { method: 'POST' });
-    const data = await resp.json();
-
-    if (data.detail) {
-      showMessage('ecoBackfillMessage', 'error', 'Error: ' + data.detail);
-      return;
-    }
-
+    const data = await client.backfill.startEco();
     ecoBackfillJobId = data.job_id;
     showMessage('ecoBackfillMessage', 'success', 'ECO backfill started!');
     ecoBackfillTracker.show(null);
@@ -371,7 +301,7 @@ async function startBackfillECO() {
 
 loadECOBackfillStatus();
 
-// Delete all data progress tracker
+// Delete all data
 let deleteAllJobId = null;
 
 const deleteAllTracker = new ProgressTracker({
@@ -386,8 +316,7 @@ const deleteAllTracker = new ProgressTracker({
 
 async function loadDeleteAllStatus() {
   try {
-    const statusResp = await fetch('/api/data/delete-status');
-    const status = await statusResp.json();
+    const status = await client.data.deleteStatus();
 
     if (status.status === 'running') {
       deleteAllJobId = status.job_id;
@@ -421,9 +350,7 @@ async function confirmDeleteAll() {
   if (!doubleConfirmed) return;
 
   try {
-    const resp = await fetch('/api/data/all', { method: 'DELETE' });
-    const data = await resp.json();
-
+    const data = await client.data.deleteAll();
     if (data.job_id) {
       deleteAllJobId = data.job_id;
       showMessage('deleteAllMessage', 'success', 'Delete job started!');
@@ -438,7 +365,7 @@ async function confirmDeleteAll() {
 
 loadDeleteAllStatus();
 
-// Initialize WebSocket for real-time updates
+// WebSocket
 wsClient.connect();
 
 wsClient.subscribe([
@@ -449,7 +376,6 @@ wsClient.subscribe([
   'job.failed'
 ]);
 
-// Debounced HTMX refresh (at most once per second)
 let jobsRefreshTimeout = null;
 function debouncedRefreshJobsTable() {
   if (jobsRefreshTimeout) return;
@@ -459,26 +385,24 @@ function debouncedRefreshJobsTable() {
   }, 1000);
 }
 
-// Job ID to tracker mapping for progress updates
 function getTrackerForJob(jobId) {
-  if (jobId === currentJobId) return { tracker: importTracker, fillId: 'importProgressFill', textId: 'importProgressText' };
-  if (jobId === analysisJobId) return { tracker: analysisTracker };
-  if (jobId === backfillJobId) return { tracker: backfillTracker };
-  if (jobId === ecoBackfillJobId) return { tracker: ecoBackfillTracker };
-  if (jobId === deleteAllJobId) return { tracker: deleteAllTracker };
+  if (jobId === currentJobId) return importTracker;
+  if (jobId === analysisJobId) return analysisTracker;
+  if (jobId === backfillJobId) return backfillTracker;
+  if (jobId === ecoBackfillJobId) return ecoBackfillTracker;
+  if (jobId === deleteAllJobId) return deleteAllTracker;
   return null;
 }
 
 wsClient.on('job.progress_updated', (data) => {
-  const match = getTrackerForJob(data.job_id);
-  if (match) {
-    match.tracker.updateProgress(data.current, data.total, data.percent);
+  const tracker = getTrackerForJob(data.job_id);
+  if (tracker) {
+    tracker.updateProgress(data.current, data.total, data.percent);
   }
   debouncedRefreshJobsTable();
 });
 
 wsClient.on('job.status_changed', (data) => {
-  // Handle import job completion
   if (data.job_id === currentJobId) {
     if (data.status === 'completed') {
       document.getElementById('importProgress').style.display = 'none';
@@ -491,7 +415,6 @@ wsClient.on('job.status_changed', (data) => {
     }
   }
 
-  // Handle analysis job completion
   if (data.job_id === analysisJobId) {
     if (data.status === 'completed') {
       analysisTracker.hide();
@@ -506,7 +429,6 @@ wsClient.on('job.status_changed', (data) => {
     }
   }
 
-  // Handle backfill job completion
   if (data.job_id === backfillJobId) {
     if (data.status === 'completed') {
       backfillTracker.hide();
@@ -521,7 +443,6 @@ wsClient.on('job.status_changed', (data) => {
     }
   }
 
-  // Handle ECO backfill job completion
   if (data.job_id === ecoBackfillJobId) {
     if (data.status === 'completed') {
       ecoBackfillTracker.hide();
@@ -536,7 +457,6 @@ wsClient.on('job.status_changed', (data) => {
     }
   }
 
-  // Handle delete all job completion
   if (data.job_id === deleteAllJobId) {
     if (data.status === 'completed') {
       deleteAllTracker.hide();
