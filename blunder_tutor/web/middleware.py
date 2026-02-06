@@ -16,6 +16,8 @@ LOCALE_DISPLAY_NAMES = {
     "fr": "Français",
     "es": "Español",
     "pl": "Polski",
+    "be": "Беларуская",
+    "zh": "中文",
 }
 
 
