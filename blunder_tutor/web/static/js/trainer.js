@@ -1289,4 +1289,11 @@ async function init() {
 }
 
 init();
-// Stats are loaded automatically via HTMX on page load
+
+// WebSocket integration for real-time stats updates
+wsClient.connect();
+wsClient.subscribe(['stats.updated']);
+
+wsClient.on('stats.updated', () => {
+  htmx.trigger('#statsContent', 'statsUpdate');
+});
