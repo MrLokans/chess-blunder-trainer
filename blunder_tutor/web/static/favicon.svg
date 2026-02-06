@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Rounded board square -->
+  <rect width="64" height="64" rx="10" fill="#b58863"/>
+  <rect x="3" y="3" width="58" height="58" rx="8" fill="#f0d9b5"/>
+  <!-- Chess knight (Unicode ♞ style, simplified) -->
+  <text x="28" y="50" font-family="serif" font-size="48" fill="#4a3728" text-anchor="middle">♞</text>
+  <!-- Red blunder "??" badge -->
+  <circle cx="52" cy="12" r="11" fill="#dc3545"/>
+  <text x="52" y="17" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">??</text>
+</svg>
