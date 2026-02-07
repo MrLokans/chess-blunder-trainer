@@ -105,9 +105,9 @@ if (localeSelect) {
     const locale = localeSelect.value;
     document.cookie = `locale=${locale};path=/;max-age=${365 * 24 * 3600};SameSite=Lax`;
     client.settings.setLocale(locale).then(() => {
-      window.location.reload();
+      window.location.href = '/settings';
     }).catch(() => {
-      window.location.reload();
+      window.location.href = '/settings';
     });
   });
 }

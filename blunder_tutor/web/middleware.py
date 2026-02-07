@@ -75,7 +75,13 @@ class LocaleMiddleware(BaseHTTPMiddleware):
                 features
             )
 
-        return await call_next(request)
+        response = await call_next(request)
+
+        content_type = response.headers.get("content-type", "")
+        if "text/html" in content_type:
+            response.headers["Cache-Control"] = "no-store"
+
+        return response
 
     async def _load_features(self, request: Request) -> dict[str, bool]:
         try:
