@@ -6,6 +6,12 @@ MATE_SCORE_WEB = 10000  # Used in web interface (lower for display)
 
 # Blunder detection thresholds (centipawns)
 MATE_THRESHOLD = 90000  # Positions with eval >= this are considered mate-in-X
+ALREADY_LOST_THRESHOLD = (
+    -300
+)  # Player's POV: positions worse than this are "already lost"
+STILL_WINNING_THRESHOLD = (
+    300  # Player's POV: if eval_after still above this, advantage wasn't lost
+)
 
 # Move classification values (used in database)
 CLASSIFICATION_BLUNDER = 3

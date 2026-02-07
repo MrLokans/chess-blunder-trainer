@@ -32,8 +32,13 @@ class StatsRepository(BaseDbRepository):
         async with conn.execute(
             """
             SELECT COUNT(*)
-            FROM analysis_moves
-            WHERE classification = 3
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE am.classification = 3
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
+                END
             """
         ) as cursor:
             blunder_row = await cursor.fetchone()
@@ -98,13 +103,21 @@ class StatsRepository(BaseDbRepository):
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> dict[str, object]:
-        query = """
+        player_side_filter = """
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
+                END
+        """
+
+        query = f"""
             SELECT
                 COUNT(*) as total_blunders,
                 AVG(am.cp_loss) as avg_cp_loss
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
+            {player_side_filter}
         """
         params: list[str] = []
 
@@ -126,13 +139,14 @@ class StatsRepository(BaseDbRepository):
         total_blunders = row[0] if row else 0
         avg_cp_loss = row[1] if row else 0.0
 
-        date_query = """
+        date_query = f"""
             SELECT
                 DATE(g.end_time_utc) as date,
                 COUNT(*) as count
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
+            {player_side_filter}
         """
         date_params: list[str] = []
 
@@ -233,6 +247,10 @@ class StatsRepository(BaseDbRepository):
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
+                END
         """
         params: list[str] = []
 
@@ -300,6 +318,10 @@ class StatsRepository(BaseDbRepository):
             JOIN analysis_games ag ON am.game_id = ag.game_id
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3 AND ag.eco_code IS NOT NULL
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
+                END
         """
         params: list[object] = []
 
@@ -639,7 +661,6 @@ class StatsRepository(BaseDbRepository):
         end_date: str | None = None,
         game_types: list[int] | None = None,
     ) -> dict[str, object]:
-        """Get blunder statistics grouped by tactical pattern."""
         query = """
             SELECT
                 tactical_pattern,
@@ -648,6 +669,10 @@ class StatsRepository(BaseDbRepository):
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
+                END
         """
         params: list[str] = []
 
@@ -722,7 +747,6 @@ class StatsRepository(BaseDbRepository):
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> dict[str, object]:
-        """Get blunder statistics grouped by game type (bullet, blitz, rapid, etc.)."""
         query = """
             SELECT
                 g.time_control,
@@ -730,6 +754,10 @@ class StatsRepository(BaseDbRepository):
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
+                END
         """
         params: list[str] = []
 
@@ -795,7 +823,6 @@ class StatsRepository(BaseDbRepository):
         game_types: list[int] | None = None,
         player_colors: list[int] | None = None,
     ) -> dict[str, object]:
-        """Get blunders by phase with additional game type and color filters."""
         query = """
             SELECT
                 am.game_phase,
@@ -805,6 +832,10 @@ class StatsRepository(BaseDbRepository):
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
+                END
         """
         params: list[object] = []
 
