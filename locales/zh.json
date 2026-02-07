@@ -368,5 +368,22 @@
   "settings.features.dashboard_tactical_breakdown": "按战术模式分析失误",
   "settings.features.dashboard_accuracy": "准确率图表",
   "settings.features.auto_sync": "自动同步",
-  "settings.features.auto_analyze": "自动分析"
+  "settings.features.auto_analyze": "自动分析",
+  "dashboard.chart.blunders_by_difficulty": "按难度分类的失误",
+  "dashboard.chart.blunders_by_difficulty_desc": "查看你有多少失误是容易避免的，多少是真正棘手的。",
+  "dashboard.chart.no_difficulty_data": "暂无难度数据。重新分析棋局以计算难度评分。",
+  "dashboard.difficulty.easy": "简单",
+  "dashboard.difficulty.medium": "中等",
+  "dashboard.difficulty.hard": "困难",
+  "dashboard.difficulty.unscored": "未评分",
+  "trainer.filters.difficulty": "难度",
+  "settings.features.dashboard_difficulty_breakdown": "按难度分类的失误",
+  "settings.features.trainer_filter_difficulty": "难度过滤器",
+  "dashboard.difficulty.help_label": "什么是难度？",
+  "dashboard.difficulty.help_title": "难度是如何计算的",
+  "dashboard.difficulty.help_intro": "每个失误按0-100评分，衡量最佳走法的发现难度。这有助于区分粗心大意和真正棘手的局面。",
+  "dashboard.difficulty.help_easy": "最佳走法是吃子或将军，或者有很多安全的替代走法。你应该能看到它。",
+  "dashboard.difficulty.help_medium": "最佳走法需要一些计算。战术和位置考量的混合。",
+  "dashboard.difficulty.help_hard": "最佳走法是安静的、非强制性的走法，且安全替代走法很少。即使强棋手也可能错过。",
+  "dashboard.difficulty.help_factors": "考量因素：最佳走法类型（吃子/将军=更容易）、合法安全走法数量、所需计算深度。"
 }

@@ -368,5 +368,22 @@
   "settings.features.dashboard_tactical_breakdown": "Зевки по тактическим паттернам",
   "settings.features.dashboard_accuracy": "Графики точности",
   "settings.features.auto_sync": "Автоматическая синхронизация",
-  "settings.features.auto_analyze": "Автоматический анализ"
+  "settings.features.auto_analyze": "Автоматический анализ",
+  "dashboard.chart.blunders_by_difficulty": "Зевки по сложности",
+  "dashboard.chart.blunders_by_difficulty_desc": "Сколько зевков можно было легко избежать, а сколько были действительно сложными.",
+  "dashboard.chart.no_difficulty_data": "Данные о сложности пока отсутствуют. Перезапустите анализ для вычисления оценок сложности.",
+  "dashboard.difficulty.easy": "Лёгкие",
+  "dashboard.difficulty.medium": "Средние",
+  "dashboard.difficulty.hard": "Сложные",
+  "dashboard.difficulty.unscored": "Без оценки",
+  "trainer.filters.difficulty": "Сложность",
+  "settings.features.dashboard_difficulty_breakdown": "Зевки по сложности",
+  "settings.features.trainer_filter_difficulty": "Фильтр по сложности",
+  "dashboard.difficulty.help_label": "Что такое сложность?",
+  "dashboard.difficulty.help_title": "Как рассчитывается сложность",
+  "dashboard.difficulty.help_intro": "Каждый зевок оценивается от 0 до 100 по тому, насколько трудно было найти лучший ход. Это помогает отделить невнимательность от действительно сложных позиций.",
+  "dashboard.difficulty.help_easy": "Лучший ход — взятие или шах, или было много безопасных альтернатив. Вы должны были его увидеть.",
+  "dashboard.difficulty.help_medium": "Лучший ход требовал расчёта. Сочетание тактических и позиционных соображений.",
+  "dashboard.difficulty.help_hard": "Лучший ход — тихий, не форсирующий ход с малым количеством безопасных альтернатив. Даже сильные игроки могут его пропустить.",
+  "dashboard.difficulty.help_factors": "Факторы: тип лучшего хода (взятие/шах = проще), количество безопасных ходов, глубина необходимого расчёта."
 }

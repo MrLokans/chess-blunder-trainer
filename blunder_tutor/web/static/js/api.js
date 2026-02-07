@@ -57,6 +57,7 @@ export const client = {
     blundersByGameType: (params) => request(withQuery('/api/stats/blunders/by-game-type', params)),
     blundersByEco: (params) => request(withQuery('/api/stats/blunders/by-eco', params)),
     blundersByTacticalPattern: (params) => request(withQuery('/api/stats/blunders/by-tactical-pattern', params)),
+    blundersByDifficulty: (params) => request(withQuery('/api/stats/blunders/by-difficulty', params)),
   },
 
   analysis: {

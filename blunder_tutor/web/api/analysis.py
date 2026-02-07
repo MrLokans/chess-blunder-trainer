@@ -51,6 +51,19 @@ class ColorEnum(str, Enum):
     black = "black"
 
 
+class DifficultyEnum(str, Enum):
+    easy = "easy"
+    medium = "medium"
+    hard = "hard"
+
+
+DIFFICULTY_RANGES = {
+    "easy": (0, 30),
+    "medium": (31, 60),
+    "hard": (61, 100),
+}
+
+
 PATTERN_FROM_STRING = {
     "fork": TacticalPattern.FORK,
     "pin": TacticalPattern.PIN,
@@ -191,6 +204,10 @@ async def puzzle(
         list[ColorEnum] | None,
         Query(description="Filter by player color (white, black)"),
     ] = None,
+    difficulties: Annotated[
+        list[DifficultyEnum] | None,
+        Query(description="Filter by difficulty (easy, medium, hard)"),
+    ] = None,
 ) -> dict[str, Any]:
     username = config.username
     source = None
@@ -238,6 +255,10 @@ async def puzzle(
 
     colors_int = [COLOR_FROM_STRING[c.value] for c in colors] if colors else None
 
+    difficulty_ranges_list = None
+    if difficulties:
+        difficulty_ranges_list = [DIFFICULTY_RANGES[d.value] for d in difficulties]
+
     try:
         puzzle_with_analysis = await puzzle_service.get_puzzle_with_analysis(
             username=username,
@@ -250,6 +271,7 @@ async def puzzle(
             tactical_patterns=tactical_patterns_int,
             game_types=game_types_int,
             player_colors=colors_int,
+            difficulty_ranges=difficulty_ranges_list,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

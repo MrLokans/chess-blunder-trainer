@@ -22,6 +22,7 @@ let currentPhaseFilters = [];
 let currentTacticalFilter = 'all';
 let currentGameTypeFilters = [];
 let currentColorFilter = 'both';
+let currentDifficultyFilters = [];
 let filtersCollapsed = false;
 let boardFlipped = false;
 
@@ -75,6 +76,7 @@ const showTacticsCheckbox = document.getElementById('showTactics');
 const legendTactic = document.getElementById('legendTactic');
 const gameTypeCheckboxes = document.querySelectorAll('.game-type-checkbox');
 const colorFilterRadios = document.querySelectorAll('input[name="colorFilter"]');
+const difficultyFilterCheckboxes = document.querySelectorAll('.difficulty-filter-checkbox');
 const filtersHeader = document.getElementById('filtersHeader');
 const filtersToggleBtn = document.getElementById('filtersToggleBtn');
 const filtersContent = document.getElementById('filtersContent');
@@ -214,7 +216,8 @@ function hasActiveFilters() {
   const hasPhaseFilter = currentPhaseFilters.length > 0 && currentPhaseFilters.length < 3;
   const hasGameTypeFilter = currentGameTypeFilters.length > 0 && currentGameTypeFilters.length < 4;
   const hasColorFilter = currentColorFilter && currentColorFilter !== 'both';
-  return hasTacticalFilter || hasPhaseFilter || hasGameTypeFilter || hasColorFilter;
+  const hasDifficultyFilter = currentDifficultyFilters.length > 0 && currentDifficultyFilters.length < 3;
+  return hasTacticalFilter || hasPhaseFilter || hasGameTypeFilter || hasColorFilter || hasDifficultyFilter;
 }
 
 function showEmptyState(errorType) {
@@ -375,6 +378,7 @@ async function loadPuzzle() {
     if (currentTacticalFilter && currentTacticalFilter !== 'all') params.tactical_patterns = currentTacticalFilter;
     if (currentGameTypeFilters.length > 0) params.game_types = currentGameTypeFilters;
     if (currentColorFilter && currentColorFilter !== 'both') params.colors = currentColorFilter;
+    if (currentDifficultyFilters.length > 0) params.difficulties = currentDifficultyFilters;
 
     const data = await client.trainer.getPuzzle(params);
 
@@ -617,6 +621,12 @@ const gameTypeFilter = new FilterPersistence({
   defaultValues: ['bullet', 'blitz', 'rapid']
 });
 
+const difficultyFilter = new FilterPersistence({
+  storageKey: 'blunder-tutor-difficulty-filters',
+  checkboxSelector: '.difficulty-filter-checkbox',
+  defaultValues: ['easy', 'medium', 'hard']
+});
+
 const COLOR_FILTER_STORAGE_KEY = 'blunder-tutor-color-filter';
 const FILTERS_COLLAPSED_KEY = 'blunder-tutor-filters-collapsed';
 
@@ -635,6 +645,8 @@ function clearAllFilters() {
   colorFilterRadios.forEach(radio => {
     radio.checked = radio.value === 'both';
   });
+
+  currentDifficultyFilters = difficultyFilter.reset(['easy', 'medium', 'hard']);
 
   loadPuzzle();
 }
@@ -766,6 +778,13 @@ gameTypeCheckboxes.forEach(checkbox => {
   });
 });
 
+difficultyFilterCheckboxes.forEach(checkbox => {
+  checkbox.addEventListener('change', () => {
+    currentDifficultyFilters = difficultyFilter.save();
+    loadPuzzle();
+  });
+});
+
 colorFilterRadios.forEach(radio => {
   radio.addEventListener('change', () => {
     colorFilterRadios.forEach(r => {
@@ -840,6 +859,7 @@ async function init() {
   currentPhaseFilters = phaseFilter.load();
   loadTacticalFilterFromStorage();
   currentGameTypeFilters = gameTypeFilter.load();
+  currentDifficultyFilters = difficultyFilter.load();
   loadColorFilterFromStorage();
   loadFiltersPanelState();
 

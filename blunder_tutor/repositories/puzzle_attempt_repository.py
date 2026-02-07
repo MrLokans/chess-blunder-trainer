@@ -152,6 +152,26 @@ class PuzzleAttemptRepository(BaseDbRepository):
             "accuracy": round((correct / total * 100), 1) if total > 0 else 0.0,
         }
 
+    async def get_failure_rates_by_pattern(
+        self, username: str
+    ) -> dict[int | None, float]:
+        conn = await self.get_connection()
+        async with conn.execute(
+            """
+            SELECT am.tactical_pattern,
+                   COUNT(*) as attempts,
+                   SUM(CASE WHEN pa.was_correct = 0 THEN 1 ELSE 0 END) as failures
+            FROM puzzle_attempts pa
+            JOIN analysis_moves am ON pa.game_id = am.game_id AND pa.ply = am.ply
+            WHERE pa.username = ?
+            GROUP BY am.tactical_pattern
+            """,
+            (username,),
+        ) as cursor:
+            rows = await cursor.fetchall()
+
+        return {row[0]: row[2] / row[1] if row[1] > 0 else 0.0 for row in rows}
+
     async def get_daily_attempt_counts(
         self, username: str, days: int = 365
     ) -> dict[str, dict[str, int]]:

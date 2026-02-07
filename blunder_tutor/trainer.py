@@ -34,7 +34,8 @@ class BlunderPuzzle:
     game_phase: int | None = None
     tactical_pattern: int | None = None
     tactical_reason: str | None = None
-    tactical_squares: list[str] | None = None  # Squares involved in the tactic
+    difficulty: int | None = None
+    tactical_squares: list[str] | None = None
     game_url: str | None = None
 
 
@@ -61,6 +62,7 @@ class Trainer:
         tactical_patterns: list[int] | None = None,
         game_types: list[int] | None = None,
         player_colors: list[int] | None = None,
+        difficulty_ranges: list[tuple[int, int]] | None = None,
     ) -> BlunderPuzzle:
         usernames = [username] if isinstance(username, str) else username
 
@@ -82,6 +84,14 @@ class Trainer:
             game_types=game_types,
         )
         candidates = filter_blunders(blunders, merged_game_side_map)
+
+        if difficulty_ranges and candidates:
+            candidates = [
+                b
+                for b in candidates
+                if b.get("difficulty") is not None
+                and any(lo <= b["difficulty"] <= hi for lo, hi in difficulty_ranges)
+            ]
 
         if (start_date or end_date) and candidates:
             filtered_candidates = []
@@ -119,7 +129,8 @@ class Trainer:
         if not candidates:
             raise ValueError("No blunders found for the requested user/source.")
 
-        blunder = random.choice(candidates)
+        weights = await self._compute_weights(candidates, actual_username)
+        blunder = random.choices(candidates, weights=weights, k=1)[0]
         game_id = str(blunder["game_id"])
         ply = int(blunder["ply"])
         blunder_uci = str(blunder["uci"])
@@ -137,6 +148,7 @@ class Trainer:
         blunder_game_phase = blunder.get("game_phase")
         blunder_tactical_pattern = blunder.get("tactical_pattern")
         blunder_tactical_reason = blunder.get("tactical_reason")
+        blunder_difficulty = blunder.get("difficulty")
 
         game = await self.games.load_game(game_id)
         board = board_before_ply(game, ply)
@@ -171,9 +183,44 @@ class Trainer:
             game_phase=blunder_game_phase,
             tactical_pattern=blunder_tactical_pattern,
             tactical_reason=blunder_tactical_reason,
+            difficulty=blunder_difficulty,
             tactical_squares=tactical_squares,
             game_url=game_url,
         )
+
+    async def _compute_weights(
+        self,
+        candidates: list[dict[str, object]],
+        username: str,
+    ) -> list[float]:
+        failure_rates = await self.attempts.get_failure_rates_by_pattern(username)
+        has_history = bool(failure_rates)
+
+        weights = []
+        for blunder in candidates:
+            w = 1.0
+
+            # Patterns the player fails at more get higher weight
+            pattern = blunder.get("tactical_pattern")
+            if has_history:
+                rate = failure_rates.get(pattern, 0.0)
+                # Unseen patterns get a bonus so they're explored
+                if pattern is not None and pattern not in failure_rates:
+                    w *= 1.5
+                else:
+                    w *= 1.0 + rate
+
+            # Higher-difficulty positions are more valuable to practice
+            difficulty = blunder.get("difficulty")
+            if difficulty is not None:
+                if difficulty <= 30:
+                    w *= 1.3  # easy = should have seen it
+                elif difficulty >= 70:
+                    w *= 0.7  # very hard = less learnable
+
+            weights.append(w)
+
+        return weights
 
     def _compute_tactical_squares(
         self,

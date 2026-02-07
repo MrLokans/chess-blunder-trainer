@@ -160,6 +160,23 @@
 </div>
 {% endif %}
 
+{% if has_feature('dashboard.difficulty_breakdown') %}
+<div class="chart-container">
+  <div class="chart-title">
+    {{ t('dashboard.chart.blunders_by_difficulty') }}
+    <button class="info-help-btn" id="difficultyHelpBtn" aria-label="{{ t('dashboard.difficulty.help_label') }}">?</button>
+  </div>
+  <p class="chart-description">{{ t('dashboard.chart.blunders_by_difficulty_desc') }}</p>
+  <div class="difficulty-bar-container" id="difficultyBarContainer" style="display: none;">
+    <div class="difficulty-bar" id="difficultyBar"></div>
+    <div class="difficulty-legend" id="difficultyLegend"></div>
+  </div>
+  <div class="difficulty-breakdown" id="difficultyBreakdown">
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
+  </div>
+</div>
+{% endif %}
+
 {% if has_feature('dashboard.tactical_breakdown') %}
 <div class="chart-container">
   <div class="chart-title">{{ t('dashboard.chart.blunders_by_tactical') }}</div>
@@ -217,6 +234,29 @@
 <div class="mt-4">
   <a class="btn" href="/management">{{ t('dashboard.link.manage_imports') }}</a>
 </div>
+
+<!-- Difficulty help modal -->
+<div class="info-modal-overlay" id="difficultyHelpOverlay">
+  <div class="info-modal">
+    <div class="info-modal-header">
+      <h3>{{ t('dashboard.difficulty.help_title') }}</h3>
+      <button class="info-modal-close" id="difficultyHelpClose">&times;</button>
+    </div>
+    <div class="info-modal-body">
+      <p>{{ t('dashboard.difficulty.help_intro') }}</p>
+      <dl class="info-modal-definitions">
+        <dt class="diff-easy">{{ t('dashboard.difficulty.easy') }} (0–30)</dt>
+        <dd>{{ t('dashboard.difficulty.help_easy') }}</dd>
+        <dt class="diff-medium">{{ t('dashboard.difficulty.medium') }} (31–60)</dt>
+        <dd>{{ t('dashboard.difficulty.help_medium') }}</dd>
+        <dt class="diff-hard">{{ t('dashboard.difficulty.hard') }} (61–100)</dt>
+        <dd>{{ t('dashboard.difficulty.help_hard') }}</dd>
+      </dl>
+      <p class="info-modal-note">{{ t('dashboard.difficulty.help_factors') }}</p>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}

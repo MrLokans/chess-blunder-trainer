@@ -200,6 +200,27 @@
           </div>
           {% endif %}
 
+          {% if has_feature('trainer.filter.difficulty') %}
+          <!-- Difficulty filter -->
+          <div class="filter-group">
+            <div class="filter-label">{{ t('trainer.filters.difficulty') }}</div>
+            <div class="difficulty-filter">
+              <label class="filter-checkbox-label">
+                <input type="checkbox" class="difficulty-filter-checkbox" value="easy" checked>
+                {{ t('dashboard.difficulty.easy') }}
+              </label>
+              <label class="filter-checkbox-label">
+                <input type="checkbox" class="difficulty-filter-checkbox" value="medium" checked>
+                {{ t('dashboard.difficulty.medium') }}
+              </label>
+              <label class="filter-checkbox-label">
+                <input type="checkbox" class="difficulty-filter-checkbox" value="hard" checked>
+                {{ t('dashboard.difficulty.hard') }}
+              </label>
+            </div>
+          </div>
+          {% endif %}
+
           {% if has_feature('trainer.filter.tactical') %}
           <!-- Tactical pattern filter -->
           <div class="filter-group">

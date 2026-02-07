@@ -17,6 +17,9 @@ class Feature(StrEnum):
     DASHBOARD_OPENING_BREAKDOWN = "dashboard.opening_breakdown"
     DASHBOARD_TACTICAL_BREAKDOWN = "dashboard.tactical_breakdown"
     DASHBOARD_ACCURACY = "dashboard.accuracy"
+    DASHBOARD_DIFFICULTY_BREAKDOWN = "dashboard.difficulty_breakdown"
+
+    TRAINER_FILTER_DIFFICULTY = "trainer.filter.difficulty"
 
     AUTO_SYNC = "auto.sync"
     AUTO_ANALYZE = "auto.analyze"
@@ -43,6 +46,7 @@ FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
             Feature.TRAINER_TACTICS,
             Feature.TRAINER_FILTER_PHASE,
             Feature.TRAINER_FILTER_TACTICAL,
+            Feature.TRAINER_FILTER_DIFFICULTY,
         ],
     ),
     (
@@ -53,6 +57,7 @@ FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
             Feature.DASHBOARD_OPENING_BREAKDOWN,
             Feature.DASHBOARD_TACTICAL_BREAKDOWN,
             Feature.DASHBOARD_ACCURACY,
+            Feature.DASHBOARD_DIFFICULTY_BREAKDOWN,
         ],
     ),
     (
@@ -76,6 +81,8 @@ FEATURE_LABELS: dict[Feature, str] = {
     Feature.DASHBOARD_OPENING_BREAKDOWN: "settings.features.dashboard_opening_breakdown",
     Feature.DASHBOARD_TACTICAL_BREAKDOWN: "settings.features.dashboard_tactical_breakdown",
     Feature.DASHBOARD_ACCURACY: "settings.features.dashboard_accuracy",
+    Feature.DASHBOARD_DIFFICULTY_BREAKDOWN: "settings.features.dashboard_difficulty_breakdown",
+    Feature.TRAINER_FILTER_DIFFICULTY: "settings.features.trainer_filter_difficulty",
     Feature.AUTO_SYNC: "settings.features.auto_sync",
     Feature.AUTO_ANALYZE: "settings.features.auto_analyze",
 }

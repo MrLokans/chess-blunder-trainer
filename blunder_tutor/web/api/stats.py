@@ -634,3 +634,58 @@ async def get_blunders_by_game_type(
         start_date=start_date_str,
         end_date=end_date_str,
     )
+
+
+class DifficultyBlunderItem(BaseModel):
+    difficulty: str = Field(
+        description="Difficulty bucket (easy, medium, hard, unscored)"
+    )
+    count: int = Field(description="Number of blunders in this bucket")
+    percentage: float = Field(description="Percentage of total blunders")
+    avg_cp_loss: float = Field(description="Average centipawn loss")
+
+
+class BlundersByDifficulty(BaseModel):
+    total_blunders: int = Field(description="Total number of blunders")
+    by_difficulty: list[DifficultyBlunderItem] = Field(
+        description="Blunders grouped by difficulty"
+    )
+
+
+@stats_router.get(
+    "/api/stats/blunders/by-difficulty",
+    response_model=BlundersByDifficulty,
+    summary="Get blunders by difficulty",
+    description="Returns blunder statistics grouped by difficulty bucket (easy, medium, hard).",
+)
+async def get_blunders_by_difficulty(
+    stats_repo: StatsRepoDep,
+    settings_repo: SettingsRepoDep,
+    username: Annotated[
+        str | None,
+        Query(max_length=100, description="Filter by username"),
+    ] = None,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    game_types: Annotated[
+        list[int] | None,
+        Query(description="Filter by game type IDs"),
+    ] = None,
+) -> dict[str, Any]:
+    if not username:
+        username = await _resolve_username(settings_repo)
+    start_date_str = start_date.isoformat() if start_date else None
+    end_date_str = end_date.isoformat() if end_date else None
+
+    return await stats_repo.get_blunders_by_difficulty(
+        username=username,
+        start_date=start_date_str,
+        end_date=end_date_str,
+        game_types=game_types,
+    )

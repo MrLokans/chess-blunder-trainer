@@ -282,6 +282,74 @@ async function loadStats() {
     }
     }
 
+    // Blunders by difficulty
+    if (hasFeature('dashboard.difficulty_breakdown') && document.getElementById('difficultyBreakdown')) {
+      const diffData = await client.stats.blundersByDifficulty(dateAndGameTypeParams());
+
+      const diffBreakdown = document.getElementById('difficultyBreakdown');
+      const diffBarContainer = document.getElementById('difficultyBarContainer');
+      const diffBar = document.getElementById('difficultyBar');
+      const diffLegend = document.getElementById('difficultyLegend');
+
+      const diffToClass = {
+        easy: 'diff-easy',
+        medium: 'diff-medium',
+        hard: 'diff-hard',
+        unscored: 'diff-unscored',
+      };
+
+      const diffLabels = {
+        easy: t('dashboard.difficulty.easy'),
+        medium: t('dashboard.difficulty.medium'),
+        hard: t('dashboard.difficulty.hard'),
+        unscored: t('dashboard.difficulty.unscored'),
+      };
+
+      if (diffData.total_blunders > 0 && diffData.by_difficulty.length > 0) {
+        diffBarContainer.style.display = 'block';
+
+        diffBar.innerHTML = diffData.by_difficulty
+          .filter(d => d.percentage > 0)
+          .map(d => {
+            const cls = diffToClass[d.difficulty] || 'diff-unscored';
+            return `<div class="difficulty-bar-segment ${cls}" style="flex: ${d.percentage}">${d.percentage > 8 ? d.percentage + '%' : ''}</div>`;
+          })
+          .join('');
+
+        diffLegend.innerHTML = diffData.by_difficulty
+          .filter(d => d.count > 0)
+          .map(d => {
+            const cls = diffToClass[d.difficulty] || 'diff-unscored';
+            return `
+              <div class="difficulty-legend-item">
+                <span class="difficulty-legend-color ${cls}"></span>
+                <span>${diffLabels[d.difficulty] || d.difficulty}</span>
+              </div>
+            `;
+          })
+          .join('');
+
+        diffBreakdown.innerHTML = diffData.by_difficulty
+          .filter(d => d.count > 0)
+          .map(d => {
+            const cls = diffToClass[d.difficulty] || 'diff-unscored';
+            const label = diffLabels[d.difficulty] || d.difficulty;
+            return `
+              <div class="difficulty-card ${cls}">
+                <div class="difficulty-name">${label}</div>
+                <div class="difficulty-count">${d.count}</div>
+                <div class="difficulty-percent">${d.percentage}%</div>
+                <div class="difficulty-avg-loss">${t('dashboard.chart.avg_loss', { loss: (d.avg_cp_loss / 100).toFixed(1) })}</div>
+              </div>
+            `;
+          })
+          .join('');
+      } else {
+        diffBarContainer.style.display = 'none';
+        diffBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_difficulty_data') + '</div>';
+      }
+    }
+
     // Blunders by tactical pattern
     if (hasFeature('dashboard.tactical_breakdown') && document.getElementById('tacticalBreakdown')) {
     const tacticalData = await client.stats.blundersByTacticalPattern(dateAndGameTypeParams());
@@ -669,3 +737,21 @@ document.getElementById('clearDateBtn').addEventListener('click', clearDateFilte
 document.querySelectorAll('.filter-presets button[data-preset]').forEach(btn => {
   btn.addEventListener('click', () => setPreset(btn.dataset.preset));
 });
+
+// Difficulty help modal
+const diffHelpBtn = document.getElementById('difficultyHelpBtn');
+const diffHelpOverlay = document.getElementById('difficultyHelpOverlay');
+const diffHelpClose = document.getElementById('difficultyHelpClose');
+
+if (diffHelpBtn && diffHelpOverlay) {
+  diffHelpBtn.addEventListener('click', () => diffHelpOverlay.classList.add('visible'));
+  diffHelpClose.addEventListener('click', () => diffHelpOverlay.classList.remove('visible'));
+  diffHelpOverlay.addEventListener('click', (e) => {
+    if (e.target === diffHelpOverlay) diffHelpOverlay.classList.remove('visible');
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && diffHelpOverlay.classList.contains('visible')) {
+      diffHelpOverlay.classList.remove('visible');
+    }
+  });
+}

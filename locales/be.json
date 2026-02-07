@@ -368,5 +368,22 @@
   "settings.features.dashboard_tactical_breakdown": "Памылкі па тактычных патэрнах",
   "settings.features.dashboard_accuracy": "Графікі дакладнасці",
   "settings.features.auto_sync": "Аўтаматычная сінхранізацыя",
-  "settings.features.auto_analyze": "Аўтаматычны аналіз"
+  "settings.features.auto_analyze": "Аўтаматычны аналіз",
+  "dashboard.chart.blunders_by_difficulty": "Памылкі па складанасці",
+  "dashboard.chart.blunders_by_difficulty_desc": "Колькі памылак можна было лёгка пазбегнуць, а колькі былі сапраўды складанымі.",
+  "dashboard.chart.no_difficulty_data": "Даныя пра складанасць пакуль адсутнічаюць. Перазапусціце аналіз для вылічэння ацэнак складанасці.",
+  "dashboard.difficulty.easy": "Лёгкія",
+  "dashboard.difficulty.medium": "Сярэднія",
+  "dashboard.difficulty.hard": "Складаныя",
+  "dashboard.difficulty.unscored": "Без ацэнкі",
+  "trainer.filters.difficulty": "Складанасць",
+  "settings.features.dashboard_difficulty_breakdown": "Памылкі па складанасці",
+  "settings.features.trainer_filter_difficulty": "Фільтр па складанасці",
+  "dashboard.difficulty.help_label": "Што такое складанасць?",
+  "dashboard.difficulty.help_title": "Як разлічваецца складанасць",
+  "dashboard.difficulty.help_intro": "Кожная памылка ацэньваецца ад 0 да 100 па тым, наколькі цяжка было знайсці лепшы ход. Гэта дапамагае адрозніць няўважлівасць ад сапраўды складаных пазіцый.",
+  "dashboard.difficulty.help_easy": "Лепшы ход — узяцце або шах, або было шмат бяспечных альтэрнатыў. Вы павінны былі яго ўбачыць.",
+  "dashboard.difficulty.help_medium": "Лепшы ход патрабаваў разліку. Спалучэнне тактычных і пазіцыйных меркаванняў.",
+  "dashboard.difficulty.help_hard": "Лепшы ход — ціхі, не фарсіруючы ход з малой колькасцю бяспечных альтэрнатыў. Нават моцныя гульцы могуць яго прапусціць.",
+  "dashboard.difficulty.help_factors": "Фактары: тып лепшага ходу (узяцце/шах = прасцей), колькасць бяспечных ходаў, глыбіня неабходнага разліку."
 }

@@ -368,5 +368,22 @@
   "settings.features.dashboard_tactical_breakdown": "Błędy wg wzorca taktycznego",
   "settings.features.dashboard_accuracy": "Wykresy dokładności",
   "settings.features.auto_sync": "Automatyczna synchronizacja",
-  "settings.features.auto_analyze": "Automatyczna analiza"
+  "settings.features.auto_analyze": "Automatyczna analiza",
+  "dashboard.chart.blunders_by_difficulty": "Błędy wg trudności",
+  "dashboard.chart.blunders_by_difficulty_desc": "Ile błędów było łatwo uniknąć, a ile wynikało z naprawdę trudnych pozycji.",
+  "dashboard.chart.no_difficulty_data": "Brak danych o trudności. Ponownie przeanalizuj partie, aby obliczyć wyniki trudności.",
+  "dashboard.difficulty.easy": "Łatwe",
+  "dashboard.difficulty.medium": "Średnie",
+  "dashboard.difficulty.hard": "Trudne",
+  "dashboard.difficulty.unscored": "Nieocenione",
+  "trainer.filters.difficulty": "Trudność",
+  "settings.features.dashboard_difficulty_breakdown": "Błędy wg trudności",
+  "settings.features.trainer_filter_difficulty": "Filtr trudności",
+  "dashboard.difficulty.help_label": "Czym jest trudność?",
+  "dashboard.difficulty.help_title": "Jak obliczana jest trudność",
+  "dashboard.difficulty.help_intro": "Każdy błąd oceniany jest od 0 do 100 w zależności od tego, jak trudno było znaleźć najlepszy ruch. Pomaga to odróżnić nieuwagę od naprawdę trudnych pozycji.",
+  "dashboard.difficulty.help_easy": "Najlepszy ruch to bicie lub szach, albo było wiele bezpiecznych alternatyw. Powinieneś go zobaczyć.",
+  "dashboard.difficulty.help_medium": "Najlepszy ruch wymagał obliczeń. Połączenie rozważań taktycznych i pozycyjnych.",
+  "dashboard.difficulty.help_hard": "Najlepszy ruch to cichy, niewymuszający ruch z małą liczbą bezpiecznych alternatyw. Nawet silni gracze mogą go przeoczyć.",
+  "dashboard.difficulty.help_factors": "Czynniki: typ najlepszego ruchu (bicie/szach = łatwiej), liczba bezpiecznych ruchów, głębokość wymaganego obliczenia."
 }

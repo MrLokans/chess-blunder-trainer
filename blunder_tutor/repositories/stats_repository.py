@@ -910,3 +910,95 @@ class StatsRepository(BaseDbRepository):
             "total_blunders": total,
             "by_phase": phases,
         }
+
+    async def get_blunders_by_difficulty(
+        self,
+        username: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        game_types: list[int] | None = None,
+    ) -> dict[str, object]:
+        query = """
+            SELECT
+                am.difficulty,
+                am.cp_loss,
+                g.time_control
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE am.classification = 3
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
+                END
+        """
+        params: list[object] = []
+
+        if username:
+            query += " AND g.username = ?"
+            params.append(username)
+
+        if start_date:
+            query += " AND g.end_time_utc >= ?"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND g.end_time_utc <= ?"
+            params.append(end_date)
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        game_types_set = set(game_types) if game_types else None
+
+        buckets: dict[str, dict[str, object]] = {
+            "easy": {"label": "easy", "count": 0, "total_cp_loss": 0.0},
+            "medium": {"label": "medium", "count": 0, "total_cp_loss": 0.0},
+            "hard": {"label": "hard", "count": 0, "total_cp_loss": 0.0},
+            "unscored": {"label": "unscored", "count": 0, "total_cp_loss": 0.0},
+        }
+
+        for row in rows:
+            difficulty = row[0]
+            cp_loss = row[1] or 0
+            time_control = row[2]
+
+            if game_types_set:
+                game_type = int(classify_game_type(time_control))
+                if game_type not in game_types_set:
+                    continue
+
+            if difficulty is None:
+                key = "unscored"
+            elif difficulty <= 30:
+                key = "easy"
+            elif difficulty <= 60:
+                key = "medium"
+            else:
+                key = "hard"
+
+            buckets[key]["count"] += 1
+            buckets[key]["total_cp_loss"] += cp_loss
+
+        total = sum(int(b["count"]) for b in buckets.values())
+        by_difficulty = []
+        for bucket_key in ("easy", "medium", "hard", "unscored"):
+            b = buckets[bucket_key]
+            count = int(b["count"])
+            if count == 0:
+                continue
+            avg_cp_loss = float(b["total_cp_loss"]) / count
+            percentage = (count / total * 100) if total > 0 else 0.0
+            by_difficulty.append(
+                {
+                    "difficulty": b["label"],
+                    "count": count,
+                    "percentage": round(percentage, 1),
+                    "avg_cp_loss": round(avg_cp_loss, 1),
+                }
+            )
+
+        return {
+            "total_blunders": total,
+            "by_difficulty": by_difficulty,
+        }

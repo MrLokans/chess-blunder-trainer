@@ -368,5 +368,22 @@
   "settings.features.dashboard_tactical_breakdown": "Errores por patrón táctico",
   "settings.features.dashboard_accuracy": "Gráficos de precisión",
   "settings.features.auto_sync": "Sincronización automática",
-  "settings.features.auto_analyze": "Análisis automático"
+  "settings.features.auto_analyze": "Análisis automático",
+  "dashboard.chart.blunders_by_difficulty": "Errores por dificultad",
+  "dashboard.chart.blunders_by_difficulty_desc": "Cuántos errores fueron fáciles de evitar frente a posiciones genuinamente complicadas.",
+  "dashboard.chart.no_difficulty_data": "No hay datos de dificultad disponibles aún. Vuelve a analizar partidas para calcular puntuaciones de dificultad.",
+  "dashboard.difficulty.easy": "Fácil",
+  "dashboard.difficulty.medium": "Medio",
+  "dashboard.difficulty.hard": "Difícil",
+  "dashboard.difficulty.unscored": "Sin puntuar",
+  "trainer.filters.difficulty": "Dificultad",
+  "settings.features.dashboard_difficulty_breakdown": "Errores por dificultad",
+  "settings.features.trainer_filter_difficulty": "Filtro de dificultad",
+  "dashboard.difficulty.help_label": "¿Qué es la dificultad?",
+  "dashboard.difficulty.help_title": "Cómo se calcula la dificultad",
+  "dashboard.difficulty.help_intro": "Cada error se puntúa de 0 a 100 según lo difícil que era encontrar la mejor jugada. Esto ayuda a separar los descuidos de las posiciones genuinamente complicadas.",
+  "dashboard.difficulty.help_easy": "La mejor jugada era una captura o jaque, o había muchas alternativas seguras. Deberías haberla visto.",
+  "dashboard.difficulty.help_medium": "La mejor jugada requería cálculo. Una mezcla de consideraciones tácticas y posicionales.",
+  "dashboard.difficulty.help_hard": "La mejor jugada era tranquila, no forzante, con pocas alternativas seguras. Incluso jugadores fuertes podrían no verla.",
+  "dashboard.difficulty.help_factors": "Factores: tipo de mejor jugada (captura/jaque = más fácil), número de jugadas legales seguras, profundidad del cálculo requerido."
 }

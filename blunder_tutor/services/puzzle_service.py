@@ -29,6 +29,7 @@ class PuzzleService:
         tactical_patterns: list[int] | None = None,
         game_types: list[int] | None = None,
         player_colors: list[int] | None = None,
+        difficulty_ranges: list[tuple[int, int]] | None = None,
     ) -> PuzzleWithAnalysis:
         puzzle = await self.trainer.pick_random_blunder(
             username=username,
@@ -41,6 +42,7 @@ class PuzzleService:
             tactical_patterns=tactical_patterns,
             game_types=game_types,
             player_colors=player_colors,
+            difficulty_ranges=difficulty_ranges,
         )
 
         if puzzle.best_move_uci and puzzle.best_move_san and puzzle.best_line:

@@ -489,7 +489,8 @@
    Phase Filter
    ========================================================================== */
 
-.phase-filter {
+.phase-filter,
+.difficulty-filter {
   display: flex;
   gap: var(--space-4);
   flex-wrap: wrap;

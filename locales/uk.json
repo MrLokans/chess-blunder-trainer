@@ -368,5 +368,22 @@
   "settings.features.dashboard_tactical_breakdown": "Помилки за тактичними патернами",
   "settings.features.dashboard_accuracy": "Графіки точності",
   "settings.features.auto_sync": "Автоматична синхронізація",
-  "settings.features.auto_analyze": "Автоматичний аналіз"
+  "settings.features.auto_analyze": "Автоматичний аналіз",
+  "dashboard.chart.blunders_by_difficulty": "Помилки за складністю",
+  "dashboard.chart.blunders_by_difficulty_desc": "Скільки помилок можна було легко уникнути, а скільки були справді складними.",
+  "dashboard.chart.no_difficulty_data": "Дані про складність поки відсутні. Перезапустіть аналіз для обчислення оцінок складності.",
+  "dashboard.difficulty.easy": "Легкі",
+  "dashboard.difficulty.medium": "Середні",
+  "dashboard.difficulty.hard": "Складні",
+  "dashboard.difficulty.unscored": "Без оцінки",
+  "trainer.filters.difficulty": "Складність",
+  "settings.features.dashboard_difficulty_breakdown": "Помилки за складністю",
+  "settings.features.trainer_filter_difficulty": "Фільтр за складністю",
+  "dashboard.difficulty.help_label": "Що таке складність?",
+  "dashboard.difficulty.help_title": "Як розраховується складність",
+  "dashboard.difficulty.help_intro": "Кожна помилка оцінюється від 0 до 100 за тим, наскільки важко було знайти найкращий хід. Це допомагає відрізнити неуважність від справді складних позицій.",
+  "dashboard.difficulty.help_easy": "Найкращий хід — взяття або шах, або було багато безпечних альтернатив. Ви повинні були його побачити.",
+  "dashboard.difficulty.help_medium": "Найкращий хід вимагав розрахунку. Поєднання тактичних і позиційних міркувань.",
+  "dashboard.difficulty.help_hard": "Найкращий хід — тихий, не форсуючий хід з малою кількістю безпечних альтернатив. Навіть сильні гравці можуть його пропустити.",
+  "dashboard.difficulty.help_factors": "Фактори: тип найкращого ходу (взяття/шах = простіше), кількість безпечних ходів, глибина необхідного розрахунку."
 }

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+import chess
 import chess.engine
 
 from blunder_tutor.analysis.pipeline.context import StepResult
@@ -30,6 +31,51 @@ def _classify(delta: int, thresholds: Thresholds) -> str:
 
 def _class_to_int(label: str) -> int:
     return {"good": 0, "inaccuracy": 1, "mistake": 2, "blunder": 3}[label]
+
+
+def compute_difficulty(
+    board: chess.Board,
+    best_move_uci: str | None,
+    cp_loss: int,
+    classification: int,
+) -> int:
+    if classification < _class_to_int("inaccuracy"):
+        return 0
+
+    if not best_move_uci:
+        return 50
+
+    try:
+        best_move = chess.Move.from_uci(best_move_uci)
+    except ValueError:
+        return 50
+
+    score = 0
+
+    # Quiet (non-forcing) best moves are harder to find
+    is_capture = board.is_capture(best_move)
+    gives_check = board.gives_check(best_move)
+    if not is_capture and not gives_check:
+        score += 40
+    elif is_capture and not gives_check:
+        score += 15
+    else:
+        score += 5
+
+    # Fewer safe alternatives → harder position (less choice = more forgivable)
+    legal_count = board.legal_moves.count()
+    if legal_count <= 3:
+        score += 30
+    elif legal_count <= 8:
+        score += 20
+    elif legal_count <= 15:
+        score += 10
+
+    # Very large cp_loss with a quiet best move suggests a deep tactic
+    if cp_loss >= 400 and not is_capture and not gives_check:
+        score += 15
+
+    return min(score, 100)
 
 
 class MoveQualityStep(AnalysisStep):
@@ -73,6 +119,16 @@ class MoveQualityStep(AnalysisStep):
 
                 class_label = _classify(cp_loss, thresholds)
 
+            classification = _class_to_int(class_label)
+            board = move_data.get("board")
+            difficulty = (
+                compute_difficulty(
+                    board, move_data["best_move_uci"], cp_loss, classification
+                )
+                if board is not None
+                else None
+            )
+
             moves.append(
                 {
                     "ply": move_data["ply"],
@@ -84,11 +140,12 @@ class MoveQualityStep(AnalysisStep):
                     "eval_after": eval_after,
                     "delta": delta,
                     "cp_loss": cp_loss,
-                    "classification": _class_to_int(class_label),
+                    "classification": classification,
                     "best_move_uci": move_data["best_move_uci"],
                     "best_move_san": move_data["best_move_san"],
                     "best_line": move_data["best_line"],
                     "best_move_eval": move_data["best_move_eval"],
+                    "difficulty": difficulty,
                 }
             )
 

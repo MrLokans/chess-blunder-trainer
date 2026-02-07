@@ -9,12 +9,10 @@
   "common.clear": "Clear",
   "common.no_activity": "{date}: No activity",
   "common.back_to_trainer": "← Back to Trainer",
-
   "nav.trainer": "Trainer",
   "nav.dashboard": "Dashboard",
   "nav.management": "Management",
   "nav.settings": "Settings",
-
   "chess.phase.opening": "Opening",
   "chess.phase.middlegame": "Middlegame",
   "chess.phase.endgame": "Endgame",
@@ -24,10 +22,8 @@
   "chess.color.white": "White",
   "chess.color.black": "Black",
   "chess.color.both": "Both",
-
   "trainer.title": "Blunder Trainer",
   "trainer.loading_stats": "Loading stats...",
-
   "trainer.empty.no_games_title": "No games imported",
   "trainer.empty.no_games_message": "Import your games from Lichess or Chess.com to start training on your blunders.",
   "trainer.empty.no_games_action": "Import Games",
@@ -40,40 +36,31 @@
   "trainer.empty.default_title": "No puzzles available",
   "trainer.empty.default_message": "Import your games to start training on your blunders.",
   "trainer.empty.default_action": "Import Games",
-
   "trainer.phase.guess": "Find the best move",
   "trainer.phase.correct": "Correct!",
   "trainer.phase.explore": "Explore the position",
-
   "trainer.color.playing_as_white": "Playing as White",
   "trainer.color.playing_as_black": "Playing as Black",
-
   "trainer.legend.your_blunder": "Your blunder",
   "trainer.legend.best_move": "Best move",
   "trainer.legend.your_move": "Your move",
   "trainer.legend.tactical_squares": "Tactical squares",
-
   "trainer.toggle.show_arrows": "Show move arrows",
   "trainer.toggle.show_threats": "Show threats (hanging pieces, pins, checks)",
   "trainer.toggle.show_tactics": "Highlight tactical pattern (after reveal)",
-
   "trainer.section.your_blunder": "Your Blunder",
   "trainer.blunder.eval_label": "Evaluation:",
   "trainer.blunder.cp_loss": "{loss} pawns",
-
   "trainer.section.best_move": "Best Move",
   "trainer.best_move.line_label": "Line:",
   "trainer.best_move.tactical_pattern": "Tactical Pattern",
-
   "trainer.section.instructions": "Instructions",
   "trainer.instructions.goal": "Goal:",
   "trainer.instructions.text": "Find a better move than your blunder.",
   "trainer.instructions.drag": "Drag pieces to make a move, then click Submit to check.",
   "trainer.instructions.show_best": "Click \"Show Best\" to reveal the engine's recommendation.",
-
   "trainer.section.exploration": "Exploration",
   "trainer.move_indicator.label": "Your move:",
-
   "trainer.button.submit": "Submit",
   "trainer.button.reset": "Reset",
   "trainer.button.show_best": "Show Best",
@@ -81,10 +68,8 @@
   "trainer.button.play_best": "Play Best Move",
   "trainer.button.undo": "Undo",
   "trainer.button.view_dashboard": "View Dashboard",
-
   "trainer.link.original_game": "Original game",
   "trainer.link.analyze_lichess": "Analyze on Lichess",
-
   "trainer.filters.title": "Puzzle Filters",
   "trainer.filters.game_type": "Game Type",
   "trainer.filters.color": "Play as Color",
@@ -96,12 +81,10 @@
   "trainer.filters.tactical_hanging": "Hanging",
   "trainer.filters.tactical_skewer": "Skewer",
   "trainer.filters.tactical_discovery": "Discovery",
-
   "trainer.game_type.bullet": "Bullet",
   "trainer.game_type.blitz": "Blitz",
   "trainer.game_type.rapid": "Rapid",
   "trainer.game_type.classical": "Classical",
-
   "trainer.feedback.excellent": "Excellent!",
   "trainer.feedback.found_best": "You found the best move: {move}",
   "trainer.feedback.same_blunder": "Same blunder!",
@@ -115,7 +98,6 @@
   "trainer.feedback.no_move": "Drag a piece to make a move first.",
   "trainer.feedback.best_revealed": "Best move revealed",
   "trainer.feedback.best_revealed_detail": "The best move was {move}",
-
   "trainer.shortcuts.title": "Keyboard Shortcuts",
   "trainer.shortcuts.submit": "Submit move",
   "trainer.shortcuts.next": "Next puzzle",
@@ -129,18 +111,15 @@
   "trainer.shortcuts.undo": "Undo move",
   "trainer.shortcuts.show_help": "Show this help",
   "trainer.shortcuts.close_help": "Close this help",
-
   "trainer.stats.accuracy": "Accuracy",
   "trainer.stats.total_attempts": "Total Attempts",
   "trainer.stats.correct": "Correct",
   "trainer.stats.incorrect": "Incorrect",
   "trainer.stats.unique_puzzles": "Unique Puzzles",
-
   "heatmap.total": "{count, plural, one {# puzzle} other {# puzzles}}",
   "heatmap.days": "{count, plural, one {# active day} other {# active days}}",
   "heatmap.tooltip": "{date}: {total, plural, one {# puzzle} other {# puzzles}} (✓{correct} ✗{incorrect})",
   "heatmap.error": "Failed to load activity data",
-
   "dashboard.title": "Blunder Tutor Dashboard",
   "dashboard.filter.from": "From:",
   "dashboard.filter.to": "To:",
@@ -150,36 +129,29 @@
   "dashboard.filter.last_90d": "Last 90 days",
   "dashboard.filter.last_1y": "Last year",
   "dashboard.filter.all_time": "All time",
-
   "dashboard.stat.total_games": "Total Games",
   "dashboard.stat.analyzed_games": "Analyzed Games",
   "dashboard.stat.total_blunders": "Total Blunders",
   "dashboard.stat.analysis_progress": "Analysis Progress",
-
   "dashboard.analysis.running": "Analysis running: {current}/{total} ({percent}%)",
   "dashboard.analysis.completed": "Last analysis: completed",
   "dashboard.analysis.failed": "Last analysis: failed",
   "dashboard.analysis.retry": "Retry",
-
   "dashboard.chart.puzzle_activity": "Puzzle Activity",
   "dashboard.chart.puzzle_activity_desc": "Your puzzle solving activity over the past year.",
   "dashboard.chart.loading_activity": "Loading activity data...",
-
   "dashboard.chart.blunders_by_phase": "Blunders by Game Phase",
   "dashboard.chart.blunders_by_phase_desc": "Understand where in your games you tend to make mistakes.",
   "dashboard.chart.phase_percent": "{percentage}% of blunders",
   "dashboard.chart.avg_loss": "Avg. loss: {loss} pawns",
   "dashboard.chart.no_phase_data": "No blunder data available yet. Analyze some games to see your phase breakdown.",
-
   "dashboard.chart.blunders_by_color": "Blunders by Color",
   "dashboard.chart.blunders_by_color_desc": "Compare your blunder rate when playing as white versus black.",
   "dashboard.chart.as_color": "As {color}",
   "dashboard.chart.no_color_data": "No blunder data available yet. Analyze some games to see your color breakdown.",
-
   "dashboard.chart.blunders_by_game_type": "Blunders by Game Type",
   "dashboard.chart.blunders_by_game_type_desc": "Compare your blunder rate across different time controls.",
   "dashboard.chart.no_game_type_data": "No game type data available yet. Analyze some games to see your blunders by time control.",
-
   "dashboard.chart.blunders_by_opening": "Blunders by Opening",
   "dashboard.chart.blunders_by_opening_desc": "See which openings give you the most trouble.",
   "dashboard.chart.eco_opening": "Opening",
@@ -187,18 +159,15 @@
   "dashboard.chart.eco_avg_loss": "Avg. Loss",
   "dashboard.chart.eco_games": "Games",
   "dashboard.chart.no_opening_data": "No opening data available yet. Analyze some games to see your opening breakdown.",
-
   "dashboard.chart.blunders_by_tactical": "Blunders by Tactical Pattern",
   "dashboard.chart.blunders_by_tactical_desc": "Understand what types of tactical mistakes you make most often.",
   "dashboard.chart.no_tactical_data": "No tactical pattern data available yet. Run a backfill to analyze existing blunders for tactical patterns.",
-
   "dashboard.chart.game_breakdown": "Game Breakdown by Source",
   "dashboard.chart.source": "Source",
   "dashboard.chart.username": "Username",
   "dashboard.chart.total_games": "Total Games",
   "dashboard.chart.analyzed": "Analyzed",
   "dashboard.chart.pending": "Pending",
-
   "dashboard.chart.accuracy_by_date": "Game Accuracy by Date",
   "dashboard.chart.accuracy_by_date_desc": "Track your game accuracy over time. Higher = better play (0–100 scale).",
   "dashboard.chart.no_accuracy_data": "No game data available yet. Import and analyze some games to see your accuracy trends.",
@@ -206,14 +175,11 @@
   "dashboard.chart.accuracy": "Accuracy",
   "dashboard.chart.games_axis": "Games",
   "dashboard.chart.accuracy_axis": "Accuracy %",
-
   "dashboard.chart.accuracy_by_hour": "Game Accuracy by Hour of Day",
   "dashboard.chart.accuracy_by_hour_desc": "Discover when you play your most accurate chess.",
   "dashboard.chart.no_hourly_data": "No game data available yet. Import and analyze some games to see your hourly accuracy patterns.",
   "dashboard.chart.hour_axis": "Hour of Day (UTC)",
-
   "dashboard.link.manage_imports": "Manage Imports & Sync",
-
   "dashboard.game_type.ultrabullet": "UltraBullet",
   "dashboard.game_type.bullet": "Bullet",
   "dashboard.game_type.blitz": "Blitz",
@@ -221,7 +187,6 @@
   "dashboard.game_type.classical": "Classical",
   "dashboard.game_type.correspondence": "Correspondence",
   "dashboard.game_type.unknown": "Unknown",
-
   "dashboard.tactical.fork": "Fork",
   "dashboard.tactical.pin": "Pin",
   "dashboard.tactical.skewer": "Skewer",
@@ -232,7 +197,6 @@
   "dashboard.tactical.back_rank": "Back Rank",
   "dashboard.tactical.trapped": "Trapped",
   "dashboard.tactical.other": "Other",
-
   "management.title": "Management",
   "management.engine.title": "Chess Engine Status",
   "management.engine.loading": "Loading engine status...",
@@ -243,7 +207,6 @@
   "management.engine.not_configured": "Not configured",
   "management.engine.install_hint": "Please ensure Stockfish is installed and the path is correct.",
   "management.engine.load_failed": "Failed to load engine status: {error}",
-
   "management.import.title": "Bulk Import Games",
   "management.import.source": "Source",
   "management.import.select_source": "Select source...",
@@ -258,13 +221,11 @@
   "management.import.completed": "Import completed!",
   "management.import.failed": "Import failed: {error}",
   "management.import.start_failed": "Failed to start import: {error}",
-
   "management.sync.title": "Sync Games",
   "management.sync.description": "Fetch new games from all configured sources.",
   "management.sync.button": "Sync Now",
   "management.sync.started": "Sync started! Check Recent Jobs for progress.",
   "management.sync.failed": "Failed to start sync: {error}",
-
   "management.analysis.title": "Analyze Games",
   "management.analysis.pending": "{count} games pending analysis",
   "management.analysis.start": "Analyze All Games",
@@ -273,7 +234,6 @@
   "management.analysis.started": "Analysis started!",
   "management.analysis.completed": "Analysis completed!",
   "management.analysis.failed": "Analysis failed: {error}",
-
   "management.backfill_phases.title": "Backfill Game Phases",
   "management.backfill_phases.description": "Backfill phase data (opening/middlegame/endgame) for analyzed games.",
   "management.backfill_phases.pending": "{count} games pending phase backfill",
@@ -282,7 +242,6 @@
   "management.backfill_phases.started": "Backfill started!",
   "management.backfill_phases.completed": "Backfill completed!",
   "management.backfill_phases.failed": "Backfill failed: {error}",
-
   "management.backfill_eco.title": "Backfill ECO Codes",
   "management.backfill_eco.description": "Backfill ECO opening codes for analyzed games.",
   "management.backfill_eco.pending": "{count} games pending ECO classification",
@@ -291,7 +250,6 @@
   "management.backfill_eco.started": "ECO backfill started!",
   "management.backfill_eco.completed": "ECO backfill completed!",
   "management.backfill_eco.failed": "ECO backfill failed: {error}",
-
   "management.jobs.title": "Recent Jobs",
   "management.jobs.type": "Type",
   "management.jobs.status": "Status",
@@ -302,7 +260,6 @@
   "management.jobs.actions": "Actions",
   "management.jobs.none": "No jobs found",
   "management.jobs.delete_confirm": "Are you sure you want to delete this job?",
-
   "management.danger.title": "Danger Zone",
   "management.danger.description": "Delete all imported games, analysis results, puzzle attempts, and job history.",
   "management.danger.warning": "This action cannot be undone.",
@@ -314,7 +271,6 @@
   "management.danger.failed": "Delete failed: {error}",
   "management.danger.confirm1": "Are you sure you want to delete ALL data?\n\nThis will permanently remove:\n• All imported games\n• All analysis results\n• All puzzle attempts\n• All job history\n\nThis action cannot be undone!",
   "management.danger.confirm2": "This is your final warning!\n\nClick OK to permanently delete all data.",
-
   "settings.title": "Settings",
   "settings.subtitle": "Manage your chess usernames",
   "settings.username_required": "At least one username is required to continue training.",
@@ -379,7 +335,6 @@
   "settings.save_error": "Network error. Please try again.",
   "settings.username_error": "Please provide at least one username (Lichess or Chess.com)",
   "settings.setting_up": "Saving...",
-
   "setup.title": "Welcome to Blunder Tutor",
   "setup.subtitle": "Configure your chess usernames to get started",
   "setup.username_required": "At least one username is required to train with your games.",
@@ -410,9 +365,25 @@
   "settings.features.dashboard_accuracy": "Accuracy charts",
   "settings.features.auto_sync": "Automatic sync",
   "settings.features.auto_analyze": "Automatic analysis",
-
   "setup.username_error": "Please provide at least one username (Lichess or Chess.com)",
   "setup.failed": "Setup failed. Please try again.",
   "setup.help": "Need help? Check the {link}",
-  "setup.documentation": "documentation"
+  "setup.documentation": "documentation",
+  "dashboard.chart.blunders_by_difficulty": "Blunders by Difficulty",
+  "dashboard.chart.blunders_by_difficulty_desc": "See how many of your blunders were easy to avoid versus genuinely tricky positions.",
+  "dashboard.chart.no_difficulty_data": "No difficulty data available yet. Re-analyze games to compute difficulty scores.",
+  "dashboard.difficulty.easy": "Easy",
+  "dashboard.difficulty.medium": "Medium",
+  "dashboard.difficulty.hard": "Hard",
+  "dashboard.difficulty.unscored": "Unscored",
+  "trainer.filters.difficulty": "Difficulty",
+  "settings.features.dashboard_difficulty_breakdown": "Blunders by difficulty",
+  "settings.features.trainer_filter_difficulty": "Difficulty filter",
+  "dashboard.difficulty.help_label": "What is difficulty?",
+  "dashboard.difficulty.help_title": "How Difficulty Is Calculated",
+  "dashboard.difficulty.help_intro": "Each blunder is scored 0–100 based on how hard the best move was to find. This helps separate careless mistakes from genuinely tricky positions.",
+  "dashboard.difficulty.help_easy": "The best move was a capture or check, or there were many safe alternatives. You should have seen it.",
+  "dashboard.difficulty.help_medium": "The best move required some calculation. A mix of tactical and positional considerations.",
+  "dashboard.difficulty.help_hard": "The best move was a quiet, non-forcing move with few safe alternatives. Even strong players might miss it.",
+  "dashboard.difficulty.help_factors": "Factors: best move type (capture/check = easier), number of legal non-losing moves, and depth of the required calculation."
 }
