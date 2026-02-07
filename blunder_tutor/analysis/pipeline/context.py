@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING, Any
 import chess.engine
 import chess.pgn
 
+from blunder_tutor.constants import DEFAULT_ENGINE_DEPTH
+
 if TYPE_CHECKING:
     from blunder_tutor.analysis.thresholds import Thresholds
     from blunder_tutor.repositories.analysis import AnalysisRepository
@@ -28,11 +30,15 @@ class StepContext:
     game_repo: GameRepository
     engine_path: str
     thresholds: Thresholds
-    depth: int | None = 14
+    depth: int | None = DEFAULT_ENGINE_DEPTH
     time_limit: float | None = None
     step_results: dict[str, StepResult] = field(default_factory=dict)
     force_rerun: bool = False
     engine: chess.engine.UciProtocol | None = None
+
+    def __post_init__(self) -> None:
+        if self.depth is None:
+            self.depth = DEFAULT_ENGINE_DEPTH
 
     def get_step_result(self, step_id: str) -> StepResult | None:
         return self.step_results.get(step_id)

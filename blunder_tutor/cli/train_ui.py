@@ -3,6 +3,7 @@ import argparse
 import uvicorn
 
 from blunder_tutor.cli.base import CLICommand
+from blunder_tutor.constants import DEFAULT_ENGINE_DEPTH
 from blunder_tutor.web.app import AppConfig, create_app
 
 
@@ -28,7 +29,7 @@ class TrainUICommand(CLICommand):
         train_ui_parser.add_argument(
             "--depth",
             type=int,
-            default=14,
+            default=DEFAULT_ENGINE_DEPTH,
             help="Engine analysis depth",
         )
         train_ui_parser.add_argument(

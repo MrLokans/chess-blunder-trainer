@@ -8,21 +8,20 @@ from blunder_tutor.repositories.base import BaseDbRepository
 
 class SettingsRepository(BaseDbRepository):
     async def ensure_settings_table(self) -> None:
-        conn = await self.get_connection()
-        await conn.executescript(
-            """
-            CREATE TABLE IF NOT EXISTS app_settings (
-                key TEXT PRIMARY KEY,
-                value TEXT,
-                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-            );
-            INSERT OR IGNORE INTO app_settings (key, value) VALUES
-                ('setup_completed', 'false'),
-                ('lichess_username', NULL),
-                ('chesscom_username', NULL);
-            """
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.executescript(
+                """
+                CREATE TABLE IF NOT EXISTS app_settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT,
+                    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                INSERT OR IGNORE INTO app_settings (key, value) VALUES
+                    ('setup_completed', 'false'),
+                    ('lichess_username', NULL),
+                    ('chesscom_username', NULL);
+                """
+            )
 
     async def get_setting(self, key: str) -> str | None:
         conn = await self.get_connection()
@@ -33,15 +32,14 @@ class SettingsRepository(BaseDbRepository):
         return row[0] if row else None
 
     async def set_setting(self, key: str, value: str | None) -> None:
-        conn = await self.get_connection()
-        await conn.execute(
-            """
-            INSERT OR REPLACE INTO app_settings (key, value, updated_at)
-            VALUES (?, ?, ?)
-            """,
-            (key, value, datetime.utcnow().isoformat()),
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.execute(
+                """
+                INSERT OR REPLACE INTO app_settings (key, value, updated_at)
+                VALUES (?, ?, ?)
+                """,
+                (key, value, datetime.utcnow().isoformat()),
+            )
 
     async def get_all_settings(self) -> dict[str, str]:
         conn = await self.get_connection()

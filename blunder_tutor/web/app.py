@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.background.executor import JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
@@ -25,12 +26,10 @@ from blunder_tutor.web.middleware import LocaleMiddleware, SetupCheckMiddleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Async lifespan context manager for FastAPI app startup/shutdown."""
-    config: AppConfig = app.state.config
 
-    # Startup: create async engine
-    transport, engine = await chess.engine.popen_uci(config.engine_path)
-    app.state.transport = transport
-    app.state.engine = engine
+    # Startup: create work coordinator with engine pool
+    coordinator: WorkCoordinator = app.state.work_coordinator
+    await coordinator.start()
 
     # Load scheduler settings asynchronously
     settings_repo = app.state.settings_repo
@@ -50,7 +49,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await app.state.job_executor.shutdown()
     app.state.scheduler.shutdown()
-    await app.state.engine.quit()
+    await coordinator.shutdown()
     await settings_repo.close()
 
 
@@ -79,11 +78,15 @@ def create_app(
     limit = (
         chess.engine.Limit(time=config.engine.time_limit)
         if config.engine.time_limit is not None
-        else chess.engine.Limit(depth=config.depth)
+        else chess.engine.Limit(depth=config.engine.depth)
     )
     app.state.config = config
     app.state.templates = templates
     app.state.limit = limit
+
+    # Initialize work coordinator (engine pool + task queue)
+    work_coordinator = WorkCoordinator(engine_path=config.engine_path)
+    app.state.work_coordinator = work_coordinator
 
     # Initialize event bus and WebSocket manager
     event_bus = EventBus()
@@ -97,6 +100,7 @@ def create_app(
         event_bus=event_bus,
         db_path=config.data.db_path,
         engine_path=config.engine_path,
+        work_coordinator=work_coordinator,
     )
     app.state.job_executor = job_executor
 

@@ -4,6 +4,7 @@ import asyncio
 from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.analysis.pipeline import PipelinePreset
 from blunder_tutor.cli.base import CLICommand
+from blunder_tutor.constants import DEFAULT_ENGINE_DEPTH
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories import GameRepository
 from blunder_tutor.repositories.analysis import AnalysisRepository
@@ -51,7 +52,7 @@ class AnalyzeCommand(CLICommand):
         analyze_parser.add_argument(
             "--depth",
             type=int,
-            default=14,
+            default=DEFAULT_ENGINE_DEPTH,
             help="Engine analysis depth",
         )
         analyze_parser.add_argument(

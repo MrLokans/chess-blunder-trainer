@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import chess
 import chess.engine
 
 from blunder_tutor.constants import MATE_SCORE_WEB
 from blunder_tutor.utils.chess_utils import board_from_fen, format_eval
+
+if TYPE_CHECKING:
+    from blunder_tutor.analysis.engine_pool import WorkCoordinator
 
 
 @dataclass
@@ -25,15 +29,20 @@ class MoveEvaluation:
 
 
 class AnalysisService:
-    def __init__(self, engine: chess.engine.UciProtocol, limit: chess.engine.Limit):
-        self.engine = engine
+    def __init__(self, coordinator: WorkCoordinator, limit: chess.engine.Limit) -> None:
+        self._coordinator = coordinator
         self.limit = limit
 
     async def analyze_position(
         self, fen: str, player_color: str | None = None
     ) -> PositionAnalysis:
         board = chess.Board(fen)
-        info = await self.engine.analyse(board, self.limit)
+        limit = self.limit
+
+        async def _work(engine: chess.engine.UciProtocol) -> chess.engine.InfoDict:
+            return await engine.analyse(board, limit)
+
+        info = await self._coordinator.submit(_work)
 
         score = info.get("score")
         eval_cp = score.white().score(mate_score=MATE_SCORE_WEB) if score else 0
@@ -41,13 +50,12 @@ class AnalysisService:
         pv = info.get("pv", [])
         best_move_uci = None
         best_move_san = None
-        best_line = []
+        best_line: list[str] = []
 
         if pv:
             best_move_uci = pv[0].uci()
             best_move_san = board.san(pv[0])
 
-            # Build continuation line in SAN notation (up to 5 moves)
             temp_board = board.copy()
             for move in pv[:5]:
                 best_line.append(temp_board.san(move))
@@ -78,9 +86,13 @@ class AnalysisService:
         if move not in board.legal_moves:
             raise ValueError(f"Illegal move: {move_uci}")
 
-        # Make the move and evaluate
         board.push(move)
-        info = await self.engine.analyse(board, self.limit)
+        limit = self.limit
+
+        async def _work(engine: chess.engine.UciProtocol) -> chess.engine.InfoDict:
+            return await engine.analyse(board, limit)
+
+        info = await self._coordinator.submit(_work)
 
         score = info.get("score")
         eval_cp = score.white().score(mate_score=MATE_SCORE_WEB) if score else 0

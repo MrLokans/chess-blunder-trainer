@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 import chess
@@ -13,18 +12,27 @@ from blunder_tutor.utils.chess_utils import score_to_cp
 if TYPE_CHECKING:
     from blunder_tutor.analysis.pipeline.context import StepContext
 
+MATE_SCORE_ANALYSIS = 100000
 
-def _iter_moves(
+
+def _collect_positions(
     game: chess.pgn.Game,
-) -> Iterable[tuple[int, chess.Move, chess.Board]]:
+) -> tuple[list[chess.Board], list[tuple[int, chess.Move, chess.Color, str]]]:
     board = game.board()
+    positions = [board.copy()]
+    move_metadata: list[tuple[int, chess.Move, chess.Color, str]] = []
     move_number = 1
+
     for move in game.mainline_moves():
-        board_before = board.copy(stack=False)
-        yield move_number, move, board_before
+        player = board.turn
+        san = board.san(move)
+        move_metadata.append((move_number, move, player, san))
         board.push(move)
+        positions.append(board.copy())
         if board.turn == chess.WHITE:
             move_number += 1
+
+    return positions, move_metadata
 
 
 class StockfishAnalysisStep(AnalysisStep):
@@ -39,19 +47,33 @@ class StockfishAnalysisStep(AnalysisStep):
             else chess.engine.Limit(time=ctx.time_limit)
         )
 
-        move_evals: list[dict] = []
-
         engine = ctx.engine
         owns_engine = engine is None
         if owns_engine:
             _, engine = await chess.engine.popen_uci(ctx.engine_path)
 
+        info_flags = chess.engine.INFO_SCORE | chess.engine.INFO_PV
+        game_id = ctx.game_id
+
         try:
-            for move_number, move, board in _iter_moves(ctx.game):
-                player = board.turn
-                info_before = await engine.analyse(board, limit)
+            positions, move_metadata = _collect_positions(ctx.game)
+
+            infos: list[chess.engine.InfoDict | None] = []
+            for pos in positions:
+                if pos.is_checkmate():
+                    infos.append(None)
+                else:
+                    infos.append(
+                        await engine.analyse(pos, limit, game=game_id, info=info_flags)
+                    )
+
+            move_evals: list[dict] = []
+            for i, (move_number, move, player, san) in enumerate(move_metadata):
+                board = positions[i]
+                info_before = infos[i]
+                assert info_before is not None
+
                 eval_before = score_to_cp(info_before["score"], player)
-                san = board.san(move)
                 ply = (board.fullmove_number - 1) * 2 + (
                     1 if player == chess.WHITE else 2
                 )
@@ -59,7 +81,7 @@ class StockfishAnalysisStep(AnalysisStep):
                 pv = info_before.get("pv", [])
                 best_move_uci = None
                 best_move_san = None
-                best_line = []
+                best_line: list[str] = []
                 best_move_eval = None
 
                 if pv:
@@ -71,18 +93,14 @@ class StockfishAnalysisStep(AnalysisStep):
                         best_line.append(temp_board.san(pv_move))
                         temp_board.push(pv_move)
 
-                    best_move_board = board.copy()
-                    best_move_board.push(pv[0])
-                    info_best = await engine.analyse(best_move_board, limit)
-                    best_move_eval = score_to_cp(info_best["score"], player)
+                    best_move_eval = eval_before
 
-                board_after = board.copy(stack=False)
-                board_after.push(move)
-
+                board_after = positions[i + 1]
                 if board_after.is_checkmate():
-                    eval_after = 100000  # MATE_SCORE_ANALYSIS
+                    eval_after = MATE_SCORE_ANALYSIS
                 else:
-                    info_after = await engine.analyse(board_after, limit)
+                    info_after = infos[i + 1]
+                    assert info_after is not None
                     eval_after = score_to_cp(info_after["score"], player)
 
                 move_evals.append(

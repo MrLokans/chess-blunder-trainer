@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from blunder_tutor.analysis.eco import classify_opening
@@ -8,6 +9,8 @@ from blunder_tutor.analysis.pipeline.steps.base import AnalysisStep
 
 if TYPE_CHECKING:
     from blunder_tutor.analysis.pipeline.context import StepContext
+
+logger = logging.getLogger(__name__)
 
 
 class ECOClassifyStep(AnalysisStep):
@@ -20,9 +23,17 @@ class ECOClassifyStep(AnalysisStep):
         for move in ctx.game.mainline_moves():
             board.push(move)
 
-        eco = classify_opening(board)
-        eco_code = eco.code if eco else None
-        eco_name = eco.name if eco else None
+        eco_code = None
+        eco_name = None
+        try:
+            eco = classify_opening(board)
+            if eco:
+                eco_code = eco.code
+                eco_name = eco.name
+        except Exception:
+            logger.debug(
+                "ECO classification failed for %s, skipping", ctx.game_id, exc_info=True
+            )
 
         await ctx.analysis_repo.update_game_eco(ctx.game_id, eco_code, eco_name)
 

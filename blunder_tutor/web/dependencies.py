@@ -5,6 +5,7 @@ from typing import Annotated
 import chess.engine
 from fastapi import Depends, Request
 
+from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
@@ -116,8 +117,8 @@ def get_scheduler(
     return request.app.state.scheduler
 
 
-def get_engine(request: Request) -> chess.engine.UciProtocol:
-    return request.app.state.engine
+def get_work_coordinator(request: Request) -> WorkCoordinator:
+    return request.app.state.work_coordinator
 
 
 def get_engine_limit(request: Request) -> chess.engine.Limit:
@@ -125,10 +126,10 @@ def get_engine_limit(request: Request) -> chess.engine.Limit:
 
 
 def get_analysis_service(
-    engine: Annotated[chess.engine.UciProtocol, Depends(get_engine)],
+    coordinator: Annotated[WorkCoordinator, Depends(get_work_coordinator)],
     limit: Annotated[chess.engine.Limit, Depends(get_engine_limit)],
 ) -> AnalysisService:
-    return AnalysisService(engine=engine, limit=limit)
+    return AnalysisService(coordinator=coordinator, limit=limit)
 
 
 async def get_trainer(
@@ -165,7 +166,7 @@ JobServiceDep = Annotated[JobService, Depends(get_job_service)]
 GameRepoDep = Annotated[GameRepository, Depends(get_game_repository)]
 AnalysisRepoDep = Annotated[AnalysisRepository, Depends(get_analysis_repository)]
 SchedulerDep = Annotated[BackgroundScheduler, Depends(get_scheduler)]
-EngineDep = Annotated[chess.engine.UciProtocol, Depends(get_engine)]
+WorkCoordinatorDep = Annotated[WorkCoordinator, Depends(get_work_coordinator)]
 LimitDep = Annotated[chess.engine.Limit, Depends(get_engine_limit)]
 AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]
 TrainerDep = Annotated[Trainer, Depends(get_trainer)]

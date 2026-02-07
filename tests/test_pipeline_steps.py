@@ -157,6 +157,113 @@ class TestMoveQualityStep:
         assert "classification" in moves[0]
 
 
+class TestStockfishAnalysisStep:
+    @pytest.fixture
+    def short_game(self):
+        pgn_text = """[Event "Test"]
+[Site "?"]
+[Date "2024.01.01"]
+[Round "1"]
+[White "Player1"]
+[Black "Player2"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 1-0"""
+        return chess.pgn.read_game(io.StringIO(pgn_text))
+
+    def _make_mock_score(self, cp_value: int) -> MagicMock:
+        score = MagicMock()
+        pov_score = MagicMock()
+        pov_score.score.return_value = cp_value
+        pov_score.is_mate.return_value = False
+        score.pov.return_value = pov_score
+        return score
+
+    async def test_single_pass_analyse_call_count(self, short_game):
+        from blunder_tutor.analysis.pipeline.steps.stockfish import (
+            StockfishAnalysisStep,
+        )
+
+        def analyse_side_effect(board, _limit, **_kwargs):
+            legal_moves = list(board.legal_moves)
+            pv = [legal_moves[0]] if legal_moves else []
+            return {"score": self._make_mock_score(20), "pv": pv}
+
+        mock_engine = AsyncMock()
+        mock_engine.analyse = AsyncMock(side_effect=analyse_side_effect)
+
+        analysis_repo = AsyncMock()
+        analysis_repo.is_step_completed = AsyncMock(return_value=False)
+
+        ctx = StepContext(
+            game_id="test",
+            game=short_game,
+            analysis_repo=analysis_repo,
+            game_repo=AsyncMock(),
+            engine_path="/fake",
+            engine=mock_engine,
+            thresholds=Thresholds(),
+            depth=14,
+        )
+
+        step = StockfishAnalysisStep()
+        result = await step.execute(ctx)
+        assert result.success is True
+
+        # 5 moves → 6 positions evaluated in single pass, no extra calls
+        # Old implementation: 5 info_before + 5 info_after + 5 info_best = 15
+        n_moves = 5
+        n_positions = n_moves + 1
+        assert mock_engine.analyse.call_count == n_positions
+
+        assert len(result.data["move_evals"]) == n_moves
+
+    async def test_output_fields_present(self, short_game):
+        from blunder_tutor.analysis.pipeline.steps.stockfish import (
+            StockfishAnalysisStep,
+        )
+
+        def analyse_side_effect(board, _limit, **_kwargs):
+            legal_moves = list(board.legal_moves)
+            pv = [legal_moves[0]] if legal_moves else []
+            return {"score": self._make_mock_score(20), "pv": pv}
+
+        mock_engine = AsyncMock()
+        mock_engine.analyse = AsyncMock(side_effect=analyse_side_effect)
+
+        ctx = StepContext(
+            game_id="test",
+            game=short_game,
+            analysis_repo=AsyncMock(),
+            game_repo=AsyncMock(),
+            engine_path="/fake",
+            engine=mock_engine,
+            thresholds=Thresholds(),
+            depth=14,
+        )
+
+        step = StockfishAnalysisStep()
+        result = await step.execute(ctx)
+
+        required_keys = {
+            "ply",
+            "move_number",
+            "player",
+            "uci",
+            "san",
+            "eval_before",
+            "eval_after",
+            "info_before",
+            "best_move_uci",
+            "best_move_san",
+            "best_line",
+            "best_move_eval",
+            "board",
+        }
+        for entry in result.data["move_evals"]:
+            assert set(entry.keys()) == required_keys
+
+
 class TestStepIntegration:
     def test_all_steps_have_unique_ids(self):
         from blunder_tutor.analysis.pipeline.steps import get_all_steps

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from collections.abc import Coroutine
+from dataclasses import dataclass
 from typing import Any
 
 from blunder_tutor.events.event_bus import EventBus
@@ -11,12 +13,24 @@ from blunder_tutor.repositories.job_repository import JobRepository
 
 logger = logging.getLogger(__name__)
 
+PROGRESS_FLUSH_INTERVAL = 2.0
+
+
+@dataclass
+class _ProgressState:
+    current: int = 0
+    total: int = 0
+    job_type: str = ""
+    last_flushed_at: float = 0.0
+    last_flushed_value: int = -1
+
 
 class JobService:
     def __init__(self, job_repository: JobRepository, event_bus: EventBus):
         self.job_repository = job_repository
         self.event_bus = event_bus
         self._main_loop: asyncio.AbstractEventLoop | None = None
+        self._progress: dict[str, _ProgressState] = {}
 
     def set_event_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         self._main_loop = loop
@@ -82,23 +96,48 @@ class JobService:
         current: int,
         total: int,
     ) -> None:
-        await self.job_repository.update_job_progress(job_id, current, total)
+        state = self._progress.get(job_id)
+        if state is None:
+            job = await self.job_repository.get_job(job_id)
+            job_type = job["job_type"] if job else "unknown"
+            state = _ProgressState(job_type=job_type)
+            self._progress[job_id] = state
 
-        job = await self.job_repository.get_job(job_id)
-        if job:
-            event = JobEvent.create_progress_updated(
-                job_id=job_id,
-                job_type=job["job_type"],
-                current=current,
-                total=total,
+        state.current = current
+        state.total = total
+
+        event = JobEvent.create_progress_updated(
+            job_id=job_id,
+            job_type=state.job_type,
+            current=current,
+            total=total,
+        )
+        await self.event_bus.publish(event)
+
+        now = time.monotonic()
+        should_flush = (
+            now - state.last_flushed_at >= PROGRESS_FLUSH_INTERVAL
+            or current == total
+            or current == 0
+        )
+        if should_flush:
+            await self.job_repository.update_job_progress(job_id, current, total)
+            state.last_flushed_at = now
+            state.last_flushed_value = current
+
+    async def flush_progress(self, job_id: str) -> None:
+        state = self._progress.pop(job_id, None)
+        if state is not None and state.last_flushed_value != state.current:
+            await self.job_repository.update_job_progress(
+                job_id, state.current, state.total
             )
-            await self.event_bus.publish(event)
 
     async def complete_job(
         self,
         job_id: str,
         result: dict[str, object],
     ) -> None:
+        await self.flush_progress(job_id)
         await self.job_repository.complete_job(job_id, result)
 
         job = await self.job_repository.get_job(job_id)

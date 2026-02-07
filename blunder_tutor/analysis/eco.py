@@ -33,9 +33,12 @@ class ECODatabase:
 
     def _extract_moves_san(self, board: chess.Board) -> str:
         moves = []
-        temp_board = chess.Board()
+        temp_board = board.root()
         for move in board.move_stack:
-            san = temp_board.san(move)
+            try:
+                san = temp_board.san(move)
+            except (AssertionError, ValueError):
+                break
             moves.append(san)
             temp_board.push(move)
         return " ".join(moves)

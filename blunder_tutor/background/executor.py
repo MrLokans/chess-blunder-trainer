@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from blunder_tutor.background.runners import JOB_RUNNERS
 from blunder_tutor.core.dependencies import (
@@ -12,6 +12,9 @@ from blunder_tutor.core.dependencies import (
     set_context,
 )
 from blunder_tutor.events import EventBus, EventType, JobExecutionRequestEvent
+
+if TYPE_CHECKING:
+    from blunder_tutor.analysis.engine_pool import WorkCoordinator
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +26,17 @@ class JobExecutor:
     job runners that automatically resolve and cleanup dependencies.
     """
 
-    def __init__(self, event_bus: EventBus, db_path: Path, engine_path: str) -> None:
+    def __init__(
+        self,
+        event_bus: EventBus,
+        db_path: Path,
+        engine_path: str,
+        work_coordinator: WorkCoordinator | None = None,
+    ) -> None:
         self._event_bus = event_bus
         self._db_path = db_path
         self._engine_path = engine_path
+        self._work_coordinator = work_coordinator
         self._shutdown = False
         self._running_tasks: dict[str, asyncio.Task] = {}
         self._queue: asyncio.Queue | None = None
@@ -73,6 +83,7 @@ class JobExecutor:
             db_path=self._db_path,
             event_bus=self._event_bus,
             engine_path=self._engine_path,
+            work_coordinator=self._work_coordinator,
         )
         set_context(context)
 

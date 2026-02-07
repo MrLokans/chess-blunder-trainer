@@ -31,64 +31,65 @@ class AnalysisRepository(BaseDbRepository):
         eco_code: str | None = None,
         eco_name: str | None = None,
     ) -> None:
-        conn = await self.get_connection()
-        await conn.execute(
-            """
-            INSERT OR REPLACE INTO analysis_games (
-                game_id, pgn_path, analyzed_at, engine_path, depth, time_limit,
-                inaccuracy, mistake, blunder, eco_code, eco_name
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                game_id,
-                pgn_path,
-                analyzed_at,
-                engine_path,
-                depth,
-                time_limit,
-                thresholds["inaccuracy"],
-                thresholds["mistake"],
-                thresholds["blunder"],
-                eco_code,
-                eco_name,
-            ),
-        )
-
-        await conn.execute("DELETE FROM analysis_moves WHERE game_id = ?", (game_id,))
-        await conn.executemany(
-            """
-            INSERT INTO analysis_moves (
-                game_id, ply, move_number, player, uci, san,
-                eval_before, eval_after, delta, cp_loss, classification,
-                best_move_uci, best_move_san, best_line, best_move_eval, game_phase,
-                tactical_pattern, tactical_reason
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            [
+        async with self.write_transaction() as conn:
+            await conn.execute(
+                """
+                INSERT OR REPLACE INTO analysis_games (
+                    game_id, pgn_path, analyzed_at, engine_path, depth, time_limit,
+                    inaccuracy, mistake, blunder, eco_code, eco_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
                 (
                     game_id,
-                    int(move["ply"]),
-                    int(move["move_number"]),
-                    0 if move["player"] == "white" else 1,
-                    str(move["uci"]),
-                    move.get("san"),
-                    int(move["eval_before"]),
-                    int(move["eval_after"]),
-                    int(move["delta"]),
-                    int(move["cp_loss"]),
-                    int(move["classification"]),
-                    move.get("best_move_uci"),
-                    move.get("best_move_san"),
-                    move.get("best_line"),
-                    move.get("best_move_eval"),
-                    move.get("game_phase"),
-                    move.get("tactical_pattern"),
-                    move.get("tactical_reason"),
-                )
-                for move in moves
-            ],
-        )
-        await conn.commit()
+                    pgn_path,
+                    analyzed_at,
+                    engine_path,
+                    depth,
+                    time_limit,
+                    thresholds["inaccuracy"],
+                    thresholds["mistake"],
+                    thresholds["blunder"],
+                    eco_code,
+                    eco_name,
+                ),
+            )
+
+            await conn.execute(
+                "DELETE FROM analysis_moves WHERE game_id = ?", (game_id,)
+            )
+            await conn.executemany(
+                """
+                INSERT INTO analysis_moves (
+                    game_id, ply, move_number, player, uci, san,
+                    eval_before, eval_after, delta, cp_loss, classification,
+                    best_move_uci, best_move_san, best_line, best_move_eval, game_phase,
+                    tactical_pattern, tactical_reason
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        game_id,
+                        int(move["ply"]),
+                        int(move["move_number"]),
+                        0 if move["player"] == "white" else 1,
+                        str(move["uci"]),
+                        move.get("san"),
+                        int(move["eval_before"]),
+                        int(move["eval_after"]),
+                        int(move["delta"]),
+                        int(move["cp_loss"]),
+                        int(move["classification"]),
+                        move.get("best_move_uci"),
+                        move.get("best_move_san"),
+                        move.get("best_line"),
+                        move.get("best_move_eval"),
+                        move.get("game_phase"),
+                        move.get("tactical_pattern"),
+                        move.get("tactical_reason"),
+                    )
+                    for move in moves
+                ],
+            )
 
     async def fetch_blunders(
         self, game_phases: list[int] | None = None
@@ -189,22 +190,20 @@ class AnalysisRepository(BaseDbRepository):
         return [{"ply": row[0], "move_number": row[1]} for row in rows]
 
     async def update_move_phase(self, game_id: str, ply: int, game_phase: int) -> None:
-        conn = await self.get_connection()
-        await conn.execute(
-            "UPDATE analysis_moves SET game_phase = ? WHERE game_id = ? AND ply = ?",
-            (game_phase, game_id, ply),
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.execute(
+                "UPDATE analysis_moves SET game_phase = ? WHERE game_id = ? AND ply = ?",
+                (game_phase, game_id, ply),
+            )
 
     async def update_moves_phases_batch(
         self, updates: list[tuple[int, str, int]]
     ) -> None:
-        conn = await self.get_connection()
-        await conn.executemany(
-            "UPDATE analysis_moves SET game_phase = ? WHERE game_id = ? AND ply = ?",
-            updates,
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.executemany(
+                "UPDATE analysis_moves SET game_phase = ? WHERE game_id = ? AND ply = ?",
+                updates,
+            )
 
     async def get_game_ids_missing_eco(self) -> list[str]:
         conn = await self.get_connection()
@@ -224,12 +223,11 @@ class AnalysisRepository(BaseDbRepository):
     async def update_game_eco(
         self, game_id: str, eco_code: str | None, eco_name: str | None
     ) -> None:
-        conn = await self.get_connection()
-        await conn.execute(
-            "UPDATE analysis_games SET eco_code = ?, eco_name = ? WHERE game_id = ?",
-            (eco_code, eco_name, game_id),
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.execute(
+                "UPDATE analysis_games SET eco_code = ?, eco_name = ? WHERE game_id = ?",
+                (eco_code, eco_name, game_id),
+            )
 
     async def get_game_eco(self, game_id: str) -> dict[str, str | None]:
         conn = await self.get_connection()
@@ -243,16 +241,18 @@ class AnalysisRepository(BaseDbRepository):
         return {"eco_code": None, "eco_name": None}
 
     async def mark_step_completed(self, game_id: str, step_id: str) -> None:
-        conn = await self.get_connection()
+        await self.mark_steps_completed(game_id, [step_id])
+
+    async def mark_steps_completed(self, game_id: str, step_ids: list[str]) -> None:
         completed_at = datetime.now(UTC).isoformat()
-        await conn.execute(
-            """
-            INSERT OR REPLACE INTO analysis_step_status (game_id, step_id, completed_at)
-            VALUES (?, ?, ?)
-            """,
-            (game_id, step_id, completed_at),
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.executemany(
+                """
+                INSERT OR REPLACE INTO analysis_step_status (game_id, step_id, completed_at)
+                VALUES (?, ?, ?)
+                """,
+                [(game_id, step_id, completed_at) for step_id in step_ids],
+            )
 
     async def get_completed_steps(self, game_id: str) -> set[str]:
         conn = await self.get_connection()
@@ -273,12 +273,11 @@ class AnalysisRepository(BaseDbRepository):
         return row is not None
 
     async def clear_step_status(self, game_id: str) -> None:
-        conn = await self.get_connection()
-        await conn.execute(
-            "DELETE FROM analysis_step_status WHERE game_id = ?",
-            (game_id,),
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.execute(
+                "DELETE FROM analysis_step_status WHERE game_id = ?",
+                (game_id,),
+            )
 
     async def get_game_ids_missing_tactics(self) -> list[str]:
         """Get game IDs where blunders don't have tactical patterns classified."""
@@ -316,32 +315,28 @@ class AnalysisRepository(BaseDbRepository):
         tactical_pattern: int | None,
         tactical_reason: str | None,
     ) -> None:
-        """Update tactical pattern for a specific move."""
-        conn = await self.get_connection()
-        await conn.execute(
-            """
-            UPDATE analysis_moves
-            SET tactical_pattern = ?, tactical_reason = ?
-            WHERE game_id = ? AND ply = ?
-            """,
-            (tactical_pattern, tactical_reason, game_id, ply),
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.execute(
+                """
+                UPDATE analysis_moves
+                SET tactical_pattern = ?, tactical_reason = ?
+                WHERE game_id = ? AND ply = ?
+                """,
+                (tactical_pattern, tactical_reason, game_id, ply),
+            )
 
     async def update_moves_tactics_batch(
         self, updates: list[tuple[int | None, str | None, str, int]]
     ) -> None:
-        """Batch update tactical patterns for multiple moves."""
-        conn = await self.get_connection()
-        await conn.executemany(
-            """
-            UPDATE analysis_moves
-            SET tactical_pattern = ?, tactical_reason = ?
-            WHERE game_id = ? AND ply = ?
-            """,
-            updates,
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.executemany(
+                """
+                UPDATE analysis_moves
+                SET tactical_pattern = ?, tactical_reason = ?
+                WHERE game_id = ? AND ply = ?
+                """,
+                updates,
+            )
 
     async def fetch_blunders_with_tactics(
         self,

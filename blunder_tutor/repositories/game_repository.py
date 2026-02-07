@@ -30,34 +30,33 @@ class GameRepository(BaseDbRepository):
         timestamp = datetime.utcnow().isoformat()
         inserted = 0
 
-        conn = await self.get_connection()
-        for game in games:
-            cursor = await conn.execute(
-                """
-                INSERT INTO game_index_cache (
-                    game_id, source, username, white, black, result,
-                    date, end_time_utc, time_control, pgn_content,
-                    analyzed, indexed_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
-                ON CONFLICT(game_id) DO NOTHING
-                """,
-                (
-                    game.get("id"),
-                    game.get("source"),
-                    game.get("username"),
-                    game.get("white"),
-                    game.get("black"),
-                    game.get("result"),
-                    game.get("date"),
-                    game.get("end_time_utc"),
-                    game.get("time_control"),
-                    game.get("pgn_content"),
-                    timestamp,
-                ),
-            )
-            if cursor.rowcount > 0:
-                inserted += 1
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            for game in games:
+                cursor = await conn.execute(
+                    """
+                    INSERT INTO game_index_cache (
+                        game_id, source, username, white, black, result,
+                        date, end_time_utc, time_control, pgn_content,
+                        analyzed, indexed_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+                    ON CONFLICT(game_id) DO NOTHING
+                    """,
+                    (
+                        game.get("id"),
+                        game.get("source"),
+                        game.get("username"),
+                        game.get("white"),
+                        game.get("black"),
+                        game.get("result"),
+                        game.get("date"),
+                        game.get("end_time_utc"),
+                        game.get("time_control"),
+                        game.get("pgn_content"),
+                        timestamp,
+                    ),
+                )
+                if cursor.rowcount > 0:
+                    inserted += 1
 
         return inserted
 
@@ -276,16 +275,15 @@ class GameRepository(BaseDbRepository):
             return row[0]
 
     async def mark_game_analyzed(self, game_id: str) -> None:
-        conn = await self.get_connection()
-        await conn.execute(
-            """
-            UPDATE game_index_cache
-            SET analyzed = 1
-            WHERE game_id = ?
-            """,
-            (game_id,),
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.execute(
+                """
+                UPDATE game_index_cache
+                SET analyzed = 1
+                WHERE game_id = ?
+                """,
+                (game_id,),
+            )
 
     async def list_unanalyzed_game_ids(
         self,

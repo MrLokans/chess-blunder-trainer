@@ -23,11 +23,11 @@ class EngineStatusResponse(BaseModel):
     description="Returns information about the configured chess engine (Stockfish).",
 )
 async def get_engine_status(request: Request) -> dict[str, Any]:
-    engine = getattr(request.app.state, "engine", None)
+    coordinator = getattr(request.app.state, "work_coordinator", None)
     config = getattr(request.app.state, "config", None)
     engine_path = config.engine_path if config else None
 
-    if engine is None:
+    if coordinator is None:
         return {
             "available": False,
             "name": None,
@@ -35,7 +35,19 @@ async def get_engine_status(request: Request) -> dict[str, Any]:
             "path": engine_path,
         }
 
-    engine_id = getattr(engine, "id", {})
+    async def _get_id(engine):  # type: ignore[no-untyped-def]
+        return getattr(engine, "id", {})
+
+    try:
+        engine_id = await coordinator.submit(_get_id)
+    except Exception:
+        return {
+            "available": False,
+            "name": None,
+            "author": None,
+            "path": engine_path,
+        }
+
     return {
         "available": True,
         "name": engine_id.get("name"),

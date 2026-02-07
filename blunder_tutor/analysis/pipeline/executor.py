@@ -45,7 +45,7 @@ class PipelineExecutor:
         pipeline: AnalysisPipeline,
         game_id: str,
         thresholds: Thresholds | None = None,
-        depth: int | None = 14,
+        depth: int | None = None,
         time_limit: float | None = None,
         engine: chess.engine.UciProtocol | None = None,
     ) -> PipelineReport:
@@ -106,7 +106,6 @@ class PipelineExecutor:
 
                 if result.success:
                     report.steps_executed.append(step.step_id)
-                    await self.analysis_repo.mark_step_completed(game_id, step.step_id)
                 else:
                     report.steps_failed.append(step.step_id)
                     report.success = False
@@ -119,6 +118,11 @@ class PipelineExecutor:
                 report.success = False
                 report.error = str(e)
                 break
+
+        if report.steps_executed:
+            await self.analysis_repo.mark_steps_completed(
+                game_id, report.steps_executed
+            )
 
         report.completed_at = datetime.now(UTC).isoformat()
         return report

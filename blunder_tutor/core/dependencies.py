@@ -7,6 +7,7 @@ This module provides dependency factories that work both in FastAPI routes
 from __future__ import annotations
 
 import asyncio
+import contextvars
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,6 +16,7 @@ from typing import Annotated
 from fast_depends import Depends
 
 # Runtime imports needed for FastDepends/Pydantic validation
+from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.analysis.pipeline import PipelineExecutor
 from blunder_tutor.events import EventBus
@@ -33,30 +35,30 @@ class DependencyContext:
     db_path: Path
     event_bus: EventBus
     engine_path: str
+    work_coordinator: WorkCoordinator | None = None
 
 
-# Global context - set by the application or job executor before use
-_context: DependencyContext | None = None
+_context_var: contextvars.ContextVar[DependencyContext | None] = contextvars.ContextVar(
+    "dependency_context", default=None
+)
 
 
 def set_context(context: DependencyContext) -> None:
-    global _context
-    _context = context
+    _context_var.set(context)
 
 
 def get_context() -> DependencyContext:
-    if _context is None:
+    ctx = _context_var.get()
+    if ctx is None:
         raise RuntimeError(
             "Dependency context not initialized. "
             "Call set_context() before using dependencies."
         )
-    return _context
+    return ctx
 
 
 def clear_context() -> None:
-    """Clear the global dependency context."""
-    global _context
-    _context = None
+    _context_var.set(None)
 
 
 # --- Repository Dependencies ---
@@ -124,6 +126,11 @@ def get_event_bus() -> EventBus:
     return ctx.event_bus
 
 
+def get_work_coordinator() -> WorkCoordinator | None:
+    ctx = get_context()
+    return ctx.work_coordinator
+
+
 def get_game_analyzer(
     analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
     game_repo: Annotated[GameRepository, Depends(get_game_repository)],
@@ -133,6 +140,7 @@ def get_game_analyzer(
         analysis_repo=analysis_repo,
         games_repo=game_repo,
         engine_path=ctx.engine_path,
+        coordinator=ctx.work_coordinator,
     )
 
 

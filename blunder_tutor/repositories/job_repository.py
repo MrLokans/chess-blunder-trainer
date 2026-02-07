@@ -20,27 +20,26 @@ class JobRepository(BaseDbRepository):
         job_id = str(uuid.uuid4())
         created_at = datetime.utcnow().isoformat()
 
-        conn = await self.get_connection()
-        await conn.execute(
-            """
-            INSERT INTO background_jobs (
-                job_id, job_type, status, username, source,
-                start_date, end_date, max_games, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                job_id,
-                job_type,
-                "pending",
-                username,
-                source,
-                start_date,
-                end_date,
-                max_games,
-                created_at,
-            ),
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.execute(
+                """
+                INSERT INTO background_jobs (
+                    job_id, job_type, status, username, source,
+                    start_date, end_date, max_games, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    job_id,
+                    job_type,
+                    "pending",
+                    username,
+                    source,
+                    start_date,
+                    end_date,
+                    max_games,
+                    created_at,
+                ),
+            )
 
         return job_id
 
@@ -58,26 +57,25 @@ class JobRepository(BaseDbRepository):
         elif status in ("completed", "failed"):
             timestamp_field = "completed_at"
 
-        conn = await self.get_connection()
-        if timestamp_field:
-            await conn.execute(
-                f"""
-                UPDATE background_jobs
-                SET status = ?, error_message = ?, {timestamp_field} = ?
-                WHERE job_id = ?
-                """,
-                (status, error_message, timestamp_value, job_id),
-            )
-        else:
-            await conn.execute(
-                """
-                UPDATE background_jobs
-                SET status = ?, error_message = ?
-                WHERE job_id = ?
-                """,
-                (status, error_message, job_id),
-            )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            if timestamp_field:
+                await conn.execute(
+                    f"""
+                    UPDATE background_jobs
+                    SET status = ?, error_message = ?, {timestamp_field} = ?
+                    WHERE job_id = ?
+                    """,
+                    (status, error_message, timestamp_value, job_id),
+                )
+            else:
+                await conn.execute(
+                    """
+                    UPDATE background_jobs
+                    SET status = ?, error_message = ?
+                    WHERE job_id = ?
+                    """,
+                    (status, error_message, job_id),
+                )
 
     async def update_job_progress(
         self,
@@ -85,16 +83,15 @@ class JobRepository(BaseDbRepository):
         current: int,
         total: int,
     ) -> None:
-        conn = await self.get_connection()
-        await conn.execute(
-            """
-            UPDATE background_jobs
-            SET progress_current = ?, progress_total = ?
-            WHERE job_id = ?
-            """,
-            (current, total, job_id),
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.execute(
+                """
+                UPDATE background_jobs
+                SET progress_current = ?, progress_total = ?
+                WHERE job_id = ?
+                """,
+                (current, total, job_id),
+            )
 
     async def complete_job(
         self,
@@ -104,16 +101,15 @@ class JobRepository(BaseDbRepository):
         completed_at = datetime.utcnow().isoformat()
         result_json = json.dumps(result)
 
-        conn = await self.get_connection()
-        await conn.execute(
-            """
-            UPDATE background_jobs
-            SET status = 'completed', result_json = ?, completed_at = ?
-            WHERE job_id = ?
-            """,
-            (result_json, completed_at, job_id),
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.execute(
+                """
+                UPDATE background_jobs
+                SET status = 'completed', result_json = ?, completed_at = ?
+                WHERE job_id = ?
+                """,
+                (result_json, completed_at, job_id),
+            )
 
     async def get_job(self, job_id: str) -> dict[str, object] | None:
         conn = await self.get_connection()
@@ -230,10 +226,9 @@ class JobRepository(BaseDbRepository):
         ]
 
     async def delete_job(self, job_id: str) -> bool:
-        conn = await self.get_connection()
-        cursor = await conn.execute(
-            "DELETE FROM background_jobs WHERE job_id = ?",
-            (job_id,),
-        )
-        await conn.commit()
-        return cursor.rowcount > 0
+        async with self.write_transaction() as conn:
+            cursor = await conn.execute(
+                "DELETE FROM background_jobs WHERE job_id = ?",
+                (job_id,),
+            )
+            return cursor.rowcount > 0

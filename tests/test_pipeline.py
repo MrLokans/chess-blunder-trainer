@@ -103,6 +103,7 @@ class TestPipelineExecutor:
 
         analysis_repo.is_step_completed = AsyncMock(return_value=False)
         analysis_repo.mark_step_completed = AsyncMock()
+        analysis_repo.mark_steps_completed = AsyncMock()
         analysis_repo.get_game_eco = AsyncMock(
             return_value={"eco_code": None, "eco_name": None}
         )
@@ -146,7 +147,9 @@ class TestPipelineExecutor:
 
         assert report.success is True
         assert "test_step" in report.steps_executed
-        analysis_repo.mark_step_completed.assert_called_once()
+        analysis_repo.mark_steps_completed.assert_called_once_with(
+            "test_game_id", ["test_step"]
+        )
 
     async def test_execute_pipeline_skips_completed_steps(
         self, mock_repos, sample_game

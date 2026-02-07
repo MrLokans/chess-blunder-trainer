@@ -17,25 +17,24 @@ class PuzzleAttemptRepository(BaseDbRepository):
     ) -> None:
         attempted_at = datetime.utcnow().isoformat()
 
-        conn = await self.get_connection()
-        await conn.execute(
-            """
-            INSERT INTO puzzle_attempts (
-                game_id, ply, username, was_correct,
-                user_move_uci, best_move_uci, attempted_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                game_id,
-                ply,
-                username,
-                1 if was_correct else 0,
-                user_move_uci,
-                best_move_uci,
-                attempted_at,
-            ),
-        )
-        await conn.commit()
+        async with self.write_transaction() as conn:
+            await conn.execute(
+                """
+                INSERT INTO puzzle_attempts (
+                    game_id, ply, username, was_correct,
+                    user_move_uci, best_move_uci, attempted_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    game_id,
+                    ply,
+                    username,
+                    1 if was_correct else 0,
+                    user_move_uci,
+                    best_move_uci,
+                    attempted_at,
+                ),
+            )
 
     async def get_last_correct_attempt(
         self, game_id: str, ply: int, username: str

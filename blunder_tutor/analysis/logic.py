@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 from typing import TYPE_CHECKING
@@ -8,6 +7,7 @@ from typing import TYPE_CHECKING
 import chess.engine
 from tqdm import tqdm
 
+from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.analysis.pipeline import (
     AnalysisPipeline,
     PipelineConfig,
@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 
 DEFAULT_CONCURRENCY = min(DEFAULT_ENGINE_CONCURRENCY, os.cpu_count() or 1)
 
-# Re-export for backward compatibility
 __all__ = ["GameAnalyzer", "Thresholds"]
 
 
@@ -35,10 +34,12 @@ class GameAnalyzer:
         analysis_repo: AnalysisRepository,
         games_repo: GameRepository,
         engine_path: str,
+        coordinator: WorkCoordinator | None = None,
     ) -> None:
         self.analysis_repo = analysis_repo
         self.games_repo = games_repo
         self.engine_path = engine_path
+        self._coordinator = coordinator
         self._log = logging.getLogger("GameAnalyzer")
         self._executor = PipelineExecutor(
             analysis_repo=analysis_repo,
@@ -49,7 +50,7 @@ class GameAnalyzer:
     async def analyze_game(
         self,
         game_id: str,
-        depth: int | None = 14,
+        depth: int | None = None,
         time_limit: float | None = None,
         thresholds: Thresholds | None = None,
         steps: list[str] | None = None,
@@ -81,7 +82,7 @@ class GameAnalyzer:
 
     async def analyze_bulk(
         self,
-        depth: int | None = 14,
+        depth: int | None = None,
         time_limit: float | None = None,
         source: str | None = None,
         username: str | None = None,
@@ -101,57 +102,58 @@ class GameAnalyzer:
             "Processing %d games with concurrency=%d", len(game_ids), concurrency
         )
 
+        owns_coordinator = self._coordinator is None
+        coordinator = self._coordinator or WorkCoordinator(
+            self.engine_path, concurrency
+        )
+        if owns_coordinator:
+            await coordinator.start()
+
         results = {"processed": 0, "analyzed": 0, "skipped": 0, "failed": 0}
-        semaphore = asyncio.Semaphore(concurrency)
-        lock = asyncio.Lock()
 
-        async def process_game(game_id: str, progress: tqdm) -> None:
-            async with semaphore:
-                skip = await self.analysis_repo.analysis_exists(game_id) and not force
-                if skip:
-                    async with lock:
-                        results["skipped"] += 1
-                        results["processed"] += 1
-                        progress.update(1)
-                    return
+        try:
+            with tqdm(
+                total=len(game_ids), desc="Analyze games", unit="game"
+            ) as progress:
+                for game_id in game_ids:
 
-                engine = None
-                try:
-                    _, engine = await chess.engine.popen_uci(self.engine_path)
-                    await self.analyze_game(
-                        game_id=game_id,
-                        depth=depth,
-                        time_limit=time_limit,
-                        steps=steps,
-                        force_rerun=force,
-                        engine=engine,
-                    )
-                    async with lock:
-                        results["analyzed"] += 1
-                        results["processed"] += 1
-                        progress.update(1)
-                except Exception as e:
-                    self._log.error("Failed to analyze game %s: %s", game_id, e)
-                    async with lock:
-                        results["failed"] += 1
-                        results["processed"] += 1
-                        progress.update(1)
-                finally:
-                    if engine is not None:
-                        await engine.quit()
+                    async def process_game(
+                        engine: chess.engine.UciProtocol,
+                        *,
+                        _gid: str = game_id,
+                    ) -> None:
+                        skip = (
+                            await self.analysis_repo.analysis_exists(_gid) and not force
+                        )
+                        if skip:
+                            results["skipped"] += 1
+                            results["processed"] += 1
+                            progress.update(1)
+                            return
 
-        with tqdm(total=len(game_ids), desc="Analyze games", unit="game") as progress:
-            tasks = [
-                asyncio.create_task(process_game(gid, progress)) for gid in game_ids
-            ]
-            try:
-                await asyncio.gather(*tasks)
-            except asyncio.CancelledError:
-                self._log.info("Bulk analysis cancelled, cleaning up...")
-                for task in tasks:
-                    if not task.done():
-                        task.cancel()
-                await asyncio.gather(*tasks, return_exceptions=True)
-                raise
+                        try:
+                            await self.analyze_game(
+                                game_id=_gid,
+                                depth=depth,
+                                time_limit=time_limit,
+                                steps=steps,
+                                force_rerun=force,
+                                engine=engine,
+                            )
+                            results["analyzed"] += 1
+                            results["processed"] += 1
+                            progress.update(1)
+                        except Exception as e:
+                            self._log.error("Failed to analyze game %s: %s", _gid, e)
+                            results["failed"] += 1
+                            results["processed"] += 1
+                            progress.update(1)
+
+                    coordinator.submit(process_game)
+
+                await coordinator.drain()
+        finally:
+            if owns_coordinator:
+                await coordinator.shutdown()
 
         return results

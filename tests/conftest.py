@@ -107,6 +107,9 @@ def app(test_config: AppConfig) -> Generator[TestClient]:
         }
     )
     mock_engine.quit = AsyncMock()
+    rc_future = MagicMock()
+    rc_future.done.return_value = False
+    mock_engine.returncode = rc_future
     mock_transport = MagicMock()
 
     async def mock_popen_uci(path):

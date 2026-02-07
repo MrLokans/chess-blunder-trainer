@@ -29,6 +29,7 @@ from blunder_tutor.core.dependencies import (
     get_game_repository,
     get_job_service,
     get_settings_repository,
+    get_work_coordinator,
 )
 from blunder_tutor.events import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
@@ -94,11 +95,15 @@ async def run_analyze_job(
     username: str | None = None,
     steps: list[str] | None = None,
 ) -> dict[str, Any]:
+    coordinator = get_work_coordinator()
+    event_bus = get_event_bus()
     job = AnalyzeGamesJob(
         job_service=job_service,
         game_repo=game_repo,
         analysis_repo=analysis_repo,
         analyzer=analyzer,
+        event_bus=event_bus,
+        coordinator=coordinator,
     )
     return await job.execute(
         job_id=job_id,
