@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0]
+
+### Added
+
+- **Entitlements engine**: Extensible feature flags system allowing users to enable/disable parts of the application (e.g., dashboard charts, trainer, heatmap) from settings
+- **Feature toggles UI**: New settings section with toggleable switches for each application feature, with changes reflected across navigation, dashboard, and trainer
+
+### Fixed
+
+- **Locale application**: Fixed locale not being applied correctly on both backend and frontend after changing language in settings
+
 ## [1.0.1]
 
 ### Added
