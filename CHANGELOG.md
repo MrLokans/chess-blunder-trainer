@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0]
+
+### Changed
+
+- Introduce EnginePool / WorkCoordinator - a persistent worker-per-engine pool that replaces the previous pattern of spawning a fresh Stockfish process per game. Engines are long-lived, reused across games, and auto-configure Threads and Hash for better hardware utilization.
+- Worker-per-engine pattern: N Stockfish processes with N async workers consuming from a shared queue
+- WorkCoordinator facade with submit() / drain() / shutdown
+- Per-task timeout (default 300s) with automatic engine kill & respawn
+- Callers (GameAnalyzer.analyze_bulk, AnalyzeGamesJob, AnalysisService) submit closures instead of managing engine lifecycle themselves- Pass game=game_id to engine.analyse() to preserve transposition table across positions within the same game (previously flushed every call)
+- Pre-collect all positions, evaluate each once, and derive both before/after evals from the position array — halves the number of engine.analyse() calls per game
+- Keep full move stack in board copies for better Stockfish continuity
+- Parse only INFO_SCORE | INFO_PV instead of INFO_ALL- Add write_transaction() context manager with per-db-path asyncio.Lock to serialize writes, fixing "database is locked" errors under parallel analysis
+- All repository write methods migrated to use write_transaction()
+ Pipeline executor (pipeline/executor.py)
+- Batch mark_steps_completed() into a single call after all steps run
+ instead of one DB write per step
+- AnalyzeGamesJob watches for cancellation via EventBus subscription
+- Centralize default depth in constants.DEFAULT_ENGINE_DEPTH
+
 ## [1.1.0]
 
 ### Added
@@ -61,7 +80,7 @@ This release is quite huge, but focuses more on internals, code organization and
 - **Puzzle completion heatmap**: New GitHub-style activity heatmap on the dashboard showing daily puzzle practice
 - **Dashboard time control filter**: Filter all dashboard statistics by time control (bullet, blitz, rapid, classical, correspondence)
 - **Chessboard styling**: Customize board colors and piece sets in settings
-  - 6 board color presets (Brown, Blue, Green, Purple, Gray, Wood)
+- 6 board color presets (Brown, Blue, Green, Purple, Gray, Wood)
   - 6 piece sets (Wikipedia, Alpha, California, Cardinal, CBurnett, Merida)
   - Custom color picker for light and dark squares
   - Live preview in settings page
