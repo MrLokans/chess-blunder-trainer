@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0]
+
+### Added
+
+- **Position difficulty scoring** (#14): Blunders scored 0–100 based on legal move count and best move type (captures/checks are easier to find). New `difficulty` column in `analysis_moves`, dashboard difficulty breakdown chart, and trainer difficulty filter.
+- **Weighted puzzle selection** (#13): Puzzles for frequently-failed tactical patterns appear more often in training. Based on per-pattern failure rates from puzzle attempt history.
+- **Grouped opening breakdown** (#16): ECO openings on the dashboard are now grouped by base opening name (e.g., all Sicilian variations collapse under one row) with aggregated stats. Added Lichess and 365chess learning links, and visual hierarchy for variation/sub-variation names.
+
+### Changed
+
+- **Blunder filtering** (#10): Skip blunders in already-lost positions (eval < −300cp) and positions that remain comfortably winning after the blunder (eval > +300cp). These low-value positions no longer appear in training.
+- **Dashboard WebSocket performance** (#17): `job.progress_updated` events are now debounced (2s) instead of triggering a full stats reload on every event, reducing backend load and UI jank during analysis.
+
 ## [1.2.0]
 
 ### Changed
