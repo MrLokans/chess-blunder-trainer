@@ -385,5 +385,7 @@
   "dashboard.difficulty.help_easy": "Najlepszy ruch to bicie lub szach, albo było wiele bezpiecznych alternatyw. Powinieneś go zobaczyć.",
   "dashboard.difficulty.help_medium": "Najlepszy ruch wymagał obliczeń. Połączenie rozważań taktycznych i pozycyjnych.",
   "dashboard.difficulty.help_hard": "Najlepszy ruch to cichy, niewymuszający ruch z małą liczbą bezpiecznych alternatyw. Nawet silni gracze mogą go przeoczyć.",
-  "dashboard.difficulty.help_factors": "Czynniki: typ najlepszego ruchu (bicie/szach = łatwiej), liczba bezpiecznych ruchów, głębokość wymaganego obliczenia."
+  "dashboard.difficulty.help_factors": "Czynniki: typ najlepszego ruchu (bicie/szach = łatwiej), liczba bezpiecznych ruchów, głębokość wymaganego obliczenia.",
+  "dashboard.opening.learn_link_tooltip": "Dowiedz się o tym otwarciu",
+  "dashboard.opening.variations_count": "{count, plural, one {# wariant} few {# warianty} other {# wariantów}}"
 }

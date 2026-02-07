@@ -385,5 +385,7 @@
   "dashboard.difficulty.help_easy": "La mejor jugada era una captura o jaque, o había muchas alternativas seguras. Deberías haberla visto.",
   "dashboard.difficulty.help_medium": "La mejor jugada requería cálculo. Una mezcla de consideraciones tácticas y posicionales.",
   "dashboard.difficulty.help_hard": "La mejor jugada era tranquila, no forzante, con pocas alternativas seguras. Incluso jugadores fuertes podrían no verla.",
-  "dashboard.difficulty.help_factors": "Factores: tipo de mejor jugada (captura/jaque = más fácil), número de jugadas legales seguras, profundidad del cálculo requerido."
+  "dashboard.difficulty.help_factors": "Factores: tipo de mejor jugada (captura/jaque = más fácil), número de jugadas legales seguras, profundidad del cálculo requerido.",
+  "dashboard.opening.learn_link_tooltip": "Aprender sobre esta apertura",
+  "dashboard.opening.variations_count": "{count, plural, one {# variante} other {# variantes}}"
 }

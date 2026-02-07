@@ -385,5 +385,7 @@
   "dashboard.difficulty.help_easy": "The best move was a capture or check, or there were many safe alternatives. You should have seen it.",
   "dashboard.difficulty.help_medium": "The best move required some calculation. A mix of tactical and positional considerations.",
   "dashboard.difficulty.help_hard": "The best move was a quiet, non-forcing move with few safe alternatives. Even strong players might miss it.",
-  "dashboard.difficulty.help_factors": "Factors: best move type (capture/check = easier), number of legal non-losing moves, and depth of the required calculation."
+  "dashboard.difficulty.help_factors": "Factors: best move type (capture/check = easier), number of legal non-losing moves, and depth of the required calculation.",
+  "dashboard.opening.learn_link_tooltip": "Learn about this opening",
+  "dashboard.opening.variations_count": "{count, plural, one {# variation} other {# variations}}"
 }

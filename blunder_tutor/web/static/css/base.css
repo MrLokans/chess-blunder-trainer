@@ -898,6 +898,81 @@ tr:hover td {
   background: var(--color-slate-100);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: inherit;
+}
+
+.eco-code:hover {
+  background: var(--color-slate-200, var(--border));
+}
+
+.eco-name-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.eco-name-link:hover {
+  color: var(--primary);
+}
+
+.eco-name-base {
+  font-weight: 600;
+}
+
+.eco-name-variation {
+  font-weight: 400;
+}
+
+.eco-name-subvariation {
+  font-weight: 400;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.eco-external-icon {
+  font-size: var(--text-xs);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.eco-name-link:hover .eco-external-icon {
+  opacity: 1;
+}
+
+.eco-percent {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.eco-group-header {
+  background: var(--bg);
+}
+
+.eco-group-header:hover {
+  background: var(--color-slate-100, rgba(0,0,0,0.03));
+}
+
+.eco-group-toggle {
+  display: inline-block;
+  width: 1em;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-right: var(--space-2);
+  user-select: none;
+}
+
+.eco-variations-badge {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-left: var(--space-2);
+}
+
+.eco-child-indent {
+  padding-left: calc(var(--space-3) + 1.5em) !important;
+}
+
+.eco-group-child {
+  font-size: var(--text-xs);
 }
 
 /* ==========================================================================

@@ -385,5 +385,7 @@
   "dashboard.difficulty.help_easy": "最佳走法是吃子或将军，或者有很多安全的替代走法。你应该能看到它。",
   "dashboard.difficulty.help_medium": "最佳走法需要一些计算。战术和位置考量的混合。",
   "dashboard.difficulty.help_hard": "最佳走法是安静的、非强制性的走法，且安全替代走法很少。即使强棋手也可能错过。",
-  "dashboard.difficulty.help_factors": "考量因素：最佳走法类型（吃子/将军=更容易）、合法安全走法数量、所需计算深度。"
+  "dashboard.difficulty.help_factors": "考量因素：最佳走法类型（吃子/将军=更容易）、合法安全走法数量、所需计算深度。",
+  "dashboard.opening.learn_link_tooltip": "了解这个开局",
+  "dashboard.opening.variations_count": "{count, plural, other {# 个变体}}"
 }

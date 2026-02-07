@@ -3,6 +3,7 @@ import { FilterPersistence } from './filter-persistence.js';
 import { loadConfiguredUsernames } from './usernames.js';
 import { loadHeatmap } from './heatmap.js';
 import { client } from './api.js';
+import { groupOpeningsByBase, openingNameSlug } from './opening-group.js';
 import { hasFeature } from './features.js';
 
 const wsClient = new WebSocketClient();
@@ -97,6 +98,77 @@ function dateAndGameTypeParams() {
     params.game_types = currentGameTypeFilters;
   }
   return params;
+}
+
+function renderOpeningName(ecoCode, ecoName) {
+  const colonIdx = ecoName.indexOf(': ');
+  const lichessUrl = `https://lichess.org/opening/${openingNameSlug(ecoName)}`;
+  const ecoUrl = `https://www.365chess.com/eco/${ecoCode}`;
+
+  let nameHtml;
+  if (colonIdx > -1) {
+    const base = ecoName.substring(0, colonIdx);
+    const variation = ecoName.substring(colonIdx + 2);
+    const commaIdx = variation.indexOf(', ');
+    if (commaIdx > -1) {
+      nameHtml = `<span class="eco-name-base">${base}</span>: <span class="eco-name-variation">${variation.substring(0, commaIdx)}</span>, <span class="eco-name-subvariation">${variation.substring(commaIdx + 2)}</span>`;
+    } else {
+      nameHtml = `<span class="eco-name-base">${base}</span>: <span class="eco-name-variation">${variation}</span>`;
+    }
+  } else {
+    nameHtml = `<span class="eco-name-base">${ecoName}</span>`;
+  }
+
+  return `<a href="${ecoUrl}" target="_blank" rel="noopener" class="eco-code" title="${ecoCode}">${ecoCode}</a> <a href="${lichessUrl}" target="_blank" rel="noopener" class="eco-name-link" title="${t('dashboard.opening.learn_link_tooltip')}">${nameHtml} <span class="eco-external-icon">↗</span></a>`;
+}
+
+function renderOpeningGroup(group) {
+  if (group.variations.length === 1) {
+    const item = group.variations[0];
+    return `
+      <tr>
+        <td>${renderOpeningName(item.eco_code, item.eco_name)}</td>
+        <td>${item.count} <span class="eco-percent">(${item.percentage}%)</span></td>
+        <td>${(item.avg_cp_loss / 100).toFixed(2)} pawns</td>
+        <td>${item.game_count}</td>
+      </tr>`;
+  }
+
+  const groupId = `eco-group-${openingNameSlug(group.baseName)}`;
+  const variationsLabel = t('dashboard.opening.variations_count', { count: group.variations.length });
+  return `
+    <tr class="eco-group-header" data-group="${groupId}">
+      <td>
+        <span class="eco-group-toggle">▶</span>
+        <span class="eco-name-base">${group.baseName}</span>
+        <span class="eco-variations-badge">${variationsLabel}</span>
+      </td>
+      <td>${group.totalCount}</td>
+      <td>${(group.avgCpLoss / 100).toFixed(2)} pawns</td>
+      <td>${group.totalGames}</td>
+    </tr>
+    ${group.variations.map(item => `
+      <tr class="eco-group-child ${groupId}" style="display: none;">
+        <td class="eco-child-indent">${renderOpeningName(item.eco_code, item.eco_name)}</td>
+        <td>${item.count} <span class="eco-percent">(${item.percentage}%)</span></td>
+        <td>${(item.avg_cp_loss / 100).toFixed(2)} pawns</td>
+        <td>${item.game_count}</td>
+      </tr>
+    `).join('')}`;
+}
+
+function initOpeningGroupToggles(container) {
+  container.querySelectorAll('.eco-group-header').forEach(header => {
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', () => {
+      const groupId = header.dataset.group;
+      const children = container.querySelectorAll(`.${groupId}`);
+      const toggle = header.querySelector('.eco-group-toggle');
+      const isExpanded = toggle.textContent === '▼';
+      toggle.textContent = isExpanded ? '▶' : '▼';
+      children.forEach(child => { child.style.display = isExpanded ? 'none' : ''; });
+    });
+  });
 }
 
 async function loadStats() {
@@ -255,6 +327,7 @@ async function loadStats() {
     const ecoBreakdown = document.getElementById('ecoBreakdown');
 
     if (ecoData.total_blunders > 0 && ecoData.by_opening.length > 0) {
+      const grouped = groupOpeningsByBase(ecoData.by_opening);
       ecoBreakdown.innerHTML = `
         <table class="eco-table">
           <thead>
@@ -266,17 +339,11 @@ async function loadStats() {
             </tr>
           </thead>
           <tbody>
-            ${ecoData.by_opening.map(item => `
-              <tr>
-                <td><span class="eco-code">${item.eco_code}</span> ${item.eco_name}</td>
-                <td>${item.count} <span style="color: var(--text-muted); font-size: 0.75rem;">(${item.percentage}%)</span></td>
-                <td>${(item.avg_cp_loss / 100).toFixed(2)} pawns</td>
-                <td>${item.game_count}</td>
-              </tr>
-            `).join('')}
+            ${grouped.map(group => renderOpeningGroup(group)).join('')}
           </tbody>
         </table>
       `;
+      initOpeningGroupToggles(ecoBreakdown);
     } else {
       ecoBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_opening_data') + '</div>';
     }
