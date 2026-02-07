@@ -79,23 +79,29 @@
           <span class="legend-color user"></span>
           <span>{{ t('trainer.legend.your_move') }}</span>
         </div>
+        {% if has_feature('trainer.tactics') %}
         <div class="legend-item" id="legendTactic" style="display: none;">
           <span class="legend-color tactic"></span>
           <span>{{ t('trainer.legend.tactical_squares') }}</span>
         </div>
+        {% endif %}
       </div>
       <div class="arrow-toggle">
         <input type="checkbox" id="showArrows" checked>
         <label for="showArrows">{{ t('trainer.toggle.show_arrows') }}</label>
       </div>
+      {% if has_feature('trainer.threats') %}
       <div class="arrow-toggle">
         <input type="checkbox" id="showThreats" checked>
         <label for="showThreats">{{ t('trainer.toggle.show_threats') }}</label>
       </div>
+      {% endif %}
+      {% if has_feature('trainer.tactics') %}
       <div class="arrow-toggle">
         <input type="checkbox" id="showTactics">
         <label for="showTactics">{{ t('trainer.toggle.show_tactics') }}</label>
       </div>
+      {% endif %}
     </div>
 
     <!-- Controls column -->
@@ -108,10 +114,12 @@
           {{ t('trainer.color.playing_as_white') }}
         </span>
         <span class="phase-badge" id="phaseBadge" style="display: none; margin-left: 10px;"></span>
+        {% if has_feature('trainer.tactics') %}
         <span class="tactical-badge" id="tacticalBadge" style="display: none; margin-left: 10px;">
           <span class="icon">⚔️</span>
           <span id="tacticalPatternName">Fork</span>
         </span>
+        {% endif %}
         <a id="gameLink" href="#" target="_blank" rel="noopener noreferrer" style="display: none; margin-left: 10px; font-size: var(--text-sm); color: var(--primary); text-decoration: none; white-space: nowrap;" title="{{ t('trainer.link.original_game') }}">
           🔗 {{ t('trainer.link.original_game') }}
         </a>
@@ -171,6 +179,7 @@
             </div>
           </div>
 
+          {% if has_feature('trainer.filter.phase') %}
           <!-- Phase filter -->
           <div class="filter-group">
             <div class="filter-label">{{ t('trainer.filters.phase') }}</div>
@@ -189,7 +198,9 @@
               </label>
             </div>
           </div>
+          {% endif %}
 
+          {% if has_feature('trainer.filter.tactical') %}
           <!-- Tactical pattern filter -->
           <div class="filter-group">
             <div class="filter-label">{{ t('trainer.filters.tactical') }}</div>
@@ -202,6 +213,7 @@
               <button class="tactical-filter-btn" data-pattern="discovered_attack">{{ t('trainer.filters.tactical_discovery') }}</button>
             </div>
           </div>
+          {% endif %}
         </div>
       </div>
 
@@ -253,6 +265,7 @@
         <div class="section-title">{{ t('trainer.section.best_move') }}</div>
         <div class="best-move" id="bestMoveDisplay">...</div>
         <div class="best-line">{{ t('trainer.best_move.line_label') }} <span id="bestLineDisplay">...</span></div>
+        {% if has_feature('trainer.tactics') %}
         <!-- Tactical explanation -->
         <div class="tactical-info" id="tacticalInfo" style="display: none;">
           <div class="tactical-info-title">
@@ -261,6 +274,7 @@
           </div>
           <div class="tactical-info-reason" id="tacticalInfoReason">...</div>
         </div>
+        {% endif %}
         <div class="try-best-move">
           <button class="btn btn-success" id="tryBestBtn">{{ t('trainer.button.play_best') }}<kbd>P</kbd></button>
         </div>

@@ -80,6 +80,7 @@
   </div>
 </div>
 
+{% if has_feature('dashboard.heatmap') %}
 <div class="chart-container">
   <div class="chart-title">{{ t('dashboard.chart.puzzle_activity') }}</div>
   <p class="chart-description">{{ t('dashboard.chart.puzzle_activity_desc') }}</p>
@@ -87,7 +88,9 @@
     <div class="loading-placeholder">{{ t('dashboard.chart.loading_activity') }}</div>
   </div>
 </div>
+{% endif %}
 
+{% if has_feature('dashboard.phase_breakdown') %}
 <div class="chart-container">
   <div class="chart-title">{{ t('dashboard.chart.blunders_by_phase') }}</div>
   <p class="chart-description">{{ t('dashboard.chart.blunders_by_phase_desc') }}</p>
@@ -112,6 +115,7 @@
     <div class="loading-placeholder">{{ t('common.loading') }}</div>
   </div>
 </div>
+{% endif %}
 
 <div class="chart-container">
   <div class="chart-title">{{ t('dashboard.chart.blunders_by_color') }}</div>
@@ -146,6 +150,7 @@
   </div>
 </div>
 
+{% if has_feature('dashboard.opening_breakdown') %}
 <div class="chart-container">
   <div class="chart-title">{{ t('dashboard.chart.blunders_by_opening') }}</div>
   <p class="chart-description">{{ t('dashboard.chart.blunders_by_opening_desc') }}</p>
@@ -153,7 +158,9 @@
     <div class="loading-placeholder">{{ t('common.loading') }}</div>
   </div>
 </div>
+{% endif %}
 
+{% if has_feature('dashboard.tactical_breakdown') %}
 <div class="chart-container">
   <div class="chart-title">{{ t('dashboard.chart.blunders_by_tactical') }}</div>
   <p class="chart-description">{{ t('dashboard.chart.blunders_by_tactical_desc') }}</p>
@@ -165,6 +172,7 @@
     <div class="loading-placeholder">{{ t('common.loading') }}</div>
   </div>
 </div>
+{% endif %}
 
 <div class="chart-container">
   <div class="chart-title">{{ t('dashboard.chart.game_breakdown') }}</div>
@@ -182,6 +190,7 @@
   </table>
 </div>
 
+{% if has_feature('dashboard.accuracy') %}
 <div class="chart-container">
   <div class="chart-title">{{ t('dashboard.chart.accuracy_by_date') }}</div>
   <p class="chart-description">{{ t('dashboard.chart.accuracy_by_date_desc') }}</p>
@@ -203,6 +212,7 @@
     {{ t('dashboard.chart.no_hourly_data') }}
   </div>
 </div>
+{% endif %}
 
 <div class="mt-4">
   <a class="btn" href="/management">{{ t('dashboard.link.manage_imports') }}</a>

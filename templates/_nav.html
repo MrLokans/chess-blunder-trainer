@@ -2,8 +2,12 @@
 {% macro render_nav(active_page='') %}
 <nav>
   <a href="/" {% if active_page == 'trainer' %}class="active"{% endif %}>{{ t('nav.trainer') }}</a>
+  {% if has_feature('page.dashboard') %}
   <a href="/dashboard" {% if active_page == 'dashboard' %}class="active"{% endif %}>{{ t('nav.dashboard') }}</a>
+  {% endif %}
+  {% if has_feature('page.management') %}
   <a href="/management" {% if active_page == 'management' %}class="active"{% endif %}>{{ t('nav.management') }}</a>
+  {% endif %}
   <a href="/settings" {% if active_page == 'settings' %}class="active"{% endif %}>{{ t('nav.settings') }}</a>
 </nav>
 {% endmacro %}
@@ -11,6 +15,7 @@
 {# Minimal navigation for special pages (like setup) #}
 {% macro render_link_nav() %}
 <div class="nav-link-compact">
+  {% if has_feature('page.dashboard') %}
   <a href="/dashboard" class="nav-link-compact-item">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="3" width="7" height="7"></rect>
@@ -20,6 +25,7 @@
     </svg>
     {{ t('nav.dashboard') }}
   </a>
+  {% endif %}
   <a href="/settings" class="nav-link-compact-item">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"></circle>

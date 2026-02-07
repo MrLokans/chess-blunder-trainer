@@ -3,6 +3,7 @@ import { FilterPersistence } from './filter-persistence.js';
 import { loadConfiguredUsernames } from './usernames.js';
 import { loadHeatmap } from './heatmap.js';
 import { client } from './api.js';
+import { hasFeature } from './features.js';
 
 const wsClient = new WebSocketClient();
 
@@ -133,10 +134,13 @@ async function loadStats() {
       statusEl.textContent = '';
     }
 
-    await loadDateChart();
-    await loadHourChart();
+    if (hasFeature('dashboard.accuracy')) {
+      await loadDateChart();
+      await loadHourChart();
+    }
 
     // Blunders by phase
+    if (hasFeature('dashboard.phase_breakdown') && document.getElementById('phaseBreakdown')) {
     const phaseData = await client.stats.blundersByPhase(dateAndGameTypeParams());
 
     const phaseBreakdown = document.getElementById('phaseBreakdown');
@@ -162,6 +166,7 @@ async function loadStats() {
     } else {
       phaseBarContainer.style.display = 'none';
       phaseBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_phase_data') + '</div>';
+    }
     }
 
     // Blunders by color
@@ -244,6 +249,7 @@ async function loadStats() {
     }
 
     // Blunders by ECO opening
+    if (hasFeature('dashboard.opening_breakdown') && document.getElementById('ecoBreakdown')) {
     const ecoData = await client.stats.blundersByEco(dateAndGameTypeParams());
 
     const ecoBreakdown = document.getElementById('ecoBreakdown');
@@ -274,8 +280,10 @@ async function loadStats() {
     } else {
       ecoBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_opening_data') + '</div>';
     }
+    }
 
     // Blunders by tactical pattern
+    if (hasFeature('dashboard.tactical_breakdown') && document.getElementById('tacticalBreakdown')) {
     const tacticalData = await client.stats.blundersByTacticalPattern(dateAndGameTypeParams());
 
     const tacticalBreakdown = document.getElementById('tacticalBreakdown');
@@ -348,6 +356,7 @@ async function loadStats() {
       tacticalBarContainer.style.display = 'none';
       tacticalBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_tactical_data') + '</div>';
     }
+    }
 
     // Game breakdown
     const breakdown = await client.stats.gameBreakdown();
@@ -372,6 +381,7 @@ async function loadStats() {
 }
 
 async function loadDateChart() {
+  if (!document.getElementById('dateChartContainer')) return;
   try {
     const data = await client.stats.gamesByDate(dateAndGameTypeParams());
 
@@ -488,6 +498,7 @@ async function loadDateChart() {
 }
 
 async function loadHourChart() {
+  if (!document.getElementById('hourChartContainer')) return;
   try {
     const data = await client.stats.gamesByHour(dateAndGameTypeParams());
 
@@ -639,7 +650,9 @@ loadConfiguredUsernames().then((usernames) => {
   loadStats();
 });
 
-loadHeatmap('activityHeatmap');
+if (hasFeature('dashboard.heatmap')) {
+  loadHeatmap('activityHeatmap');
+}
 
 // WebSocket
 wsClient.connect();

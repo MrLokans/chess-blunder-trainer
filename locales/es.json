@@ -9,12 +9,10 @@
   "common.clear": "Limpiar",
   "common.no_activity": "{date}: Sin actividad",
   "common.back_to_trainer": "← Volver al entrenador",
-
   "nav.trainer": "Entrenador",
   "nav.dashboard": "Panel",
   "nav.management": "Gestión",
   "nav.settings": "Ajustes",
-
   "chess.phase.opening": "Apertura",
   "chess.phase.middlegame": "Medio juego",
   "chess.phase.endgame": "Final",
@@ -24,10 +22,8 @@
   "chess.color.white": "Blancas",
   "chess.color.black": "Negras",
   "chess.color.both": "Ambos",
-
   "trainer.title": "Entrenador de errores",
   "trainer.loading_stats": "Cargando estadísticas...",
-
   "trainer.empty.no_games_title": "No hay partidas importadas",
   "trainer.empty.no_games_message": "Importa tus partidas de Lichess o Chess.com para comenzar a entrenar tus errores.",
   "trainer.empty.no_games_action": "Importar partidas",
@@ -40,40 +36,31 @@
   "trainer.empty.default_title": "No hay puzzles disponibles",
   "trainer.empty.default_message": "Importa tus partidas para comenzar a entrenar tus errores.",
   "trainer.empty.default_action": "Importar partidas",
-
   "trainer.phase.guess": "Encuentra la mejor jugada",
   "trainer.phase.correct": "¡Correcto!",
   "trainer.phase.explore": "Explora la posición",
-
   "trainer.color.playing_as_white": "Jugando con blancas",
   "trainer.color.playing_as_black": "Jugando con negras",
-
   "trainer.legend.your_blunder": "Tu error grave",
   "trainer.legend.best_move": "Mejor jugada",
   "trainer.legend.your_move": "Tu jugada",
   "trainer.legend.tactical_squares": "Casillas tácticas",
-
   "trainer.toggle.show_arrows": "Mostrar flechas de jugadas",
   "trainer.toggle.show_threats": "Mostrar amenazas (piezas colgadas, clavadas, jaques)",
   "trainer.toggle.show_tactics": "Resaltar patrón táctico (tras revelar)",
-
   "trainer.section.your_blunder": "Tu error grave",
   "trainer.blunder.eval_label": "Evaluación:",
   "trainer.blunder.cp_loss": "{loss} peones",
-
   "trainer.section.best_move": "Mejor jugada",
   "trainer.best_move.line_label": "Variante:",
   "trainer.best_move.tactical_pattern": "Patrón táctico",
-
   "trainer.section.instructions": "Instrucciones",
   "trainer.instructions.goal": "Objetivo:",
   "trainer.instructions.text": "Encuentra una jugada mejor que tu error grave.",
   "trainer.instructions.drag": "Arrastra las piezas para hacer una jugada, luego haz clic en Enviar para comprobar.",
   "trainer.instructions.show_best": "Haz clic en «Mostrar mejor» para revelar la recomendación del motor.",
-
   "trainer.section.exploration": "Exploración",
   "trainer.move_indicator.label": "Tu jugada:",
-
   "trainer.button.submit": "Enviar",
   "trainer.button.reset": "Reiniciar",
   "trainer.button.show_best": "Mostrar mejor",
@@ -81,10 +68,8 @@
   "trainer.button.play_best": "Jugar mejor jugada",
   "trainer.button.undo": "Deshacer",
   "trainer.button.view_dashboard": "Ver panel",
-
   "trainer.link.original_game": "Partida original",
   "trainer.link.analyze_lichess": "Analizar en Lichess",
-
   "trainer.filters.title": "Filtros de puzzles",
   "trainer.filters.game_type": "Tipo de partida",
   "trainer.filters.color": "Jugar con color",
@@ -96,12 +81,10 @@
   "trainer.filters.tactical_hanging": "Pieza colgada",
   "trainer.filters.tactical_skewer": "Enfilada",
   "trainer.filters.tactical_discovery": "Descubierta",
-
   "trainer.game_type.bullet": "Bullet",
   "trainer.game_type.blitz": "Blitz",
   "trainer.game_type.rapid": "Rápida",
   "trainer.game_type.classical": "Clásica",
-
   "trainer.feedback.excellent": "¡Excelente!",
   "trainer.feedback.found_best": "Encontraste la mejor jugada: {move}",
   "trainer.feedback.same_blunder": "¡El mismo error!",
@@ -115,7 +98,6 @@
   "trainer.feedback.no_move": "Primero arrastra una pieza para hacer una jugada.",
   "trainer.feedback.best_revealed": "Mejor jugada revelada",
   "trainer.feedback.best_revealed_detail": "La mejor jugada era {move}",
-
   "trainer.shortcuts.title": "Atajos de teclado",
   "trainer.shortcuts.submit": "Enviar jugada",
   "trainer.shortcuts.next": "Siguiente puzzle",
@@ -129,18 +111,15 @@
   "trainer.shortcuts.undo": "Deshacer jugada",
   "trainer.shortcuts.show_help": "Mostrar esta ayuda",
   "trainer.shortcuts.close_help": "Cerrar esta ayuda",
-
   "trainer.stats.accuracy": "Precisión",
   "trainer.stats.total_attempts": "Intentos totales",
   "trainer.stats.correct": "Correctos",
   "trainer.stats.incorrect": "Incorrectos",
   "trainer.stats.unique_puzzles": "Puzzles únicos",
-
   "heatmap.total": "{count, plural, one {# puzzle} other {# puzzles}}",
   "heatmap.days": "{count, plural, one {# día activo} other {# días activos}}",
   "heatmap.tooltip": "{date}: {total, plural, one {# puzzle} other {# puzzles}} (✓{correct} ✗{incorrect})",
   "heatmap.error": "No se pudieron cargar los datos de actividad",
-
   "dashboard.title": "Panel de Blunder Tutor",
   "dashboard.filter.from": "Desde:",
   "dashboard.filter.to": "Hasta:",
@@ -150,36 +129,29 @@
   "dashboard.filter.last_90d": "Últimos 90 días",
   "dashboard.filter.last_1y": "Último año",
   "dashboard.filter.all_time": "Todo el tiempo",
-
   "dashboard.stat.total_games": "Total de partidas",
   "dashboard.stat.analyzed_games": "Partidas analizadas",
   "dashboard.stat.total_blunders": "Total de errores graves",
   "dashboard.stat.analysis_progress": "Progreso del análisis",
-
   "dashboard.analysis.running": "Análisis en curso: {current}/{total} ({percent}%)",
   "dashboard.analysis.completed": "Último análisis: completado",
   "dashboard.analysis.failed": "Último análisis: fallido",
   "dashboard.analysis.retry": "Reintentar",
-
   "dashboard.chart.puzzle_activity": "Actividad de puzzles",
   "dashboard.chart.puzzle_activity_desc": "Tu actividad de resolución de puzzles durante el último año.",
   "dashboard.chart.loading_activity": "Cargando datos de actividad...",
-
   "dashboard.chart.blunders_by_phase": "Errores graves por fase de juego",
   "dashboard.chart.blunders_by_phase_desc": "Descubre en qué fase de tus partidas tiendes a cometer errores.",
   "dashboard.chart.phase_percent": "{percentage}% de errores graves",
   "dashboard.chart.avg_loss": "Pérdida media: {loss} peones",
   "dashboard.chart.no_phase_data": "Aún no hay datos de errores. Analiza algunas partidas para ver el desglose por fases.",
-
   "dashboard.chart.blunders_by_color": "Errores graves por color",
   "dashboard.chart.blunders_by_color_desc": "Compara tu tasa de errores graves jugando con blancas y con negras.",
   "dashboard.chart.as_color": "Con {color}",
   "dashboard.chart.no_color_data": "Aún no hay datos de errores. Analiza algunas partidas para ver el desglose por color.",
-
   "dashboard.chart.blunders_by_game_type": "Errores graves por tipo de partida",
   "dashboard.chart.blunders_by_game_type_desc": "Compara tu tasa de errores graves en diferentes controles de tiempo.",
   "dashboard.chart.no_game_type_data": "Aún no hay datos de tipo de partida. Analiza algunas partidas para ver tus errores por control de tiempo.",
-
   "dashboard.chart.blunders_by_opening": "Errores graves por apertura",
   "dashboard.chart.blunders_by_opening_desc": "Descubre qué aperturas te causan más problemas.",
   "dashboard.chart.eco_opening": "Apertura",
@@ -187,18 +159,15 @@
   "dashboard.chart.eco_avg_loss": "Pérdida media",
   "dashboard.chart.eco_games": "Partidas",
   "dashboard.chart.no_opening_data": "Aún no hay datos de aperturas. Analiza algunas partidas para ver el desglose por apertura.",
-
   "dashboard.chart.blunders_by_tactical": "Errores graves por patrón táctico",
   "dashboard.chart.blunders_by_tactical_desc": "Descubre qué tipos de errores tácticos cometes con más frecuencia.",
   "dashboard.chart.no_tactical_data": "Aún no hay datos de patrones tácticos. Ejecuta un relleno para analizar los errores existentes en busca de patrones tácticos.",
-
   "dashboard.chart.game_breakdown": "Desglose de partidas por fuente",
   "dashboard.chart.source": "Fuente",
   "dashboard.chart.username": "Nombre de usuario",
   "dashboard.chart.total_games": "Total de partidas",
   "dashboard.chart.analyzed": "Analizadas",
   "dashboard.chart.pending": "Pendientes",
-
   "dashboard.chart.accuracy_by_date": "Precisión de juego por fecha",
   "dashboard.chart.accuracy_by_date_desc": "Sigue tu precisión de juego a lo largo del tiempo. Mayor = mejor juego (escala 0–100).",
   "dashboard.chart.no_accuracy_data": "Aún no hay datos de partidas. Importa y analiza algunas partidas para ver las tendencias de precisión.",
@@ -206,14 +175,11 @@
   "dashboard.chart.accuracy": "Precisión",
   "dashboard.chart.games_axis": "Partidas",
   "dashboard.chart.accuracy_axis": "Precisión %",
-
   "dashboard.chart.accuracy_by_hour": "Precisión de juego por hora del día",
   "dashboard.chart.accuracy_by_hour_desc": "Descubre a qué hora juegas con más precisión.",
   "dashboard.chart.no_hourly_data": "Aún no hay datos de partidas. Importa y analiza algunas partidas para ver los patrones de precisión por hora.",
   "dashboard.chart.hour_axis": "Hora del día (UTC)",
-
   "dashboard.link.manage_imports": "Gestionar importaciones y sincronización",
-
   "dashboard.game_type.ultrabullet": "UltraBullet",
   "dashboard.game_type.bullet": "Bullet",
   "dashboard.game_type.blitz": "Blitz",
@@ -221,7 +187,6 @@
   "dashboard.game_type.classical": "Clásica",
   "dashboard.game_type.correspondence": "Correspondencia",
   "dashboard.game_type.unknown": "Desconocido",
-
   "dashboard.tactical.fork": "Horquilla",
   "dashboard.tactical.pin": "Clavada",
   "dashboard.tactical.skewer": "Enfilada",
@@ -232,7 +197,6 @@
   "dashboard.tactical.back_rank": "Última fila",
   "dashboard.tactical.trapped": "Pieza atrapada",
   "dashboard.tactical.other": "Otros",
-
   "management.title": "Gestión",
   "management.engine.title": "Estado del motor de ajedrez",
   "management.engine.loading": "Cargando estado del motor...",
@@ -243,7 +207,6 @@
   "management.engine.not_configured": "No configurado",
   "management.engine.install_hint": "Asegúrate de que Stockfish esté instalado y la ruta sea correcta.",
   "management.engine.load_failed": "No se pudo cargar el estado del motor: {error}",
-
   "management.import.title": "Importación masiva de partidas",
   "management.import.source": "Fuente",
   "management.import.select_source": "Seleccionar fuente...",
@@ -258,13 +221,11 @@
   "management.import.completed": "¡Importación completada!",
   "management.import.failed": "Importación fallida: {error}",
   "management.import.start_failed": "No se pudo iniciar la importación: {error}",
-
   "management.sync.title": "Sincronizar partidas",
   "management.sync.description": "Obtener nuevas partidas de todas las fuentes configuradas.",
   "management.sync.button": "Sincronizar ahora",
   "management.sync.started": "¡Sincronización iniciada! Revisa las tareas recientes para seguir el progreso.",
   "management.sync.failed": "No se pudo iniciar la sincronización: {error}",
-
   "management.analysis.title": "Analizar partidas",
   "management.analysis.pending": "{count, plural, one {# partida pendiente de análisis} other {# partidas pendientes de análisis}}",
   "management.analysis.start": "Analizar todas las partidas",
@@ -273,7 +234,6 @@
   "management.analysis.started": "¡Análisis iniciado!",
   "management.analysis.completed": "¡Análisis completado!",
   "management.analysis.failed": "Análisis fallido: {error}",
-
   "management.backfill_phases.title": "Rellenar fases de juego",
   "management.backfill_phases.description": "Rellenar datos de fases (apertura/medio juego/final) para partidas analizadas.",
   "management.backfill_phases.pending": "{count, plural, one {# partida pendiente de relleno de fases} other {# partidas pendientes de relleno de fases}}",
@@ -282,7 +242,6 @@
   "management.backfill_phases.started": "¡Relleno iniciado!",
   "management.backfill_phases.completed": "¡Relleno completado!",
   "management.backfill_phases.failed": "Relleno fallido: {error}",
-
   "management.backfill_eco.title": "Rellenar códigos ECO",
   "management.backfill_eco.description": "Rellenar códigos de apertura ECO para partidas analizadas.",
   "management.backfill_eco.pending": "{count, plural, one {# partida pendiente de clasificación ECO} other {# partidas pendientes de clasificación ECO}}",
@@ -291,7 +250,6 @@
   "management.backfill_eco.started": "¡Relleno ECO iniciado!",
   "management.backfill_eco.completed": "¡Relleno ECO completado!",
   "management.backfill_eco.failed": "Relleno ECO fallido: {error}",
-
   "management.jobs.title": "Tareas recientes",
   "management.jobs.type": "Tipo",
   "management.jobs.status": "Estado",
@@ -302,7 +260,6 @@
   "management.jobs.actions": "Acciones",
   "management.jobs.none": "No se encontraron tareas",
   "management.jobs.delete_confirm": "¿Estás seguro de que quieres eliminar esta tarea?",
-
   "management.danger.title": "Zona de peligro",
   "management.danger.description": "Eliminar todas las partidas importadas, resultados de análisis, intentos de puzzles e historial de tareas.",
   "management.danger.warning": "Esta acción no se puede deshacer.",
@@ -314,7 +271,6 @@
   "management.danger.failed": "Eliminación fallida: {error}",
   "management.danger.confirm1": "¿Estás seguro de que quieres eliminar TODOS los datos?\n\nEsto eliminará permanentemente:\n• Todas las partidas importadas\n• Todos los resultados de análisis\n• Todos los intentos de puzzles\n• Todo el historial de tareas\n\n¡Esta acción no se puede deshacer!",
   "management.danger.confirm2": "¡Esta es tu última advertencia!\n\nHaz clic en OK para eliminar permanentemente todos los datos.",
-
   "settings.title": "Ajustes",
   "settings.subtitle": "Gestiona tus nombres de usuario de ajedrez",
   "settings.username_required": "Se requiere al menos un nombre de usuario para continuar entrenando.",
@@ -379,7 +335,6 @@
   "settings.save_error": "Error de red. Inténtalo de nuevo.",
   "settings.username_error": "Proporciona al menos un nombre de usuario (Lichess o Chess.com)",
   "settings.setting_up": "Guardando...",
-
   "setup.title": "Bienvenido a Blunder Tutor",
   "setup.subtitle": "Configura tus nombres de usuario de ajedrez para empezar",
   "setup.username_required": "Se requiere al menos un nombre de usuario para entrenar con tus partidas.",
@@ -394,5 +349,24 @@
   "setup.username_error": "Proporciona al menos un nombre de usuario (Lichess o Chess.com)",
   "setup.failed": "La configuración falló. Inténtalo de nuevo.",
   "setup.help": "¿Necesitas ayuda? Consulta la {link}",
-  "setup.documentation": "documentación"
+  "setup.documentation": "documentación",
+  "settings.features.title": "Visibilidad de funciones",
+  "settings.features.subtitle": "Muestra u oculta partes de la interfaz para mayor limpieza.",
+  "settings.features.group.pages": "Páginas",
+  "settings.features.group.trainer": "Entrenador",
+  "settings.features.group.dashboard": "Gráficos del panel",
+  "settings.features.group.automation": "Automatización",
+  "settings.features.page_dashboard": "Panel",
+  "settings.features.page_management": "Gestión",
+  "settings.features.trainer_threats": "Mostrar amenazas",
+  "settings.features.trainer_tactics": "Patrones tácticos",
+  "settings.features.trainer_filter_phase": "Filtro por fase",
+  "settings.features.trainer_filter_tactical": "Filtro por táctica",
+  "settings.features.dashboard_heatmap": "Mapa de actividad",
+  "settings.features.dashboard_phase_breakdown": "Errores por fase",
+  "settings.features.dashboard_opening_breakdown": "Errores por apertura",
+  "settings.features.dashboard_tactical_breakdown": "Errores por patrón táctico",
+  "settings.features.dashboard_accuracy": "Gráficos de precisión",
+  "settings.features.auto_sync": "Sincronización automática",
+  "settings.features.auto_analyze": "Análisis automático"
 }

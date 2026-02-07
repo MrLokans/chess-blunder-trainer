@@ -144,9 +144,9 @@ function redrawAllHighlights() {
 
   const blunder = buildBlunderHighlight(puzzle);
   const best = bestRevealed ? buildBestMoveHighlight(puzzle) : new Map();
-  const threats = buildThreatHighlights(game, showThreatsCheckbox.checked);
+  const threats = buildThreatHighlights(game, showThreatsCheckbox ? showThreatsCheckbox.checked : false);
   const tactical = buildTacticalHighlights(puzzle, game, bestRevealed,
-    showTacticsCheckbox && showTacticsCheckbox.checked);
+    showTacticsCheckbox ? showTacticsCheckbox.checked : false);
 
   if (bestRevealed && tactical.size > 0 && legendTactic) {
     legendTactic.style.display = 'flex';
@@ -162,9 +162,9 @@ function redrawAllHighlightsWithUser(userUci) {
   const blunder = buildBlunderHighlight(puzzle);
   const best = buildBestMoveHighlight(puzzle);
   const user = buildUserMoveHighlight(userUci);
-  const threats = buildThreatHighlights(game, showThreatsCheckbox.checked);
+  const threats = buildThreatHighlights(game, showThreatsCheckbox ? showThreatsCheckbox.checked : false);
   const tactical = buildTacticalHighlights(puzzle, game, bestRevealed,
-    showTacticsCheckbox && showTacticsCheckbox.checked);
+    showTacticsCheckbox ? showTacticsCheckbox.checked : false);
 
   if (bestRevealed && tactical.size > 0 && legendTactic) {
     legendTactic.style.display = 'flex';
@@ -176,7 +176,7 @@ function redrawAllHighlightsWithUser(userUci) {
 
 function redrawArrows() {
   if (!board || !puzzle) return;
-  if (!showArrowsCheckbox.checked) {
+  if (showArrowsCheckbox && !showArrowsCheckbox.checked) {
     board.clearArrows();
     return;
   }
@@ -732,8 +732,12 @@ if (shortcutsOverlay) {
 if (shortcutsHintBtn) {
   shortcutsHintBtn.addEventListener('click', toggleShortcutsOverlay);
 }
-showArrowsCheckbox.addEventListener('change', redrawArrows);
-showThreatsCheckbox.addEventListener('change', () => redrawAllHighlights());
+if (showArrowsCheckbox) {
+  showArrowsCheckbox.addEventListener('change', redrawArrows);
+}
+if (showThreatsCheckbox) {
+  showThreatsCheckbox.addEventListener('change', () => redrawAllHighlights());
+}
 if (showTacticsCheckbox) {
   showTacticsCheckbox.addEventListener('change', () => redrawAllHighlights());
 }
@@ -817,11 +821,15 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === 'p' || e.key === 'P') {
     playBestMove();
   } else if (e.key === 'a' || e.key === 'A') {
-    showArrowsCheckbox.checked = !showArrowsCheckbox.checked;
-    showArrowsCheckbox.dispatchEvent(new Event('change'));
+    if (showArrowsCheckbox) {
+      showArrowsCheckbox.checked = !showArrowsCheckbox.checked;
+      showArrowsCheckbox.dispatchEvent(new Event('change'));
+    }
   } else if (e.key === 't' || e.key === 'T') {
-    showThreatsCheckbox.checked = !showThreatsCheckbox.checked;
-    showThreatsCheckbox.dispatchEvent(new Event('change'));
+    if (showThreatsCheckbox) {
+      showThreatsCheckbox.checked = !showThreatsCheckbox.checked;
+      showThreatsCheckbox.dispatchEvent(new Event('change'));
+    }
   } else if (e.key === 'l' || e.key === 'L') {
     openLichessAnalysis();
   }

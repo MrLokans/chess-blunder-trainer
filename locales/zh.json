@@ -9,12 +9,10 @@
   "common.clear": "清除",
   "common.no_activity": "{date}：无活动",
   "common.back_to_trainer": "← 返回训练",
-
   "nav.trainer": "训练",
   "nav.dashboard": "面板",
   "nav.management": "管理",
   "nav.settings": "设置",
-
   "chess.phase.opening": "开局",
   "chess.phase.middlegame": "中局",
   "chess.phase.endgame": "残局",
@@ -24,10 +22,8 @@
   "chess.color.white": "白方",
   "chess.color.black": "黑方",
   "chess.color.both": "双方",
-
   "trainer.title": "失误训练",
   "trainer.loading_stats": "加载统计数据...",
-
   "trainer.empty.no_games_title": "没有已导入的对局",
   "trainer.empty.no_games_message": "从 Lichess 或 Chess.com 导入您的对局，开始训练您的失误。",
   "trainer.empty.no_games_action": "导入对局",
@@ -40,40 +36,31 @@
   "trainer.empty.default_title": "没有可用的题目",
   "trainer.empty.default_message": "导入您的对局以开始训练您的失误。",
   "trainer.empty.default_action": "导入对局",
-
   "trainer.phase.guess": "找到最佳走法",
   "trainer.phase.correct": "正确！",
   "trainer.phase.explore": "探索局面",
-
   "trainer.color.playing_as_white": "执白",
   "trainer.color.playing_as_black": "执黑",
-
   "trainer.legend.your_blunder": "您的严重失误",
   "trainer.legend.best_move": "最佳走法",
   "trainer.legend.your_move": "您的走法",
   "trainer.legend.tactical_squares": "战术格",
-
   "trainer.toggle.show_arrows": "显示走法箭头",
   "trainer.toggle.show_threats": "显示威胁（悬挂子力、牵制、将军）",
   "trainer.toggle.show_tactics": "高亮战术模式（揭示后）",
-
   "trainer.section.your_blunder": "您的严重失误",
   "trainer.blunder.eval_label": "评估：",
   "trainer.blunder.cp_loss": "{loss} 个兵的价值",
-
   "trainer.section.best_move": "最佳走法",
   "trainer.best_move.line_label": "变例：",
   "trainer.best_move.tactical_pattern": "战术模式",
-
   "trainer.section.instructions": "说明",
   "trainer.instructions.goal": "目标：",
   "trainer.instructions.text": "找到比您的严重失误更好的走法。",
   "trainer.instructions.drag": "拖动棋子走棋，然后点击提交进行检查。",
   "trainer.instructions.show_best": "点击「显示最佳」以查看引擎推荐。",
-
   "trainer.section.exploration": "探索",
   "trainer.move_indicator.label": "您的走法：",
-
   "trainer.button.submit": "提交",
   "trainer.button.reset": "重置",
   "trainer.button.show_best": "显示最佳",
@@ -81,10 +68,8 @@
   "trainer.button.play_best": "走出最佳走法",
   "trainer.button.undo": "撤销",
   "trainer.button.view_dashboard": "查看面板",
-
   "trainer.link.original_game": "原始对局",
   "trainer.link.analyze_lichess": "在 Lichess 上分析",
-
   "trainer.filters.title": "题目筛选",
   "trainer.filters.game_type": "对局类型",
   "trainer.filters.color": "执棋颜色",
@@ -96,12 +81,10 @@
   "trainer.filters.tactical_hanging": "悬挂子力",
   "trainer.filters.tactical_skewer": "串打",
   "trainer.filters.tactical_discovery": "闪击",
-
   "trainer.game_type.bullet": "超快棋",
   "trainer.game_type.blitz": "快棋",
   "trainer.game_type.rapid": "慢棋",
   "trainer.game_type.classical": "古典棋",
-
   "trainer.feedback.excellent": "太棒了！",
   "trainer.feedback.found_best": "您找到了最佳走法：{move}",
   "trainer.feedback.same_blunder": "同样的失误！",
@@ -115,7 +98,6 @@
   "trainer.feedback.no_move": "请先拖动棋子走棋。",
   "trainer.feedback.best_revealed": "最佳走法已揭示",
   "trainer.feedback.best_revealed_detail": "最佳走法是 {move}",
-
   "trainer.shortcuts.title": "快捷键",
   "trainer.shortcuts.submit": "提交走法",
   "trainer.shortcuts.next": "下一道题",
@@ -129,18 +111,15 @@
   "trainer.shortcuts.undo": "撤销走法",
   "trainer.shortcuts.show_help": "显示此帮助",
   "trainer.shortcuts.close_help": "关闭此帮助",
-
   "trainer.stats.accuracy": "准确率",
   "trainer.stats.total_attempts": "总尝试次数",
   "trainer.stats.correct": "正确",
   "trainer.stats.incorrect": "错误",
   "trainer.stats.unique_puzzles": "独特题目",
-
   "heatmap.total": "{count, plural, other {# 道题}}",
   "heatmap.days": "{count, plural, other {# 个活跃日}}",
   "heatmap.tooltip": "{date}：{total, plural, other {# 道题}}（✓{correct} ✗{incorrect}）",
   "heatmap.error": "加载活动数据失败",
-
   "dashboard.title": "Blunder Tutor 面板",
   "dashboard.filter.from": "从：",
   "dashboard.filter.to": "到：",
@@ -150,36 +129,29 @@
   "dashboard.filter.last_90d": "最近 90 天",
   "dashboard.filter.last_1y": "最近一年",
   "dashboard.filter.all_time": "所有时间",
-
   "dashboard.stat.total_games": "总对局数",
   "dashboard.stat.analyzed_games": "已分析对局",
   "dashboard.stat.total_blunders": "严重失误总数",
   "dashboard.stat.analysis_progress": "分析进度",
-
   "dashboard.analysis.running": "分析进行中：{current}/{total}（{percent}%）",
   "dashboard.analysis.completed": "上次分析：已完成",
   "dashboard.analysis.failed": "上次分析：失败",
   "dashboard.analysis.retry": "重试",
-
   "dashboard.chart.puzzle_activity": "题目活动",
   "dashboard.chart.puzzle_activity_desc": "过去一年您的题目解答活动。",
   "dashboard.chart.loading_activity": "加载活动数据...",
-
   "dashboard.chart.blunders_by_phase": "按对局阶段分类的严重失误",
   "dashboard.chart.blunders_by_phase_desc": "了解您在对局的哪个阶段容易犯错。",
   "dashboard.chart.phase_percent": "{percentage}% 的严重失误",
   "dashboard.chart.avg_loss": "平均损失：{loss} 个兵",
   "dashboard.chart.no_phase_data": "暂无失误数据。分析一些对局以查看阶段分布。",
-
   "dashboard.chart.blunders_by_color": "按颜色分类的严重失误",
   "dashboard.chart.blunders_by_color_desc": "比较执白和执黑时的严重失误率。",
   "dashboard.chart.as_color": "执 {color}",
   "dashboard.chart.no_color_data": "暂无失误数据。分析一些对局以查看颜色分布。",
-
   "dashboard.chart.blunders_by_game_type": "按对局类型分类的严重失误",
   "dashboard.chart.blunders_by_game_type_desc": "比较不同时间控制下的严重失误率。",
   "dashboard.chart.no_game_type_data": "暂无对局类型数据。分析一些对局以查看按时间控制分类的失误。",
-
   "dashboard.chart.blunders_by_opening": "按开局分类的严重失误",
   "dashboard.chart.blunders_by_opening_desc": "查看哪些开局给您带来最多的麻烦。",
   "dashboard.chart.eco_opening": "开局",
@@ -187,18 +159,15 @@
   "dashboard.chart.eco_avg_loss": "平均损失",
   "dashboard.chart.eco_games": "对局",
   "dashboard.chart.no_opening_data": "暂无开局数据。分析一些对局以查看开局分布。",
-
   "dashboard.chart.blunders_by_tactical": "按战术模式分类的严重失误",
   "dashboard.chart.blunders_by_tactical_desc": "了解您最常犯的战术错误类型。",
   "dashboard.chart.no_tactical_data": "暂无战术模式数据。运行回填以分析现有失误的战术模式。",
-
   "dashboard.chart.game_breakdown": "按来源分类的对局",
   "dashboard.chart.source": "来源",
   "dashboard.chart.username": "用户名",
   "dashboard.chart.total_games": "总对局数",
   "dashboard.chart.analyzed": "已分析",
   "dashboard.chart.pending": "待处理",
-
   "dashboard.chart.accuracy_by_date": "按日期分类的对局准确率",
   "dashboard.chart.accuracy_by_date_desc": "跟踪您的对局准确率变化。越高 = 下得越好（0–100 分制）。",
   "dashboard.chart.no_accuracy_data": "暂无对局数据。导入并分析一些对局以查看准确率趋势。",
@@ -206,14 +175,11 @@
   "dashboard.chart.accuracy": "准确率",
   "dashboard.chart.games_axis": "对局",
   "dashboard.chart.accuracy_axis": "准确率 %",
-
   "dashboard.chart.accuracy_by_hour": "按时段分类的对局准确率",
   "dashboard.chart.accuracy_by_hour_desc": "发现您在一天中什么时候下棋最准确。",
   "dashboard.chart.no_hourly_data": "暂无对局数据。导入并分析一些对局以查看每小时准确率模式。",
   "dashboard.chart.hour_axis": "时段（UTC）",
-
   "dashboard.link.manage_imports": "管理导入和同步",
-
   "dashboard.game_type.ultrabullet": "超超快棋",
   "dashboard.game_type.bullet": "超快棋",
   "dashboard.game_type.blitz": "快棋",
@@ -221,7 +187,6 @@
   "dashboard.game_type.classical": "古典棋",
   "dashboard.game_type.correspondence": "通信棋",
   "dashboard.game_type.unknown": "未知",
-
   "dashboard.tactical.fork": "捉双",
   "dashboard.tactical.pin": "牵制",
   "dashboard.tactical.skewer": "串打",
@@ -232,7 +197,6 @@
   "dashboard.tactical.back_rank": "底线杀",
   "dashboard.tactical.trapped": "困子",
   "dashboard.tactical.other": "其他",
-
   "management.title": "管理",
   "management.engine.title": "国际象棋引擎状态",
   "management.engine.loading": "加载引擎状态...",
@@ -243,7 +207,6 @@
   "management.engine.not_configured": "未配置",
   "management.engine.install_hint": "请确保 Stockfish 已安装且路径正确。",
   "management.engine.load_failed": "加载引擎状态失败：{error}",
-
   "management.import.title": "批量导入对局",
   "management.import.source": "来源",
   "management.import.select_source": "选择来源...",
@@ -258,13 +221,11 @@
   "management.import.completed": "导入完成！",
   "management.import.failed": "导入失败：{error}",
   "management.import.start_failed": "无法开始导入：{error}",
-
   "management.sync.title": "同步对局",
   "management.sync.description": "从所有已配置的来源获取新对局。",
   "management.sync.button": "立即同步",
   "management.sync.started": "同步已开始！查看最近的任务以跟踪进度。",
   "management.sync.failed": "无法开始同步：{error}",
-
   "management.analysis.title": "分析对局",
   "management.analysis.pending": "{count, plural, other {# 局对局待分析}}",
   "management.analysis.start": "分析所有对局",
@@ -273,7 +234,6 @@
   "management.analysis.started": "分析已开始！",
   "management.analysis.completed": "分析完成！",
   "management.analysis.failed": "分析失败：{error}",
-
   "management.backfill_phases.title": "回填对局阶段",
   "management.backfill_phases.description": "为已分析的对局回填阶段数据（开局/中局/残局）。",
   "management.backfill_phases.pending": "{count, plural, other {# 局对局待阶段回填}}",
@@ -282,7 +242,6 @@
   "management.backfill_phases.started": "回填已开始！",
   "management.backfill_phases.completed": "回填完成！",
   "management.backfill_phases.failed": "回填失败：{error}",
-
   "management.backfill_eco.title": "回填 ECO 代码",
   "management.backfill_eco.description": "为已分析的对局回填 ECO 开局代码。",
   "management.backfill_eco.pending": "{count, plural, other {# 局对局待 ECO 分类}}",
@@ -291,7 +250,6 @@
   "management.backfill_eco.started": "ECO 回填已开始！",
   "management.backfill_eco.completed": "ECO 回填完成！",
   "management.backfill_eco.failed": "ECO 回填失败：{error}",
-
   "management.jobs.title": "最近的任务",
   "management.jobs.type": "类型",
   "management.jobs.status": "状态",
@@ -302,7 +260,6 @@
   "management.jobs.actions": "操作",
   "management.jobs.none": "未找到任务",
   "management.jobs.delete_confirm": "您确定要删除此任务吗？",
-
   "management.danger.title": "危险区域",
   "management.danger.description": "删除所有已导入的对局、分析结果、题目尝试记录和任务历史。",
   "management.danger.warning": "此操作无法撤销。",
@@ -314,7 +271,6 @@
   "management.danger.failed": "删除失败：{error}",
   "management.danger.confirm1": "您确定要删除所有数据吗？\n\n这将永久删除：\n• 所有已导入的对局\n• 所有分析结果\n• 所有题目尝试记录\n• 所有任务历史\n\n此操作无法撤销！",
   "management.danger.confirm2": "这是最后的警告！\n\n点击确定以永久删除所有数据。",
-
   "settings.title": "设置",
   "settings.subtitle": "管理您的国际象棋用户名",
   "settings.username_required": "至少需要一个用户名才能继续训练。",
@@ -379,7 +335,6 @@
   "settings.save_error": "网络错误。请重试。",
   "settings.username_error": "请提供至少一个用户名（Lichess 或 Chess.com）",
   "settings.setting_up": "保存中...",
-
   "setup.title": "欢迎使用 Blunder Tutor",
   "setup.subtitle": "配置您的国际象棋用户名以开始",
   "setup.username_required": "至少需要一个用户名才能使用您的对局进行训练。",
@@ -394,5 +349,24 @@
   "setup.username_error": "请提供至少一个用户名（Lichess 或 Chess.com）",
   "setup.failed": "配置失败。请重试。",
   "setup.help": "需要帮助？查看{link}",
-  "setup.documentation": "文档"
+  "setup.documentation": "文档",
+  "settings.features.title": "功能可见性",
+  "settings.features.subtitle": "显示或隐藏界面部分以保持简洁。",
+  "settings.features.group.pages": "页面",
+  "settings.features.group.trainer": "训练器",
+  "settings.features.group.dashboard": "仪表盘图表",
+  "settings.features.group.automation": "自动化",
+  "settings.features.page_dashboard": "仪表盘",
+  "settings.features.page_management": "管理",
+  "settings.features.trainer_threats": "显示威胁",
+  "settings.features.trainer_tactics": "战术模式",
+  "settings.features.trainer_filter_phase": "阶段筛选",
+  "settings.features.trainer_filter_tactical": "战术筛选",
+  "settings.features.dashboard_heatmap": "活动热力图",
+  "settings.features.dashboard_phase_breakdown": "按阶段分析失误",
+  "settings.features.dashboard_opening_breakdown": "按开局分析失误",
+  "settings.features.dashboard_tactical_breakdown": "按战术模式分析失误",
+  "settings.features.dashboard_accuracy": "准确率图表",
+  "settings.features.auto_sync": "自动同步",
+  "settings.features.auto_analyze": "自动分析"
 }

@@ -32,10 +32,14 @@ async function loadSyncSettings() {
     await initThemeEditor();
 
     const settings = await client.settings.get();
-    document.getElementById('autoSync').checked = settings.auto_sync;
-    document.getElementById('syncInterval').value = String(settings.sync_interval);
-    document.getElementById('maxGames').value = String(settings.max_games);
-    document.getElementById('autoAnalyze').checked = settings.auto_analyze;
+    const autoSyncEl = document.getElementById('autoSync');
+    const syncIntervalEl = document.getElementById('syncInterval');
+    const maxGamesEl = document.getElementById('maxGames');
+    const autoAnalyzeEl = document.getElementById('autoAnalyze');
+    if (autoSyncEl) autoSyncEl.checked = settings.auto_sync;
+    if (syncIntervalEl) syncIntervalEl.value = String(settings.sync_interval);
+    if (maxGamesEl) maxGamesEl.value = String(settings.max_games);
+    if (autoAnalyzeEl) autoAnalyzeEl.checked = settings.auto_analyze;
     document.getElementById('spacedRepetitionDays').value = String(settings.spaced_repetition_days);
   } catch (err) {
     console.error('Failed to load settings:', err);
@@ -54,10 +58,14 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  const autoSync = document.getElementById('autoSync').checked;
-  const syncInterval = document.getElementById('syncInterval').value;
-  const maxGames = document.getElementById('maxGames').value;
-  const autoAnalyze = document.getElementById('autoAnalyze').checked;
+  const autoSyncEl = document.getElementById('autoSync');
+  const syncIntervalEl = document.getElementById('syncInterval');
+  const maxGamesInputEl = document.getElementById('maxGames');
+  const autoAnalyzeEl = document.getElementById('autoAnalyze');
+  const autoSync = autoSyncEl ? autoSyncEl.checked : false;
+  const syncInterval = syncIntervalEl ? syncIntervalEl.value : '24';
+  const maxGames = maxGamesInputEl ? maxGamesInputEl.value : '1000';
+  const autoAnalyze = autoAnalyzeEl ? autoAnalyzeEl.checked : true;
   const spacedRepetitionDays = document.getElementById('spacedRepetitionDays').value;
 
   submitBtn.disabled = true;
@@ -104,5 +112,36 @@ if (localeSelect) {
   });
 }
 
+const SETTINGS_PAGE_FEATURES = new Set(['auto.sync', 'auto.analyze']);
+
+function initFeatureToggles() {
+  let needsReload = false;
+  let reloadTimer = null;
+
+  document.querySelectorAll('.feature-toggle').forEach(el => {
+    el.addEventListener('change', async () => {
+      if (reloadTimer) clearTimeout(reloadTimer);
+
+      try {
+        await client.settings.saveFeatures({ [el.dataset.feature]: el.checked });
+        window.__features[el.dataset.feature] = el.checked;
+
+        if (SETTINGS_PAGE_FEATURES.has(el.dataset.feature)) {
+          needsReload = true;
+        }
+      } catch (err) {
+        el.checked = !el.checked;
+        console.error('Failed to save feature toggle:', err);
+        return;
+      }
+
+      if (needsReload) {
+        reloadTimer = setTimeout(() => window.location.reload(), 600);
+      }
+    });
+  });
+}
+
 loadSyncSettings();
 initBoardEditor();
+initFeatureToggles();

@@ -632,6 +632,43 @@ async def settings_submit(
     return {"success": True}
 
 
+class FeatureFlagsResponse(BaseModel):
+    features: dict[str, bool] = Field(description="Feature visibility flags")
+
+
+class FeatureFlagsRequest(BaseModel):
+    features: dict[str, bool] = Field(description="Feature flags to update")
+
+
+@settings_router.get(
+    "/api/settings/features",
+    response_model=FeatureFlagsResponse,
+    summary="Get feature visibility flags",
+    description="Retrieve current feature visibility settings.",
+)
+async def get_features(settings_repo: SettingsRepoDep) -> dict[str, Any]:
+    features = await settings_repo.get_feature_flags()
+    return {"features": features}
+
+
+@settings_router.post(
+    "/api/settings/features",
+    response_model=SuccessResponse,
+    summary="Update feature visibility flags",
+    description="Toggle visibility of individual features.",
+)
+async def update_features(
+    request: Request, payload: FeatureFlagsRequest, settings_repo: SettingsRepoDep
+) -> dict[str, bool]:
+    await settings_repo.set_feature_flags(payload.features)
+
+    scheduler = request.app.state.scheduler
+    settings = await settings_repo.get_all_settings()
+    scheduler.update_jobs(settings)
+
+    return {"success": True}
+
+
 class LocaleRequest(BaseModel):
     locale: str = Field(description="Locale code (e.g., 'en', 'ru')")
 

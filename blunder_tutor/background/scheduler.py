@@ -60,11 +60,18 @@ class BackgroundScheduler:
         self._event_bus = event_bus
         self._engine_path = engine_path
 
+    def _is_feature_enabled(
+        self, settings: dict[str, str | None], feature_key: str
+    ) -> bool:
+        val = settings.get(f"feature_{feature_key}")
+        return val != "false"
+
     def start(self, settings: dict[str, str | None]) -> None:
         with contextlib.suppress(Exception):
             self.scheduler.remove_job("auto_sync")
 
-        if settings.get("auto_sync_enabled") == "true":
+        sync_feature_on = self._is_feature_enabled(settings, "auto.sync")
+        if sync_feature_on and settings.get("auto_sync_enabled") == "true":
             interval_hours_str = settings.get("sync_interval_hours")
             interval_hours = int(interval_hours_str) if interval_hours_str else 24
 
@@ -87,7 +94,8 @@ class BackgroundScheduler:
         with contextlib.suppress(Exception):
             self.scheduler.remove_job("auto_sync")
 
-        if settings.get("auto_sync_enabled") == "true":
+        sync_feature_on = self._is_feature_enabled(settings, "auto.sync")
+        if sync_feature_on and settings.get("auto_sync_enabled") == "true":
             interval_hours_str = settings.get("sync_interval_hours")
             interval_hours = int(interval_hours_str) if interval_hours_str else 24
 

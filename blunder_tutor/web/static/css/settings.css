@@ -358,3 +358,32 @@
     grid-template-columns: 1fr 1fr;
     gap: var(--space-3);
   }
+
+/* Feature toggles */
+.feature-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.feature-group-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.feature-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.feature-toggle-row input[type="checkbox"] {
+  width: auto;
+}

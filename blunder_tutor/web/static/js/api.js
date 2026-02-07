@@ -96,6 +96,8 @@ export const client = {
     getPieceSets: () => request('/api/settings/board/piece-sets'),
     getBoardColorPresets: () => request('/api/settings/board/color-presets'),
     setLocale: (locale) => post('/api/settings/locale', { locale }),
+    getFeatures: () => request('/api/settings/features'),
+    saveFeatures: (features) => post('/api/settings/features', { features }),
   },
 
   trainer: {

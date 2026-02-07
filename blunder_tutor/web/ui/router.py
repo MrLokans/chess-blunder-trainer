@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
+from blunder_tutor.features import FEATURE_GROUPS, FEATURE_LABELS
 from blunder_tutor.web.dependencies import SettingsRepoDep
 
 
@@ -28,12 +29,18 @@ async def management(request: Request) -> HTMLResponse:
 async def settings(request: Request, settings_repo: SettingsRepoDep) -> HTMLResponse:
     usernames = await settings_repo.get_configured_usernames()
 
+    feature_groups = [
+        (group_label, [(f.value, FEATURE_LABELS[f]) for f in group_features])
+        for group_label, group_features in FEATURE_GROUPS
+    ]
+
     return request.app.state.templates.TemplateResponse(
         "settings.html",
         {
             "request": request,
             "lichess_username": usernames.get("lichess"),
             "chesscom_username": usernames.get("chesscom"),
+            "feature_groups": feature_groups,
         },
     )
 

@@ -9,12 +9,10 @@
   "common.clear": "Сбросить",
   "common.no_activity": "{date}: Нет активности",
   "common.back_to_trainer": "← Назад к тренажёру",
-
   "nav.trainer": "Тренажёр",
   "nav.dashboard": "Статистика",
   "nav.management": "Управление",
   "nav.settings": "Настройки",
-
   "chess.phase.opening": "Дебют",
   "chess.phase.middlegame": "Миттельшпиль",
   "chess.phase.endgame": "Эндшпиль",
@@ -24,10 +22,8 @@
   "chess.color.white": "Белые",
   "chess.color.black": "Чёрные",
   "chess.color.both": "Оба",
-
   "trainer.title": "Тренажёр зевков",
   "trainer.loading_stats": "Загрузка статистики...",
-
   "trainer.empty.no_games_title": "Партии не импортированы",
   "trainer.empty.no_games_message": "Импортируйте партии с Lichess или Chess.com, чтобы начать тренировку.",
   "trainer.empty.no_games_action": "Импортировать партии",
@@ -40,40 +36,31 @@
   "trainer.empty.default_title": "Нет доступных задач",
   "trainer.empty.default_message": "Импортируйте партии, чтобы начать тренировку.",
   "trainer.empty.default_action": "Импортировать партии",
-
   "trainer.phase.guess": "Найдите лучший ход",
   "trainer.phase.correct": "Правильно!",
   "trainer.phase.explore": "Исследуйте позицию",
-
   "trainer.color.playing_as_white": "Играете белыми",
   "trainer.color.playing_as_black": "Играете чёрными",
-
   "trainer.legend.your_blunder": "Ваш зевок",
   "trainer.legend.best_move": "Лучший ход",
   "trainer.legend.your_move": "Ваш ход",
   "trainer.legend.tactical_squares": "Тактические поля",
-
   "trainer.toggle.show_arrows": "Показать стрелки ходов",
   "trainer.toggle.show_threats": "Показать угрозы (висячие фигуры, связки, шахи)",
   "trainer.toggle.show_tactics": "Выделить тактический приём (после раскрытия)",
-
   "trainer.section.your_blunder": "Ваш зевок",
   "trainer.blunder.eval_label": "Оценка:",
   "trainer.blunder.cp_loss": "{loss} пешек",
-
   "trainer.section.best_move": "Лучший ход",
   "trainer.best_move.line_label": "Вариант:",
   "trainer.best_move.tactical_pattern": "Тактический приём",
-
   "trainer.section.instructions": "Инструкция",
   "trainer.instructions.goal": "Цель:",
   "trainer.instructions.text": "Найдите ход лучше вашего зевка.",
   "trainer.instructions.drag": "Перетащите фигуру для хода, затем нажмите «Отправить».",
   "trainer.instructions.show_best": "Нажмите «Показать лучший», чтобы увидеть рекомендацию движка.",
-
   "trainer.section.exploration": "Исследование",
   "trainer.move_indicator.label": "Ваш ход:",
-
   "trainer.button.submit": "Отправить",
   "trainer.button.reset": "Сброс",
   "trainer.button.show_best": "Лучший ход",
@@ -81,10 +68,8 @@
   "trainer.button.play_best": "Сыграть лучший",
   "trainer.button.undo": "Отменить",
   "trainer.button.view_dashboard": "Статистика",
-
   "trainer.link.original_game": "Оригинальная партия",
   "trainer.link.analyze_lichess": "Анализ на Lichess",
-
   "trainer.filters.title": "Фильтры задач",
   "trainer.filters.game_type": "Тип партии",
   "trainer.filters.color": "Цвет",
@@ -96,12 +81,10 @@
   "trainer.filters.tactical_hanging": "Висячая",
   "trainer.filters.tactical_skewer": "Линейный удар",
   "trainer.filters.tactical_discovery": "Вскрытие",
-
   "trainer.game_type.bullet": "Пуля",
   "trainer.game_type.blitz": "Блиц",
   "trainer.game_type.rapid": "Рапид",
   "trainer.game_type.classical": "Классика",
-
   "trainer.feedback.excellent": "Отлично!",
   "trainer.feedback.found_best": "Вы нашли лучший ход: {move}",
   "trainer.feedback.same_blunder": "Тот же зевок!",
@@ -115,7 +98,6 @@
   "trainer.feedback.no_move": "Перетащите фигуру, чтобы сделать ход.",
   "trainer.feedback.best_revealed": "Лучший ход показан",
   "trainer.feedback.best_revealed_detail": "Лучший ход был {move}",
-
   "trainer.shortcuts.title": "Горячие клавиши",
   "trainer.shortcuts.submit": "Отправить ход",
   "trainer.shortcuts.next": "Следующая задача",
@@ -129,18 +111,15 @@
   "trainer.shortcuts.undo": "Отмена хода",
   "trainer.shortcuts.show_help": "Показать справку",
   "trainer.shortcuts.close_help": "Закрыть справку",
-
   "trainer.stats.accuracy": "Точность",
   "trainer.stats.total_attempts": "Всего попыток",
   "trainer.stats.correct": "Верно",
   "trainer.stats.incorrect": "Неверно",
   "trainer.stats.unique_puzzles": "Уникальные задачи",
-
   "heatmap.total": "{count, plural, one {# задача} few {# задачи} many {# задач} other {# задач}}",
   "heatmap.days": "{count, plural, one {# активный день} few {# активных дня} many {# активных дней} other {# активных дней}}",
   "heatmap.tooltip": "{date}: {total, plural, one {# задача} few {# задачи} many {# задач} other {# задач}} (✓{correct} ✗{incorrect})",
   "heatmap.error": "Не удалось загрузить данные активности",
-
   "dashboard.title": "Статистика Blunder Tutor",
   "dashboard.filter.from": "С:",
   "dashboard.filter.to": "По:",
@@ -150,36 +129,29 @@
   "dashboard.filter.last_90d": "90 дней",
   "dashboard.filter.last_1y": "Год",
   "dashboard.filter.all_time": "Всё время",
-
   "dashboard.stat.total_games": "Всего партий",
   "dashboard.stat.analyzed_games": "Проанализировано",
   "dashboard.stat.total_blunders": "Всего зевков",
   "dashboard.stat.analysis_progress": "Прогресс анализа",
-
   "dashboard.analysis.running": "Анализ: {current}/{total} ({percent}%)",
   "dashboard.analysis.completed": "Последний анализ: завершён",
   "dashboard.analysis.failed": "Последний анализ: ошибка",
   "dashboard.analysis.retry": "Повторить",
-
   "dashboard.chart.puzzle_activity": "Активность решения задач",
   "dashboard.chart.puzzle_activity_desc": "Ваша активность за последний год.",
   "dashboard.chart.loading_activity": "Загрузка данных активности...",
-
   "dashboard.chart.blunders_by_phase": "Зевки по стадиям партии",
   "dashboard.chart.blunders_by_phase_desc": "Узнайте, на какой стадии вы чаще допускаете ошибки.",
   "dashboard.chart.phase_percent": "{percentage}% зевков",
   "dashboard.chart.avg_loss": "Ср. потеря: {loss} пешек",
   "dashboard.chart.no_phase_data": "Нет данных. Проанализируйте партии, чтобы увидеть распределение по стадиям.",
-
   "dashboard.chart.blunders_by_color": "Зевки по цвету",
   "dashboard.chart.blunders_by_color_desc": "Сравните частоту зевков при игре белыми и чёрными.",
   "dashboard.chart.as_color": "За {color}",
   "dashboard.chart.no_color_data": "Нет данных. Проанализируйте партии, чтобы увидеть распределение по цвету.",
-
   "dashboard.chart.blunders_by_game_type": "Зевки по типу партии",
   "dashboard.chart.blunders_by_game_type_desc": "Сравните частоту зевков в разных контролях времени.",
   "dashboard.chart.no_game_type_data": "Нет данных. Проанализируйте партии, чтобы увидеть распределение по типам.",
-
   "dashboard.chart.blunders_by_opening": "Зевки по дебютам",
   "dashboard.chart.blunders_by_opening_desc": "Узнайте, в каких дебютах вы чаще ошибаетесь.",
   "dashboard.chart.eco_opening": "Дебют",
@@ -187,18 +159,15 @@
   "dashboard.chart.eco_avg_loss": "Ср. потеря",
   "dashboard.chart.eco_games": "Партии",
   "dashboard.chart.no_opening_data": "Нет данных по дебютам. Проанализируйте партии для получения статистики.",
-
   "dashboard.chart.blunders_by_tactical": "Зевки по тактическим приёмам",
   "dashboard.chart.blunders_by_tactical_desc": "Узнайте, какие тактические ошибки вы допускаете чаще всего.",
   "dashboard.chart.no_tactical_data": "Нет данных по тактике. Запустите бэкфилл для анализа тактических приёмов.",
-
   "dashboard.chart.game_breakdown": "Партии по источникам",
   "dashboard.chart.source": "Источник",
   "dashboard.chart.username": "Имя пользователя",
   "dashboard.chart.total_games": "Всего",
   "dashboard.chart.analyzed": "Анализ",
   "dashboard.chart.pending": "Ожидание",
-
   "dashboard.chart.accuracy_by_date": "Точность по датам",
   "dashboard.chart.accuracy_by_date_desc": "Отслеживайте точность игры во времени (шкала 0–100).",
   "dashboard.chart.no_accuracy_data": "Нет данных. Импортируйте и проанализируйте партии для просмотра трендов.",
@@ -206,14 +175,11 @@
   "dashboard.chart.accuracy": "Точность",
   "dashboard.chart.games_axis": "Партии",
   "dashboard.chart.accuracy_axis": "Точность %",
-
   "dashboard.chart.accuracy_by_hour": "Точность по времени суток",
   "dashboard.chart.accuracy_by_hour_desc": "Узнайте, когда вы играете наиболее точно.",
   "dashboard.chart.no_hourly_data": "Нет данных. Импортируйте и проанализируйте партии для просмотра почасовой статистики.",
   "dashboard.chart.hour_axis": "Час дня (UTC)",
-
   "dashboard.link.manage_imports": "Управление импортом",
-
   "dashboard.game_type.ultrabullet": "Ультрапуля",
   "dashboard.game_type.bullet": "Пуля",
   "dashboard.game_type.blitz": "Блиц",
@@ -221,7 +187,6 @@
   "dashboard.game_type.classical": "Классика",
   "dashboard.game_type.correspondence": "Переписка",
   "dashboard.game_type.unknown": "Неизвестно",
-
   "dashboard.tactical.fork": "Вилка",
   "dashboard.tactical.pin": "Связка",
   "dashboard.tactical.skewer": "Линейный удар",
@@ -232,7 +197,6 @@
   "dashboard.tactical.back_rank": "Задний ряд",
   "dashboard.tactical.trapped": "Ловушка",
   "dashboard.tactical.other": "Другое",
-
   "management.title": "Управление",
   "management.engine.title": "Статус движка",
   "management.engine.loading": "Загрузка статуса движка...",
@@ -243,7 +207,6 @@
   "management.engine.not_configured": "Не настроен",
   "management.engine.install_hint": "Убедитесь, что Stockfish установлен и путь указан правильно.",
   "management.engine.load_failed": "Не удалось загрузить статус движка: {error}",
-
   "management.import.title": "Массовый импорт партий",
   "management.import.source": "Источник",
   "management.import.select_source": "Выберите источник...",
@@ -258,13 +221,11 @@
   "management.import.completed": "Импорт завершён!",
   "management.import.failed": "Ошибка импорта: {error}",
   "management.import.start_failed": "Не удалось начать импорт: {error}",
-
   "management.sync.title": "Синхронизация партий",
   "management.sync.description": "Загрузить новые партии со всех настроенных источников.",
   "management.sync.button": "Синхронизировать",
   "management.sync.started": "Синхронизация запущена! Проверьте раздел «Последние задачи».",
   "management.sync.failed": "Не удалось начать синхронизацию: {error}",
-
   "management.analysis.title": "Анализ партий",
   "management.analysis.pending": "{count} партий ожидают анализа",
   "management.analysis.start": "Анализировать все партии",
@@ -273,7 +234,6 @@
   "management.analysis.started": "Анализ запущен!",
   "management.analysis.completed": "Анализ завершён!",
   "management.analysis.failed": "Ошибка анализа: {error}",
-
   "management.backfill_phases.title": "Бэкфилл стадий партии",
   "management.backfill_phases.description": "Заполнить данные о стадиях (дебют/миттельшпиль/эндшпиль) для проанализированных партий.",
   "management.backfill_phases.pending": "{count} партий ожидают бэкфилла стадий",
@@ -282,7 +242,6 @@
   "management.backfill_phases.started": "Бэкфилл запущен!",
   "management.backfill_phases.completed": "Бэкфилл завершён!",
   "management.backfill_phases.failed": "Ошибка бэкфилла: {error}",
-
   "management.backfill_eco.title": "Бэкфилл ECO-кодов",
   "management.backfill_eco.description": "Заполнить ECO-коды дебютов для проанализированных партий.",
   "management.backfill_eco.pending": "{count} партий ожидают классификации ECO",
@@ -291,7 +250,6 @@
   "management.backfill_eco.started": "Бэкфилл ECO запущен!",
   "management.backfill_eco.completed": "Бэкфилл ECO завершён!",
   "management.backfill_eco.failed": "Ошибка бэкфилла ECO: {error}",
-
   "management.jobs.title": "Последние задачи",
   "management.jobs.type": "Тип",
   "management.jobs.status": "Статус",
@@ -302,7 +260,6 @@
   "management.jobs.actions": "Действия",
   "management.jobs.none": "Задачи не найдены",
   "management.jobs.delete_confirm": "Вы уверены, что хотите удалить эту задачу?",
-
   "management.danger.title": "Опасная зона",
   "management.danger.description": "Удалить все импортированные партии, результаты анализа, попытки решения задач и историю задач.",
   "management.danger.warning": "Это действие нельзя отменить.",
@@ -314,7 +271,6 @@
   "management.danger.failed": "Ошибка удаления: {error}",
   "management.danger.confirm1": "Вы уверены, что хотите удалить ВСЕ данные?\n\nБудут безвозвратно удалены:\n• Все импортированные партии\n• Все результаты анализа\n• Все попытки решения задач\n• Вся история задач\n\nЭто действие нельзя отменить!",
   "management.danger.confirm2": "Это последнее предупреждение!\n\nНажмите OK, чтобы безвозвратно удалить все данные.",
-
   "settings.title": "Настройки",
   "settings.subtitle": "Управление шахматными аккаунтами",
   "settings.username_required": "Для продолжения тренировки необходимо указать хотя бы одно имя пользователя.",
@@ -379,7 +335,6 @@
   "settings.save_error": "Ошибка сети. Попробуйте снова.",
   "settings.username_error": "Укажите хотя бы одно имя пользователя (Lichess или Chess.com)",
   "settings.setting_up": "Сохранение...",
-
   "setup.title": "Добро пожаловать в Blunder Tutor",
   "setup.subtitle": "Настройте шахматные аккаунты для начала работы",
   "setup.username_required": "Для тренировки необходимо указать хотя бы одно имя пользователя.",
@@ -394,5 +349,24 @@
   "setup.username_error": "Укажите хотя бы одно имя пользователя (Lichess или Chess.com)",
   "setup.failed": "Ошибка настройки. Попробуйте снова.",
   "setup.help": "Нужна помощь? Смотрите {link}",
-  "setup.documentation": "документацию"
+  "setup.documentation": "документацию",
+  "settings.features.title": "Видимость функций",
+  "settings.features.subtitle": "Показывайте или скрывайте части интерфейса для удобства.",
+  "settings.features.group.pages": "Страницы",
+  "settings.features.group.trainer": "Тренажёр",
+  "settings.features.group.dashboard": "Графики панели",
+  "settings.features.group.automation": "Автоматизация",
+  "settings.features.page_dashboard": "Панель",
+  "settings.features.page_management": "Управление",
+  "settings.features.trainer_threats": "Показ угроз",
+  "settings.features.trainer_tactics": "Тактические паттерны",
+  "settings.features.trainer_filter_phase": "Фильтр по фазе",
+  "settings.features.trainer_filter_tactical": "Фильтр по тактике",
+  "settings.features.dashboard_heatmap": "Тепловая карта активности",
+  "settings.features.dashboard_phase_breakdown": "Зевки по фазам",
+  "settings.features.dashboard_opening_breakdown": "Зевки по дебютам",
+  "settings.features.dashboard_tactical_breakdown": "Зевки по тактическим паттернам",
+  "settings.features.dashboard_accuracy": "Графики точности",
+  "settings.features.auto_sync": "Автоматическая синхронизация",
+  "settings.features.auto_analyze": "Автоматический анализ"
 }

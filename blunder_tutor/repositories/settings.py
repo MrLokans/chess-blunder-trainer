@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from blunder_tutor.features import DEFAULTS, Feature
 from blunder_tutor.repositories.base import BaseDbRepository
 
 
@@ -54,6 +55,21 @@ class SettingsRepository(BaseDbRepository):
 
     async def mark_setup_completed(self) -> None:
         await self.set_setting("setup_completed", "true")
+
+    async def get_feature_flags(self) -> dict[str, bool]:
+        all_settings = await self.get_all_settings()
+        result = {}
+        for feature in Feature:
+            db_val = all_settings.get(f"feature_{feature.value}")
+            result[feature.value] = (
+                db_val == "true" if db_val is not None else DEFAULTS[feature]
+            )
+        return result
+
+    async def set_feature_flags(self, flags: dict[str, bool]) -> None:
+        for key, enabled in flags.items():
+            if Feature.is_valid(key):
+                await self.set_setting(f"feature_{key}", "true" if enabled else "false")
 
     async def get_configured_usernames(self) -> dict[str, str]:
         usernames = {}

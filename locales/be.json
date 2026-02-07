@@ -9,12 +9,10 @@
   "common.clear": "Ачысціць",
   "common.no_activity": "{date}: Няма актыўнасці",
   "common.back_to_trainer": "← Назад да трэнера",
-
   "nav.trainer": "Трэнер",
   "nav.dashboard": "Панэль",
   "nav.management": "Кіраванне",
   "nav.settings": "Налады",
-
   "chess.phase.opening": "Дэбют",
   "chess.phase.middlegame": "Мітэльшпіль",
   "chess.phase.endgame": "Эндшпіль",
@@ -24,10 +22,8 @@
   "chess.color.white": "Белыя",
   "chess.color.black": "Чорныя",
   "chess.color.both": "Абодва",
-
   "trainer.title": "Трэнер памылак",
   "trainer.loading_stats": "Загрузка статыстыкі...",
-
   "trainer.empty.no_games_title": "Няма імпартаваных партый",
   "trainer.empty.no_games_message": "Імпартуйце свае партыі з Lichess або Chess.com, каб пачаць трэніроўку на сваіх памылках.",
   "trainer.empty.no_games_action": "Імпартаваць партыі",
@@ -40,40 +36,31 @@
   "trainer.empty.default_title": "Няма даступных задач",
   "trainer.empty.default_message": "Імпартуйце свае партыі, каб пачаць трэніроўку на сваіх памылках.",
   "trainer.empty.default_action": "Імпартаваць партыі",
-
   "trainer.phase.guess": "Знайдзіце найлепшы ход",
   "trainer.phase.correct": "Правільна!",
   "trainer.phase.explore": "Даследуйце пазіцыю",
-
   "trainer.color.playing_as_white": "Граеце белымі",
   "trainer.color.playing_as_black": "Граеце чорнымі",
-
   "trainer.legend.your_blunder": "Ваш грубы промах",
   "trainer.legend.best_move": "Найлепшы ход",
   "trainer.legend.your_move": "Ваш ход",
   "trainer.legend.tactical_squares": "Тактычныя палі",
-
   "trainer.toggle.show_arrows": "Паказаць стрэлкі хадоў",
   "trainer.toggle.show_threats": "Паказаць пагрозы (вісячыя фігуры, звязкі, шахі)",
   "trainer.toggle.show_tactics": "Падсвяціць тактычны матыў (пасля раскрыцця)",
-
   "trainer.section.your_blunder": "Ваш грубы промах",
   "trainer.blunder.eval_label": "Ацэнка:",
   "trainer.blunder.cp_loss": "{loss} пешак",
-
   "trainer.section.best_move": "Найлепшы ход",
   "trainer.best_move.line_label": "Варыянт:",
   "trainer.best_move.tactical_pattern": "Тактычны матыў",
-
   "trainer.section.instructions": "Інструкцыі",
   "trainer.instructions.goal": "Мэта:",
   "trainer.instructions.text": "Знайдзіце лепшы ход, чым ваш грубы промах.",
   "trainer.instructions.drag": "Перацягніце фігуры, каб зрабіць ход, потым націсніце Адправіць для праверкі.",
   "trainer.instructions.show_best": "Націсніце «Паказаць найлепшы», каб убачыць рэкамендацыю рухавіка.",
-
   "trainer.section.exploration": "Даследаванне",
   "trainer.move_indicator.label": "Ваш ход:",
-
   "trainer.button.submit": "Адправіць",
   "trainer.button.reset": "Скінуць",
   "trainer.button.show_best": "Паказаць найлепшы",
@@ -81,10 +68,8 @@
   "trainer.button.play_best": "Зайграць найлепшы ход",
   "trainer.button.undo": "Адмяніць",
   "trainer.button.view_dashboard": "Праглядзець панэль",
-
   "trainer.link.original_game": "Арыгінальная партыя",
   "trainer.link.analyze_lichess": "Аналізаваць на Lichess",
-
   "trainer.filters.title": "Фільтры задач",
   "trainer.filters.game_type": "Тып партыі",
   "trainer.filters.color": "Граць за колер",
@@ -96,12 +81,10 @@
   "trainer.filters.tactical_hanging": "Вісячая фігура",
   "trainer.filters.tactical_skewer": "Скразны ўдар",
   "trainer.filters.tactical_discovery": "Адкрыццё",
-
   "trainer.game_type.bullet": "Буліт",
   "trainer.game_type.blitz": "Бліц",
   "trainer.game_type.rapid": "Рапід",
   "trainer.game_type.classical": "Класічныя",
-
   "trainer.feedback.excellent": "Выдатна!",
   "trainer.feedback.found_best": "Вы знайшлі найлепшы ход: {move}",
   "trainer.feedback.same_blunder": "Той жа промах!",
@@ -115,7 +98,6 @@
   "trainer.feedback.no_move": "Спачатку перацягніце фігуру, каб зрабіць ход.",
   "trainer.feedback.best_revealed": "Найлепшы ход паказаны",
   "trainer.feedback.best_revealed_detail": "Найлепшым ходам быў {move}",
-
   "trainer.shortcuts.title": "Гарачыя клавішы",
   "trainer.shortcuts.submit": "Адправіць ход",
   "trainer.shortcuts.next": "Наступная задача",
@@ -129,18 +111,15 @@
   "trainer.shortcuts.undo": "Адмяніць ход",
   "trainer.shortcuts.show_help": "Паказаць гэту даведку",
   "trainer.shortcuts.close_help": "Закрыць гэту даведку",
-
   "trainer.stats.accuracy": "Дакладнасць",
   "trainer.stats.total_attempts": "Агульная колькасць спроб",
   "trainer.stats.correct": "Правільныя",
   "trainer.stats.incorrect": "Няправільныя",
   "trainer.stats.unique_puzzles": "Унікальныя задачы",
-
   "heatmap.total": "{count, plural, one {# задача} few {# задачы} many {# задач} other {# задач}}",
   "heatmap.days": "{count, plural, one {# актыўны дзень} few {# актыўныя дні} many {# актыўных дзён} other {# актыўных дзён}}",
   "heatmap.tooltip": "{date}: {total, plural, one {# задача} few {# задачы} many {# задач} other {# задач}} (✓{correct} ✗{incorrect})",
   "heatmap.error": "Не ўдалося загрузіць даныя актыўнасці",
-
   "dashboard.title": "Панэль Blunder Tutor",
   "dashboard.filter.from": "Ад:",
   "dashboard.filter.to": "Да:",
@@ -150,36 +129,29 @@
   "dashboard.filter.last_90d": "Апошнія 90 дзён",
   "dashboard.filter.last_1y": "Апошні год",
   "dashboard.filter.all_time": "Увесь час",
-
   "dashboard.stat.total_games": "Усяго партый",
   "dashboard.stat.analyzed_games": "Прааналізаваныя партыі",
   "dashboard.stat.total_blunders": "Усяго грубых промахаў",
   "dashboard.stat.analysis_progress": "Прагрэс аналізу",
-
   "dashboard.analysis.running": "Аналіз выконваецца: {current}/{total} ({percent}%)",
   "dashboard.analysis.completed": "Апошні аналіз: завершаны",
   "dashboard.analysis.failed": "Апошні аналіз: няўдача",
   "dashboard.analysis.retry": "Паўтарыць",
-
   "dashboard.chart.puzzle_activity": "Актыўнасць задач",
   "dashboard.chart.puzzle_activity_desc": "Ваша актыўнасць рашэння задач за апошні год.",
   "dashboard.chart.loading_activity": "Загрузка даных актыўнасці...",
-
   "dashboard.chart.blunders_by_phase": "Промахі па фазе гульні",
   "dashboard.chart.blunders_by_phase_desc": "Даведайцеся, у якой фазе партыі вы часцей за ўсё памыляецеся.",
   "dashboard.chart.phase_percent": "{percentage}% промахаў",
   "dashboard.chart.avg_loss": "Сяр. страта: {loss} пешак",
   "dashboard.chart.no_phase_data": "Пакуль няма даных пра промахі. Прааналізуйце некалькі партый, каб убачыць размеркаванне па фазах.",
-
   "dashboard.chart.blunders_by_color": "Промахі па колеры",
   "dashboard.chart.blunders_by_color_desc": "Параўнайце частату промахаў пры гульні белымі і чорнымі.",
   "dashboard.chart.as_color": "За {color}",
   "dashboard.chart.no_color_data": "Пакуль няма даных пра промахі. Прааналізуйце некалькі партый, каб убачыць размеркаванне па колеры.",
-
   "dashboard.chart.blunders_by_game_type": "Промахі па тыпе партыі",
   "dashboard.chart.blunders_by_game_type_desc": "Параўнайце частату промахаў пры розных кантролях часу.",
   "dashboard.chart.no_game_type_data": "Пакуль няма даных пра тыпы партый. Прааналізуйце партыі, каб убачыць промахі па кантролі часу.",
-
   "dashboard.chart.blunders_by_opening": "Промахі па дэбюце",
   "dashboard.chart.blunders_by_opening_desc": "Даведайцеся, якія дэбюты ствараюць вам найбольш праблем.",
   "dashboard.chart.eco_opening": "Дэбют",
@@ -187,18 +159,15 @@
   "dashboard.chart.eco_avg_loss": "Сяр. страта",
   "dashboard.chart.eco_games": "Партыі",
   "dashboard.chart.no_opening_data": "Пакуль няма даных пра дэбюты. Прааналізуйце некалькі партый, каб убачыць размеркаванне па дэбютах.",
-
   "dashboard.chart.blunders_by_tactical": "Промахі па тактычным матыве",
   "dashboard.chart.blunders_by_tactical_desc": "Даведайцеся, якія тактычныя памылкі вы робіце часцей за ўсё.",
   "dashboard.chart.no_tactical_data": "Пакуль няма даных пра тактычныя матывы. Запусціце запаўненне, каб прааналізаваць наяўныя промахі.",
-
   "dashboard.chart.game_breakdown": "Размеркаванне партый па крыніцы",
   "dashboard.chart.source": "Крыніца",
   "dashboard.chart.username": "Імя карыстальніка",
   "dashboard.chart.total_games": "Усяго партый",
   "dashboard.chart.analyzed": "Прааналізавана",
   "dashboard.chart.pending": "Чакае",
-
   "dashboard.chart.accuracy_by_date": "Дакладнасць гульні па даце",
   "dashboard.chart.accuracy_by_date_desc": "Адсочвайце дакладнасць гульні з часам. Вышэй = лепшая гульня (шкала 0–100).",
   "dashboard.chart.no_accuracy_data": "Пакуль няма даных. Імпартуйце і прааналізуйце партыі, каб убачыць трэнды дакладнасці.",
@@ -206,14 +175,11 @@
   "dashboard.chart.accuracy": "Дакладнасць",
   "dashboard.chart.games_axis": "Партыі",
   "dashboard.chart.accuracy_axis": "Дакладнасць %",
-
   "dashboard.chart.accuracy_by_hour": "Дакладнасць гульні па гадзіне дня",
   "dashboard.chart.accuracy_by_hour_desc": "Даведайцеся, калі вы граеце найбольш дакладна.",
   "dashboard.chart.no_hourly_data": "Пакуль няма даных. Імпартуйце і прааналізуйце партыі, каб убачыць пагадзінныя патэрны дакладнасці.",
   "dashboard.chart.hour_axis": "Гадзіна дня (UTC)",
-
   "dashboard.link.manage_imports": "Кіраваць імпартам і сінхранізацыяй",
-
   "dashboard.game_type.ultrabullet": "Ультрабуліт",
   "dashboard.game_type.bullet": "Буліт",
   "dashboard.game_type.blitz": "Бліц",
@@ -221,7 +187,6 @@
   "dashboard.game_type.classical": "Класічныя",
   "dashboard.game_type.correspondence": "Карэспандэнтныя",
   "dashboard.game_type.unknown": "Невядома",
-
   "dashboard.tactical.fork": "Відэлец",
   "dashboard.tactical.pin": "Звязка",
   "dashboard.tactical.skewer": "Скразны ўдар",
@@ -232,7 +197,6 @@
   "dashboard.tactical.back_rank": "Апошні рад",
   "dashboard.tactical.trapped": "Замкнёная фігура",
   "dashboard.tactical.other": "Іншыя",
-
   "management.title": "Кіраванне",
   "management.engine.title": "Статус шахматнага рухавіка",
   "management.engine.loading": "Загрузка статусу рухавіка...",
@@ -243,7 +207,6 @@
   "management.engine.not_configured": "Не наладжана",
   "management.engine.install_hint": "Упэўніцеся, што Stockfish усталяваны і шлях правільны.",
   "management.engine.load_failed": "Не ўдалося загрузіць статус рухавіка: {error}",
-
   "management.import.title": "Масавы імпарт партый",
   "management.import.source": "Крыніца",
   "management.import.select_source": "Абярыце крыніцу...",
@@ -258,13 +221,11 @@
   "management.import.completed": "Імпарт завершаны!",
   "management.import.failed": "Імпарт не ўдаўся: {error}",
   "management.import.start_failed": "Не ўдалося пачаць імпарт: {error}",
-
   "management.sync.title": "Сінхранізаваць партыі",
   "management.sync.description": "Атрымаць новыя партыі з усіх наладжаных крыніц.",
   "management.sync.button": "Сінхранізаваць зараз",
   "management.sync.started": "Сінхранізацыю пачата! Праверце апошнія заданні для адсочвання прагрэсу.",
   "management.sync.failed": "Не ўдалося пачаць сінхранізацыю: {error}",
-
   "management.analysis.title": "Аналіз партый",
   "management.analysis.pending": "{count, plural, one {# партыя чакае аналізу} few {# партыі чакаюць аналізу} many {# партый чакаюць аналізу} other {# партый чакаюць аналізу}}",
   "management.analysis.start": "Аналізаваць усе партыі",
@@ -273,7 +234,6 @@
   "management.analysis.started": "Аналіз пачаты!",
   "management.analysis.completed": "Аналіз завершаны!",
   "management.analysis.failed": "Аналіз не ўдаўся: {error}",
-
   "management.backfill_phases.title": "Запоўніць фазы гульні",
   "management.backfill_phases.description": "Запоўніць даныя пра фазы (дэбют/мітэльшпіль/эндшпіль) для прааналізаваных партый.",
   "management.backfill_phases.pending": "{count, plural, one {# партыя чакае запаўнення фаз} few {# партыі чакаюць запаўнення фаз} many {# партый чакаюць запаўнення фаз} other {# партый чакаюць запаўнення фаз}}",
@@ -282,7 +242,6 @@
   "management.backfill_phases.started": "Запаўненне пачата!",
   "management.backfill_phases.completed": "Запаўненне завершана!",
   "management.backfill_phases.failed": "Запаўненне не ўдалося: {error}",
-
   "management.backfill_eco.title": "Запоўніць коды ECO",
   "management.backfill_eco.description": "Запоўніць коды дэбютаў ECO для прааналізаваных партый.",
   "management.backfill_eco.pending": "{count, plural, one {# партыя чакае класіфікацыі ECO} few {# партыі чакаюць класіфікацыі ECO} many {# партый чакаюць класіфікацыі ECO} other {# партый чакаюць класіфікацыі ECO}}",
@@ -291,7 +250,6 @@
   "management.backfill_eco.started": "Запаўненне ECO пачата!",
   "management.backfill_eco.completed": "Запаўненне ECO завершана!",
   "management.backfill_eco.failed": "Запаўненне ECO не ўдалося: {error}",
-
   "management.jobs.title": "Апошнія заданні",
   "management.jobs.type": "Тып",
   "management.jobs.status": "Статус",
@@ -302,7 +260,6 @@
   "management.jobs.actions": "Дзеянні",
   "management.jobs.none": "Заданняў не знойдзена",
   "management.jobs.delete_confirm": "Вы ўпэўнены, што хочаце выдаліць гэта заданне?",
-
   "management.danger.title": "Небяспечная зона",
   "management.danger.description": "Выдаліць усе імпартаваныя партыі, вынікі аналізу, спробы рашэння задач і гісторыю заданняў.",
   "management.danger.warning": "Гэта дзеянне нельга адмяніць.",
@@ -314,7 +271,6 @@
   "management.danger.failed": "Выдаленне не ўдалося: {error}",
   "management.danger.confirm1": "Вы ўпэўнены, што хочаце выдаліць УСЕ даныя?\n\nГэта назаўсёды выдаліць:\n• Усе імпартаваныя партыі\n• Усе вынікі аналізу\n• Усе спробы рашэння задач\n• Усю гісторыю заданняў\n\nГэта дзеянне нельга адмяніць!",
   "management.danger.confirm2": "Гэта апошняе папярэджанне!\n\nНацісніце OK, каб назаўсёды выдаліць усе даныя.",
-
   "settings.title": "Налады",
   "settings.subtitle": "Кіруйце сваімі імёнамі карыстальнікаў",
   "settings.username_required": "Для працягу трэніроўкі патрабуецца прынамсі адно імя карыстальніка.",
@@ -379,7 +335,6 @@
   "settings.save_error": "Памылка сеткі. Паспрабуйце яшчэ раз.",
   "settings.username_error": "Укажыце прынамсі адно імя карыстальніка (Lichess або Chess.com)",
   "settings.setting_up": "Захаванне...",
-
   "setup.title": "Сардэчна запрашаем у Blunder Tutor",
   "setup.subtitle": "Наладзьце свае імёны карыстальнікаў, каб пачаць",
   "setup.username_required": "Для трэніроўкі на вашых партыях патрабуецца прынамсі адно імя карыстальніка.",
@@ -394,5 +349,24 @@
   "setup.username_error": "Укажыце прынамсі адно імя карыстальніка (Lichess або Chess.com)",
   "setup.failed": "Наладжванне не ўдалося. Паспрабуйце яшчэ раз.",
   "setup.help": "Патрэбна дапамога? Праглядзіце {link}",
-  "setup.documentation": "дакументацыю"
+  "setup.documentation": "дакументацыю",
+  "settings.features.title": "Бачнасць функцый",
+  "settings.features.subtitle": "Паказвайце або хавайце часткі інтэрфейсу для зручнасці.",
+  "settings.features.group.pages": "Старонкі",
+  "settings.features.group.trainer": "Трэнажор",
+  "settings.features.group.dashboard": "Графікі панэлі",
+  "settings.features.group.automation": "Аўтаматызацыя",
+  "settings.features.page_dashboard": "Панэль",
+  "settings.features.page_management": "Кіраванне",
+  "settings.features.trainer_threats": "Паказ пагроз",
+  "settings.features.trainer_tactics": "Тактычныя патэрны",
+  "settings.features.trainer_filter_phase": "Фільтр па фазе",
+  "settings.features.trainer_filter_tactical": "Фільтр па тактыцы",
+  "settings.features.dashboard_heatmap": "Цеплавая карта актыўнасці",
+  "settings.features.dashboard_phase_breakdown": "Памылкі па фазах",
+  "settings.features.dashboard_opening_breakdown": "Памылкі па дэбютах",
+  "settings.features.dashboard_tactical_breakdown": "Памылкі па тактычных патэрнах",
+  "settings.features.dashboard_accuracy": "Графікі дакладнасці",
+  "settings.features.auto_sync": "Аўтаматычная сінхранізацыя",
+  "settings.features.auto_analyze": "Аўтаматычны аналіз"
 }

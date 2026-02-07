@@ -52,6 +52,27 @@
 
       <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
 
+      <h2 style="font-size: 1.25rem; margin-bottom: 8px;">{{ t('settings.features.title') }}</h2>
+      <p class="help-text" style="margin-bottom: 16px;">{{ t('settings.features.subtitle') }}</p>
+
+      <div id="featureToggles" class="feature-toggles">
+        {% for group_label, group_features in feature_groups %}
+        <div class="feature-group">
+          <div class="feature-group-title">{{ t(group_label) }}</div>
+          {% for feature_id, label_key in group_features %}
+          <label class="feature-toggle-row">
+            <input type="checkbox" class="feature-toggle" data-feature="{{ feature_id }}"
+                   {% if has_feature(feature_id) %}checked{% endif %}>
+            <span>{{ t(label_key) }}</span>
+          </label>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if has_feature('auto.sync') %}
+      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
+
       <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.auto_sync.title') }}</h2>
 
       <div class="form-group">
@@ -77,7 +98,9 @@
         <input type="number" id="maxGames" min="100" max="10000" value="1000" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
         <div class="help-text">{{ t('settings.max_games.help') }}</div>
       </div>
+      {% endif %}
 
+      {% if has_feature('auto.analyze') %}
       <div class="form-group">
         <label style="display: flex; align-items: center; gap: 8px;">
           <input type="checkbox" id="autoAnalyze" name="autoAnalyze" checked style="width: auto;">
@@ -85,6 +108,7 @@
         </label>
         <div class="help-text">{{ t('settings.auto_analyze.help') }}</div>
       </div>
+      {% endif %}
 
       <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
 

@@ -18,6 +18,9 @@
   </script>
   <script src="/static/js/i18n.js"></script>
 
+  <!-- Feature flags for client-side visibility -->
+  <script>window.__features = {{ features_json|default('{}')|safe }};</script>
+
   <!-- HTMX for reactive components -->
   <script src="/static/vendor/htmx-1.9.10.min.js"></script>
 

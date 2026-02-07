@@ -66,7 +66,29 @@ class LocaleMiddleware(BaseHTTPMiddleware):
             )
             templates.env.globals["locale_display_names"] = LOCALE_DISPLAY_NAMES
 
+        path = request.url.path
+        if not path.startswith(("/static", "/api/", "/health", "/favicon")):
+            features = await self._load_features(request)
+            request.app.state.templates.env.globals["features"] = features
+            request.app.state.templates.env.globals["has_feature"] = features.get
+            request.app.state.templates.env.globals["features_json"] = json.dumps(
+                features
+            )
+
         return await call_next(request)
+
+    async def _load_features(self, request: Request) -> dict[str, bool]:
+        try:
+            config = request.app.state.config
+            settings_repo = SettingsRepository(db_path=config.data.db_path)
+            try:
+                return await settings_repo.get_feature_flags()
+            finally:
+                await settings_repo.close()
+        except Exception:
+            from blunder_tutor.features import DEFAULTS
+
+            return {f.value: v for f, v in DEFAULTS.items()}
 
     def _detect_locale(self, request: Request) -> str:
         cookie_locale = request.cookies.get("locale")
