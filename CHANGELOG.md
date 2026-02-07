@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AnalyzeGamesJob watches for cancellation via EventBus subscription
 - Centralize default depth in constants.DEFAULT_ENGINE_DEPTH
 
+### Fixed
+
+- Blunder stats calculation now respects original player blunders only.
+
 ## [1.1.0]
 
 ### Added
