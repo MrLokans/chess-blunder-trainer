@@ -4,6 +4,7 @@ import { loadConfiguredUsernames } from './usernames.js';
 import { loadHeatmap } from './heatmap.js';
 import { client } from './api.js';
 import { groupOpeningsByBase, openingNameSlug } from './opening-group.js';
+import { debounce } from './debounce.js';
 import { hasFeature } from './features.js';
 
 const wsClient = new WebSocketClient();
@@ -793,9 +794,11 @@ if (hasFeature('dashboard.heatmap')) {
 wsClient.connect();
 wsClient.subscribe(['stats.updated', 'job.completed', 'job.progress_updated', 'job.status_changed']);
 
+const debouncedLoadStats = debounce(loadStats, 2000);
+
 wsClient.on('stats.updated', () => loadStats());
 wsClient.on('job.completed', () => loadStats());
-wsClient.on('job.progress_updated', () => loadStats());
+wsClient.on('job.progress_updated', () => debouncedLoadStats());
 wsClient.on('job.status_changed', () => loadStats());
 
 // Wire up date filter buttons

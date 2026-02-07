@@ -3,6 +3,7 @@ import { ProgressTracker } from './progress-tracker.js';
 import { JobCard } from './job-card.js';
 import { loadConfiguredUsernames } from './usernames.js';
 import { client } from './api.js';
+import { debounce } from './debounce.js';
 
 const wsClient = new WebSocketClient();
 
@@ -252,14 +253,7 @@ wsClient.subscribe([
   'job.failed'
 ]);
 
-let jobsRefreshTimeout = null;
-function debouncedRefreshJobsTable() {
-  if (jobsRefreshTimeout) return;
-  jobsRefreshTimeout = setTimeout(() => {
-    refreshJobsTable();
-    jobsRefreshTimeout = null;
-  }, 1000);
-}
+const debouncedRefreshJobsTable = debounce(refreshJobsTable, 1000);
 
 wsClient.on('job.progress_updated', (data) => {
   // Import tracker (not a JobCard)
