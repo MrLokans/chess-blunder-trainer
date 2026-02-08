@@ -36,9 +36,15 @@ async def lifespan(app: FastAPI):
     coordinator: WorkCoordinator = app.state.work_coordinator
     await coordinator.start()
 
-    # Load scheduler settings asynchronously
+    # Load settings asynchronously
     settings_repo = app.state.settings_repo
     scheduler_settings = await settings_repo.get_all_settings()
+
+    # Seed locale cache from DB so templates render the saved language
+    # without relying on a cookie being present
+    saved_locale = scheduler_settings.get("locale")
+    if saved_locale:
+        app.state._locale_cache = saved_locale
 
     # Start scheduler in async context
     app.state.scheduler.start(scheduler_settings)

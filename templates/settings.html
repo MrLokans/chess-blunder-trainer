@@ -15,28 +15,10 @@
     <h1>{{ t('settings.title') }}</h1>
     <p class="subtitle">{{ t('settings.subtitle') }}</p>
 
-    <div class="alert alert-info visible">
-      {{ t('settings.username_required') }}
-    </div>
-
     <div class="alert alert-error" id="errorAlert"></div>
     <div class="alert alert-success" id="successAlert"></div>
 
     <form id="settingsForm">
-      <div class="form-group">
-        <label for="lichess">{{ t('settings.lichess_label') }}</label>
-        <input type="text" id="lichess" name="lichess" placeholder="{{ t('settings.lichess_placeholder') }}" value="{{ lichess_username or '' }}">
-        <div class="help-text">{{ t('settings.lichess_help') }}</div>
-      </div>
-
-      <div class="form-group">
-        <label for="chesscom">{{ t('settings.chesscom_label') }}</label>
-        <input type="text" id="chesscom" name="chesscom" placeholder="{{ t('settings.chesscom_placeholder') }}" value="{{ chesscom_username or '' }}">
-        <div class="help-text">{{ t('settings.chesscom_help') }}</div>
-      </div>
-
-      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
-
       <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.locale.label') }}</h2>
 
       <div class="form-group">
@@ -71,7 +53,7 @@
         {% endfor %}
       </div>
 
-      {% if has_feature('auto.sync') %}
+      <div id="autoSyncSection" style="{% if not has_feature('auto.sync') %}display: none;{% endif %}">
       <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
 
       <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.auto_sync.title') }}</h2>
@@ -99,9 +81,9 @@
         <input type="number" id="maxGames" min="100" max="10000" value="1000" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
         <div class="help-text">{{ t('settings.max_games.help') }}</div>
       </div>
-      {% endif %}
+      </div>
 
-      {% if has_feature('auto.analyze') %}
+      <div id="autoAnalyzeSection" style="{% if not has_feature('auto.analyze') %}display: none;{% endif %}">
       <div class="form-group">
         <label style="display: flex; align-items: center; gap: 8px;">
           <input type="checkbox" id="autoAnalyze" name="autoAnalyze" checked style="width: auto;">
@@ -109,7 +91,7 @@
         </label>
         <div class="help-text">{{ t('settings.auto_analyze.help') }}</div>
       </div>
-      {% endif %}
+      </div>
 
       <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
 

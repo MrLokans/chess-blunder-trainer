@@ -26,9 +26,7 @@ async def management(request: Request) -> HTMLResponse:
     )
 
 
-async def settings(request: Request, settings_repo: SettingsRepoDep) -> HTMLResponse:
-    usernames = await settings_repo.get_configured_usernames()
-
+async def settings(request: Request) -> HTMLResponse:
     feature_groups = [
         (group_label, [(f.value, FEATURE_LABELS[f]) for f in group_features])
         for group_label, group_features in FEATURE_GROUPS
@@ -38,8 +36,6 @@ async def settings(request: Request, settings_repo: SettingsRepoDep) -> HTMLResp
         "settings.html",
         {
             "request": request,
-            "lichess_username": usernames.get("lichess"),
-            "chesscom_username": usernames.get("chesscom"),
             "feature_groups": feature_groups,
         },
     )

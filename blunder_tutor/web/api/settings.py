@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
@@ -45,8 +46,6 @@ class ThemeColors(BaseModel):
 
 
 class SettingsRequest(BaseModel):
-    lichess: str = Field(default="", description="Lichess username")
-    chesscom: str = Field(default="", description="Chess.com username")
     auto_sync: bool = Field(default=False, description="Enable automatic game sync")
     sync_interval: int = Field(
         default=24, ge=1, le=168, description="Sync interval in hours"
@@ -584,30 +583,12 @@ async def reset_theme(settings_repo: SettingsRepoDep) -> dict[str, bool]:
 @settings_router.post(
     "/api/settings",
     response_model=SuccessResponse,
-    responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "At least one username is required",
-        }
-    },
     summary="Update settings",
-    description="Update application settings including usernames, sync configuration, and analysis preferences.",
+    description="Update application settings including sync configuration and analysis preferences.",
 )
 async def settings_submit(
     request: Request, payload: SettingsRequest, settings_repo: SettingsRepoDep
 ) -> dict[str, bool]:
-    lichess = payload.lichess.strip()
-    chesscom = payload.chesscom.strip()
-
-    if not lichess and not chesscom:
-        raise HTTPException(
-            status_code=400,
-            detail="At least one username is required (Lichess or Chess.com)",
-        )
-
-    await settings_repo.set_setting("lichess_username", lichess if lichess else None)
-    await settings_repo.set_setting("chesscom_username", chesscom if chesscom else None)
-
     await settings_repo.set_setting(
         "auto_sync_enabled", "true" if payload.auto_sync else "false"
     )
@@ -681,13 +662,22 @@ class LocaleRequest(BaseModel):
 )
 async def set_locale(
     request: Request, payload: LocaleRequest, settings_repo: SettingsRepoDep
-) -> dict[str, bool]:
+) -> JSONResponse:
     i18n = getattr(request.app.state, "i18n", None)
     if i18n and payload.locale not in i18n.available_locales():
         raise HTTPException(status_code=400, detail="Unsupported locale")
     await settings_repo.set_setting("locale", payload.locale)
     request.app.state._locale_cache = payload.locale
-    return {"success": True}
+
+    response = JSONResponse(content={"success": True})
+    response.set_cookie(
+        key="locale",
+        value=payload.locale,
+        path="/",
+        max_age=365 * 24 * 3600,
+        samesite="lax",
+    )
+    return response
 
 
 class DeleteAllResponse(BaseModel):

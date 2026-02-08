@@ -6,8 +6,6 @@ const form = document.getElementById('settingsForm');
 const errorAlert = document.getElementById('errorAlert');
 const successAlert = document.getElementById('successAlert');
 const submitBtn = document.getElementById('submitBtn');
-const lichessInput = document.getElementById('lichess');
-const chesscomInput = document.getElementById('chesscom');
 const localeSelect = document.getElementById('localeSelect');
 
 function showError(message) {
@@ -50,14 +48,6 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   hideAlerts();
 
-  const lichess = lichessInput.value.trim();
-  const chesscom = chesscomInput.value.trim();
-
-  if (!lichess && !chesscom) {
-    showError(t('settings.username_error'));
-    return;
-  }
-
   const autoSyncEl = document.getElementById('autoSync');
   const syncIntervalEl = document.getElementById('syncInterval');
   const maxGamesInputEl = document.getElementById('maxGames');
@@ -75,8 +65,6 @@ form.addEventListener('submit', async (e) => {
     const theme = getCurrentTheme();
 
     await client.settings.save({
-      lichess,
-      chesscom,
       auto_sync: autoSync,
       sync_interval: syncInterval,
       max_games: maxGames,
@@ -102,41 +90,39 @@ form.addEventListener('submit', async (e) => {
 
 if (localeSelect) {
   localeSelect.addEventListener('change', () => {
-    const locale = localeSelect.value;
-    document.cookie = `locale=${locale};path=/;max-age=${365 * 24 * 3600};SameSite=Lax`;
-    client.settings.setLocale(locale).then(() => {
-      window.location.href = '/settings';
+    client.settings.setLocale(localeSelect.value).then(() => {
+      window.location.reload();
     }).catch(() => {
-      window.location.href = '/settings';
+      window.location.reload();
     });
   });
 }
 
-const SETTINGS_PAGE_FEATURES = new Set(['auto.sync', 'auto.analyze']);
+const FEATURE_SECTION_MAP = {
+  'auto.sync': 'autoSyncSection',
+  'auto.analyze': 'autoAnalyzeSection',
+};
 
 function initFeatureToggles() {
-  let needsReload = false;
-  let reloadTimer = null;
-
   document.querySelectorAll('.feature-toggle').forEach(el => {
     el.addEventListener('change', async () => {
-      if (reloadTimer) clearTimeout(reloadTimer);
+      const featureId = el.dataset.feature;
+      const newValue = el.checked;
 
       try {
-        await client.settings.saveFeatures({ [el.dataset.feature]: el.checked });
-        window.__features[el.dataset.feature] = el.checked;
+        await client.settings.saveFeatures({ [featureId]: newValue });
+        window.__features[featureId] = newValue;
 
-        if (SETTINGS_PAGE_FEATURES.has(el.dataset.feature)) {
-          needsReload = true;
+        const sectionId = FEATURE_SECTION_MAP[featureId];
+        if (sectionId) {
+          const section = document.getElementById(sectionId);
+          if (section) {
+            section.style.display = newValue ? '' : 'none';
+          }
         }
       } catch (err) {
-        el.checked = !el.checked;
+        el.checked = !newValue;
         console.error('Failed to save feature toggle:', err);
-        return;
-      }
-
-      if (needsReload) {
-        reloadTimer = setTimeout(() => window.location.reload(), 600);
       }
     });
   });
