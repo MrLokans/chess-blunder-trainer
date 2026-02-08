@@ -4,6 +4,7 @@ from collections.abc import Iterable
 
 from blunder_tutor.constants import (
     ALREADY_LOST_THRESHOLD,
+    LONG_MATE_DEPTH_THRESHOLD,
     MATE_THRESHOLD,
     STILL_WINNING_THRESHOLD,
 )
@@ -12,6 +13,15 @@ from blunder_tutor.constants import (
 def is_valid_blunder(blunder: dict[str, object]) -> bool:
     eval_before = int(blunder.get("eval_before", 0))
     eval_after = int(blunder.get("eval_after", 0))
+    missed_mate_depth = blunder.get("missed_mate_depth")
+
+    # Short mate misses (mate-in-1 through mate-in-N where N <= threshold)
+    # are always valid — these are the most learnable positions
+    if (
+        missed_mate_depth is not None
+        and 0 < missed_mate_depth <= LONG_MATE_DEPTH_THRESHOLD
+    ):
+        return True
 
     if eval_before >= MATE_THRESHOLD and eval_after >= 0:
         return False

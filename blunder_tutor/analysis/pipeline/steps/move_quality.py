@@ -8,6 +8,7 @@ import chess.engine
 
 from blunder_tutor.analysis.pipeline.context import StepResult
 from blunder_tutor.analysis.pipeline.steps.base import AnalysisStep
+from blunder_tutor.constants import LONG_MATE_DEPTH_THRESHOLD, MAX_CP_LOSS
 
 if TYPE_CHECKING:
     from blunder_tutor.analysis.pipeline.context import StepContext
@@ -17,6 +18,11 @@ if TYPE_CHECKING:
 def _is_mate_score(score: chess.engine.PovScore, side: chess.Color) -> bool:
     pov = score.pov(side)
     return pov.is_mate()
+
+
+def _get_mate_depth(score: chess.engine.PovScore, side: chess.Color) -> int | None:
+    pov = score.pov(side)
+    return pov.mate() if pov.is_mate() else None
 
 
 def _classify(delta: int, thresholds: Thresholds) -> str:
@@ -106,6 +112,8 @@ class MoveQualityStep(AnalysisStep):
             info_before = move_data["info_before"]
             player = chess.WHITE if move_data["player"] == "white" else chess.BLACK
 
+            missed_mate_depth: int | None = None
+
             if eval_after == 100000:  # Checkmate
                 delta = 0
                 cp_loss = 0
@@ -114,9 +122,19 @@ class MoveQualityStep(AnalysisStep):
                 delta = eval_before - eval_after
                 cp_loss = max(0, delta)
 
-                if _is_mate_score(info_before["score"], player) and eval_after > 500:
-                    cp_loss = min(cp_loss, thresholds.inaccuracy - 1)
+                mate_depth_before = _get_mate_depth(info_before["score"], player)
+                if mate_depth_before is not None and mate_depth_before > 0:
+                    missed_mate_depth = mate_depth_before
 
+                    if eval_after > 500:
+                        # Still winning comfortably — downgrade regardless of mate depth
+                        cp_loss = min(cp_loss, thresholds.inaccuracy - 1)
+                    elif mate_depth_before > LONG_MATE_DEPTH_THRESHOLD:
+                        # Long forced mate: engine-only find, not a human-learnable blunder.
+                        # Downgrade to at most a mistake.
+                        cp_loss = min(cp_loss, thresholds.blunder - 1)
+
+                cp_loss = min(cp_loss, MAX_CP_LOSS)
                 class_label = _classify(cp_loss, thresholds)
 
             classification = _class_to_int(class_label)
@@ -146,6 +164,7 @@ class MoveQualityStep(AnalysisStep):
                     "best_line": move_data["best_line"],
                     "best_move_eval": move_data["best_move_eval"],
                     "difficulty": difficulty,
+                    "missed_mate_depth": missed_mate_depth,
                 }
             )
 

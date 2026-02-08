@@ -12,6 +12,13 @@ ALREADY_LOST_THRESHOLD = (
 STILL_WINNING_THRESHOLD = (
     300  # Player's POV: if eval_after still above this, advantage wasn't lost
 )
+MAX_CP_LOSS = (
+    1500  # Cap for cp_loss: prevents mate scores (±100k) from distorting averages
+)
+
+# Mate depth classification: mates longer than this are engine-only finds,
+# not realistic for beginner/intermediate players to calculate
+LONG_MATE_DEPTH_THRESHOLD = 5
 
 # Move classification values (used in database)
 CLASSIFICATION_BLUNDER = 3

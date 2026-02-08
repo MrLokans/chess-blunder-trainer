@@ -35,6 +35,7 @@ class BlunderPuzzle:
     tactical_pattern: int | None = None
     tactical_reason: str | None = None
     difficulty: int | None = None
+    missed_mate_depth: int | None = None
     tactical_squares: list[str] | None = None
     game_url: str | None = None
 
@@ -149,6 +150,7 @@ class Trainer:
         blunder_tactical_pattern = blunder.get("tactical_pattern")
         blunder_tactical_reason = blunder.get("tactical_reason")
         blunder_difficulty = blunder.get("difficulty")
+        blunder_missed_mate_depth = blunder.get("missed_mate_depth")
 
         game = await self.games.load_game(game_id)
         board = board_before_ply(game, ply)
@@ -184,6 +186,7 @@ class Trainer:
             tactical_pattern=blunder_tactical_pattern,
             tactical_reason=blunder_tactical_reason,
             difficulty=blunder_difficulty,
+            missed_mate_depth=blunder_missed_mate_depth,
             tactical_squares=tactical_squares,
             game_url=game_url,
         )
@@ -199,6 +202,14 @@ class Trainer:
         weights = []
         for blunder in candidates:
             w = 1.0
+
+            # Short mate misses are the most learnable positions
+            missed_mate_depth = blunder.get("missed_mate_depth")
+            if missed_mate_depth is not None and missed_mate_depth > 0:
+                if missed_mate_depth <= 2:
+                    w *= 2.0
+                elif missed_mate_depth <= 5:
+                    w *= 1.5
 
             # Patterns the player fails at more get higher weight
             pattern = blunder.get("tactical_pattern")

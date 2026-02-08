@@ -63,8 +63,8 @@ class AnalysisRepository(BaseDbRepository):
                     game_id, ply, move_number, player, uci, san,
                     eval_before, eval_after, delta, cp_loss, classification,
                     best_move_uci, best_move_san, best_line, best_move_eval, game_phase,
-                    tactical_pattern, tactical_reason, difficulty
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    tactical_pattern, tactical_reason, difficulty, missed_mate_depth
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     (
@@ -87,6 +87,7 @@ class AnalysisRepository(BaseDbRepository):
                         move.get("tactical_pattern"),
                         move.get("tactical_reason"),
                         move.get("difficulty"),
+                        move.get("missed_mate_depth"),
                     )
                     for move in moves
                 ],
@@ -382,7 +383,7 @@ class AnalysisRepository(BaseDbRepository):
                    am.eval_before, am.eval_after, am.cp_loss,
                    am.best_move_uci, am.best_move_san, am.best_line, am.best_move_eval,
                    am.game_phase, am.tactical_pattern, am.tactical_reason,
-                   g.time_control, am.difficulty
+                   g.time_control, am.difficulty, am.missed_mate_depth
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE {where_clause}
@@ -421,6 +422,7 @@ class AnalysisRepository(BaseDbRepository):
                     "time_control": time_control,
                     "game_type": game_type,
                     "difficulty": row[16],
+                    "missed_mate_depth": row[17],
                 }
             )
 
