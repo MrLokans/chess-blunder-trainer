@@ -589,3 +589,46 @@
     border-top-color: var(--text, #1e293b);
     z-index: 100;
   }
+
+  /* Conversion & Resilience */
+  .cr-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-top: var(--space-3);
+  }
+
+  @media (max-width: 480px) {
+    .cr-metrics {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .cr-metric-card {
+    text-align: center;
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface, var(--bg));
+  }
+
+  .cr-metric-label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-2);
+  }
+
+  .cr-metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: var(--space-2);
+  }
+
+  .cr-metric-detail {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+  }

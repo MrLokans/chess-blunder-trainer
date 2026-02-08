@@ -418,6 +418,34 @@ async function loadStats() {
       }
     }
 
+    // Conversion & Resilience
+    if (hasFeature('dashboard.conversion_resilience') && document.getElementById('conversionResilienceContainer')) {
+      const crData = await client.stats.conversionResilience(dateAndGameTypeParams());
+      const crContainer = document.getElementById('conversionResilienceContainer');
+
+      if (crData.games_with_advantage > 0 || crData.games_with_disadvantage > 0) {
+        const conversionColor = crData.conversion_rate >= 70 ? 'var(--success, #22c55e)' : crData.conversion_rate >= 50 ? 'var(--warning, #f59e0b)' : 'var(--error, #ef4444)';
+        const resilienceColor = crData.resilience_rate >= 20 ? 'var(--success, #22c55e)' : crData.resilience_rate >= 10 ? 'var(--warning, #f59e0b)' : 'var(--error, #ef4444)';
+
+        crContainer.innerHTML = `
+          <div class="cr-metrics">
+            <div class="cr-metric-card">
+              <div class="cr-metric-label">${t('dashboard.conversion.title')}</div>
+              <div class="cr-metric-value" style="color: ${conversionColor}">${crData.conversion_rate}%</div>
+              <div class="cr-metric-detail">${t('dashboard.conversion.detail', { converted: crData.games_converted, total: crData.games_with_advantage })}</div>
+            </div>
+            <div class="cr-metric-card">
+              <div class="cr-metric-label">${t('dashboard.resilience.title')}</div>
+              <div class="cr-metric-value" style="color: ${resilienceColor}">${crData.resilience_rate}%</div>
+              <div class="cr-metric-detail">${t('dashboard.resilience.detail', { saved: crData.games_saved, total: crData.games_with_disadvantage })}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        crContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.conversion.no_data') + '</div>';
+      }
+    }
+
     // Blunders by tactical pattern
     if (hasFeature('dashboard.tactical_breakdown') && document.getElementById('tacticalBreakdown')) {
     const tacticalData = await client.stats.blundersByTacticalPattern(dateAndGameTypeParams());

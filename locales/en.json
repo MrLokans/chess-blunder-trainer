@@ -438,5 +438,13 @@
   "chess.piece.bishop.inst": "bishop",
   "chess.piece.rook.inst": "rook",
   "chess.piece.queen.inst": "queen",
-  "chess.piece.king.inst": "king"
+  "chess.piece.king.inst": "king",
+  "dashboard.chart.conversion_resilience": "Conversion & Resilience",
+  "dashboard.chart.conversion_resilience_desc": "How well you convert winning positions and save losing ones. Based on positions where the evaluation exceeded ±2 pawns.",
+  "dashboard.conversion.title": "Conversion",
+  "dashboard.conversion.detail": "Converted {converted} of {total} winning positions",
+  "dashboard.conversion.no_data": "Not enough analyzed games to compute conversion and resilience rates.",
+  "dashboard.resilience.title": "Resilience",
+  "dashboard.resilience.detail": "Saved {saved} of {total} losing positions",
+  "settings.features.dashboard_conversion_resilience": "Conversion & resilience rates"
 }

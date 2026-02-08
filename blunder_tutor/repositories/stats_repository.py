@@ -11,6 +11,9 @@ from blunder_tutor.utils.time_control import (
     classify_game_type,
 )
 
+WINNING_THRESHOLD_CP = 200
+LOSING_THRESHOLD_CP = -200
+
 
 class StatsRepository(BaseDbRepository):
     async def get_overview_stats(self) -> dict[str, object]:
@@ -1001,4 +1004,128 @@ class StatsRepository(BaseDbRepository):
         return {
             "total_blunders": total,
             "by_difficulty": by_difficulty,
+        }
+
+    async def get_conversion_resilience(
+        self,
+        username: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        game_types: list[int] | None = None,
+    ) -> dict[str, object]:
+        if not username:
+            return {
+                "conversion_rate": 0.0,
+                "resilience_rate": 0.0,
+                "games_with_advantage": 0,
+                "games_converted": 0,
+                "games_with_disadvantage": 0,
+                "games_saved": 0,
+            }
+
+        username_lower = username.lower()
+
+        query = """
+            SELECT
+                g.game_id,
+                g.result,
+                g.white,
+                g.black,
+                g.time_control,
+                am.eval_before,
+                am.player
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE g.analyzed = 1
+              AND g.username = ?
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = ? THEN 0
+                    WHEN LOWER(g.black) = ? THEN 1
+                END
+        """
+        params: list[object] = [username, username_lower, username_lower]
+
+        if start_date:
+            query += " AND g.end_time_utc >= ?"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND g.end_time_utc <= ?"
+            params.append(end_date)
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        game_types_set = set(game_types) if game_types else None
+
+        # game_id -> {result, is_white, evals: [user-perspective evals]}
+        games: dict[str, dict] = {}
+        for game_id, result, white, _black, time_control, eval_before, _player in rows:
+            if game_types_set:
+                gt = int(classify_game_type(time_control))
+                if gt not in game_types_set:
+                    continue
+
+            if game_id not in games:
+                is_white = white and white.lower() == username_lower
+                games[game_id] = {
+                    "result": result,
+                    "is_white": is_white,
+                    "evals": [],
+                }
+
+            # Convert eval to user's perspective (eval_before is from white's POV)
+            user_eval = eval_before if games[game_id]["is_white"] else -eval_before
+            games[game_id]["evals"].append(user_eval)
+
+        games_with_advantage = 0
+        games_converted = 0
+        games_with_disadvantage = 0
+        games_saved = 0
+
+        for game_data in games.values():
+            evals = game_data["evals"]
+            if not evals:
+                continue
+
+            result = game_data["result"]
+            is_white = game_data["is_white"]
+
+            user_won = (result == "1-0" and is_white) or (
+                result == "0-1" and not is_white
+            )
+            user_drew = result == "1/2-1/2"
+
+            peak_advantage = max(evals)
+            peak_disadvantage = min(evals)
+
+            if peak_advantage > WINNING_THRESHOLD_CP:
+                games_with_advantage += 1
+                if user_won:
+                    games_converted += 1
+
+            if peak_disadvantage < LOSING_THRESHOLD_CP:
+                games_with_disadvantage += 1
+                if user_won or user_drew:
+                    games_saved += 1
+
+        conversion_rate = (
+            round(games_converted / games_with_advantage * 100, 1)
+            if games_with_advantage > 0
+            else 0.0
+        )
+        resilience_rate = (
+            round(games_saved / games_with_disadvantage * 100, 1)
+            if games_with_disadvantage > 0
+            else 0.0
+        )
+
+        return {
+            "conversion_rate": conversion_rate,
+            "resilience_rate": resilience_rate,
+            "games_with_advantage": games_with_advantage,
+            "games_converted": games_converted,
+            "games_with_disadvantage": games_with_disadvantage,
+            "games_saved": games_saved,
         }

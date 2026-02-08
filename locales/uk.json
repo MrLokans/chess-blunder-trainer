@@ -438,5 +438,13 @@
   "chess.piece.bishop.inst": "слоном",
   "chess.piece.rook.inst": "турою",
   "chess.piece.queen.inst": "ферзем",
-  "chess.piece.king.inst": "королем"
+  "chess.piece.king.inst": "королем",
+  "dashboard.chart.conversion_resilience": "Конвертація та стійкість",
+  "dashboard.chart.conversion_resilience_desc": "Наскільки добре ви конвертуєте виграні позиції та рятуєте програні. Враховуються позиції з оцінкою понад ±2 пішаки.",
+  "dashboard.conversion.title": "Конвертація",
+  "dashboard.conversion.detail": "Конвертовано {converted} з {total} виграних позицій",
+  "dashboard.conversion.no_data": "Недостатньо проаналізованих партій для обчислення показників конвертації та стійкості.",
+  "dashboard.resilience.title": "Стійкість",
+  "dashboard.resilience.detail": "Врятовано {saved} з {total} програних позицій",
+  "settings.features.dashboard_conversion_resilience": "Конвертація та стійкість"
 }

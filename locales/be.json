@@ -438,5 +438,13 @@
   "chess.piece.bishop.inst": "сланом",
   "chess.piece.rook.inst": "ладдзёй",
   "chess.piece.queen.inst": "фярзём",
-  "chess.piece.king.inst": "каралём"
+  "chess.piece.king.inst": "каралём",
+  "dashboard.chart.conversion_resilience": "Канвертацыя і ўстойлівасць",
+  "dashboard.chart.conversion_resilience_desc": "Наколькі добра вы канвертуеце выйграныя пазіцыі і ратуеце прайграныя. Улічваюцца пазіцыі з ацэнкай больш за ±2 пешкі.",
+  "dashboard.conversion.title": "Канвертацыя",
+  "dashboard.conversion.detail": "Канвертавана {converted} з {total} выйграных пазіцый",
+  "dashboard.conversion.no_data": "Недастаткова прааналізаваных партый для вылічэння паказчыкаў канвертацыі і ўстойлівасці.",
+  "dashboard.resilience.title": "Устойлівасць",
+  "dashboard.resilience.detail": "Выратавана {saved} з {total} прайграных пазіцый",
+  "settings.features.dashboard_conversion_resilience": "Канвертацыя і ўстойлівасць"
 }

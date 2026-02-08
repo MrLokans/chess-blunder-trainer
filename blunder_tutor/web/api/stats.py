@@ -636,6 +636,23 @@ async def get_blunders_by_game_type(
     )
 
 
+class ConversionResilienceResponse(BaseModel):
+    conversion_rate: float = Field(
+        description="Percentage of winning positions converted to wins"
+    )
+    resilience_rate: float = Field(
+        description="Percentage of losing positions saved (draw or win)"
+    )
+    games_with_advantage: int = Field(
+        description="Games where user had a winning position"
+    )
+    games_converted: int = Field(description="Games where the advantage was converted")
+    games_with_disadvantage: int = Field(
+        description="Games where user had a losing position"
+    )
+    games_saved: int = Field(description="Games where a losing position was saved")
+
+
 class DifficultyBlunderItem(BaseModel):
     difficulty: str = Field(
         description="Difficulty bucket (easy, medium, hard, unscored)"
@@ -688,4 +705,47 @@ async def get_blunders_by_difficulty(
         start_date=start_date_str,
         end_date=end_date_str,
         game_types=game_types,
+    )
+
+
+@stats_router.get(
+    "/api/stats/conversion-resilience",
+    response_model=ConversionResilienceResponse,
+    summary="Get conversion and resilience rates",
+    description="Returns how well the user converts winning positions and saves losing positions.",
+)
+async def get_conversion_resilience(
+    stats_repo: StatsRepoDep,
+    settings_repo: SettingsRepoDep,
+    username: Annotated[
+        str | None,
+        Query(max_length=100, description="Filter by username"),
+    ] = None,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    game_types: Annotated[
+        list[str] | None,
+        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
+    ] = None,
+) -> dict[str, Any]:
+    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
+
+    if not username:
+        username = await _resolve_username(settings_repo)
+
+    start_date_str = start_date.isoformat() if start_date else None
+    end_date_str = end_date.isoformat() if end_date else None
+    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
+
+    return await stats_repo.get_conversion_resilience(
+        username=username,
+        start_date=start_date_str,
+        end_date=end_date_str,
+        game_types=game_type_ids,
     )

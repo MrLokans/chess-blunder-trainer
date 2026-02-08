@@ -177,6 +177,16 @@
 </div>
 {% endif %}
 
+{% if has_feature('dashboard.conversion_resilience') %}
+<div class="chart-container">
+  <div class="chart-title">{{ t('dashboard.chart.conversion_resilience') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.conversion_resilience_desc') }}</p>
+  <div class="conversion-resilience-container" id="conversionResilienceContainer">
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
+  </div>
+</div>
+{% endif %}
+
 {% if has_feature('dashboard.tactical_breakdown') %}
 <div class="chart-container">
   <div class="chart-title">{{ t('dashboard.chart.blunders_by_tactical') }}</div>

@@ -438,5 +438,13 @@
   "chess.piece.bishop.inst": "gońcem",
   "chess.piece.rook.inst": "wieżą",
   "chess.piece.queen.inst": "hetmanem",
-  "chess.piece.king.inst": "królem"
+  "chess.piece.king.inst": "królem",
+  "dashboard.chart.conversion_resilience": "Konwersja i odporność",
+  "dashboard.chart.conversion_resilience_desc": "Jak dobrze konwertujesz wygrane pozycje i ratujesz przegrane. Na podstawie pozycji z oceną powyżej ±2 pionków.",
+  "dashboard.conversion.title": "Konwersja",
+  "dashboard.conversion.detail": "Skonwertowano {converted} z {total} wygranych pozycji",
+  "dashboard.conversion.no_data": "Za mało przeanalizowanych partii, aby obliczyć wskaźniki konwersji i odporności.",
+  "dashboard.resilience.title": "Odporność",
+  "dashboard.resilience.detail": "Uratowano {saved} z {total} przegranych pozycji",
+  "settings.features.dashboard_conversion_resilience": "Wskaźniki konwersji i odporności"
 }

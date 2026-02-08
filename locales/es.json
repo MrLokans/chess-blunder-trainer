@@ -438,5 +438,13 @@
   "chess.piece.bishop.inst": "alfil",
   "chess.piece.rook.inst": "torre",
   "chess.piece.queen.inst": "dama",
-  "chess.piece.king.inst": "rey"
+  "chess.piece.king.inst": "rey",
+  "dashboard.chart.conversion_resilience": "Conversión y resiliencia",
+  "dashboard.chart.conversion_resilience_desc": "Qué tan bien conviertes posiciones ganadoras y salvas posiciones perdedoras. Basado en posiciones con evaluación superior a ±2 peones.",
+  "dashboard.conversion.title": "Conversión",
+  "dashboard.conversion.detail": "Convertidas {converted} de {total} posiciones ganadoras",
+  "dashboard.conversion.no_data": "No hay suficientes partidas analizadas para calcular las tasas de conversión y resiliencia.",
+  "dashboard.resilience.title": "Resiliencia",
+  "dashboard.resilience.detail": "Salvadas {saved} de {total} posiciones perdedoras",
+  "settings.features.dashboard_conversion_resilience": "Tasas de conversión y resiliencia"
 }

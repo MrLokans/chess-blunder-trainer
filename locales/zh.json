@@ -438,5 +438,13 @@
   "chess.piece.bishop.inst": "象",
   "chess.piece.rook.inst": "车",
   "chess.piece.queen.inst": "后",
-  "chess.piece.king.inst": "王"
+  "chess.piece.king.inst": "王",
+  "dashboard.chart.conversion_resilience": "转化率与韧性",
+  "dashboard.chart.conversion_resilience_desc": "衡量你将优势局面转化为胜利以及从劣势局面中挽回的能力。基于评估超过±2个兵值的局面。",
+  "dashboard.conversion.title": "转化率",
+  "dashboard.conversion.detail": "在 {total} 个优势局面中转化了 {converted} 个",
+  "dashboard.conversion.no_data": "分析的棋局不足，无法计算转化率和韧性指标。",
+  "dashboard.resilience.title": "韧性",
+  "dashboard.resilience.detail": "在 {total} 个劣势局面中挽回了 {saved} 个",
+  "settings.features.dashboard_conversion_resilience": "转化率与韧性"
 }

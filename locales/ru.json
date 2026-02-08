@@ -438,5 +438,13 @@
   "chess.piece.bishop.inst": "слоном",
   "chess.piece.rook.inst": "ладьёй",
   "chess.piece.queen.inst": "ферзём",
-  "chess.piece.king.inst": "королём"
+  "chess.piece.king.inst": "королём",
+  "dashboard.chart.conversion_resilience": "Конвертация и стойкость",
+  "dashboard.chart.conversion_resilience_desc": "Насколько хорошо вы конвертируете выигранные позиции и спасаете проигранные. Учитываются позиции с оценкой более ±2 пешек.",
+  "dashboard.conversion.title": "Конвертация",
+  "dashboard.conversion.detail": "Конвертировано {converted} из {total} выигранных позиций",
+  "dashboard.conversion.no_data": "Недостаточно проанализированных партий для вычисления показателей конвертации и стойкости.",
+  "dashboard.resilience.title": "Стойкость",
+  "dashboard.resilience.detail": "Спасено {saved} из {total} проигранных позиций",
+  "settings.features.dashboard_conversion_resilience": "Конвертация и стойкость"
 }

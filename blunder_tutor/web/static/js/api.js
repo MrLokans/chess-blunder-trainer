@@ -58,6 +58,7 @@ export const client = {
     blundersByEco: (params) => request(withQuery('/api/stats/blunders/by-eco', params)),
     blundersByTacticalPattern: (params) => request(withQuery('/api/stats/blunders/by-tactical-pattern', params)),
     blundersByDifficulty: (params) => request(withQuery('/api/stats/blunders/by-difficulty', params)),
+    conversionResilience: (params) => request(withQuery('/api/stats/conversion-resilience', params)),
   },
 
   analysis: {
