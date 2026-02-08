@@ -164,7 +164,20 @@ class TestGenerateExplanation:
         )
         assert "back rank" in result.best_move_text.lower()
 
-    def test_hanging_piece_pattern(self):
+    def test_hanging_piece_pattern_when_best_move_captures(self):
+        # Best move captures the hanging piece → use "captures undefended" template
+        fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="e1e2",
+            best_move_uci="d1d5",
+            tactical_pattern="Hanging Piece",
+            cp_loss=500,
+        )
+        assert "undefended" in result.best_move_text.lower()
+
+    def test_hanging_piece_pattern_when_best_move_not_capture(self):
+        # Best move avoids hanging a piece but doesn't capture → fall through
         fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         result = _resolve(
             fen,
@@ -173,12 +186,28 @@ class TestGenerateExplanation:
             tactical_pattern="Hanging Piece",
             cp_loss=300,
         )
-        assert "undefended" in result.best_move_text.lower()
+        assert "undefended" not in result.best_move_text.lower()
+        assert result.best_move_text != ""
 
     def test_best_move_simple_capture(self):
         fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"
         result = _resolve(fen, blunder_uci="e1e2", best_move_uci="d1d5", cp_loss=500)
         assert "rook" in result.best_move_text.lower()
+
+    def test_hanging_piece_non_capture_from_real_game(self):
+        # Real bug: O-O left h4 pawn hanging, best Nd2 is not a capture.
+        # Should NOT say "captures an undefended piece".
+        fen = "r2q1rk1/pb1p4/1p2p1Bp/2p1b3/7P/2P5/PP3PP1/RN1QK2R w KQ - 1 16"
+        result = _resolve(
+            fen,
+            blunder_uci="e1g1",
+            best_move_uci="b1d2",
+            tactical_pattern="Hanging Piece",
+            cp_loss=262,
+        )
+        assert "captures" not in result.best_move_text.lower()
+        assert "undefended" not in result.best_move_text.lower()
+        assert "Nd2" in result.best_move_text
 
     def test_left_piece_hanging_blunder(self):
         pass

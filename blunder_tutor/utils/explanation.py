@@ -351,14 +351,22 @@ def _explain_best(
             return I18nMessage(
                 key="explanation.best.pattern_discovered", params={"san": san}
             )
-        pattern_key = _PATTERN_KEYS.get(pattern_lower)
-        if pattern_key:
-            return I18nMessage(key=pattern_key, params={"san": san})
-        # Generic pattern
-        return I18nMessage(
-            key="explanation.best.pattern_generic",
-            params={"san": san, "pattern": pattern_lower},
-        )
+        # "Hanging piece" describes the blunder (left a piece undefended),
+        # so only use the capture template when the best move actually captures.
+        if pattern_lower == "hanging piece":
+            if board.is_capture(best_move):
+                return I18nMessage(
+                    key="explanation.best.pattern_hanging", params={"san": san}
+                )
+            # Fall through — the best move avoids the hanging piece, not captures it
+        else:
+            pattern_key = _PATTERN_KEYS.get(pattern_lower)
+            if pattern_key:
+                return I18nMessage(key=pattern_key, params={"san": san})
+            return I18nMessage(
+                key="explanation.best.pattern_generic",
+                params={"san": san, "pattern": pattern_lower},
+            )
 
     # Simple winning capture — accusative ("wins the {piece}")
     if board.is_capture(best_move):
