@@ -2,34 +2,51 @@
 
 [![codecov](https://codecov.io/gh/MrLokans/chess-blunder-trainer/badge.svg)](https://codecov.io/gh/MrLokans/chess-blunder-trainer)
 
-**Learn from your mistakes.** Blunder Tutor imports your games from Chess.com and Lichess, analyzes them with Stockfish, and creates personalized puzzles from your actual blunders. Instead of practicing generic tactics, you train on the exact positions where you went wrong.
+**Stop repeating the same chess mistakes.** Blunder Tutor pulls your games from Lichess and Chess.com, finds the positions where you went wrong, and turns them into puzzles you can practice — for free, on your own machine.
 
-## Why Blunder Tutor?
 
-Most chess players make the same types of mistakes repeatedly. Generic puzzle trainers help with pattern recognition, but they don't address *your* specific weaknesses. Blunder Tutor:
+## What It Does
 
-- **Targets your real weaknesses** — puzzles come from positions where you actually blundered
-- **Tracks your progress** — see which mistake patterns you've corrected over time
-- **Supports multiple platforms** — import games from both Lichess and Chess.com
-- **Self-hosted** — your data stays on your machine, no accounts required
+1. **Import your games** from Lichess, Chess.com, or both
+2. **Find your blunders** using Stockfish engine analysis
+3. **Practice them as puzzles** — the positions where *you* made mistakes, not random tactics
+4. **See where you're weakest** — dashboard shows your blunder patterns by opening, game phase, and difficulty
 
 ## Screenshots
 
-![Main View](images/main.png)
+![Trainer](images/main.png)
 
 | | |
 |:-:|:-:|
 | ![Dashboard](images/dashboard-1.png) | ![Dashboard Stats](images/dashboard-2.png) |
 
-## Quick Start
+## Why Not Just Use Lichess or Chess.com Analysis?
 
-### Using Docker directly
+- **Lichess analysis** shows you the blunder but doesn't let you drill it repeatedly
+- **Chess.com Game Review** is paywalled — one free review per day, then $50–150/year
+- **Generic puzzle sites** train random positions, not *your* weaknesses
+
+Blunder Tutor combines the parts that matter: finds your mistakes, turns them into drillable puzzles, and tracks which patterns you've fixed. All free, all local.
+
+## Quick Start
 
 ```bash
 docker run -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/mrlokans/blunder-tutor:latest
 ```
 
-Open http://localhost:8000 and enter your Lichess or Chess.com username to get started.
+Open http://localhost:8000 and enter your chess username. That's it.
+
+For Docker Compose, environment variables, and advanced options see [Docker Deployment Guide](docs/DOCKER.md).
+
+## Features
+
+- **Multi-platform import** — Lichess + Chess.com in one place
+- **Stockfish 18 analysis** — configurable depth, runs locally
+- **Puzzle trainer** — practice your blunders with hints and best-move arrows
+- **Dashboard** — accuracy trends, blunder heatmap, opening breakdown, difficulty distribution
+- **Auto-sync** — scheduled background fetch and analysis of new games
+- **Self-hosted** — your data stays on your machine, no account needed
+- **Multilingual** — English, Russian, and more
 
 ## Local Development
 
@@ -37,29 +54,19 @@ Open http://localhost:8000 and enter your Lichess or Chess.com username to get s
 make install-dev    # Install dependencies
 make test           # Run tests
 make lint           # Check code style
-make train-ui       # Start dev server
+make fix            # Auto-fix formatting
+make train-ui       # Start on localhost:8000
 ```
 
-Requires Stockfish on your PATH or set `STOCKFISH_BINARY`.
+Requires Python 3.13+ and Stockfish on your PATH (or set `STOCKFISH_BINARY`).
 
-## How It Works
+## Contributing
 
-1. **Fetch** — Downloads your recent games via Lichess/Chess.com APIs
-2. **Analyze** — Stockfish evaluates every position to find blunders (≥200 centipawn loss)
-3. **Train** — Practice the blundered positions as puzzles, with the engine's best move as the solution
+Issues and pull requests are welcome. Run `make install-dev` and `make test` before submitting.
 
 ## Links
 
 - [Changelog](CHANGELOG.md)
-
-## Glossary
-
-- **[Stockfish](https://www.chessprogramming.org/Stockfish)**: Open-source chess engine used for game analysis
-- **Blunder**: A serious mistake that loses significant material or positional advantage (typically ≥200 centipawns)
-- **Mistake**: A moderate error that worsens your position (typically 100-200 centipawns)
-- **Inaccuracy**: A minor suboptimal move (typically 50-100 centipawns)
-- **[Centipawn](https://www.chessprogramming.org/Centipawns) (cp)**: Unit measuring position evaluation; 100 cp ≈ 1 pawn of advantage
-- **[Depth](https://www.chessprogramming.org/Depth)**: How many half-moves (plies) ahead the engine calculates; higher = stronger but slower
-- **[PGN](https://www.chessprogramming.org/Portable_Game_Notation)**: Portable Game Notation, standard text format for recording chess games
-- **[SAN](https://www.chessprogramming.org/Algebraic_Chess_Notation#SAN)**: Standard Algebraic Notation, human-readable move format (e.g., `Nf3`, `e4`, `O-O`)
-- **[UCI](https://www.chessprogramming.org/UCI)**: Universal Chess Interface, protocol for communicating with chess engines
+- [Docker Deployment Guide](docs/DOCKER.md)
+- [Glossary](docs/GLOSSARY.md) — chess and engine terminology
+- [License](LICENSE) (AGPL-3.0)
