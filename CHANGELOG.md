@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0]
+
+### Added
+
+- **Conversion & resilience rates**: New dashboard widget showing how well you convert winning positions into wins and save losing positions. Tracks games with advantage/disadvantage and their outcomes. New API endpoint `GET /api/stats/conversion-resilience` with date range and time control filtering. Feature-flagged under `dashboard.conversion_resilience`.
+- **Collapse point analysis**: Dashboard visualization of when you typically make your first blunder in a game. Shows average/median collapse move, distribution chart bucketed by move ranges, and clean game count. New API endpoint `GET /api/stats/collapse-point`. Feature-flagged under `dashboard.collapse_point`.
+- **Engine rate limiting in demo mode**: Per-IP throttling on engine-hitting endpoints (`/api/puzzle`, `/api/submit`, `/api/analyze`) using `fastapi-throttle`. Default: 30 requests per 60 seconds. Configurable via `DEMO_THROTTLE_RATE` env var (format: `requests/seconds`, e.g. `10/30`). Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `Retry-After` headers. No-op in normal (non-demo) mode.
+
+
+### Fixed
+
+- **Hanging piece detection in explanations**: Improved accuracy of hanging piece detection in blunder explanations — no longer misidentifies defended pieces as hanging.
+
+---
+
 ## [1.4.0]
 
 ### Added
