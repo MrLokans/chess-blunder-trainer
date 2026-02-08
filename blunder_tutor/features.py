@@ -19,6 +19,7 @@ class Feature(StrEnum):
     DASHBOARD_ACCURACY = "dashboard.accuracy"
     DASHBOARD_DIFFICULTY_BREAKDOWN = "dashboard.difficulty_breakdown"
     DASHBOARD_CONVERSION_RESILIENCE = "dashboard.conversion_resilience"
+    DASHBOARD_COLLAPSE_POINT = "dashboard.collapse_point"
 
     TRAINER_FILTER_DIFFICULTY = "trainer.filter.difficulty"
 
@@ -60,6 +61,7 @@ FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
             Feature.DASHBOARD_ACCURACY,
             Feature.DASHBOARD_DIFFICULTY_BREAKDOWN,
             Feature.DASHBOARD_CONVERSION_RESILIENCE,
+            Feature.DASHBOARD_COLLAPSE_POINT,
         ],
     ),
     (
@@ -85,6 +87,7 @@ FEATURE_LABELS: dict[Feature, str] = {
     Feature.DASHBOARD_ACCURACY: "settings.features.dashboard_accuracy",
     Feature.DASHBOARD_DIFFICULTY_BREAKDOWN: "settings.features.dashboard_difficulty_breakdown",
     Feature.DASHBOARD_CONVERSION_RESILIENCE: "settings.features.dashboard_conversion_resilience",
+    Feature.DASHBOARD_COLLAPSE_POINT: "settings.features.dashboard_collapse_point",
     Feature.TRAINER_FILTER_DIFFICULTY: "settings.features.trainer_filter_difficulty",
     Feature.AUTO_SYNC: "settings.features.auto_sync",
     Feature.AUTO_ANALYZE: "settings.features.auto_analyze",

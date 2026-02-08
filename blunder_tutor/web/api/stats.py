@@ -636,6 +636,31 @@ async def get_blunders_by_game_type(
     )
 
 
+class CollapseDistributionItem(BaseModel):
+    move_range: str = Field(
+        description="Move range bucket (e.g., '1-5', '6-10', '41+')"
+    )
+    count: int = Field(description="Number of games with first blunder in this range")
+
+
+class CollapsePointResponse(BaseModel):
+    avg_collapse_move: int | None = Field(
+        description="Average move number of first blunder"
+    )
+    median_collapse_move: int | None = Field(
+        description="Median move number of first blunder"
+    )
+    distribution: list[CollapseDistributionItem] = Field(
+        description="Distribution of first blunder by move-number buckets"
+    )
+    total_games_with_blunders: int = Field(
+        description="Games where the user made at least one blunder"
+    )
+    total_games_without_blunders: int = Field(
+        description="Games with zero blunders (clean games)"
+    )
+
+
 class ConversionResilienceResponse(BaseModel):
     conversion_rate: float = Field(
         description="Percentage of winning positions converted to wins"
@@ -705,6 +730,49 @@ async def get_blunders_by_difficulty(
         start_date=start_date_str,
         end_date=end_date_str,
         game_types=game_types,
+    )
+
+
+@stats_router.get(
+    "/api/stats/collapse-point",
+    response_model=CollapsePointResponse,
+    summary="Get collapse point statistics",
+    description="Returns the typical move number where the user makes their first blunder in a game.",
+)
+async def get_collapse_point(
+    stats_repo: StatsRepoDep,
+    settings_repo: SettingsRepoDep,
+    username: Annotated[
+        str | None,
+        Query(max_length=100, description="Filter by username"),
+    ] = None,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    game_types: Annotated[
+        list[str] | None,
+        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
+    ] = None,
+) -> dict[str, Any]:
+    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
+
+    if not username:
+        username = await _resolve_username(settings_repo)
+
+    start_date_str = start_date.isoformat() if start_date else None
+    end_date_str = end_date.isoformat() if end_date else None
+    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
+
+    return await stats_repo.get_collapse_point(
+        username=username,
+        start_date=start_date_str,
+        end_date=end_date_str,
+        game_types=game_type_ids,
     )
 
 

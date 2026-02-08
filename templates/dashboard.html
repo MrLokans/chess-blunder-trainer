@@ -177,6 +177,16 @@
 </div>
 {% endif %}
 
+{% if has_feature('dashboard.collapse_point') %}
+<div class="chart-container">
+  <div class="chart-title">{{ t('dashboard.chart.collapse_point') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.collapse_point_desc') }}</p>
+  <div class="collapse-point-container" id="collapsePointContainer">
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
+  </div>
+</div>
+{% endif %}
+
 {% if has_feature('dashboard.conversion_resilience') %}
 <div class="chart-container">
   <div class="chart-title">{{ t('dashboard.chart.conversion_resilience') }}</div>

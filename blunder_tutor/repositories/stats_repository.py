@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import statistics
 from collections import defaultdict
 
 from blunder_tutor.analysis.tactics import PATTERN_LABELS
@@ -13,6 +14,9 @@ from blunder_tutor.utils.time_control import (
 
 WINNING_THRESHOLD_CP = 200
 LOSING_THRESHOLD_CP = -200
+
+COLLAPSE_BUCKET_SIZE = 5
+COLLAPSE_MAX_BUCKET_START = 41
 
 
 class StatsRepository(BaseDbRepository):
@@ -1128,4 +1132,136 @@ class StatsRepository(BaseDbRepository):
             "games_converted": games_converted,
             "games_with_disadvantage": games_with_disadvantage,
             "games_saved": games_saved,
+        }
+
+    async def get_collapse_point(
+        self,
+        username: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        game_types: list[int] | None = None,
+    ) -> dict[str, object]:
+        if not username:
+            return {
+                "avg_collapse_move": None,
+                "median_collapse_move": None,
+                "distribution": [],
+                "total_games_with_blunders": 0,
+                "total_games_without_blunders": 0,
+            }
+
+        username_lower = username.lower()
+
+        query = """
+            SELECT
+                am.game_id,
+                am.move_number,
+                g.time_control
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE g.analyzed = 1
+              AND am.classification = 3
+              AND g.username = ?
+              AND am.player = CASE
+                    WHEN LOWER(g.white) = ? THEN 0
+                    WHEN LOWER(g.black) = ? THEN 1
+                END
+            ORDER BY am.game_id, am.ply
+        """
+        params: list[object] = [username, username_lower, username_lower]
+
+        if start_date:
+            query += " AND g.end_time_utc >= ?"
+            params.append(start_date)
+
+        if end_date:
+            query += " AND g.end_time_utc <= ?"
+            params.append(end_date)
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            blunder_rows = await cursor.fetchall()
+
+        game_types_set = set(game_types) if game_types else None
+
+        # Find first blunder move_number per game
+        first_blunder_by_game: dict[str, int] = {}
+        for game_id, move_number, time_control in blunder_rows:
+            if game_types_set:
+                gt = int(classify_game_type(time_control))
+                if gt not in game_types_set:
+                    continue
+            if game_id not in first_blunder_by_game:
+                first_blunder_by_game[game_id] = move_number
+
+        # Count total analyzed games (for clean game %)
+        total_query = """
+            SELECT g.game_id, g.time_control
+            FROM game_index_cache g
+            WHERE g.analyzed = 1 AND g.username = ?
+        """
+        total_params: list[object] = [username]
+
+        if start_date:
+            total_query += " AND g.end_time_utc >= ?"
+            total_params.append(start_date)
+        if end_date:
+            total_query += " AND g.end_time_utc <= ?"
+            total_params.append(end_date)
+
+        async with conn.execute(total_query, total_params) as cursor:
+            total_rows = await cursor.fetchall()
+
+        total_analyzed = 0
+        for _game_id, time_control in total_rows:
+            if game_types_set:
+                gt = int(classify_game_type(time_control))
+                if gt not in game_types_set:
+                    continue
+            total_analyzed += 1
+
+        collapse_moves = list(first_blunder_by_game.values())
+        total_with_blunders = len(collapse_moves)
+        total_without_blunders = total_analyzed - total_with_blunders
+
+        if not collapse_moves:
+            return {
+                "avg_collapse_move": None,
+                "median_collapse_move": None,
+                "distribution": [],
+                "total_games_with_blunders": 0,
+                "total_games_without_blunders": total_without_blunders,
+            }
+
+        avg_move = round(statistics.mean(collapse_moves))
+        median_move = round(statistics.median(collapse_moves))
+
+        # Build 5-move buckets
+        bucket_counts: dict[str, int] = {}
+        for move in collapse_moves:
+            if move >= COLLAPSE_MAX_BUCKET_START:
+                label = f"{COLLAPSE_MAX_BUCKET_START}+"
+            else:
+                start = ((move - 1) // COLLAPSE_BUCKET_SIZE) * COLLAPSE_BUCKET_SIZE + 1
+                end = start + COLLAPSE_BUCKET_SIZE - 1
+                label = f"{start}-{end}"
+            bucket_counts[label] = bucket_counts.get(label, 0) + 1
+
+        # Sort buckets by range start
+        def bucket_sort_key(label: str) -> int:
+            return int(label.split("-")[0].rstrip("+"))
+
+        distribution = [
+            {"move_range": label, "count": count}
+            for label, count in sorted(
+                bucket_counts.items(), key=lambda x: bucket_sort_key(x[0])
+            )
+        ]
+
+        return {
+            "avg_collapse_move": avg_move,
+            "median_collapse_move": median_move,
+            "distribution": distribution,
+            "total_games_with_blunders": total_with_blunders,
+            "total_games_without_blunders": total_without_blunders,
         }

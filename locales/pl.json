@@ -446,5 +446,17 @@
   "dashboard.conversion.no_data": "Za mało przeanalizowanych partii, aby obliczyć wskaźniki konwersji i odporności.",
   "dashboard.resilience.title": "Odporność",
   "dashboard.resilience.detail": "Uratowano {saved} z {total} przegranych pozycji",
-  "settings.features.dashboard_conversion_resilience": "Wskaźniki konwersji i odporności"
+  "settings.features.dashboard_conversion_resilience": "Wskaźniki konwersji i odporności",
+  "dashboard.chart.collapse_point": "Moment krytyczny",
+  "dashboard.chart.collapse_point_desc": "Typowy numer posunięcia, w którym popełniasz pierwszy poważny błąd w partii.",
+  "dashboard.collapse.avg_move": "Twój pierwszy poważny błąd zwykle zdarza się na posunięciu {move}",
+  "dashboard.collapse.median_move": "Mediana: posunięcie {move}",
+  "dashboard.collapse.clean_games": "Czyste partie (bez błędów): {count} ({percentage}%)",
+  "dashboard.collapse.games_with_blunders": "{count} partii z błędami",
+  "dashboard.collapse.no_data": "Brak danych o momencie krytycznym. Najpierw przeanalizuj kilka partii.",
+  "dashboard.collapse.zone_opening": "Przygotowanie debiutowe",
+  "dashboard.collapse.zone_middle": "Koncentracja",
+  "dashboard.collapse.zone_late": "Niedoczas",
+  "dashboard.collapse.distribution_title": "Pierwszy błąd wg numeru posunięcia",
+  "settings.features.dashboard_collapse_point": "Panel: Moment krytyczny"
 }

@@ -632,3 +632,103 @@
     font-size: var(--text-sm);
     color: var(--text-muted);
   }
+
+  /* Collapse Point */
+  .collapse-summary {
+    text-align: center;
+    margin-bottom: var(--space-6);
+  }
+
+  .collapse-big-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: var(--space-2);
+  }
+
+  .collapse-meta {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    margin-bottom: var(--space-1);
+  }
+
+  .collapse-separator {
+    margin: 0 var(--space-2);
+  }
+
+  .collapse-clean {
+    font-size: var(--text-sm);
+    color: var(--success, #22c55e);
+    font-weight: 600;
+  }
+
+  .collapse-distribution {
+    margin-top: var(--space-4);
+  }
+
+  .collapse-dist-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: var(--space-3);
+  }
+
+  .collapse-bar-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-1);
+  }
+
+  .collapse-bar-label {
+    width: 3.5rem;
+    text-align: right;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .collapse-bar-track {
+    flex: 1;
+    height: 1.25rem;
+    background: var(--surface, #1e293b);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .collapse-bar-fill {
+    height: 100%;
+    border-radius: var(--radius);
+    transition: width 0.3s ease;
+    min-width: 2px;
+  }
+
+  .collapse-bar-count {
+    width: 2rem;
+    text-align: right;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .collapse-zone-legend {
+    display: flex;
+    gap: var(--space-4);
+    justify-content: center;
+    margin-top: var(--space-4);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+  }
+
+  .collapse-zone-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .collapse-zone-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    display: inline-block;
+  }

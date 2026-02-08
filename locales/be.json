@@ -446,5 +446,17 @@
   "dashboard.conversion.no_data": "Недастаткова прааналізаваных партый для вылічэння паказчыкаў канвертацыі і ўстойлівасці.",
   "dashboard.resilience.title": "Устойлівасць",
   "dashboard.resilience.detail": "Выратавана {saved} з {total} прайграных пазіцый",
-  "settings.features.dashboard_conversion_resilience": "Канвертацыя і ўстойлівасць"
+  "settings.features.dashboard_conversion_resilience": "Канвертацыя і ўстойлівасць",
+  "dashboard.chart.collapse_point": "Крытычны момант",
+  "dashboard.chart.collapse_point_desc": "Тыповы нумар хаду, на якім вы робіце першы грубы промах у партыі.",
+  "dashboard.collapse.avg_move": "Ваш першы грубы промах звычайна здараецца на хадзе {move}",
+  "dashboard.collapse.median_move": "Медыяна: ход {move}",
+  "dashboard.collapse.clean_games": "Чыстыя партыі (без промахаў): {count} ({percentage}%)",
+  "dashboard.collapse.games_with_blunders": "{count} партый з промахамі",
+  "dashboard.collapse.no_data": "Няма дадзеных пра крытычныя моманты. Спачатку прааналізуйце некалькі партый.",
+  "dashboard.collapse.zone_opening": "Дэбютная падрыхтоўка",
+  "dashboard.collapse.zone_middle": "Канцэнтрацыя",
+  "dashboard.collapse.zone_late": "Цэйтнот",
+  "dashboard.collapse.distribution_title": "Першы промах па нумары хаду",
+  "settings.features.dashboard_collapse_point": "Панэль: Крытычны момант"
 }

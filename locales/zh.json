@@ -446,5 +446,17 @@
   "dashboard.conversion.no_data": "分析的棋局不足，无法计算转化率和韧性指标。",
   "dashboard.resilience.title": "韧性",
   "dashboard.resilience.detail": "在 {total} 个劣势局面中挽回了 {saved} 个",
-  "settings.features.dashboard_conversion_resilience": "转化率与韧性"
+  "settings.features.dashboard_conversion_resilience": "转化率与韧性",
+  "dashboard.chart.collapse_point": "关键时刻",
+  "dashboard.chart.collapse_point_desc": "您在棋局中犯下第一个严重失误的典型步数。",
+  "dashboard.collapse.avg_move": "您的第一个严重失误通常发生在第 {move} 步",
+  "dashboard.collapse.median_move": "中位数：第 {move} 步",
+  "dashboard.collapse.clean_games": "无失误棋局：{count} 局（{percentage}%）",
+  "dashboard.collapse.games_with_blunders": "{count} 局有严重失误",
+  "dashboard.collapse.no_data": "暂无关键时刻数据。请先分析一些棋局。",
+  "dashboard.collapse.zone_opening": "开局准备",
+  "dashboard.collapse.zone_middle": "专注力",
+  "dashboard.collapse.zone_late": "时间紧迫",
+  "dashboard.collapse.distribution_title": "按步数统计的首次失误分布",
+  "settings.features.dashboard_collapse_point": "仪表板：关键时刻"
 }

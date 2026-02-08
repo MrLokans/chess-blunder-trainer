@@ -446,5 +446,17 @@
   "dashboard.conversion.no_data": "Недостаточно проанализированных партий для вычисления показателей конвертации и стойкости.",
   "dashboard.resilience.title": "Стойкость",
   "dashboard.resilience.detail": "Спасено {saved} из {total} проигранных позиций",
-  "settings.features.dashboard_conversion_resilience": "Конвертация и стойкость"
+  "settings.features.dashboard_conversion_resilience": "Конвертация и стойкость",
+  "dashboard.chart.collapse_point": "Критический момент",
+  "dashboard.chart.collapse_point_desc": "Типичный номер хода, на котором вы делаете первый зевок в партии.",
+  "dashboard.collapse.avg_move": "Ваш первый зевок обычно происходит на ходу {move}",
+  "dashboard.collapse.median_move": "Медиана: ход {move}",
+  "dashboard.collapse.clean_games": "Чистые партии (без зевков): {count} ({percentage}%)",
+  "dashboard.collapse.games_with_blunders": "{count} партий с зевками",
+  "dashboard.collapse.no_data": "Нет данных о критических моментах. Сначала проанализируйте несколько партий.",
+  "dashboard.collapse.zone_opening": "Дебютная подготовка",
+  "dashboard.collapse.zone_middle": "Концентрация",
+  "dashboard.collapse.zone_late": "Цейтнот",
+  "dashboard.collapse.distribution_title": "Первый зевок по номеру хода",
+  "settings.features.dashboard_collapse_point": "Панель: Критический момент"
 }

@@ -418,6 +418,72 @@ async function loadStats() {
       }
     }
 
+    // Collapse point
+    if (hasFeature('dashboard.collapse_point') && document.getElementById('collapsePointContainer')) {
+      const cpData = await client.stats.collapsePoint(dateAndGameTypeParams());
+      const cpContainer = document.getElementById('collapsePointContainer');
+
+      if (cpData.avg_collapse_move !== null && cpData.total_games_with_blunders > 0) {
+        const totalGamesForClean = cpData.total_games_with_blunders + cpData.total_games_without_blunders;
+        const cleanPercent = totalGamesForClean > 0
+          ? Math.round(cpData.total_games_without_blunders / totalGamesForClean * 100)
+          : 0;
+
+        const maxCount = Math.max(...cpData.distribution.map(d => d.count), 1);
+
+        const zoneColor = (label) => {
+          const start = parseInt(label.split('-')[0]);
+          if (start <= 10) return 'var(--success, #22c55e)';
+          if (start <= 25) return 'var(--warning, #f59e0b)';
+          return 'var(--error, #ef4444)';
+        };
+
+        const zoneLabel = (label) => {
+          const start = parseInt(label.split('-')[0]);
+          if (start <= 10) return t('dashboard.collapse.zone_opening');
+          if (start <= 25) return t('dashboard.collapse.zone_middle');
+          return t('dashboard.collapse.zone_late');
+        };
+
+        const barsHtml = cpData.distribution.map(d => {
+          const pct = Math.round(d.count / maxCount * 100);
+          const color = zoneColor(d.move_range);
+          return `
+            <div class="collapse-bar-row">
+              <span class="collapse-bar-label">${d.move_range}</span>
+              <div class="collapse-bar-track">
+                <div class="collapse-bar-fill" style="width: ${pct}%; background: ${color};" title="${zoneLabel(d.move_range)}"></div>
+              </div>
+              <span class="collapse-bar-count">${d.count}</span>
+            </div>
+          `;
+        }).join('');
+
+        cpContainer.innerHTML = `
+          <div class="collapse-summary">
+            <div class="collapse-big-number">${t('dashboard.collapse.avg_move', { move: cpData.avg_collapse_move })}</div>
+            <div class="collapse-meta">
+              <span>${t('dashboard.collapse.median_move', { move: cpData.median_collapse_move })}</span>
+              <span class="collapse-separator">·</span>
+              <span>${t('dashboard.collapse.games_with_blunders', { count: cpData.total_games_with_blunders })}</span>
+            </div>
+            <div class="collapse-clean">${t('dashboard.collapse.clean_games', { count: cpData.total_games_without_blunders, percentage: cleanPercent })}</div>
+          </div>
+          <div class="collapse-distribution">
+            <div class="collapse-dist-title">${t('dashboard.collapse.distribution_title')}</div>
+            ${barsHtml}
+          </div>
+          <div class="collapse-zone-legend">
+            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--success, #22c55e);"></span>${t('dashboard.collapse.zone_opening')}</span>
+            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--warning, #f59e0b);"></span>${t('dashboard.collapse.zone_middle')}</span>
+            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--error, #ef4444);"></span>${t('dashboard.collapse.zone_late')}</span>
+          </div>
+        `;
+      } else {
+        cpContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.collapse.no_data') + '</div>';
+      }
+    }
+
     // Conversion & Resilience
     if (hasFeature('dashboard.conversion_resilience') && document.getElementById('conversionResilienceContainer')) {
       const crData = await client.stats.conversionResilience(dateAndGameTypeParams());

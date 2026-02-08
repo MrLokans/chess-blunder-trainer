@@ -446,5 +446,17 @@
   "dashboard.conversion.no_data": "No hay suficientes partidas analizadas para calcular las tasas de conversión y resiliencia.",
   "dashboard.resilience.title": "Resiliencia",
   "dashboard.resilience.detail": "Salvadas {saved} de {total} posiciones perdedoras",
-  "settings.features.dashboard_conversion_resilience": "Tasas de conversión y resiliencia"
+  "settings.features.dashboard_conversion_resilience": "Tasas de conversión y resiliencia",
+  "dashboard.chart.collapse_point": "Momento crítico",
+  "dashboard.chart.collapse_point_desc": "El número de jugada típico donde cometes tu primer error grave en una partida.",
+  "dashboard.collapse.avg_move": "Tu primer error grave suele ocurrir en la jugada {move}",
+  "dashboard.collapse.median_move": "Mediana: jugada {move}",
+  "dashboard.collapse.clean_games": "Partidas limpias (sin errores graves): {count} ({percentage}%)",
+  "dashboard.collapse.games_with_blunders": "{count} partidas con errores graves",
+  "dashboard.collapse.no_data": "No hay datos de momento crítico disponibles. Analiza algunas partidas primero.",
+  "dashboard.collapse.zone_opening": "Preparación de apertura",
+  "dashboard.collapse.zone_middle": "Concentración",
+  "dashboard.collapse.zone_late": "Apuro de tiempo",
+  "dashboard.collapse.distribution_title": "Primer error grave por número de jugada",
+  "settings.features.dashboard_collapse_point": "Panel: Momento Crítico"
 }

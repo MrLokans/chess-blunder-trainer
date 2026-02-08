@@ -446,5 +446,17 @@
   "dashboard.conversion.no_data": "Недостатньо проаналізованих партій для обчислення показників конвертації та стійкості.",
   "dashboard.resilience.title": "Стійкість",
   "dashboard.resilience.detail": "Врятовано {saved} з {total} програних позицій",
-  "settings.features.dashboard_conversion_resilience": "Конвертація та стійкість"
+  "settings.features.dashboard_conversion_resilience": "Конвертація та стійкість",
+  "dashboard.chart.collapse_point": "Критичний момент",
+  "dashboard.chart.collapse_point_desc": "Типовий номер ходу, на якому ви робите перший грубий промах у партії.",
+  "dashboard.collapse.avg_move": "Ваш перший грубий промах зазвичай трапляється на ході {move}",
+  "dashboard.collapse.median_move": "Медіана: хід {move}",
+  "dashboard.collapse.clean_games": "Чисті партії (без промахів): {count} ({percentage}%)",
+  "dashboard.collapse.games_with_blunders": "{count} партій з промахами",
+  "dashboard.collapse.no_data": "Немає даних про критичні моменти. Спочатку проаналізуйте кілька партій.",
+  "dashboard.collapse.zone_opening": "Дебютна підготовка",
+  "dashboard.collapse.zone_middle": "Концентрація",
+  "dashboard.collapse.zone_late": "Цейтнот",
+  "dashboard.collapse.distribution_title": "Перший промах за номером ходу",
+  "settings.features.dashboard_collapse_point": "Панель: Критичний момент"
 }

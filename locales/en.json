@@ -446,5 +446,17 @@
   "dashboard.conversion.no_data": "Not enough analyzed games to compute conversion and resilience rates.",
   "dashboard.resilience.title": "Resilience",
   "dashboard.resilience.detail": "Saved {saved} of {total} losing positions",
-  "settings.features.dashboard_conversion_resilience": "Conversion & resilience rates"
+  "settings.features.dashboard_conversion_resilience": "Conversion & resilience rates",
+  "dashboard.chart.collapse_point": "Critical Moment",
+  "dashboard.chart.collapse_point_desc": "The typical move number where you make your first blunder in a game.",
+  "dashboard.collapse.avg_move": "Your first blunder typically happens on move {move}",
+  "dashboard.collapse.median_move": "Median: move {move}",
+  "dashboard.collapse.clean_games": "Clean games (no blunders): {count} ({percentage}%)",
+  "dashboard.collapse.games_with_blunders": "{count} games with blunders",
+  "dashboard.collapse.no_data": "No collapse point data available yet. Analyze some games first.",
+  "dashboard.collapse.zone_opening": "Opening preparation",
+  "dashboard.collapse.zone_middle": "Concentration",
+  "dashboard.collapse.zone_late": "Time trouble",
+  "dashboard.collapse.distribution_title": "First blunder by move number",
+  "settings.features.dashboard_collapse_point": "Dashboard: Critical Moment (Collapse Point)"
 }
