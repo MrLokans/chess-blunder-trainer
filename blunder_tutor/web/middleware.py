@@ -9,20 +9,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.repositories.settings import SettingsRepository
 
-DEMO_BLOCKED_ROUTES: list[tuple[str, re.Pattern]] = [
-    ("POST", re.compile(r"^/api/setup$")),
-    ("POST", re.compile(r"^/api/import/start$")),
-    ("POST", re.compile(r"^/api/sync/start$")),
-    ("POST", re.compile(r"^/api/analysis/start$")),
-    ("POST", re.compile(r"^/api/analysis/stop/")),
-    ("DELETE", re.compile(r"^/api/jobs/")),
-    ("POST", re.compile(r"^/api/backfill-")),
-    ("POST", re.compile(r"^/api/settings$")),
-    ("POST", re.compile(r"^/api/settings/")),
-    ("DELETE", re.compile(r"^/api/data/")),
-]
+MUTATION_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
-DEMO_ALLOWED_OVERRIDES: list[tuple[str, re.Pattern]] = [
+DEMO_ALLOWED_MUTATIONS: list[tuple[str, re.Pattern]] = [
+    ("POST", re.compile(r"^/api/submit$")),
+    ("POST", re.compile(r"^/api/analyze$")),
     ("POST", re.compile(r"^/api/settings/locale$")),
 ]
 
@@ -35,19 +26,18 @@ class DemoModeMiddleware(BaseHTTPMiddleware):
         method = request.method
         path = request.url.path
 
-        for m, pattern in DEMO_ALLOWED_OVERRIDES:
-            if method == m and pattern.search(path):
-                return await call_next(request)
+        if method in MUTATION_METHODS:
+            for m, pattern in DEMO_ALLOWED_MUTATIONS:
+                if method == m and pattern.search(path):
+                    return await call_next(request)
 
-        for m, pattern in DEMO_BLOCKED_ROUTES:
-            if method == m and pattern.search(path):
-                return JSONResponse(
-                    status_code=403,
-                    content={
-                        "error": "demo_mode",
-                        "message": "This action is disabled in demo mode",
-                    },
-                )
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "error": "demo_mode",
+                    "message": "This action is disabled in demo mode",
+                },
+            )
 
         return await call_next(request)
 
