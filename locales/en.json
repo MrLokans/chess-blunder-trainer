@@ -387,5 +387,8 @@
   "dashboard.difficulty.help_hard": "The best move was a quiet, non-forcing move with few safe alternatives. Even strong players might miss it.",
   "dashboard.difficulty.help_factors": "Factors: best move type (capture/check = easier), number of legal non-losing moves, and depth of the required calculation.",
   "dashboard.opening.learn_link_tooltip": "Learn about this opening",
-  "dashboard.opening.variations_count": "{count, plural, one {# variation} other {# variations}}"
+  "dashboard.opening.variations_count": "{count, plural, one {# variation} other {# variations}}",
+  "demo.banner": "Demo mode — browse freely, but changes are disabled",
+  "demo.disabled_action": "This action is not available in demo mode.",
+  "demo.self_host_cta": "Self-host your own instance"
 }

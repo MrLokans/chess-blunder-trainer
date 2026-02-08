@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block body %}
+{% include '_demo_banner.html' %}
 <div class="container">
   <a href="/" class="back-link">{{ t('common.back_to_trainer') }}</a>
 
@@ -390,7 +391,9 @@
 
       <div class="btn-row" style="margin-top: 32px;">
         <a class="btn btn-secondary" href="/">{{ t('common.cancel') }}</a>
+        {% if not demo_mode %}
         <button type="submit" class="btn btn-primary" id="submitBtn">{{ t('settings.save') }}</button>
+        {% endif %}
       </div>
     </form>
   </div>

@@ -1,12 +1,56 @@
 from __future__ import annotations
 
 import json
+import re
 
 from fastapi import Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.repositories.settings import SettingsRepository
+
+DEMO_BLOCKED_ROUTES: list[tuple[str, re.Pattern]] = [
+    ("POST", re.compile(r"^/api/setup$")),
+    ("POST", re.compile(r"^/api/import/start$")),
+    ("POST", re.compile(r"^/api/sync/start$")),
+    ("POST", re.compile(r"^/api/analysis/start$")),
+    ("POST", re.compile(r"^/api/analysis/stop/")),
+    ("DELETE", re.compile(r"^/api/jobs/")),
+    ("POST", re.compile(r"^/api/backfill-")),
+    ("POST", re.compile(r"^/api/settings$")),
+    ("POST", re.compile(r"^/api/settings/")),
+    ("DELETE", re.compile(r"^/api/data/")),
+]
+
+DEMO_ALLOWED_OVERRIDES: list[tuple[str, re.Pattern]] = [
+    ("POST", re.compile(r"^/api/settings/locale$")),
+]
+
+
+class DemoModeMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if not getattr(request.app.state, "demo_mode", False):
+            return await call_next(request)
+
+        method = request.method
+        path = request.url.path
+
+        for m, pattern in DEMO_ALLOWED_OVERRIDES:
+            if method == m and pattern.search(path):
+                return await call_next(request)
+
+        for m, pattern in DEMO_BLOCKED_ROUTES:
+            if method == m and pattern.search(path):
+                return JSONResponse(
+                    status_code=403,
+                    content={
+                        "error": "demo_mode",
+                        "message": "This action is disabled in demo mode",
+                    },
+                )
+
+        return await call_next(request)
+
 
 LOCALE_DISPLAY_NAMES = {
     "en": "English",
@@ -25,6 +69,9 @@ class SetupCheckMiddleware(BaseHTTPMiddleware):
     EXEMPT_PATHS = {"/setup", "/api/", "/health", "/static", "/favicon.ico"}
 
     async def dispatch(self, request: Request, call_next):
+        if getattr(request.app.state, "demo_mode", False):
+            return await call_next(request)
+
         # Check if path is exempt
         if any(request.url.path.startswith(path) for path in self.EXEMPT_PATHS):
             return await call_next(request)

@@ -387,5 +387,8 @@
   "dashboard.difficulty.help_hard": "Najlepszy ruch to cichy, niewymuszający ruch z małą liczbą bezpiecznych alternatyw. Nawet silni gracze mogą go przeoczyć.",
   "dashboard.difficulty.help_factors": "Czynniki: typ najlepszego ruchu (bicie/szach = łatwiej), liczba bezpiecznych ruchów, głębokość wymaganego obliczenia.",
   "dashboard.opening.learn_link_tooltip": "Dowiedz się o tym otwarciu",
-  "dashboard.opening.variations_count": "{count, plural, one {# wariant} few {# warianty} other {# wariantów}}"
+  "dashboard.opening.variations_count": "{count, plural, one {# wariant} few {# warianty} other {# wariantów}}",
+  "demo.banner": "Tryb demo — przeglądaj swobodnie, ale zmiany są wyłączone",
+  "demo.disabled_action": "Ta akcja nie jest dostępna w trybie demo.",
+  "demo.self_host_cta": "Zainstaluj własną instancję"
 }

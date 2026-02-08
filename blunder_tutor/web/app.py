@@ -20,7 +20,11 @@ from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web import routes
 from blunder_tutor.web.config import AppConfig, config_factory
-from blunder_tutor.web.middleware import LocaleMiddleware, SetupCheckMiddleware
+from blunder_tutor.web.middleware import (
+    DemoModeMiddleware,
+    LocaleMiddleware,
+    SetupCheckMiddleware,
+)
 
 
 @asynccontextmanager
@@ -117,8 +121,13 @@ def create_app(
     static_dir = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
+    # Inject demo_mode flag into app state and templates
+    app.state.demo_mode = config.demo_mode
+    templates.env.globals["demo_mode"] = config.demo_mode
+
     # Add middleware (order matters: last added = first executed)
     app.add_middleware(SetupCheckMiddleware)
+    app.add_middleware(DemoModeMiddleware)
     app.add_middleware(LocaleMiddleware)
     app = routes.configure_router(app)
     return app

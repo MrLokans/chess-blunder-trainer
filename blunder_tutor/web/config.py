@@ -25,6 +25,7 @@ class AppConfig(BaseModel):
     engine_path: str
     engine: EngineConfig
     data: DataConfig = DataConfig()
+    demo_mode: bool = False
 
 
 def get_engine_path(environ: typing.Mapping) -> str:
@@ -60,4 +61,5 @@ def config_factory(
         engine=EngineConfig(
             path=final_engine_path,
         ),
+        demo_mode=environ.get("DEMO_MODE", "").lower() in ("true", "1", "yes"),
     )

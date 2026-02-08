@@ -17,6 +17,9 @@
 <div class="card">
   <h2>{{ t('management.import.title') }}</h2>
   <div id="importMessage" style="display: none;"></div>
+  {% if demo_mode %}
+  <p style="color: var(--text-muted); font-size: 0.875rem;">{{ t('demo.disabled_action') }}</p>
+  {% else %}
   <form id="importForm">
     <div class="form-group">
       <label for="source">{{ t('management.import.source') }}</label>
@@ -36,6 +39,7 @@
     </div>
     <button type="submit" class="btn">{{ t('management.import.start') }}</button>
   </form>
+  {% endif %}
 
   <div id="importProgress" style="display: none; margin-top: 24px;">
     <p><strong>{{ t('management.import.in_progress') }}</strong></p>
@@ -51,7 +55,11 @@
   <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
     {{ t('management.sync.description') }}
   </p>
+  {% if not demo_mode %}
   <button class="btn" id="syncBtn">{{ t('management.sync.button') }}</button>
+  {% else %}
+  <p style="color: var(--text-muted); font-size: 0.875rem;">{{ t('demo.disabled_action') }}</p>
+  {% endif %}
   <div id="syncStatus" style="margin-top: 16px;"></div>
 </div>
 
@@ -65,10 +73,12 @@
     </p>
   </div>
 
+  {% if not demo_mode %}
   <div id="analysisControls">
     <button class="btn" id="startAnalysisBtn">{{ t('management.analysis.start') }}</button>
     <button class="btn" id="stopAnalysisBtn" style="display: none; background: var(--error);">{{ t('management.analysis.stop') }}</button>
   </div>
+  {% endif %}
 
   <div id="analysisProgress" style="display: none; margin-top: 24px;">
     <p><strong>{{ t('management.analysis.in_progress') }}</strong></p>
@@ -91,9 +101,11 @@
     </p>
   </div>
 
+  {% if not demo_mode %}
   <div id="backfillControls">
     <button class="btn" id="startBackfillBtn">{{ t('management.backfill_phases.start') }}</button>
   </div>
+  {% endif %}
 
   <div id="backfillProgress" style="display: none; margin-top: 24px;">
     <p><strong>{{ t('management.backfill_phases.in_progress') }}</strong></p>
@@ -116,9 +128,11 @@
     </p>
   </div>
 
+  {% if not demo_mode %}
   <div id="ecoBackfillControls">
     <button class="btn" id="startEcoBackfillBtn">{{ t('management.backfill_eco.start') }}</button>
   </div>
+  {% endif %}
 
   <div id="ecoBackfillProgress" style="display: none; margin-top: 24px;">
     <p><strong>{{ t('management.backfill_eco.in_progress') }}</strong></p>
@@ -154,6 +168,7 @@
   </table>
 </div>
 
+{% if not demo_mode %}
 <div class="card" style="border-color: var(--error);">
   <h2 style="color: var(--error);">{{ t('management.danger.title') }}</h2>
   <div id="deleteAllMessage" style="display: none;"></div>
@@ -173,6 +188,7 @@
     </div>
   </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}

@@ -387,5 +387,8 @@
   "dashboard.difficulty.help_hard": "Лучший ход — тихий, не форсирующий ход с малым количеством безопасных альтернатив. Даже сильные игроки могут его пропустить.",
   "dashboard.difficulty.help_factors": "Факторы: тип лучшего хода (взятие/шах = проще), количество безопасных ходов, глубина необходимого расчёта.",
   "dashboard.opening.learn_link_tooltip": "Изучить этот дебют",
-  "dashboard.opening.variations_count": "{count, plural, one {# вариант} few {# варианта} other {# вариантов}}"
+  "dashboard.opening.variations_count": "{count, plural, one {# вариант} few {# варианта} other {# вариантов}}",
+  "demo.banner": "Демо-режим — смотрите свободно, но изменения отключены",
+  "demo.disabled_action": "Это действие недоступно в демо-режиме.",
+  "demo.self_host_cta": "Развернуть свой экземпляр"
 }

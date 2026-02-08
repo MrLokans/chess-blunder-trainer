@@ -7,6 +7,10 @@
 {% endblock %}
 
 {% block body %}
+{% include '_demo_banner.html' %}
+{% if demo_mode %}
+<script>window.location.href = '/';</script>
+{% endif %}
 <div class="container">
   <div class="card">
     <h1>{{ t('setup.title') }}</h1>

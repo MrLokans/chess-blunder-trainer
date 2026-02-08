@@ -387,5 +387,8 @@
   "dashboard.difficulty.help_hard": "Лепшы ход — ціхі, не фарсіруючы ход з малой колькасцю бяспечных альтэрнатыў. Нават моцныя гульцы могуць яго прапусціць.",
   "dashboard.difficulty.help_factors": "Фактары: тып лепшага ходу (узяцце/шах = прасцей), колькасць бяспечных ходаў, глыбіня неабходнага разліку.",
   "dashboard.opening.learn_link_tooltip": "Даведацца пра гэты дэбют",
-  "dashboard.opening.variations_count": "{count, plural, one {# варыянт} few {# варыянты} other {# варыянтаў}}"
+  "dashboard.opening.variations_count": "{count, plural, one {# варыянт} few {# варыянты} other {# варыянтаў}}",
+  "demo.banner": "Дэма-рэжым — праглядайце свабодна, але змены адключаны",
+  "demo.disabled_action": "Гэта дзеянне недаступнае ў дэма-рэжыме.",
+  "demo.self_host_cta": "Разгарнуць уласны экзэмпляр"
 }

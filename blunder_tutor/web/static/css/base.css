@@ -1188,3 +1188,28 @@ kbd {
   color: var(--text);
   border-color: var(--text-muted);
 }
+
+/* Demo mode banner */
+.demo-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: var(--color-warning-bg, #fff3cd);
+  color: var(--color-warning, #856404);
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.demo-banner a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+body:has(.demo-banner) {
+  padding-top: 38px;
+}
