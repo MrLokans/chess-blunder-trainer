@@ -25,6 +25,7 @@ from blunder_tutor.web.middleware import (
     LocaleMiddleware,
     SetupCheckMiddleware,
 )
+from blunder_tutor.web.throttle import create_engine_throttle
 
 
 @asynccontextmanager
@@ -124,6 +125,9 @@ def create_app(
     # Inject demo_mode flag into app state and templates
     app.state.demo_mode = config.demo_mode
     templates.env.globals["demo_mode"] = config.demo_mode
+
+    # Set up per-IP engine throttle for demo mode
+    app.state.engine_throttle = create_engine_throttle(config)
 
     # Add middleware (order matters: last added = first executed)
     app.add_middleware(SetupCheckMiddleware)

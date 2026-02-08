@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 from typing import Annotated
 
 import chess.engine
-from fastapi import Depends, Request
+from fastapi import Depends, Request, Response
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.background.scheduler import BackgroundScheduler
@@ -174,3 +174,11 @@ PuzzleServiceDep = Annotated[PuzzleService, Depends(get_puzzle_service)]
 DataManagementRepoDep = Annotated[
     DataManagementRepository, Depends(get_data_management_repository)
 ]
+
+
+async def check_engine_throttle(request: Request, response: Response) -> None:
+    throttle = request.app.state.engine_throttle
+    await throttle(request, response)
+
+
+EngineThrottleDep = Annotated[None, Depends(check_engine_throttle)]

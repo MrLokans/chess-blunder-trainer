@@ -156,6 +156,7 @@ Installed at runtime via `uv`/pip. Not vendored in this repository.
 | tqdm             | MIT/MPL-2.0  | [https://github.com/tqdm/tqdm](https://github.com/tqdm/tqdm)                                       |
 | hyx              | MIT          | [https://github.com/roma-glushko/hyx](https://github.com/roma-glushko/hyx)                         |
 | fast-depends     | MIT          | [https://github.com/Lancetnik/FastDepends](https://github.com/Lancetnik/FastDepends)               |
+| fastapi-throttle | MIT          | [https://github.com/AliYmn/fastapi-throttle](https://github.com/AliYmn/fastapi-throttle)           |
 
 
 ### Dev-only

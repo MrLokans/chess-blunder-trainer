@@ -16,6 +16,10 @@ services:
       - STOCKFISH_BINARY=/usr/local/bin/stockfish
       - STOCKFISH_DEPTH=${STOCKFISH_DEPTH:-14}
 
+      # Demo mode (rate-limits engine endpoints, blocks mutations)
+      # - DEMO_MODE=true
+      # - DEMO_THROTTLE_RATE=30/60  # requests/seconds per IP (default: 30/60)
+
       # Server configuration
       - HOST=0.0.0.0
       - PORT=8000

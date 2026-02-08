@@ -20,12 +20,18 @@ class EngineConfig(BaseModel):
     time_limit: float = constants.DEFAULT_ENGINE_TIME_LIMIT
 
 
+class ThrottleConfig(BaseModel):
+    engine_requests: int = 10
+    engine_window_seconds: int = 60
+
+
 class AppConfig(BaseModel):
     username: str | None = None
     engine_path: str
     engine: EngineConfig
     data: DataConfig = DataConfig()
     demo_mode: bool = False
+    throttle: ThrottleConfig = ThrottleConfig()
 
 
 def get_engine_path(environ: typing.Mapping) -> str:
@@ -55,6 +61,16 @@ def config_factory(
         and getattr(parsed_args, "depth", None)
         or constants.DEFAULT_ENGINE_DEPTH
     )
+    throttle = ThrottleConfig()
+    throttle_env = environ.get("DEMO_THROTTLE_RATE")
+    if throttle_env:
+        parts = throttle_env.split("/", 1)
+        if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+            throttle = ThrottleConfig(
+                engine_requests=int(parts[0]),
+                engine_window_seconds=int(parts[1]),
+            )
+
     return AppConfig(
         data=DataConfig(),
         engine_path=final_engine_path,
@@ -62,4 +78,5 @@ def config_factory(
             path=final_engine_path,
         ),
         demo_mode=environ.get("DEMO_MODE", "").lower() in ("true", "1", "yes"),
+        throttle=throttle,
     )

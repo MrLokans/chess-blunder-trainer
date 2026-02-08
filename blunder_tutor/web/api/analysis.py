@@ -14,6 +14,7 @@ from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     AnalysisServiceDep,
     ConfigDep,
+    EngineThrottleDep,
     PuzzleAttemptRepoDep,
     PuzzleServiceDep,
     SettingsRepoDep,
@@ -190,6 +191,7 @@ async def puzzle(
     config: ConfigDep,
     settings_repo: SettingsRepoDep,
     puzzle_service: PuzzleServiceDep,
+    _throttle: EngineThrottleDep,
     start_date: Annotated[
         date | None,
         Query(description="Start date for puzzle filtering (YYYY-MM-DD)"),
@@ -361,6 +363,7 @@ async def submit(
     payload: SubmitMoveRequest,
     attempt_repo: PuzzleAttemptRepoDep,
     analysis_service: AnalysisServiceDep,
+    _throttle: EngineThrottleDep,
 ) -> dict[str, Any]:
     try:
         user_san = analysis_service.get_move_san(payload.fen, payload.move)
@@ -418,7 +421,9 @@ async def submit(
     description="Analyze a specific chess position and return evaluation with best move.",
 )
 async def analyze_move(
-    payload: AnalyzeMoveRequest, analysis_service: AnalysisServiceDep
+    payload: AnalyzeMoveRequest,
+    analysis_service: AnalysisServiceDep,
+    _throttle: EngineThrottleDep,
 ) -> dict[str, Any]:
     try:
         analysis = await analysis_service.analyze_position(payload.fen)
