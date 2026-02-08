@@ -26,26 +26,10 @@ Most chess players make the same types of mistakes repeatedly. Generic puzzle tr
 ### Using Docker directly
 
 ```bash
-docker run blunder-tutor-1 -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/mrlokans/blunder-tutor:latest
+docker run -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/mrlokans/blunder-tutor:latest
 ```
 
 Open http://localhost:8000 and enter your Lichess or Chess.com username to get started.
-
-### Configuration
-
-Set environment variables in `.env` (see `.env.example`):
-
-| Variable | Description |
-|----------|-------------|
-| `LICHESS_USERNAME` | Your Lichess username |
-| `CHESSCOM_USERNAME` | Your Chess.com username |
-| `STOCKFISH_DEPTH` | Analysis depth (default: 14) |
-| `AUTO_SYNC_ENABLED` | Enable automatic game sync |
-| `SYNC_INTERVAL_HOURS` | Hours between syncs (default: 24) |
-
-Game data persists in `./data` across restarts.
-
-For advanced Docker options, see [DOCKER.md](DOCKER.md).
 
 ## Local Development
 
