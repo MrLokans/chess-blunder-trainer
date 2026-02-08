@@ -77,6 +77,9 @@ const legendTactic = document.getElementById('legendTactic');
 const gameTypeCheckboxes = document.querySelectorAll('.game-type-checkbox');
 const colorFilterRadios = document.querySelectorAll('input[name="colorFilter"]');
 const difficultyFilterCheckboxes = document.querySelectorAll('.difficulty-filter-checkbox');
+const explanationInfo = document.getElementById('explanationInfo');
+const explanationBlunder = document.getElementById('explanationBlunder');
+const explanationBest = document.getElementById('explanationBest');
 const filtersHeader = document.getElementById('filtersHeader');
 const filtersToggleBtn = document.getElementById('filtersToggleBtn');
 const filtersContent = document.getElementById('filtersContent');
@@ -311,6 +314,17 @@ function showTacticalInfo(pattern, reason) {
   }
 }
 
+function showExplanation(blunderText, bestText) {
+  if (!explanationInfo) return;
+  if (!blunderText && !bestText) {
+    explanationInfo.style.display = 'none';
+    return;
+  }
+  explanationBlunder.textContent = blunderText || '';
+  explanationBest.textContent = bestText || '';
+  explanationInfo.style.display = 'block';
+}
+
 function updateGameLink(url) {
   const el = document.getElementById('gameLink');
   if (!el) return;
@@ -371,6 +385,7 @@ async function loadPuzzle() {
   if (legendTactic) legendTactic.style.display = 'none';
   updateTacticalBadge(null);
   if (tacticalInfo) tacticalInfo.style.display = 'none';
+  if (explanationInfo) explanationInfo.style.display = 'none';
 
   try {
     const params = {};
@@ -520,6 +535,7 @@ function revealBestMove() {
 
   if (puzzle) {
     showTacticalInfo(puzzle.tactical_pattern, puzzle.tactical_reason);
+    showExplanation(puzzle.explanation_blunder, puzzle.explanation_best);
     redrawAllHighlights();
   }
 

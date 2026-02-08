@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from datetime import date
 from enum import Enum
+from functools import partial
 from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from blunder_tutor.analysis.tactics import PATTERN_LABELS, TacticalPattern
@@ -143,6 +144,14 @@ class PuzzleResponse(BaseModel):
     game_url: str | None = Field(
         description="URL to the original game on Lichess or Chess.com"
     )
+    explanation_blunder: str | None = Field(
+        default=None,
+        description="Beginner-friendly explanation of why the move was a blunder",
+    )
+    explanation_best: str | None = Field(
+        default=None,
+        description="Beginner-friendly explanation of what the best move achieves",
+    )
 
 
 class SubmitMoveResponse(BaseModel):
@@ -177,6 +186,7 @@ analysis_router = APIRouter()
     description="Returns a random blunder puzzle for the user to solve, with optional filtering.",
 )
 async def puzzle(
+    request: Request,
     config: ConfigDep,
     settings_repo: SettingsRepoDep,
     puzzle_service: PuzzleServiceDep,
@@ -280,6 +290,28 @@ async def puzzle(
     analysis = puzzle_with_analysis.analysis
 
     from blunder_tutor.utils.chess_utils import format_eval
+    from blunder_tutor.utils.explanation import (
+        generate_explanation,
+        resolve_explanation,
+    )
+
+    explanation_raw = generate_explanation(
+        fen=puzzle_data.fen,
+        blunder_uci=puzzle_data.blunder_uci,
+        best_move_uci=analysis.best_move_uci,
+        tactical_pattern=PATTERN_LABELS.get(puzzle_data.tactical_pattern)
+        if puzzle_data.tactical_pattern is not None
+        else None,
+        cp_loss=puzzle_data.cp_loss,
+        eval_before=puzzle_data.eval_before,
+        eval_after=puzzle_data.eval_after,
+        best_line=analysis.best_line,
+    )
+
+    locale = getattr(request.state, "locale", "en")
+    i18n = getattr(request.app.state, "i18n", None)
+    t = partial(i18n.t, locale) if i18n else lambda key, **kw: key
+    explanation = resolve_explanation(explanation_raw, t)
 
     return {
         "game_id": puzzle_data.game_id,
@@ -311,6 +343,8 @@ async def puzzle(
         "tactical_reason": puzzle_data.tactical_reason,
         "tactical_squares": puzzle_data.tactical_squares,
         "game_url": puzzle_data.game_url,
+        "explanation_blunder": explanation.blunder_text or None,
+        "explanation_best": explanation.best_move_text or None,
     }
 
 

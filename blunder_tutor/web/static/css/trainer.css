@@ -602,6 +602,41 @@
   line-height: 1.5;
 }
 
+/* Beginner-friendly explanation */
+.explanation-info {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background: rgba(59, 130, 246, 0.08);
+  border-radius: var(--radius);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.explanation-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  color: var(--primary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-2);
+}
+
+.explanation-blunder {
+  color: var(--text);
+  margin-bottom: var(--space-2);
+}
+
+.explanation-blunder:empty,
+.explanation-best:empty {
+  display: none;
+}
+
+.explanation-best {
+  color: var(--text);
+}
+
 /* Highlight legend for tactics */
 .legend-color.tactic {
   background-color: rgba(139, 92, 246, 0.45);

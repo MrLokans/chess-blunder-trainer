@@ -297,6 +297,12 @@
           <div class="tactical-info-reason" id="tacticalInfoReason">...</div>
         </div>
         {% endif %}
+        <!-- Beginner-friendly explanation -->
+        <div class="explanation-info" id="explanationInfo" style="display: none;">
+          <div class="explanation-title">📖 <span>{{ t('trainer.explanation.title') }}</span></div>
+          <div class="explanation-blunder" id="explanationBlunder"></div>
+          <div class="explanation-best" id="explanationBest"></div>
+        </div>
         <div class="try-best-move">
           <button class="btn btn-success" id="tryBestBtn">{{ t('trainer.button.play_best') }}<kbd>P</kbd></button>
         </div>
