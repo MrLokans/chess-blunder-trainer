@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0]
+
+### Added
+
+- **Traps & gambits detection** (experimental): Pattern-matching engine that identifies known opening traps (Scholar's Mate, Fried Liver, Fishing Pole, etc.) in your analyzed games. Tracks whether you sprung or fell into each trap. New dedicated `/traps` page with a trap catalog, per-trap stats, and game history. Dashboard summary card shows trap encounter counts.
+
+### Changed
+
+- **Settings page no longer manages usernames**: Lichess/Chess.com usernames are now configured exclusively through the Setup page (initial onboarding) and the Management page (import form). Removes the confusing duplication where usernames appeared in both Settings and Management.
+
+### Fixed
+
+- **Locale and feature flags not applied to navigation**: Switching language or toggling features required a full backend process restart to take effect in the navigation bar and other imported macros. Root cause was Jinja2 caching `env.globals` (including `t()`, `has_feature()`) at macro import time. Fixed by adding `with context` to all `{% from "_nav.html" import ... %}` directives so macros always receive the current request's globals.
+- **Saved locale lost on server restart**: The locale preference stored in the database was never loaded into the in-memory cache on application startup. After a process restart, the app fell back to English (or Accept-Language) until the user changed language again. Now `lifespan` seeds `_locale_cache` from the DB, and `_detect_locale` falls back to a DB read when neither cookie nor cache is available.
+- **Locale cookie set only client-side**: The `POST /api/settings/locale` endpoint now sets the `locale` cookie via a `Set-Cookie` response header instead of relying on client-side JavaScript, making locale persistence more reliable.
+
+---
+
 ## [1.5.0]
 
 ### Added
