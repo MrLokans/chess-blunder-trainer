@@ -20,6 +20,7 @@ class Feature(StrEnum):
     DASHBOARD_DIFFICULTY_BREAKDOWN = "dashboard.difficulty_breakdown"
     DASHBOARD_CONVERSION_RESILIENCE = "dashboard.conversion_resilience"
     DASHBOARD_COLLAPSE_POINT = "dashboard.collapse_point"
+    DASHBOARD_TRAPS = "dashboard.traps"
 
     TRAINER_FILTER_DIFFICULTY = "trainer.filter.difficulty"
 
@@ -31,7 +32,10 @@ class Feature(StrEnum):
         return value in cls._value2member_map_
 
 
-DEFAULTS: dict[Feature, bool] = dict.fromkeys(Feature, True)
+DEFAULTS: dict[Feature, bool] = {
+    **dict.fromkeys(Feature, True),
+    Feature.DASHBOARD_TRAPS: False,
+}
 
 FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
     (
@@ -62,6 +66,7 @@ FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
             Feature.DASHBOARD_DIFFICULTY_BREAKDOWN,
             Feature.DASHBOARD_CONVERSION_RESILIENCE,
             Feature.DASHBOARD_COLLAPSE_POINT,
+            Feature.DASHBOARD_TRAPS,
         ],
     ),
     (
@@ -88,6 +93,7 @@ FEATURE_LABELS: dict[Feature, str] = {
     Feature.DASHBOARD_DIFFICULTY_BREAKDOWN: "settings.features.dashboard_difficulty_breakdown",
     Feature.DASHBOARD_CONVERSION_RESILIENCE: "settings.features.dashboard_conversion_resilience",
     Feature.DASHBOARD_COLLAPSE_POINT: "settings.features.dashboard_collapse_point",
+    Feature.DASHBOARD_TRAPS: "settings.features.dashboard_traps",
     Feature.TRAINER_FILTER_DIFFICULTY: "settings.features.trainer_filter_difficulty",
     Feature.AUTO_SYNC: "settings.features.auto_sync",
     Feature.AUTO_ANALYZE: "settings.features.auto_analyze",

@@ -9,10 +9,11 @@ if TYPE_CHECKING:
 
 
 class PipelinePreset(Enum):
-    FULL = ["eco", "stockfish", "move_quality", "phase", "write"]
+    FULL = ["eco", "stockfish", "move_quality", "phase", "traps", "write"]
     FAST = ["eco", "phase"]
     BACKFILL_ECO = ["eco"]
     BACKFILL_PHASE = ["phase"]
+    BACKFILL_TRAPS = ["traps"]
 
 
 @dataclass

@@ -187,6 +187,16 @@
 </div>
 {% endif %}
 
+{% if has_feature('dashboard.traps') %}
+<div class="chart-container">
+  <div class="chart-title">{{ t('traps.dashboard_card_title') }}</div>
+  <p class="chart-description">{{ t('traps.dashboard_card_desc') }}</p>
+  <div id="trapsDashboardCard">
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
+  </div>
+</div>
+{% endif %}
+
 {% if has_feature('dashboard.conversion_resilience') %}
 <div class="chart-container">
   <div class="chart-title">{{ t('dashboard.chart.conversion_resilience') }}</div>

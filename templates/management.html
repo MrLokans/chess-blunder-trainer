@@ -144,6 +144,31 @@
 </div>
 
 <div class="card">
+  <h2>{{ t('management.backfill_traps.title') }}</h2>
+  <div id="trapsBackfillMessage" style="display: none;"></div>
+
+  <div id="trapsBackfillInfo" style="margin-bottom: 16px;">
+    <p style="color: var(--text-muted); font-size: 0.875rem;">
+      {{ t('management.backfill_traps.description') }}
+    </p>
+  </div>
+
+  {% if not demo_mode %}
+  <div id="trapsBackfillControls">
+    <button class="btn" id="startTrapsBackfillBtn">{{ t('management.backfill_traps.start') }}</button>
+  </div>
+  {% endif %}
+
+  <div id="trapsBackfillProgress" style="display: none; margin-top: 24px;">
+    <p><strong>{{ t('management.backfill_traps.in_progress') }}</strong></p>
+    <div class="progress-bar">
+      <div class="progress-fill" id="trapsBackfillProgressFill" style="width: 0%"></div>
+      <div class="progress-text" id="trapsBackfillProgressText">0%</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
   <h2>{{ t('management.jobs.title') }}</h2>
   <table id="jobsTable">
     <thead>

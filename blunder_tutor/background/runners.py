@@ -17,6 +17,7 @@ from blunder_tutor.background.jobs.analyze_games import AnalyzeGamesJob
 from blunder_tutor.background.jobs.backfill_eco import BackfillECOJob
 from blunder_tutor.background.jobs.backfill_phases import BackfillPhasesJob
 from blunder_tutor.background.jobs.backfill_tactics import BackfillTacticsJob
+from blunder_tutor.background.jobs.backfill_traps import BackfillTrapsJob
 from blunder_tutor.background.jobs.delete_all_data import DeleteAllDataJob
 from blunder_tutor.background.jobs.import_games import ImportGamesJob
 from blunder_tutor.background.jobs.sync_games import SyncGamesJob
@@ -36,6 +37,7 @@ from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.settings import SettingsRepository
+from blunder_tutor.repositories.trap_repository import TrapRepository
 from blunder_tutor.services.job_service import JobService
 
 logger = logging.getLogger(__name__)
@@ -178,6 +180,25 @@ async def run_backfill_tactics_job(
     return await job.execute(job_id=job_id)
 
 
+@inject
+async def run_backfill_traps_job(
+    job_id: str,
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+) -> dict[str, Any]:
+    ctx = get_context()
+    trap_repo = TrapRepository(db_path=ctx.db_path)
+    try:
+        job = BackfillTrapsJob(
+            job_service=job_service,
+            game_repo=game_repo,
+            trap_repo=trap_repo,
+        )
+        return await job.execute(job_id=job_id)
+    finally:
+        await trap_repo.close()
+
+
 # Mapping of job types to runner functions
 JOB_RUNNERS = {
     "import": run_import_job,
@@ -186,5 +207,6 @@ JOB_RUNNERS = {
     "backfill_phases": run_backfill_phases_job,
     "backfill_eco": run_backfill_eco_job,
     "backfill_tactics": run_backfill_tactics_job,
+    "backfill_traps": run_backfill_traps_job,
     "delete_all_data": run_delete_all_data_job,
 }

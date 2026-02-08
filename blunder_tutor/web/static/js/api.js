@@ -81,6 +81,8 @@ export const client = {
     ecoPending: () => request('/api/backfill-eco/pending'),
     ecoStatus: () => request('/api/backfill-eco/status'),
     startEco: () => post('/api/backfill-eco/start', {}),
+    trapsStatus: () => request('/api/backfill-traps/status'),
+    startTraps: () => post('/api/backfill-traps/start', {}),
   },
 
   data: {
@@ -101,6 +103,12 @@ export const client = {
     setLocale: (locale) => post('/api/settings/locale', { locale }),
     getFeatures: () => request('/api/settings/features'),
     saveFeatures: (features) => post('/api/settings/features', { features }),
+  },
+
+  traps: {
+    catalog: () => request('/api/traps/catalog'),
+    stats: () => request('/api/traps/stats'),
+    detail: (trapId) => request(`/api/traps/${trapId}`),
   },
 
   trainer: {

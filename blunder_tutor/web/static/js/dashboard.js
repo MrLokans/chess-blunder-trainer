@@ -512,6 +512,37 @@ async function loadStats() {
       }
     }
 
+    // Traps summary card
+    if (hasFeature('dashboard.traps') && document.getElementById('trapsDashboardCard')) {
+      try {
+        const trapsData = await client.traps.stats();
+        const card = document.getElementById('trapsDashboardCard');
+        const summary = trapsData.summary || {};
+        const stats = trapsData.stats || [];
+
+        if (summary.total_sprung > 0 || summary.total_entered > 0) {
+          const topItems = (summary.top_traps || []).slice(0, 3).map(tt => {
+            const match = stats.find(s => s.trap_id === tt.trap_id);
+            return `<span style="display:inline-block;background:var(--primary);color:var(--bg);padding:2px 8px;border-radius:var(--radius);font-size:0.8rem;margin-right:4px;">${match ? match.name : tt.trap_id} (${tt.count})</span>`;
+          }).join('');
+
+          card.innerHTML = `
+            <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-2);">
+              <div><strong style="font-size:1.5rem;color:var(--error);">${summary.total_sprung}</strong> <span style="color:var(--text-muted);font-size:0.85rem;">${t('traps.times_fell')}</span></div>
+              <div><strong style="font-size:1.5rem;color:var(--warning);">${summary.total_entered}</strong> <span style="color:var(--text-muted);font-size:0.85rem;">${t('traps.times_entered')}</span></div>
+            </div>
+            ${topItems ? `<div>${topItems}</div>` : ''}
+            <a href="/traps" style="display:inline-block;margin-top:var(--space-2);color:var(--primary);">${t('traps.view_all')} →</a>
+          `;
+        } else {
+          card.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);">${t('traps.no_data')}<br><a href="/traps">${t('traps.view_all')}</a></div>`;
+        }
+      } catch {
+        const card = document.getElementById('trapsDashboardCard');
+        if (card) card.innerHTML = '';
+      }
+    }
+
     // Blunders by tactical pattern
     if (hasFeature('dashboard.tactical_breakdown') && document.getElementById('tacticalBreakdown')) {
     const tacticalData = await client.stats.blundersByTacticalPattern(dateAndGameTypeParams());

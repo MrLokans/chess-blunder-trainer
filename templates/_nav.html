@@ -5,6 +5,9 @@
   {% if has_feature('page.dashboard') %}
   <a href="/dashboard" {% if active_page == 'dashboard' %}class="active"{% endif %}>{{ t('nav.dashboard') }}</a>
   {% endif %}
+  {% if has_feature('dashboard.traps') %}
+  <a href="/traps" {% if active_page == 'traps' %}class="active"{% endif %}>{{ t('nav.traps') }}</a>
+  {% endif %}
   {% if has_feature('page.management') %}
   <a href="/management" {% if active_page == 'management' %}class="active"{% endif %}>{{ t('nav.management') }}</a>
   {% endif %}

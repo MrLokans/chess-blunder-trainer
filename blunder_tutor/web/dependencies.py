@@ -17,6 +17,7 @@ from blunder_tutor.repositories.puzzle_attempt_repository import (
 )
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.repositories.stats_repository import StatsRepository
+from blunder_tutor.repositories.trap_repository import TrapRepository
 from blunder_tutor.services.analysis_service import AnalysisService
 from blunder_tutor.services.job_service import JobService
 from blunder_tutor.services.puzzle_service import PuzzleService
@@ -101,6 +102,16 @@ async def get_analysis_repository(
         await repo.close()
 
 
+async def get_trap_repository(
+    config: Annotated[AppConfig, Depends(get_config)],
+) -> AsyncGenerator[TrapRepository]:
+    repo = TrapRepository(db_path=config.data.db_path)
+    try:
+        yield repo
+    finally:
+        await repo.close()
+
+
 async def get_data_management_repository(
     config: Annotated[AppConfig, Depends(get_config)],
 ) -> AsyncGenerator[DataManagementRepository]:
@@ -171,6 +182,7 @@ LimitDep = Annotated[chess.engine.Limit, Depends(get_engine_limit)]
 AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]
 TrainerDep = Annotated[Trainer, Depends(get_trainer)]
 PuzzleServiceDep = Annotated[PuzzleService, Depends(get_puzzle_service)]
+TrapRepoDep = Annotated[TrapRepository, Depends(get_trap_repository)]
 DataManagementRepoDep = Annotated[
     DataManagementRepository, Depends(get_data_management_repository)
 ]

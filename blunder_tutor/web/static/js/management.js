@@ -212,6 +212,20 @@ const ecoBackfillCard = new JobCard({
   failedPrefix: t('management.backfill_eco.failed', { error: '' }),
 });
 
+const trapsBackfillCard = new JobCard({
+  progressContainerId: 'trapsBackfillProgress',
+  fillId: 'trapsBackfillProgressFill',
+  textId: 'trapsBackfillProgressText',
+  startBtnId: 'startTrapsBackfillBtn',
+  messageId: 'trapsBackfillMessage',
+  showMessage,
+  fetchStatus: () => client.backfill.trapsStatus(),
+  startJob: () => client.backfill.startTraps(),
+  startedMessage: t('management.backfill_traps.started'),
+  completedMessage: t('management.backfill_traps.completed'),
+  failedPrefix: t('management.backfill_traps.failed', { error: '' }),
+});
+
 const deleteAllCard = new JobCard({
   progressContainerId: 'deleteAllProgress',
   fillId: 'deleteAllProgressFill',
@@ -302,4 +316,6 @@ document.getElementById('startAnalysisBtn').addEventListener('click', () => anal
 document.getElementById('stopAnalysisBtn').addEventListener('click', () => analysisCard.stop(refreshJobsTable));
 document.getElementById('startBackfillBtn').addEventListener('click', () => backfillCard.start());
 document.getElementById('startEcoBackfillBtn').addEventListener('click', () => ecoBackfillCard.start());
+const trapsBackfillBtn = document.getElementById('startTrapsBackfillBtn');
+if (trapsBackfillBtn) trapsBackfillBtn.addEventListener('click', () => trapsBackfillCard.start());
 document.getElementById('deleteAllBtn').addEventListener('click', confirmDeleteAll);

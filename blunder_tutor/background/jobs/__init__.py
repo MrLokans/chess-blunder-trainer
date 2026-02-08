@@ -7,6 +7,7 @@ from blunder_tutor.background.jobs.analyze_games import AnalyzeGamesJob
 from blunder_tutor.background.jobs.backfill_eco import BackfillECOJob
 from blunder_tutor.background.jobs.backfill_phases import BackfillPhasesJob
 from blunder_tutor.background.jobs.backfill_tactics import BackfillTacticsJob
+from blunder_tutor.background.jobs.backfill_traps import BackfillTrapsJob
 from blunder_tutor.background.jobs.delete_all_data import DeleteAllDataJob
 from blunder_tutor.background.jobs.import_games import ImportGamesJob
 from blunder_tutor.background.jobs.sync_games import SyncGamesJob
@@ -16,6 +17,7 @@ __all__ = [
     "BackfillECOJob",
     "BackfillPhasesJob",
     "BackfillTacticsJob",
+    "BackfillTrapsJob",
     "DeleteAllDataJob",
     "ImportGamesJob",
     "SyncGamesJob",

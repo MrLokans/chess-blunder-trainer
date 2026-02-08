@@ -45,6 +45,13 @@ async def settings(request: Request, settings_repo: SettingsRepoDep) -> HTMLResp
     )
 
 
+async def traps_page(request: Request) -> HTMLResponse:
+    return request.app.state.templates.TemplateResponse(
+        "traps.html",
+        {"request": request, "title": "Traps & Attacks"},
+    )
+
+
 async def setup(request: Request, settings_repo: SettingsRepoDep) -> HTMLResponse:
     if await settings_repo.is_setup_completed():
         return RedirectResponse(url="/", status_code=303)
@@ -62,6 +69,9 @@ ui_router.add_api_route(
 )
 ui_router.add_api_route(
     "/management", management, response_class=HTMLResponse, methods=["GET"]
+)
+ui_router.add_api_route(
+    "/traps", traps_page, response_class=HTMLResponse, methods=["GET"]
 )
 ui_router.add_api_route("/setup", setup, response_class=HTMLResponse, methods=["GET"])
 ui_router.add_api_route(

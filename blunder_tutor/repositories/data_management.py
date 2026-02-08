@@ -8,6 +8,13 @@ class DataManagementRepository(BaseDbRepository):
         async with self.write_transaction() as conn:
             counts: dict[str, int] = {}
 
+            try:
+                cursor = await conn.execute("SELECT COUNT(*) FROM trap_matches")
+                counts["trap_matches"] = (await cursor.fetchone())[0]
+                await conn.execute("DELETE FROM trap_matches")
+            except Exception:
+                counts["trap_matches"] = 0
+
             cursor = await conn.execute("SELECT COUNT(*) FROM puzzle_attempts")
             counts["puzzle_attempts"] = (await cursor.fetchone())[0]
             await conn.execute("DELETE FROM puzzle_attempts")

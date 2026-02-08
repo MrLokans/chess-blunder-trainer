@@ -488,3 +488,45 @@ async def get_backfill_tactics_pending(
 ) -> dict[str, int]:
     games_needing_backfill = await analysis_repo.get_game_ids_missing_tactics()
     return {"pending_count": len(games_needing_backfill)}
+
+
+@jobs_router.post(
+    "/api/backfill-traps/start",
+    response_model=JobResponse,
+    summary="Start traps backfill",
+    description="Start a background job to detect opening traps in already-analyzed games.",
+)
+async def start_backfill_traps_job(
+    job_service: JobServiceDep,
+    event_bus: EventBusDep,
+) -> dict[str, str]:
+    job_id = await job_service.create_job(job_type="backfill_traps")
+
+    event = JobExecutionRequestEvent.create(
+        job_id=job_id,
+        job_type="backfill_traps",
+    )
+    await event_bus.publish(event)
+
+    return {"job_id": job_id}
+
+
+@jobs_router.get(
+    "/api/backfill-traps/status",
+    summary="Get backfill traps status",
+    description="Get the status of the most recent or currently running traps backfill job.",
+)
+async def get_backfill_traps_status(job_service: JobServiceDep) -> dict[str, Any]:
+    running_jobs = await job_service.list_jobs(
+        job_type="backfill_traps", status="running", limit=1
+    )
+
+    if running_jobs:
+        return running_jobs[0]
+
+    recent_jobs = await job_service.list_jobs(job_type="backfill_traps", limit=1)
+
+    if not recent_jobs:
+        return {"status": "no_jobs"}
+
+    return recent_jobs[0]

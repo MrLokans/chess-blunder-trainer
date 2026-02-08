@@ -6,6 +6,7 @@ from blunder_tutor.analysis.pipeline.steps.move_quality import MoveQualityStep
 from blunder_tutor.analysis.pipeline.steps.phase import PhaseClassifyStep
 from blunder_tutor.analysis.pipeline.steps.stockfish import StockfishAnalysisStep
 from blunder_tutor.analysis.pipeline.steps.tactics import TacticsClassifyStep
+from blunder_tutor.analysis.pipeline.steps.traps import TrapDetectionStep
 from blunder_tutor.analysis.pipeline.steps.write import WriteAnalysisStep
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "PhaseClassifyStep",
     "StockfishAnalysisStep",
     "TacticsClassifyStep",
+    "TrapDetectionStep",
     "WriteAnalysisStep",
 ]
 
@@ -26,5 +28,6 @@ def get_all_steps() -> list[AnalysisStep]:
         MoveQualityStep(),
         PhaseClassifyStep(),
         TacticsClassifyStep(),
+        TrapDetectionStep(),
         WriteAnalysisStep(),
     ]
