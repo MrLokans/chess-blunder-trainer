@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0]
+
+### Added
+
+- **Demo mode**: Read-only deployment mode (`DEMO_MODE=true`) for hosting a public demo. `DemoModeMiddleware` blocks all mutation endpoints (setup, jobs, settings, data wipe) with 403 responses. Templates conditionally hide action buttons. Persistent top banner with link to self-hosting instructions. Trainer puzzle solving and all GET endpoints remain fully functional.
+- **Beginner-friendly blunder explanations**: Natural-language explanations of why a move was a blunder and what the best move achieves, shown in the trainer after the best move is revealed. Template-based explanation generator using `python-chess` detects: hanging pieces, exposed pieces, bad captures, checkmate, check+capture, tactical patterns (fork/pin/skewer/discovered/back rank/hanging), simple captures, and cp-loss fallback. Null-move threat detection for quiet best moves (e.g., "The best move Nh4 creates a bishop threat" when the knight clears a diagonal). Best-line material analysis for combinations. Two-phase i18n architecture: `generate_explanation()` returns i18n keys with parameters, `resolve_explanation()` formats them via `TranslationManager` for the active locale.
+- **Grammatical case support for piece names**: Slavic translations (Russian, Ukrainian, Polish, Belarusian) now use correct noun declensions in explanation templates. Case-specific keys (`.gen`, `.acc`, `.inst` suffixes) for all six chess pieces across all four Slavic locales (18 new keys per locale).
+
+
+### Changed
+
+- **README restructured** for clarity, Docker quick-start command fixed, GitHub release annotations for Docker images.
+
+### Fixed
+
+- Explanation no longer shows "wins material with a none" when tactical pattern is `None` — the string `"None"` from pattern labels is now filtered out.
+- Belarusian declension of "ферзь": oblique cases now correctly use "фярзя"/"фярзём" (яканне rule for unstressed vowels).
+
+---
+
 ## [1.3.0]
 
 ### Added
