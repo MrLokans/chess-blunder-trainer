@@ -13,6 +13,7 @@ from blunder_tutor.analysis.pipeline import (
     PipelineConfig,
     PipelineExecutor,
     PipelinePreset,
+    PipelineReport,
 )
 from blunder_tutor.analysis.pipeline.steps import get_all_steps
 from blunder_tutor.analysis.thresholds import Thresholds
@@ -56,7 +57,7 @@ class GameAnalyzer:
         steps: list[str] | None = None,
         force_rerun: bool = False,
         engine: chess.engine.UciProtocol | None = None,
-    ) -> None:
+    ) -> PipelineReport:
         thresholds = thresholds or Thresholds()
         available_steps = get_all_steps()
 
@@ -79,6 +80,8 @@ class GameAnalyzer:
 
         if not report.success:
             raise RuntimeError(f"Pipeline failed: {report.error}")
+
+        return report
 
     async def analyze_bulk(
         self,

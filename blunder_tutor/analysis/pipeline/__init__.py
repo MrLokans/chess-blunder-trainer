@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from blunder_tutor.analysis.pipeline.context import StepContext, StepResult
-from blunder_tutor.analysis.pipeline.executor import PipelineExecutor
+from blunder_tutor.analysis.pipeline.executor import PipelineExecutor, PipelineReport
 from blunder_tutor.analysis.pipeline.pipeline import (
     AnalysisPipeline,
     PipelineConfig,
@@ -15,6 +15,7 @@ __all__ = [
     "PipelineConfig",
     "PipelineExecutor",
     "PipelinePreset",
+    "PipelineReport",
     "StepContext",
     "StepResult",
 ]

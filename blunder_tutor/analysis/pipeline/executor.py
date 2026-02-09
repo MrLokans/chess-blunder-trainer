@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
@@ -22,6 +23,7 @@ class PipelineReport:
     steps_executed: list[str] = field(default_factory=list)
     steps_skipped: list[str] = field(default_factory=list)
     steps_failed: list[str] = field(default_factory=list)
+    step_durations: dict[str, float] = field(default_factory=dict)
     started_at: str = ""
     completed_at: str = ""
     success: bool = True
@@ -101,7 +103,9 @@ class PipelineExecutor:
 
             try:
                 self._log.debug("Executing step %s", step.step_id)
+                t0 = time.perf_counter()
                 result = await step.execute(ctx)
+                report.step_durations[step.step_id] = time.perf_counter() - t0
                 ctx.add_step_result(result)
 
                 if result.success:
