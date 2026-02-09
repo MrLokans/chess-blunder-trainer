@@ -8,7 +8,8 @@ import chess.engine
 
 from blunder_tutor.analysis.pipeline.context import StepResult
 from blunder_tutor.analysis.pipeline.steps.base import AnalysisStep
-from blunder_tutor.constants import LONG_MATE_DEPTH_THRESHOLD, MAX_CP_LOSS
+from blunder_tutor.analysis.thresholds import winning_chances
+from blunder_tutor.constants import MAX_CP_LOSS
 
 if TYPE_CHECKING:
     from blunder_tutor.analysis.pipeline.context import StepContext
@@ -25,14 +26,35 @@ def _get_mate_depth(score: chess.engine.PovScore, side: chess.Color) -> int | No
     return pov.mate() if pov.is_mate() else None
 
 
-def _classify(delta: int, thresholds: Thresholds) -> str:
-    if delta >= thresholds.blunder:
+def _classify_wc(wc_loss: float, thresholds: Thresholds) -> str:
+    if wc_loss >= thresholds.wc_blunder:
         return "blunder"
-    if delta >= thresholds.mistake:
+    if wc_loss >= thresholds.wc_mistake:
         return "mistake"
-    if delta >= thresholds.inaccuracy:
+    if wc_loss >= thresholds.wc_inaccuracy:
         return "inaccuracy"
     return "good"
+
+
+# Mate-transition thresholds (from Lichess Advice.scala).
+_MATE_CP_INACCURACY = -999
+_MATE_CP_MISTAKE = -700
+
+
+def _classify_mate_created(prev_pov_cp: int) -> str:
+    if prev_pov_cp < _MATE_CP_INACCURACY:
+        return "inaccuracy"
+    if prev_pov_cp < _MATE_CP_MISTAKE:
+        return "mistake"
+    return "blunder"
+
+
+def _classify_mate_lost(current_pov_cp: int) -> str:
+    if current_pov_cp > -_MATE_CP_INACCURACY:
+        return "inaccuracy"
+    if current_pov_cp > -_MATE_CP_MISTAKE:
+        return "mistake"
+    return "blunder"
 
 
 def _class_to_int(label: str) -> int:
@@ -114,28 +136,46 @@ class MoveQualityStep(AnalysisStep):
 
             missed_mate_depth: int | None = None
 
-            if eval_after == 100000:  # Checkmate
+            if eval_after == 100000:  # Checkmate delivered
                 delta = 0
                 cp_loss = 0
                 class_label = "good"
             else:
                 delta = eval_before - eval_after
-                cp_loss = max(0, delta)
+                cp_loss = min(max(0, delta), MAX_CP_LOSS)
 
-                mate_depth_before = _get_mate_depth(info_before["score"], player)
-                if mate_depth_before is not None and mate_depth_before > 0:
-                    missed_mate_depth = mate_depth_before
+                mate_before = _get_mate_depth(info_before["score"], player)
+                has_winning_mate_before = mate_before is not None and mate_before > 0
+                is_mate_before = mate_before is not None
 
-                    if eval_after > 500:
-                        # Still winning comfortably — downgrade regardless of mate depth
-                        cp_loss = min(cp_loss, thresholds.inaccuracy - 1)
-                    elif mate_depth_before > LONG_MATE_DEPTH_THRESHOLD:
-                        # Long forced mate: engine-only find, not a human-learnable blunder.
-                        # Downgrade to at most a mistake.
-                        cp_loss = min(cp_loss, thresholds.blunder - 1)
+                # Detect mate-after from eval (score_to_cp uses mate_score=100000)
+                is_mate_after = abs(eval_after) >= 90000
+                has_winning_mate_after = is_mate_after and eval_after > 0
+                has_losing_mate_after = is_mate_after and eval_after < 0
 
-                cp_loss = min(cp_loss, MAX_CP_LOSS)
-                class_label = _classify(cp_loss, thresholds)
+                if has_winning_mate_before:
+                    missed_mate_depth = mate_before
+
+                # Mate transition types (Lichess Advice.scala)
+                mate_created = not is_mate_before and has_losing_mate_after
+                mate_lost = (
+                    has_winning_mate_before
+                    and not has_winning_mate_after
+                    and not has_losing_mate_after
+                )
+                mate_delayed = has_winning_mate_before and has_losing_mate_after
+
+                if mate_created:
+                    class_label = _classify_mate_created(eval_before)
+                elif mate_lost:
+                    class_label = _classify_mate_lost(eval_after)
+                elif mate_delayed:
+                    class_label = "blunder"
+                else:
+                    wc_before = winning_chances(eval_before)
+                    wc_after = winning_chances(eval_after)
+                    wc_loss = max(0.0, wc_before - wc_after)
+                    class_label = _classify_wc(wc_loss, thresholds)
 
             classification = _class_to_int(class_label)
             board = move_data.get("board")

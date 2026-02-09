@@ -20,6 +20,7 @@ from blunder_tutor.background.jobs.backfill_tactics import BackfillTacticsJob
 from blunder_tutor.background.jobs.backfill_traps import BackfillTrapsJob
 from blunder_tutor.background.jobs.delete_all_data import DeleteAllDataJob
 from blunder_tutor.background.jobs.import_games import ImportGamesJob
+from blunder_tutor.background.jobs.import_pgn import ImportPgnJob
 from blunder_tutor.background.jobs.sync_games import SyncGamesJob
 from blunder_tutor.core.dependencies import (
     get_analysis_repository,

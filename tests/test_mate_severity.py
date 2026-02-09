@@ -13,9 +13,9 @@ from blunder_tutor.analysis.pipeline.steps.move_quality import (
 )
 from blunder_tutor.analysis.thresholds import Thresholds
 from blunder_tutor.constants import (
-    LONG_MATE_DEPTH_THRESHOLD,
     MAX_CP_LOSS,
     MATE_SCORE_ANALYSIS,
+    LONG_MATE_DEPTH_THRESHOLD,
 )
 from blunder_tutor.trainer import Trainer
 
@@ -175,8 +175,16 @@ class TestMissedMateDepth:
         assert result.data["moves"][0]["cp_loss"] == 0
 
 
-class TestLongMateDowngrade:
-    async def test_short_mate_miss_stays_blunder(self):
+class TestMateLostClassification:
+    """Lichess-style MateLost: had winning mate → now just CP.
+
+    Classification depends on eval_after:
+      > 999 → inaccuracy (still crushing)
+      > 700 → mistake
+      else  → blunder
+    """
+
+    async def test_mate_lost_to_bad_position_is_blunder(self):
         move = _move_eval(
             eval_before=MATE_SCORE_ANALYSIS,
             eval_after=-100,
@@ -189,36 +197,23 @@ class TestLongMateDowngrade:
         assert m["classification"] == _class_to_int("blunder")
         assert m["missed_mate_depth"] == 2
 
-    async def test_long_mate_miss_downgraded_to_mistake(self):
+    async def test_mate_lost_still_crushing_is_inaccuracy(self):
         move = _move_eval(
             eval_before=MATE_SCORE_ANALYSIS,
-            eval_after=-100,
-            score_before=_make_pov_score(mate=10),
+            eval_after=1200,
+            score_before=_make_pov_score(mate=3),
         )
         ctx = _mock_context([move])
         step = MoveQualityStep()
         result = await step.execute(ctx)
         m = result.data["moves"][0]
-        assert m["classification"] == _class_to_int("mistake")
-        assert m["missed_mate_depth"] == 10
+        assert m["classification"] == _class_to_int("inaccuracy")
 
-    async def test_mate_at_threshold_stays_blunder(self):
+    async def test_mate_lost_still_winning_is_mistake(self):
         move = _move_eval(
             eval_before=MATE_SCORE_ANALYSIS,
-            eval_after=-100,
-            score_before=_make_pov_score(mate=LONG_MATE_DEPTH_THRESHOLD),
-        )
-        ctx = _mock_context([move])
-        step = MoveQualityStep()
-        result = await step.execute(ctx)
-        m = result.data["moves"][0]
-        assert m["classification"] == _class_to_int("blunder")
-
-    async def test_mate_just_above_threshold_downgraded(self):
-        move = _move_eval(
-            eval_before=MATE_SCORE_ANALYSIS,
-            eval_after=-100,
-            score_before=_make_pov_score(mate=LONG_MATE_DEPTH_THRESHOLD + 1),
+            eval_after=800,
+            score_before=_make_pov_score(mate=5),
         )
         ctx = _mock_context([move])
         step = MoveQualityStep()
@@ -226,18 +221,17 @@ class TestLongMateDowngrade:
         m = result.data["moves"][0]
         assert m["classification"] == _class_to_int("mistake")
 
-    async def test_still_winning_after_mate_miss_downgraded(self):
+    async def test_mate_lost_to_equal_is_blunder(self):
         move = _move_eval(
             eval_before=MATE_SCORE_ANALYSIS,
-            eval_after=600,
+            eval_after=50,
             score_before=_make_pov_score(mate=2),
         )
         ctx = _mock_context([move])
         step = MoveQualityStep()
         result = await step.execute(ctx)
         m = result.data["moves"][0]
-        # Even short mate miss: if still winning, downgraded
-        assert m["classification"] < _class_to_int("inaccuracy")
+        assert m["classification"] == _class_to_int("blunder")
 
 
 class TestFilteringWithMateDepth:
