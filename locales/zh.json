@@ -496,5 +496,22 @@
   "management.backfill_traps.in_progress": "回填进行中...",
   "management.backfill_traps.started": "陷阱检测回填已开始。",
   "management.backfill_traps.completed": "陷阱检测回填已完成。",
-  "management.backfill_traps.failed": "回填失败: {error}"
+  "management.backfill_traps.failed": "回填失败: {error}",
+  "nav.import": "导入",
+  "import.title": "导入PGN",
+  "import.description": "粘贴PGN以导入并分析棋局。",
+  "import.placeholder": "在此粘贴PGN...",
+  "import.submit": "导入并分析",
+  "import.analyzing": "正在分析棋局...",
+  "import.success": "棋局已导入并分析完成",
+  "import.error.invalid_pgn": "PGN格式无效",
+  "import.error.no_moves": "PGN不包含任何走法",
+  "import.error.missing_header": "缺少必需的标头：{header}",
+  "import.results.eco": "开局",
+  "import.results.moves": "走法",
+  "import.results.blunders": "严重失误",
+  "import.results.mistakes": "失误",
+  "import.results.inaccuracies": "不精确",
+  "settings.features.page_import": "导入页面（实验性）",
+  "import.results.go_to_trainer": "前往训练器"
 }

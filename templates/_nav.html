@@ -11,6 +11,9 @@
   {% if has_feature('page.management') %}
   <a href="/management" {% if active_page == 'management' %}class="active"{% endif %}>{{ t('nav.management') }}</a>
   {% endif %}
+  {% if has_feature('page.import') %}
+  <a href="/import" {% if active_page == 'import' %}class="active"{% endif %}>{{ t('nav.import') }}</a>
+  {% endif %}
   <a href="/settings" {% if active_page == 'settings' %}class="active"{% endif %}>{{ t('nav.settings') }}</a>
 </nav>
 {% endmacro %}

@@ -496,5 +496,22 @@
   "management.backfill_traps.in_progress": "Бэкфилл в процессе...",
   "management.backfill_traps.started": "Бэкфилл обнаружения ловушек запущен.",
   "management.backfill_traps.completed": "Бэкфилл обнаружения ловушек завершён.",
-  "management.backfill_traps.failed": "Бэкфилл не удался: {error}"
+  "management.backfill_traps.failed": "Бэкфилл не удался: {error}",
+  "nav.import": "Импорт",
+  "import.title": "Импорт PGN",
+  "import.description": "Вставьте PGN для импорта и анализа партии.",
+  "import.placeholder": "Вставьте PGN сюда...",
+  "import.submit": "Импорт и анализ",
+  "import.analyzing": "Анализ партии...",
+  "import.success": "Партия импортирована и проанализирована",
+  "import.error.invalid_pgn": "Неверный формат PGN",
+  "import.error.no_moves": "PGN не содержит ходов",
+  "import.error.missing_header": "Отсутствует обязательный заголовок: {header}",
+  "import.results.eco": "Дебют",
+  "import.results.moves": "Ходы",
+  "import.results.blunders": "Грубые ошибки",
+  "import.results.mistakes": "Ошибки",
+  "import.results.inaccuracies": "Неточности",
+  "settings.features.page_import": "Страница импорта (экспериментально)",
+  "import.results.go_to_trainer": "Перейти к тренажёру"
 }

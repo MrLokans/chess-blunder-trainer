@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "_nav.html" import render_nav with context %}
+
+{% block title %}{{ t('import.title') }} - Blunder Tutor{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/import.css">
+{% endblock %}
+
+{% block content %}
+<h1>{{ t('import.title') }}</h1>
+{{ render_nav('import') }}
+{% include '_demo_banner.html' %}
+
+<p class="import-description">{{ t('import.description') }}</p>
+
+<div class="import-form">
+  <textarea id="pgnInput" class="pgn-textarea" rows="14"
+    placeholder="{{ t('import.placeholder') }}"></textarea>
+
+  <div class="import-errors" id="importErrors" style="display:none;"></div>
+
+  {% if not demo_mode %}
+  <button id="importBtn" class="btn btn-primary">{{ t('import.submit') }}</button>
+  {% endif %}
+
+  <div class="import-spinner" id="importSpinner" style="display:none;">
+    <span class="spinner"></span>
+    <span>{{ t('import.analyzing') }}</span>
+  </div>
+</div>
+
+<div class="import-results" id="importResults" style="display:none;">
+  <h2>{{ t('import.success') }}</h2>
+  <div class="results-grid">
+    <div class="result-item">
+      <span class="result-label">{{ t('import.results.eco') }}</span>
+      <span class="result-value" id="resEco">—</span>
+    </div>
+    <div class="result-item">
+      <span class="result-label">{{ t('import.results.moves') }}</span>
+      <span class="result-value" id="resMoves">—</span>
+    </div>
+    <div class="result-item result-blunders">
+      <span class="result-label">{{ t('import.results.blunders') }}</span>
+      <span class="result-value" id="resBlunders">0</span>
+    </div>
+    <div class="result-item result-mistakes">
+      <span class="result-label">{{ t('import.results.mistakes') }}</span>
+      <span class="result-value" id="resMistakes">0</span>
+    </div>
+    <div class="result-item result-inaccuracies">
+      <span class="result-label">{{ t('import.results.inaccuracies') }}</span>
+      <span class="result-value" id="resInaccuracies">0</span>
+    </div>
+  </div>
+  <a href="/" class="btn btn-secondary" id="trainLink">{{ t('import.results.go_to_trainer') }}</a>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/import.js"></script>
+{% endblock %}

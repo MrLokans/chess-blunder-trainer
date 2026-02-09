@@ -496,5 +496,22 @@
   "management.backfill_traps.in_progress": "Бэкфіл у працэсе...",
   "management.backfill_traps.started": "Бэкфіл выяўлення пастак запушчаны.",
   "management.backfill_traps.completed": "Бэкфіл выяўлення пастак завершаны.",
-  "management.backfill_traps.failed": "Бэкфіл не ўдаўся: {error}"
+  "management.backfill_traps.failed": "Бэкфіл не ўдаўся: {error}",
+  "nav.import": "Імпарт",
+  "import.title": "Імпарт PGN",
+  "import.description": "Устаўце PGN для імпарту і аналізу партыі.",
+  "import.placeholder": "Устаўце PGN тут...",
+  "import.submit": "Імпарт і аналіз",
+  "import.analyzing": "Аналіз партыі...",
+  "import.success": "Партыя імпартавана і прааналізавана",
+  "import.error.invalid_pgn": "Няправільны фармат PGN",
+  "import.error.no_moves": "PGN не змяшчае хадоў",
+  "import.error.missing_header": "Адсутнічае абавязковы загаловак: {header}",
+  "import.results.eco": "Дэбют",
+  "import.results.moves": "Хады",
+  "import.results.blunders": "Грубыя промахі",
+  "import.results.mistakes": "Памылкі",
+  "import.results.inaccuracies": "Недакладнасці",
+  "settings.features.page_import": "Старонка імпарту (эксперыментальна)",
+  "import.results.go_to_trainer": "Перайсці да трэнажора"
 }

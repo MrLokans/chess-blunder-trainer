@@ -496,5 +496,22 @@
   "management.backfill_traps.in_progress": "Backfill w toku...",
   "management.backfill_traps.started": "Backfill wykrywania pułapek rozpoczęty.",
   "management.backfill_traps.completed": "Backfill wykrywania pułapek zakończony.",
-  "management.backfill_traps.failed": "Backfill nie powiódł się: {error}"
+  "management.backfill_traps.failed": "Backfill nie powiódł się: {error}",
+  "nav.import": "Import",
+  "import.title": "Import PGN",
+  "import.description": "Wklej PGN, aby zaimportować i przeanalizować partię.",
+  "import.placeholder": "Wklej PGN tutaj...",
+  "import.submit": "Importuj i analizuj",
+  "import.analyzing": "Analizowanie partii...",
+  "import.success": "Partia zaimportowana i przeanalizowana",
+  "import.error.invalid_pgn": "Nieprawidłowy format PGN",
+  "import.error.no_moves": "PGN nie zawiera ruchów",
+  "import.error.missing_header": "Brakuje wymaganego nagłówka: {header}",
+  "import.results.eco": "Otwarcie",
+  "import.results.moves": "Ruchy",
+  "import.results.blunders": "Grube błędy",
+  "import.results.mistakes": "Błędy",
+  "import.results.inaccuracies": "Niedokładności",
+  "settings.features.page_import": "Strona importu (eksperymentalna)",
+  "import.results.go_to_trainer": "Przejdź do trenera"
 }

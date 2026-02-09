@@ -496,5 +496,22 @@
   "management.backfill_traps.in_progress": "Backfill in progress...",
   "management.backfill_traps.started": "Trap detection backfill started.",
   "management.backfill_traps.completed": "Trap detection backfill completed.",
-  "management.backfill_traps.failed": "Trap detection backfill failed: {error}"
+  "management.backfill_traps.failed": "Trap detection backfill failed: {error}",
+  "nav.import": "Import",
+  "import.title": "Import PGN",
+  "import.description": "Paste a PGN to import and analyze a game.",
+  "import.placeholder": "Paste your PGN here...",
+  "import.submit": "Import & Analyze",
+  "import.analyzing": "Analyzing game...",
+  "import.success": "Game imported and analyzed",
+  "import.error.invalid_pgn": "Invalid PGN format",
+  "import.error.no_moves": "PGN contains no moves",
+  "import.error.missing_header": "Missing required header: {header}",
+  "import.results.eco": "Opening",
+  "import.results.moves": "Moves",
+  "import.results.blunders": "Blunders",
+  "import.results.mistakes": "Mistakes",
+  "import.results.inaccuracies": "Inaccuracies",
+  "settings.features.page_import": "Import page (experimental)",
+  "import.results.go_to_trainer": "Go to trainer"
 }

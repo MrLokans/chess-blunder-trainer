@@ -200,6 +200,29 @@ async def run_backfill_traps_job(
         await trap_repo.close()
 
 
+@inject
+async def run_import_pgn_job(
+    job_id: str,
+    game_id: str,
+    job_service: Annotated[JobService, Depends(get_job_service)],
+    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
+    analyzer: Annotated[GameAnalyzer, Depends(get_game_analyzer)],
+    username: str = "",
+) -> dict[str, Any]:
+    coordinator = get_work_coordinator()
+    event_bus = get_event_bus()
+    job = ImportPgnJob(
+        job_service=job_service,
+        game_repo=game_repo,
+        analysis_repo=analysis_repo,
+        analyzer=analyzer,
+        event_bus=event_bus,
+        coordinator=coordinator,
+    )
+    return await job.execute(job_id=job_id, game_id=game_id, username=username)
+
+
 # Mapping of job types to runner functions
 JOB_RUNNERS = {
     "import": run_import_job,
@@ -210,4 +233,5 @@ JOB_RUNNERS = {
     "backfill_tactics": run_backfill_tactics_job,
     "backfill_traps": run_backfill_traps_job,
     "delete_all_data": run_delete_all_data_job,
+    "import_pgn": run_import_pgn_job,
 }

@@ -24,6 +24,8 @@ class Feature(StrEnum):
 
     TRAINER_FILTER_DIFFICULTY = "trainer.filter.difficulty"
 
+    PAGE_IMPORT = "page.import"
+
     AUTO_SYNC = "auto.sync"
     AUTO_ANALYZE = "auto.analyze"
 
@@ -35,6 +37,7 @@ class Feature(StrEnum):
 DEFAULTS: dict[Feature, bool] = {
     **dict.fromkeys(Feature, True),
     Feature.DASHBOARD_TRAPS: False,
+    Feature.PAGE_IMPORT: False,
 }
 
 FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
@@ -43,6 +46,7 @@ FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
         [
             Feature.PAGE_DASHBOARD,
             Feature.PAGE_MANAGEMENT,
+            Feature.PAGE_IMPORT,
         ],
     ),
     (
@@ -95,6 +99,7 @@ FEATURE_LABELS: dict[Feature, str] = {
     Feature.DASHBOARD_COLLAPSE_POINT: "settings.features.dashboard_collapse_point",
     Feature.DASHBOARD_TRAPS: "settings.features.dashboard_traps",
     Feature.TRAINER_FILTER_DIFFICULTY: "settings.features.trainer_filter_difficulty",
+    Feature.PAGE_IMPORT: "settings.features.page_import",
     Feature.AUTO_SYNC: "settings.features.auto_sync",
     Feature.AUTO_ANALYZE: "settings.features.auto_analyze",
 }

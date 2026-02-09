@@ -496,5 +496,22 @@
   "management.backfill_traps.in_progress": "Бекфіл в процесі...",
   "management.backfill_traps.started": "Бекфіл виявлення пасток запущено.",
   "management.backfill_traps.completed": "Бекфіл виявлення пасток завершено.",
-  "management.backfill_traps.failed": "Бекфіл не вдався: {error}"
+  "management.backfill_traps.failed": "Бекфіл не вдався: {error}",
+  "nav.import": "Імпорт",
+  "import.title": "Імпорт PGN",
+  "import.description": "Вставте PGN для імпорту та аналізу партії.",
+  "import.placeholder": "Вставте PGN сюди...",
+  "import.submit": "Імпорт і аналіз",
+  "import.analyzing": "Аналіз партії...",
+  "import.success": "Партію імпортовано та проаналізовано",
+  "import.error.invalid_pgn": "Невірний формат PGN",
+  "import.error.no_moves": "PGN не містить ходів",
+  "import.error.missing_header": "Відсутній обов'язковий заголовок: {header}",
+  "import.results.eco": "Дебют",
+  "import.results.moves": "Ходи",
+  "import.results.blunders": "Грубі помилки",
+  "import.results.mistakes": "Помилки",
+  "import.results.inaccuracies": "Неточності",
+  "settings.features.page_import": "Сторінка імпорту (експериментально)",
+  "import.results.go_to_trainer": "Перейти до тренажера"
 }

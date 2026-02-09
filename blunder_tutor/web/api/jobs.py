@@ -39,6 +39,8 @@ class JobStatusResponse(BaseModel):
     source: str | None = Field(None, description="Platform source")
     progress: int | None = Field(None, description="Progress percentage")
     message: str | None = Field(None, description="Status message")
+    error_message: str | None = Field(None, description="Error message if job failed")
+    result: dict[str, Any] | None = Field(None, description="Job result data")
 
 
 class SyncStatusResponse(BaseModel):

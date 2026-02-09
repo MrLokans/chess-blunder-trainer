@@ -496,5 +496,22 @@
   "management.backfill_traps.in_progress": "Relleno en progreso...",
   "management.backfill_traps.started": "Relleno de detección de trampas iniciado.",
   "management.backfill_traps.completed": "Relleno de detección de trampas completado.",
-  "management.backfill_traps.failed": "Relleno fallido: {error}"
+  "management.backfill_traps.failed": "Relleno fallido: {error}",
+  "nav.import": "Importar",
+  "import.title": "Importar PGN",
+  "import.description": "Pega un PGN para importar y analizar una partida.",
+  "import.placeholder": "Pega tu PGN aquí...",
+  "import.submit": "Importar y analizar",
+  "import.analyzing": "Analizando partida...",
+  "import.success": "Partida importada y analizada",
+  "import.error.invalid_pgn": "Formato PGN inválido",
+  "import.error.no_moves": "El PGN no contiene movimientos",
+  "import.error.missing_header": "Falta encabezado requerido: {header}",
+  "import.results.eco": "Apertura",
+  "import.results.moves": "Jugadas",
+  "import.results.blunders": "Errores graves",
+  "import.results.mistakes": "Errores",
+  "import.results.inaccuracies": "Imprecisiones",
+  "settings.features.page_import": "Página de importación (experimental)",
+  "import.results.go_to_trainer": "Ir al entrenador"
 }
