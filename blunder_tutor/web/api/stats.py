@@ -3,25 +3,15 @@ from __future__ import annotations
 from datetime import date
 from typing import Annotated, Any
 
-from fastapi import HTTPException, Query, Request
+from fastapi import Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
-from blunder_tutor.repositories.settings import SettingsRepository
-from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     PuzzleAttemptRepoDep,
-    SettingsRepoDep,
     StatsRepoDep,
 )
-
-
-async def _resolve_username(settings_repo: SettingsRepository) -> str | None:
-    usernames = await settings_repo.get_configured_usernames()
-    if not usernames:
-        return None
-    return next(iter(usernames.values()))
 
 
 def _parse_game_types(
@@ -165,12 +155,8 @@ async def get_game_breakdown(
         str | None,
         Query(description="Filter by game source (e.g., 'lichess', 'chesscom')"),
     ] = None,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username"),
-    ] = None,
 ) -> dict[str, Any]:
-    breakdown = await stats_repo.get_game_breakdown(source=source, username=username)
+    breakdown = await stats_repo.get_game_breakdown(source=source)
     return {"items": breakdown}
 
 
@@ -178,14 +164,10 @@ async def get_game_breakdown(
     "/api/stats/blunders",
     response_model=BlunderBreakdown,
     summary="Get blunder breakdown",
-    description="Returns blunder statistics with optional filtering by username and date range.",
+    description="Returns blunder statistics with optional filtering by date range.",
 )
 async def get_blunder_breakdown(
     stats_repo: StatsRepoDep,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username"),
-    ] = None,
     start_date: Annotated[
         date | None,
         Query(description="Start date for filtering (YYYY-MM-DD)"),
@@ -199,7 +181,6 @@ async def get_blunder_breakdown(
     end_date_str = end_date.isoformat() if end_date else None
 
     return await stats_repo.get_blunder_breakdown(
-        username=username,
         start_date=start_date_str,
         end_date=end_date_str,
     )
@@ -218,21 +199,13 @@ async def get_analysis_progress(stats_repo: StatsRepoDep) -> dict[str, Any]:
 @stats_router.get(
     "/api/stats/training",
     response_model=TrainingStats,
-    responses={400: {"model": ErrorResponse, "description": "No username configured"}},
     summary="Get training statistics",
-    description="Returns puzzle training statistics for the configured user including attempts and accuracy.",
+    description="Returns puzzle training statistics including attempts and accuracy.",
 )
 async def get_training_stats(
-    settings_repo: SettingsRepoDep,
     attempt_repo: PuzzleAttemptRepoDep,
 ) -> TrainingStats:
-    usernames = await settings_repo.get_configured_usernames()
-    if not usernames:
-        raise HTTPException(status_code=400, detail="No username configured")
-
-    username = "multi" if len(usernames) > 1 else next(iter(usernames.values()))
-
-    stats = await attempt_repo.get_user_stats(username)
+    stats = await attempt_repo.get_user_stats()
 
     return TrainingStats(**stats)
 
@@ -245,21 +218,9 @@ async def get_training_stats(
 )
 async def get_training_stats_html(
     request: Request,
-    settings_repo: SettingsRepoDep,
     attempt_repo: PuzzleAttemptRepoDep,
 ) -> HTMLResponse:
-    usernames = await settings_repo.get_configured_usernames()
-    if not usernames:
-        stats = {
-            "total_attempts": 0,
-            "correct_attempts": 0,
-            "incorrect_attempts": 0,
-            "unique_puzzles": 0,
-            "accuracy": 0.0,
-        }
-    else:
-        username = "multi" if len(usernames) > 1 else next(iter(usernames.values()))
-        stats = await attempt_repo.get_user_stats(username)
+    stats = await attempt_repo.get_user_stats()
 
     return request.app.state.templates.TemplateResponse(
         "_stats_partial.html",
@@ -274,24 +235,13 @@ async def get_training_stats_html(
     description="Returns daily puzzle attempt counts for rendering a GitHub-style activity heatmap.",
 )
 async def get_activity_heatmap(
-    settings_repo: SettingsRepoDep,
     attempt_repo: PuzzleAttemptRepoDep,
     days: Annotated[
         int,
         Query(ge=30, le=365, description="Number of days to include"),
     ] = 365,
 ) -> dict[str, Any]:
-    usernames = await settings_repo.get_configured_usernames()
-    if not usernames:
-        return {
-            "daily_counts": {},
-            "max_count": 0,
-            "total_days": 0,
-            "total_attempts": 0,
-        }
-
-    username = "multi" if len(usernames) > 1 else next(iter(usernames.values()))
-    daily_counts = await attempt_repo.get_daily_attempt_counts(username, days)
+    daily_counts = await attempt_repo.get_daily_attempt_counts(days)
 
     max_count = max((d["total"] for d in daily_counts.values()), default=0)
     total_attempts = sum(d["total"] for d in daily_counts.values())
@@ -312,10 +262,6 @@ async def get_activity_heatmap(
 )
 async def get_blunders_by_phase(
     stats_repo: StatsRepoDep,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username"),
-    ] = None,
     start_date: Annotated[
         date | None,
         Query(description="Start date for filtering (YYYY-MM-DD)"),
@@ -340,7 +286,6 @@ async def get_blunders_by_phase(
         game_type_ids = [gt for gt in game_type_ids if gt is not None]
 
     return await stats_repo.get_blunders_by_phase_filtered(
-        username=username,
         start_date=start_date_str,
         end_date=end_date_str,
         game_types=game_type_ids if game_type_ids else None,
@@ -355,10 +300,6 @@ async def get_blunders_by_phase(
 )
 async def get_blunders_by_eco(
     stats_repo: StatsRepoDep,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username"),
-    ] = None,
     start_date: Annotated[
         date | None,
         Query(description="Start date for filtering (YYYY-MM-DD)"),
@@ -387,7 +328,6 @@ async def get_blunders_by_eco(
         game_type_ids = [gt for gt in game_type_ids if gt is not None]
 
     return await stats_repo.get_blunders_by_eco(
-        username=username,
         start_date=start_date_str,
         end_date=end_date_str,
         limit=limit,
@@ -403,10 +343,6 @@ async def get_blunders_by_eco(
 )
 async def get_blunders_by_color(
     stats_repo: StatsRepoDep,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username (required)"),
-    ] = None,
     start_date: Annotated[
         date | None,
         Query(description="Start date for filtering (YYYY-MM-DD)"),
@@ -420,7 +356,6 @@ async def get_blunders_by_color(
     end_date_str = end_date.isoformat() if end_date else None
 
     return await stats_repo.get_blunders_by_color(
-        username=username,
         start_date=start_date_str,
         end_date=end_date_str,
     )
@@ -454,11 +389,6 @@ class GamesByHour(BaseModel):
 )
 async def get_games_by_date(
     stats_repo: StatsRepoDep,
-    settings_repo: SettingsRepoDep,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username"),
-    ] = None,
     start_date: Annotated[
         date | None,
         Query(description="Start date for filtering (YYYY-MM-DD)"),
@@ -474,14 +404,11 @@ async def get_games_by_date(
 ) -> dict[str, Any]:
     from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
 
-    resolved = username or await _resolve_username(settings_repo)
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
     game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
 
     items = await stats_repo.get_games_by_date(
-        username=resolved,
         start_date=start_date_str,
         end_date=end_date_str,
         game_types=game_type_ids,
@@ -497,11 +424,6 @@ async def get_games_by_date(
 )
 async def get_games_by_hour(
     stats_repo: StatsRepoDep,
-    settings_repo: SettingsRepoDep,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username"),
-    ] = None,
     start_date: Annotated[
         date | None,
         Query(description="Start date for filtering (YYYY-MM-DD)"),
@@ -517,14 +439,11 @@ async def get_games_by_hour(
 ) -> dict[str, Any]:
     from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
 
-    resolved = username or await _resolve_username(settings_repo)
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
     game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
 
     items = await stats_repo.get_games_by_hour(
-        username=resolved,
         start_date=start_date_str,
         end_date=end_date_str,
         game_types=game_type_ids,
@@ -570,10 +489,6 @@ class BlundersByGameType(BaseModel):
 )
 async def get_blunders_by_tactical_pattern(
     stats_repo: StatsRepoDep,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username"),
-    ] = None,
     start_date: Annotated[
         date | None,
         Query(description="Start date for filtering (YYYY-MM-DD)"),
@@ -598,7 +513,6 @@ async def get_blunders_by_tactical_pattern(
         game_type_ids = [gt for gt in game_type_ids if gt is not None]
 
     return await stats_repo.get_blunders_by_tactical_pattern(
-        username=username,
         start_date=start_date_str,
         end_date=end_date_str,
         game_types=game_type_ids if game_type_ids else None,
@@ -613,10 +527,6 @@ async def get_blunders_by_tactical_pattern(
 )
 async def get_blunders_by_game_type(
     stats_repo: StatsRepoDep,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username"),
-    ] = None,
     start_date: Annotated[
         date | None,
         Query(description="Start date for filtering (YYYY-MM-DD)"),
@@ -630,7 +540,6 @@ async def get_blunders_by_game_type(
     end_date_str = end_date.isoformat() if end_date else None
 
     return await stats_repo.get_blunders_by_game_type(
-        username=username,
         start_date=start_date_str,
         end_date=end_date_str,
     )
@@ -702,11 +611,6 @@ class BlundersByDifficulty(BaseModel):
 )
 async def get_blunders_by_difficulty(
     stats_repo: StatsRepoDep,
-    settings_repo: SettingsRepoDep,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username"),
-    ] = None,
     start_date: Annotated[
         date | None,
         Query(description="Start date for filtering (YYYY-MM-DD)"),
@@ -720,13 +624,10 @@ async def get_blunders_by_difficulty(
         Query(description="Filter by game type IDs"),
     ] = None,
 ) -> dict[str, Any]:
-    if not username:
-        username = await _resolve_username(settings_repo)
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
 
     return await stats_repo.get_blunders_by_difficulty(
-        username=username,
         start_date=start_date_str,
         end_date=end_date_str,
         game_types=game_types,
@@ -741,11 +642,6 @@ async def get_blunders_by_difficulty(
 )
 async def get_collapse_point(
     stats_repo: StatsRepoDep,
-    settings_repo: SettingsRepoDep,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username"),
-    ] = None,
     start_date: Annotated[
         date | None,
         Query(description="Start date for filtering (YYYY-MM-DD)"),
@@ -761,15 +657,11 @@ async def get_collapse_point(
 ) -> dict[str, Any]:
     from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
 
-    if not username:
-        username = await _resolve_username(settings_repo)
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
     game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
 
     return await stats_repo.get_collapse_point(
-        username=username,
         start_date=start_date_str,
         end_date=end_date_str,
         game_types=game_type_ids,
@@ -784,11 +676,6 @@ async def get_collapse_point(
 )
 async def get_conversion_resilience(
     stats_repo: StatsRepoDep,
-    settings_repo: SettingsRepoDep,
-    username: Annotated[
-        str | None,
-        Query(max_length=100, description="Filter by username"),
-    ] = None,
     start_date: Annotated[
         date | None,
         Query(description="Start date for filtering (YYYY-MM-DD)"),
@@ -804,15 +691,11 @@ async def get_conversion_resilience(
 ) -> dict[str, Any]:
     from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
 
-    if not username:
-        username = await _resolve_username(settings_repo)
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
     game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
 
     return await stats_repo.get_conversion_resilience(
-        username=username,
         start_date=start_date_str,
         end_date=end_date_str,
         game_types=game_type_ids,

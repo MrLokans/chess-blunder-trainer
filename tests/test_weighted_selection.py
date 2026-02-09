@@ -48,7 +48,7 @@ class TestComputeWeights:
     async def test_no_history_uniform_weights(self, trainer):
         candidates = [_make_blunder(ply=i) for i in range(5)]
         trainer.attempts.get_failure_rates_by_pattern = AsyncMock(return_value={})
-        weights = await trainer._compute_weights(candidates, "user1")
+        weights = await trainer._compute_weights(candidates)
         assert all(w == 1.0 for w in weights)
 
     async def test_high_failure_rate_increases_weight(self, trainer):
@@ -59,7 +59,7 @@ class TestComputeWeights:
         trainer.attempts.get_failure_rates_by_pattern = AsyncMock(
             return_value={1: 0.8, 2: 0.1}
         )
-        weights = await trainer._compute_weights(candidates, "user1")
+        weights = await trainer._compute_weights(candidates)
         assert weights[0] > weights[1]
 
     async def test_unseen_pattern_gets_exploration_bonus(self, trainer):
@@ -68,7 +68,7 @@ class TestComputeWeights:
             _make_blunder(ply=2, tactical_pattern=99),  # unseen
         ]
         trainer.attempts.get_failure_rates_by_pattern = AsyncMock(return_value={1: 0.0})
-        weights = await trainer._compute_weights(candidates, "user1")
+        weights = await trainer._compute_weights(candidates)
         assert weights[1] > weights[0]
 
     async def test_easy_difficulty_boosts_weight(self, trainer):
@@ -77,7 +77,7 @@ class TestComputeWeights:
             _make_blunder(ply=2, difficulty=50),
         ]
         trainer.attempts.get_failure_rates_by_pattern = AsyncMock(return_value={})
-        weights = await trainer._compute_weights(candidates, "user1")
+        weights = await trainer._compute_weights(candidates)
         assert weights[0] > weights[1]
 
     async def test_hard_difficulty_reduces_weight(self, trainer):
@@ -86,7 +86,7 @@ class TestComputeWeights:
             _make_blunder(ply=2, difficulty=80),
         ]
         trainer.attempts.get_failure_rates_by_pattern = AsyncMock(return_value={})
-        weights = await trainer._compute_weights(candidates, "user1")
+        weights = await trainer._compute_weights(candidates)
         assert weights[0] > weights[1]
 
     async def test_none_difficulty_no_effect(self, trainer):
@@ -95,7 +95,7 @@ class TestComputeWeights:
             _make_blunder(ply=2, difficulty=None),
         ]
         trainer.attempts.get_failure_rates_by_pattern = AsyncMock(return_value={})
-        weights = await trainer._compute_weights(candidates, "user1")
+        weights = await trainer._compute_weights(candidates)
         assert weights[0] == weights[1] == 1.0
 
     async def test_combined_pattern_and_difficulty(self, trainer):
@@ -110,7 +110,7 @@ class TestComputeWeights:
         trainer.attempts.get_failure_rates_by_pattern = AsyncMock(
             return_value={1: 0.9, 2: 0.1}
         )
-        weights = await trainer._compute_weights(candidates, "user1")
+        weights = await trainer._compute_weights(candidates)
         # Pattern 1: (1 + 0.9) * 1.3 = 2.47
         # Pattern 2: (1 + 0.1) * 0.7 = 0.77
         assert weights[0] > weights[1]

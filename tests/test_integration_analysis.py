@@ -482,8 +482,6 @@ class TestTrainingPipelineIntegration:
         )
 
         puzzle = await trainer.pick_random_blunder(
-            username="testuser",
-            source="test",
             exclude_recently_solved=False,
         )
 
@@ -522,10 +520,8 @@ class TestTrainingPipelineIntegration:
             analysis=analysis_repo,
         )
 
-        # Pick puzzle for testuser who played as Black (Player2)
+        # Pick puzzle — testuser played as Black (Player2)
         puzzle = await trainer.pick_random_blunder(
-            username="testuser",
-            source="test",
             exclude_recently_solved=False,
         )
 

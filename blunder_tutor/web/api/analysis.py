@@ -13,7 +13,6 @@ from blunder_tutor.constants import PHASE_FROM_STRING, PHASE_LABELS
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     AnalysisServiceDep,
-    ConfigDep,
     EngineThrottleDep,
     PuzzleAttemptRepoDep,
     PuzzleServiceDep,
@@ -104,7 +103,6 @@ class SubmitMoveRequest(BaseModel):
     best_move_san: str | None = Field(description="Best move in SAN notation")
     best_line: list[str] = Field(description="Best continuation line")
     player_color: str = Field(description="Player color ('white' or 'black')")
-    username: str = Field(description="Username for the puzzle attempt")
     eval_after: int = Field(description="Evaluation after the blunder")
     best_move_eval: int | None = Field(description="Cached evaluation after best move")
 
@@ -120,7 +118,6 @@ class PuzzleResponse(BaseModel):
     blunder_san: str = Field(description="The blunder move in SAN notation")
     fen: str = Field(description="Position FEN after the previous move")
     player_color: str = Field(description="Player color ('white' or 'black')")
-    username: str = Field(description="Username for this puzzle")
     eval_before: int = Field(description="Evaluation in centipawns before the blunder")
     eval_after: int = Field(description="Evaluation in centipawns after the blunder")
     cp_loss: int = Field(description="Centipawn loss from the blunder")
@@ -182,13 +179,12 @@ analysis_router = APIRouter()
 @analysis_router.get(
     "/api/puzzle",
     response_model=PuzzleResponse,
-    responses={400: {"model": ErrorResponse, "description": "No username configured"}},
+    responses={400: {"model": ErrorResponse, "description": "No puzzles available"}},
     summary="Get a puzzle",
     description="Returns a random blunder puzzle for the user to solve, with optional filtering.",
 )
 async def puzzle(
     request: Request,
-    config: ConfigDep,
     settings_repo: SettingsRepoDep,
     puzzle_service: PuzzleServiceDep,
     _throttle: EngineThrottleDep,
@@ -221,26 +217,6 @@ async def puzzle(
         Query(description="Filter by difficulty (easy, medium, hard)"),
     ] = None,
 ) -> dict[str, Any]:
-    username = config.username
-    source = None
-
-    if not username:
-        usernames = await settings_repo.get_configured_usernames()
-
-        if not usernames:
-            raise HTTPException(
-                status_code=400,
-                detail="No username configured. Please configure your username in Settings.",
-            )
-
-        if len(usernames) > 1:
-            username = list(usernames.values())
-            source = None
-        else:
-            platform, uname = next(iter(usernames.items()))
-            username = uname
-            source = platform
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
 
@@ -273,8 +249,6 @@ async def puzzle(
 
     try:
         puzzle_with_analysis = await puzzle_service.get_puzzle_with_analysis(
-            username=username,
-            source=source,
             start_date=start_date_str,
             end_date=end_date_str,
             exclude_recently_solved=True,
@@ -322,7 +296,6 @@ async def puzzle(
         "blunder_san": puzzle_data.blunder_san,
         "fen": puzzle_data.fen,
         "player_color": puzzle_data.player_color,
-        "username": puzzle_data.username,
         "eval_before": puzzle_data.eval_before,
         "eval_after": puzzle_data.eval_after,
         "cp_loss": puzzle_data.cp_loss,
@@ -393,7 +366,6 @@ async def submit(
     await attempt_repo.record_attempt(
         game_id=payload.game_id,
         ply=payload.ply,
-        username=payload.username,
         was_correct=is_best,
         user_move_uci=payload.move,
         best_move_uci=payload.best_move_uci,

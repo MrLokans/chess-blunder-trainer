@@ -63,7 +63,7 @@ async def test_conversion_win_from_winning_position(stats_repo):
     await _insert_game(stats_repo, "g1", "testuser", "testuser", "opponent", "1-0")
     await _insert_move(stats_repo, "g1", 1, 0, 300)  # +3.0 from white's perspective
 
-    result = await stats_repo.get_conversion_resilience(username="testuser")
+    result = await stats_repo.get_conversion_resilience()
     assert result["games_with_advantage"] == 1
     assert result["games_converted"] == 1
     assert result["conversion_rate"] == 100.0
@@ -73,7 +73,7 @@ async def test_conversion_loss_from_winning_position(stats_repo):
     await _insert_game(stats_repo, "g2", "testuser", "testuser", "opponent", "0-1")
     await _insert_move(stats_repo, "g2", 1, 0, 500)
 
-    result = await stats_repo.get_conversion_resilience(username="testuser")
+    result = await stats_repo.get_conversion_resilience()
     assert result["games_with_advantage"] == 1
     assert result["games_converted"] == 0
     assert result["conversion_rate"] == 0.0
@@ -83,7 +83,7 @@ async def test_resilience_save_from_losing_position(stats_repo):
     await _insert_game(stats_repo, "g3", "testuser", "testuser", "opponent", "1/2-1/2")
     await _insert_move(stats_repo, "g3", 1, 0, -400)
 
-    result = await stats_repo.get_conversion_resilience(username="testuser")
+    result = await stats_repo.get_conversion_resilience()
     assert result["games_with_disadvantage"] == 1
     assert result["games_saved"] == 1
     assert result["resilience_rate"] == 100.0
@@ -93,7 +93,7 @@ async def test_resilience_loss_from_losing_position(stats_repo):
     await _insert_game(stats_repo, "g4", "testuser", "testuser", "opponent", "0-1")
     await _insert_move(stats_repo, "g4", 1, 0, -400)
 
-    result = await stats_repo.get_conversion_resilience(username="testuser")
+    result = await stats_repo.get_conversion_resilience()
     assert result["games_with_disadvantage"] == 1
     assert result["games_saved"] == 0
     assert result["resilience_rate"] == 0.0
@@ -104,7 +104,7 @@ async def test_black_perspective_eval_flipped(stats_repo):
     await _insert_game(stats_repo, "g5", "testuser", "opponent", "testuser", "1/2-1/2")
     await _insert_move(stats_repo, "g5", 2, 1, 300)  # +3.0 from white's POV
 
-    result = await stats_repo.get_conversion_resilience(username="testuser")
+    result = await stats_repo.get_conversion_resilience()
     # From user (black) perspective, eval = -300, so this is a losing position
     assert result["games_with_disadvantage"] == 1
     assert result["games_saved"] == 1
@@ -116,7 +116,7 @@ async def test_game_both_winning_and_losing(stats_repo):
     await _insert_move(stats_repo, "g6", 1, 0, 500)  # winning
     await _insert_move(stats_repo, "g6", 3, 0, -400)  # losing
 
-    result = await stats_repo.get_conversion_resilience(username="testuser")
+    result = await stats_repo.get_conversion_resilience()
     assert result["games_with_advantage"] == 1
     assert result["games_converted"] == 1
     assert result["games_with_disadvantage"] == 1
@@ -137,9 +137,7 @@ async def test_game_type_filter(stats_repo):
     from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
 
     bullet_id = GAME_TYPE_FROM_STRING["bullet"]
-    result = await stats_repo.get_conversion_resilience(
-        username="testuser", game_types=[bullet_id]
-    )
+    result = await stats_repo.get_conversion_resilience(game_types=[bullet_id])
     assert result["games_with_advantage"] == 1
     assert result["games_converted"] == 1
 
@@ -148,7 +146,7 @@ async def test_no_qualifying_positions(stats_repo):
     await _insert_game(stats_repo, "g9", "testuser", "testuser", "opponent", "1-0")
     await _insert_move(stats_repo, "g9", 1, 0, 100)  # only +1.0, below threshold
 
-    result = await stats_repo.get_conversion_resilience(username="testuser")
+    result = await stats_repo.get_conversion_resilience()
     assert result["games_with_advantage"] == 0
     assert result["games_with_disadvantage"] == 0
     assert result["conversion_rate"] == 0.0

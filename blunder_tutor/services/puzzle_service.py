@@ -19,8 +19,6 @@ class PuzzleService:
 
     async def get_puzzle_with_analysis(
         self,
-        username: str | list[str],
-        source: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         exclude_recently_solved: bool = True,
@@ -32,8 +30,6 @@ class PuzzleService:
         difficulty_ranges: list[tuple[int, int]] | None = None,
     ) -> PuzzleWithAnalysis:
         puzzle = await self.trainer.pick_random_blunder(
-            username=username,
-            source=source,
             start_date=start_date,
             end_date=end_date,
             exclude_recently_solved=exclude_recently_solved,

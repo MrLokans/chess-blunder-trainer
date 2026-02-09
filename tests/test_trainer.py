@@ -43,7 +43,7 @@ class TestBlunderPuzzle:
 class TestPickRandomBlunder:
     async def test_pick_blunder_basic(self, trainer):
         # Mock game repository methods
-        trainer.games.get_username_side_map = AsyncMock(
+        trainer.games.get_all_game_side_map = AsyncMock(
             return_value={"game1": 0}  # white
         )
 
@@ -94,25 +94,24 @@ class TestPickRandomBlunder:
         mock_game.mainline_moves.return_value = moves
         trainer.games.load_game = AsyncMock(return_value=mock_game)
 
-        puzzle = await trainer.pick_random_blunder("testuser")
+        puzzle = await trainer.pick_random_blunder()
 
         assert puzzle.game_id == "game1"
         assert puzzle.ply == 10
         assert puzzle.blunder_uci == "e2e4"
         assert puzzle.player_color == "white"
-        assert puzzle.username == "testuser"
         assert puzzle.game_url == "https://lichess.org/abc123"
 
     async def test_no_games_found(self, trainer):
         # No games found for user
-        trainer.games.get_username_side_map = AsyncMock(return_value={})
+        trainer.games.get_all_game_side_map = AsyncMock(return_value={})
 
         with pytest.raises(ValueError, match="No games found"):
-            await trainer.pick_random_blunder("testuser")
+            await trainer.pick_random_blunder()
 
     async def test_no_blunders_found(self, trainer):
-        # Mock get_username_side_map
-        trainer.games.get_username_side_map = AsyncMock(
+        # Mock get_all_game_side_map
+        trainer.games.get_all_game_side_map = AsyncMock(
             return_value={"game1": 0}  # white
         )
 
@@ -120,11 +119,11 @@ class TestPickRandomBlunder:
         trainer.analysis.fetch_blunders_with_tactics = AsyncMock(return_value=[])
 
         with pytest.raises(ValueError, match="No blunders found"):
-            await trainer.pick_random_blunder("testuser")
+            await trainer.pick_random_blunder()
 
     async def test_filters_mate_situations(self, trainer):
         # Mock game repository
-        trainer.games.get_username_side_map = AsyncMock(
+        trainer.games.get_all_game_side_map = AsyncMock(
             return_value={"game1": 0}  # white
         )
 
@@ -191,7 +190,7 @@ class TestPickRandomBlunder:
         mock_game.mainline_moves.return_value = moves
         trainer.games.load_game = AsyncMock(return_value=mock_game)
 
-        puzzle = await trainer.pick_random_blunder("testuser")
+        puzzle = await trainer.pick_random_blunder()
 
         # Should get the second blunder (non-mate situation)
         assert puzzle.ply == 10

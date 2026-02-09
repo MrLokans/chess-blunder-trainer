@@ -10,7 +10,6 @@ class PuzzleAttemptRepository(BaseDbRepository):
         self,
         game_id: str,
         ply: int,
-        username: str,
         was_correct: bool,
         user_move_uci: str | None = None,
         best_move_uci: str | None = None,
@@ -28,7 +27,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
                 (
                     game_id,
                     ply,
-                    username,
+                    "local",
                     1 if was_correct else 0,
                     user_move_uci,
                     best_move_uci,
@@ -67,9 +66,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
             "attempted_at": row[7],
         }
 
-    async def get_recently_solved_puzzles(
-        self, username: str, days: int = 30
-    ) -> set[tuple[str, int]]:
+    async def get_recently_solved_puzzles(self, days: int = 30) -> set[tuple[str, int]]:
         cutoff_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
 
         conn = await self.get_connection()
@@ -77,9 +74,9 @@ class PuzzleAttemptRepository(BaseDbRepository):
             """
             SELECT DISTINCT game_id, ply
             FROM puzzle_attempts
-            WHERE username = ? AND was_correct = 1 AND attempted_at >= ?
+            WHERE was_correct = 1 AND attempted_at >= ?
             """,
-            (username, cutoff_date),
+            (cutoff_date,),
         ) as cursor:
             rows = await cursor.fetchall()
 
@@ -117,7 +114,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
             "last_correct_at": row[2],
         }
 
-    async def get_user_stats(self, username: str) -> dict[str, object]:
+    async def get_user_stats(self) -> dict[str, object]:
         conn = await self.get_connection()
         async with conn.execute(
             """
@@ -126,9 +123,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
                 SUM(CASE WHEN was_correct = 1 THEN 1 ELSE 0 END) as correct_attempts,
                 COUNT(DISTINCT game_id || '-' || ply) as unique_puzzles
             FROM puzzle_attempts
-            WHERE username = ?
-            """,
-            (username,),
+            """
         ) as cursor:
             row = await cursor.fetchone()
 
@@ -152,9 +147,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
             "accuracy": round((correct / total * 100), 1) if total > 0 else 0.0,
         }
 
-    async def get_failure_rates_by_pattern(
-        self, username: str
-    ) -> dict[int | None, float]:
+    async def get_failure_rates_by_pattern(self) -> dict[int | None, float]:
         conn = await self.get_connection()
         async with conn.execute(
             """
@@ -163,17 +156,15 @@ class PuzzleAttemptRepository(BaseDbRepository):
                    SUM(CASE WHEN pa.was_correct = 0 THEN 1 ELSE 0 END) as failures
             FROM puzzle_attempts pa
             JOIN analysis_moves am ON pa.game_id = am.game_id AND pa.ply = am.ply
-            WHERE pa.username = ?
             GROUP BY am.tactical_pattern
-            """,
-            (username,),
+            """
         ) as cursor:
             rows = await cursor.fetchall()
 
         return {row[0]: row[2] / row[1] if row[1] > 0 else 0.0 for row in rows}
 
     async def get_daily_attempt_counts(
-        self, username: str, days: int = 365
+        self, days: int = 365
     ) -> dict[str, dict[str, int]]:
         cutoff_date = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
 
@@ -185,11 +176,11 @@ class PuzzleAttemptRepository(BaseDbRepository):
                 COUNT(*) as total,
                 SUM(CASE WHEN was_correct = 1 THEN 1 ELSE 0 END) as correct
             FROM puzzle_attempts
-            WHERE username = ? AND DATE(attempted_at) >= ?
+            WHERE DATE(attempted_at) >= ?
             GROUP BY DATE(attempted_at)
             ORDER BY date
             """,
-            (username, cutoff_date),
+            (cutoff_date,),
         ) as cursor:
             rows = await cursor.fetchall()
 

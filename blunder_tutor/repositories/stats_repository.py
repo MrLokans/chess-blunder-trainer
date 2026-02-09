@@ -61,7 +61,6 @@ class StatsRepository(BaseDbRepository):
     async def get_game_breakdown(
         self,
         source: str | None = None,
-        username: str | None = None,
     ) -> list[dict[str, object]]:
         query = """
             SELECT
@@ -80,10 +79,6 @@ class StatsRepository(BaseDbRepository):
         if source:
             query += " AND source = ?"
             params.append(source)
-
-        if username:
-            query += " AND username = ?"
-            params.append(username)
 
         query += " GROUP BY source, username ORDER BY total_games DESC"
 
@@ -106,7 +101,6 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunder_breakdown(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> dict[str, object]:
@@ -127,10 +121,6 @@ class StatsRepository(BaseDbRepository):
             {player_side_filter}
         """
         params: list[str] = []
-
-        if username:
-            query += " AND g.username = ?"
-            params.append(username)
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -153,13 +143,10 @@ class StatsRepository(BaseDbRepository):
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
+            AND g.end_time_utc IS NOT NULL
             {player_side_filter}
         """
         date_params: list[str] = []
-
-        if username:
-            date_query += " AND g.username = ?"
-            date_params.append(username)
 
         if start_date:
             date_query += " AND g.end_time_utc >= ?"
@@ -242,7 +229,6 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_phase(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> dict[str, object]:
@@ -260,10 +246,6 @@ class StatsRepository(BaseDbRepository):
                 END
         """
         params: list[str] = []
-
-        if username:
-            query += " AND g.username = ?"
-            params.append(username)
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -308,7 +290,6 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_eco(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         limit: int = 10,
@@ -331,10 +312,6 @@ class StatsRepository(BaseDbRepository):
                 END
         """
         params: list[object] = []
-
-        if username:
-            query += " AND g.username = ?"
-            params.append(username)
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -406,39 +383,26 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_color(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> dict[str, object]:
-        if not username:
-            return {"total_blunders": 0, "by_color": [], "blunders_by_date": []}
-
-        username_lower = username.lower()
-
         query = """
             SELECT
                 CASE
-                    WHEN LOWER(g.white) = ? THEN 0
-                    WHEN LOWER(g.black) = ? THEN 1
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
                 END as user_color,
                 COUNT(*) as count,
                 AVG(am.cp_loss) as avg_cp_loss
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
-              AND g.username = ?
               AND am.player = CASE
-                    WHEN LOWER(g.white) = ? THEN 0
-                    WHEN LOWER(g.black) = ? THEN 1
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
                 END
         """
-        params: list[object] = [
-            username_lower,
-            username_lower,
-            username,
-            username_lower,
-            username_lower,
-        ]
+        params: list[object] = []
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -480,26 +444,20 @@ class StatsRepository(BaseDbRepository):
             SELECT
                 DATE(g.end_time_utc) as date,
                 CASE
-                    WHEN LOWER(g.white) = ? THEN 0
-                    WHEN LOWER(g.black) = ? THEN 1
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
                 END as user_color,
                 COUNT(*) as count
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
-              AND g.username = ?
+              AND g.end_time_utc IS NOT NULL
               AND am.player = CASE
-                    WHEN LOWER(g.white) = ? THEN 0
-                    WHEN LOWER(g.black) = ? THEN 1
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
                 END
         """
-        date_params: list[object] = [
-            username_lower,
-            username_lower,
-            username,
-            username_lower,
-            username_lower,
-        ]
+        date_params: list[object] = []
 
         if start_date:
             date_query += " AND g.end_time_utc >= ?"
@@ -531,15 +489,10 @@ class StatsRepository(BaseDbRepository):
 
     async def get_games_by_date(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         game_types: list[int] | None = None,
     ) -> list[dict[str, object]]:
-        if not username:
-            return []
-
-        username_lower = username.lower()
         query = """
             SELECT
                 g.game_id,
@@ -549,13 +502,12 @@ class StatsRepository(BaseDbRepository):
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
-              AND g.username = ?
               AND am.player = CASE
-                    WHEN LOWER(g.white) = ? THEN 0
-                    WHEN LOWER(g.black) = ? THEN 1
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
                 END
         """
-        params: list[object] = [username, username_lower, username_lower]
+        params: list[object] = []
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -598,15 +550,10 @@ class StatsRepository(BaseDbRepository):
 
     async def get_games_by_hour(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         game_types: list[int] | None = None,
     ) -> list[dict[str, object]]:
-        if not username:
-            return []
-
-        username_lower = username.lower()
         query = """
             SELECT
                 g.game_id,
@@ -616,13 +563,12 @@ class StatsRepository(BaseDbRepository):
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
-              AND g.username = ?
               AND am.player = CASE
-                    WHEN LOWER(g.white) = ? THEN 0
-                    WHEN LOWER(g.black) = ? THEN 1
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
                 END
         """
-        params: list[object] = [username, username_lower, username_lower]
+        params: list[object] = []
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -663,7 +609,6 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_tactical_pattern(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         game_types: list[int] | None = None,
@@ -682,10 +627,6 @@ class StatsRepository(BaseDbRepository):
                 END
         """
         params: list[str] = []
-
-        if username:
-            query += " AND g.username = ?"
-            params.append(username)
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -750,7 +691,6 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_game_type(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> dict[str, object]:
@@ -767,10 +707,6 @@ class StatsRepository(BaseDbRepository):
                 END
         """
         params: list[str] = []
-
-        if username:
-            query += " AND g.username = ?"
-            params.append(username)
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -824,7 +760,6 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_phase_filtered(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         game_types: list[int] | None = None,
@@ -845,10 +780,6 @@ class StatsRepository(BaseDbRepository):
                 END
         """
         params: list[object] = []
-
-        if username:
-            query += " AND g.username = ?"
-            params.append(username)
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -920,7 +851,6 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_difficulty(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         game_types: list[int] | None = None,
@@ -939,10 +869,6 @@ class StatsRepository(BaseDbRepository):
                 END
         """
         params: list[object] = []
-
-        if username:
-            query += " AND g.username = ?"
-            params.append(username)
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -1012,42 +938,29 @@ class StatsRepository(BaseDbRepository):
 
     async def get_conversion_resilience(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         game_types: list[int] | None = None,
     ) -> dict[str, object]:
-        if not username:
-            return {
-                "conversion_rate": 0.0,
-                "resilience_rate": 0.0,
-                "games_with_advantage": 0,
-                "games_converted": 0,
-                "games_with_disadvantage": 0,
-                "games_saved": 0,
-            }
-
-        username_lower = username.lower()
-
         query = """
             SELECT
                 g.game_id,
                 g.result,
                 g.white,
                 g.black,
+                g.username,
                 g.time_control,
                 am.eval_before,
                 am.player
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
-              AND g.username = ?
               AND am.player = CASE
-                    WHEN LOWER(g.white) = ? THEN 0
-                    WHEN LOWER(g.black) = ? THEN 1
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
                 END
         """
-        params: list[object] = [username, username_lower, username_lower]
+        params: list[object] = []
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -1065,14 +978,23 @@ class StatsRepository(BaseDbRepository):
 
         # game_id -> {result, is_white, evals: [user-perspective evals]}
         games: dict[str, dict] = {}
-        for game_id, result, white, _black, time_control, eval_before, _player in rows:
+        for (
+            game_id,
+            result,
+            white,
+            _black,
+            game_username,
+            time_control,
+            eval_before,
+            _player,
+        ) in rows:
             if game_types_set:
                 gt = int(classify_game_type(time_control))
                 if gt not in game_types_set:
                     continue
 
             if game_id not in games:
-                is_white = white and white.lower() == username_lower
+                is_white = white and white.lower() == (game_username or "").lower()
                 games[game_id] = {
                     "result": result,
                     "is_white": is_white,
@@ -1136,22 +1058,10 @@ class StatsRepository(BaseDbRepository):
 
     async def get_collapse_point(
         self,
-        username: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         game_types: list[int] | None = None,
     ) -> dict[str, object]:
-        if not username:
-            return {
-                "avg_collapse_move": None,
-                "median_collapse_move": None,
-                "distribution": [],
-                "total_games_with_blunders": 0,
-                "total_games_without_blunders": 0,
-            }
-
-        username_lower = username.lower()
-
         query = """
             SELECT
                 am.game_id,
@@ -1161,14 +1071,13 @@ class StatsRepository(BaseDbRepository):
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
               AND am.classification = 3
-              AND g.username = ?
               AND am.player = CASE
-                    WHEN LOWER(g.white) = ? THEN 0
-                    WHEN LOWER(g.black) = ? THEN 1
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
                 END
             ORDER BY am.game_id, am.ply
         """
-        params: list[object] = [username, username_lower, username_lower]
+        params: list[object] = []
 
         if start_date:
             query += " AND g.end_time_utc >= ?"
@@ -1198,9 +1107,9 @@ class StatsRepository(BaseDbRepository):
         total_query = """
             SELECT g.game_id, g.time_control
             FROM game_index_cache g
-            WHERE g.analyzed = 1 AND g.username = ?
+            WHERE g.analyzed = 1
         """
-        total_params: list[object] = [username]
+        total_params: list[object] = []
 
         if start_date:
             total_query += " AND g.end_time_utc >= ?"

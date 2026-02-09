@@ -31,11 +31,10 @@ describe('withQuery (via client calls)', () => {
   });
 
   it('appends query params to URL', async () => {
-    await client.stats.gamesByDate({ source: 'lichess', username: 'bob' });
+    await client.stats.gamesByDate({ source: 'lichess' });
     assert.equal(fetchCalls.length, 1);
     const url = fetchCalls[0].url;
     assert(url.includes('source=lichess'));
-    assert(url.includes('username=bob'));
   });
 
   it('handles array params', async () => {
@@ -46,10 +45,9 @@ describe('withQuery (via client calls)', () => {
   });
 
   it('skips null/undefined params', async () => {
-    await client.stats.gamesByDate({ source: null, username: undefined, days: '30' });
+    await client.stats.gamesByDate({ source: null, days: '30' });
     const url = fetchCalls[0].url;
     assert(!url.includes('source'));
-    assert(!url.includes('username'));
     assert(url.includes('days=30'));
   });
 

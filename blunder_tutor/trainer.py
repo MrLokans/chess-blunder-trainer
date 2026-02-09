@@ -53,8 +53,6 @@ class Trainer:
 
     async def pick_random_blunder(
         self,
-        username: str | list[str],
-        source: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         exclude_recently_solved: bool = True,
@@ -65,18 +63,10 @@ class Trainer:
         player_colors: list[int] | None = None,
         difficulty_ranges: list[tuple[int, int]] | None = None,
     ) -> BlunderPuzzle:
-        usernames = [username] if isinstance(username, str) else username
-
-        merged_game_side_map = {}
-        actual_source = source
-        actual_username = username if isinstance(username, str) else usernames[0]
-
-        for uname in usernames:
-            game_side_map = await self.games.get_username_side_map(uname, source)
-            merged_game_side_map.update(game_side_map)
+        merged_game_side_map = await self.games.get_all_game_side_map()
 
         if not merged_game_side_map:
-            raise ValueError("No games found for the requested user/source.")
+            raise ValueError("No games found.")
 
         blunders = await self.analysis.fetch_blunders_with_tactics(
             game_phases=game_phases,
@@ -117,7 +107,7 @@ class Trainer:
 
         if exclude_recently_solved and candidates:
             recently_solved = await self.attempts.get_recently_solved_puzzles(
-                actual_username, days=spaced_repetition_days
+                days=spaced_repetition_days
             )
 
             if recently_solved:
@@ -128,9 +118,9 @@ class Trainer:
                 ]
 
         if not candidates:
-            raise ValueError("No blunders found for the requested user/source.")
+            raise ValueError("No blunders found.")
 
-        weights = await self._compute_weights(candidates, actual_username)
+        weights = await self._compute_weights(candidates)
         blunder = random.choices(candidates, weights=weights, k=1)[0]
         game_id = str(blunder["game_id"])
         ply = int(blunder["ply"])
@@ -157,9 +147,8 @@ class Trainer:
         game_url = extract_game_url(game)
 
         game_metadata = await self.games.get_game(game_id)
-        if game_metadata:
-            actual_source = game_metadata.get("source", "any")
-            actual_username = username if isinstance(username, str) else "multi"
+        actual_source = game_metadata.get("source", "any") if game_metadata else "any"
+        actual_username = game_metadata.get("username", "") if game_metadata else ""
 
         # Compute tactical squares on-the-fly for highlighting
         tactical_squares = self._compute_tactical_squares(
@@ -194,9 +183,8 @@ class Trainer:
     async def _compute_weights(
         self,
         candidates: list[dict[str, object]],
-        username: str,
     ) -> list[float]:
-        failure_rates = await self.attempts.get_failure_rates_by_pattern(username)
+        failure_rates = await self.attempts.get_failure_rates_by_pattern()
         has_history = bool(failure_rates)
 
         weights = []

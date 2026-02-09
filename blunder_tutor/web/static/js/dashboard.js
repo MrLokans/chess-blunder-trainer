@@ -1,6 +1,5 @@
 import { WebSocketClient } from './websocket-client.js';
 import { FilterPersistence } from './filter-persistence.js';
-import { loadConfiguredUsernames } from './usernames.js';
 import { loadHeatmap } from './heatmap.js';
 import { client } from './api.js';
 import { groupOpeningsByBase, openingNameSlug } from './opening-group.js';
@@ -11,7 +10,6 @@ const wsClient = new WebSocketClient();
 
 let currentDateFrom = null;
 let currentDateTo = null;
-let configuredUsernames = {};
 let dateChart = null;
 let hourChart = null;
 let currentGameTypeFilters = ['bullet', 'blitz', 'rapid', 'classical'];
@@ -21,10 +19,6 @@ const gameTypeFilter = new FilterPersistence({
   checkboxSelector: '.game-type-filter',
   defaultValues: ['bullet', 'blitz', 'rapid', 'classical']
 });
-
-function getFirstUsername() {
-  return configuredUsernames.lichess_username || configuredUsernames.chesscom_username || null;
-}
 
 function getPresetDates(preset) {
   const now = new Date();
@@ -243,9 +237,7 @@ async function loadStats() {
     }
 
     // Blunders by color
-    const username = getFirstUsername();
     const colorParams = { ...dateParams() };
-    if (username) colorParams.username = username;
     const colorData = await client.stats.blundersByColor(colorParams);
 
     const colorBreakdown = document.getElementById('colorBreakdown');
@@ -905,11 +897,8 @@ document.querySelectorAll('.game-type-filter').forEach(checkbox => {
   });
 });
 
-// Load stats on page load (after loading configured usernames)
-loadConfiguredUsernames().then((usernames) => {
-  configuredUsernames = usernames;
-  loadStats();
-});
+// Load stats on page load
+loadStats();
 
 if (hasFeature('dashboard.heatmap')) {
   loadHeatmap('activityHeatmap');

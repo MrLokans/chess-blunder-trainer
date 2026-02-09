@@ -70,7 +70,7 @@ async def test_single_game_single_blunder(stats_repo):
     await _insert_move(stats_repo, "g1", 1, 0, classification=0)
     await _insert_move(stats_repo, "g1", 3, 0, classification=3, move_number=2)
 
-    result = await stats_repo.get_collapse_point(username="testuser")
+    result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] == 2
     assert result["median_collapse_move"] == 2
     assert result["total_games_with_blunders"] == 1
@@ -84,7 +84,7 @@ async def test_multiple_blunders_takes_first(stats_repo):
     await _insert_move(stats_repo, "g1", 19, 0, classification=3, move_number=10)
     await _insert_move(stats_repo, "g1", 39, 0, classification=3, move_number=20)
 
-    result = await stats_repo.get_collapse_point(username="testuser")
+    result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] == 10
     assert result["total_games_with_blunders"] == 1
 
@@ -98,7 +98,7 @@ async def test_multiple_games_average(stats_repo):
     await _insert_game(stats_repo, "g2", "testuser", "testuser", "opp2")
     await _insert_move(stats_repo, "g2", 59, 0, classification=3, move_number=30)
 
-    result = await stats_repo.get_collapse_point(username="testuser")
+    result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] == 20
     assert result["median_collapse_move"] == 20
     assert result["total_games_with_blunders"] == 2
@@ -113,7 +113,7 @@ async def test_clean_games_counted(stats_repo):
     await _insert_game(stats_repo, "g2", "testuser", "testuser", "opp2")
     await _insert_move(stats_repo, "g2", 1, 0, classification=0)
 
-    result = await stats_repo.get_collapse_point(username="testuser")
+    result = await stats_repo.get_collapse_point()
     assert result["total_games_with_blunders"] == 1
     assert result["total_games_without_blunders"] == 1
 
@@ -125,7 +125,7 @@ async def test_only_user_blunders_counted(stats_repo):
     # User blunder at move 15
     await _insert_move(stats_repo, "g1", 29, 0, classification=3, move_number=15)
 
-    result = await stats_repo.get_collapse_point(username="testuser")
+    result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] == 15
 
 
@@ -133,7 +133,7 @@ async def test_black_player_blunders(stats_repo):
     await _insert_game(stats_repo, "g1", "testuser", "opponent", "testuser")
     await _insert_move(stats_repo, "g1", 20, 1, classification=3, move_number=10)
 
-    result = await stats_repo.get_collapse_point(username="testuser")
+    result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] == 10
     assert result["total_games_with_blunders"] == 1
 
@@ -151,7 +151,7 @@ async def test_distribution_buckets(stats_repo):
     await _insert_game(stats_repo, "g3", "testuser", "testuser", "o3")
     await _insert_move(stats_repo, "g3", 83, 0, classification=3, move_number=42)
 
-    result = await stats_repo.get_collapse_point(username="testuser")
+    result = await stats_repo.get_collapse_point()
     dist = {d["move_range"]: d["count"] for d in result["distribution"]}
     assert dist["1-5"] == 1
     assert dist["6-10"] == 1
@@ -174,9 +174,7 @@ async def test_game_type_filter(stats_repo):
     from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
 
     bullet_id = GAME_TYPE_FROM_STRING["bullet"]
-    result = await stats_repo.get_collapse_point(
-        username="testuser", game_types=[bullet_id]
-    )
+    result = await stats_repo.get_collapse_point(game_types=[bullet_id])
     assert result["avg_collapse_move"] == 5
     assert result["total_games_with_blunders"] == 1
 
@@ -185,7 +183,7 @@ async def test_no_blunders_at_all(stats_repo):
     await _insert_game(stats_repo, "g1", "testuser", "testuser", "opponent")
     await _insert_move(stats_repo, "g1", 1, 0, classification=0)
 
-    result = await stats_repo.get_collapse_point(username="testuser")
+    result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] is None
     assert result["median_collapse_move"] is None
     assert result["total_games_with_blunders"] == 0

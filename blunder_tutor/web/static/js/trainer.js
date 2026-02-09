@@ -439,8 +439,6 @@ async function loadPuzzle() {
         showEmptyState('no_games');
       } else if (errorMsg.includes('no blunders found')) {
         showEmptyState('no_blunders');
-      } else if (errorMsg.includes('no username configured')) {
-        window.location.href = '/setup';
       } else {
         showEmptyState('unknown');
       }
@@ -473,7 +471,6 @@ async function submitMoveAction() {
     best_move_san: puzzle.best_move_san || '',
     best_line: puzzle.best_line || [],
     player_color: puzzle.player_color || 'white',
-    username: puzzle.username || '',
     eval_after: puzzle.eval_after || 0,
     best_move_eval: puzzle.best_move_eval || null
   };

@@ -296,7 +296,7 @@ class TestTrainerWeightsWithMateDepth:
             self._blunder(missed_mate_depth=None),
         ]
         trainer.attempts.get_failure_rates_by_pattern = AsyncMock(return_value={})
-        weights = await trainer._compute_weights(candidates, "user1")
+        weights = await trainer._compute_weights(candidates)
         assert weights[0] == pytest.approx(2.0)
         assert weights[1] == pytest.approx(1.0)
 
@@ -306,7 +306,7 @@ class TestTrainerWeightsWithMateDepth:
             self._blunder(missed_mate_depth=None),
         ]
         trainer.attempts.get_failure_rates_by_pattern = AsyncMock(return_value={})
-        weights = await trainer._compute_weights(candidates, "user1")
+        weights = await trainer._compute_weights(candidates)
         assert weights[0] == pytest.approx(1.5)
         assert weights[1] == pytest.approx(1.0)
 
@@ -316,5 +316,5 @@ class TestTrainerWeightsWithMateDepth:
             self._blunder(missed_mate_depth=None),
         ]
         trainer.attempts.get_failure_rates_by_pattern = AsyncMock(return_value={})
-        weights = await trainer._compute_weights(candidates, "user1")
+        weights = await trainer._compute_weights(candidates)
         assert weights[0] == weights[1]

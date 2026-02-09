@@ -60,31 +60,23 @@ class GameRepository(BaseDbRepository):
 
         return inserted
 
-    async def get_username_side_map(
-        self, username: str, source: str | None = None
-    ) -> dict[str, int]:
-        username_lower = username.lower()
+    async def get_all_game_side_map(self) -> dict[str, int]:
+        """Build a side map for every game using the stored ``username`` column."""
         game_map: dict[str, int] = {}
 
-        query = """
-            SELECT game_id, white, black FROM game_index_cache
-            WHERE LOWER(white) = ? OR LOWER(black) = ?
-        """
-        params: list[str] = [username_lower, username_lower]
-
-        if source:
-            query += " AND source = ?"
-            params.append(source)
-
         conn = await self.get_connection()
-        async with conn.execute(query, params) as cursor:
+        async with conn.execute(
+            "SELECT game_id, username, white, black FROM game_index_cache"
+        ) as cursor:
             rows = await cursor.fetchall()
 
-        for row in rows:
-            game_id, white, black = row
-            if white and white.lower() == username_lower:
+        for game_id, username, white, black in rows:
+            if not username:
+                continue
+            uname_lower = username.lower()
+            if white and white.lower() == uname_lower:
                 game_map[game_id] = 0
-            elif black and black.lower() == username_lower:
+            elif black and black.lower() == uname_lower:
                 game_map[game_id] = 1
 
         return game_map
