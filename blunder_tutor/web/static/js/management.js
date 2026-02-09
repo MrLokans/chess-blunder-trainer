@@ -16,6 +16,23 @@ const STORAGE_KEYS = {
   maxGames: 'blunder_import_maxGames'
 };
 
+const APP_STORAGE_KEYS = [
+  STORAGE_KEYS.source,
+  STORAGE_KEYS.username,
+  STORAGE_KEYS.maxGames,
+  'blunder-tutor-phase-filters',
+  'blunder-tutor-game-type-filters',
+  'blunder-tutor-difficulty-filters',
+  'blunder-tutor-tactical-filter',
+  'blunder-tutor-color-filter',
+  'blunder-tutor-filters-collapsed',
+  'dashboard-game-type-filters',
+];
+
+function clearAppLocalStorage() {
+  APP_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
+}
+
 // Engine status (unique, not a job card)
 async function loadEngineStatus() {
   const container = document.getElementById('engineStatus');
@@ -239,7 +256,10 @@ const deleteAllCard = new JobCard({
   startedMessage: t('management.danger.started'),
   completedMessage: t('management.danger.completed'),
   failedPrefix: t('management.danger.failed', { error: '' }),
-  onComplete: () => setTimeout(() => window.location.reload(), 2000),
+  onComplete: () => {
+    clearAppLocalStorage();
+    setTimeout(() => window.location.reload(), 2000);
+  },
 });
 
 const jobCards = [analysisCard, backfillCard, ecoBackfillCard, deleteAllCard];

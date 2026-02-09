@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
+from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
 from blunder_tutor.web.dependencies import (
     PuzzleAttemptRepoDep,
     StatsRepoDep,
@@ -275,8 +276,6 @@ async def get_blunders_by_phase(
         Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
     ] = None,
 ) -> dict[str, Any]:
-    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
 
@@ -317,8 +316,6 @@ async def get_blunders_by_eco(
         Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
     ] = None,
 ) -> dict[str, Any]:
-    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
 
@@ -402,8 +399,6 @@ async def get_games_by_date(
         Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
     ] = None,
 ) -> dict[str, Any]:
-    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
     game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
@@ -437,8 +432,6 @@ async def get_games_by_hour(
         Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
     ] = None,
 ) -> dict[str, Any]:
-    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
     game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
@@ -502,8 +495,6 @@ async def get_blunders_by_tactical_pattern(
         Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
     ] = None,
 ) -> dict[str, Any]:
-    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
 
@@ -620,17 +611,20 @@ async def get_blunders_by_difficulty(
         Query(description="End date for filtering (YYYY-MM-DD)"),
     ] = None,
     game_types: Annotated[
-        list[int] | None,
-        Query(description="Filter by game type IDs"),
+        list[str] | None,
+        Query(
+            description="Filter by game type names (bullet, blitz, rapid, classical)"
+        ),
     ] = None,
 ) -> dict[str, Any]:
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
+    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
 
     return await stats_repo.get_blunders_by_difficulty(
         start_date=start_date_str,
         end_date=end_date_str,
-        game_types=game_types,
+        game_types=game_type_ids,
     )
 
 
@@ -655,8 +649,6 @@ async def get_collapse_point(
         Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
     ] = None,
 ) -> dict[str, Any]:
-    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
     game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
@@ -689,8 +681,6 @@ async def get_conversion_resilience(
         Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
     ] = None,
 ) -> dict[str, Any]:
-    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
-
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
     game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
