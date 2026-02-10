@@ -51,7 +51,7 @@ class SettingsRequest(BaseModel):
         default=24, ge=1, le=168, description="Sync interval in hours"
     )
     max_games: int = Field(
-        default=1000, ge=1, le=10000, description="Maximum games to sync"
+        default=100, ge=1, le=10000, description="Maximum games to sync"
     )
     auto_analyze: bool = Field(
         default=True, description="Automatically analyze new games"
@@ -76,7 +76,7 @@ class SettingsResponse(BaseModel):
     chesscom_username: str | None = Field(None, description="Chess.com username")
     auto_sync: bool = Field(default=False, description="Auto sync enabled")
     sync_interval: int = Field(default=24, description="Sync interval in hours")
-    max_games: int = Field(default=1000, description="Max games to sync")
+    max_games: int = Field(default=100, description="Max games to sync")
     auto_analyze: bool = Field(default=True, description="Auto analyze new games")
     spaced_repetition_days: int = Field(
         default=30, description="Spaced repetition days"
@@ -149,7 +149,7 @@ async def get_settings(settings_repo: SettingsRepoDep) -> dict[str, Any]:
         "chesscom_username": settings.get("chesscom_username"),
         "auto_sync": settings.get("auto_sync_enabled") == "true",
         "sync_interval": int(settings.get("sync_interval_hours", "24")),
-        "max_games": int(settings.get("sync_max_games", "1000")),
+        "max_games": int(settings.get("sync_max_games", "100")),
         "auto_analyze": settings.get("analyze_new_games_automatically", "true")
         == "true",
         "spaced_repetition_days": int(settings.get("spaced_repetition_days", "30")),

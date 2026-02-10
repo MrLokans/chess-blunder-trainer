@@ -9,7 +9,6 @@ from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.utils.accuracy import game_accuracy
 from blunder_tutor.utils.time_control import (
     GAME_TYPE_LABELS,
-    classify_game_type,
 )
 
 WINNING_THRESHOLD_CP = 200
@@ -19,16 +18,87 @@ COLLAPSE_BUCKET_SIZE = 5
 COLLAPSE_MAX_BUCKET_START = 41
 
 
+def _append_date_filters(
+    clause: str,
+    params: list[object],
+    start_date: str | None,
+    end_date: str | None,
+    *,
+    table_alias: str = "g",
+) -> str:
+    if start_date:
+        clause += f" AND {table_alias}.end_time_utc >= ?"
+        params.append(start_date)
+    if end_date:
+        clause += f" AND {table_alias}.end_time_utc <= ?"
+        params.append(end_date + " 23:59:59")
+    return clause
+
+
+def _append_game_type_filter(
+    clause: str,
+    params: list[object],
+    game_types: list[int] | None,
+    *,
+    table_alias: str = "g",
+) -> str:
+    if game_types:
+        placeholders = ",".join("?" for _ in game_types)
+        clause += f" AND {table_alias}.game_type IN ({placeholders})"
+        params.extend(game_types)
+    return clause
+
+
+def _append_common_filters(
+    clause: str,
+    params: list[object],
+    start_date: str | None,
+    end_date: str | None,
+    game_types: list[int] | None,
+    *,
+    table_alias: str = "g",
+) -> str:
+    clause = _append_date_filters(
+        clause, params, start_date, end_date, table_alias=table_alias
+    )
+    clause = _append_game_type_filter(
+        clause, params, game_types, table_alias=table_alias
+    )
+    return clause
+
+
+PLAYER_SIDE_FILTER = """
+    AND am.player = CASE
+        WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+        WHEN LOWER(g.black) = LOWER(g.username) THEN 1
+    END
+"""
+
+
 class StatsRepository(BaseDbRepository):
-    async def get_overview_stats(self) -> dict[str, object]:
+    async def get_overview_stats(
+        self,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        game_types: list[int] | None = None,
+    ) -> dict[str, object]:
         conn = await self.get_connection()
+
+        game_where = "WHERE 1=1"
+        game_params: list[object] = []
+        game_where = _append_common_filters(
+            game_where, game_params, start_date, end_date, game_types
+        )
+
         async with conn.execute(
-            """
+            f"""
             SELECT
                 COUNT(*) as total,
                 SUM(CASE WHEN analyzed = 1 THEN 1 ELSE 0 END) as analyzed
-            FROM game_index_cache
-            """
+            FROM game_index_cache g
+            {game_where}
+            """,
+            game_params,
         ) as cursor:
             game_row = await cursor.fetchone()
 
@@ -36,17 +106,23 @@ class StatsRepository(BaseDbRepository):
         analyzed_games = int(game_row[1]) if game_row and game_row[1] is not None else 0
         pending_analysis = total_games - analyzed_games
 
+        blunder_where = f"""
+            WHERE am.classification = 3
+            {PLAYER_SIDE_FILTER}
+        """
+        blunder_params: list[object] = []
+        blunder_where = _append_common_filters(
+            blunder_where, blunder_params, start_date, end_date, game_types
+        )
+
         async with conn.execute(
-            """
+            f"""
             SELECT COUNT(*)
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
-            WHERE am.classification = 3
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
-            """
+            {blunder_where}
+            """,
+            blunder_params,
         ) as cursor:
             blunder_row = await cursor.fetchone()
         total_blunders = blunder_row[0] if blunder_row else 0
@@ -104,13 +180,6 @@ class StatsRepository(BaseDbRepository):
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> dict[str, object]:
-        player_side_filter = """
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
-        """
-
         query = f"""
             SELECT
                 COUNT(*) as total_blunders,
@@ -118,7 +187,7 @@ class StatsRepository(BaseDbRepository):
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
-            {player_side_filter}
+            {PLAYER_SIDE_FILTER}
         """
         params: list[str] = []
 
@@ -144,7 +213,7 @@ class StatsRepository(BaseDbRepository):
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
             AND g.end_time_utc IS NOT NULL
-            {player_side_filter}
+            {PLAYER_SIDE_FILTER}
         """
         date_params: list[str] = []
 
@@ -232,7 +301,7 @@ class StatsRepository(BaseDbRepository):
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> dict[str, object]:
-        query = """
+        query = f"""
             SELECT
                 game_phase,
                 COUNT(*) as count,
@@ -240,10 +309,7 @@ class StatsRepository(BaseDbRepository):
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
+            {PLAYER_SIDE_FILTER}
         """
         params: list[str] = []
 
@@ -295,38 +361,25 @@ class StatsRepository(BaseDbRepository):
         limit: int = 10,
         game_types: list[int] | None = None,
     ) -> dict[str, object]:
-        query = """
+        query = f"""
             SELECT
                 ag.eco_code,
                 ag.eco_name,
                 am.cp_loss,
-                ag.game_id,
-                g.time_control
+                ag.game_id
             FROM analysis_moves am
             JOIN analysis_games ag ON am.game_id = ag.game_id
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3 AND ag.eco_code IS NOT NULL
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
+            {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
+        query = _append_common_filters(query, params, start_date, end_date, game_types)
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        # Filter by game type and aggregate in Python
-        game_types_set = set(game_types) if game_types else None
         eco_stats: dict[tuple[str, str], dict[str, object]] = {}
 
         for row in rows:
@@ -334,12 +387,6 @@ class StatsRepository(BaseDbRepository):
             eco_name = row[1]
             cp_loss = row[2] or 0
             game_id = row[3]
-            time_control = row[4]
-
-            if game_types_set:
-                game_type = int(classify_game_type(time_control))
-                if game_type not in game_types_set:
-                    continue
 
             key = (eco_code, eco_name)
             if key not in eco_stats:
@@ -353,7 +400,6 @@ class StatsRepository(BaseDbRepository):
             eco_stats[key]["total_cp_loss"] += cp_loss
             eco_stats[key]["game_ids"].add(game_id)
 
-        # Sort by count and limit
         sorted_ecos = sorted(
             eco_stats.items(), key=lambda x: x[1]["count"], reverse=True
         )[:limit]
@@ -386,7 +432,7 @@ class StatsRepository(BaseDbRepository):
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> dict[str, object]:
-        query = """
+        query = f"""
             SELECT
                 CASE
                     WHEN LOWER(g.white) = LOWER(g.username) THEN 0
@@ -397,10 +443,7 @@ class StatsRepository(BaseDbRepository):
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
+            {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
 
@@ -440,7 +483,7 @@ class StatsRepository(BaseDbRepository):
                 }
             )
 
-        date_query = """
+        date_query = f"""
             SELECT
                 DATE(g.end_time_utc) as date,
                 CASE
@@ -452,10 +495,7 @@ class StatsRepository(BaseDbRepository):
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
               AND g.end_time_utc IS NOT NULL
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
+            {PLAYER_SIDE_FILTER}
         """
         date_params: list[object] = []
 
@@ -493,48 +533,28 @@ class StatsRepository(BaseDbRepository):
         end_date: str | None = None,
         game_types: list[int] | None = None,
     ) -> list[dict[str, object]]:
-        query = """
+        query = f"""
             SELECT
                 g.game_id,
                 DATE(g.end_time_utc) as game_date,
-                am.cp_loss,
-                g.time_control
+                am.cp_loss
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
+            {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
-
+        query = _append_common_filters(query, params, start_date, end_date, game_types)
         query += " ORDER BY game_date ASC"
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        game_types_set = set(game_types) if game_types else None
-
-        # Group cp_losses by (game_id, date), filtering by game type
         game_date_losses: dict[tuple[str, str], list[int]] = defaultdict(list)
-        for game_id, game_date, cp_loss, time_control in rows:
-            if game_types_set:
-                gt = int(classify_game_type(time_control))
-                if gt not in game_types_set:
-                    continue
+        for game_id, game_date, cp_loss in rows:
             game_date_losses[(game_id, game_date)].append(cp_loss)
 
-        # Compute per-game accuracy, then average per date
         date_accuracies: dict[str, list[float]] = defaultdict(list)
         for (_, game_date), losses in game_date_losses.items():
             date_accuracies[game_date].append(game_accuracy(losses))
@@ -554,46 +574,27 @@ class StatsRepository(BaseDbRepository):
         end_date: str | None = None,
         game_types: list[int] | None = None,
     ) -> list[dict[str, object]]:
-        query = """
+        query = f"""
             SELECT
                 g.game_id,
                 CAST(strftime('%H', g.end_time_utc) AS INTEGER) as hour,
-                am.cp_loss,
-                g.time_control
+                am.cp_loss
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
+            {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
+        query = _append_common_filters(query, params, start_date, end_date, game_types)
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        game_types_set = set(game_types) if game_types else None
-
-        # Group cp_losses by (game_id, hour), filtering by game type
         game_hour_losses: dict[tuple[str, int], list[int]] = defaultdict(list)
-        for game_id, hour, cp_loss, time_control in rows:
-            if game_types_set:
-                gt = int(classify_game_type(time_control))
-                if gt not in game_types_set:
-                    continue
+        for game_id, hour, cp_loss in rows:
             game_hour_losses[(game_id, hour)].append(cp_loss)
 
-        # Compute per-game accuracy, then average per hour
         hour_accuracies: dict[int, list[float]] = defaultdict(list)
         for (_, hour), losses in game_hour_losses.items():
             hour_accuracies[hour].append(game_accuracy(losses))
@@ -613,61 +614,30 @@ class StatsRepository(BaseDbRepository):
         end_date: str | None = None,
         game_types: list[int] | None = None,
     ) -> dict[str, object]:
-        query = """
+        query = f"""
             SELECT
                 tactical_pattern,
-                cp_loss,
-                g.time_control
+                COUNT(*) as count,
+                AVG(cp_loss) as avg_cp_loss
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
+            {PLAYER_SIDE_FILTER}
         """
-        params: list[str] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
+        params: list[object] = []
+        query = _append_common_filters(query, params, start_date, end_date, game_types)
+        query += " GROUP BY tactical_pattern ORDER BY count DESC"
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        # Filter by game type and aggregate in Python
-        game_types_set = set(game_types) if game_types else None
-        pattern_stats: dict[int | None, dict[str, float]] = {}
-
+        total = sum(row[1] for row in rows)
+        patterns = []
         for row in rows:
             pattern_int = row[0]
-            cp_loss = row[1] or 0
-            time_control = row[2]
-
-            if game_types_set:
-                game_type = int(classify_game_type(time_control))
-                if game_type not in game_types_set:
-                    continue
-
-            if pattern_int not in pattern_stats:
-                pattern_stats[pattern_int] = {"count": 0, "total_cp_loss": 0.0}
-
-            pattern_stats[pattern_int]["count"] += 1
-            pattern_stats[pattern_int]["total_cp_loss"] += cp_loss
-
-        total = sum(int(stats["count"]) for stats in pattern_stats.values())
-        patterns = []
-        for pattern_int in sorted(
-            pattern_stats.keys(), key=lambda x: pattern_stats[x]["count"], reverse=True
-        ):
-            stats = pattern_stats[pattern_int]
-            count = int(stats["count"])
-            avg_cp_loss = stats["total_cp_loss"] / count if count > 0 else 0.0
+            count = row[1]
+            avg_cp_loss = row[2] or 0.0
             pattern_label = (
                 PATTERN_LABELS.get(pattern_int, "Unknown")
                 if pattern_int is not None
@@ -694,62 +664,39 @@ class StatsRepository(BaseDbRepository):
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> dict[str, object]:
-        query = """
+        query = f"""
             SELECT
-                g.time_control,
-                am.cp_loss
+                g.game_type,
+                COUNT(*) as count,
+                AVG(am.cp_loss) as avg_cp_loss
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
+            {PLAYER_SIDE_FILTER}
         """
-        params: list[str] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
+        params: list[object] = []
+        query = _append_date_filters(query, params, start_date, end_date)
+        query += " GROUP BY g.game_type ORDER BY g.game_type"
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        # Group by game type in Python
-        game_type_stats: dict[int, dict[str, float]] = {}
-        for row in rows:
-            time_control = row[0]
-            cp_loss = row[1] or 0
-
-            game_type = int(classify_game_type(time_control))
-
-            if game_type not in game_type_stats:
-                game_type_stats[game_type] = {"count": 0, "total_cp_loss": 0.0}
-
-            game_type_stats[game_type]["count"] += 1
-            game_type_stats[game_type]["total_cp_loss"] += cp_loss
-
-        total = sum(stats["count"] for stats in game_type_stats.values())
-
+        total = sum(row[1] for row in rows)
         game_types = []
-        for game_type_int in sorted(game_type_stats.keys()):
-            stats = game_type_stats[game_type_int]
-            count = int(stats["count"])
-            avg_cp_loss = stats["total_cp_loss"] / count if count > 0 else 0.0
+        for row in rows:
+            game_type_int = row[0]
+            count = row[1]
+            avg_cp_loss = row[2] or 0.0
             game_type_label = GAME_TYPE_LABELS.get(game_type_int, "unknown")
             percentage = (count / total * 100) if total > 0 else 0.0
             game_types.append(
                 {
                     "game_type": game_type_label,
-                    "game_type_id": game_type_int,
+                    "game_type_id": game_type_int if game_type_int is not None else -1,
                     "count": count,
                     "percentage": round(percentage, 1),
-                    "avg_cp_loss": round(avg_cp_loss, 1),
+                    "avg_cp_loss": round(float(avg_cp_loss), 1),
                 }
             )
 
@@ -765,69 +712,36 @@ class StatsRepository(BaseDbRepository):
         game_types: list[int] | None = None,
         player_colors: list[int] | None = None,
     ) -> dict[str, object]:
-        query = """
+        query = f"""
             SELECT
                 am.game_phase,
-                am.cp_loss,
-                g.time_control,
-                am.player
+                COUNT(*) as count,
+                AVG(am.cp_loss) as avg_cp_loss
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
+            {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
+        query = _append_common_filters(query, params, start_date, end_date, game_types)
 
         if player_colors:
             placeholders = ",".join("?" * len(player_colors))
             query += f" AND am.player IN ({placeholders})"
             params.extend(player_colors)
 
+        query += " GROUP BY am.game_phase ORDER BY am.game_phase"
+
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        # Filter by game type in Python and group by phase
-        game_types_set = set(game_types) if game_types else None
-        phase_stats: dict[int | None, dict[str, float]] = {}
-
-        for row in rows:
-            game_phase = row[0]
-            cp_loss = row[1] or 0
-            time_control = row[2]
-
-            # Filter by game type if specified
-            if game_types_set:
-                game_type = int(classify_game_type(time_control))
-                if game_type not in game_types_set:
-                    continue
-
-            if game_phase not in phase_stats:
-                phase_stats[game_phase] = {"count": 0, "total_cp_loss": 0.0}
-
-            phase_stats[game_phase]["count"] += 1
-            phase_stats[game_phase]["total_cp_loss"] += cp_loss
-
-        total = sum(int(stats["count"]) for stats in phase_stats.values())
-
+        total = sum(row[1] for row in rows)
         phases = []
-        for phase_int in sorted(
-            phase_stats.keys(), key=lambda x: x if x is not None else 999
-        ):
-            stats = phase_stats[phase_int]
-            count = int(stats["count"])
-            avg_cp_loss = stats["total_cp_loss"] / count if count > 0 else 0.0
+        for row in rows:
+            phase_int = row[0]
+            count = row[1]
+            avg_cp_loss = row[2] or 0.0
             phase_label = (
                 PHASE_LABELS.get(phase_int, "unknown")
                 if phase_int is not None
@@ -855,79 +769,46 @@ class StatsRepository(BaseDbRepository):
         end_date: str | None = None,
         game_types: list[int] | None = None,
     ) -> dict[str, object]:
-        query = """
+        query = f"""
             SELECT
-                am.difficulty,
-                am.cp_loss,
-                g.time_control
+                CASE
+                    WHEN am.difficulty IS NULL THEN 'unscored'
+                    WHEN am.difficulty <= 30 THEN 'easy'
+                    WHEN am.difficulty <= 60 THEN 'medium'
+                    ELSE 'hard'
+                END as diff_bucket,
+                COUNT(*) as count,
+                AVG(am.cp_loss) as avg_cp_loss
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE am.classification = 3
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
+            {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
+        query = _append_common_filters(query, params, start_date, end_date, game_types)
+        query += " GROUP BY diff_bucket"
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        game_types_set = set(game_types) if game_types else None
+        total = sum(row[1] for row in rows)
+        bucket_map = {row[0]: row for row in rows}
 
-        buckets: dict[str, dict[str, object]] = {
-            "easy": {"label": "easy", "count": 0, "total_cp_loss": 0.0},
-            "medium": {"label": "medium", "count": 0, "total_cp_loss": 0.0},
-            "hard": {"label": "hard", "count": 0, "total_cp_loss": 0.0},
-            "unscored": {"label": "unscored", "count": 0, "total_cp_loss": 0.0},
-        }
-
-        for row in rows:
-            difficulty = row[0]
-            cp_loss = row[1] or 0
-            time_control = row[2]
-
-            if game_types_set:
-                game_type = int(classify_game_type(time_control))
-                if game_type not in game_types_set:
-                    continue
-
-            if difficulty is None:
-                key = "unscored"
-            elif difficulty <= 30:
-                key = "easy"
-            elif difficulty <= 60:
-                key = "medium"
-            else:
-                key = "hard"
-
-            buckets[key]["count"] += 1
-            buckets[key]["total_cp_loss"] += cp_loss
-
-        total = sum(int(b["count"]) for b in buckets.values())
         by_difficulty = []
         for bucket_key in ("easy", "medium", "hard", "unscored"):
-            b = buckets[bucket_key]
-            count = int(b["count"])
-            if count == 0:
+            row = bucket_map.get(bucket_key)
+            if not row:
                 continue
-            avg_cp_loss = float(b["total_cp_loss"]) / count
+            count = row[1]
+            avg_cp_loss = row[2] or 0.0
             percentage = (count / total * 100) if total > 0 else 0.0
             by_difficulty.append(
                 {
-                    "difficulty": b["label"],
+                    "difficulty": bucket_key,
                     "count": count,
                     "percentage": round(percentage, 1),
-                    "avg_cp_loss": round(avg_cp_loss, 1),
+                    "avg_cp_loss": round(float(avg_cp_loss), 1),
                 }
             )
 
@@ -942,57 +823,28 @@ class StatsRepository(BaseDbRepository):
         end_date: str | None = None,
         game_types: list[int] | None = None,
     ) -> dict[str, object]:
-        query = """
+        query = f"""
             SELECT
                 g.game_id,
                 g.result,
                 g.white,
-                g.black,
                 g.username,
-                g.time_control,
                 am.eval_before,
                 am.player
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
+            {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
+        query = _append_common_filters(query, params, start_date, end_date, game_types)
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        game_types_set = set(game_types) if game_types else None
-
-        # game_id -> {result, is_white, evals: [user-perspective evals]}
         games: dict[str, dict] = {}
-        for (
-            game_id,
-            result,
-            white,
-            _black,
-            game_username,
-            time_control,
-            eval_before,
-            _player,
-        ) in rows:
-            if game_types_set:
-                gt = int(classify_game_type(time_control))
-                if gt not in game_types_set:
-                    continue
-
+        for game_id, result, white, game_username, eval_before, _player in rows:
             if game_id not in games:
                 is_white = white and white.lower() == (game_username or "").lower()
                 games[game_id] = {
@@ -1001,7 +853,6 @@ class StatsRepository(BaseDbRepository):
                     "evals": [],
                 }
 
-            # Convert eval to user's perspective (eval_before is from white's POV)
             user_eval = eval_before if games[game_id]["is_white"] else -eval_before
             games[game_id]["evals"].append(user_eval)
 
@@ -1062,72 +913,42 @@ class StatsRepository(BaseDbRepository):
         end_date: str | None = None,
         game_types: list[int] | None = None,
     ) -> dict[str, object]:
-        query = """
+        query = f"""
             SELECT
                 am.game_id,
-                am.move_number,
-                g.time_control
+                am.move_number
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
               AND am.classification = 3
-              AND am.player = CASE
-                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-                END
-            ORDER BY am.game_id, am.ply
+            {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
+        query = _append_common_filters(query, params, start_date, end_date, game_types)
+        query += " ORDER BY am.game_id, am.ply"
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             blunder_rows = await cursor.fetchall()
 
-        game_types_set = set(game_types) if game_types else None
-
-        # Find first blunder move_number per game
         first_blunder_by_game: dict[str, int] = {}
-        for game_id, move_number, time_control in blunder_rows:
-            if game_types_set:
-                gt = int(classify_game_type(time_control))
-                if gt not in game_types_set:
-                    continue
+        for game_id, move_number in blunder_rows:
             if game_id not in first_blunder_by_game:
                 first_blunder_by_game[game_id] = move_number
 
-        # Count total analyzed games (for clean game %)
         total_query = """
-            SELECT g.game_id, g.time_control
+            SELECT COUNT(*)
             FROM game_index_cache g
             WHERE g.analyzed = 1
         """
         total_params: list[object] = []
-
-        if start_date:
-            total_query += " AND g.end_time_utc >= ?"
-            total_params.append(start_date)
-        if end_date:
-            total_query += " AND g.end_time_utc <= ?"
-            total_params.append(end_date)
+        total_query = _append_common_filters(
+            total_query, total_params, start_date, end_date, game_types
+        )
 
         async with conn.execute(total_query, total_params) as cursor:
-            total_rows = await cursor.fetchall()
-
-        total_analyzed = 0
-        for _game_id, time_control in total_rows:
-            if game_types_set:
-                gt = int(classify_game_type(time_control))
-                if gt not in game_types_set:
-                    continue
-            total_analyzed += 1
+            total_row = await cursor.fetchone()
+        total_analyzed = total_row[0] if total_row else 0
 
         collapse_moves = list(first_blunder_by_game.values())
         total_with_blunders = len(collapse_moves)
@@ -1145,7 +966,6 @@ class StatsRepository(BaseDbRepository):
         avg_move = round(statistics.mean(collapse_moves))
         median_move = round(statistics.median(collapse_moves))
 
-        # Build 5-move buckets
         bucket_counts: dict[str, int] = {}
         for move in collapse_moves:
             if move >= COLLAPSE_MAX_BUCKET_START:
@@ -1156,7 +976,6 @@ class StatsRepository(BaseDbRepository):
                 label = f"{start}-{end}"
             bucket_counts[label] = bucket_counts.get(label, 0) + 1
 
-        # Sort buckets by range start
         def bucket_sort_key(label: str) -> int:
             return int(label.split("-")[0].rstrip("+"))
 

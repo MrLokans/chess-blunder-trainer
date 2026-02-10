@@ -22,9 +22,7 @@ from blunder_tutor.web.dependencies import (
 class StartImportRequest(BaseModel):
     username: str = Field(description="Username to import games for")
     source: str = Field(description="Platform source ('lichess' or 'chesscom')")
-    max_games: int = Field(
-        default=1000, description="Maximum number of games to import"
-    )
+    max_games: int = Field(default=100, description="Maximum number of games to import")
 
 
 class JobResponse(BaseModel):

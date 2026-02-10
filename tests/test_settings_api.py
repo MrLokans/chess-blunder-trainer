@@ -8,7 +8,7 @@ def test_get_settings_returns_defaults(app):
     data = response.json()
     assert data["auto_sync"] is False
     assert data["sync_interval"] == 24
-    assert data["max_games"] == 1000
+    assert data["max_games"] == 100
     assert data["auto_analyze"] is True
     assert data["spaced_repetition_days"] == 30
 

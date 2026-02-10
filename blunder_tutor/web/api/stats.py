@@ -140,8 +140,30 @@ stats_router = APIRouter()
     summary="Get dashboard statistics",
     description="Returns overall dashboard statistics including total games, analyzed games, blunders, and pending analysis.",
 )
-async def get_dashboard_stats(stats_repo: StatsRepoDep) -> dict[str, Any]:
-    return await stats_repo.get_overview_stats()
+async def get_dashboard_stats(
+    stats_repo: StatsRepoDep,
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    game_types: Annotated[
+        list[str] | None,
+        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
+    ] = None,
+) -> dict[str, Any]:
+    start_date_str = start_date.isoformat() if start_date else None
+    end_date_str = end_date.isoformat() if end_date else None
+    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
+
+    return await stats_repo.get_overview_stats(
+        start_date=start_date_str,
+        end_date=end_date_str,
+        game_types=game_type_ids,
+    )
 
 
 @stats_router.get(

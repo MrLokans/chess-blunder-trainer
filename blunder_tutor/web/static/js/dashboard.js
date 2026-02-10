@@ -168,7 +168,7 @@ function initOpeningGroupToggles(container) {
 
 async function loadStats() {
   try {
-    const overview = await client.stats.overview();
+    const overview = await client.stats.overview(dateAndGameTypeParams());
 
     document.getElementById('totalGames').textContent = overview.total_games || 0;
     document.getElementById('analyzedGames').textContent = overview.analyzed_games || 0;

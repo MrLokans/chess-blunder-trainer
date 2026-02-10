@@ -85,7 +85,7 @@ def upgrade() -> None:
             ('auto_sync_enabled', 'false'),
             ('sync_interval_hours', '24'),
             ('last_sync_timestamp', NULL),
-            ('sync_max_games', '1000'),
+            ('sync_max_games', '100'),
             ('analyze_new_games_automatically', 'true'),
             ('spaced_repetition_days', '30')
         """

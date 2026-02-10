@@ -47,7 +47,7 @@ export const client = {
   },
 
   stats: {
-    overview: () => request('/api/stats'),
+    overview: (params) => request(withQuery('/api/stats', params)),
     gameBreakdown: () => request('/api/stats/games'),
     gamesByDate: (params) => request(withQuery('/api/stats/games/by-date', params)),
     gamesByHour: (params) => request(withQuery('/api/stats/games/by-hour', params)),

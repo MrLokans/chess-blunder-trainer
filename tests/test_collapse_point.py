@@ -17,15 +17,18 @@ async def stats_repo(db_path):
 async def _insert_game(
     stats_repo, game_id, username, white, black, time_control="300+0"
 ):
+    from blunder_tutor.utils.time_control import classify_game_type
+
+    game_type = int(classify_game_type(time_control))
     conn = await stats_repo.get_connection()
     await conn.execute(
         """
         INSERT INTO game_index_cache
             (game_id, source, username, white, black, result, time_control,
-             end_time_utc, pgn_content, analyzed, indexed_at)
-        VALUES (?, 'lichess', ?, ?, ?, '1-0', ?, '2025-01-15T10:00:00Z', '', 1, '2025-01-15T10:00:00Z')
+             end_time_utc, pgn_content, analyzed, indexed_at, game_type)
+        VALUES (?, 'lichess', ?, ?, ?, '1-0', ?, '2025-01-15T10:00:00Z', '', 1, '2025-01-15T10:00:00Z', ?)
         """,
-        (game_id, username, white, black, time_control),
+        (game_id, username, white, black, time_control, game_type),
     )
     await conn.execute(
         """

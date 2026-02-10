@@ -7,6 +7,7 @@ import chess.pgn
 
 from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.utils.pgn_utils import load_game_from_string
+from blunder_tutor.utils.time_control import classify_game_type
 
 
 class GameRepository(BaseDbRepository):
@@ -32,13 +33,15 @@ class GameRepository(BaseDbRepository):
 
         async with self.write_transaction() as conn:
             for game in games:
+                time_control = game.get("time_control")
+                game_type = int(classify_game_type(time_control))
                 cursor = await conn.execute(
                     """
                     INSERT INTO game_index_cache (
                         game_id, source, username, white, black, result,
                         date, end_time_utc, time_control, pgn_content,
-                        analyzed, indexed_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+                        analyzed, indexed_at, game_type
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
                     ON CONFLICT(game_id) DO NOTHING
                     """,
                     (
@@ -50,9 +53,10 @@ class GameRepository(BaseDbRepository):
                         game.get("result"),
                         game.get("date"),
                         game.get("end_time_utc"),
-                        game.get("time_control"),
+                        time_control,
                         game.get("pgn_content"),
                         timestamp,
+                        game_type,
                     ),
                 )
                 if cursor.rowcount > 0:
