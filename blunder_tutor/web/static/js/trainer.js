@@ -336,6 +336,24 @@ function updateGameLink(url) {
   }
 }
 
+function updateCopyDebugBtn(gameId, ply) {
+  const btn = document.getElementById('copyDebugBtn');
+  if (!btn) return;
+  btn.style.display = gameId ? 'inline-block' : 'none';
+  btn.onclick = async () => {
+    try {
+      const params = ply != null ? { ply } : {};
+      const text = await client.debug.gameInfo(gameId, params);
+      await navigator.clipboard.writeText(text);
+      const original = btn.textContent;
+      btn.textContent = '✅ ' + t('trainer.debug.copied');
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    } catch (e) {
+      console.error('Copy debug failed:', e);
+    }
+  };
+}
+
 function getLastMove() {
   const history = game.history({ verbose: true });
   return history.length > 0 ? history[history.length - 1] : null;
@@ -416,6 +434,7 @@ async function loadPuzzle() {
     updatePhaseBadge(puzzle.game_phase);
     updateTacticalBadge(puzzle.tactical_pattern);
     updateGameLink(puzzle.game_url);
+    updateCopyDebugBtn(puzzle.game_id, puzzle.ply);
     blunderMove.textContent = puzzle.blunder_san;
     evalBefore.textContent = puzzle.eval_before_display;
     evalAfter.textContent = puzzle.eval_after_display;

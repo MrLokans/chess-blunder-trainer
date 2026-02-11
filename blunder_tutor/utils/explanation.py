@@ -214,6 +214,31 @@ def _detect_next_move_threat(board: chess.Board, move: chess.Move) -> _Threat | 
     return None
 
 
+def _find_hanging_piece(
+    board: chess.Board,
+    move: chess.Move,
+    player_color: chess.Color,
+) -> tuple[chess.PieceType, chess.Square] | None:
+    board_after = board.copy()
+    board_after.push(move)
+    enemy = not player_color
+    best: tuple[int, chess.PieceType, chess.Square] | None = None
+    for sq in chess.SQUARES:
+        piece = board_after.piece_at(sq)
+        if (
+            piece
+            and piece.color == enemy
+            and piece.piece_type != chess.KING
+            and _is_hanging(board_after, sq, enemy)
+        ):
+            val = PIECE_VALUES.get(piece.piece_type, 0)
+            if best is None or val > best[0]:
+                best = (val, piece.piece_type, sq)
+    if best is None:
+        return None
+    return (best[1], best[2])
+
+
 def _count_material(board: chess.Board, color: chess.Color) -> int:
     total = 0
     for sq in chess.SQUARES:
@@ -233,9 +258,13 @@ def _explain_blunder(
     blunder_move: chess.Move,
     player_color: chess.Color,
     cp_loss: int,
+    best_move: chess.Move | None = None,
 ) -> I18nMessage | None:
     board_after = board.copy()
     board_after.push(blunder_move)
+
+    if best_move and _move_gives_mate(board, best_move):
+        return I18nMessage(key="explanation.blunder.missed_mate")
 
     moved_key_nom = _piece_key(board, blunder_move.from_square)
     if not moved_key_nom:
@@ -337,6 +366,18 @@ def _explain_best(
                     },
                 )
         if _has_pattern(tactical_pattern):
+            if tactical_pattern.lower() == "hanging piece":
+                hanging = _find_hanging_piece(board, best_move, board.turn)
+                if hanging:
+                    piece_type, sq = hanging
+                    return I18nMessage(
+                        key="explanation.best.check_wins_hanging",
+                        params={
+                            "san": san,
+                            "piece": _type_key(piece_type, "acc"),
+                            "square": chess.square_name(sq),
+                        },
+                    )
             return I18nMessage(
                 key="explanation.best.check_with_pattern",
                 params={"san": san, "pattern": tactical_pattern.lower()},
@@ -355,6 +396,16 @@ def _explain_best(
         # so only use the capture template when the best move actually captures.
         if pattern_lower == "hanging piece":
             if board.is_capture(best_move):
+                captured = board.piece_at(best_move.to_square)
+                if captured:
+                    return I18nMessage(
+                        key="explanation.best.pattern_hanging_piece",
+                        params={
+                            "san": san,
+                            "piece": _type_key(captured.piece_type, "acc"),
+                            "square": chess.square_name(best_move.to_square),
+                        },
+                    )
                 return I18nMessage(
                     key="explanation.best.pattern_hanging", params={"san": san}
                 )
@@ -448,17 +499,21 @@ def generate_explanation(
     if blunder_move not in board.legal_moves:
         return BlunderExplanation(blunder=None, best_move=None)
 
-    blunder_msg = _explain_blunder(board, blunder_move, player_color, cp_loss)
-
+    best_move: chess.Move | None = None
     best_msg = None
     if best_move_uci:
         try:
             best_move = chess.Move.from_uci(best_move_uci)
-            if best_move in board.legal_moves:
-                best_msg = _explain_best(
-                    board, best_move, tactical_pattern, cp_loss, best_line
-                )
+            if best_move not in board.legal_moves:
+                best_move = None
         except ValueError:
             pass
+
+    blunder_msg = _explain_blunder(
+        board, blunder_move, player_color, cp_loss, best_move
+    )
+
+    if best_move:
+        best_msg = _explain_best(board, best_move, tactical_pattern, cp_loss, best_line)
 
     return BlunderExplanation(blunder=blunder_msg, best_move=best_msg)

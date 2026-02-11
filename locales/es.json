@@ -398,6 +398,7 @@
   "chess.piece.rook": "torre",
   "chess.piece.queen": "dama",
   "chess.piece.king": "rey",
+  "explanation.blunder.missed_mate": "No viste un jaque mate en una jugada.",
   "explanation.blunder.hanging_piece": "Tu {piece} en {square} está indefenso y puede ser capturado.",
   "explanation.blunder.exposed_piece": "Mover tu {piece} dejó tu {exposed} en {square} indefenso.",
   "explanation.blunder.bad_capture": "Capturar con tu {piece} pierde material — tu {piece} vale más que la pieza capturada.",
@@ -405,6 +406,7 @@
   "explanation.best.checkmate": "La mejor jugada {san} da jaque mate.",
   "explanation.best.capture_with_check": "La mejor jugada {san} captura el/la {piece} con jaque.",
   "explanation.best.check_with_pattern": "La mejor jugada {san} da jaque, aprovechando un(a) {pattern}.",
+  "explanation.best.check_wins_hanging": "La mejor jugada {san} da jaque, ganando el/la {piece} indefenso/a en {square}.",
   "explanation.best.check_winning": "La mejor jugada {san} da jaque y gana material.",
   "explanation.best.pattern_fork": "La mejor jugada {san} crea un tenedor, atacando varias piezas a la vez.",
   "explanation.best.pattern_pin": "La mejor jugada {san} crea una clavada y gana material.",
@@ -412,6 +414,7 @@
   "explanation.best.pattern_discovered": "La mejor jugada {san} desata un ataque descubierto sobre una pieza valiosa.",
   "explanation.best.pattern_back_rank": "La mejor jugada {san} explota la debilidad de la última fila.",
   "explanation.best.pattern_hanging": "La mejor jugada {san} captura una pieza indefensa.",
+  "explanation.best.pattern_hanging_piece": "La mejor jugada {san} captura el/la {piece} indefenso/a en {square}.",
   "explanation.best.pattern_generic": "La mejor jugada {san} gana material con un(a) {pattern}.",
   "explanation.best.wins_piece": "La mejor jugada {san} gana el/la {piece}.",
   "explanation.best.attacks_piece": "La mejor jugada {san} ataca el/la {piece}.",
@@ -513,5 +516,10 @@
   "import.results.mistakes": "Errores",
   "import.results.inaccuracies": "Imprecisiones",
   "settings.features.page_import": "Página de importación (experimental)",
-  "import.results.go_to_trainer": "Ir al entrenador"
+  "import.results.go_to_trainer": "Ir al entrenador",
+  "settings.features.group.developer": "Desarrollador",
+  "settings.features.debug_copy": "Botón de copiar información de depuración",
+  "trainer.debug.copy": "Depurar",
+  "trainer.debug.copy_title": "Copiar información de depuración al portapapeles",
+  "trainer.debug.copied": "¡Copiado!"
 }

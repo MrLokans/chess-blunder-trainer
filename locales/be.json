@@ -398,6 +398,7 @@
   "chess.piece.rook": "ладдзя",
   "chess.piece.queen": "ферзь",
   "chess.piece.king": "кароль",
+  "explanation.blunder.missed_mate": "Вы прапусцілі мат у адзін ход.",
   "explanation.blunder.hanging_piece": "Ваша {piece} на {square} без абароны і можа быць узята.",
   "explanation.blunder.exposed_piece": "Ход вашым {piece} пакінуў вашага {exposed} на {square} без абароны.",
   "explanation.blunder.bad_capture": "Узяцце вашым {piece} губіць матэрыял — ваша фігура каштуе больш за ўзятую.",
@@ -405,6 +406,7 @@
   "explanation.best.checkmate": "Лепшы ход {san} ставіць мат.",
   "explanation.best.capture_with_check": "Лепшы ход {san} бярэ {piece} з шахам.",
   "explanation.best.check_with_pattern": "Лепшы ход {san} дае шах, выкарыстоўваючы {pattern}.",
+  "explanation.best.check_wins_hanging": "Лепшы ход {san} дае шах, выйгрываючы неабароненага {piece} на {square}.",
   "explanation.best.check_winning": "Лепшы ход {san} дае шах і выйгравае матэрыял.",
   "explanation.best.pattern_fork": "Лепшы ход {san} стварае відэлец, атакуючы некалькі фігур адразу.",
   "explanation.best.pattern_pin": "Лепшы ход {san} стварае звязку і выйгравае матэрыял.",
@@ -412,6 +414,7 @@
   "explanation.best.pattern_discovered": "Лепшы ход {san} адкрывае схаваную атаку на каштоўную фігуру.",
   "explanation.best.pattern_back_rank": "Лепшы ход {san} выкарыстоўвае слабасць апошняй гарызанталі.",
   "explanation.best.pattern_hanging": "Лепшы ход {san} бярэ неабароненую фігуру.",
+  "explanation.best.pattern_hanging_piece": "Лепшы ход {san} бярэ неабароненага {piece} на {square}.",
   "explanation.best.pattern_generic": "Лепшы ход {san} выйгравае матэрыял з дапамогай {pattern}.",
   "explanation.best.wins_piece": "Лепшы ход {san} выйгравае {piece}.",
   "explanation.best.attacks_piece": "Лепшы ход {san} атакуе {piece}.",
@@ -513,5 +516,10 @@
   "import.results.mistakes": "Памылкі",
   "import.results.inaccuracies": "Недакладнасці",
   "settings.features.page_import": "Старонка імпарту (эксперыментальна)",
-  "import.results.go_to_trainer": "Перайсці да трэнажора"
+  "import.results.go_to_trainer": "Перайсці да трэнажора",
+  "settings.features.group.developer": "Распрацоўка",
+  "settings.features.debug_copy": "Кнопка капіравання адладачнай інфармацыі",
+  "trainer.debug.copy": "Адладка",
+  "trainer.debug.copy_title": "Скапіраваць адладачную інфармацыю ў буфер абмену",
+  "trainer.debug.copied": "Скапіравана!"
 }

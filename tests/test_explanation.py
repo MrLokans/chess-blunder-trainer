@@ -26,6 +26,7 @@ for _p in ["pawn", "knight", "bishop", "rook", "queen", "king"]:
         _EN_PIECES[f"chess.piece.{_p}.{_c}"] = _p
 
 _EN_TEMPLATES = {
+    "explanation.blunder.missed_mate": "You missed a checkmate in one move.",
     "explanation.blunder.hanging_piece": "Your {piece} on {square} is undefended and can be captured.",
     "explanation.blunder.exposed_piece": "Moving your {piece} left your {exposed} on {square} undefended.",
     "explanation.blunder.bad_capture": "Capturing with your {piece} loses material — your {piece} is worth more than the captured piece.",
@@ -40,6 +41,8 @@ _EN_TEMPLATES = {
     "explanation.best.pattern_discovered": "The best move {san} unleashes a discovered attack, hitting a valuable piece.",
     "explanation.best.pattern_back_rank": "The best move {san} exploits a back rank weakness.",
     "explanation.best.pattern_hanging": "The best move {san} captures an undefended piece.",
+    "explanation.best.pattern_hanging_piece": "The best move {san} captures the undefended {piece} on {square}.",
+    "explanation.best.check_wins_hanging": "The best move {san} gives check, winning the undefended {piece} on {square}.",
     "explanation.best.pattern_generic": "The best move {san} wins material with a {pattern}.",
     "explanation.best.wins_piece": "The best move {san} wins the {piece}.",
     "explanation.best.attacks_piece": "The best move {san} attacks the {piece}.",

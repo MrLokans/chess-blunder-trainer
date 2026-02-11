@@ -398,6 +398,7 @@
   "chess.piece.rook": "ладья",
   "chess.piece.queen": "ферзь",
   "chess.piece.king": "король",
+  "explanation.blunder.missed_mate": "Вы пропустили мат в один ход.",
   "explanation.blunder.hanging_piece": "Ваша {piece} на {square} без защиты и может быть взята.",
   "explanation.blunder.exposed_piece": "Ход вашим {piece} оставил вашего {exposed} на {square} без защиты.",
   "explanation.blunder.bad_capture": "Взятие вашим {piece} теряет материал — ваша фигура стоит больше взятой.",
@@ -405,6 +406,7 @@
   "explanation.best.checkmate": "Лучший ход {san} ставит мат.",
   "explanation.best.capture_with_check": "Лучший ход {san} берёт {piece} с шахом.",
   "explanation.best.check_with_pattern": "Лучший ход {san} даёт шах, используя {pattern}.",
+  "explanation.best.check_wins_hanging": "Лучший ход {san} даёт шах, выигрывая незащищённого {piece} на {square}.",
   "explanation.best.check_winning": "Лучший ход {san} даёт шах и выигрывает материал.",
   "explanation.best.pattern_fork": "Лучший ход {san} создаёт вилку, атакуя несколько фигур сразу.",
   "explanation.best.pattern_pin": "Лучший ход {san} создаёт связку и выигрывает материал.",
@@ -412,6 +414,7 @@
   "explanation.best.pattern_discovered": "Лучший ход {san} открывает скрытую атаку на ценную фигуру.",
   "explanation.best.pattern_back_rank": "Лучший ход {san} использует слабость последней горизонтали.",
   "explanation.best.pattern_hanging": "Лучший ход {san} берёт незащищённую фигуру.",
+  "explanation.best.pattern_hanging_piece": "Лучший ход {san} берёт незащищённого {piece} на {square}.",
   "explanation.best.pattern_generic": "Лучший ход {san} выигрывает материал с помощью {pattern}.",
   "explanation.best.wins_piece": "Лучший ход {san} выигрывает {piece}.",
   "explanation.best.attacks_piece": "Лучший ход {san} атакует {piece}.",
@@ -513,5 +516,10 @@
   "import.results.mistakes": "Ошибки",
   "import.results.inaccuracies": "Неточности",
   "settings.features.page_import": "Страница импорта (экспериментально)",
-  "import.results.go_to_trainer": "Перейти к тренажёру"
+  "import.results.go_to_trainer": "Перейти к тренажёру",
+  "settings.features.group.developer": "Разработка",
+  "settings.features.debug_copy": "Кнопка копирования отладочной информации",
+  "trainer.debug.copy": "Отладка",
+  "trainer.debug.copy_title": "Скопировать отладочную информацию в буфер обмена",
+  "trainer.debug.copied": "Скопировано!"
 }

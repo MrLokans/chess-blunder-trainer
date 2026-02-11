@@ -14,6 +14,15 @@ async function request(url, options = {}) {
   return resp.json();
 }
 
+async function requestText(url, options = {}) {
+  const resp = await fetch(url, options);
+  if (!resp.ok) {
+    const data = await resp.json().catch(() => ({}));
+    throw new ApiError(resp.status, data.detail || data.error || 'Request failed');
+  }
+  return resp.text();
+}
+
 function post(url, body) {
   return request(url, {
     method: 'POST',
@@ -114,6 +123,10 @@ export const client = {
   trainer: {
     getPuzzle: (params) => request(withQuery('/api/puzzle', params)),
     submitMove: (payload) => post('/api/submit', payload),
+  },
+
+  debug: {
+    gameInfo: (gameId, params) => requestText(withQuery(`/api/games/${encodeURIComponent(gameId)}/debug`, params)),
   },
 
   setup: {

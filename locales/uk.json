@@ -398,6 +398,7 @@
   "chess.piece.rook": "тура",
   "chess.piece.queen": "ферзь",
   "chess.piece.king": "король",
+  "explanation.blunder.missed_mate": "Ви пропустили мат в один хід.",
   "explanation.blunder.hanging_piece": "Ваша {piece} на {square} без захисту і може бути взята.",
   "explanation.blunder.exposed_piece": "Хід вашим {piece} залишив вашого {exposed} на {square} без захисту.",
   "explanation.blunder.bad_capture": "Взяття вашим {piece} втрачає матеріал — ваша фігура коштує більше за взяту.",
@@ -405,6 +406,7 @@
   "explanation.best.checkmate": "Найкращий хід {san} ставить мат.",
   "explanation.best.capture_with_check": "Найкращий хід {san} бере {piece} із шахом.",
   "explanation.best.check_with_pattern": "Найкращий хід {san} дає шах, використовуючи {pattern}.",
+  "explanation.best.check_wins_hanging": "Найкращий хід {san} дає шах, вигравши незахищеного {piece} на {square}.",
   "explanation.best.check_winning": "Найкращий хід {san} дає шах і виграє матеріал.",
   "explanation.best.pattern_fork": "Найкращий хід {san} створює вилку, атакуючи кілька фігур одразу.",
   "explanation.best.pattern_pin": "Найкращий хід {san} створює зв'язку і виграє матеріал.",
@@ -412,6 +414,7 @@
   "explanation.best.pattern_discovered": "Найкращий хід {san} відкриває приховану атаку на цінну фігуру.",
   "explanation.best.pattern_back_rank": "Найкращий хід {san} використовує слабкість останньої горизонталі.",
   "explanation.best.pattern_hanging": "Найкращий хід {san} бере незахищену фігуру.",
+  "explanation.best.pattern_hanging_piece": "Найкращий хід {san} бере незахищеного {piece} на {square}.",
   "explanation.best.pattern_generic": "Найкращий хід {san} виграє матеріал за допомогою {pattern}.",
   "explanation.best.wins_piece": "Найкращий хід {san} виграє {piece}.",
   "explanation.best.attacks_piece": "Найкращий хід {san} атакує {piece}.",
@@ -513,5 +516,10 @@
   "import.results.mistakes": "Помилки",
   "import.results.inaccuracies": "Неточності",
   "settings.features.page_import": "Сторінка імпорту (експериментально)",
-  "import.results.go_to_trainer": "Перейти до тренажера"
+  "import.results.go_to_trainer": "Перейти до тренажера",
+  "settings.features.group.developer": "Розробка",
+  "settings.features.debug_copy": "Кнопка копіювання відлагоджувальної інформації",
+  "trainer.debug.copy": "Відладка",
+  "trainer.debug.copy_title": "Скопіювати відлагоджувальну інформацію до буфера обміну",
+  "trainer.debug.copied": "Скопійовано!"
 }

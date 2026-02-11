@@ -398,6 +398,7 @@
   "chess.piece.rook": "rook",
   "chess.piece.queen": "queen",
   "chess.piece.king": "king",
+  "explanation.blunder.missed_mate": "You missed a checkmate in one move.",
   "explanation.blunder.hanging_piece": "Your {piece} on {square} is undefended and can be captured.",
   "explanation.blunder.exposed_piece": "Moving your {piece} left your {exposed} on {square} undefended.",
   "explanation.blunder.bad_capture": "Capturing with your {piece} loses material — your {piece} is worth more than the captured piece.",
@@ -405,6 +406,7 @@
   "explanation.best.checkmate": "The best move {san} delivers checkmate.",
   "explanation.best.capture_with_check": "The best move {san} captures the {piece} with check.",
   "explanation.best.check_with_pattern": "The best move {san} gives check, exploiting a {pattern}.",
+  "explanation.best.check_wins_hanging": "The best move {san} gives check, winning the undefended {piece} on {square}.",
   "explanation.best.check_winning": "The best move {san} gives check, winning material.",
   "explanation.best.pattern_fork": "The best move {san} creates a fork, attacking multiple pieces at once.",
   "explanation.best.pattern_pin": "The best move {san} creates a pin, winning material.",
@@ -412,6 +414,7 @@
   "explanation.best.pattern_discovered": "The best move {san} unleashes a discovered attack, hitting a valuable piece.",
   "explanation.best.pattern_back_rank": "The best move {san} exploits a back rank weakness.",
   "explanation.best.pattern_hanging": "The best move {san} captures an undefended piece.",
+  "explanation.best.pattern_hanging_piece": "The best move {san} captures the undefended {piece} on {square}.",
   "explanation.best.pattern_generic": "The best move {san} wins material with a {pattern}.",
   "explanation.best.wins_piece": "The best move {san} wins the {piece}.",
   "explanation.best.attacks_piece": "The best move {san} attacks the {piece}.",
@@ -513,5 +516,10 @@
   "import.results.mistakes": "Mistakes",
   "import.results.inaccuracies": "Inaccuracies",
   "settings.features.page_import": "Import page (experimental)",
-  "import.results.go_to_trainer": "Go to trainer"
+  "import.results.go_to_trainer": "Go to trainer",
+  "settings.features.group.developer": "Developer",
+  "settings.features.debug_copy": "Copy debug info button",
+  "trainer.debug.copy": "Debug",
+  "trainer.debug.copy_title": "Copy game debug info to clipboard",
+  "trainer.debug.copied": "Copied!"
 }

@@ -29,6 +29,8 @@ class Feature(StrEnum):
     AUTO_SYNC = "auto.sync"
     AUTO_ANALYZE = "auto.analyze"
 
+    DEBUG_COPY = "debug.copy"
+
     @classmethod
     def is_valid(cls, value: str) -> bool:
         return value in cls._value2member_map_
@@ -38,6 +40,7 @@ DEFAULTS: dict[Feature, bool] = {
     **dict.fromkeys(Feature, True),
     Feature.DASHBOARD_TRAPS: False,
     Feature.PAGE_IMPORT: False,
+    Feature.DEBUG_COPY: False,
 }
 
 FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
@@ -80,6 +83,12 @@ FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
             Feature.AUTO_ANALYZE,
         ],
     ),
+    (
+        "settings.features.group.developer",
+        [
+            Feature.DEBUG_COPY,
+        ],
+    ),
 ]
 
 FEATURE_LABELS: dict[Feature, str] = {
@@ -102,4 +111,5 @@ FEATURE_LABELS: dict[Feature, str] = {
     Feature.PAGE_IMPORT: "settings.features.page_import",
     Feature.AUTO_SYNC: "settings.features.auto_sync",
     Feature.AUTO_ANALYZE: "settings.features.auto_analyze",
+    Feature.DEBUG_COPY: "settings.features.debug_copy",
 }
