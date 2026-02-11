@@ -521,5 +521,20 @@
   "settings.features.debug_copy": "Przycisk kopiowania informacji debugowania",
   "trainer.debug.copy": "Debug",
   "trainer.debug.copy_title": "Skopiuj informacje debugowania do schowka",
-  "trainer.debug.copied": "Skopiowano!"
+  "trainer.debug.copied": "Skopiowano!",
+  "nav.starred": "Ulubione",
+  "starred.title": "Ulubione zagadki",
+  "starred.empty": "Brak ulubionych zagadek. Oznaczaj błędy w trenerze, aby je tutaj zapisać.",
+  "starred.unstar": "Usuń z ulubionych",
+  "starred.col.date": "Data",
+  "starred.col.players": "Gracze",
+  "starred.col.move": "Ruch",
+  "starred.col.eval_swing": "Strata oceny",
+  "starred.col.phase": "Faza",
+  "starred.col.note": "Notatka",
+  "trainer.star.add": "Ulubione",
+  "trainer.star.remove": "Usuń",
+  "trainer.star.added": "Dodano!",
+  "trainer.star.removed": "Usunięto",
+  "settings.features.starred_puzzles": "Ulubione zagadki"
 }

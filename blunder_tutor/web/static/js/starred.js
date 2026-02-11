@@ -1,0 +1,101 @@
+import { client } from './api.js';
+
+const PHASE_LABELS = {
+  0: 'Opening',
+  1: 'Middlegame',
+  2: 'Endgame',
+};
+
+const t = window.__i18n_t || ((key) => key);
+
+async function loadStarred() {
+  const content = document.getElementById('starredContent');
+  const emptyEl = document.getElementById('starredEmpty');
+  const listEl = document.getElementById('starredList');
+  const tbody = document.getElementById('starredTableBody');
+
+  try {
+    const data = await client.starred.list({ limit: 200 });
+
+    content.style.display = 'none';
+
+    if (!data.items || data.items.length === 0) {
+      emptyEl.style.display = 'block';
+      listEl.style.display = 'none';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    listEl.style.display = 'block';
+    tbody.innerHTML = '';
+
+    for (const item of data.items) {
+      const tr = document.createElement('tr');
+
+      const dateCell = document.createElement('td');
+      dateCell.textContent = item.date || '—';
+      tr.appendChild(dateCell);
+
+      const playersCell = document.createElement('td');
+      playersCell.textContent = (item.white && item.black)
+        ? `${item.white} vs ${item.black}`
+        : '—';
+      tr.appendChild(playersCell);
+
+      const moveCell = document.createElement('td');
+      const link = document.createElement('a');
+      link.href = `/?game_id=${encodeURIComponent(item.game_id)}&ply=${item.ply}`;
+      link.className = 'puzzle-link';
+      link.textContent = item.san || `ply ${item.ply}`;
+      moveCell.appendChild(link);
+      tr.appendChild(moveCell);
+
+      const evalCell = document.createElement('td');
+      evalCell.className = 'eval-swing';
+      if (item.cp_loss != null) {
+        evalCell.textContent = `-${(item.cp_loss / 100).toFixed(1)}`;
+      } else {
+        evalCell.textContent = '—';
+      }
+      tr.appendChild(evalCell);
+
+      const phaseCell = document.createElement('td');
+      phaseCell.textContent = PHASE_LABELS[item.game_phase] || '—';
+      tr.appendChild(phaseCell);
+
+      const noteCell = document.createElement('td');
+      noteCell.className = 'note-text';
+      noteCell.textContent = item.note || '';
+      noteCell.title = item.note || '';
+      tr.appendChild(noteCell);
+
+      const actionCell = document.createElement('td');
+      const unstarBtn = document.createElement('button');
+      unstarBtn.className = 'unstar-btn';
+      unstarBtn.textContent = '★';
+      unstarBtn.title = t('starred.unstar');
+      unstarBtn.addEventListener('click', async () => {
+        try {
+          await client.starred.unstar(item.game_id, item.ply);
+          tr.remove();
+          const remaining = tbody.querySelectorAll('tr');
+          if (remaining.length === 0) {
+            listEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+          }
+        } catch (e) {
+          console.error('Failed to unstar:', e);
+        }
+      });
+      actionCell.appendChild(unstarBtn);
+      tr.appendChild(actionCell);
+
+      tbody.appendChild(tr);
+    }
+  } catch (err) {
+    console.error('Failed to load starred puzzles:', err);
+    content.innerHTML = '<p class="error">Failed to load starred puzzles</p>';
+  }
+}
+
+loadStarred();

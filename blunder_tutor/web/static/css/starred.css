@@ -1,0 +1,68 @@
+.starred-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.starred-table th,
+.starred-table td {
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.starred-table th {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.starred-table tr:hover {
+  background: var(--bg-hover, rgba(0, 0, 0, 0.03));
+}
+
+.starred-table .puzzle-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.starred-table .puzzle-link:hover {
+  text-decoration: underline;
+}
+
+.starred-table .eval-swing {
+  font-family: monospace;
+  color: var(--error);
+}
+
+.starred-table .note-text {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.starred-table .unstar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.3rem;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+
+.starred-table .unstar-btn:hover {
+  color: var(--error);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}

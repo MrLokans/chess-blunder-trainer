@@ -2,16 +2,15 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import Any, ClassVar
 
 from blunder_tutor.background.base import BaseJob
 from blunder_tutor.background.registry import register_job
 from blunder_tutor.events import EventBus, JobExecutionRequestEvent
-
-if TYPE_CHECKING:
-    from blunder_tutor.repositories.game_repository import GameRepository
-    from blunder_tutor.repositories.settings import SettingsRepository
-    from blunder_tutor.services.job_service import JobService
+from blunder_tutor.fetchers import chesscom, lichess
+from blunder_tutor.repositories.game_repository import GameRepository
+from blunder_tutor.repositories.settings import SettingsRepository
+from blunder_tutor.services.job_service import JobService
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +67,6 @@ class SyncGamesJob(BaseJob):
     async def _sync_single_source(
         self, job_id: str, source: str, username: str
     ) -> dict[str, Any]:
-        from blunder_tutor.fetchers import chesscom, lichess
-
         await self.job_service.update_job_status(job_id, "running")
 
         max_games_str = await self.settings_repo.get_setting("sync_max_games")

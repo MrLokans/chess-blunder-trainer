@@ -55,6 +55,13 @@ async def import_page(request: Request) -> HTMLResponse:
     )
 
 
+async def starred_page(request: Request) -> HTMLResponse:
+    return request.app.state.templates.TemplateResponse(
+        "starred.html",
+        {"request": request, "title": "Starred Puzzles"},
+    )
+
+
 async def setup(request: Request, settings_repo: SettingsRepoDep) -> HTMLResponse:
     if await settings_repo.is_setup_completed():
         return RedirectResponse(url="/", status_code=303)
@@ -78,6 +85,9 @@ ui_router.add_api_route(
 )
 ui_router.add_api_route(
     "/import", import_page, response_class=HTMLResponse, methods=["GET"]
+)
+ui_router.add_api_route(
+    "/starred", starred_page, response_class=HTMLResponse, methods=["GET"]
 )
 ui_router.add_api_route("/setup", setup, response_class=HTMLResponse, methods=["GET"])
 ui_router.add_api_route(

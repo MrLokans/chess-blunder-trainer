@@ -29,6 +29,8 @@ class Feature(StrEnum):
     AUTO_SYNC = "auto.sync"
     AUTO_ANALYZE = "auto.analyze"
 
+    STARRED_PUZZLES = "starred.puzzles"
+
     DEBUG_COPY = "debug.copy"
 
     @classmethod
@@ -40,6 +42,7 @@ DEFAULTS: dict[Feature, bool] = {
     **dict.fromkeys(Feature, True),
     Feature.DASHBOARD_TRAPS: False,
     Feature.PAGE_IMPORT: False,
+    Feature.STARRED_PUZZLES: False,
     Feature.DEBUG_COPY: False,
 }
 
@@ -60,6 +63,7 @@ FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
             Feature.TRAINER_FILTER_PHASE,
             Feature.TRAINER_FILTER_TACTICAL,
             Feature.TRAINER_FILTER_DIFFICULTY,
+            Feature.STARRED_PUZZLES,
         ],
     ),
     (
@@ -111,5 +115,6 @@ FEATURE_LABELS: dict[Feature, str] = {
     Feature.PAGE_IMPORT: "settings.features.page_import",
     Feature.AUTO_SYNC: "settings.features.auto_sync",
     Feature.AUTO_ANALYZE: "settings.features.auto_analyze",
+    Feature.STARRED_PUZZLES: "settings.features.starred_puzzles",
     Feature.DEBUG_COPY: "settings.features.debug_copy",
 }

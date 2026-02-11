@@ -31,6 +31,14 @@ function post(url, body) {
   });
 }
 
+function put(url, body) {
+  return request(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+}
+
 function del(url) {
   return request(url, { method: 'DELETE' });
 }
@@ -122,7 +130,15 @@ export const client = {
 
   trainer: {
     getPuzzle: (params) => request(withQuery('/api/puzzle', params)),
+    getSpecificPuzzle: (gameId, ply) => request(withQuery('/api/puzzle/specific', { game_id: gameId, ply })),
     submitMove: (payload) => post('/api/submit', payload),
+  },
+
+  starred: {
+    star: (gameId, ply, note) => put(`/api/starred/${encodeURIComponent(gameId)}/${ply}`, note ? { note } : {}),
+    unstar: (gameId, ply) => del(`/api/starred/${encodeURIComponent(gameId)}/${ply}`),
+    isStarred: (gameId, ply) => request(`/api/starred/${encodeURIComponent(gameId)}/${ply}`),
+    list: (params) => request(withQuery('/api/starred', params)),
   },
 
   debug: {

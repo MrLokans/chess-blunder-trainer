@@ -521,5 +521,20 @@
   "settings.features.debug_copy": "Кнопка копирования отладочной информации",
   "trainer.debug.copy": "Отладка",
   "trainer.debug.copy_title": "Скопировать отладочную информацию в буфер обмена",
-  "trainer.debug.copied": "Скопировано!"
+  "trainer.debug.copied": "Скопировано!",
+  "nav.starred": "Избранное",
+  "starred.title": "Избранные задачи",
+  "starred.empty": "Нет избранных задач. Отмечайте зевки в тренажёре, чтобы сохранить их здесь.",
+  "starred.unstar": "Убрать из избранного",
+  "starred.col.date": "Дата",
+  "starred.col.players": "Игроки",
+  "starred.col.move": "Ход",
+  "starred.col.eval_swing": "Потеря оценки",
+  "starred.col.phase": "Фаза",
+  "starred.col.note": "Заметка",
+  "trainer.star.add": "В избранное",
+  "trainer.star.remove": "Убрать",
+  "trainer.star.added": "Добавлено!",
+  "trainer.star.removed": "Удалено",
+  "settings.features.starred_puzzles": "Избранные задачи"
 }

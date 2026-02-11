@@ -1,20 +1,18 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import Any, ClassVar
 
+import chess.engine
+
+from blunder_tutor.analysis.engine_pool import WorkCoordinator
+from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.background.base import BaseJob
 from blunder_tutor.background.registry import register_job
-
-if TYPE_CHECKING:
-    import chess.engine
-
-    from blunder_tutor.analysis.engine_pool import WorkCoordinator
-    from blunder_tutor.analysis.logic import GameAnalyzer
-    from blunder_tutor.events.event_bus import EventBus
-    from blunder_tutor.repositories.analysis import AnalysisRepository
-    from blunder_tutor.repositories.game_repository import GameRepository
-    from blunder_tutor.services.job_service import JobService
+from blunder_tutor.events.event_bus import EventBus
+from blunder_tutor.repositories.analysis import AnalysisRepository
+from blunder_tutor.repositories.game_repository import GameRepository
+from blunder_tutor.services.job_service import JobService
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +43,6 @@ class ImportPgnJob(BaseJob):
 
         await self.job_service.update_job_status(job_id, "running")
         await self.job_service.update_job_progress(job_id, 0, 1)
-
-        from blunder_tutor.analysis.engine_pool import WorkCoordinator
 
         owns_coordinator = self._coordinator is None
         coordinator = self._coordinator or WorkCoordinator(self.analyzer.engine_path, 1)

@@ -521,5 +521,20 @@
   "settings.features.debug_copy": "Кнопка капіравання адладачнай інфармацыі",
   "trainer.debug.copy": "Адладка",
   "trainer.debug.copy_title": "Скапіраваць адладачную інфармацыю ў буфер абмену",
-  "trainer.debug.copied": "Скапіравана!"
+  "trainer.debug.copied": "Скапіравана!",
+  "nav.starred": "Абранае",
+  "starred.title": "Абраныя задачы",
+  "starred.empty": "Няма абраных задач. Адзначайце памылкі ў трэнажоры, каб захаваць іх тут.",
+  "starred.unstar": "Прыбраць з абранага",
+  "starred.col.date": "Дата",
+  "starred.col.players": "Гульцы",
+  "starred.col.move": "Ход",
+  "starred.col.eval_swing": "Страта ацэнкі",
+  "starred.col.phase": "Фаза",
+  "starred.col.note": "Нататка",
+  "trainer.star.add": "Да абранага",
+  "trainer.star.remove": "Прыбраць",
+  "trainer.star.added": "Дададзена!",
+  "trainer.star.removed": "Выдалена",
+  "settings.features.starred_puzzles": "Абраныя задачы"
 }

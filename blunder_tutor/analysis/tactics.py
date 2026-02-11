@@ -654,9 +654,6 @@ def analyze_blunder_tactics(
     """Legacy function for backward compatibility."""
     result = classify_blunder_tactics(board_before, blunder_move, best_move)
 
-    # Convert to old format
-    from dataclasses import dataclass, field
-
     @dataclass
     class TacticsReport:
         patterns: list[TacticalMotif] = field(default_factory=list)

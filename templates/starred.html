@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_nav.html" import render_nav with context %}
+
+{% block title %}{{ t('starred.title') }} - Blunder Tutor{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/starred.css">
+{% endblock %}
+
+{% block content %}
+<h1>{{ t('starred.title') }}</h1>
+{{ render_nav('starred') }}
+{% include '_demo_banner.html' %}
+
+<div id="starredContent">
+  <p class="loading">{{ t('common.loading') }}</p>
+</div>
+
+<div id="starredEmpty" style="display: none;" class="empty-state">
+  <p>{{ t('starred.empty') }}</p>
+</div>
+
+<div id="starredList" style="display: none;">
+  <table class="starred-table">
+    <thead>
+      <tr>
+        <th>{{ t('starred.col.date') }}</th>
+        <th>{{ t('starred.col.players') }}</th>
+        <th>{{ t('starred.col.move') }}</th>
+        <th>{{ t('starred.col.eval_swing') }}</th>
+        <th>{{ t('starred.col.phase') }}</th>
+        <th>{{ t('starred.col.note') }}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="starredTableBody"></tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="module" src="/static/js/starred.js"></script>
+{% endblock %}

@@ -124,6 +124,11 @@
         <a id="gameLink" href="#" target="_blank" rel="noopener noreferrer" style="display: none; margin-left: 10px; font-size: var(--text-sm); color: var(--primary); text-decoration: none; white-space: nowrap;" title="{{ t('trainer.link.original_game') }}">
           🔗 {{ t('trainer.link.original_game') }}
         </a>
+        {% if has_feature('starred.puzzles') %}
+        <button class="btn btn-secondary" id="starPuzzleBtn" style="display: none; margin-left: 10px; padding: 4px 10px; font-size: var(--text-sm);" title="{{ t('trainer.star.add') }}">
+          ☆ {{ t('trainer.star.add') }}
+        </button>
+        {% endif %}
         {% if has_feature('debug.copy') %}
         <button class="btn btn-secondary" id="copyDebugBtn" style="display: none; margin-left: 10px; padding: 4px 10px; font-size: var(--text-sm);" title="{{ t('trainer.debug.copy_title') }}">
           📋 {{ t('trainer.debug.copy') }}

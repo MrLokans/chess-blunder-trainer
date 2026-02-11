@@ -521,5 +521,20 @@
   "settings.features.debug_copy": "Botón de copiar información de depuración",
   "trainer.debug.copy": "Depurar",
   "trainer.debug.copy_title": "Copiar información de depuración al portapapeles",
-  "trainer.debug.copied": "¡Copiado!"
+  "trainer.debug.copied": "¡Copiado!",
+  "nav.starred": "Favoritos",
+  "starred.title": "Puzzles favoritos",
+  "starred.empty": "No hay puzzles favoritos. Marca errores en el entrenador para guardarlos aquí.",
+  "starred.unstar": "Quitar de favoritos",
+  "starred.col.date": "Fecha",
+  "starred.col.players": "Jugadores",
+  "starred.col.move": "Jugada",
+  "starred.col.eval_swing": "Pérdida eval.",
+  "starred.col.phase": "Fase",
+  "starred.col.note": "Nota",
+  "trainer.star.add": "Favorito",
+  "trainer.star.remove": "Quitar",
+  "trainer.star.added": "¡Añadido!",
+  "trainer.star.removed": "Eliminado",
+  "settings.features.starred_puzzles": "Puzzles favoritos"
 }

@@ -521,5 +521,20 @@
   "settings.features.debug_copy": "Кнопка копіювання відлагоджувальної інформації",
   "trainer.debug.copy": "Відладка",
   "trainer.debug.copy_title": "Скопіювати відлагоджувальну інформацію до буфера обміну",
-  "trainer.debug.copied": "Скопійовано!"
+  "trainer.debug.copied": "Скопійовано!",
+  "nav.starred": "Обране",
+  "starred.title": "Обрані задачі",
+  "starred.empty": "Немає обраних задач. Відмічайте помилки у тренажері, щоб зберегти їх тут.",
+  "starred.unstar": "Прибрати з обраного",
+  "starred.col.date": "Дата",
+  "starred.col.players": "Гравці",
+  "starred.col.move": "Хід",
+  "starred.col.eval_swing": "Втрата оцінки",
+  "starred.col.phase": "Фаза",
+  "starred.col.note": "Нотатка",
+  "trainer.star.add": "До обраного",
+  "trainer.star.remove": "Прибрати",
+  "trainer.star.added": "Додано!",
+  "trainer.star.removed": "Видалено",
+  "settings.features.starred_puzzles": "Обрані задачі"
 }

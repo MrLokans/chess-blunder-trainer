@@ -8,6 +8,9 @@
   {% if has_feature('dashboard.traps') %}
   <a href="/traps" {% if active_page == 'traps' %}class="active"{% endif %}>{{ t('nav.traps') }}</a>
   {% endif %}
+  {% if has_feature('starred.puzzles') %}
+  <a href="/starred" {% if active_page == 'starred' %}class="active"{% endif %}>{{ t('nav.starred') }}</a>
+  {% endif %}
   {% if has_feature('page.management') %}
   <a href="/management" {% if active_page == 'management' %}class="active"{% endif %}>{{ t('nav.management') }}</a>
   {% endif %}

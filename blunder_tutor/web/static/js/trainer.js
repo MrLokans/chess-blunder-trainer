@@ -354,6 +354,45 @@ function updateCopyDebugBtn(gameId, ply) {
   };
 }
 
+let currentStarred = false;
+
+function updateStarButton(gameId, ply) {
+  const btn = document.getElementById('starPuzzleBtn');
+  if (!btn) return;
+  btn.style.display = gameId ? 'inline-block' : 'none';
+
+  async function refreshState() {
+    try {
+      const resp = await client.starred.isStarred(gameId, ply);
+      currentStarred = resp.starred;
+      btn.textContent = currentStarred ? '★ ' + t('trainer.star.remove') : '☆ ' + t('trainer.star.add');
+      btn.title = currentStarred ? t('trainer.star.remove') : t('trainer.star.add');
+    } catch {
+      // Ignore errors
+    }
+  }
+
+  btn.onclick = async () => {
+    try {
+      if (currentStarred) {
+        await client.starred.unstar(gameId, ply);
+        currentStarred = false;
+        btn.textContent = '☆ ' + t('trainer.star.add');
+        btn.title = t('trainer.star.add');
+      } else {
+        await client.starred.star(gameId, ply);
+        currentStarred = true;
+        btn.textContent = '★ ' + t('trainer.star.remove');
+        btn.title = t('trainer.star.remove');
+      }
+    } catch (e) {
+      console.error('Star toggle failed:', e);
+    }
+  };
+
+  refreshState();
+}
+
 function getLastMove() {
   const history = game.history({ verbose: true });
   return history.length > 0 ? history[history.length - 1] : null;
@@ -435,6 +474,7 @@ async function loadPuzzle() {
     updateTacticalBadge(puzzle.tactical_pattern);
     updateGameLink(puzzle.game_url);
     updateCopyDebugBtn(puzzle.game_id, puzzle.ply);
+    updateStarButton(puzzle.game_id, puzzle.ply);
     blunderMove.textContent = puzzle.blunder_san;
     evalBefore.textContent = puzzle.eval_before_display;
     evalAfter.textContent = puzzle.eval_after_display;
@@ -465,6 +505,70 @@ async function loadPuzzle() {
       console.error('Failed to load puzzle:', err);
       showEmptyState('unknown');
     }
+  }
+}
+
+async function loadSpecificPuzzle(gameId, ply) {
+  submitted = false;
+  bestRevealed = false;
+  boardFlipped = false;
+  moveHistory = [];
+  hideFeedback();
+  bestMoveInfo.classList.remove('visible');
+  historySection.style.display = 'none';
+  moveHistoryEl.textContent = '';
+  currentMoveEl.textContent = '-';
+  phaseIndicator.textContent = t('trainer.phase.guess');
+  phaseIndicator.className = 'phase guess';
+  submitBtn.disabled = false;
+  showBestBtn.disabled = false;
+  highlightLegend.style.display = 'none';
+  legendBest.style.display = 'none';
+  legendUser.style.display = 'none';
+  legendBlunder.style.display = 'flex';
+  if (legendTactic) legendTactic.style.display = 'none';
+  updateTacticalBadge(null);
+  if (tacticalInfo) tacticalInfo.style.display = 'none';
+  if (explanationInfo) explanationInfo.style.display = 'none';
+
+  try {
+    const data = await client.trainer.getSpecificPuzzle(gameId, ply);
+    hideEmptyState();
+    puzzle = data;
+    game = new Chess(puzzle.fen);
+
+    const orientation = puzzle.player_color === 'black' ? 'black' : 'white';
+    if (board) board.destroy();
+    board = new BoardAdapter('board', {
+      fen: puzzle.fen,
+      orientation: orientation,
+      game: game,
+      onMove: onBoardMove,
+    });
+
+    updateColorBadge(puzzle.player_color);
+    updatePhaseBadge(puzzle.game_phase);
+    updateTacticalBadge(puzzle.tactical_pattern);
+    updateGameLink(puzzle.game_url);
+    updateCopyDebugBtn(puzzle.game_id, puzzle.ply);
+    updateStarButton(puzzle.game_id, puzzle.ply);
+    blunderMove.textContent = puzzle.blunder_san;
+    evalBefore.textContent = puzzle.eval_before_display;
+    evalAfter.textContent = puzzle.eval_after_display;
+    cpLoss.textContent = t('trainer.blunder.cp_loss', { loss: (puzzle.cp_loss / 100).toFixed(1) });
+
+    updateEvalBar(puzzle.eval_before, puzzle.player_color, evalBarFill, evalValue);
+    bestMoveDisplay.textContent = puzzle.best_move_san || '...';
+    bestLineDisplay.textContent = puzzle.best_line ? puzzle.best_line.join(' ') : '...';
+
+    setTimeout(() => {
+      highlightLegend.style.display = 'flex';
+      redrawAllHighlights();
+      redrawArrows();
+    }, 100);
+  } catch (err) {
+    console.error('Failed to load specific puzzle:', err);
+    showEmptyState('unknown');
   }
 }
 
@@ -896,7 +1000,16 @@ async function init() {
   loadFiltersPanelState();
 
   await loadBoardSettings();
-  loadPuzzle();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const deepGameId = urlParams.get('game_id');
+  const deepPly = urlParams.get('ply');
+
+  if (deepGameId && deepPly) {
+    await loadSpecificPuzzle(deepGameId, parseInt(deepPly, 10));
+  } else {
+    loadPuzzle();
+  }
 }
 
 init();

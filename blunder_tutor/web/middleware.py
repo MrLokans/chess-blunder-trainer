@@ -7,6 +7,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from blunder_tutor.features import DEFAULTS
 from blunder_tutor.repositories.settings import SettingsRepository
 
 MUTATION_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
@@ -129,8 +130,6 @@ class LocaleMiddleware(BaseHTTPMiddleware):
             finally:
                 await settings_repo.close()
         except Exception:
-            from blunder_tutor.features import DEFAULTS
-
             return {f.value: v for f, v in DEFAULTS.items()}
 
     async def _detect_locale(self, request: Request) -> str:

@@ -180,6 +180,61 @@ class Trainer:
             game_url=game_url,
         )
 
+    async def get_specific_blunder(self, game_id: str, ply: int) -> BlunderPuzzle:
+        blunder = await self.analysis.get_move_analysis(game_id, ply)
+        if not blunder:
+            raise ValueError(f"No analysis found for game {game_id} ply {ply}")
+
+        blunder_uci = str(blunder["uci"])
+        blunder_san = str(blunder.get("san") or blunder_uci)
+        eval_before = int(blunder.get("eval_before", 0))
+        eval_after = int(blunder.get("eval_after", 0))
+        cp_loss = int(blunder.get("cp_loss", 0))
+        player = int(blunder["player"])
+        player_color = "white" if player == 0 else "black"
+
+        best_move_uci = blunder.get("best_move_uci")
+        best_move_san = blunder.get("best_move_san")
+        best_line = blunder.get("best_line")
+        best_move_eval = blunder.get("best_move_eval")
+
+        game = await self.games.load_game(game_id)
+        board = board_before_ply(game, ply)
+        game_url = extract_game_url(game)
+
+        game_metadata = await self.games.get_game(game_id)
+        actual_source = game_metadata.get("source", "any") if game_metadata else "any"
+        actual_username = game_metadata.get("username", "") if game_metadata else ""
+
+        tactical_squares = self._compute_tactical_squares(
+            board, blunder_uci, best_move_uci
+        )
+
+        return BlunderPuzzle(
+            game_id=game_id,
+            ply=ply,
+            blunder_uci=blunder_uci,
+            blunder_san=blunder_san,
+            fen=board.fen(),
+            source=actual_source,
+            username=actual_username,
+            eval_before=eval_before,
+            eval_after=eval_after,
+            cp_loss=cp_loss,
+            player_color=player_color,
+            best_move_uci=best_move_uci,
+            best_move_san=best_move_san,
+            best_line=best_line,
+            best_move_eval=best_move_eval,
+            game_phase=blunder.get("game_phase"),
+            tactical_pattern=blunder.get("tactical_pattern"),
+            tactical_reason=blunder.get("tactical_reason"),
+            difficulty=blunder.get("difficulty"),
+            missed_mate_depth=blunder.get("missed_mate_depth"),
+            tactical_squares=tactical_squares,
+            game_url=game_url,
+        )
+
     async def _compute_weights(
         self,
         candidates: list[dict[str, object]],

@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field
 
 from blunder_tutor.analysis.tactics import PATTERN_LABELS, TacticalPattern
 from blunder_tutor.constants import PHASE_FROM_STRING, PHASE_LABELS
+from blunder_tutor.utils.chess_utils import format_eval
+from blunder_tutor.utils.explanation import generate_explanation, resolve_explanation
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     AnalysisServiceDep,
@@ -265,11 +267,79 @@ async def puzzle(
     puzzle_data = puzzle_with_analysis.puzzle
     analysis = puzzle_with_analysis.analysis
 
-    from blunder_tutor.utils.chess_utils import format_eval
-    from blunder_tutor.utils.explanation import (
-        generate_explanation,
-        resolve_explanation,
+    explanation_raw = generate_explanation(
+        fen=puzzle_data.fen,
+        blunder_uci=puzzle_data.blunder_uci,
+        best_move_uci=analysis.best_move_uci,
+        tactical_pattern=PATTERN_LABELS.get(puzzle_data.tactical_pattern)
+        if puzzle_data.tactical_pattern is not None
+        else None,
+        cp_loss=puzzle_data.cp_loss,
+        eval_before=puzzle_data.eval_before,
+        eval_after=puzzle_data.eval_after,
+        best_line=analysis.best_line,
     )
+
+    locale = getattr(request.state, "locale", "en")
+    i18n = getattr(request.app.state, "i18n", None)
+    t = partial(i18n.t, locale) if i18n else lambda key, **kw: key
+    explanation = resolve_explanation(explanation_raw, t)
+
+    return {
+        "game_id": puzzle_data.game_id,
+        "ply": puzzle_data.ply,
+        "blunder_uci": puzzle_data.blunder_uci,
+        "blunder_san": puzzle_data.blunder_san,
+        "fen": puzzle_data.fen,
+        "player_color": puzzle_data.player_color,
+        "eval_before": puzzle_data.eval_before,
+        "eval_after": puzzle_data.eval_after,
+        "cp_loss": puzzle_data.cp_loss,
+        "eval_before_display": format_eval(
+            puzzle_data.eval_before, puzzle_data.player_color
+        ),
+        "eval_after_display": format_eval(
+            puzzle_data.eval_after, puzzle_data.player_color
+        ),
+        "best_move_uci": analysis.best_move_uci or "",
+        "best_move_san": analysis.best_move_san or "",
+        "best_line": analysis.best_line or [],
+        "best_move_eval": puzzle_data.best_move_eval,
+        "game_phase": PHASE_LABELS.get(puzzle_data.game_phase)
+        if puzzle_data.game_phase is not None
+        else None,
+        "tactical_pattern": PATTERN_LABELS.get(puzzle_data.tactical_pattern)
+        if puzzle_data.tactical_pattern is not None
+        else None,
+        "tactical_reason": puzzle_data.tactical_reason,
+        "tactical_squares": puzzle_data.tactical_squares,
+        "game_url": puzzle_data.game_url,
+        "explanation_blunder": explanation.blunder_text or None,
+        "explanation_best": explanation.best_move_text or None,
+    }
+
+
+@analysis_router.get(
+    "/api/puzzle/specific",
+    response_model=PuzzleResponse,
+    responses={400: {"model": ErrorResponse, "description": "Puzzle not found"}},
+    summary="Get a specific puzzle",
+    description="Returns a specific blunder puzzle by game_id and ply.",
+)
+async def specific_puzzle(
+    request: Request,
+    puzzle_service: PuzzleServiceDep,
+    _throttle: EngineThrottleDep,
+    game_id: Annotated[str, Query(description="Game ID")],
+    ply: Annotated[int, Query(description="Ply number")],
+) -> dict[str, Any]:
+    try:
+        puzzle_with_analysis = await puzzle_service.get_specific_puzzle(game_id, ply)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    puzzle_data = puzzle_with_analysis.puzzle
+    analysis = puzzle_with_analysis.analysis
 
     explanation_raw = generate_explanation(
         fen=puzzle_data.fen,
@@ -358,8 +428,6 @@ async def submit(
             user_eval_cp = user_eval.eval_cp
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-    from blunder_tutor.utils.chess_utils import format_eval
 
     user_eval_display = format_eval(user_eval_cp, payload.player_color)
 

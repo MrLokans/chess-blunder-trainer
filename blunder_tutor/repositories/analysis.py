@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 from blunder_tutor.constants import CLASSIFICATION_BLUNDER
 from blunder_tutor.repositories.base import BaseDbRepository
+from blunder_tutor.utils.time_control import classify_game_type
 
 
 class AnalysisRepository(BaseDbRepository):
@@ -134,6 +135,46 @@ class AnalysisRepository(BaseDbRepository):
             }
             for row in rows
         ]
+
+    async def get_move_analysis(
+        self, game_id: str, ply: int
+    ) -> dict[str, object] | None:
+        conn = await self.get_connection()
+        async with conn.execute(
+            """
+            SELECT game_id, ply, player, uci, san, eval_before, eval_after, cp_loss,
+                   best_move_uci, best_move_san, best_line, best_move_eval,
+                   game_phase, tactical_pattern, tactical_reason,
+                   difficulty, missed_mate_depth
+            FROM analysis_moves
+            WHERE game_id = ? AND ply = ?
+            """,
+            (game_id, ply),
+        ) as cursor:
+            row = await cursor.fetchone()
+
+        if not row:
+            return None
+
+        return {
+            "game_id": row[0],
+            "ply": row[1],
+            "player": row[2],
+            "uci": row[3],
+            "san": row[4],
+            "eval_before": row[5],
+            "eval_after": row[6],
+            "cp_loss": row[7],
+            "best_move_uci": row[8],
+            "best_move_san": row[9],
+            "best_line": row[10],
+            "best_move_eval": row[11],
+            "game_phase": row[12],
+            "tactical_pattern": row[13],
+            "tactical_reason": row[14],
+            "difficulty": row[15],
+            "missed_mate_depth": row[16],
+        }
 
     async def fetch_moves(self, game_id: str) -> list[dict[str, object]]:
         conn = await self.get_connection()
@@ -356,8 +397,6 @@ class AnalysisRepository(BaseDbRepository):
             game_types: Filter by game type - requires post-fetch filtering since
                         game_type is computed from time_control
         """
-        from blunder_tutor.utils.time_control import classify_game_type
-
         conn = await self.get_connection()
         conditions = ["am.classification = ?"]
         params: list = [CLASSIFICATION_BLUNDER]

@@ -521,5 +521,20 @@
   "settings.features.debug_copy": "复制调试信息按钮",
   "trainer.debug.copy": "调试",
   "trainer.debug.copy_title": "复制游戏调试信息到剪贴板",
-  "trainer.debug.copied": "已复制！"
+  "trainer.debug.copied": "已复制！",
+  "nav.starred": "收藏",
+  "starred.title": "收藏的题目",
+  "starred.empty": "暂无收藏题目。在训练器中标记失误以保存到这里。",
+  "starred.unstar": "取消收藏",
+  "starred.col.date": "日期",
+  "starred.col.players": "棋手",
+  "starred.col.move": "着法",
+  "starred.col.eval_swing": "评估损失",
+  "starred.col.phase": "阶段",
+  "starred.col.note": "备注",
+  "trainer.star.add": "收藏",
+  "trainer.star.remove": "取消收藏",
+  "trainer.star.added": "已收藏！",
+  "trainer.star.removed": "已取消",
+  "settings.features.starred_puzzles": "收藏题目功能"
 }

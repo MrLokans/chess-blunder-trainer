@@ -521,5 +521,20 @@
   "settings.features.debug_copy": "Copy debug info button",
   "trainer.debug.copy": "Debug",
   "trainer.debug.copy_title": "Copy game debug info to clipboard",
-  "trainer.debug.copied": "Copied!"
+  "trainer.debug.copied": "Copied!",
+  "nav.starred": "Starred",
+  "starred.title": "Starred Puzzles",
+  "starred.empty": "No starred puzzles yet. Star blunders from the trainer to save them here.",
+  "starred.unstar": "Remove from starred",
+  "starred.col.date": "Date",
+  "starred.col.players": "Players",
+  "starred.col.move": "Move",
+  "starred.col.eval_swing": "Eval Swing",
+  "starred.col.phase": "Phase",
+  "starred.col.note": "Note",
+  "trainer.star.add": "Star",
+  "trainer.star.remove": "Unstar",
+  "trainer.star.added": "Starred!",
+  "trainer.star.removed": "Unstarred",
+  "settings.features.starred_puzzles": "Starred (favorite) puzzles"
 }

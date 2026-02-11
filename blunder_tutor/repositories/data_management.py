@@ -35,6 +35,13 @@ class DataManagementRepository(BaseDbRepository):
             counts["background_jobs"] = (await cursor.fetchone())[0]
             await conn.execute("DELETE FROM background_jobs")
 
+            try:
+                cursor = await conn.execute("SELECT COUNT(*) FROM starred_puzzles")
+                counts["starred_puzzles"] = (await cursor.fetchone())[0]
+                await conn.execute("DELETE FROM starred_puzzles")
+            except Exception:
+                counts["starred_puzzles"] = 0
+
             cursor = await conn.execute("SELECT COUNT(*) FROM game_index_cache")
             counts["game_index_cache"] = (await cursor.fetchone())[0]
             await conn.execute("DELETE FROM game_index_cache")
