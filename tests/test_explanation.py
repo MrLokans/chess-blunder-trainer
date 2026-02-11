@@ -179,6 +179,22 @@ class TestGenerateExplanation:
         )
         assert "undefended" in result.best_move_text.lower()
 
+    def test_hanging_piece_pattern_capture_of_defended_piece(self):
+        # "Hanging Piece" pattern refers to the blunder creating a hanging piece
+        # (White queen on d4), NOT the captured piece being undefended.
+        # When best move captures a defended piece, don't say "undefended".
+        # Real bug: Qxf6 where queen on f6 is defended by rook on f8.
+        fen = "r1b2rk1/p1p4p/2p1pqp1/3p4/2PQ4/8/PP1N1PPP/R3K2R w KQ - 1 18"
+        result = _resolve(
+            fen,
+            blunder_uci="e1g1",
+            best_move_uci="d4f6",
+            tactical_pattern="Hanging Piece",
+            cp_loss=600,
+        )
+        assert "undefended" not in result.best_move_text.lower()
+        assert result.best_move_text != ""
+
     def test_hanging_piece_pattern_when_best_move_not_capture(self):
         # Best move avoids hanging a piece but doesn't capture → fall through
         fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -255,6 +271,33 @@ class TestGenerateExplanation:
             best_line=["e4", "e5", "d4"],
         )
         assert result.best_move_text != ""
+
+    def test_sacrifice_with_check_uses_combination_when_best_line_wins_material(self):
+        # Bxh7+ sacrifices bishop for pawn with check, then Ng5+ Kg8 Qxd5
+        # wins the queen. Should say "combination", not "captures the pawn".
+        fen = "r1b2rk1/pppp1ppp/8/3qB3/8/3B1N2/5PPP/1R1Q2K1 w - - 0 21"
+        result = _resolve(
+            fen,
+            blunder_uci="b1b5",
+            best_move_uci="d3h7",
+            cp_loss=298,
+            best_line=["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qxd5"],
+        )
+        assert "combination" in result.best_move_text.lower()
+        assert "pawn" not in result.best_move_text.lower()
+
+    def test_capture_with_check_still_works_for_high_value_captures(self):
+        # Nxf6+ captures the queen with check — captured value > mover value,
+        # so "capture with check" template should be used directly.
+        fen = "r1b1k2r/pppp1ppp/5q2/3Np3/2B1P3/8/PPPP1PPP/R1BQK2R w KQkq - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="c4d3",
+            best_move_uci="d5f6",
+            cp_loss=400,
+        )
+        assert "check" in result.best_move_text.lower()
+        assert "queen" in result.best_move_text.lower()
 
     def test_best_move_gives_check_with_pattern(self):
         fen = "4k3/8/8/8/8/8/8/3QK3 w - - 0 1"

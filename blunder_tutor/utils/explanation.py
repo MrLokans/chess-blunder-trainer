@@ -340,6 +340,31 @@ _PATTERN_KEYS = {
 }
 
 
+def _material_balance(board: chess.Board, color: chess.Color) -> int:
+    return _count_material(board, color) - _count_material(board, not color)
+
+
+def _check_best_line_material_gain(
+    board: chess.Board,
+    best_move: chess.Move,
+    best_line: list[str],
+    min_gain: int = 3,
+) -> I18nMessage | None:
+    san = board.san(best_move)
+    line_board = board.copy()
+    line_board.push(best_move)
+    balance_before = _material_balance(board, board.turn)
+    try:
+        for move_san in best_line[1:]:
+            line_board.push(line_board.parse_san(move_san))
+        balance_after = _material_balance(line_board, board.turn)
+        if balance_after - balance_before >= min_gain:
+            return I18nMessage(key="explanation.best.combination", params={"san": san})
+    except (ValueError, chess.IllegalMoveError):
+        pass
+    return None
+
+
 def _explain_best(
     board: chess.Board,
     best_move: chess.Move,
@@ -358,6 +383,17 @@ def _explain_best(
         if board.is_capture(best_move):
             captured = board.piece_at(best_move.to_square)
             if captured:
+                captured_val = PIECE_VALUES.get(captured.piece_type, 0)
+                mover_val = PIECE_VALUES.get(
+                    board.piece_type_at(best_move.from_square), 0
+                )
+                # When sacrificing or capturing a low-value piece with check,
+                # check if the best line wins significantly more material
+                # (e.g. Bxh7+ Kxh7 Ng5+ ... Qxd5 wins the queen).
+                if captured_val <= mover_val and best_line and len(best_line) >= 3:
+                    combo = _check_best_line_material_gain(board, best_move, best_line)
+                    if combo:
+                        return combo
                 return I18nMessage(
                     key="explanation.best.capture_with_check",
                     params={
@@ -397,7 +433,7 @@ def _explain_best(
         if pattern_lower == "hanging piece":
             if board.is_capture(best_move):
                 captured = board.piece_at(best_move.to_square)
-                if captured:
+                if captured and _is_hanging(board, best_move.to_square, not board.turn):
                     return I18nMessage(
                         key="explanation.best.pattern_hanging_piece",
                         params={
@@ -406,9 +442,7 @@ def _explain_best(
                             "square": chess.square_name(best_move.to_square),
                         },
                     )
-                return I18nMessage(
-                    key="explanation.best.pattern_hanging", params={"san": san}
-                )
+                # Captured piece is defended — fall through to generic capture logic
             # Fall through — the best move avoids the hanging piece, not captures it
         else:
             pattern_key = _PATTERN_KEYS.get(pattern_lower)
@@ -447,19 +481,9 @@ def _explain_best(
 
     # Best-line material analysis
     if best_line and len(best_line) >= 3:
-        line_board = board.copy()
-        line_board.push(best_move)
-        material_before = _count_material(board, board.turn)
-        try:
-            for move_san in best_line[1:]:
-                line_board.push(line_board.parse_san(move_san))
-            material_after = _count_material(line_board, board.turn)
-            if material_after - material_before >= 3:
-                return I18nMessage(
-                    key="explanation.best.combination", params={"san": san}
-                )
-        except (ValueError, chess.IllegalMoveError):
-            pass
+        combo = _check_best_line_material_gain(board, best_move, best_line)
+        if combo:
+            return combo
 
     # cp-loss avoidance
     pawn_loss = cp_loss / 100

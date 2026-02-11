@@ -207,6 +207,22 @@ class TestClassifyBlunderTactics:
         # Should handle gracefully even without obvious tactics
         assert result.primary_pattern == TacticalPattern.NONE or result.blunder_reason
 
+    def test_pre_existing_pin_not_attributed_to_blunder(self):
+        # Qd5 pins f7 pawn to kg8 in both positions. Rb2 doesn't create
+        # this pin, so it shouldn't be reported as an allowed tactic.
+        board = chess.Board(
+            "1r4k1/p2bqpp1/3b3p/2pQ4/2P2PP1/4p2P/P3B1R1/4R1K1 b - - 1 26"
+        )
+        blunder = chess.Move.from_uci("b8b2")
+        best = chess.Move.from_uci("d6f4")
+
+        result = classify_blunder_tactics(board, blunder, best)
+
+        assert (
+            result.allowed_tactic is None
+            or result.allowed_tactic.pattern != TacticalPattern.PIN
+        )
+
     def test_primary_pattern_from_missed_tactic(self):
         """Primary pattern comes from missed tactic if present."""
         board = chess.Board(

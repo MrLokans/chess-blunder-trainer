@@ -621,8 +621,15 @@ def classify_blunder_tactics(
 
     player_color = board_before.turn
 
-    # Check what new weaknesses exist after our blunder
+    # Check what NEW weaknesses exist after our blunder (exclude pre-existing ones)
+    weaknesses_before = analyze_position_weaknesses(board_before, player_color)
     weaknesses_after = analyze_position_weaknesses(board_after_blunder, player_color)
+    pre_existing = {(w.pattern, tuple(sorted(w.squares))) for w in weaknesses_before}
+    new_weaknesses = [
+        w
+        for w in weaknesses_after
+        if (w.pattern, tuple(sorted(w.squares))) not in pre_existing
+    ]
 
     # 3. If we know opponent's reply, check if it's a tactic
     if opponent_reply:
@@ -630,9 +637,8 @@ def classify_blunder_tactics(
         if allowed:
             result.allowed_tactic = allowed
             reasons.append(f"Allowed {allowed.description.lower()}")
-    elif weaknesses_after:
-        # Even without opponent's reply, we can flag hanging pieces we created
-        worst_weakness = max(weaknesses_after, key=lambda w: w.material_gain)
+    elif new_weaknesses:
+        worst_weakness = max(new_weaknesses, key=lambda w: w.material_gain)
         result.allowed_tactic = worst_weakness
         reasons.append(f"Created {worst_weakness.description.lower()}")
 
