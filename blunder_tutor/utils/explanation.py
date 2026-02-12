@@ -1,11 +1,100 @@
 """Beginner-friendly explanation generator for blunder puzzles.
 
-Generates natural-language explanations of why a move was a blunder
-and what the correct move achieves, using template-based logic.
+Background
+----------
+Translating a chess engine's numerical evaluation into a human-readable
+sentence is a known hard problem.  Engines output centipawn scores and
+best-move sequences; they never explain *why*.  The explanation must be
+reverse-engineered from the output — and the approaches in the literature
+range from rigid rule-based templates to LLM-powered generation.
 
-Two-phase design:
-  1. `generate_explanation()` analyzes the position and returns i18n keys + params
-  2. `resolve_explanation()` formats them via TranslationManager for the active locale
+The academic lineage starts with Bratko / Guid / Sadikov (Ljubljana,
+2006-2013), who compared positional features across consecutive positions
+and filled sentence templates ("The move aims to centralize the Knight").
+Jhamtani et al. (CMU, ACL 2018) scaled this up with neural seq2seq models
+trained on 298K move-commentary pairs.  The current frontier — Kim et al.
+(2024, concept-guided commentary) and Soliman & Ehab (2025, Caïssa AI) —
+pairs engine analysis with LLMs grounded in structured chess concepts.
+
+A recurring finding across all of this work: **LLMs hallucinate when asked
+to evaluate positions, but perform well when asked to *explain* pre-computed
+engine analysis.**  The engine provides ground truth; the language layer
+translates it.  See docs/explaining-engines.md for the full survey.
+
+Our approach
+------------
+We don't use an LLM.  Instead we adopt the most reliable offline strategy
+from the literature: **walk the engine's principal variation (PV) and
+describe what concretely happens** — who captures what, whether the line
+ends in check or mate, what the net material change is.  The PV is the
+single most trustworthy artefact Stockfish produces: it shows the actual
+sequence of best play for both sides.
+
+This "PV-first" design replaced an earlier template-only system that tried
+to infer explanations from static pattern detection (forks, pins, hanging
+pieces).  That approach repeatedly misattributed causality: a pre-existing
+pin was blamed on the blunder, a defended queen was called "undefended",
+a bishop sacrifice for a pawn was described as "captures the pawn with
+check" when the real point was winning the queen three moves later.
+
+Architecture (three phases)
+---------------------------
+``_explain_best`` resolves the best-move explanation in priority order:
+
+1. **Immediate mate** — if the best move is checkmate, say so.  No PV
+   needed; this is always unambiguous.
+
+2. **PV analysis** (``_analyze_pv`` → ``_explain_best_from_pv``) — walk
+   the engine's best line (up to 5 half-moves), track every capture by
+   both sides, compute the material-balance delta, detect mate in the
+   line.  From the structured ``PVAnalysis`` result:
+
+   - *Mate in N*: "Qf7+ leads to checkmate in 3 moves: Qf7+ Kh8 Qf8#"
+   - *Sacrifice combination*: the player gives up material (opponent
+     captures something) but ends with a net gain ≥ 3 pawns.  If a
+     tactical pattern label is available from ``analysis/tactics.py``,
+     it enriches the message: "Bxh7+ wins the queen via discovered
+     attack: Bxh7+ Kxh7 Ng5+ Kg8 Qxd5".  Otherwise: "wins the queen
+     through a combination".
+   - *Non-sacrifice material win*: net gain ≥ 1 pawn through a
+     multi-move sequence that isn't a simple direct capture.
+   - *Simple direct capture*: the PV deliberately returns ``None`` so
+     the static layer can describe it more concisely ("wins the rook")
+     without redundantly showing the one-move line.
+
+3. **Static fallback** (``_explain_best_static``) — used when no PV is
+   available or when the PV is uninformative (no material gain, no mate).
+   This is the old template system, kept as a safety net:
+
+   - Check + capture ("captures the rook with check")
+   - Named tactical pattern ("creates a fork")
+   - Simple capture ("wins the bishop")
+   - Null-move threat detection ("threatens checkmate")
+   - Centipawn-loss avoidance ("avoids losing 3.5 pawns of advantage")
+   - Bare fallback ("the best move is Nf3")
+
+Blunder-side explanation
+------------------------
+``_explain_blunder`` is simpler and still fully static: it examines the
+position *after* the blunder was played and checks, in order:
+
+- Did the player miss an immediate mate?
+- Did the moved piece land on an undefended square?
+- Did moving the piece expose another piece?
+- Was it a bad capture (trading a high-value piece for a low-value one)?
+- Fallback: report the centipawn loss as pawn equivalents.
+
+i18n design
+-----------
+Explanations are produced as ``I18nMessage(key, params)`` — never as raw
+text.  Piece names are passed as i18n key references (e.g.
+``chess.piece.queen.acc`` for accusative case), enabling grammatically
+correct translations in morphologically rich languages (Russian, Polish,
+Ukrainian).  The ``resolve_explanation`` function pairs the message with
+a ``t()`` translator to produce the final ``ResolvedExplanation``.
+
+All explanation keys live under the ``explanation.blunder.*`` and
+``explanation.best.*`` namespaces in ``locales/*.json``.
 """
 
 from __future__ import annotations
@@ -248,6 +337,181 @@ def _count_material(board: chess.Board, color: chess.Color) -> int:
     return total
 
 
+def _material_balance(board: chess.Board, color: chess.Color) -> int:
+    return _count_material(board, color) - _count_material(board, not color)
+
+
+# ---------------------------------------------------------------------------
+# PV (principal variation) analysis
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class _PVCapture:
+    piece_type: chess.PieceType
+    by_color: chess.Color
+
+
+@dataclass(frozen=True)
+class PVAnalysis:
+    """Structured result from walking the engine's principal variation."""
+
+    moves_san: list[str]
+    gives_check: bool
+    gives_mate: bool
+    balance_gain: int
+    player_captures: list[_PVCapture]
+    opponent_captures: list[_PVCapture]
+    best_opponent_loss: chess.PieceType | None
+
+    @property
+    def is_sacrifice_combination(self) -> bool:
+        return bool(self.opponent_captures) and self.balance_gain >= 3
+
+    @property
+    def net_piece_won(self) -> chess.PieceType | None:
+        if self.balance_gain < 1:
+            return None
+        return self.best_opponent_loss
+
+
+def _analyze_pv(
+    board: chess.Board,
+    best_move: chess.Move,
+    best_line: list[str],
+) -> PVAnalysis | None:
+    player = board.turn
+    line_board = board.copy()
+    balance_before = _material_balance(board, player)
+
+    player_caps: list[_PVCapture] = []
+    opp_caps: list[_PVCapture] = []
+    gives_check = False
+    gives_mate = False
+
+    try:
+        line_board.push(best_move)
+        if line_board.is_checkmate():
+            gives_mate = True
+        gives_check = line_board.is_check()
+
+        if board.is_capture(best_move):
+            captured = board.piece_at(best_move.to_square)
+            if captured:
+                player_caps.append(_PVCapture(captured.piece_type, player))
+
+        for move_san in best_line[1:]:
+            prev_board = line_board.copy()
+            move = line_board.parse_san(move_san)
+            is_cap = line_board.is_capture(move)
+            side = line_board.turn
+            line_board.push(move)
+
+            if is_cap:
+                captured = prev_board.piece_at(move.to_square)
+                if captured:
+                    cap = _PVCapture(captured.piece_type, side)
+                    if side == player:
+                        player_caps.append(cap)
+                    else:
+                        opp_caps.append(cap)
+
+            if line_board.is_checkmate():
+                gives_mate = True
+                break
+    except (ValueError, chess.IllegalMoveError):
+        if not player_caps and not gives_check:
+            return None
+
+    balance_after = _material_balance(line_board, player)
+
+    best_opp_loss: chess.PieceType | None = None
+    if player_caps:
+        best_opp_loss = max(
+            (c.piece_type for c in player_caps),
+            key=lambda pt: PIECE_VALUES.get(pt, 0),
+        )
+
+    return PVAnalysis(
+        moves_san=best_line,
+        gives_check=gives_check,
+        gives_mate=gives_mate,
+        balance_gain=balance_after - balance_before,
+        player_captures=player_caps,
+        opponent_captures=opp_caps,
+        best_opponent_loss=best_opp_loss,
+    )
+
+
+def _format_line(moves: list[str], max_moves: int = 5) -> str:
+    return " ".join(moves[:max_moves])
+
+
+def _explain_best_from_pv(
+    board: chess.Board,
+    best_move: chess.Move,
+    pv: PVAnalysis,
+    tactical_pattern: str | None,
+) -> I18nMessage | None:
+    san = board.san(best_move)
+    line_str = _format_line(pv.moves_san)
+
+    # Mate in the PV
+    if pv.gives_mate:
+        mate_depth = len(pv.moves_san) // 2 + 1
+        if mate_depth <= 1:
+            return I18nMessage(key="explanation.best.checkmate", params={"san": san})
+        return I18nMessage(
+            key="explanation.best.pv_mate",
+            params={"san": san, "moves": str(mate_depth), "line": line_str},
+        )
+
+    # Sacrifice that wins material through a combination
+    if pv.is_sacrifice_combination and pv.net_piece_won:
+        piece_key = _type_key(pv.net_piece_won, "acc")
+        pattern_suffix = ""
+        if _has_pattern(tactical_pattern):
+            pattern_suffix = tactical_pattern.lower()
+        if pattern_suffix:
+            return I18nMessage(
+                key="explanation.best.pv_wins_piece_via_pattern",
+                params={
+                    "san": san,
+                    "piece": piece_key,
+                    "pattern": pattern_suffix,
+                    "line": line_str,
+                },
+            )
+        return I18nMessage(
+            key="explanation.best.pv_wins_piece_via_combination",
+            params={"san": san, "piece": piece_key, "line": line_str},
+        )
+
+    # Non-sacrifice that wins material (net gain ≥ 1 pawn)
+    if pv.balance_gain >= 1 and pv.net_piece_won:
+        piece_key = _type_key(pv.net_piece_won, "acc")
+        # Simple first-move capture that wins the piece directly
+        if (
+            board.is_capture(best_move)
+            and len(pv.player_captures) == 1
+            and pv.balance_gain >= PIECE_VALUES.get(pv.net_piece_won, 0)
+        ):
+            return None  # Let static analysis handle simple captures
+        return I18nMessage(
+            key="explanation.best.pv_wins_piece",
+            params={"san": san, "piece": piece_key, "line": line_str},
+        )
+
+    # Material gain without a clear piece (e.g. wins 2 pawns through trades)
+    if pv.balance_gain >= 3:
+        return I18nMessage(
+            key="explanation.best.combination",
+            params={"san": san},
+        )
+
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Blunder-side explanation
 # ---------------------------------------------------------------------------
@@ -327,10 +591,9 @@ def _explain_blunder(
 
 
 # ---------------------------------------------------------------------------
-# Best-move explanation
+# Best-move explanation (static fallbacks)
 # ---------------------------------------------------------------------------
 
-# Pattern key → i18n explanation key
 _PATTERN_KEYS = {
     "fork": "explanation.best.pattern_fork",
     "pin": "explanation.best.pattern_pin",
@@ -340,60 +603,22 @@ _PATTERN_KEYS = {
 }
 
 
-def _material_balance(board: chess.Board, color: chess.Color) -> int:
-    return _count_material(board, color) - _count_material(board, not color)
-
-
-def _check_best_line_material_gain(
-    board: chess.Board,
-    best_move: chess.Move,
-    best_line: list[str],
-    min_gain: int = 3,
-) -> I18nMessage | None:
-    san = board.san(best_move)
-    line_board = board.copy()
-    line_board.push(best_move)
-    balance_before = _material_balance(board, board.turn)
-    try:
-        for move_san in best_line[1:]:
-            line_board.push(line_board.parse_san(move_san))
-        balance_after = _material_balance(line_board, board.turn)
-        if balance_after - balance_before >= min_gain:
-            return I18nMessage(key="explanation.best.combination", params={"san": san})
-    except (ValueError, chess.IllegalMoveError):
-        pass
-    return None
-
-
-def _explain_best(
+def _explain_best_static(
     board: chess.Board,
     best_move: chess.Move,
     tactical_pattern: str | None,
     cp_loss: int,
-    best_line: list[str] | None = None,
 ) -> I18nMessage | None:
+    """Fallback explanation using only static position analysis (no PV)."""
     san = board.san(best_move)
 
-    # Checkmate
     if _move_gives_mate(board, best_move):
         return I18nMessage(key="explanation.best.checkmate", params={"san": san})
 
-    # Check + capture — accusative ("captures the {piece}")
     if _move_gives_check(board, best_move):
         if board.is_capture(best_move):
             captured = board.piece_at(best_move.to_square)
             if captured:
-                captured_val = PIECE_VALUES.get(captured.piece_type, 0)
-                mover_val = PIECE_VALUES.get(
-                    board.piece_type_at(best_move.from_square), 0
-                )
-                # When sacrificing or capturing a low-value piece with check,
-                # check if the best line wins significantly more material
-                # (e.g. Bxh7+ Kxh7 Ng5+ ... Qxd5 wins the queen).
-                if captured_val <= mover_val and best_line and len(best_line) >= 3:
-                    combo = _check_best_line_material_gain(board, best_move, best_line)
-                    if combo:
-                        return combo
                 return I18nMessage(
                     key="explanation.best.capture_with_check",
                     params={
@@ -420,16 +645,12 @@ def _explain_best(
             )
         return I18nMessage(key="explanation.best.check_winning", params={"san": san})
 
-    # Named tactical pattern
     if _has_pattern(tactical_pattern):
         pattern_lower = tactical_pattern.lower()
-        # Discovered attack variants
         if "discovered" in pattern_lower:
             return I18nMessage(
                 key="explanation.best.pattern_discovered", params={"san": san}
             )
-        # "Hanging piece" describes the blunder (left a piece undefended),
-        # so only use the capture template when the best move actually captures.
         if pattern_lower == "hanging piece":
             if board.is_capture(best_move):
                 captured = board.piece_at(best_move.to_square)
@@ -442,8 +663,6 @@ def _explain_best(
                             "square": chess.square_name(best_move.to_square),
                         },
                     )
-                # Captured piece is defended — fall through to generic capture logic
-            # Fall through — the best move avoids the hanging piece, not captures it
         else:
             pattern_key = _PATTERN_KEYS.get(pattern_lower)
             if pattern_key:
@@ -453,7 +672,6 @@ def _explain_best(
                 params={"san": san, "pattern": pattern_lower},
             )
 
-    # Simple winning capture — accusative ("wins the {piece}")
     if board.is_capture(best_move):
         captured = board.piece_at(best_move.to_square)
         if captured:
@@ -465,7 +683,6 @@ def _explain_best(
                 },
             )
 
-    # Threat detection (null-move)
     threat = _detect_next_move_threat(board, best_move)
     if threat:
         threat_keys = {
@@ -479,13 +696,6 @@ def _explain_best(
             params={"san": san, "piece": threat.piece_key},
         )
 
-    # Best-line material analysis
-    if best_line and len(best_line) >= 3:
-        combo = _check_best_line_material_gain(board, best_move, best_line)
-        if combo:
-            return combo
-
-    # cp-loss avoidance
     pawn_loss = cp_loss / 100
     if pawn_loss >= 1.5:
         return I18nMessage(
@@ -493,8 +703,36 @@ def _explain_best(
             params={"san": san, "loss": f"{pawn_loss:.1f}"},
         )
 
-    # Bare fallback
     return I18nMessage(key="explanation.best.fallback", params={"san": san})
+
+
+# ---------------------------------------------------------------------------
+# Best-move explanation (PV-first, with static fallback)
+# ---------------------------------------------------------------------------
+
+
+def _explain_best(
+    board: chess.Board,
+    best_move: chess.Move,
+    tactical_pattern: str | None,
+    cp_loss: int,
+    best_line: list[str] | None = None,
+) -> I18nMessage | None:
+    # Phase 1: immediate mate (no PV needed)
+    if _move_gives_mate(board, best_move):
+        san = board.san(best_move)
+        return I18nMessage(key="explanation.best.checkmate", params={"san": san})
+
+    # Phase 2: PV-first — walk the engine line to explain what happens
+    if best_line and len(best_line) >= 2:
+        pv = _analyze_pv(board, best_move, best_line)
+        if pv:
+            pv_msg = _explain_best_from_pv(board, best_move, pv, tactical_pattern)
+            if pv_msg:
+                return pv_msg
+
+    # Phase 3: static fallback (pattern detection, simple captures, threats)
+    return _explain_best_static(board, best_move, tactical_pattern, cp_loss)
 
 
 # ---------------------------------------------------------------------------

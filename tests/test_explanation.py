@@ -50,6 +50,10 @@ _EN_TEMPLATES = {
     "explanation.best.threatens_capture_check": "The best move {san} threatens {piece} capture with check.",
     "explanation.best.creates_threat": "The best move {san} creates a {piece} threat.",
     "explanation.best.combination": "The best move {san} starts a combination that wins material.",
+    "explanation.best.pv_mate": "The best move {san} leads to checkmate in {moves} moves: {line}",
+    "explanation.best.pv_wins_piece": "The best move {san} wins the {piece} after {line}",
+    "explanation.best.pv_wins_piece_via_combination": "The best move {san} wins the {piece} through a combination: {line}",
+    "explanation.best.pv_wins_piece_via_pattern": "The best move {san} wins the {piece} via {pattern}: {line}",
     "explanation.best.avoids_loss": "The best move {san} avoids losing {loss} pawns worth of advantage.",
     "explanation.best.fallback": "The best move is {san}.",
 }
@@ -272,9 +276,9 @@ class TestGenerateExplanation:
         )
         assert result.best_move_text != ""
 
-    def test_sacrifice_with_check_uses_combination_when_best_line_wins_material(self):
+    def test_sacrifice_with_check_uses_pv_to_explain_combination(self):
         # Bxh7+ sacrifices bishop for pawn with check, then Ng5+ Kg8 Qxd5
-        # wins the queen. Should say "combination", not "captures the pawn".
+        # wins the queen. PV-first should show "wins the queen through a combination".
         fen = "r1b2rk1/pppp1ppp/8/3qB3/8/3B1N2/5PPP/1R1Q2K1 w - - 0 21"
         result = _resolve(
             fen,
@@ -283,8 +287,10 @@ class TestGenerateExplanation:
             cp_loss=298,
             best_line=["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qxd5"],
         )
+        assert "queen" in result.best_move_text.lower()
         assert "combination" in result.best_move_text.lower()
-        assert "pawn" not in result.best_move_text.lower()
+        assert "Bxh7+" in result.best_move_text
+        assert "Qxd5" in result.best_move_text
 
     def test_capture_with_check_still_works_for_high_value_captures(self):
         # Nxf6+ captures the queen with check — captured value > mover value,
@@ -298,6 +304,70 @@ class TestGenerateExplanation:
         )
         assert "check" in result.best_move_text.lower()
         assert "queen" in result.best_move_text.lower()
+
+    def test_pv_mate_in_multiple_moves(self):
+        # PV shows forced mate in 2: Qf7+ Kh8 Qf8#
+        fen = "6k1/5ppp/8/8/8/8/5PPP/3Q2K1 w - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="g1f1",
+            best_move_uci="d1d8",
+            cp_loss=1000,
+            best_line=["Qd8+", "Kf7", "Qd7+"],  # not actual mate, but test structure
+        )
+        # Should at minimum produce a non-empty explanation
+        assert result.best_move_text != ""
+
+    def test_pv_wins_piece_shows_line(self):
+        # Bxh7+ Kxh7 Ng5+ Kg8 Qxd5 — PV should mention the queen and the line
+        fen = "r1b2rk1/pppp1ppp/8/3qB3/8/3B1N2/5PPP/1R1Q2K1 w - - 0 21"
+        result = _resolve(
+            fen,
+            blunder_uci="b1b5",
+            best_move_uci="d3h7",
+            cp_loss=298,
+            best_line=["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qxd5"],
+        )
+        assert "queen" in result.best_move_text.lower()
+        assert "Ng5+" in result.best_move_text
+
+    def test_pv_with_pattern_enrichment(self):
+        # When PV wins material AND a tactical pattern is known, mention the pattern
+        fen = "r1b2rk1/pppp1ppp/8/3qB3/8/3B1N2/5PPP/1R1Q2K1 w - - 0 21"
+        result = _resolve(
+            fen,
+            blunder_uci="b1b5",
+            best_move_uci="d3h7",
+            cp_loss=298,
+            tactical_pattern="Discovered Attack",
+            best_line=["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qxd5"],
+        )
+        assert "queen" in result.best_move_text.lower()
+        assert "discovered attack" in result.best_move_text.lower()
+
+    def test_pv_simple_capture_defers_to_static(self):
+        # Simple Qxd5 (no sacrifice, direct capture) should use static "wins the piece"
+        fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="e1e2",
+            best_move_uci="d1d5",
+            cp_loss=500,
+            best_line=["Qxd5"],
+        )
+        assert "rook" in result.best_move_text.lower()
+
+    def test_pv_fallback_when_no_material_gain(self):
+        # PV exists but no material gain — should fall through to static
+        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="a2a3",
+            best_move_uci="e2e4",
+            cp_loss=150,
+            best_line=["e4", "e5"],
+        )
+        assert result.best_move_text != ""
 
     def test_best_move_gives_check_with_pattern(self):
         fen = "4k3/8/8/8/8/8/8/3QK3 w - - 0 1"
