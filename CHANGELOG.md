@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.4]
+
+### Changed
+
+- **PV-first blunder explanations**: Reworked the explanation engine to lead with the principal variation (PV) line and use static templating, producing clearer and more understandable descriptions of why a move was a blunder.
+- **Board images reworked**: Updated all screenshot assets in the README. Disabled board coordinates display due to unreliable rendering across browsers.
+
+---
+
+## [1.7.3]
+
+### Changed
+
+- Minor adjustments to blunder explanation wording and formatting.
+
+---
+
+## [1.7.2]
+
+### Fixed
+
+- **Dashboard stats consistency**: Proper filtering by game types and date ranges across all dashboard widgets — previously some charts ignored active filters.
+
+---
+
+## [1.7.1]
+
+### Fixed
+
+- **localStorage not cleared on data wipe**: Clicking "Remove all data" left stale filter state in localStorage, causing phantom filters on next use.
+- **Incorrect gameType filtering in dashboards**: Dashboard charts applied game type filters incorrectly, showing data from unselected time controls.
+
+---
+
+## [1.7.0]
+
+### Added
+
+- **Manual PGN import** (experimental): Import games by pasting PGN text directly, without needing a Lichess/Chess.com account. Feature-flagged and switched off by default.
+- **Favourite puzzles** (experimental): Star/unstar blunder puzzles during training to build a personal collection of positions worth revisiting. Dedicated `/starred` page with list view. Feature-flagged under `trainer.starred`.
+- **Debug info for game analysis** (experimental): New `GET /api/games/<game_id>/debug` endpoint and optional 📋 Debug button in the trainer (behind `debug.copy` feature flag) that copies a full diagnostic snapshot — metadata, PGN, move-by-move analysis table, and blunder summary.
+- **Improved blunder descriptions**: Detect hanging-piece missed captures and mate-in-1 misses in explanations.
+
+### Changed
+
+- **Blunder classification aligned with Lichess**: Dead-end positions where mate was already predicted are no longer classified as blunders, reducing false positives.
+- **Dropped legacy username resolution**: Removed old username-resolving code path that was superseded by the Setup/Management page flow.
+
+---
+
+## [1.6.1]
+
+### Fixed
+
+- **False blunder classification in mate-predicted positions**: Positions where Stockfish already predicted a forced mate were incorrectly marking every subsequent move as a blunder. Adopted Lichess-style logic to handle these dead-end positions correctly, significantly reducing inflated blunder counts.
+
+---
+
 ## [1.6.0]
 
 ### Added
