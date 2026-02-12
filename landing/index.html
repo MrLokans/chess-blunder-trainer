@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blunder Tutor — Stop Repeating the Same Chess Mistakes</title>
+  <meta name="description" content="Import your games from Lichess and Chess.com, find your blunders with Stockfish, and practice them as puzzles. Free, self-hosted, private.">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Blunder Tutor — Stop Repeating the Same Chess Mistakes">
+  <meta property="og:description" content="Import your games, find your blunders with Stockfish, practice them as puzzles. Free & self-hosted.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="images/main-screen.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Analytics -->
+  <script defer data-domain="blundertutor.com" src="https://analytics.mrlokans.work/js/script.js"></script>
+</head>
+<body>
+
+  <!-- ===== Header ===== -->
+  <header class="header">
+    <nav class="nav container">
+      <a href="#" class="nav__logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 16l-1.447.724a1 1 0 0 0-.553.894V20h12v-2.382a1 1 0 0 0-.553-.894L16 16"/>
+          <path d="M8.5 14h7"/>
+          <path d="M9 6.5a3 3 0 1 1 6 0c0 2-3 3-3 5.5-0-2.5-3-3.5-3-5.5z"/>
+        </svg>
+        Blunder Tutor
+      </a>
+
+      <ul class="nav__links">
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#comparison">Why Blunder Tutor</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#screenshots">Screenshots</a></li>
+        <li>
+          <a href="https://github.com/MrLokans/chess-blunder-trainer" class="nav__cta">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            GitHub
+          </a>
+        </li>
+      </ul>
+
+      <button class="nav__hamburger" aria-label="Toggle menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </nav>
+  </header>
+
+  <!-- ===== Hero ===== -->
+  <section class="hero">
+    <div class="hero__content container">
+      <div class="hero__badge">♟ Free, Open Source and Self-Hosted</div>
+      <h1 class="hero__title">
+        Stop repeating the<br>same <span>chess mistakes</span>
+      </h1>
+      <p class="hero__subtitle">
+        Import your games from Lichess and Chess.com, find your blunders with Stockfish, and turn them into puzzles you can actually practice.
+      </p>
+      <div class="hero__actions">
+        <a href="#quickstart" class="btn btn--primary">
+          Get Started — It's Free
+        </a>
+        <a href="https://github.com/MrLokans/chess-blunder-trainer" class="btn btn--outline">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+
+      <div class="hero__screenshot">
+        <img src="images/main-screen.png" alt="Blunder Tutor trainer interface showing a chess puzzle derived from your own blunder" width="2494" height="1662" loading="eager">
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== How It Works ===== -->
+  <section id="how-it-works" class="section section--alt">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">How It Works</div>
+        <h2 class="section__title">Three steps to better chess</h2>
+        <p class="section__desc">No account needed. Your data stays on your machine.</p>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step__icon">
+            <span class="step__number">1</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <h3 class="step__title">Import your games</h3>
+          <p class="step__desc">Connect your Lichess or Chess.com username. Blunder Tutor fetches all your games automatically.</p>
+        </div>
+        <div class="step">
+          <div class="step__icon">
+            <span class="step__number">2</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <h3 class="step__title">Find your blunders</h3>
+          <p class="step__desc">Stockfish analyzes every move and identifies the positions where you went wrong — blunders, mistakes, inaccuracies.</p>
+        </div>
+        <div class="step">
+          <div class="step__icon">
+            <span class="step__number">3</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <h3 class="step__title">Practice as puzzles</h3>
+          <p class="step__desc">Each blunder becomes a puzzle. Drill the exact positions where <em>you</em> made mistakes until you stop repeating them.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Comparison ===== -->
+  <section id="comparison" class="section">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">Why Blunder Tutor</div>
+        <h2 class="section__title">Not just another analysis tool</h2>
+        <p class="section__desc">Other tools show you the mistake. Blunder Tutor makes you fix it.</p>
+      </div>
+
+      <div class="comparison">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Lichess Analysis</th>
+              <th>Chess.com Review</th>
+              <th class="highlight">Blunder Tutor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Find your blunders</td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+              <td class="highlight"><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Persistent blunder library across all games</td>
+              <td>
+                <span class="cross">✗</span>
+                <span class="info-tip" tabindex="0">?<span class="info-tip__content">"Learn from your mistakes" lets you retry blunders, but only within a single game review session. No persistent collection across games.</span></span>
+              </td>
+              <td>
+                <span class="cross">✗</span>
+                <span class="info-tip" tabindex="0">?<span class="info-tip__content">Game Review "Key Moments" lets you retry positions (premium only), but scoped to one game at a time. No aggregated blunder library.</span></span>
+              </td>
+              <td class="highlight"><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Track blunder patterns</td>
+              <td>
+                <span class="partial">Limited</span>
+                <span class="info-tip" tabindex="0">?<span class="info-tip__content">Lichess Insights shows accuracy by opening, time control, and game phase — but doesn't track specific blunder positions or patterns over time.</span></span>
+              </td>
+              <td>
+                <span class="partial">Limited</span>
+                <span class="info-tip" tabindex="0">?<span class="info-tip__content">Premium Game Review shows accuracy stats and opening performance, but no blunder-specific pattern tracking or heatmaps.</span></span>
+              </td>
+              <td class="highlight"><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Free unlimited analysis</td>
+              <td><span class="check">✓</span></td>
+              <td><span class="cross">1/day free</span></td>
+              <td class="highlight"><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Works with both platforms</td>
+              <td><span class="cross">Lichess only</span></td>
+              <td><span class="cross">Chess.com only</span></td>
+              <td class="highlight"><span class="check">✓ Both</span></td>
+            </tr>
+            <tr>
+              <td>Self-hosted &amp; private</td>
+              <td>
+                <span class="partial">Technically</span>
+                <span class="info-tip" tabindex="0">?<span class="info-tip__content">Lichess is open-source (lila), but self-hosting requires MongoDB, Redis, Elasticsearch, and multiple services. Not a simple single-binary setup.</span></span>
+              </td>
+              <td><span class="cross">✗</span></td>
+              <td class="highlight"><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Price</td>
+              <td>Free</td>
+              <td>$50–100/year</td>
+              <td class="highlight">Free</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Features ===== -->
+  <section id="features" class="section section--alt">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">Features</div>
+        <h2 class="section__title">Everything you need to improve</h2>
+      </div>
+
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">Multi-Platform Import</h3>
+          <p class="feature-card__desc">Pull games from Lichess and Chess.com into one place. All time controls, all game types.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">Puzzle Trainer</h3>
+          <p class="feature-card__desc">Your blunders become interactive puzzles with hints, best-move arrows, and move validation on a real board.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">Analytics Dashboard</h3>
+          <p class="feature-card__desc">Accuracy trends, blunder heatmaps, opening breakdown, game-phase distribution. See exactly where you're weakest.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">Auto-Sync</h3>
+          <p class="feature-card__desc">Scheduled background fetching and analysis. New games are imported and analyzed automatically.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M20 9h3"/><path d="M20 14h3"/><path d="M1 9h3"/><path d="M1 14h3"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">Stockfish 18 Analysis</h3>
+          <p class="feature-card__desc">Configurable analysis depth with the strongest open-source chess engine. Runs entirely on your hardware.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">Self-Hosted &amp; Private</h3>
+          <p class="feature-card__desc">Your data never leaves your machine. No accounts, no tracking, no subscriptions. Just Docker and go.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Screenshots ===== -->
+  <section id="screenshots" class="section">
+    <div class="container">
+      <div class="section__header">
+        <div class="section__label">In Action</div>
+        <h2 class="section__title">See it for yourself</h2>
+      </div>
+
+      <div class="screenshots">
+        <div class="screenshots__item">
+          <img src="images/dashboard-main.png" alt="Dashboard showing total games, analyzed games, blunder count, and puzzle activity heatmap" width="2490" height="1686" loading="lazy">
+          <div class="screenshots__caption">Dashboard — stats overview &amp; puzzle activity</div>
+        </div>
+        <div class="screenshots__item">
+          <img src="images/dashboard-accuracy.png" alt="Game accuracy charts by date and hour of day" width="2436" height="1702" loading="lazy">
+          <div class="screenshots__caption">Dashboard — accuracy trends by date &amp; time of day</div>
+        </div>
+        <div class="screenshots__item">
+          <img src="images/dashboard-game-type-and-opening.png" alt="Blunders breakdown by game type and opening" width="2424" height="1644" loading="lazy">
+          <div class="screenshots__caption">Dashboard — blunders by game type &amp; opening</div>
+        </div>
+        <div class="screenshots__item">
+          <img src="images/dashboard-phase-and-color.png" alt="Blunders by game phase and color" width="2438" height="1446" loading="lazy">
+          <div class="screenshots__caption">Dashboard — blunders by game phase &amp; color</div>
+        </div>
+        <div class="screenshots__item">
+          <img src="images/dashboard-difficulty-and-critical-moments.png" alt="Blunder difficulty distribution and critical moment analysis" width="2492" height="1586" loading="lazy">
+          <div class="screenshots__caption">Dashboard — difficulty &amp; critical moments</div>
+        </div>
+        <div class="screenshots__item">
+          <img src="images/dashboard-resilience-and-tactics.png" alt="Conversion and resilience stats with tactical pattern breakdown" width="2438" height="1398" loading="lazy">
+          <div class="screenshots__caption">Dashboard — conversion, resilience &amp; tactical patterns</div>
+        </div>
+        <div class="screenshots__item">
+          <img src="images/board-styling.png" alt="Board appearance settings with piece sets and board colors" width="978" height="1128" loading="lazy">
+          <div class="screenshots__caption">Settings — board appearance &amp; piece sets</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Quick Start ===== -->
+  <section id="quickstart" class="section section--alt">
+    <div class="container">
+      <div class="quickstart">
+        <div class="section__header">
+          <div class="section__label">Quick Start</div>
+          <h2 class="section__title">Up and running in 30 seconds</h2>
+        </div>
+
+        <div class="quickstart__code">
+          <button class="copy-btn">Copy</button>
+          <pre><span class="comment"># Run with Docker — that's all you need</span>
+<span class="prompt">$ </span>docker run -p 8000:8000 \
+    -v $(pwd)/data:/app/data \
+    ghcr.io/mrlokans/blunder-tutor:latest</pre>
+        </div>
+
+        <p class="quickstart__note">
+          Then open <strong>http://localhost:8000</strong> and enter your chess username.<br>
+          For Docker Compose and more options, see the <a href="https://github.com/MrLokans/chess-blunder-trainer/blob/main/docs/DOCKER.md">deployment guide</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div class="footer__left">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 16l-1.447.724a1 1 0 0 0-.553.894V20h12v-2.382a1 1 0 0 0-.553-.894L16 16"/>
+          <path d="M8.5 14h7"/>
+          <path d="M9 6.5a3 3 0 1 1 6 0c0 2-3 3-3 5.5-0-2.5-3-3.5-3-5.5z"/>
+        </svg>
+        Blunder Tutor · AGPL-3.0
+      </div>
+      <ul class="footer__links">
+        <li><a href="https://github.com/MrLokans/chess-blunder-trainer">GitHub</a></li>
+        <li><a href="https://github.com/MrLokans/chess-blunder-trainer/blob/main/CHANGELOG.md">Changelog</a></li>
+        <li><a href="https://github.com/MrLokans/chess-blunder-trainer/blob/main/docs/DOCKER.md">Docs</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
