@@ -25,9 +25,9 @@
 
 #board {
   width: 100%;
+  box-shadow: var(--shadow-md);
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: var(--shadow-md);
 }
 
 /* Board square color customization via CSS variables */

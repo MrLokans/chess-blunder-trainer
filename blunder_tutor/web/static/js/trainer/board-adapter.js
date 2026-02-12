@@ -33,7 +33,7 @@ export class BoardAdapter {
       fen: fen,
       orientation: cgColor,
       turnColor: turnColor,
-      coordinates: true,
+      coordinates: false,
       animation: { enabled: true, duration: 150 },
       movable: {
         free: false,

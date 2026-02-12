@@ -34,6 +34,7 @@ FORCE :=
 .PHONY: analyze analyze-bulk train-ui
 .PHONY: format lint lint/be lint/fe check test test/be test/fe download-pieces migrate
 .PHONY: docker/build docker/run docker/stop
+.PHONY: landing
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*##"; print "Available targets:"} \
@@ -155,6 +156,10 @@ docker/run: ## Run Docker container (optional: DOCKER_TAG=dev)
 
 docker/stop: ## Stop running container
 	-docker stop $$(docker ps -q --filter ancestor=$(DOCKER_IMAGE):$(DOCKER_TAG))
+
+# Marketing
+landing: ## Serve the landing page locally on port 8080
+	uv run python -m http.server 8080 -d landing
 
 # Cleanup
 clean: ## Remove Python cache files

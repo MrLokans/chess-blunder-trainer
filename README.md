@@ -14,11 +14,14 @@
 
 ## Screenshots
 
-![Trainer](images/main.png)
+![Trainer](images/main-screen.png)
 
 | | |
 |:-:|:-:|
-| ![Dashboard](images/dashboard-1.png) | ![Dashboard Stats](images/dashboard-2.png) |
+| ![Dashboard Overview](images/dashboard-main.png) | ![Accuracy Trends](images/dashboard-accuracy.png) |
+| ![Game Type & Opening](images/dashboard-game-type-and-opening.png) | ![Phase & Color](images/dashboard-phase-and-color.png) |
+| ![Difficulty & Critical Moments](images/dashboard-difficulty-and-critical-moments.png) | ![Resilience & Tactics](images/dashboard-resilience-and-tactics.png) |
+| ![Board Styling](images/board-styling.png) | |
 
 ## Why Not Just Use Lichess or Chess.com Analysis?
 
