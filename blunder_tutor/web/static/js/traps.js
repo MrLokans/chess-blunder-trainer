@@ -71,11 +71,11 @@ function renderTable(stats) {
   tbody.innerHTML = filtered.map(s => `
     <tr data-trap-id="${s.trap_id}">
       <td>${s.name}</td>
-      <td><span class="category-badge">${s.category}</span></td>
+      <td><span class="category-badge">${t('traps.category.' + s.category) || s.category}</span></td>
       <td class="count-entered">${s.entered}</td>
       <td class="count-sprung">${s.sprung}</td>
       <td class="count-executed">${s.executed}</td>
-      <td>${s.last_seen ? new Date(s.last_seen).toLocaleDateString() : '-'}</td>
+      <td>${s.last_seen ? formatDate(s.last_seen, { year: 'numeric', month: '2-digit', day: '2-digit' }) : '-'}</td>
     </tr>
   `).join('');
 

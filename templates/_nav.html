@@ -1,6 +1,10 @@
 {# Navigation macro for consistent navigation across pages #}
 {% macro render_nav(active_page='') %}
-<nav class="trainer-nav">
+<nav class="trainer-nav" id="mainNav">
+  <button class="nav-hamburger" id="navHamburger" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="navLinks">
   <a href="/" class="trainer-nav-link{% if active_page == 'trainer' %} active{% endif %}">{{ t('nav.trainer') }}</a>
   {% if has_feature('page.dashboard') %}
   <a href="/dashboard" class="trainer-nav-link{% if active_page == 'dashboard' %} active{% endif %}">{{ t('nav.dashboard') }}</a>
@@ -18,6 +22,7 @@
   <a href="/import" class="trainer-nav-link{% if active_page == 'import' %} active{% endif %}">{{ t('nav.import') }}</a>
   {% endif %}
   <a href="/settings" class="trainer-nav-link{% if active_page == 'settings' %} active{% endif %}">{{ t('nav.settings') }}</a>
+  </div>
 </nav>
 {% endmacro %}
 

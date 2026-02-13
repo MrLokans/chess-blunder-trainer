@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_nav.html" import render_link_nav with context %}
+{% from "_nav.html" import render_nav with context %}
 
 {% block title %}{{ title }} - Blunder Tutor{% endblock %}
 
@@ -25,13 +25,7 @@
     </h1>
     <button class="shortcuts-hint-btn" id="shortcutsHintBtn" title="Keyboard shortcuts (?)">?</button>
   </div>
-  <nav class="trainer-nav">
-    <a href="/" class="trainer-nav-link active">{{ t('nav.trainer') }}</a>
-    {% if has_feature('page.dashboard') %}
-    <a href="/dashboard" class="trainer-nav-link">{{ t('nav.dashboard') }}</a>
-    {% endif %}
-    <a href="/settings" class="trainer-nav-link">{{ t('nav.settings') }}</a>
-  </nav>
+  {{ render_nav('trainer') }}
 </header>
 
 <!-- Session Bar -->

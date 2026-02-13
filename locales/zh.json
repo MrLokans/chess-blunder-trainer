@@ -279,7 +279,7 @@
   "management.danger.confirm1": "您确定要删除所有数据吗？\n\n这将永久删除：\n• 所有已导入的对局\n• 所有分析结果\n• 所有题目尝试记录\n• 所有任务历史\n\n此操作无法撤销！",
   "management.danger.confirm2": "这是最后的警告！\n\n点击确定以永久删除所有数据。",
   "settings.title": "设置",
-  "settings.subtitle": "管理您的国际象棋用户名",
+  "settings.subtitle": "偏好设置、外观和同步选项",
   "settings.username_required": "至少需要一个用户名才能继续训练。",
   "settings.lichess_label": "Lichess 用户名",
   "settings.lichess_placeholder": "输入您的 Lichess 用户名",

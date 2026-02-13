@@ -279,7 +279,7 @@
   "management.danger.confirm1": "¿Estás seguro de que quieres eliminar TODOS los datos?\n\nEsto eliminará permanentemente:\n• Todas las partidas importadas\n• Todos los resultados de análisis\n• Todos los intentos de puzzles\n• Todo el historial de tareas\n\n¡Esta acción no se puede deshacer!",
   "management.danger.confirm2": "¡Esta es tu última advertencia!\n\nHaz clic en OK para eliminar permanentemente todos los datos.",
   "settings.title": "Ajustes",
-  "settings.subtitle": "Gestiona tus nombres de usuario de ajedrez",
+  "settings.subtitle": "Preferencias, apariencia y sincronización",
   "settings.username_required": "Se requiere al menos un nombre de usuario para continuar entrenando.",
   "settings.lichess_label": "Nombre de usuario de Lichess",
   "settings.lichess_placeholder": "Introduce tu nombre de usuario de Lichess",

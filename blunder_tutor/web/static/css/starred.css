@@ -19,8 +19,12 @@
   letter-spacing: 0.5px;
 }
 
-.starred-table tr:hover {
-  background: var(--bg-hover, rgba(0, 0, 0, 0.03));
+.starred-table tbody tr {
+  cursor: pointer;
+}
+
+.starred-table tbody tr:hover {
+  background: var(--warm-gray, rgba(0, 0, 0, 0.03));
 }
 
 .starred-table .puzzle-link {

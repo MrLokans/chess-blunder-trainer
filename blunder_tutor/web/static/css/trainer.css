@@ -822,17 +822,27 @@
   transition: transform 0.3s ease;
 }
 
+.chevron-icon {
+  transition: transform 0.2s ease;
+}
+
 .chevron-icon.collapsed {
   transform: rotate(-90deg);
 }
 
 .filters-content {
   padding: var(--s-xl);
-  display: block;
+  max-height: 800px;
+  overflow: hidden;
+  transition: max-height 0.25s ease, padding 0.25s ease, opacity 0.2s ease;
+  opacity: 1;
 }
 
 .filters-content.collapsed {
-  display: none;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
 }
 
 .filter-group {

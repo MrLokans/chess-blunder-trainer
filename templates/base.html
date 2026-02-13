@@ -60,6 +60,26 @@
   <!-- Base JavaScript (jQuery for chessboard, if needed) -->
   {% block base_scripts %}{% endblock %}
 
+  <!-- Mobile nav toggle -->
+  <script>
+    (function() {
+      var btn = document.getElementById('navHamburger');
+      var links = document.getElementById('navLinks');
+      if (btn && links) {
+        btn.addEventListener('click', function() {
+          var open = links.classList.toggle('open');
+          btn.setAttribute('aria-expanded', open);
+        });
+        document.addEventListener('click', function(e) {
+          if (!btn.contains(e.target) && !links.contains(e.target)) {
+            links.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+    })();
+  </script>
+
   <!-- Theme sync - fetch from server and update cache -->
   <script src="/static/js/theme-sync.js"></script>
 

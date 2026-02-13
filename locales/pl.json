@@ -279,7 +279,7 @@
   "management.danger.confirm1": "Czy na pewno chcesz usunąć WSZYSTKIE dane?\n\nTo trwale usunie:\n• Wszystkie zaimportowane partie\n• Wszystkie wyniki analiz\n• Wszystkie próby rozwiązania zadań\n• Całą historię zadań\n\nTej akcji nie można cofnąć!",
   "management.danger.confirm2": "To ostatnie ostrzeżenie!\n\nKliknij OK, aby trwale usunąć wszystkie dane.",
   "settings.title": "Ustawienia",
-  "settings.subtitle": "Zarządzaj swoimi nazwami użytkowników",
+  "settings.subtitle": "Preferencje, wygląd i synchronizacja",
   "settings.username_required": "Wymagana jest co najmniej jedna nazwa użytkownika, aby kontynuować trening.",
   "settings.lichess_label": "Nazwa użytkownika Lichess",
   "settings.lichess_placeholder": "Wprowadź nazwę użytkownika Lichess",

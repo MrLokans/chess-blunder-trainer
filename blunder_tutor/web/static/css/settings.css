@@ -1,9 +1,3 @@
-  body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
   .container {
     max-width: 580px;
   }

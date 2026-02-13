@@ -13,6 +13,7 @@ export class JobCard {
     pendingCountId = null,
     fetchPending = null,
     pendingField = 'pending_count',
+    pendingMessageKey = null,
     fetchStatus,
     startJob,
     stopJob = null,
@@ -27,6 +28,7 @@ export class JobCard {
     this.pendingCountId = pendingCountId;
     this.fetchPending = fetchPending;
     this.pendingField = pendingField;
+    this.pendingMessageKey = pendingMessageKey;
     this.fetchStatus = fetchStatus;
     this.startJob = startJob;
     this.stopJob = stopJob;
@@ -51,8 +53,13 @@ export class JobCard {
     try {
       if (this.fetchPending && this.pendingCountId) {
         const pending = await this.fetchPending();
-        document.getElementById(this.pendingCountId).textContent =
-          pending[this.pendingField] || 0;
+        const count = pending[this.pendingField] || 0;
+        const el = document.getElementById(this.pendingCountId);
+        if (el) {
+          el.textContent = this.pendingMessageKey
+            ? t(this.pendingMessageKey, { count })
+            : count;
+        }
       }
 
       const status = await this.fetchStatus();

@@ -6,7 +6,7 @@ const PHASE_LABELS = {
   2: 'Endgame',
 };
 
-const t = window.__i18n_t || ((key) => key);
+const t = window.t || ((key) => key);
 
 async function loadStarred() {
   const content = document.getElementById('starredContent');
@@ -33,7 +33,9 @@ async function loadStarred() {
       const tr = document.createElement('tr');
 
       const dateCell = document.createElement('td');
-      dateCell.textContent = item.date || '—';
+      dateCell.textContent = item.date
+        ? formatDate(item.date, { year: 'numeric', month: '2-digit', day: '2-digit' })
+        : '—';
       tr.appendChild(dateCell);
 
       const playersCell = document.createElement('td');

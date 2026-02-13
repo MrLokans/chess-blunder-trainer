@@ -70,15 +70,15 @@
   <div id="analysisMessage" style="display: none;"></div>
 
   <div id="analysisInfo" style="margin-bottom: 16px;">
-    <p style="color: var(--text-muted); font-size: 0.875rem;">
-      <span id="unanalyzedCount">-</span> {{ t('management.analysis.pending', count='') }}
+    <p style="color: var(--text-muted); font-size: 0.875rem;" id="unanalyzedText">
+      <span class="inline-spinner"></span>
     </p>
   </div>
 
   {% if not demo_mode %}
   <div id="analysisControls">
     <button class="btn" id="startAnalysisBtn">{{ t('management.analysis.start') }}</button>
-    <button class="btn" id="stopAnalysisBtn" style="display: none; background: var(--error);">{{ t('management.analysis.stop') }}</button>
+    <button class="btn btn-danger" id="stopAnalysisBtn" style="display: none;">{{ t('management.analysis.stop') }}</button>
   </div>
   {% endif %}
 
@@ -99,7 +99,7 @@
     <p style="color: var(--text-muted); font-size: 0.875rem;">
       {{ t('management.backfill_phases.description') }}
       <br>
-      <span id="backfillPendingCount">-</span> {{ t('management.backfill_phases.pending', count='') }}
+      <span id="backfillPendingText"><span class="inline-spinner"></span></span>
     </p>
   </div>
 
@@ -126,7 +126,7 @@
     <p style="color: var(--text-muted); font-size: 0.875rem;">
       {{ t('management.backfill_eco.description') }}
       <br>
-      <span id="ecoBackfillPendingCount">-</span> {{ t('management.backfill_eco.pending', count='') }}
+      <span id="ecoBackfillPendingText"><span class="inline-spinner"></span></span>
     </p>
   </div>
 
@@ -172,6 +172,7 @@
 
 <div class="card">
   <h2>{{ t('management.jobs.title') }}</h2>
+  <div style="overflow-x: auto;">
   <table id="jobsTable">
     <thead>
       <tr>
@@ -193,24 +194,25 @@
       </tr>
     </tbody>
   </table>
+  </div>
 </div>
 
 {% if not demo_mode %}
-<div class="card" style="border-color: var(--error);">
+<div class="card" style="border-top-color: var(--red);">
   <h2 style="color: var(--error);">{{ t('management.danger.title') }}</h2>
   <div id="deleteAllMessage" style="display: none;"></div>
   <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
     {{ t('management.danger.description') }}
     <strong>{{ t('management.danger.warning') }}</strong> {{ t('management.danger.settings_preserved') }}
   </p>
-  <button class="btn" id="deleteAllBtn" style="background: var(--error);">
+  <button class="btn btn-danger" id="deleteAllBtn">
     {{ t('management.danger.button') }}
   </button>
 
   <div id="deleteAllProgress" style="display: none; margin-top: 24px;">
     <p><strong>{{ t('management.danger.deleting') }}</strong></p>
     <div class="progress-bar">
-      <div class="progress-fill" id="deleteAllProgressFill" style="width: 0%; background: var(--error);"></div>
+      <div class="progress-fill" id="deleteAllProgressFill" style="width: 0%; background: var(--red);"></div>
       <div class="progress-text" id="deleteAllProgressText">0%</div>
     </div>
   </div>

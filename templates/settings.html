@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_nav.html" import render_nav with context %}
 
 {% block title %}{{ t('nav.settings') }} - Blunder Tutor{% endblock %}
 
@@ -15,7 +16,7 @@
       Blunder Tutor
     </h1>
   </div>
-  <a href="/" class="back-link" style="margin-bottom: 0;">{{ t('common.back_to_trainer') }}</a>
+  {{ render_nav('settings') }}
 </header>
 <div class="container">
   <div class="card">
