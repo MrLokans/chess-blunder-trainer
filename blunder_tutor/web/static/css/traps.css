@@ -1,13 +1,13 @@
 .traps-summary {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: var(--space-4);
-  margin-bottom: var(--space-4);
+  background: var(--white);
+  border-radius: 0;
+  padding: var(--s-md);
+  margin-bottom: var(--s-md);
 }
 
 .traps-summary .summary-stats {
   display: flex;
-  gap: var(--space-6);
+  gap: var(--s-lg);
   flex-wrap: wrap;
 }
 
@@ -18,47 +18,47 @@
 .traps-summary .stat-value {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--blue);
 }
 
 .traps-summary .stat-label {
-  color: var(--text-muted);
-  font-size: 0.875rem;
+  color: var(--mid-gray);
+  font-size: var(--text-base);
 }
 
 .traps-summary .top-traps {
-  margin-top: var(--space-3);
+  margin-top: var(--s-md);
 }
 
 .traps-summary .top-traps .trap-tag {
   display: inline-block;
-  background: var(--primary);
-  color: var(--bg);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius);
-  font-size: 0.8rem;
-  margin-right: var(--space-1);
-  margin-bottom: var(--space-1);
+  background: var(--blue);
+  color: var(--white);
+  padding: var(--s-xs) var(--s-sm);
+  border-radius: 0;
+  font-size: var(--text-sm);
+  margin-right: var(--s-xs);
+  margin-bottom: var(--s-xs);
 }
 
 .traps-filter {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
+  gap: var(--s-sm);
+  margin-bottom: var(--s-md);
 }
 
 .traps-filter select {
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius);
-  border: 1px solid var(--text-muted);
-  background: var(--bg-card);
-  color: var(--text);
+  padding: var(--s-xs) var(--s-sm);
+  border-radius: 0;
+  border: 2px solid var(--black);
+  background: var(--white);
+  color: var(--black);
 }
 
 .traps-table-container {
   overflow-x: auto;
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--s-md);
 }
 
 .traps-table {
@@ -68,79 +68,81 @@
 
 .traps-table th,
 .traps-table td {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--s-sm) var(--s-md);
   text-align: left;
-  border-bottom: 1px solid var(--text-muted);
+  border-bottom: 1px solid var(--warm-gray);
 }
 
 .traps-table th {
-  font-weight: 600;
-  color: var(--text-muted);
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--mid-gray);
 }
 
 .traps-table tbody tr {
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s ease;
 }
 
 .traps-table tbody tr:hover {
-  background: var(--bg-card);
+  background: var(--warm-gray);
 }
 
 .traps-table .count-sprung {
-  color: var(--error);
+  color: var(--red);
   font-weight: 600;
 }
 
 .traps-table .count-entered {
-  color: var(--warning);
+  color: var(--yellow);
 }
 
 .traps-table .count-executed {
-  color: var(--success);
+  color: var(--correct);
 }
 
 .traps-table .category-badge {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: var(--radius);
-  font-size: 0.8rem;
-  background: var(--bg);
-  border: 1px solid var(--text-muted);
+  border-radius: 0;
+  font-size: var(--text-sm);
+  background: var(--warm-gray);
+  border: 1px solid var(--mid-gray);
 }
 
 .trap-detail-panel {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: var(--space-4);
-  margin-top: var(--space-4);
+  background: var(--white);
+  border-radius: 0;
+  border: 2px solid var(--black);
+  padding: var(--s-md);
+  margin-top: var(--s-md);
   position: relative;
 }
 
 .trap-detail-close {
   position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
+  top: var(--s-sm);
+  right: var(--s-sm);
   background: none;
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: var(--text-muted);
-  padding: var(--space-1);
+  color: var(--mid-gray);
+  padding: var(--s-xs);
   line-height: 1;
 }
 
 .trap-detail-close:hover {
-  color: var(--text);
+  color: var(--black);
 }
 
 .trap-detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
+  gap: var(--s-md);
 }
 
 @media (max-width: 768px) {
@@ -150,15 +152,15 @@
 }
 
 .trap-detail-section h3 {
-  color: var(--primary);
-  margin-bottom: var(--space-2);
-  font-size: 0.95rem;
+  color: var(--blue);
+  margin-bottom: var(--s-sm);
+  font-size: var(--text-base);
 }
 
 .trap-refutation-move {
   font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--success);
+  font-size: var(--text-lg);
+  color: var(--correct);
 }
 
 .trap-games-list {
@@ -167,25 +169,25 @@
 }
 
 .trap-game-item {
-  padding: var(--space-1) 0;
-  border-bottom: 1px solid var(--bg);
-  font-size: 0.85rem;
+  padding: var(--s-xs) 0;
+  border-bottom: 1px solid var(--warm-gray);
+  font-size: var(--text-sm);
 }
 
 .trap-game-item .match-type-sprung {
-  color: var(--error);
+  color: var(--red);
 }
 
 .trap-game-item .match-type-entered {
-  color: var(--warning);
+  color: var(--yellow);
 }
 
 .trap-game-item .match-type-executed {
-  color: var(--success);
+  color: var(--correct);
 }
 
 .traps-table .no-data {
   text-align: center;
-  color: var(--text-muted);
-  padding: var(--space-6);
+  color: var(--mid-gray);
+  padding: var(--s-lg);
 }

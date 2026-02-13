@@ -1,22 +1,23 @@
 .starred-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem;
+  margin-top: var(--s-md);
 }
 
 .starred-table th,
 .starred-table td {
-  padding: 0.6rem 0.8rem;
+  padding: var(--s-sm);
   text-align: left;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--warm-gray);
 }
 
 .starred-table th {
-  font-weight: 600;
-  color: var(--text-muted);
-  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--mid-gray);
 }
 
 .starred-table tbody tr {
@@ -24,26 +25,26 @@
 }
 
 .starred-table tbody tr:hover {
-  background: var(--warm-gray, rgba(0, 0, 0, 0.03));
+  background: var(--warm-gray);
 }
 
 .starred-table .puzzle-link {
-  color: var(--primary);
+  color: var(--blue);
   text-decoration: none;
   font-weight: 500;
 }
 
 .starred-table .puzzle-link:hover {
-  text-decoration: underline;
+  border-bottom: 1px solid var(--blue);
 }
 
 .starred-table .eval-swing {
-  font-family: monospace;
-  color: var(--error);
+  font-family: var(--font-mono);
+  color: var(--red);
 }
 
 .starred-table .note-text {
-  color: var(--text-muted);
+  color: var(--mid-gray);
   font-size: var(--text-sm);
   max-width: 200px;
   overflow: hidden;
@@ -56,17 +57,13 @@
   border: none;
   cursor: pointer;
   font-size: 1.1rem;
-  padding: 0.3rem;
-  color: var(--text-muted);
-  transition: color 0.15s;
+  padding: var(--s-xs);
+  color: var(--mid-gray);
+  transition: color 0.15s ease;
 }
 
 .starred-table .unstar-btn:hover {
-  color: var(--error);
+  color: var(--red);
 }
 
-.empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: var(--text-muted);
-}
+/* Empty state is in base.css */

@@ -297,11 +297,7 @@
   height: 100%;
 }
 
-/* Board square colors */
-:root {
-  --board-light: #E0E0E0;
-  --board-dark: #A0A0A0;
-}
+/* Board square colors defined in base.css :root */
 
 /* ==========================================================================
    Board Toggles
@@ -1187,47 +1183,7 @@
   padding: var(--s-2xl);
 }
 
-/* ==========================================================================
-   Empty State
-   ========================================================================== */
-
-.empty-state {
-  text-align: center;
-  padding: var(--s-2xl) var(--s-xl);
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.empty-state-icon {
-  color: var(--mid-gray);
-  margin-bottom: var(--s-lg);
-  opacity: 0.5;
-}
-
-.empty-state-title {
-  font-family: var(--font-mono);
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--black);
-  margin: 0 0 var(--s-sm) 0;
-}
-
-.empty-state-message {
-  font-family: var(--font-sans);
-  font-size: var(--text-base);
-  color: var(--mid-gray);
-  margin: 0 0 var(--s-lg) 0;
-  line-height: 1.6;
-}
-
-.empty-state-actions {
-  display: flex;
-  gap: var(--s-sm);
-  justify-content: center;
-  flex-wrap: wrap;
-}
+/* Empty state is now in base.css */
 
 /* ==========================================================================
    Phase Badge

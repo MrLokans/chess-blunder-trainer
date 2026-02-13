@@ -73,6 +73,32 @@
   --color-phase-endgame: var(--dark-gray);
   --color-phase-unknown: var(--mid-gray);
 
+  /* Tactical Pattern Colors */
+  --color-tactic-fork: #ef4444;
+  --color-tactic-pin: var(--mid-gray-light);
+  --color-tactic-skewer: #06b6d4;
+  --color-tactic-discovered: #f59e0b;
+  --color-tactic-hanging: #ec4899;
+  --color-tactic-back-rank: #10b981;
+  --color-tactic-other: #6b7280;
+
+  /* Difficulty Colors */
+  --color-diff-easy: var(--blue);
+  --color-diff-medium: #f59e0b;
+  --color-diff-hard: #ef4444;
+  --color-diff-unscored: #6b7280;
+
+  /* Game Type Colors */
+  --color-gametype-ultrabullet: var(--dark-gray);
+  --color-gametype-bullet: var(--red);
+  --color-gametype-blitz: #C4A826;
+  --color-gametype-rapid: var(--blue);
+  --color-gametype-classical: var(--correct);
+  --color-gametype-correspondence: var(--mid-gray-light);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 2px rgba(26, 58, 143, 0.25);
+
   /* No shadows in Bauhaus */
   --shadow-sm: none;
   --shadow: none;
@@ -1385,4 +1411,160 @@ body:has(.demo-banner) {
   color: var(--white);
 }
 
-/* Decorative accents removed — they clashed with the geometric aesthetic */
+/* ==========================================================================
+   Modal Overlay — shared pattern
+   ========================================================================== */
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-overlay.visible {
+  display: flex;
+}
+
+.modal {
+  background: var(--white);
+  border: 3px solid var(--black);
+  border-radius: 0;
+  padding: var(--s-xl);
+  min-width: 320px;
+  max-width: 480px;
+  box-shadow: none;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--s-md);
+}
+
+.modal-header h3 {
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--mid-gray);
+  padding: 0 var(--s-xs);
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: var(--black);
+}
+
+/* ==========================================================================
+   Empty State — shared pattern
+   ========================================================================== */
+
+.empty-state {
+  text-align: center;
+  padding: var(--s-2xl) var(--s-xl);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.empty-state-icon {
+  color: var(--mid-gray);
+  margin-bottom: var(--s-lg);
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--black);
+  margin: 0 0 var(--s-sm) 0;
+}
+
+.empty-state-message {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--mid-gray);
+  margin: 0 0 var(--s-lg) 0;
+  line-height: 1.6;
+}
+
+.empty-state-actions {
+  display: flex;
+  gap: var(--s-sm);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   Filter Chips — unified toggle pattern
+   ========================================================================== */
+
+.chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: var(--s-xs) var(--s-md);
+  border: 2px solid var(--mid-gray);
+  background: transparent;
+  color: var(--dark-gray);
+  cursor: pointer;
+  border-radius: 0;
+  transition: all 0.15s ease;
+}
+
+.chip:hover {
+  border-color: var(--black);
+  color: var(--black);
+}
+
+.chip.active {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+}
+
+/* Chip as label wrapping a hidden input */
+.chip-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-sm);
+  cursor: pointer;
+  user-select: none;
+}
+
+.chip-label input[type="checkbox"],
+.chip-label input[type="radio"] {
+  display: none;
+}
+
+.chip-label:has(input:checked) .chip {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+}
+
+/* ==========================================================================
+   Additional Utility Classes
+   ========================================================================== */
+
+.hidden { display: none; }
+.gap-sm { gap: var(--s-sm); }
+.gap-md { gap: var(--s-md); }
+.flex { display: flex; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.w-full { width: 100%; }

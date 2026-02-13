@@ -7,33 +7,33 @@
   .chart-empty-state {
     display: none;
     text-align: center;
-    padding: var(--space-10);
-    color: var(--text-muted);
+    padding: var(--s-2xl);
+    color: var(--mid-gray);
   }
 
   .chart-description {
     font-size: var(--text-sm);
-    color: var(--text-muted);
-    margin-bottom: var(--space-4);
+    color: var(--mid-gray);
+    margin-bottom: var(--s-md);
   }
 
   .loading-placeholder {
     text-align: center;
-    padding: var(--space-5);
-    color: var(--text-muted);
+    padding: var(--s-xl);
+    color: var(--mid-gray);
   }
 
   /* Game type filter styles */
   .game-type-filters {
     display: flex;
-    gap: var(--space-4);
+    gap: var(--s-md);
     flex-wrap: wrap;
   }
 
   .checkbox-label {
     display: flex;
     align-items: center;
-    gap: var(--space-1);
+    gap: var(--s-xs);
     cursor: pointer;
     font-size: var(--text-sm);
   }
@@ -43,19 +43,28 @@
     cursor: pointer;
   }
 
-  /* Tactical pattern styles */
-  .tactical-bar-container {
-    margin-bottom: var(--space-4);
+  /* ==========================================================================
+     Breakdown Bars — shared pattern for tactical/difficulty/game-type
+     ========================================================================== */
+
+  .tactical-bar-container,
+  .difficulty-bar-container,
+  .game-type-bar-container {
+    margin-bottom: var(--s-md);
   }
 
-  .tactical-bar {
+  .tactical-bar,
+  .difficulty-bar,
+  .game-type-bar {
     display: flex;
     height: 24px;
     border-radius: 0;
     overflow: hidden;
   }
 
-  .tactical-bar-segment {
+  .tactical-bar-segment,
+  .difficulty-bar-segment,
+  .game-type-bar-segment {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -65,30 +74,185 @@
     transition: flex 0.3s ease;
   }
 
-  .tactical-bar-segment.fork { background: #ef4444; }
-  .tactical-bar-segment.pin { background: #B8B4AB; }
-  .tactical-bar-segment.skewer { background: #06b6d4; }
-  .tactical-bar-segment.discovered { background: #f59e0b; }
-  .tactical-bar-segment.hanging { background: #ec4899; }
-  .tactical-bar-segment.back_rank { background: #10b981; }
-  .tactical-bar-segment.other { background: #6b7280; }
+  /* Tactical bar segment colors */
+  .tactical-bar-segment.fork { background: var(--color-tactic-fork); }
+  .tactical-bar-segment.pin { background: var(--color-tactic-pin); }
+  .tactical-bar-segment.skewer { background: var(--color-tactic-skewer); }
+  .tactical-bar-segment.discovered { background: var(--color-tactic-discovered); }
+  .tactical-bar-segment.hanging { background: var(--color-tactic-hanging); }
+  .tactical-bar-segment.back_rank { background: var(--color-tactic-back-rank); }
+  .tactical-bar-segment.other { background: var(--color-tactic-other); }
 
-  .tactical-legend {
+  /* Difficulty bar segment colors */
+  .difficulty-bar-segment.diff-easy { background: var(--color-diff-easy); }
+  .difficulty-bar-segment.diff-medium { background: var(--color-diff-medium); }
+  .difficulty-bar-segment.diff-hard { background: var(--color-diff-hard); }
+  .difficulty-bar-segment.diff-unscored { background: var(--color-diff-unscored); }
+
+  /* Game type bar segment colors */
+  .game-type-bar-segment.ultrabullet { background: var(--color-gametype-ultrabullet); }
+  .game-type-bar-segment.bullet { background: var(--color-gametype-bullet); }
+  .game-type-bar-segment.blitz { background: var(--color-gametype-blitz); }
+  .game-type-bar-segment.rapid { background: var(--color-gametype-rapid); }
+  .game-type-bar-segment.classical { background: var(--color-gametype-classical); }
+  .game-type-bar-segment.correspondence { background: var(--color-gametype-correspondence); }
+
+  /* ==========================================================================
+     Breakdown Legends — shared pattern
+     ========================================================================== */
+
+  .tactical-legend,
+  .difficulty-legend,
+  .game-type-legend {
     display: flex;
-    gap: var(--space-4);
+    gap: var(--s-md);
     flex-wrap: wrap;
-    margin-top: var(--space-2);
+    margin-top: var(--s-sm);
   }
 
-  .tactical-legend-item {
+  .tactical-legend-item,
+  .difficulty-legend-item,
+  .game-type-legend-item {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--s-sm);
     font-size: var(--text-xs);
-    color: var(--text-muted);
+    color: var(--mid-gray);
   }
 
-  /* Info help button */
+  .tactical-legend-color,
+  .difficulty-legend-color,
+  .game-type-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 0;
+  }
+
+  /* Tactical legend colors */
+  .tactical-legend-color.fork { background: var(--color-tactic-fork); }
+  .tactical-legend-color.pin { background: var(--color-tactic-pin); }
+  .tactical-legend-color.skewer { background: var(--color-tactic-skewer); }
+  .tactical-legend-color.discovered { background: var(--color-tactic-discovered); }
+  .tactical-legend-color.hanging { background: var(--color-tactic-hanging); }
+  .tactical-legend-color.back_rank { background: var(--color-tactic-back-rank); }
+  .tactical-legend-color.other { background: var(--color-tactic-other); }
+
+  /* Difficulty legend colors */
+  .difficulty-legend-color.diff-easy { background: var(--color-diff-easy); }
+  .difficulty-legend-color.diff-medium { background: var(--color-diff-medium); }
+  .difficulty-legend-color.diff-hard { background: var(--color-diff-hard); }
+  .difficulty-legend-color.diff-unscored { background: var(--color-diff-unscored); }
+
+  /* Game type legend colors */
+  .game-type-legend-color.ultrabullet { background: var(--color-gametype-ultrabullet); }
+  .game-type-legend-color.bullet { background: var(--color-gametype-bullet); }
+  .game-type-legend-color.blitz { background: var(--color-gametype-blitz); }
+  .game-type-legend-color.rapid { background: var(--color-gametype-rapid); }
+  .game-type-legend-color.classical { background: var(--color-gametype-classical); }
+  .game-type-legend-color.correspondence { background: var(--color-gametype-correspondence); }
+
+  /* ==========================================================================
+     Breakdown Card Grids — shared pattern
+     ========================================================================== */
+
+  .tactical-breakdown,
+  .difficulty-breakdown,
+  .game-type-breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--s-md);
+  }
+
+  .game-type-breakdown {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .tactical-card,
+  .difficulty-card,
+  .game-type-card {
+    padding: var(--s-md);
+    border-radius: 0;
+    text-align: center;
+    border: 2px solid var(--black);
+  }
+
+  .tactical-name,
+  .difficulty-name,
+  .game-type-name {
+    font-weight: 600;
+    text-transform: capitalize;
+    margin-bottom: var(--s-xs);
+    font-size: var(--text-sm);
+  }
+
+  .tactical-count,
+  .difficulty-count,
+  .game-type-count {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--black);
+  }
+
+  .tactical-percent,
+  .difficulty-percent,
+  .game-type-percent {
+    font-size: var(--text-xs);
+    color: var(--mid-gray);
+  }
+
+  .difficulty-avg-loss {
+    font-size: var(--text-xs);
+    color: var(--mid-gray);
+    margin-top: var(--s-xs);
+  }
+
+  /* Tactical card colors */
+  .tactical-card.fork { background: color-mix(in srgb, var(--color-tactic-fork) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-fork) 30%, transparent); }
+  .tactical-card.pin { background: color-mix(in srgb, var(--color-tactic-pin) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-pin) 30%, transparent); }
+  .tactical-card.skewer { background: color-mix(in srgb, var(--color-tactic-skewer) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-skewer) 30%, transparent); }
+  .tactical-card.discovered { background: color-mix(in srgb, var(--color-tactic-discovered) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-discovered) 30%, transparent); }
+  .tactical-card.hanging { background: color-mix(in srgb, var(--color-tactic-hanging) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-hanging) 30%, transparent); }
+  .tactical-card.back_rank { background: color-mix(in srgb, var(--color-tactic-back-rank) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-back-rank) 30%, transparent); }
+  .tactical-card.other { background: color-mix(in srgb, var(--color-tactic-other) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-other) 30%, transparent); }
+
+  .tactical-card.fork .tactical-name { color: var(--color-tactic-fork); }
+  .tactical-card.pin .tactical-name { color: var(--color-tactic-pin); }
+  .tactical-card.skewer .tactical-name { color: var(--color-tactic-skewer); }
+  .tactical-card.discovered .tactical-name { color: var(--color-tactic-discovered); }
+  .tactical-card.hanging .tactical-name { color: var(--color-tactic-hanging); }
+  .tactical-card.back_rank .tactical-name { color: var(--color-tactic-back-rank); }
+  .tactical-card.other .tactical-name { color: var(--color-tactic-other); }
+
+  /* Difficulty card colors */
+  .difficulty-card.diff-easy { background: color-mix(in srgb, var(--color-diff-easy) 10%, transparent); border-color: color-mix(in srgb, var(--color-diff-easy) 30%, transparent); }
+  .difficulty-card.diff-medium { background: color-mix(in srgb, var(--color-diff-medium) 10%, transparent); border-color: color-mix(in srgb, var(--color-diff-medium) 30%, transparent); }
+  .difficulty-card.diff-hard { background: color-mix(in srgb, var(--color-diff-hard) 10%, transparent); border-color: color-mix(in srgb, var(--color-diff-hard) 30%, transparent); }
+  .difficulty-card.diff-unscored { background: color-mix(in srgb, var(--color-diff-unscored) 10%, transparent); border-color: color-mix(in srgb, var(--color-diff-unscored) 30%, transparent); }
+
+  .difficulty-card.diff-easy .difficulty-name { color: var(--color-diff-easy); }
+  .difficulty-card.diff-medium .difficulty-name { color: var(--color-diff-medium); }
+  .difficulty-card.diff-hard .difficulty-name { color: var(--color-diff-hard); }
+  .difficulty-card.diff-unscored .difficulty-name { color: var(--color-diff-unscored); }
+
+  /* Game type card colors */
+  .game-type-card.ultrabullet { background: color-mix(in srgb, var(--color-gametype-ultrabullet) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-ultrabullet) 30%, transparent); }
+  .game-type-card.bullet { background: color-mix(in srgb, var(--color-gametype-bullet) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-bullet) 30%, transparent); }
+  .game-type-card.blitz { background: color-mix(in srgb, var(--color-gametype-blitz) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-blitz) 30%, transparent); }
+  .game-type-card.rapid { background: color-mix(in srgb, var(--color-gametype-rapid) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-rapid) 30%, transparent); }
+  .game-type-card.classical { background: color-mix(in srgb, var(--color-gametype-classical) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-classical) 30%, transparent); }
+  .game-type-card.correspondence { background: color-mix(in srgb, var(--color-gametype-correspondence) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-correspondence) 30%, transparent); }
+
+  .game-type-card.ultrabullet .game-type-name { color: var(--color-gametype-ultrabullet); }
+  .game-type-card.bullet .game-type-name { color: var(--color-gametype-bullet); }
+  .game-type-card.blitz .game-type-name { color: var(--color-gametype-blitz); }
+  .game-type-card.rapid .game-type-name { color: var(--color-gametype-rapid); }
+  .game-type-card.classical .game-type-name { color: var(--color-gametype-classical); }
+  .game-type-card.correspondence .game-type-name { color: var(--color-gametype-correspondence); }
+
+  /* ==========================================================================
+     Info Help Button & Modal
+     ========================================================================== */
+
   .info-help-btn {
     display: inline-flex;
     align-items: center;
@@ -97,22 +261,21 @@
     height: 20px;
     border-radius: 0;
     border: 2px solid var(--mid-gray);
-    background: var(--bg);
-    color: var(--text-muted);
+    background: var(--white);
+    color: var(--mid-gray);
     font-size: var(--text-xs);
     font-weight: 700;
     cursor: pointer;
-    margin-left: var(--space-2);
+    margin-left: var(--s-sm);
     vertical-align: middle;
     transition: color 0.15s ease, border-color 0.15s ease;
   }
 
   .info-help-btn:hover {
-    color: var(--text);
-    border-color: var(--text);
+    color: var(--black);
+    border-color: var(--black);
   }
 
-  /* Info modal overlay */
   .info-modal-overlay {
     display: none;
     position: fixed;
@@ -141,7 +304,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--s-md);
   }
 
   .info-modal-header h3 {
@@ -155,336 +318,76 @@
     border: none;
     font-size: var(--text-2xl);
     cursor: pointer;
-    color: var(--text-muted);
-    padding: 0 var(--space-1);
+    color: var(--mid-gray);
+    padding: 0 var(--s-xs);
     line-height: 1;
   }
 
   .info-modal-close:hover {
-    color: var(--text);
+    color: var(--black);
   }
 
   .info-modal-body {
     font-size: var(--text-sm);
-    color: var(--text);
+    color: var(--black);
     line-height: 1.6;
   }
 
   .info-modal-body p {
-    margin: 0 0 var(--space-3) 0;
+    margin: 0 0 var(--s-md) 0;
   }
 
   .info-modal-definitions {
-    margin: 0 0 var(--space-3) 0;
+    margin: 0 0 var(--s-md) 0;
   }
 
   .info-modal-definitions dt {
     font-weight: 600;
-    margin-top: var(--space-2);
+    margin-top: var(--s-sm);
   }
 
-  .info-modal-definitions dt.diff-easy { color: #1A3A8F; }
-  .info-modal-definitions dt.diff-medium { color: #f59e0b; }
-  .info-modal-definitions dt.diff-hard { color: #ef4444; }
+  .info-modal-definitions dt.diff-easy { color: var(--color-diff-easy); }
+  .info-modal-definitions dt.diff-medium { color: var(--color-diff-medium); }
+  .info-modal-definitions dt.diff-hard { color: var(--color-diff-hard); }
 
   .info-modal-definitions dd {
-    margin: var(--space-1) 0 0 var(--space-4);
-    color: var(--text-muted);
+    margin: var(--s-xs) 0 0 var(--s-md);
+    color: var(--mid-gray);
   }
 
   .info-modal-note {
     font-size: var(--text-xs);
-    color: var(--text-muted);
+    color: var(--mid-gray);
     font-style: italic;
   }
 
-  /* Difficulty breakdown styles */
-  .difficulty-bar-container {
-    margin-bottom: var(--space-4);
-  }
+  /* ==========================================================================
+     Heatmap
+     ========================================================================== */
 
-  .difficulty-bar {
-    display: flex;
-    height: 24px;
-    border-radius: 0;
-    overflow: hidden;
-  }
-
-  .difficulty-bar-segment {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: var(--text-xs);
-    font-weight: 600;
-    transition: flex 0.3s ease;
-  }
-
-  .difficulty-bar-segment.diff-easy { background: #1A3A8F; }
-  .difficulty-bar-segment.diff-medium { background: #f59e0b; }
-  .difficulty-bar-segment.diff-hard { background: #ef4444; }
-  .difficulty-bar-segment.diff-unscored { background: #6b7280; }
-
-  .difficulty-legend {
-    display: flex;
-    gap: var(--space-4);
-    margin-top: var(--space-2);
-    flex-wrap: wrap;
-  }
-
-  .difficulty-legend-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    font-size: var(--text-sm);
-    color: var(--text-muted);
-  }
-
-  .difficulty-legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 0;
-  }
-
-  .difficulty-legend-color.diff-easy { background: #1A3A8F; }
-  .difficulty-legend-color.diff-medium { background: #f59e0b; }
-  .difficulty-legend-color.diff-hard { background: #ef4444; }
-  .difficulty-legend-color.diff-unscored { background: #6b7280; }
-
-  .difficulty-breakdown {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: var(--space-3);
-  }
-
-  .difficulty-card {
-    padding: var(--space-4);
-    border-radius: 0;
-    text-align: center;
-    border: 2px solid var(--black);
-  }
-
-  .difficulty-card.diff-easy { background: rgba(26, 58, 143, 0.1); border-color: rgba(26, 58, 143, 0.3); }
-  .difficulty-card.diff-medium { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); }
-  .difficulty-card.diff-hard { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
-  .difficulty-card.diff-unscored { background: rgba(107, 114, 128, 0.1); border-color: rgba(107, 114, 128, 0.3); }
-
-  .difficulty-name {
-    font-weight: 600;
-    text-transform: capitalize;
-    margin-bottom: var(--space-1);
-    font-size: var(--text-sm);
-  }
-
-  .difficulty-card.diff-easy .difficulty-name { color: #1A3A8F; }
-  .difficulty-card.diff-medium .difficulty-name { color: #f59e0b; }
-  .difficulty-card.diff-hard .difficulty-name { color: #ef4444; }
-  .difficulty-card.diff-unscored .difficulty-name { color: #6b7280; }
-
-  .difficulty-count {
-    font-size: var(--text-lg);
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .difficulty-percent {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
-
-  .difficulty-avg-loss {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    margin-top: var(--space-1);
-  }
-
-  .tactical-legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 0;
-  }
-
-  .tactical-legend-color.fork { background: #ef4444; }
-  .tactical-legend-color.pin { background: #B8B4AB; }
-  .tactical-legend-color.skewer { background: #06b6d4; }
-  .tactical-legend-color.discovered { background: #f59e0b; }
-  .tactical-legend-color.hanging { background: #ec4899; }
-  .tactical-legend-color.back_rank { background: #10b981; }
-  .tactical-legend-color.other { background: #6b7280; }
-
-  .tactical-breakdown {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: var(--space-3);
-  }
-
-  .tactical-card {
-    padding: var(--space-4);
-    border-radius: 0;
-    text-align: center;
-    border: 2px solid var(--black);
-  }
-
-  .tactical-card.fork { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
-  .tactical-card.pin { background: rgba(184, 180, 171, 0.1); border-color: rgba(184, 180, 171, 0.3); }
-  .tactical-card.skewer { background: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.3); }
-  .tactical-card.discovered { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); }
-  .tactical-card.hanging { background: rgba(236, 72, 153, 0.1); border-color: rgba(236, 72, 153, 0.3); }
-  .tactical-card.back_rank { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); }
-  .tactical-card.other { background: rgba(107, 114, 128, 0.1); border-color: rgba(107, 114, 128, 0.3); }
-
-  .tactical-name {
-    font-weight: 600;
-    text-transform: capitalize;
-    margin-bottom: var(--space-1);
-    font-size: var(--text-sm);
-  }
-
-  .tactical-card.fork .tactical-name { color: #ef4444; }
-  .tactical-card.pin .tactical-name { color: #B8B4AB; }
-  .tactical-card.skewer .tactical-name { color: #06b6d4; }
-  .tactical-card.discovered .tactical-name { color: #f59e0b; }
-  .tactical-card.hanging .tactical-name { color: #ec4899; }
-  .tactical-card.back_rank .tactical-name { color: #10b981; }
-  .tactical-card.other .tactical-name { color: #6b7280; }
-
-  .tactical-count {
-    font-size: var(--text-lg);
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .tactical-percent {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
-
-  /* Game type styles */
-  .game-type-bar-container {
-    margin-bottom: var(--space-4);
-  }
-
-  .game-type-bar {
-    display: flex;
-    height: 24px;
-    border-radius: 0;
-    overflow: hidden;
-  }
-
-  .game-type-bar-segment {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: var(--text-xs);
-    font-weight: 600;
-    transition: flex 0.3s ease;
-  }
-
-  .game-type-bar-segment.ultrabullet { background: #3A3A3A; }
-  .game-type-bar-segment.bullet { background: #D42828; }
-  .game-type-bar-segment.blitz { background: #C4A826; }
-  .game-type-bar-segment.rapid { background: #1A3A8F; }
-  .game-type-bar-segment.classical { background: #2D8F3E; }
-  .game-type-bar-segment.correspondence { background: #B8B4AB; }
-
-  .game-type-legend {
-    display: flex;
-    gap: var(--space-4);
-    flex-wrap: wrap;
-    margin-top: var(--space-2);
-  }
-
-  .game-type-legend-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
-
-  .game-type-legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 0;
-  }
-
-  .game-type-legend-color.ultrabullet { background: #3A3A3A; }
-  .game-type-legend-color.bullet { background: #D42828; }
-  .game-type-legend-color.blitz { background: #C4A826; }
-  .game-type-legend-color.rapid { background: #1A3A8F; }
-  .game-type-legend-color.classical { background: #2D8F3E; }
-  .game-type-legend-color.correspondence { background: #B8B4AB; }
-
-  .game-type-breakdown {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: var(--space-3);
-  }
-
-  .game-type-card {
-    padding: var(--space-4);
-    border-radius: 0;
-    text-align: center;
-    border: 2px solid var(--black);
-  }
-
-  .game-type-card.ultrabullet { background: rgba(58, 58, 58, 0.1); border-color: rgba(58, 58, 58, 0.3); }
-  .game-type-card.bullet { background: rgba(212, 40, 40, 0.1); border-color: rgba(212, 40, 40, 0.3); }
-  .game-type-card.blitz { background: rgba(196, 168, 38, 0.1); border-color: rgba(196, 168, 38, 0.3); }
-  .game-type-card.rapid { background: rgba(26, 58, 143, 0.1); border-color: rgba(26, 58, 143, 0.3); }
-  .game-type-card.classical { background: rgba(45, 143, 62, 0.1); border-color: rgba(45, 143, 62, 0.3); }
-  .game-type-card.correspondence { background: rgba(184, 180, 171, 0.1); border-color: rgba(184, 180, 171, 0.3); }
-
-  .game-type-name {
-    font-weight: 600;
-    text-transform: capitalize;
-    margin-bottom: var(--space-1);
-    font-size: var(--text-sm);
-  }
-
-  .game-type-card.ultrabullet .game-type-name { color: #3A3A3A; }
-  .game-type-card.bullet .game-type-name { color: #D42828; }
-  .game-type-card.blitz .game-type-name { color: #C4A826; }
-  .game-type-card.rapid .game-type-name { color: #1A3A8F; }
-  .game-type-card.classical .game-type-name { color: #2D8F3E; }
-  .game-type-card.correspondence .game-type-name { color: #B8B4AB; }
-
-  .game-type-count {
-    font-size: var(--text-lg);
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .game-type-percent {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
-
-  /* Heatmap styles */
   .heatmap-wrapper {
-    padding: var(--space-4);
+    padding: var(--s-md);
   }
 
   .heatmap-summary {
     display: flex;
-    gap: var(--space-4);
-    margin-bottom: var(--space-4);
+    gap: var(--s-md);
+    margin-bottom: var(--s-md);
     font-size: var(--text-sm);
   }
 
   .heatmap-total {
     font-weight: 600;
-    color: var(--text);
+    color: var(--black);
   }
 
   .heatmap-days {
-    color: var(--text-muted);
+    color: var(--mid-gray);
   }
 
   .heatmap-container {
     display: flex;
-    gap: var(--space-2);
+    gap: var(--s-sm);
     overflow-x: auto;
   }
 
@@ -494,7 +397,7 @@
     justify-content: space-around;
     padding-top: 20px;
     font-size: 10px;
-    color: var(--text-muted);
+    color: var(--mid-gray);
   }
 
   .heatmap-grid-wrapper {
@@ -505,7 +408,7 @@
   .heatmap-months {
     display: grid;
     font-size: 10px;
-    color: var(--text-muted);
+    color: var(--mid-gray);
     margin-bottom: 4px;
     height: 16px;
   }
@@ -524,7 +427,7 @@
   .heatmap-cell {
     width: 12px;
     height: 12px;
-    border-radius: 2px;
+    border-radius: 0;
     cursor: pointer;
   }
 
@@ -532,7 +435,7 @@
     visibility: hidden;
   }
 
-  .heatmap-cell.level-0 { background: var(--heatmap-empty, #ebedf0); }
+  .heatmap-cell.level-0 { background: var(--heatmap-empty, var(--warm-gray)); }
   .heatmap-cell.level-1 { background: var(--heatmap-l1, #9be9a8); }
   .heatmap-cell.level-2 { background: var(--heatmap-l2, #40c463); }
   .heatmap-cell.level-3 { background: var(--heatmap-l3, #30a14e); }
@@ -541,10 +444,10 @@
   .heatmap-legend {
     display: flex;
     align-items: center;
-    gap: var(--space-1);
-    margin-top: var(--space-3);
+    gap: var(--s-xs);
+    margin-top: var(--s-md);
     font-size: 10px;
-    color: var(--text-muted);
+    color: var(--mid-gray);
     justify-content: flex-end;
   }
 
@@ -554,11 +457,11 @@
 
   .heatmap-error {
     text-align: center;
-    padding: var(--space-5);
-    color: var(--text-muted);
+    padding: var(--s-xl);
+    color: var(--mid-gray);
   }
 
-  /* Custom instant tooltip */
+  /* Heatmap tooltip */
   .heatmap-cell[data-tooltip] {
     position: relative;
   }
@@ -570,11 +473,11 @@
     left: 50%;
     transform: translateX(-50%);
     padding: 4px 8px;
-    background: var(--text, #1e293b);
-    color: var(--bg-card, #fff);
+    background: var(--black);
+    color: var(--white);
     font-size: 11px;
     white-space: nowrap;
-    border-radius: 4px;
+    border-radius: 0;
     z-index: 100;
     pointer-events: none;
   }
@@ -586,16 +489,19 @@
     left: 50%;
     transform: translateX(-50%);
     border: 4px solid transparent;
-    border-top-color: var(--text, #1e293b);
+    border-top-color: var(--black);
     z-index: 100;
   }
 
-  /* Conversion & Resilience */
+  /* ==========================================================================
+     Conversion & Resilience
+     ========================================================================== */
+
   .cr-metrics {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-4);
-    margin-top: var(--space-3);
+    gap: var(--s-md);
+    margin-top: var(--s-md);
   }
 
   @media (max-width: 480px) {
@@ -606,92 +512,95 @@
 
   .cr-metric-card {
     text-align: center;
-    padding: var(--space-4);
+    padding: var(--s-md);
     border: 2px solid var(--black);
     border-radius: 0;
-    background: var(--surface, var(--bg));
+    background: var(--white);
   }
 
   .cr-metric-label {
     font-size: var(--text-sm);
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--mid-gray);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--s-sm);
   }
 
   .cr-metric-value {
     font-size: 2.5rem;
     font-weight: 700;
     line-height: 1.2;
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--s-sm);
   }
 
   .cr-metric-detail {
     font-size: var(--text-sm);
-    color: var(--text-muted);
+    color: var(--mid-gray);
   }
 
-  /* Collapse Point */
+  /* ==========================================================================
+     Collapse Point
+     ========================================================================== */
+
   .collapse-summary {
     text-align: center;
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--s-lg);
   }
 
   .collapse-big-number {
     font-size: 1.25rem;
     font-weight: 700;
-    color: var(--text);
-    margin-bottom: var(--space-2);
+    color: var(--black);
+    margin-bottom: var(--s-sm);
   }
 
   .collapse-meta {
     font-size: var(--text-sm);
-    color: var(--text-muted);
-    margin-bottom: var(--space-1);
+    color: var(--mid-gray);
+    margin-bottom: var(--s-xs);
   }
 
   .collapse-separator {
-    margin: 0 var(--space-2);
+    margin: 0 var(--s-sm);
   }
 
   .collapse-clean {
     font-size: var(--text-sm);
-    color: var(--success, #1A3A8F);
+    color: var(--correct);
     font-weight: 600;
   }
 
   .collapse-distribution {
-    margin-top: var(--space-4);
+    margin-top: var(--s-md);
   }
 
   .collapse-dist-title {
     font-size: var(--text-sm);
     font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: var(--space-3);
+    color: var(--mid-gray);
+    margin-bottom: var(--s-md);
   }
 
   .collapse-bar-row {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    margin-bottom: var(--space-1);
+    gap: var(--s-sm);
+    margin-bottom: var(--s-xs);
   }
 
   .collapse-bar-label {
     width: 3.5rem;
     text-align: right;
     font-size: var(--text-xs);
-    color: var(--text-muted);
+    color: var(--mid-gray);
     font-variant-numeric: tabular-nums;
   }
 
   .collapse-bar-track {
     flex: 1;
     height: 1.25rem;
-    background: var(--surface, #1e293b);
+    background: var(--warm-gray);
     border-radius: 0;
     overflow: hidden;
   }
@@ -707,23 +616,23 @@
     width: 2rem;
     text-align: right;
     font-size: var(--text-xs);
-    color: var(--text-muted);
+    color: var(--mid-gray);
     font-variant-numeric: tabular-nums;
   }
 
   .collapse-zone-legend {
     display: flex;
-    gap: var(--space-4);
+    gap: var(--s-md);
     justify-content: center;
-    margin-top: var(--space-4);
+    margin-top: var(--s-md);
     font-size: var(--text-xs);
-    color: var(--text-muted);
+    color: var(--mid-gray);
   }
 
   .collapse-zone-item {
     display: flex;
     align-items: center;
-    gap: var(--space-1);
+    gap: var(--s-xs);
   }
 
   .collapse-zone-dot {

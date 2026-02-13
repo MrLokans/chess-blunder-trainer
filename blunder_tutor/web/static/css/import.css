@@ -1,38 +1,37 @@
 .import-description {
-  color: var(--text-muted);
-  margin-bottom: 1.5rem;
+  color: var(--mid-gray);
+  margin-bottom: var(--s-lg);
 }
 
 .import-form {
-  margin-bottom: 2rem;
+  margin-bottom: var(--s-xl);
 }
 
 .pgn-textarea {
   width: 100%;
-  font-family: monospace;
-  font-size: 0.9rem;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius, 6px);
-  background: var(--surface);
-  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  padding: var(--s-sm);
+  border: 2px solid var(--black);
+  border-radius: 0;
+  background: var(--white);
+  color: var(--black);
   resize: vertical;
-  margin-bottom: 1rem;
+  margin-bottom: var(--s-md);
 }
 
 .pgn-textarea:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 59, 130, 246), 0.15);
+  border-color: var(--blue);
 }
 
 .import-errors {
-  background: var(--error-bg, #fef2f2);
-  color: var(--error);
-  border: 1px solid var(--error);
-  border-radius: var(--radius, 6px);
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
+  background: var(--bg-error);
+  color: var(--red);
+  border: 2px solid var(--red);
+  border-radius: 0;
+  padding: var(--s-sm) var(--s-md);
+  margin-bottom: var(--s-md);
 }
 
 .import-errors ul {
@@ -43,68 +42,64 @@
 .import-spinner {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--text-muted);
-  margin-top: 1rem;
+  gap: var(--s-sm);
+  color: var(--mid-gray);
+  margin-top: var(--s-md);
 }
 
 .spinner {
   width: 1.2rem;
   height: 1.2rem;
-  border: 2px solid var(--border);
-  border-top-color: var(--primary);
+  border: 2px solid var(--mid-gray-light);
+  border-top-color: var(--blue);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 .import-results {
-  border: 1px solid var(--border);
-  border-radius: var(--radius, 6px);
-  padding: 1.5rem;
-  background: var(--surface);
+  border: 2px solid var(--black);
+  border-radius: 0;
+  padding: var(--s-lg);
+  background: var(--white);
 }
 
 .import-results h2 {
-  color: var(--success, #22c55e);
+  color: var(--correct);
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: var(--s-md);
 }
 
 .results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: var(--s-md);
+  margin-bottom: var(--s-lg);
 }
 
 .result-item {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--s-xs);
 }
 
 .result-label {
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  font-size: var(--text-sm);
+  color: var(--mid-gray);
 }
 
 .result-value {
-  font-size: 1.25rem;
+  font-size: var(--text-xl);
   font-weight: 600;
 }
 
 .result-blunders .result-value {
-  color: var(--error);
+  color: var(--red);
 }
 
 .result-mistakes .result-value {
-  color: var(--warning, #f59e0b);
+  color: var(--yellow);
 }
 
 .result-inaccuracies .result-value {
-  color: var(--text-muted);
+  color: var(--mid-gray);
 }
