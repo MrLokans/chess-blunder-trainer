@@ -45,18 +45,18 @@ cg-board square.highlight-user {
 }
 
 cg-board square.highlight-hanging {
-  background-color: rgba(212, 40, 40, 0.3) !important;
-  box-shadow: inset 0 0 0 3px var(--red) !important;
+  background-color: rgba(212, 40, 40, 0.12) !important;
+  box-shadow: inset 0 0 0 2px rgba(212, 40, 40, 0.4) !important;
 }
 
 cg-board square.highlight-king-danger {
-  box-shadow: inset 0 0 0 3px var(--yellow) !important;
-  background-color: rgba(242, 193, 46, 0.2) !important;
+  background-color: rgba(242, 193, 46, 0.1) !important;
+  box-shadow: inset 0 0 0 2px rgba(242, 193, 46, 0.4) !important;
 }
 
 cg-board square.highlight-checking {
-  background-color: rgba(242, 193, 46, 0.3) !important;
-  box-shadow: inset 0 0 0 3px var(--yellow) !important;
+  background-color: rgba(242, 193, 46, 0.1) !important;
+  box-shadow: inset 0 0 0 2px rgba(242, 193, 46, 0.4) !important;
 }
 
 cg-board square.highlight-tactic-primary {

@@ -6,7 +6,6 @@ export function updateEvalBar(cp, playerColor, fillEl, valueEl) {
   const percentage = 50 + (normalized / maxCp) * 50;
 
   fillEl.style.height = percentage + '%';
-  fillEl.style.width = percentage + '%';
 
   let displayVal;
   if (Math.abs(cp) >= 10000) {

@@ -274,12 +274,13 @@
   line-height: 1;
 }
 
-.eval-value.positive { color: var(--black); }
-.eval-value.negative { color: var(--black); }
+.eval-value.positive { color: var(--white); }
+.eval-value.negative { color: var(--white); }
 
 #boardWrapper {
   flex: 1;
   max-width: 580px;
+  position: relative;
 }
 
 #board {
@@ -458,32 +459,168 @@
   border-bottom: 3px solid var(--black);
 }
 
-/* Prompt state */
-.move-prompt {
+/* Below-board prompt */
+.board-prompt {
+  max-width: 620px;
+  width: 100%;
   padding: var(--s-md) 0;
+  text-align: center;
+}
+
+/* Board result overlay — covers the board with centered card */
+.board-result-card {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.45);
+  justify-content: center;
+  align-items: center;
+}
+
+.board-result-card.visible {
   display: flex;
-  align-items: flex-start;
-  gap: var(--s-md);
+  animation: fadeIn 0.2s ease;
 }
 
-.move-prompt-icon {
-  color: var(--dark-gray);
-  flex-shrink: 0;
-  margin-top: 2px;
+/* Inner content panel */
+.board-result-inner {
+  background: var(--white);
+  border: 3px solid var(--black);
+  border-left-width: 5px;
+  padding: var(--s-lg);
+  max-width: 400px;
+  width: 85%;
+  max-height: 90%;
+  overflow-y: auto;
 }
 
-.move-prompt-text {
+/* Accent left-border colors on inner panel */
+.board-result-card.accent-correct .board-result-inner {
+  border-left-color: var(--correct);
+}
+
+.board-result-card.accent-revealed .board-result-inner {
+  border-left-color: var(--yellow);
+}
+
+.board-result-card.accent-blunder .board-result-inner {
+  border-left-color: var(--red);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.board-result-header {
+  margin-bottom: var(--s-sm);
+}
+
+.board-result-title {
   font-family: var(--font-mono);
-  font-size: 14px;
   font-weight: 700;
-  color: var(--black);
+  font-size: var(--text-base);
+  margin-bottom: 2px;
 }
 
-.move-prompt-sub {
+.board-result-detail {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: var(--text-sm);
+  opacity: 0.85;
+}
+
+.board-result-body {
+  display: none;
+}
+
+.board-result-card.best-revealed .board-result-body {
+  display: block;
+}
+
+.board-result-best {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-md);
+  margin-bottom: var(--s-sm);
+}
+
+.board-result-move {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--correct);
+}
+
+.board-result-line {
+  font-family: var(--font-mono);
+  font-size: 13px;
   color: var(--dark-gray);
-  margin-top: var(--s-xs);
+}
+
+.board-result-action {
+  margin-bottom: var(--s-sm);
+}
+
+.board-result-inner .btn kbd {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: inherit;
+  opacity: 0.8;
+  margin-left: var(--s-sm);
+}
+
+.board-result-next {
+  border-top: 1px solid var(--warm-gray);
+  padding-top: var(--s-md);
+  margin-top: var(--s-md);
+}
+
+.board-result-next-btn {
+  width: 100%;
+}
+
+.board-result-details {
+  border-top: 1px solid var(--warm-gray);
+  padding-top: var(--s-sm);
+  margin-top: var(--s-sm);
+}
+
+.board-result-details summary {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--dark-gray);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.board-result-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.board-result-details[open] summary {
+  margin-bottom: var(--s-sm);
+}
+
+.board-result-details-body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--dark-gray);
+}
+
+.board-result-details-heading {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: var(--s-xs);
 }
 
 /* Pending move card */
@@ -544,86 +681,7 @@
   color: var(--white);
 }
 
-/* ==========================================================================
-   Best Move Info Card
-   ========================================================================== */
-
-.best-move-info {
-  background: var(--bg-correct);
-  border: none;
-  border-left: 4px solid var(--correct);
-  border-radius: 0;
-  padding: var(--s-md);
-  display: none;
-  margin-top: var(--s-md);
-}
-
-.best-move-info.visible {
-  display: block;
-  animation: fadeUp 0.3s ease;
-}
-
-.best-move {
-  font-family: var(--font-mono);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--correct);
-}
-
-.best-line {
-  margin-top: var(--s-sm);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--dark-gray);
-}
-
-/* ==========================================================================
-   Feedback Area
-   ========================================================================== */
-
-.feedback {
-  padding: var(--s-md);
-  border-radius: 0;
-  margin-bottom: 0;
-  display: none;
-  border-left: 4px solid;
-  animation: fadeUp 0.3s ease;
-}
-
-.feedback.visible {
-  display: block;
-}
-
-.feedback.correct {
-  background: var(--bg-correct);
-  border-left-color: var(--correct);
-  color: var(--black);
-}
-
-.feedback.incorrect {
-  background: var(--bg-pending);
-  border-left-color: var(--yellow);
-  color: var(--black);
-}
-
-.feedback.blunder-repeat {
-  background: var(--bg-error);
-  border-left-color: var(--red);
-  color: var(--black);
-}
-
-.feedback-title {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: var(--text-base);
-  margin-bottom: 2px;
-}
-
-.feedback-detail {
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  opacity: 0.85;
-}
+/* (Best move info and feedback are now in board-result-card below the board) */
 
 /* ==========================================================================
    Move Indicator
@@ -747,18 +805,18 @@
   color: var(--white);
 }
 
-/* Show Best — yellow key */
+/* Show Best — green key */
 .action-key#showBestBtn kbd {
+  background: var(--correct);
+  border-color: var(--correct);
+  color: var(--white);
+}
+
+/* Next — yellow key */
+.action-key#nextBtn kbd {
   background: var(--yellow);
   border-color: var(--yellow);
   color: var(--black);
-}
-
-/* Next — red key */
-.action-key#nextBtn kbd {
-  background: var(--red);
-  border-color: var(--red);
-  color: var(--white);
 }
 
 /* ==========================================================================
@@ -1336,13 +1394,7 @@
   color: var(--mid-gray);
 }
 
-/* ==========================================================================
-   Try Best Move
-   ========================================================================== */
-
-.try-best-move {
-  margin-top: var(--s-sm);
-}
+/* (Try Best Move button is now inside board-result-card) */
 
 /* ==========================================================================
    Tactical Badge
@@ -1368,81 +1420,11 @@
   font-size: var(--text-sm);
 }
 
-/* ==========================================================================
-   Tactical Info Panel
-   ========================================================================== */
-
-.tactical-info {
-  margin-top: var(--s-sm);
-  padding: var(--s-md);
-  background: rgba(26, 58, 143, 0.08);
-  border-left: 4px solid var(--blue);
-  border-radius: 0;
-  border-top: none;
-  border-right: none;
-  border-bottom: none;
-}
-
-.tactical-info-title {
-  display: flex;
-  align-items: center;
-  gap: var(--s-sm);
-  font-family: var(--font-mono);
-  font-weight: 700;
-  color: var(--blue);
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: var(--s-sm);
-}
-
-.tactical-info-reason {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  color: var(--dark-gray);
-  line-height: 1.5;
-}
-
-/* Explanation */
-.explanation-info {
-  margin-top: var(--s-sm);
-  padding: var(--s-md);
-  background: rgba(26, 58, 143, 0.08);
-  border-left: 4px solid var(--blue);
-  border-radius: 0;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.6;
-  border-top: none;
-  border-right: none;
-  border-bottom: none;
-}
-
-.explanation-title {
-  display: flex;
-  align-items: center;
-  gap: var(--s-sm);
-  font-family: var(--font-mono);
-  font-weight: 700;
-  color: var(--blue);
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: var(--s-sm);
-}
-
-.explanation-blunder {
-  color: var(--black);
-  margin-bottom: var(--s-sm);
-}
+/* (Tactical info and explanation are now in board-result-card details sections) */
 
 .explanation-blunder:empty,
 .explanation-best:empty {
   display: none;
-}
-
-.explanation-best {
-  color: var(--black);
 }
 
 /* Tactic legend */

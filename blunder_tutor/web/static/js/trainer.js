@@ -41,13 +41,15 @@ const blunderMove = document.getElementById('blunderMove');
 const evalBefore = document.getElementById('evalBefore');
 const evalAfter = document.getElementById('evalAfter');
 const cpLoss = document.getElementById('cpLoss');
-const feedback = document.getElementById('feedback');
+const boardResultCard = document.getElementById('boardResultCard');
 const feedbackTitle = document.getElementById('feedbackTitle');
 const feedbackDetail = document.getElementById('feedbackDetail');
+const movePrompt = document.getElementById('movePrompt');
 const currentMoveEl = document.getElementById('currentMove');
-const bestMoveInfo = document.getElementById('bestMoveInfo');
 const bestMoveDisplay = document.getElementById('bestMoveDisplay');
 const bestLineDisplay = document.getElementById('bestLineDisplay');
+const tacticalDetails = document.getElementById('tacticalDetails');
+const explanationDetails = document.getElementById('explanationDetails');
 const historySection = document.getElementById('historySection');
 const moveHistoryEl = document.getElementById('moveHistory');
 
@@ -56,6 +58,7 @@ const resetBtn = document.getElementById('resetBtn');
 const showBestBtn = document.getElementById('showBestBtn');
 const nextBtn = document.getElementById('nextBtn');
 const tryBestBtn = document.getElementById('tryBestBtn');
+const overlayNextBtn = document.getElementById('overlayNextBtn');
 const undoBtn = document.getElementById('undoBtn');
 const lichessBtn = document.getElementById('lichessBtn');
 const highlightLegend = document.getElementById('highlightLegend');
@@ -68,7 +71,6 @@ const phaseFilterCheckboxes = document.querySelectorAll('.phase-filter-checkbox'
 const phaseBadge = document.getElementById('phaseBadge');
 const tacticalBadge = document.getElementById('tacticalBadge');
 const tacticalPatternName = document.getElementById('tacticalPatternName');
-const tacticalInfo = document.getElementById('tacticalInfo');
 const tacticalInfoTitle = document.getElementById('tacticalInfoTitle');
 const tacticalInfoReason = document.getElementById('tacticalInfoReason');
 const tacticalFilterBtns = document.querySelectorAll('.tactical-filter-btn');
@@ -77,7 +79,6 @@ const legendTactic = document.getElementById('legendTactic');
 const gameTypeCheckboxes = document.querySelectorAll('.game-type-checkbox');
 const colorFilterRadios = document.querySelectorAll('input[name="colorFilter"]');
 const difficultyFilterCheckboxes = document.querySelectorAll('.difficulty-filter-checkbox');
-const explanationInfo = document.getElementById('explanationInfo');
 const explanationBlunder = document.getElementById('explanationBlunder');
 const explanationBest = document.getElementById('explanationBest');
 const filtersHeader = document.getElementById('filtersHeader');
@@ -282,14 +283,28 @@ function hideEmptyState() {
   if (sessionBar) sessionBar.style.display = 'flex';
 }
 
-function showFeedback(type, titleText, detail) {
-  feedback.className = 'feedback visible ' + type;
+function showBoardResult(accentClass, titleText, detail) {
+  boardResultCard.className = 'board-result-card visible ' + accentClass;
   feedbackTitle.textContent = titleText;
   feedbackDetail.textContent = detail;
+  movePrompt.style.display = 'none';
 }
 
-function hideFeedback() {
-  feedback.className = 'feedback';
+function hideBoardResult() {
+  boardResultCard.classList.remove('visible');
+  movePrompt.style.display = '';
+  tryBestBtn.style.display = '';
+  if (tacticalDetails) tacticalDetails.removeAttribute('open');
+  if (explanationDetails) explanationDetails.removeAttribute('open');
+}
+
+function toggleBoardResultOverlay() {
+  if (boardResultCard.classList.contains('visible')) {
+    hideBoardResult();
+  } else {
+    boardResultCard.classList.add('visible');
+    movePrompt.style.display = 'none';
+  }
 }
 
 function updateColorBadge(color) {
@@ -337,25 +352,25 @@ function updateTacticalBadge(pattern) {
 }
 
 function showTacticalInfo(pattern, reason) {
-  if (!tacticalInfo) return;
+  if (!tacticalDetails) return;
   if (pattern && pattern !== 'None' && reason) {
     tacticalInfoTitle.textContent = pattern;
     tacticalInfoReason.textContent = reason;
-    tacticalInfo.style.display = 'block';
+    tacticalDetails.style.display = '';
   } else {
-    tacticalInfo.style.display = 'none';
+    tacticalDetails.style.display = 'none';
   }
 }
 
 function showExplanation(blunderText, bestText) {
-  if (!explanationInfo) return;
+  if (!explanationDetails) return;
   if (!blunderText && !bestText) {
-    explanationInfo.style.display = 'none';
+    explanationDetails.style.display = 'none';
     return;
   }
   explanationBlunder.textContent = blunderText || '';
   explanationBest.textContent = bestText || '';
-  explanationInfo.style.display = 'block';
+  explanationDetails.style.display = '';
 }
 
 function updateGameLink(url) {
@@ -455,7 +470,12 @@ function onBoardMove(_orig, _dest, move) {
     updateMoveHistory();
     historySection.style.display = 'block';
   } else if (!submitted) {
-    submitBtn.style.display = '';
+    const uci = move.from + move.to + (move.promotion || '');
+    if (puzzle && uci === puzzle.best_move_uci) {
+      setTimeout(() => submitMoveAction(), 150);
+    } else {
+      submitBtn.style.display = '';
+    }
   }
 }
 
@@ -466,8 +486,7 @@ async function loadPuzzle() {
   bestRevealed = false;
   boardFlipped = false;
   moveHistory = [];
-  hideFeedback();
-  bestMoveInfo.classList.remove('visible');
+  hideBoardResult();
   if (blunderSection) blunderSection.classList.remove('blunder-dimmed');
   historySection.style.display = 'none';
   moveHistoryEl.textContent = '';
@@ -483,8 +502,8 @@ async function loadPuzzle() {
   legendBlunder.style.display = 'flex';
   if (legendTactic) legendTactic.style.display = 'none';
   updateTacticalBadge(null);
-  if (tacticalInfo) tacticalInfo.style.display = 'none';
-  if (explanationInfo) explanationInfo.style.display = 'none';
+  if (tacticalDetails) tacticalDetails.style.display = 'none';
+  if (explanationDetails) explanationDetails.style.display = 'none';
 
   try {
     const params = {};
@@ -525,7 +544,7 @@ async function loadPuzzle() {
     updateEvalBar(puzzle.eval_before, puzzle.player_color, evalBarFill, evalValue);
 
     bestMoveDisplay.textContent = puzzle.best_move_san || '...';
-    bestLineDisplay.textContent = puzzle.best_line ? puzzle.best_line.join(' ') : '...';
+    bestLineDisplay.textContent = puzzle.best_line && puzzle.best_line.length > 1 ? puzzle.best_line.slice(1).join(' ') : '';
 
     setTimeout(() => {
       redrawAllHighlights();
@@ -554,8 +573,7 @@ async function loadSpecificPuzzle(gameId, ply) {
   bestRevealed = false;
   boardFlipped = false;
   moveHistory = [];
-  hideFeedback();
-  bestMoveInfo.classList.remove('visible');
+  hideBoardResult();
   if (blunderSection) blunderSection.classList.remove('blunder-dimmed');
   historySection.style.display = 'none';
   moveHistoryEl.textContent = '';
@@ -571,8 +589,8 @@ async function loadSpecificPuzzle(gameId, ply) {
   legendBlunder.style.display = 'flex';
   if (legendTactic) legendTactic.style.display = 'none';
   updateTacticalBadge(null);
-  if (tacticalInfo) tacticalInfo.style.display = 'none';
-  if (explanationInfo) explanationInfo.style.display = 'none';
+  if (tacticalDetails) tacticalDetails.style.display = 'none';
+  if (explanationDetails) explanationDetails.style.display = 'none';
 
   try {
     const data = await client.trainer.getSpecificPuzzle(gameId, ply);
@@ -602,7 +620,7 @@ async function loadSpecificPuzzle(gameId, ply) {
 
     updateEvalBar(puzzle.eval_before, puzzle.player_color, evalBarFill, evalValue);
     bestMoveDisplay.textContent = puzzle.best_move_san || '...';
-    bestLineDisplay.textContent = puzzle.best_line ? puzzle.best_line.join(' ') : '...';
+    bestLineDisplay.textContent = puzzle.best_line && puzzle.best_line.length > 1 ? puzzle.best_line.slice(1).join(' ') : '';
 
     setTimeout(() => {
       redrawAllHighlights();
@@ -619,7 +637,7 @@ async function submitMoveAction() {
 
   const lastMove = getLastMove();
   if (!lastMove) {
-    showFeedback('incorrect', t('common.no_move_made'), t('trainer.feedback.no_move'));
+    showBoardResult('accent-revealed', t('common.no_move_made'), t('trainer.feedback.no_move'));
     return;
   }
 
@@ -646,19 +664,20 @@ async function submitMoveAction() {
     submitted = true;
 
     if (data.is_best) {
-      showFeedback('correct', t('trainer.feedback.excellent'), t('trainer.feedback.found_best', { move: data.user_san }));
+      showBoardResult('accent-correct', t('trainer.feedback.excellent'), t('trainer.feedback.found_best'));
+      tryBestBtn.style.display = 'none';
       phaseIndicator.textContent = t('trainer.phase.correct');
       phaseIndicator.className = 'phase explore';
       legendUser.style.display = 'none';
     } else if (data.is_blunder) {
-      showFeedback('blunder-repeat', t('trainer.feedback.same_blunder'), t('trainer.feedback.same_blunder_detail', { userMove: data.user_san, bestMove: data.best_san }));
+      showBoardResult('accent-blunder', t('trainer.feedback.same_blunder'), t('trainer.feedback.same_blunder_detail', { userMove: data.user_san }));
       legendUser.style.display = 'none';
     } else {
       const evalDiff = Math.abs(data.user_eval - puzzle.eval_before);
       if (evalDiff < 50) {
-        showFeedback('correct', t('trainer.feedback.good_move'), t('trainer.feedback.good_move_detail', { userMove: data.user_san, bestMove: data.best_san }));
+        showBoardResult('accent-correct', t('trainer.feedback.good_move'), t('trainer.feedback.good_move_detail', { userMove: data.user_san }));
       } else {
-        showFeedback('incorrect', t('trainer.feedback.not_quite'), t('trainer.feedback.not_quite_detail', { userMove: data.user_san, userEval: data.user_eval_display, bestMove: data.best_san }));
+        showBoardResult('accent-revealed', t('trainer.feedback.not_quite'), t('trainer.feedback.not_quite_detail', { userMove: data.user_san, userEval: data.user_eval_display }));
       }
       legendUser.style.display = 'flex';
       redrawAllHighlightsWithUser(data.user_uci);
@@ -678,17 +697,17 @@ async function submitMoveAction() {
     }
 
   } catch (err) {
-    showFeedback('incorrect', t('trainer.feedback.error'), err.message || t('trainer.feedback.submit_failed'));
+    showBoardResult('accent-revealed', t('trainer.feedback.error'), err.message || t('trainer.feedback.submit_failed'));
     console.error(err);
   }
 }
 
 function revealBestMove() {
   bestRevealed = true;
-  bestMoveInfo.classList.add('visible');
+  boardResultCard.classList.add('visible', 'best-revealed');
+  movePrompt.style.display = 'none';
   submitBtn.disabled = true;
   submitBtn.style.display = 'none';
-  showBestBtn.disabled = true;
   phaseIndicator.textContent = t('trainer.phase.explore');
   phaseIndicator.className = 'phase explore';
 
@@ -714,7 +733,7 @@ function resetPosition() {
   updateMoveHistory();
 
   if (!bestRevealed) {
-    hideFeedback();
+    hideBoardResult();
   }
 
   setTimeout(() => {
@@ -726,19 +745,29 @@ function resetPosition() {
 function playBestMove() {
   if (!puzzle || !puzzle.best_move_uci) return;
 
-  game = new Chess(puzzle.fen);
+  const wasVisible = boardResultCard.classList.contains('visible');
+  if (wasVisible) hideBoardResult();
 
-  const from = puzzle.best_move_uci.slice(0, 2);
-  const to = puzzle.best_move_uci.slice(2, 4);
-  const promotion = puzzle.best_move_uci.length > 4 ? puzzle.best_move_uci[4] : undefined;
+  const execute = () => {
+    game = new Chess(puzzle.fen);
+    const from = puzzle.best_move_uci.slice(0, 2);
+    const to = puzzle.best_move_uci.slice(2, 4);
+    const promotion = puzzle.best_move_uci.length > 4 ? puzzle.best_move_uci[4] : undefined;
 
-  const move = game.move({ from, to, promotion });
-  if (move) {
-    board.setPosition(game.fen(), game);
-    moveHistory = [move.san];
-    updateMoveHistory();
-    updateCurrentMove();
-    historySection.style.display = 'block';
+    const move = game.move({ from, to, promotion });
+    if (move) {
+      board.setPosition(game.fen(), game);
+      moveHistory = [move.san];
+      updateMoveHistory();
+      updateCurrentMove();
+      historySection.style.display = 'block';
+    }
+  };
+
+  if (wasVisible) {
+    setTimeout(execute, 100);
+  } else {
+    execute();
   }
 }
 
@@ -931,14 +960,20 @@ function applyBoardColors() {
 }
 
 // Event listeners
-submitBtn.addEventListener('click', submitMoveAction);
+submitBtn.addEventListener('click', (e) => { e.stopPropagation(); submitMoveAction(); });
 resetBtn.addEventListener('click', resetPosition);
-showBestBtn.addEventListener('click', () => {
-  revealBestMove();
-  showFeedback('incorrect', t('trainer.feedback.best_revealed'), t('trainer.feedback.best_revealed_detail', { move: puzzle.best_move_san }));
+showBestBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (bestRevealed) {
+    toggleBoardResultOverlay();
+  } else {
+    showBoardResult('accent-revealed', t('trainer.feedback.best_revealed'), t('trainer.feedback.best_revealed_detail'));
+    revealBestMove();
+  }
 });
 nextBtn.addEventListener('click', loadPuzzle);
 tryBestBtn.addEventListener('click', playBestMove);
+overlayNextBtn.addEventListener('click', (e) => { e.stopPropagation(); loadPuzzle(); });
 undoBtn.addEventListener('click', undoMove);
 lichessBtn.addEventListener('click', openLichessAnalysis);
 
@@ -953,6 +988,13 @@ if (shortcutsOverlay) {
 if (shortcutsHintBtn) {
   shortcutsHintBtn.addEventListener('click', toggleShortcutsOverlay);
 }
+document.addEventListener('click', (e) => {
+  if (!boardResultCard.classList.contains('visible')) return;
+  const inner = boardResultCard.querySelector('.board-result-inner');
+  if (inner && !inner.contains(e.target)) {
+    hideBoardResult();
+  }
+});
 if (showArrowsCheckbox) {
   showArrowsCheckbox.addEventListener('change', redrawArrows);
 }
@@ -1030,6 +1072,10 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (shortcutsOverlay && shortcutsOverlay.classList.contains('visible')) {
       toggleShortcutsOverlay();
+      return;
+    }
+    if (boardResultCard.classList.contains('visible')) {
+      hideBoardResult();
     }
     return;
   }
@@ -1049,9 +1095,11 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key === 'f' || e.key === 'F') {
     flipBoard();
   } else if (e.key === 'b' || e.key === 'B') {
-    if (!bestRevealed) {
+    if (bestRevealed) {
+      toggleBoardResultOverlay();
+    } else {
+      showBoardResult('accent-revealed', t('trainer.feedback.best_revealed'), t('trainer.feedback.best_revealed_detail'));
       revealBestMove();
-      showFeedback('incorrect', t('trainer.feedback.best_revealed'), t('trainer.feedback.best_revealed_detail', { move: puzzle.best_move_san }));
     }
   } else if (e.key === 'p' || e.key === 'P') {
     playBestMove();

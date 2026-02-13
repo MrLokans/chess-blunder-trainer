@@ -93,7 +93,55 @@
       </div>
       <div id="boardWrapper">
         <div id="board"></div>
+        <!-- Board-anchored overlay result card -->
+        <div class="board-result-card" id="boardResultCard">
+          <div class="board-result-inner">
+            <!-- Feedback header -->
+            <div class="board-result-header" id="boardResultHeader">
+              <div class="board-result-title" id="feedbackTitle"></div>
+              <div class="board-result-detail" id="feedbackDetail"></div>
+            </div>
+            <!-- Best move section (visible only with .best-revealed) -->
+            <div class="board-result-body">
+              <div class="board-result-best">
+                <span class="board-result-move" id="bestMoveDisplay">...</span>
+                <span class="board-result-line" id="bestLineDisplay">...</span>
+              </div>
+              <div class="board-result-action">
+                <button class="btn btn-success" id="tryBestBtn">
+                  {{ t('trainer.button.play_best') }}<kbd>P</kbd>
+                </button>
+              </div>
+              {% if has_feature('trainer.tactics') %}
+              <details class="board-result-details" id="tacticalDetails">
+                <summary>{{ t('trainer.details.tactical') }} ▸</summary>
+                <div class="board-result-details-body">
+                  <div class="board-result-details-heading" id="tacticalInfoTitle"></div>
+                  <div class="board-result-details-text" id="tacticalInfoReason"></div>
+                </div>
+              </details>
+              {% endif %}
+              <details class="board-result-details" id="explanationDetails">
+                <summary>{{ t('trainer.details.explanation') }} ▸</summary>
+                <div class="board-result-details-body">
+                  <div id="explanationBlunder"></div>
+                  <div id="explanationBest"></div>
+                </div>
+              </details>
+            </div>
+            <div class="board-result-next">
+              <button class="btn btn-primary board-result-next-btn" id="overlayNextBtn">
+                {{ t('trainer.shortcuts.next') }}<kbd>N</kbd>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+
+    <!-- Below-board prompt (visible by default, hidden on reveal) -->
+    <div class="board-prompt" id="movePrompt">
+      <div class="section-title">{{ t('trainer.prompt.make_better') }}</div>
     </div>
 
     <!-- Hidden legend (kept for JS compat) -->
@@ -134,17 +182,6 @@
 
     <!-- Move Interaction Zone -->
     <div class="panel-section" id="moveInteractionZone">
-      <!-- Feedback area -->
-      <div class="feedback" id="feedback">
-        <div class="feedback-title" id="feedbackTitle"></div>
-        <div class="feedback-detail" id="feedbackDetail"></div>
-      </div>
-
-      <!-- Move prompt (default state) -->
-      <div class="move-prompt" id="movePrompt">
-        <div class="section-title">{{ t('trainer.prompt.make_better') }}</div>
-      </div>
-
       <!-- Move indicator (pending move) -->
       <div class="move-indicator" style="display: none;">
         <span class="label">{{ t('trainer.move_indicator.label') }}</span>
@@ -157,30 +194,6 @@
         <button class="action-key" id="resetBtn"><kbd>R</kbd> {{ t('trainer.shortcuts.reset') }}</button>
         <button class="action-key" id="showBestBtn"><kbd>B</kbd> {{ t('trainer.shortcuts.show_best') }}</button>
         <button class="action-key" id="nextBtn"><kbd>N</kbd> {{ t('trainer.shortcuts.next') }}</button>
-      </div>
-
-      <!-- Best move reveal -->
-      <div class="best-move-info" id="bestMoveInfo">
-        <div class="section-title">{{ t('trainer.section.best_move') }}</div>
-        <div class="best-move" id="bestMoveDisplay">...</div>
-        <div class="best-line">{{ t('trainer.best_move.line_label') }} <span id="bestLineDisplay">...</span></div>
-        {% if has_feature('trainer.tactics') %}
-        <div class="tactical-info" id="tacticalInfo" style="display: none;">
-          <div class="tactical-info-title">
-            <span>💡</span>
-            <span id="tacticalInfoTitle">Tactical Pattern</span>
-          </div>
-          <div class="tactical-info-reason" id="tacticalInfoReason">...</div>
-        </div>
-        {% endif %}
-        <div class="explanation-info" id="explanationInfo" style="display: none;">
-          <div class="explanation-title">📖 <span>{{ t('trainer.explanation.title') }}</span></div>
-          <div class="explanation-blunder" id="explanationBlunder"></div>
-          <div class="explanation-best" id="explanationBest"></div>
-        </div>
-        <div class="try-best-move">
-          <button class="btn btn-success" id="tryBestBtn">{{ t('trainer.button.play_best') }}<kbd>P</kbd></button>
-        </div>
       </div>
     </div>
 
@@ -382,5 +395,5 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script type="module" src="/static/js/trainer.js?v=11"></script>
+<script type="module" src="/static/js/trainer.js?v=12"></script>
 {% endblock %}

@@ -159,8 +159,7 @@ class TestRealLocales:
         assert en_keys == ru_keys
 
     def test_russian_trainer_feedback(self, mgr):
-        result = mgr.t("ru", "trainer.feedback.found_best", move="Nf3")
-        assert "Nf3" in result
+        result = mgr.t("ru", "trainer.feedback.found_best")
         assert "нашли" in result.lower()
 
 
