@@ -5,6 +5,7 @@ export function updateEvalBar(cp, playerColor, fillEl, valueEl) {
   const normalized = Math.max(-maxCp, Math.min(maxCp, playerCp));
   const percentage = 50 + (normalized / maxCp) * 50;
 
+  fillEl.style.height = percentage + '%';
   fillEl.style.width = percentage + '%';
 
   let displayVal;

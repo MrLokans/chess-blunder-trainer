@@ -28,8 +28,8 @@ let boardFlipped = false;
 
 let boardSettings = {
   piece_set: 'wikipedia',
-  board_light: '#f0d9b5',
-  board_dark: '#b58863'
+  board_light: '#E8E4DB',
+  board_dark: '#B8B4AB'
 };
 
 // DOM elements
@@ -90,6 +90,7 @@ const emptyStateTitle = document.getElementById('emptyStateTitle');
 const emptyStateMessage = document.getElementById('emptyStateMessage');
 const emptyStateAction = document.getElementById('emptyStateAction');
 const statsCard = document.getElementById('statsCard');
+const sessionBar = document.getElementById('sessionBar');
 const shortcutsOverlay = document.getElementById('shortcutsOverlay');
 const shortcutsClose = document.getElementById('shortcutsClose');
 const shortcutsHintBtn = document.getElementById('shortcutsHintBtn');
@@ -223,10 +224,24 @@ function hasActiveFilters() {
   return hasTacticalFilter || hasPhaseFilter || hasGameTypeFilter || hasColorFilter || hasDifficultyFilter;
 }
 
+function updateFilterCountBadge() {
+  const badge = document.getElementById('filtersCountBadge');
+  if (!badge) return;
+  let count = 0;
+  if (currentTacticalFilter && currentTacticalFilter !== 'all') count++;
+  if (currentPhaseFilters.length > 0 && currentPhaseFilters.length < 3) count++;
+  if (currentGameTypeFilters.length > 0 && currentGameTypeFilters.length < 4) count++;
+  if (currentColorFilter && currentColorFilter !== 'both') count++;
+  if (currentDifficultyFilters.length > 0 && currentDifficultyFilters.length < 3) count++;
+  badge.textContent = count > 0 ? count + ' active' : '0 active';
+  badge.style.display = count > 0 ? '' : 'none';
+}
+
 function showEmptyState(errorType) {
   trainerLayout.style.display = 'none';
   emptyState.style.display = 'block';
-  statsCard.style.display = 'none';
+  if (statsCard) statsCard.style.display = 'none';
+  if (sessionBar) sessionBar.style.display = 'none';
   emptyStateAction.onclick = null;
 
   if (errorType === 'no_games') {
@@ -259,7 +274,8 @@ function showEmptyState(errorType) {
 function hideEmptyState() {
   emptyState.style.display = 'none';
   trainerLayout.style.display = 'grid';
-  statsCard.style.display = 'block';
+  if (statsCard) statsCard.style.display = 'block';
+  if (sessionBar) sessionBar.style.display = 'flex';
 }
 
 function showFeedback(type, titleText, detail) {
@@ -273,12 +289,22 @@ function hideFeedback() {
 }
 
 function updateColorBadge(color) {
-  if (color === 'white') {
-    colorBadge.className = 'color-badge white';
-    colorBadge.innerHTML = '<span class="color-dot white"></span> ' + t('trainer.color.playing_as_white');
-  } else {
-    colorBadge.className = 'color-badge black';
-    colorBadge.innerHTML = '<span class="color-dot black"></span> ' + t('trainer.color.playing_as_black');
+  if (colorBadge) {
+    if (color === 'white') {
+      colorBadge.className = 'color-badge white';
+      colorBadge.innerHTML = '<span class="color-dot white"></span> ' + t('trainer.color.playing_as_white');
+    } else {
+      colorBadge.className = 'color-badge black';
+      colorBadge.innerHTML = '<span class="color-dot black"></span> ' + t('trainer.color.playing_as_black');
+    }
+  }
+  const colorIndicator = document.getElementById('colorIndicator');
+  const colorTagText = document.getElementById('colorTagText');
+  if (colorIndicator) {
+    colorIndicator.className = 'color-indicator ' + (color === 'white' ? 'white-piece' : 'black-piece');
+  }
+  if (colorTagText) {
+    colorTagText.textContent = color === 'white' ? t('chess.color.white') : t('chess.color.black');
   }
 }
 
@@ -286,7 +312,7 @@ function updatePhaseBadge(phase) {
   if (!phaseBadge) return;
   if (phase) {
     phaseBadge.textContent = phase.charAt(0).toUpperCase() + phase.slice(1);
-    phaseBadge.className = 'phase-badge ' + phase;
+    phaseBadge.className = 'context-tag phase-highlight';
     phaseBadge.style.display = 'inline-block';
   } else {
     phaseBadge.style.display = 'none';
@@ -295,11 +321,14 @@ function updatePhaseBadge(phase) {
 
 function updateTacticalBadge(pattern) {
   if (!tacticalBadge) return;
+  const tacticalSep = document.getElementById('tacticalSeparator');
   if (pattern && pattern !== 'None') {
     tacticalPatternName.textContent = pattern;
     tacticalBadge.style.display = 'inline-flex';
+    if (tacticalSep) tacticalSep.style.display = '';
   } else {
     tacticalBadge.style.display = 'none';
+    if (tacticalSep) tacticalSep.style.display = 'none';
   }
 }
 
@@ -327,12 +356,15 @@ function showExplanation(blunderText, bestText) {
 
 function updateGameLink(url) {
   const el = document.getElementById('gameLink');
+  const sep = document.getElementById('gameLinkSeparator');
   if (!el) return;
   if (url) {
     el.href = url;
-    el.style.display = 'inline';
+    el.style.display = 'inline-flex';
+    if (sep) sep.style.display = '';
   } else {
     el.style.display = 'none';
+    if (sep) sep.style.display = 'none';
   }
 }
 
@@ -422,6 +454,7 @@ function onBoardMove(_orig, _dest, move) {
 
 // Core actions
 async function loadPuzzle() {
+  updateFilterCountBadge();
   submitted = false;
   bestRevealed = false;
   boardFlipped = false;
@@ -998,6 +1031,7 @@ async function init() {
   currentDifficultyFilters = difficultyFilter.load();
   loadColorFilterFromStorage();
   loadFiltersPanelState();
+  updateFilterCountBadge();
 
   await loadBoardSettings();
 

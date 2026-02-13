@@ -1,22 +1,12 @@
-<div class="training-stats-grid">
-  <div class="training-stat-item">
-    <div class="training-stat-label">{{ t('trainer.stats.accuracy') }}</div>
-    <div class="training-stat-value training-stat-success">{{ accuracy }}%</div>
-  </div>
-  <div class="training-stat-item">
-    <div class="training-stat-label">{{ t('trainer.stats.total_attempts') }}</div>
-    <div class="training-stat-value">{{ total_attempts }}</div>
-  </div>
-  <div class="training-stat-item">
-    <div class="training-stat-label">{{ t('trainer.stats.correct') }}</div>
-    <div class="training-stat-value training-stat-success">{{ correct_attempts }}</div>
-  </div>
-  <div class="training-stat-item">
-    <div class="training-stat-label">{{ t('trainer.stats.incorrect') }}</div>
-    <div class="training-stat-value training-stat-accent">{{ incorrect_attempts }}</div>
-  </div>
-  <div class="training-stat-item">
-    <div class="training-stat-label">{{ t('trainer.stats.unique_puzzles') }}</div>
-    <div class="training-stat-value">{{ unique_puzzles }}</div>
-  </div>
+<div class="session-stat">
+  <span class="session-stat-value correct-count">{{ correct_attempts }}</span>
+  <span class="session-stat-label">{{ t('trainer.stats.correct') }}</span>
+</div>
+<div class="session-stat">
+  <span class="session-stat-value incorrect-count">{{ incorrect_attempts }}</span>
+  <span class="session-stat-label">{{ t('trainer.stats.incorrect') }}</span>
+</div>
+<div class="session-stat">
+  <span class="session-stat-value accuracy-value">{{ accuracy }}%</span>
+  <span class="session-stat-label">{{ t('trainer.stats.accuracy') }}</span>
 </div>
