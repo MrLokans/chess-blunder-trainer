@@ -122,8 +122,8 @@
   --transition-slow: 0.25s ease;
 
   /* Board colors */
-  --board-light: #E8E4DB;
-  --board-dark: var(--mid-gray-light);
+  --board-light: #E0E0E0;
+  --board-dark: #A0A0A0;
 }
 
 /* ==========================================================================
@@ -677,11 +677,11 @@ tr:hover td {
 
 .chart-title {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--dark-gray);
+  color: var(--black);
   margin-bottom: var(--s-md);
 }
 

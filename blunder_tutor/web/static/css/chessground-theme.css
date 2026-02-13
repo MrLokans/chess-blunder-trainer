@@ -77,42 +77,42 @@ cg-board square.highlight-tactic-secondary {
 .cg-wrap coords.squares:nth-child(even) coord:nth-child(odd),
 .cg-wrap.orientation-black coords.files:nth-child(even) coord:nth-child(odd),
 .cg-wrap coords.files:nth-child(even) coord:nth-child(even) {
-  color: var(--board-dark, #B8B4AB);
+  color: var(--board-dark, #A0A0A0);
 }
 
 .cg-wrap coords:nth-child(odd) coord:nth-child(odd),
 .cg-wrap coords.squares:nth-child(even) coord:nth-child(even),
 .cg-wrap.orientation-black coords.files:nth-child(even) coord:nth-child(even),
 .cg-wrap coords.files:nth-child(even) coord:nth-child(odd) {
-  color: var(--board-light, #E8E4DB);
+  color: var(--board-light, #E0E0E0);
 }
 
 /* ==========================================================================
    Piece Images
    ========================================================================== */
 
-.cg-wrap piece.pawn.white   { background-image: url(/static/pieces/wikipedia/wP.png); }
-.cg-wrap piece.rook.white   { background-image: url(/static/pieces/wikipedia/wR.png); }
-.cg-wrap piece.knight.white { background-image: url(/static/pieces/wikipedia/wN.png); }
-.cg-wrap piece.bishop.white { background-image: url(/static/pieces/wikipedia/wB.png); }
-.cg-wrap piece.queen.white  { background-image: url(/static/pieces/wikipedia/wQ.png); }
-.cg-wrap piece.king.white   { background-image: url(/static/pieces/wikipedia/wK.png); }
-.cg-wrap piece.pawn.black   { background-image: url(/static/pieces/wikipedia/bP.png); }
-.cg-wrap piece.rook.black   { background-image: url(/static/pieces/wikipedia/bR.png); }
-.cg-wrap piece.knight.black { background-image: url(/static/pieces/wikipedia/bN.png); }
-.cg-wrap piece.bishop.black { background-image: url(/static/pieces/wikipedia/bB.png); }
-.cg-wrap piece.queen.black  { background-image: url(/static/pieces/wikipedia/bQ.png); }
-.cg-wrap piece.king.black   { background-image: url(/static/pieces/wikipedia/bK.png); }
+.cg-wrap piece.pawn.white   { background-image: url(/static/pieces/gioco/wP.svg); }
+.cg-wrap piece.rook.white   { background-image: url(/static/pieces/gioco/wR.svg); }
+.cg-wrap piece.knight.white { background-image: url(/static/pieces/gioco/wN.svg); }
+.cg-wrap piece.bishop.white { background-image: url(/static/pieces/gioco/wB.svg); }
+.cg-wrap piece.queen.white  { background-image: url(/static/pieces/gioco/wQ.svg); }
+.cg-wrap piece.king.white   { background-image: url(/static/pieces/gioco/wK.svg); }
+.cg-wrap piece.pawn.black   { background-image: url(/static/pieces/gioco/bP.svg); }
+.cg-wrap piece.rook.black   { background-image: url(/static/pieces/gioco/bR.svg); }
+.cg-wrap piece.knight.black { background-image: url(/static/pieces/gioco/bN.svg); }
+.cg-wrap piece.bishop.black { background-image: url(/static/pieces/gioco/bB.svg); }
+.cg-wrap piece.queen.black  { background-image: url(/static/pieces/gioco/bQ.svg); }
+.cg-wrap piece.king.black   { background-image: url(/static/pieces/gioco/bK.svg); }
 
-.cg-wrap piece.ghost.pawn.white   { background-image: url(/static/pieces/wikipedia/wP.png); }
-.cg-wrap piece.ghost.rook.white   { background-image: url(/static/pieces/wikipedia/wR.png); }
-.cg-wrap piece.ghost.knight.white { background-image: url(/static/pieces/wikipedia/wN.png); }
-.cg-wrap piece.ghost.bishop.white { background-image: url(/static/pieces/wikipedia/wB.png); }
-.cg-wrap piece.ghost.queen.white  { background-image: url(/static/pieces/wikipedia/wQ.png); }
-.cg-wrap piece.ghost.king.white   { background-image: url(/static/pieces/wikipedia/wK.png); }
-.cg-wrap piece.ghost.pawn.black   { background-image: url(/static/pieces/wikipedia/bP.png); }
-.cg-wrap piece.ghost.rook.black   { background-image: url(/static/pieces/wikipedia/bR.png); }
-.cg-wrap piece.ghost.knight.black { background-image: url(/static/pieces/wikipedia/bN.png); }
-.cg-wrap piece.ghost.bishop.black { background-image: url(/static/pieces/wikipedia/bB.png); }
-.cg-wrap piece.ghost.queen.black  { background-image: url(/static/pieces/wikipedia/bQ.png); }
-.cg-wrap piece.ghost.king.black   { background-image: url(/static/pieces/wikipedia/bK.png); }
+.cg-wrap piece.ghost.pawn.white   { background-image: url(/static/pieces/gioco/wP.svg); }
+.cg-wrap piece.ghost.rook.white   { background-image: url(/static/pieces/gioco/wR.svg); }
+.cg-wrap piece.ghost.knight.white { background-image: url(/static/pieces/gioco/wN.svg); }
+.cg-wrap piece.ghost.bishop.white { background-image: url(/static/pieces/gioco/wB.svg); }
+.cg-wrap piece.ghost.queen.white  { background-image: url(/static/pieces/gioco/wQ.svg); }
+.cg-wrap piece.ghost.king.white   { background-image: url(/static/pieces/gioco/wK.svg); }
+.cg-wrap piece.ghost.pawn.black   { background-image: url(/static/pieces/gioco/bP.svg); }
+.cg-wrap piece.ghost.rook.black   { background-image: url(/static/pieces/gioco/bR.svg); }
+.cg-wrap piece.ghost.knight.black { background-image: url(/static/pieces/gioco/bN.svg); }
+.cg-wrap piece.ghost.bishop.black { background-image: url(/static/pieces/gioco/bB.svg); }
+.cg-wrap piece.ghost.queen.black  { background-image: url(/static/pieces/gioco/bQ.svg); }
+.cg-wrap piece.ghost.king.black   { background-image: url(/static/pieces/gioco/bK.svg); }

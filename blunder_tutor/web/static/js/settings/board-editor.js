@@ -3,9 +3,9 @@ import { client } from '../api.js';
 
 let pieceSets = [];
 let boardColorPresets = [];
-let currentPieceSet = 'wikipedia';
-let currentBoardLight = '#f0d9b5';
-let currentBoardDark = '#b58863';
+let currentPieceSet = 'gioco';
+let currentBoardLight = '#E0E0E0';
+let currentBoardDark = '#A0A0A0';
 let activeBoardColorPreset = null;
 
 const boardPreview = document.getElementById('boardPreview');
@@ -25,7 +25,7 @@ const previewPieces = [
 
 function getPieceImageUrl(piece) {
   if (!piece) return null;
-  const format = currentPieceSet === 'wikipedia' ? 'png' : 'svg';
+  const format = 'svg';
   return `/static/pieces/${currentPieceSet}/${piece}.${format}`;
 }
 
@@ -124,9 +124,9 @@ setupColorInput(boardDarkColor, boardDarkHex, (val) => {
 });
 
 document.getElementById('resetBoardBtn').addEventListener('click', () => {
-  currentPieceSet = 'wikipedia';
-  currentBoardLight = '#f0d9b5';
-  currentBoardDark = '#b58863';
+  currentPieceSet = 'gioco';
+  currentBoardLight = '#E0E0E0';
+  currentBoardDark = '#A0A0A0';
 
   boardLightColor.value = currentBoardLight;
   boardLightHex.value = currentBoardLight.toUpperCase();

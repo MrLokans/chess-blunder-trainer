@@ -299,8 +299,8 @@
 
 /* Board square colors */
 :root {
-  --board-light: #E8E4DB;
-  --board-dark: #B8B4AB;
+  --board-light: #E0E0E0;
+  --board-dark: #A0A0A0;
 }
 
 /* ==========================================================================

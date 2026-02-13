@@ -7,9 +7,8 @@ def test_get_piece_sets(app):
     data = response.json()
     assert "piece_sets" in data
     assert len(data["piece_sets"]) > 0
-    # Check wikipedia is included
     ids = [ps["id"] for ps in data["piece_sets"]]
-    assert "wikipedia" in ids
+    assert "gioco" in ids
 
 
 def test_get_board_color_presets(app):
@@ -27,9 +26,9 @@ def test_get_board_settings_defaults(app):
     response = app.get("/api/settings/board")
     assert response.status_code == 200
     data = response.json()
-    assert data["piece_set"] == "wikipedia"
-    assert data["board_light"] == "#f0d9b5"
-    assert data["board_dark"] == "#b58863"
+    assert data["piece_set"] == "gioco"
+    assert data["board_light"] == "#E0E0E0"
+    assert data["board_dark"] == "#A0A0A0"
 
 
 def test_update_board_settings(app):
@@ -87,6 +86,6 @@ def test_reset_board_settings(app):
     # Verify defaults
     response = app.get("/api/settings/board")
     data = response.json()
-    assert data["piece_set"] == "wikipedia"
-    assert data["board_light"] == "#f0d9b5"
-    assert data["board_dark"] == "#b58863"
+    assert data["piece_set"] == "gioco"
+    assert data["board_light"] == "#E0E0E0"
+    assert data["board_dark"] == "#A0A0A0"

@@ -341,7 +341,6 @@ THEME_KEYS = list(DEFAULT_THEME.keys())
 
 # Board styling constants
 PIECE_SETS = [
-    {"id": "wikipedia", "name": "Wikipedia", "format": "png"},
     {"id": "alpha", "name": "Alpha", "format": "svg"},
     {"id": "california", "name": "California", "format": "svg"},
     {"id": "cardinal", "name": "Cardinal", "format": "svg"},
@@ -360,7 +359,9 @@ PIECE_SETS = [
     {"id": "tatiana", "name": "Tatiana", "format": "svg"},
 ]
 
-DEFAULT_PIECE_SET = "wikipedia"
+DEFAULT_PIECE_SET = "gioco"
+DEFAULT_BOARD_LIGHT = "#E0E0E0"
+DEFAULT_BOARD_DARK = "#A0A0A0"
 
 BOARD_COLOR_PRESETS = {
     "brown": {
@@ -394,9 +395,6 @@ BOARD_COLOR_PRESETS = {
         "dark": "#b88b4a",
     },
 }
-
-DEFAULT_BOARD_LIGHT = "#f0d9b5"
-DEFAULT_BOARD_DARK = "#b58863"
 
 
 class ThemePreset(BaseModel):

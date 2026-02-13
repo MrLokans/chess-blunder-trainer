@@ -23,13 +23,13 @@ let currentTacticalFilter = 'all';
 let currentGameTypeFilters = [];
 let currentColorFilter = 'both';
 let currentDifficultyFilters = [];
-let filtersCollapsed = false;
+let filtersCollapsed = true;
 let boardFlipped = false;
 
 let boardSettings = {
-  piece_set: 'wikipedia',
-  board_light: '#E8E4DB',
-  board_dark: '#B8B4AB'
+  piece_set: 'gioco',
+  board_light: '#E0E0E0',
+  board_dark: '#A0A0A0'
 };
 
 // DOM elements
@@ -127,7 +127,7 @@ function applyBoardBackground(light, dark) {
 let pieceStyleEl = null;
 
 function applyPieceSet(pieceSet) {
-  const format = pieceSet === 'wikipedia' ? 'png' : 'svg';
+  const format = 'svg';
   const pieces = ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king'];
   const colorMap = { white: 'w', black: 'b' };
   const pieceMap = { pawn: 'P', rook: 'R', knight: 'N', bishop: 'B', queen: 'Q', king: 'K' };
@@ -901,13 +901,16 @@ function loadFiltersPanelState() {
   if (stored) {
     try {
       filtersCollapsed = JSON.parse(stored);
-      if (filtersCollapsed) {
-        filtersContent.classList.add('collapsed');
-        filtersChevron.classList.add('collapsed');
-      }
     } catch {
-      filtersCollapsed = false;
+      filtersCollapsed = true;
     }
+  }
+  if (filtersCollapsed) {
+    filtersContent.classList.add('collapsed');
+    filtersChevron.classList.add('collapsed');
+  } else {
+    filtersContent.classList.remove('collapsed');
+    filtersChevron.classList.remove('collapsed');
   }
 }
 
@@ -946,7 +949,7 @@ async function loadBoardSettings() {
   try {
     boardSettings = await client.settings.getBoard();
     applyBoardColors();
-    applyPieceSet(boardSettings.piece_set || 'wikipedia');
+    applyPieceSet(boardSettings.piece_set || 'gioco');
   } catch (err) {
     console.warn('Failed to load board settings:', err);
   }
