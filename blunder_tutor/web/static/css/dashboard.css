@@ -51,7 +51,7 @@
   .tactical-bar {
     display: flex;
     height: 24px;
-    border-radius: var(--radius);
+    border-radius: 0;
     overflow: hidden;
   }
 
@@ -95,8 +95,8 @@
     justify-content: center;
     width: 20px;
     height: 20px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
+    border-radius: 0;
+    border: 2px solid var(--mid-gray);
     background: var(--bg);
     color: var(--text-muted);
     font-size: var(--text-xs);
@@ -128,13 +128,13 @@
   }
 
   .info-modal {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-6);
+    background: var(--white);
+    border: 3px solid var(--black);
+    border-radius: 0;
+    padding: var(--s-xl);
     min-width: 320px;
     max-width: 480px;
-    box-shadow: var(--shadow-lg);
+    box-shadow: none;
   }
 
   .info-modal-header {
@@ -206,7 +206,7 @@
   .difficulty-bar {
     display: flex;
     height: 24px;
-    border-radius: var(--radius);
+    border-radius: 0;
     overflow: hidden;
   }
 
@@ -243,7 +243,7 @@
   .difficulty-legend-color {
     width: 12px;
     height: 12px;
-    border-radius: var(--radius-sm);
+    border-radius: 0;
   }
 
   .difficulty-legend-color.diff-easy { background: #1A3A8F; }
@@ -259,9 +259,9 @@
 
   .difficulty-card {
     padding: var(--space-4);
-    border-radius: var(--radius);
+    border-radius: 0;
     text-align: center;
-    border: 1px solid var(--border);
+    border: 2px solid var(--black);
   }
 
   .difficulty-card.diff-easy { background: rgba(26, 58, 143, 0.1); border-color: rgba(26, 58, 143, 0.3); }
@@ -301,7 +301,7 @@
   .tactical-legend-color {
     width: 12px;
     height: 12px;
-    border-radius: var(--radius-sm);
+    border-radius: 0;
   }
 
   .tactical-legend-color.fork { background: #ef4444; }
@@ -320,9 +320,9 @@
 
   .tactical-card {
     padding: var(--space-4);
-    border-radius: var(--radius);
+    border-radius: 0;
     text-align: center;
-    border: 1px solid var(--border);
+    border: 2px solid var(--black);
   }
 
   .tactical-card.fork { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
@@ -367,7 +367,7 @@
   .game-type-bar {
     display: flex;
     height: 24px;
-    border-radius: var(--radius);
+    border-radius: 0;
     overflow: hidden;
   }
 
@@ -406,7 +406,7 @@
   .game-type-legend-color {
     width: 12px;
     height: 12px;
-    border-radius: var(--radius-sm);
+    border-radius: 0;
   }
 
   .game-type-legend-color.ultrabullet { background: #3A3A3A; }
@@ -424,9 +424,9 @@
 
   .game-type-card {
     padding: var(--space-4);
-    border-radius: var(--radius);
+    border-radius: 0;
     text-align: center;
-    border: 1px solid var(--border);
+    border: 2px solid var(--black);
   }
 
   .game-type-card.ultrabullet { background: rgba(58, 58, 58, 0.1); border-color: rgba(58, 58, 58, 0.3); }
@@ -607,8 +607,8 @@
   .cr-metric-card {
     text-align: center;
     padding: var(--space-4);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border: 2px solid var(--black);
+    border-radius: 0;
     background: var(--surface, var(--bg));
   }
 
@@ -692,13 +692,13 @@
     flex: 1;
     height: 1.25rem;
     background: var(--surface, #1e293b);
-    border-radius: var(--radius);
+    border-radius: 0;
     overflow: hidden;
   }
 
   .collapse-bar-fill {
     height: 100%;
-    border-radius: var(--radius);
+    border-radius: 0;
     transition: width 0.3s ease;
     min-width: 2px;
   }
