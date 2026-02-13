@@ -3,9 +3,11 @@
 
 {% block title %}{{ t('nav.management') }} - Blunder Tutor{% endblock %}
 
-{% block content %}
-<h1>{{ t('management.title') }}</h1>
+{% block header_nav %}
 {{ render_nav('management') }}
+{% endblock %}
+
+{% block content %}
 
 <div class="card">
   <h2>{{ t('management.engine.title') }}</h2>

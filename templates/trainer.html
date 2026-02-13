@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_nav.html" import render_link_nav with context %}
 
-{% block title %}{{ title }} - Blunder Trainer{% endblock %}
+{% block title %}{{ title }} - Blunder Tutor{% endblock %}
 
 {% block extra_head %}
 <!-- Chessground CSS -->
@@ -21,7 +21,7 @@
   <div class="trainer-header-left">
     <h1 class="trainer-logo">
       <span class="trainer-logo-icon"></span>
-      {{ t('trainer.title') }}
+      Blunder Tutor
     </h1>
     <button class="shortcuts-hint-btn" id="shortcutsHintBtn" title="Keyboard shortcuts (?)">?</button>
   </div>
@@ -102,26 +102,6 @@
       </div>
     </div>
 
-    <!-- Board toggles -->
-    <div class="board-toggles">
-      <div class="arrow-toggle">
-        <input type="checkbox" id="showArrows" checked>
-        <label for="showArrows">{{ t('trainer.toggle.show_arrows') }}</label>
-      </div>
-      {% if has_feature('trainer.threats') %}
-      <div class="arrow-toggle">
-        <input type="checkbox" id="showThreats" checked>
-        <label for="showThreats">{{ t('trainer.toggle.show_threats') }}</label>
-      </div>
-      {% endif %}
-      {% if has_feature('trainer.tactics') %}
-      <div class="arrow-toggle">
-        <input type="checkbox" id="showTactics">
-        <label for="showTactics">{{ t('trainer.toggle.show_tactics') }}</label>
-      </div>
-      {% endif %}
-    </div>
-
     <!-- Hidden legend (kept for JS compat) -->
     <div class="highlight-legend" id="highlightLegend" style="display: none;">
       <div class="legend-item" id="legendBlunder"><span class="legend-color blunder"></span><span>{{ t('trainer.legend.your_blunder') }}</span></div>
@@ -135,39 +115,31 @@
 
   <!-- Right Panel -->
   <div class="trainer-panel">
-    <!-- Your Blunder section -->
-    <div class="panel-section">
-      <div class="section-title">{{ t('trainer.section.your_blunder') }}</div>
-      <div class="blunder-info">
-        <div class="blunder-move">
-          <span class="icon">??</span>
-          <span id="blunderMove">...</span>
-        </div>
-        <div class="blunder-eval">
-          <span id="evalBefore">...</span> → <span id="evalAfter">...</span>
-          (<span class="loss" id="cpLoss">...</span>)
-        </div>
-      </div>
-      <a href="#" class="explore-link" id="exploreLink" style="display: none;">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        {{ t('trainer.link.explore') }}
-      </a>
+    <!-- Puzzle tools (star, debug) -->
+    <div class="panel-section puzzle-tools" id="blunderSection">
       {% if has_feature('starred.puzzles') %}
-      <button class="btn btn-ghost" id="starPuzzleBtn" style="display: none; margin-top: 8px;" title="{{ t('trainer.star.add') }}">
+      <button class="btn btn-ghost" id="starPuzzleBtn" style="display: none;" title="{{ t('trainer.star.add') }}">
         ☆ {{ t('trainer.star.add') }}
       </button>
       {% endif %}
       {% if has_feature('debug.copy') %}
-      <button class="btn btn-ghost" id="copyDebugBtn" style="display: none; margin-top: 8px;" title="{{ t('trainer.debug.copy_title') }}">
+      <button class="btn btn-ghost" id="copyDebugBtn" style="display: none;" title="{{ t('trainer.debug.copy_title') }}">
         📋 {{ t('trainer.debug.copy') }}
       </button>
       {% endif %}
     </div>
 
+    <!-- Hidden elements for blunder info (JS compat) -->
+    <div style="display: none;">
+      <span id="blunderMove"></span>
+      <span id="evalBefore"></span>
+      <span id="evalAfter"></span>
+      <span id="cpLoss"></span>
+      <a id="exploreLink" href="#"></a>
+    </div>
+
     <!-- Move Interaction Zone -->
     <div class="panel-section" id="moveInteractionZone">
-      <div class="section-title">{{ t('trainer.section.find_best') }}</div>
-
       <!-- Feedback area -->
       <div class="feedback" id="feedback">
         <div class="feedback-title" id="feedbackTitle"></div>
@@ -176,11 +148,7 @@
 
       <!-- Move prompt (default state) -->
       <div class="move-prompt" id="movePrompt">
-        <svg class="move-prompt-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        <div>
-          <div class="move-prompt-text">{{ t('trainer.prompt.make_move') }}</div>
-          <div class="move-prompt-sub">{{ t('trainer.prompt.click_piece') }}</div>
-        </div>
+        <div class="section-title">{{ t('trainer.prompt.make_better') }}</div>
       </div>
 
       <!-- Move indicator (pending move) -->
@@ -189,15 +157,12 @@
         <span class="move" id="currentMove">-</span>
       </div>
 
-      <!-- Shortcut hints -->
-      <div class="shortcut-hints">
-        <kbd>Enter</kbd> {{ t('trainer.shortcuts.submit') }}
-        <span class="hint-separator">·</span>
-        <kbd>R</kbd> {{ t('trainer.shortcuts.reset') }}
-        <span class="hint-separator">·</span>
-        <kbd>B</kbd> {{ t('trainer.shortcuts.show_best') }}
-        <span class="hint-separator">·</span>
-        <kbd>N</kbd> {{ t('trainer.shortcuts.next') }}
+      <!-- Action buttons (clickable + shortcut hints) -->
+      <div class="action-keys">
+        <button class="action-key" id="submitBtn" style="display: none;"><kbd>Enter</kbd> {{ t('trainer.shortcuts.submit') }}</button>
+        <button class="action-key" id="resetBtn"><kbd>R</kbd> {{ t('trainer.shortcuts.reset') }}</button>
+        <button class="action-key" id="showBestBtn"><kbd>B</kbd> {{ t('trainer.shortcuts.show_best') }}</button>
+        <button class="action-key" id="nextBtn"><kbd>N</kbd> {{ t('trainer.shortcuts.next') }}</button>
       </div>
 
       <!-- Best move reveal -->
@@ -341,18 +306,46 @@
       </div>
     </div>
 
-    <!-- Action Bar (bottom) -->
-    <div class="action-bar">
-      <button class="btn btn-secondary" id="resetBtn">{{ t('trainer.button.reset') }} <kbd>R</kbd></button>
-      <button class="btn btn-secondary" id="showBestBtn">{{ t('trainer.button.show_best') }} <kbd>B</kbd></button>
-      <button class="btn btn-primary" id="nextBtn">{{ t('trainer.button.next') }} <kbd>N</kbd></button>
+    <!-- Board Settings (collapsible drawer) -->
+    <div class="panel-section filters-panel" style="padding: 0;">
+      <div class="section-title filters-header" id="boardSettingsHeader">
+        <div class="filters-header-left">
+          <span>{{ t('trainer.board_settings.title') }}</span>
+        </div>
+        <button class="filters-toggle-btn" id="boardSettingsToggleBtn" title="Toggle board settings">
+          <svg class="chevron-icon collapsed" id="boardSettingsChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+      </div>
+      <div class="filters-content collapsed" id="boardSettingsContent">
+        <div class="filter-group">
+          <div class="board-toggles-vertical">
+            <div class="arrow-toggle">
+              <input type="checkbox" id="showArrows" checked>
+              <label for="showArrows">{{ t('trainer.toggle.show_arrows') }}</label>
+            </div>
+            {% if has_feature('trainer.threats') %}
+            <div class="arrow-toggle">
+              <input type="checkbox" id="showThreats" checked>
+              <label for="showThreats">{{ t('trainer.toggle.show_threats') }}</label>
+            </div>
+            {% endif %}
+            {% if has_feature('trainer.tactics') %}
+            <div class="arrow-toggle">
+              <input type="checkbox" id="showTactics">
+              <label for="showTactics">{{ t('trainer.toggle.show_tactics') }}</label>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Hidden elements for JS compat -->
     <div style="display: none;">
       <span class="phase" id="phaseIndicator"></span>
       <span class="color-badge" id="colorBadge"></span>
-      <button class="btn" id="submitBtn">{{ t('trainer.button.submit') }}<kbd>Enter</kbd></button>
       <button class="btn" id="lichessBtn"><kbd>L</kbd></button>
       <div id="historySection">
         <div class="move-history" id="moveHistory"></div>

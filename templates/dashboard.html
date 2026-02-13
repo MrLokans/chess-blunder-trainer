@@ -11,9 +11,11 @@
 <link rel="stylesheet" href="/static/css/dashboard.css">
 {% endblock %}
 
-{% block content %}
-<h1>{{ t('dashboard.title') }}</h1>
+{% block header_nav %}
 {{ render_nav('dashboard') }}
+{% endblock %}
+
+{% block content %}
 
 <div class="dashboard-filters">
   <div class="filter-group">

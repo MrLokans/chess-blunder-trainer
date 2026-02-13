@@ -7,9 +7,11 @@
 <link rel="stylesheet" href="/static/css/starred.css">
 {% endblock %}
 
-{% block content %}
-<h1>{{ t('starred.title') }}</h1>
+{% block header_nav %}
 {{ render_nav('starred') }}
+{% endblock %}
+
+{% block content %}
 {% include '_demo_banner.html' %}
 
 <div id="starredContent">

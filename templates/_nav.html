@@ -1,23 +1,23 @@
 {# Navigation macro for consistent navigation across pages #}
 {% macro render_nav(active_page='') %}
-<nav>
-  <a href="/" {% if active_page == 'trainer' %}class="active"{% endif %}>{{ t('nav.trainer') }}</a>
+<nav class="trainer-nav">
+  <a href="/" class="trainer-nav-link{% if active_page == 'trainer' %} active{% endif %}">{{ t('nav.trainer') }}</a>
   {% if has_feature('page.dashboard') %}
-  <a href="/dashboard" {% if active_page == 'dashboard' %}class="active"{% endif %}>{{ t('nav.dashboard') }}</a>
+  <a href="/dashboard" class="trainer-nav-link{% if active_page == 'dashboard' %} active{% endif %}">{{ t('nav.dashboard') }}</a>
   {% endif %}
   {% if has_feature('dashboard.traps') %}
-  <a href="/traps" {% if active_page == 'traps' %}class="active"{% endif %}>{{ t('nav.traps') }}</a>
+  <a href="/traps" class="trainer-nav-link{% if active_page == 'traps' %} active{% endif %}">{{ t('nav.traps') }}</a>
   {% endif %}
   {% if has_feature('starred.puzzles') %}
-  <a href="/starred" {% if active_page == 'starred' %}class="active"{% endif %}>{{ t('nav.starred') }}</a>
+  <a href="/starred" class="trainer-nav-link{% if active_page == 'starred' %} active{% endif %}">{{ t('nav.starred') }}</a>
   {% endif %}
   {% if has_feature('page.management') %}
-  <a href="/management" {% if active_page == 'management' %}class="active"{% endif %}>{{ t('nav.management') }}</a>
+  <a href="/management" class="trainer-nav-link{% if active_page == 'management' %} active{% endif %}">{{ t('nav.management') }}</a>
   {% endif %}
   {% if has_feature('page.import') %}
-  <a href="/import" {% if active_page == 'import' %}class="active"{% endif %}>{{ t('nav.import') }}</a>
+  <a href="/import" class="trainer-nav-link{% if active_page == 'import' %} active{% endif %}">{{ t('nav.import') }}</a>
   {% endif %}
-  <a href="/settings" {% if active_page == 'settings' %}class="active"{% endif %}>{{ t('nav.settings') }}</a>
+  <a href="/settings" class="trainer-nav-link{% if active_page == 'settings' %} active{% endif %}">{{ t('nav.settings') }}</a>
 </nav>
 {% endmacro %}
 

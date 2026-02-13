@@ -3,69 +3,11 @@
    ========================================================================== */
 
 /* ==========================================================================
-   Header
+   Header (overrides for trainer page)
    ========================================================================== */
 
 .trainer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--s-md) var(--s-xl);
-  border-bottom: 3px solid var(--black);
-}
-
-.trainer-header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--s-sm);
-}
-
-.trainer-logo {
-  display: flex;
-  align-items: center;
-  gap: var(--s-sm);
-  font-family: var(--font-mono);
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--black);
-  margin: 0;
-}
-
-.trainer-logo-icon {
-  width: 20px;
-  height: 20px;
-  background: var(--red);
-}
-
-.trainer-nav {
-  display: flex;
-  gap: 0;
-  align-items: center;
-}
-
-.trainer-nav-link {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--dark-gray);
-  text-decoration: none;
-  padding: var(--s-sm) var(--s-md);
-  transition: all 0.15s ease;
-  border: none;
-}
-
-.trainer-nav-link:hover {
-  color: var(--black);
-  border-bottom: none;
-}
-
-.trainer-nav-link.active {
-  background: var(--black);
-  color: var(--white);
+  margin-bottom: 0;
 }
 
 /* ==========================================================================
@@ -75,16 +17,18 @@
 .session-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   background: var(--black);
   padding: var(--s-sm) var(--s-xl);
   color: var(--white);
+  gap: var(--s-lg);
 }
 
 .session-left {
   display: flex;
   align-items: center;
-  gap: var(--s-sm);
+  gap: var(--s-md);
+  margin-right: auto;
 }
 
 .session-label {
@@ -99,6 +43,8 @@
   display: flex;
   gap: 4px;
   align-items: center;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  padding-left: var(--s-md);
 }
 
 .session-dot {
@@ -168,7 +114,7 @@
 
 .trainer-main {
   display: grid;
-  grid-template-columns: 1fr 420px;
+  grid-template-columns: 1fr 380px;
   min-height: calc(100vh - 120px);
 }
 
@@ -183,9 +129,13 @@
   border-left: 3px solid var(--black);
   display: flex;
   flex-direction: column;
+  height: calc(100vh - 120px);
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1080px) {
   .trainer-main {
     grid-template-columns: 1fr;
   }
@@ -285,13 +235,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s-xs);
-  width: 24px;
+  gap: 0;
+  width: 28px;
   flex-shrink: 0;
 }
 
 .eval-bar {
-  width: 24px;
+  width: 28px;
   background: var(--dark-gray);
   position: relative;
   border: none;
@@ -313,11 +263,15 @@
 
 .eval-value {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  color: var(--black);
+  color: var(--white);
   text-align: center;
   min-width: auto;
+  background: var(--dark-gray);
+  width: 28px;
+  padding: 2px 0;
+  line-height: 1;
 }
 
 .eval-value.positive { color: var(--black); }
@@ -352,39 +306,54 @@
    Board Toggles
    ========================================================================== */
 
-.board-toggles {
+.board-toggles-vertical {
   display: flex;
-  gap: var(--s-lg);
-  margin-top: var(--s-md);
-  align-items: center;
+  flex-direction: column;
+  gap: var(--s-sm);
 }
 
 .arrow-toggle {
   display: flex;
   align-items: center;
-  gap: var(--s-sm);
+  gap: 0;
   margin-top: 0;
-  font-family: var(--font-sans);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   color: var(--dark-gray);
+  cursor: pointer;
 }
 
 .arrow-toggle input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  accent-color: var(--black);
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }
 
 .arrow-toggle label {
   cursor: pointer;
   user-select: none;
   margin-bottom: 0;
-  font-family: var(--font-sans);
-  font-size: 12px;
-  text-transform: none;
-  letter-spacing: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   color: var(--dark-gray);
+  padding: var(--s-xs) var(--s-md);
+  border: 2px solid var(--mid-gray);
+  transition: all 0.15s ease;
+}
+
+.arrow-toggle label:hover {
+  border-color: var(--black);
+  color: var(--black);
+}
+
+.arrow-toggle input[type="checkbox"]:checked + label {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
 }
 
 /* ==========================================================================
@@ -402,17 +371,29 @@
 
 .section-title {
   font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 400;
+  font-size: 12px;
+  font-weight: 700;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: var(--mid-gray);
+  color: var(--dark-gray);
   margin-bottom: var(--s-md);
 }
 
 /* ==========================================================================
    Blunder Info Card
    ========================================================================== */
+
+.puzzle-tools {
+  display: flex;
+  gap: var(--s-sm);
+  align-items: center;
+  padding-top: var(--s-sm);
+  padding-bottom: var(--s-sm);
+}
+
+.puzzle-tools:not(:has(.btn[style*="inline"], .btn:not([style*="none"]))) {
+  display: none;
+}
 
 .blunder-info {
   background: var(--bg-error);
@@ -479,16 +460,16 @@
 
 /* Prompt state */
 .move-prompt {
-  border: 2px dashed var(--mid-gray);
-  padding: var(--s-lg);
+  padding: var(--s-md) 0;
   display: flex;
   align-items: flex-start;
   gap: var(--s-md);
 }
 
 .move-prompt-icon {
-  color: var(--mid-gray);
+  color: var(--dark-gray);
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .move-prompt-text {
@@ -501,7 +482,7 @@
 .move-prompt-sub {
   font-family: var(--font-sans);
   font-size: 12px;
-  color: var(--mid-gray);
+  color: var(--dark-gray);
   margin-top: var(--s-xs);
 }
 
@@ -700,31 +681,84 @@
 }
 
 /* ==========================================================================
-   Keyboard Shortcut Hints (in panel)
+   Action Keys (inline buttons + shortcut hints)
    ========================================================================== */
 
-.shortcut-hints {
+.action-keys {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-xs);
+  flex-direction: column;
+  gap: 0;
+  margin-top: var(--s-md);
+}
+
+.action-key {
+  display: flex;
   align-items: center;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--mid-gray);
+  gap: var(--s-md);
   padding: var(--s-sm) 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--warm-gray);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--black);
+  text-align: left;
+  transition: color 0.15s ease;
+  width: 100%;
 }
 
-.shortcut-hints kbd {
+.action-key:last-child {
+  border-bottom: none;
+}
+
+.action-key:hover kbd {
+  transform: translateY(-1px);
+}
+
+.action-key:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.action-key kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 var(--s-sm);
+  border: 3px solid var(--black);
+  font-family: var(--font-mono);
   font-size: 10px;
-  opacity: 1;
-  border: 1px solid var(--mid-gray);
-  padding: 0 4px;
-  margin: 0 2px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--black);
+  background: transparent;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
-.shortcut-hints .hint-separator {
-  color: var(--mid-gray);
-  margin: 0 2px;
+/* Submit — blue key */
+.action-key#submitBtn kbd {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: var(--white);
+}
+
+/* Show Best — yellow key */
+.action-key#showBestBtn kbd {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: var(--black);
+}
+
+/* Next — red key */
+.action-key#nextBtn kbd {
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--white);
 }
 
 /* ==========================================================================
@@ -734,7 +768,6 @@
 .filters-panel {
   border: none;
   border-radius: 0;
-  overflow: hidden;
 }
 
 .filters-header {
@@ -796,16 +829,10 @@
 .filters-content {
   padding: var(--s-xl);
   display: block;
-  max-height: 400px;
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
 }
 
 .filters-content.collapsed {
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  display: block;
+  display: none;
 }
 
 .filter-group {
@@ -820,10 +847,10 @@
 .filter-label {
   font-family: var(--font-mono);
   font-size: 9px;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--mid-gray);
+  color: var(--dark-gray);
   margin-bottom: var(--s-sm);
 }
 
@@ -977,25 +1004,7 @@
   color: var(--white);
 }
 
-/* ==========================================================================
-   Action Bar (bottom of panel)
-   ========================================================================== */
 
-.action-bar {
-  padding: var(--s-xl);
-  border-top: 3px solid var(--black);
-  display: flex;
-  gap: var(--s-sm);
-  margin-top: auto;
-}
-
-.action-bar .btn {
-  flex: 1;
-}
-
-.action-bar .btn-primary {
-  flex: 1;
-}
 
 /* ==========================================================================
    Color Badge
@@ -1090,12 +1099,12 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr 420px;
+  grid-template-columns: 1fr 380px;
   gap: 0;
   align-items: start;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1080px) {
   .layout {
     grid-template-columns: 1fr;
   }
@@ -1256,7 +1265,7 @@
   border-radius: 0;
   padding: var(--s-xl);
   min-width: 320px;
-  max-width: 420px;
+  max-width: 380px;
   box-shadow: none;
 }
 

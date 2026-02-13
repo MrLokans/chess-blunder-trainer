@@ -425,9 +425,9 @@ async function loadStats() {
 
         const zoneColor = (label) => {
           const start = parseInt(label.split('-')[0]);
-          if (start <= 10) return 'var(--success, #22c55e)';
-          if (start <= 25) return 'var(--warning, #f59e0b)';
-          return 'var(--error, #ef4444)';
+          if (start <= 10) return 'var(--success, #2D8F3E)';
+          if (start <= 25) return 'var(--warning, #F2C12E)';
+          return 'var(--error, #D42828)';
         };
 
         const zoneLabel = (label) => {
@@ -466,9 +466,9 @@ async function loadStats() {
             ${barsHtml}
           </div>
           <div class="collapse-zone-legend">
-            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--success, #22c55e);"></span>${t('dashboard.collapse.zone_opening')}</span>
-            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--warning, #f59e0b);"></span>${t('dashboard.collapse.zone_middle')}</span>
-            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--error, #ef4444);"></span>${t('dashboard.collapse.zone_late')}</span>
+            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--success, #2D8F3E);"></span>${t('dashboard.collapse.zone_opening')}</span>
+            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--warning, #F2C12E);"></span>${t('dashboard.collapse.zone_middle')}</span>
+            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--error, #D42828);"></span>${t('dashboard.collapse.zone_late')}</span>
           </div>
         `;
       } else {
@@ -482,8 +482,8 @@ async function loadStats() {
       const crContainer = document.getElementById('conversionResilienceContainer');
 
       if (crData.games_with_advantage > 0 || crData.games_with_disadvantage > 0) {
-        const conversionColor = crData.conversion_rate >= 70 ? 'var(--success, #22c55e)' : crData.conversion_rate >= 50 ? 'var(--warning, #f59e0b)' : 'var(--error, #ef4444)';
-        const resilienceColor = crData.resilience_rate >= 20 ? 'var(--success, #22c55e)' : crData.resilience_rate >= 10 ? 'var(--warning, #f59e0b)' : 'var(--error, #ef4444)';
+        const conversionColor = crData.conversion_rate >= 70 ? 'var(--success, #2D8F3E)' : crData.conversion_rate >= 50 ? 'var(--warning, #F2C12E)' : 'var(--error, #D42828)';
+        const resilienceColor = crData.resilience_rate >= 20 ? 'var(--success, #2D8F3E)' : crData.resilience_rate >= 10 ? 'var(--warning, #F2C12E)' : 'var(--error, #D42828)';
 
         crContainer.innerHTML = `
           <div class="cr-metrics">
@@ -667,8 +667,8 @@ async function loadDateChart() {
           {
             label: t('dashboard.chart.games_played'),
             data: gameCounts,
-            backgroundColor: 'rgba(14, 165, 233, 0.7)',
-            borderColor: 'rgba(14, 165, 233, 1)',
+            backgroundColor: 'rgba(26, 58, 143, 0.7)',
+            borderColor: 'rgba(26, 58, 143, 1)',
             borderWidth: 1,
             yAxisID: 'y',
             order: 2
@@ -677,8 +677,8 @@ async function loadDateChart() {
             label: t('dashboard.chart.accuracy'),
             data: accuracies,
             type: 'line',
-            borderColor: 'rgba(34, 197, 94, 1)',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            borderColor: 'rgba(45, 143, 62, 1)',
+            backgroundColor: 'rgba(45, 143, 62, 0.1)',
             borderWidth: 2,
             fill: false,
             tension: 0.3,
@@ -794,8 +794,8 @@ async function loadHourChart() {
           {
             label: t('dashboard.chart.games_played'),
             data: gameCounts,
-            backgroundColor: 'rgba(139, 92, 246, 0.7)',
-            borderColor: 'rgba(139, 92, 246, 1)',
+            backgroundColor: 'rgba(26, 58, 143, 0.7)',
+            borderColor: 'rgba(26, 58, 143, 1)',
             borderWidth: 1,
             yAxisID: 'y',
             order: 2
@@ -804,8 +804,8 @@ async function loadHourChart() {
             label: t('dashboard.chart.accuracy'),
             data: accuracies,
             type: 'line',
-            borderColor: 'rgba(34, 197, 94, 1)',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            borderColor: 'rgba(45, 143, 62, 1)',
+            backgroundColor: 'rgba(45, 143, 62, 0.1)',
             borderWidth: 2,
             fill: false,
             tension: 0.3,

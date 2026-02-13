@@ -84,6 +84,9 @@ const filtersHeader = document.getElementById('filtersHeader');
 const filtersToggleBtn = document.getElementById('filtersToggleBtn');
 const filtersContent = document.getElementById('filtersContent');
 const filtersChevron = document.getElementById('filtersChevron');
+const boardSettingsHeader = document.getElementById('boardSettingsHeader');
+const boardSettingsContent = document.getElementById('boardSettingsContent');
+const boardSettingsChevron = document.getElementById('boardSettingsChevron');
 const emptyState = document.getElementById('emptyState');
 const trainerLayout = document.getElementById('trainerLayout');
 const emptyStateTitle = document.getElementById('emptyStateTitle');
@@ -94,6 +97,7 @@ const sessionBar = document.getElementById('sessionBar');
 const shortcutsOverlay = document.getElementById('shortcutsOverlay');
 const shortcutsClose = document.getElementById('shortcutsClose');
 const shortcutsHintBtn = document.getElementById('shortcutsHintBtn');
+const blunderSection = document.getElementById('blunderSection');
 
 // Board background SVG generation
 let boardStyleEl = null;
@@ -444,11 +448,14 @@ function onBoardMove(_orig, _dest, move) {
   updateCurrentMove();
   board.clearArrows();
   setTimeout(() => redrawAllHighlights(), 50);
+  if (blunderSection) blunderSection.classList.add('blunder-dimmed');
 
   if (bestRevealed) {
     moveHistory.push(move.san);
     updateMoveHistory();
     historySection.style.display = 'block';
+  } else if (!submitted) {
+    submitBtn.style.display = '';
   }
 }
 
@@ -461,12 +468,14 @@ async function loadPuzzle() {
   moveHistory = [];
   hideFeedback();
   bestMoveInfo.classList.remove('visible');
+  if (blunderSection) blunderSection.classList.remove('blunder-dimmed');
   historySection.style.display = 'none';
   moveHistoryEl.textContent = '';
   currentMoveEl.textContent = '-';
   phaseIndicator.textContent = t('trainer.phase.guess');
   phaseIndicator.className = 'phase guess';
   submitBtn.disabled = false;
+  submitBtn.style.display = 'none';
   showBestBtn.disabled = false;
   highlightLegend.style.display = 'none';
   legendBest.style.display = 'none';
@@ -511,7 +520,7 @@ async function loadPuzzle() {
     blunderMove.textContent = puzzle.blunder_san;
     evalBefore.textContent = puzzle.eval_before_display;
     evalAfter.textContent = puzzle.eval_after_display;
-    cpLoss.textContent = t('trainer.blunder.cp_loss', { loss: (puzzle.cp_loss / 100).toFixed(1) });
+    cpLoss.textContent = `(${(puzzle.cp_loss / 100).toFixed(1)})`;
 
     updateEvalBar(puzzle.eval_before, puzzle.player_color, evalBarFill, evalValue);
 
@@ -519,7 +528,6 @@ async function loadPuzzle() {
     bestLineDisplay.textContent = puzzle.best_line ? puzzle.best_line.join(' ') : '...';
 
     setTimeout(() => {
-      highlightLegend.style.display = 'flex';
       redrawAllHighlights();
       redrawArrows();
     }, 100);
@@ -548,12 +556,14 @@ async function loadSpecificPuzzle(gameId, ply) {
   moveHistory = [];
   hideFeedback();
   bestMoveInfo.classList.remove('visible');
+  if (blunderSection) blunderSection.classList.remove('blunder-dimmed');
   historySection.style.display = 'none';
   moveHistoryEl.textContent = '';
   currentMoveEl.textContent = '-';
   phaseIndicator.textContent = t('trainer.phase.guess');
   phaseIndicator.className = 'phase guess';
   submitBtn.disabled = false;
+  submitBtn.style.display = 'none';
   showBestBtn.disabled = false;
   highlightLegend.style.display = 'none';
   legendBest.style.display = 'none';
@@ -588,14 +598,13 @@ async function loadSpecificPuzzle(gameId, ply) {
     blunderMove.textContent = puzzle.blunder_san;
     evalBefore.textContent = puzzle.eval_before_display;
     evalAfter.textContent = puzzle.eval_after_display;
-    cpLoss.textContent = t('trainer.blunder.cp_loss', { loss: (puzzle.cp_loss / 100).toFixed(1) });
+    cpLoss.textContent = `(${(puzzle.cp_loss / 100).toFixed(1)})`;
 
     updateEvalBar(puzzle.eval_before, puzzle.player_color, evalBarFill, evalValue);
     bestMoveDisplay.textContent = puzzle.best_move_san || '...';
     bestLineDisplay.textContent = puzzle.best_line ? puzzle.best_line.join(' ') : '...';
 
     setTimeout(() => {
-      highlightLegend.style.display = 'flex';
       redrawAllHighlights();
       redrawArrows();
     }, 100);
@@ -678,6 +687,7 @@ function revealBestMove() {
   bestRevealed = true;
   bestMoveInfo.classList.add('visible');
   submitBtn.disabled = true;
+  submitBtn.style.display = 'none';
   showBestBtn.disabled = true;
   phaseIndicator.textContent = t('trainer.phase.explore');
   phaseIndicator.className = 'phase explore';
@@ -872,7 +882,37 @@ function loadFiltersPanelState() {
   }
 }
 
-// Board settings
+let boardSettingsCollapsed = true;
+const BOARD_SETTINGS_COLLAPSED_KEY = 'boardSettingsCollapsed';
+
+function toggleBoardSettingsPanel() {
+  boardSettingsCollapsed = !boardSettingsCollapsed;
+  if (boardSettingsCollapsed) {
+    boardSettingsContent.classList.add('collapsed');
+    boardSettingsChevron.classList.add('collapsed');
+  } else {
+    boardSettingsContent.classList.remove('collapsed');
+    boardSettingsChevron.classList.remove('collapsed');
+  }
+  localStorage.setItem(BOARD_SETTINGS_COLLAPSED_KEY, JSON.stringify(boardSettingsCollapsed));
+}
+
+function loadBoardSettingsPanelState() {
+  const stored = localStorage.getItem(BOARD_SETTINGS_COLLAPSED_KEY);
+  if (stored) {
+    try {
+      boardSettingsCollapsed = JSON.parse(stored);
+      if (!boardSettingsCollapsed) {
+        boardSettingsContent.classList.remove('collapsed');
+        boardSettingsChevron.classList.remove('collapsed');
+      }
+    } catch {
+      boardSettingsCollapsed = true;
+    }
+  }
+}
+
+// Board visual settings
 async function loadBoardSettings() {
   try {
     boardSettings = await client.settings.getBoard();
@@ -975,6 +1015,13 @@ if (filtersToggleBtn) {
     toggleFiltersPanel();
   });
 }
+if (boardSettingsHeader) boardSettingsHeader.addEventListener('click', toggleBoardSettingsPanel);
+if (document.getElementById('boardSettingsToggleBtn')) {
+  document.getElementById('boardSettingsToggleBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleBoardSettingsPanel();
+  });
+}
 
 document.addEventListener('keydown', (e) => {
   const tag = (e.target.tagName || '').toLowerCase();
@@ -1031,6 +1078,7 @@ async function init() {
   currentDifficultyFilters = difficultyFilter.load();
   loadColorFilterFromStorage();
   loadFiltersPanelState();
+  loadBoardSettingsPanelState();
   updateFilterCountBadge();
 
   await loadBoardSettings();

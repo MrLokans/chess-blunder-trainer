@@ -66,7 +66,7 @@
   }
 
   .tactical-bar-segment.fork { background: #ef4444; }
-  .tactical-bar-segment.pin { background: #8b5cf6; }
+  .tactical-bar-segment.pin { background: #B8B4AB; }
   .tactical-bar-segment.skewer { background: #06b6d4; }
   .tactical-bar-segment.discovered { background: #f59e0b; }
   .tactical-bar-segment.hanging { background: #ec4899; }
@@ -183,7 +183,7 @@
     margin-top: var(--space-2);
   }
 
-  .info-modal-definitions dt.diff-easy { color: #22c55e; }
+  .info-modal-definitions dt.diff-easy { color: #1A3A8F; }
   .info-modal-definitions dt.diff-medium { color: #f59e0b; }
   .info-modal-definitions dt.diff-hard { color: #ef4444; }
 
@@ -220,7 +220,7 @@
     transition: flex 0.3s ease;
   }
 
-  .difficulty-bar-segment.diff-easy { background: #22c55e; }
+  .difficulty-bar-segment.diff-easy { background: #1A3A8F; }
   .difficulty-bar-segment.diff-medium { background: #f59e0b; }
   .difficulty-bar-segment.diff-hard { background: #ef4444; }
   .difficulty-bar-segment.diff-unscored { background: #6b7280; }
@@ -246,7 +246,7 @@
     border-radius: var(--radius-sm);
   }
 
-  .difficulty-legend-color.diff-easy { background: #22c55e; }
+  .difficulty-legend-color.diff-easy { background: #1A3A8F; }
   .difficulty-legend-color.diff-medium { background: #f59e0b; }
   .difficulty-legend-color.diff-hard { background: #ef4444; }
   .difficulty-legend-color.diff-unscored { background: #6b7280; }
@@ -264,7 +264,7 @@
     border: 1px solid var(--border);
   }
 
-  .difficulty-card.diff-easy { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3); }
+  .difficulty-card.diff-easy { background: rgba(26, 58, 143, 0.1); border-color: rgba(26, 58, 143, 0.3); }
   .difficulty-card.diff-medium { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); }
   .difficulty-card.diff-hard { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
   .difficulty-card.diff-unscored { background: rgba(107, 114, 128, 0.1); border-color: rgba(107, 114, 128, 0.3); }
@@ -276,7 +276,7 @@
     font-size: var(--text-sm);
   }
 
-  .difficulty-card.diff-easy .difficulty-name { color: #22c55e; }
+  .difficulty-card.diff-easy .difficulty-name { color: #1A3A8F; }
   .difficulty-card.diff-medium .difficulty-name { color: #f59e0b; }
   .difficulty-card.diff-hard .difficulty-name { color: #ef4444; }
   .difficulty-card.diff-unscored .difficulty-name { color: #6b7280; }
@@ -305,7 +305,7 @@
   }
 
   .tactical-legend-color.fork { background: #ef4444; }
-  .tactical-legend-color.pin { background: #8b5cf6; }
+  .tactical-legend-color.pin { background: #B8B4AB; }
   .tactical-legend-color.skewer { background: #06b6d4; }
   .tactical-legend-color.discovered { background: #f59e0b; }
   .tactical-legend-color.hanging { background: #ec4899; }
@@ -326,7 +326,7 @@
   }
 
   .tactical-card.fork { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
-  .tactical-card.pin { background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3); }
+  .tactical-card.pin { background: rgba(184, 180, 171, 0.1); border-color: rgba(184, 180, 171, 0.3); }
   .tactical-card.skewer { background: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.3); }
   .tactical-card.discovered { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); }
   .tactical-card.hanging { background: rgba(236, 72, 153, 0.1); border-color: rgba(236, 72, 153, 0.3); }
@@ -341,7 +341,7 @@
   }
 
   .tactical-card.fork .tactical-name { color: #ef4444; }
-  .tactical-card.pin .tactical-name { color: #8b5cf6; }
+  .tactical-card.pin .tactical-name { color: #B8B4AB; }
   .tactical-card.skewer .tactical-name { color: #06b6d4; }
   .tactical-card.discovered .tactical-name { color: #f59e0b; }
   .tactical-card.hanging .tactical-name { color: #ec4899; }
@@ -381,12 +381,12 @@
     transition: flex 0.3s ease;
   }
 
-  .game-type-bar-segment.ultrabullet { background: #dc2626; }
-  .game-type-bar-segment.bullet { background: #f97316; }
-  .game-type-bar-segment.blitz { background: #eab308; }
-  .game-type-bar-segment.rapid { background: #22c55e; }
-  .game-type-bar-segment.classical { background: #3b82f6; }
-  .game-type-bar-segment.correspondence { background: #8b5cf6; }
+  .game-type-bar-segment.ultrabullet { background: #3A3A3A; }
+  .game-type-bar-segment.bullet { background: #D42828; }
+  .game-type-bar-segment.blitz { background: #C4A826; }
+  .game-type-bar-segment.rapid { background: #1A3A8F; }
+  .game-type-bar-segment.classical { background: #2D8F3E; }
+  .game-type-bar-segment.correspondence { background: #B8B4AB; }
 
   .game-type-legend {
     display: flex;
@@ -409,12 +409,12 @@
     border-radius: var(--radius-sm);
   }
 
-  .game-type-legend-color.ultrabullet { background: #dc2626; }
-  .game-type-legend-color.bullet { background: #f97316; }
-  .game-type-legend-color.blitz { background: #eab308; }
-  .game-type-legend-color.rapid { background: #22c55e; }
-  .game-type-legend-color.classical { background: #3b82f6; }
-  .game-type-legend-color.correspondence { background: #8b5cf6; }
+  .game-type-legend-color.ultrabullet { background: #3A3A3A; }
+  .game-type-legend-color.bullet { background: #D42828; }
+  .game-type-legend-color.blitz { background: #C4A826; }
+  .game-type-legend-color.rapid { background: #1A3A8F; }
+  .game-type-legend-color.classical { background: #2D8F3E; }
+  .game-type-legend-color.correspondence { background: #B8B4AB; }
 
   .game-type-breakdown {
     display: grid;
@@ -429,12 +429,12 @@
     border: 1px solid var(--border);
   }
 
-  .game-type-card.ultrabullet { background: rgba(220, 38, 38, 0.1); border-color: rgba(220, 38, 38, 0.3); }
-  .game-type-card.bullet { background: rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.3); }
-  .game-type-card.blitz { background: rgba(234, 179, 8, 0.1); border-color: rgba(234, 179, 8, 0.3); }
-  .game-type-card.rapid { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3); }
-  .game-type-card.classical { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); }
-  .game-type-card.correspondence { background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3); }
+  .game-type-card.ultrabullet { background: rgba(58, 58, 58, 0.1); border-color: rgba(58, 58, 58, 0.3); }
+  .game-type-card.bullet { background: rgba(212, 40, 40, 0.1); border-color: rgba(212, 40, 40, 0.3); }
+  .game-type-card.blitz { background: rgba(196, 168, 38, 0.1); border-color: rgba(196, 168, 38, 0.3); }
+  .game-type-card.rapid { background: rgba(26, 58, 143, 0.1); border-color: rgba(26, 58, 143, 0.3); }
+  .game-type-card.classical { background: rgba(45, 143, 62, 0.1); border-color: rgba(45, 143, 62, 0.3); }
+  .game-type-card.correspondence { background: rgba(184, 180, 171, 0.1); border-color: rgba(184, 180, 171, 0.3); }
 
   .game-type-name {
     font-weight: 600;
@@ -443,12 +443,12 @@
     font-size: var(--text-sm);
   }
 
-  .game-type-card.ultrabullet .game-type-name { color: #dc2626; }
-  .game-type-card.bullet .game-type-name { color: #f97316; }
-  .game-type-card.blitz .game-type-name { color: #eab308; }
-  .game-type-card.rapid .game-type-name { color: #22c55e; }
-  .game-type-card.classical .game-type-name { color: #3b82f6; }
-  .game-type-card.correspondence .game-type-name { color: #8b5cf6; }
+  .game-type-card.ultrabullet .game-type-name { color: #3A3A3A; }
+  .game-type-card.bullet .game-type-name { color: #D42828; }
+  .game-type-card.blitz .game-type-name { color: #C4A826; }
+  .game-type-card.rapid .game-type-name { color: #1A3A8F; }
+  .game-type-card.classical .game-type-name { color: #2D8F3E; }
+  .game-type-card.correspondence .game-type-name { color: #B8B4AB; }
 
   .game-type-count {
     font-size: var(--text-lg);
@@ -658,7 +658,7 @@
 
   .collapse-clean {
     font-size: var(--text-sm);
-    color: var(--success, #22c55e);
+    color: var(--success, #1A3A8F);
     font-weight: 600;
   }
 

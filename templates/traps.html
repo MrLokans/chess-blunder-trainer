@@ -7,9 +7,11 @@
 <link rel="stylesheet" href="/static/css/traps.css">
 {% endblock %}
 
-{% block content %}
-<h1>{{ t('traps.title') }}</h1>
+{% block header_nav %}
 {{ render_nav('traps') }}
+{% endblock %}
+
+{% block content %}
 {% include '_demo_banner.html' %}
 
 <div class="traps-summary" id="trapsSummary">

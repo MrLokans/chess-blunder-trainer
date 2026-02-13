@@ -51,6 +51,8 @@
   "trainer.session_label": "Сесія",
   "trainer.section.find_best": "Знайдзіце лепшы ход",
   "trainer.prompt.make_move": "Зрабіце ход на дошцы",
+  "trainer.prompt.make_better": "Зрабіце лепшы ход",
+  "trainer.board_settings.title": "Налады дошкі",
   "trainer.prompt.click_piece": "Націсніце на фігуру, потым на поле прызначэння",
   "trainer.link.explore": "Даследаваць пазіцыю",
   "trainer.section.your_blunder": "Ваш грубы промах",

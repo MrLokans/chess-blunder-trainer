@@ -83,10 +83,21 @@
     if (theme.heatmap_l3) root.style.setProperty('--heatmap-l3', theme.heatmap_l3);
     if (theme.heatmap_l4) root.style.setProperty('--heatmap-l4', theme.heatmap_l4);
 
+    // Legacy semantic aliases — used by dashboard, settings, and other pages.
+    // Bauhaus structural tokens (--black, --white, --red, --blue, --yellow,
+    // --correct, --dark-gray, --mid-gray, --warm-gray) are NEVER overridden.
+    // They define the fixed Bauhaus design system (borders, backgrounds, CTA).
     if (theme.bg) root.style.setProperty('--bg', theme.bg);
-    if (theme.bg_card) root.style.setProperty('--bg-elevated', theme.bg_card);
+    if (theme.bg_card) {
+      root.style.setProperty('--bg-elevated', theme.bg_card);
+      root.style.setProperty('--card-bg', theme.bg_card);
+    }
     if (theme.text) root.style.setProperty('--text', theme.text);
     if (theme.text_muted) root.style.setProperty('--text-muted', theme.text_muted);
+    if (theme.primary) root.style.setProperty('--accent', theme.primary);
+    if (theme.success) root.style.setProperty('--success', theme.success);
+    if (theme.error) root.style.setProperty('--error', theme.error);
+    if (theme.warning) root.style.setProperty('--warning', theme.warning);
   }
 
   // Apply cached theme immediately to prevent FOUC

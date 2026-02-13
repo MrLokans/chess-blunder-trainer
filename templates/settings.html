@@ -8,11 +8,18 @@
 
 {% block body %}
 {% include '_demo_banner.html' %}
+<header class="trainer-header">
+  <div class="trainer-header-left">
+    <h1 class="trainer-logo">
+      <span class="trainer-logo-icon"></span>
+      Blunder Tutor
+    </h1>
+  </div>
+  <a href="/" class="back-link" style="margin-bottom: 0;">{{ t('common.back_to_trainer') }}</a>
+</header>
 <div class="container">
-  <a href="/" class="back-link">{{ t('common.back_to_trainer') }}</a>
-
   <div class="card">
-    <h1>{{ t('settings.title') }}</h1>
+    <h2>{{ t('settings.title') }}</h2>
     <p class="subtitle">{{ t('settings.subtitle') }}</p>
 
     <div class="alert alert-error" id="errorAlert"></div>

@@ -40,7 +40,15 @@
   {% include '_demo_banner.html' %}
   <div class="container">
     {% block header %}
-    <h1>{% block page_title %}Blunder Tutor{% endblock %}</h1>
+    <header class="trainer-header">
+      <div class="trainer-header-left">
+        <h1 class="trainer-logo">
+          <span class="trainer-logo-icon"></span>
+          Blunder Tutor
+        </h1>
+      </div>
+      {% block header_nav %}{% endblock %}
+    </header>
     {% endblock %}
 
     {% block navigation %}{% endblock %}

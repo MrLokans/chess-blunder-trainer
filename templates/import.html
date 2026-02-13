@@ -7,9 +7,11 @@
 <link rel="stylesheet" href="/static/css/import.css">
 {% endblock %}
 
-{% block content %}
-<h1>{{ t('import.title') }}</h1>
+{% block header_nav %}
 {{ render_nav('import') }}
+{% endblock %}
+
+{% block content %}
 {% include '_demo_banner.html' %}
 
 <p class="import-description">{{ t('import.description') }}</p>

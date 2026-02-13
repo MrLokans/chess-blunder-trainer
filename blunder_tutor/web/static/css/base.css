@@ -176,7 +176,9 @@ h1 {
 }
 
 h2 {
-  font-size: var(--text-xl);
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
   margin-bottom: var(--s-md);
 }
 
@@ -273,10 +275,15 @@ nav a.active {
 .card {
   background: var(--white);
   border: none;
+  border-top: 3px solid var(--black);
   border-radius: 0;
-  padding: 0;
+  padding: var(--s-lg) 0;
   box-shadow: none;
   margin-bottom: 0;
+}
+
+.card:last-child {
+  border-bottom: 3px solid var(--black);
 }
 
 .card-header {
@@ -630,10 +637,10 @@ tr:hover td {
 .stat-label {
   font-family: var(--font-sans);
   font-size: 11px;
-  font-weight: 400;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--mid-gray);
+  color: var(--dark-gray);
   margin-bottom: var(--s-sm);
 }
 
@@ -669,10 +676,10 @@ tr:hover td {
 .chart-title {
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: var(--mid-gray);
+  color: var(--dark-gray);
   margin-bottom: var(--s-md);
 }
 
@@ -1217,6 +1224,79 @@ kbd {
 
 body:has(.demo-banner) {
   padding-top: 38px;
+}
+
+/* ==========================================================================
+   Shared Bauhaus Header
+   ========================================================================== */
+
+.trainer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-md) var(--s-lg);
+  border-bottom: 3px solid var(--black);
+  margin-bottom: var(--s-lg);
+}
+
+.trainer-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+}
+
+.trainer-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--black);
+  margin: 0;
+}
+
+.trainer-logo-icon {
+  width: 20px;
+  height: 20px;
+  background: var(--red);
+  flex-shrink: 0;
+}
+
+.trainer-nav {
+  display: flex;
+  gap: 0;
+  align-items: center;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.trainer-nav-link {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--dark-gray);
+  text-decoration: none;
+  padding: var(--s-sm) var(--s-md);
+  transition: all 0.15s ease;
+  border: none;
+}
+
+.trainer-nav-link:hover {
+  color: var(--black);
+  border-bottom: none;
+  text-decoration: none;
+  background: none;
+}
+
+.trainer-nav-link.active {
+  background: var(--black);
+  color: var(--white);
 }
 
 /* ==========================================================================
