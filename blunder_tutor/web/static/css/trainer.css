@@ -476,7 +476,15 @@
 
 .board-result-card.visible {
   display: flex;
+  opacity: 1;
   animation: fadeIn 0.2s ease;
+}
+
+.board-result-card.fading-out {
+  display: flex;
+  opacity: 0;
+  transition: opacity 1s ease;
+  pointer-events: none;
 }
 
 /* Inner content panel */

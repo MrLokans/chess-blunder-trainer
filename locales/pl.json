@@ -48,6 +48,7 @@
   "trainer.toggle.show_arrows": "Pokaż strzałki ruchów",
   "trainer.toggle.show_threats": "Pokaż zagrożenia (wiszące figury, związki, szachy)",
   "trainer.toggle.show_tactics": "Podświetl motyw taktyczny (po odsłonięciu)",
+  "trainer.toggle.play_full_line": "Odtwórz pełną linię silnika",
   "trainer.session_label": "Sesja",
   "trainer.section.find_best": "Znajdź najlepszy ruch",
   "trainer.prompt.make_move": "Wykonaj ruch na szachownicy",

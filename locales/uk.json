@@ -48,6 +48,7 @@
   "trainer.toggle.show_arrows": "Показати стрілки ходів",
   "trainer.toggle.show_threats": "Показати загрози (висячі фігури, зв'язки, шахи)",
   "trainer.toggle.show_tactics": "Підсвітити тактичний мотив (після розкриття)",
+  "trainer.toggle.play_full_line": "Відтворити всю лінію рушія",
   "trainer.session_label": "Сесія",
   "trainer.section.find_best": "Знайдіть найкращий хід",
   "trainer.prompt.make_move": "Зробіть хід на дошці",

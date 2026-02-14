@@ -48,6 +48,7 @@
   "trainer.toggle.show_arrows": "Паказаць стрэлкі хадоў",
   "trainer.toggle.show_threats": "Паказаць пагрозы (вісячыя фігуры, звязкі, шахі)",
   "trainer.toggle.show_tactics": "Падсвяціць тактычны матыў (пасля раскрыцця)",
+  "trainer.toggle.play_full_line": "Прайграць усю лінію рухавіка",
   "trainer.session_label": "Сесія",
   "trainer.section.find_best": "Знайдзіце лепшы ход",
   "trainer.prompt.make_move": "Зрабіце ход на дошцы",

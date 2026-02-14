@@ -48,6 +48,7 @@
   "trainer.toggle.show_arrows": "Show move arrows",
   "trainer.toggle.show_threats": "Show threats (hanging pieces, pins, checks)",
   "trainer.toggle.show_tactics": "Highlight tactical pattern (after reveal)",
+  "trainer.toggle.play_full_line": "Play full engine line",
   "trainer.session_label": "Session",
   "trainer.section.find_best": "Find the best move",
   "trainer.prompt.make_move": "Make your move on the board",

@@ -25,6 +25,10 @@ let currentColorFilter = 'both';
 let currentDifficultyFilters = [];
 let filtersCollapsed = true;
 let boardFlipped = false;
+let animatingLine = false;
+let animationGeneration = 0;
+let linePositions = [];
+let lineViewIndex = -1;
 
 let boardSettings = {
   piece_set: 'gioco',
@@ -85,6 +89,7 @@ const filtersHeader = document.getElementById('filtersHeader');
 const filtersToggleBtn = document.getElementById('filtersToggleBtn');
 const filtersContent = document.getElementById('filtersContent');
 const filtersChevron = document.getElementById('filtersChevron');
+const playFullLineCheckbox = document.getElementById('playFullLine');
 const boardSettingsHeader = document.getElementById('boardSettingsHeader');
 const boardSettingsContent = document.getElementById('boardSettingsContent');
 const boardSettingsChevron = document.getElementById('boardSettingsChevron');
@@ -460,6 +465,7 @@ function updateMoveHistory() {
 
 // Board move handler
 function onBoardMove(_orig, _dest, move) {
+  if (animatingLine) return;
   updateCurrentMove();
   board.clearArrows();
   setTimeout(() => redrawAllHighlights(), 50);
@@ -481,11 +487,13 @@ function onBoardMove(_orig, _dest, move) {
 
 // Core actions
 async function loadPuzzle() {
+  if (animatingLine) return;
   updateFilterCountBadge();
   submitted = false;
   bestRevealed = false;
   boardFlipped = false;
   moveHistory = [];
+  clearLineNavigation();
   hideBoardResult();
   if (blunderSection) blunderSection.classList.remove('blunder-dimmed');
   historySection.style.display = 'none';
@@ -573,6 +581,7 @@ async function loadSpecificPuzzle(gameId, ply) {
   bestRevealed = false;
   boardFlipped = false;
   moveHistory = [];
+  clearLineNavigation();
   hideBoardResult();
   if (blunderSection) blunderSection.classList.remove('blunder-dimmed');
   historySection.style.display = 'none';
@@ -633,6 +642,7 @@ async function loadSpecificPuzzle(gameId, ply) {
 }
 
 async function submitMoveAction() {
+  if (animatingLine) return;
   if (!puzzle || !game) return;
 
   const lastMove = getLastMove();
@@ -725,11 +735,13 @@ function revealBestMove() {
 }
 
 function resetPosition() {
+  if (animatingLine) return;
   if (!puzzle) return;
   game = new Chess(puzzle.fen);
   board.setPosition(puzzle.fen, game);
   currentMoveEl.textContent = '-';
   moveHistory = [];
+  clearLineNavigation();
   updateMoveHistory();
 
   if (!bestRevealed) {
@@ -742,36 +754,109 @@ function resetPosition() {
   }, 50);
 }
 
+function playSingleBestMove() {
+  game = new Chess(puzzle.fen);
+  const from = puzzle.best_move_uci.slice(0, 2);
+  const to = puzzle.best_move_uci.slice(2, 4);
+  const promotion = puzzle.best_move_uci.length > 4 ? puzzle.best_move_uci[4] : undefined;
+
+  const move = game.move({ from, to, promotion });
+  if (move) {
+    board.setPosition(game.fen(), game);
+    moveHistory = [move.san];
+    updateMoveHistory();
+    updateCurrentMove();
+    historySection.style.display = 'block';
+  }
+}
+
+async function playFullLineAnimated() {
+  const gen = ++animationGeneration;
+  animatingLine = true;
+
+  const fadeOut = () => new Promise(resolve => {
+    boardResultCard.classList.add('fading-out');
+    boardResultCard.classList.remove('visible');
+    const onEnd = () => {
+      boardResultCard.removeEventListener('transitionend', onEnd);
+      boardResultCard.classList.remove('fading-out');
+      resolve();
+    };
+    boardResultCard.addEventListener('transitionend', onEnd);
+  });
+
+  if (boardResultCard.classList.contains('visible')) {
+    await fadeOut();
+  }
+
+  game = new Chess(puzzle.fen);
+  moveHistory = [];
+  linePositions = [{ fen: puzzle.fen, moveHistory: [] }];
+  historySection.style.display = 'block';
+
+  for (const san of puzzle.best_line) {
+    if (gen !== animationGeneration) return;
+    const move = game.move(san);
+    if (!move) break;
+    board.setPosition(game.fen(), game);
+    moveHistory.push(move.san);
+    linePositions.push({ fen: game.fen(), moveHistory: [...moveHistory] });
+    updateMoveHistory();
+    updateCurrentMove();
+    redrawAllHighlights();
+    await new Promise(r => setTimeout(r, 1000));
+  }
+
+  if (gen === animationGeneration) {
+    animatingLine = false;
+    lineViewIndex = linePositions.length - 1;
+  }
+}
+
+function clearLineNavigation() {
+  linePositions = [];
+  lineViewIndex = -1;
+}
+
+function navigateLine(direction) {
+  if (linePositions.length === 0) return;
+  const newIndex = lineViewIndex + direction;
+  if (newIndex < 0 || newIndex >= linePositions.length) return;
+
+  lineViewIndex = newIndex;
+  const pos = linePositions[lineViewIndex];
+  game = new Chess(pos.fen);
+  board.setPosition(pos.fen, game);
+  moveHistory = [...pos.moveHistory];
+  updateMoveHistory();
+  updateCurrentMove();
+  redrawAllHighlights();
+}
+
 function playBestMove() {
   if (!puzzle || !puzzle.best_move_uci) return;
+  if (animatingLine) return;
+
+  const useFullLine = playFullLineCheckbox && playFullLineCheckbox.checked
+    && puzzle.best_line && puzzle.best_line.length > 1;
+
+  if (useFullLine) {
+    playFullLineAnimated();
+    return;
+  }
 
   const wasVisible = boardResultCard.classList.contains('visible');
   if (wasVisible) hideBoardResult();
 
-  const execute = () => {
-    game = new Chess(puzzle.fen);
-    const from = puzzle.best_move_uci.slice(0, 2);
-    const to = puzzle.best_move_uci.slice(2, 4);
-    const promotion = puzzle.best_move_uci.length > 4 ? puzzle.best_move_uci[4] : undefined;
-
-    const move = game.move({ from, to, promotion });
-    if (move) {
-      board.setPosition(game.fen(), game);
-      moveHistory = [move.san];
-      updateMoveHistory();
-      updateCurrentMove();
-      historySection.style.display = 'block';
-    }
-  };
-
   if (wasVisible) {
-    setTimeout(execute, 100);
+    setTimeout(playSingleBestMove, 100);
   } else {
-    execute();
+    playSingleBestMove();
   }
 }
 
 function undoMove() {
+  if (animatingLine) return;
   if (game.history().length === 0) return;
   game.undo();
   board.setPosition(game.fen(), game);
@@ -962,6 +1047,19 @@ function applyBoardColors() {
   applyBoardBackground(boardSettings.board_light, boardSettings.board_dark);
 }
 
+const PLAY_FULL_LINE_KEY = 'blunder-tutor-play-full-line';
+
+function loadPlayFullLineSetting() {
+  if (!playFullLineCheckbox) return;
+  playFullLineCheckbox.checked = localStorage.getItem(PLAY_FULL_LINE_KEY) === 'true';
+}
+
+if (playFullLineCheckbox) {
+  playFullLineCheckbox.addEventListener('change', () => {
+    localStorage.setItem(PLAY_FULL_LINE_KEY, playFullLineCheckbox.checked ? 'true' : 'false');
+  });
+}
+
 // Event listeners
 submitBtn.addEventListener('click', (e) => { e.stopPropagation(); submitMoveAction(); });
 resetBtn.addEventListener('click', resetPosition);
@@ -1071,6 +1169,7 @@ if (document.getElementById('boardSettingsToggleBtn')) {
 document.addEventListener('keydown', (e) => {
   const tag = (e.target.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  if (animatingLine) return;
 
   if (e.key === 'Escape') {
     if (shortcutsOverlay && shortcutsOverlay.classList.contains('visible')) {
@@ -1118,6 +1217,10 @@ document.addEventListener('keydown', (e) => {
     }
   } else if (e.key === 'l' || e.key === 'L') {
     openLichessAnalysis();
+  } else if (e.key === 'ArrowLeft') {
+    navigateLine(-1);
+  } else if (e.key === 'ArrowRight') {
+    navigateLine(1);
   }
 });
 
@@ -1130,6 +1233,7 @@ async function init() {
   loadColorFilterFromStorage();
   loadFiltersPanelState();
   loadBoardSettingsPanelState();
+  loadPlayFullLineSetting();
   updateFilterCountBadge();
 
   await loadBoardSettings();

@@ -27,6 +27,7 @@ const APP_STORAGE_KEYS = [
   'blunder-tutor-color-filter',
   'blunder-tutor-filters-collapsed',
   'dashboard-game-type-filters',
+  'blunder-tutor-play-full-line',
 ];
 
 function clearAppLocalStorage() {

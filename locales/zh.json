@@ -48,6 +48,7 @@
   "trainer.toggle.show_arrows": "显示走法箭头",
   "trainer.toggle.show_threats": "显示威胁（悬挂子力、牵制、将军）",
   "trainer.toggle.show_tactics": "高亮战术模式（揭示后）",
+  "trainer.toggle.play_full_line": "播放引擎完整变化线",
   "trainer.session_label": "训练",
   "trainer.section.find_best": "找到最佳走法",
   "trainer.prompt.make_move": "在棋盘上走棋",

@@ -48,6 +48,7 @@
   "trainer.toggle.show_arrows": "Mostrar flechas de jugadas",
   "trainer.toggle.show_threats": "Mostrar amenazas (piezas colgadas, clavadas, jaques)",
   "trainer.toggle.show_tactics": "Resaltar patrón táctico (tras revelar)",
+  "trainer.toggle.play_full_line": "Reproducir línea completa del motor",
   "trainer.session_label": "Sesión",
   "trainer.section.find_best": "Encuentra la mejor jugada",
   "trainer.prompt.make_move": "Haz tu jugada en el tablero",

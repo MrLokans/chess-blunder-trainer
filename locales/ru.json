@@ -48,6 +48,7 @@
   "trainer.toggle.show_arrows": "Показать стрелки ходов",
   "trainer.toggle.show_threats": "Показать угрозы (висячие фигуры, связки, шахи)",
   "trainer.toggle.show_tactics": "Выделить тактический приём (после раскрытия)",
+  "trainer.toggle.play_full_line": "Воспроизвести всю линию движка",
   "trainer.session_label": "Сессия",
   "trainer.section.find_best": "Найдите лучший ход",
   "trainer.prompt.make_move": "Сделайте ход на доске",
