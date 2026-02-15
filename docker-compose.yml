@@ -20,6 +20,9 @@ services:
       # - DEMO_MODE=true
       # - DEMO_THROTTLE_RATE=30/60  # requests/seconds per IP (default: 30/60)
 
+      # Override database path (e.g. to use embedded demo DB)
+      # - DB_PATH=/app/demo/demo.sqlite3
+
       # Server configuration
       - HOST=0.0.0.0
       - PORT=8000

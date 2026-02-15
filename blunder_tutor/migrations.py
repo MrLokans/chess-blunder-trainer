@@ -58,7 +58,7 @@ def run_migrations(db_path: Path) -> None:
 
 
 def main() -> None:
-    db_path_env = os.environ.get("BLUNDER_TUTOR_DB_PATH")
+    db_path_env = os.environ.get("DB_PATH") or os.environ.get("BLUNDER_TUTOR_DB_PATH")
     db_path = Path(db_path_env) if db_path_env else Path("data/main.sqlite3")
 
     print(f"Running migrations on {db_path}")

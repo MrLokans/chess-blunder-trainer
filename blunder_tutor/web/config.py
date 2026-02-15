@@ -71,8 +71,11 @@ def config_factory(
                 engine_window_seconds=int(parts[1]),
             )
 
+    db_path_env = environ.get("DB_PATH")
+    data = DataConfig(db_path=Path(db_path_env)) if db_path_env else DataConfig()
+
     return AppConfig(
-        data=DataConfig(),
+        data=data,
         engine_path=final_engine_path,
         engine=EngineConfig(
             path=final_engine_path,
