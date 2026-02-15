@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4]
+
+### Changed
+
+- **Trainer layout overhaul**: Improved vertical fit so the board and controls sit within the viewport without scrolling. Removed the session subheader, reorganized action buttons, and made the top header sticky for a cleaner, more consistent experience.
+- **Landing page polish**: Visual tweaks to the public landing page for better readability and appeal.
+
+### Internal
+
+- **Test suite refactor**: Large-scale restructuring of the test suite — consolidated shared helpers/factories, expanded coverage for the database layer and puzzle services.
+
+---
+
 ## [2.0.3]
 
 ### Added
