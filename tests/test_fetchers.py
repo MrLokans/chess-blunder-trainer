@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -533,7 +534,6 @@ class TestIncrementalFetch:
         self, monkeypatch: pytest.MonkeyPatch
     ):
         """Test that since parameter is converted to milliseconds and passed to API."""
-        from datetime import UTC, datetime
 
         captured_params: list[dict] = []
 
@@ -582,7 +582,6 @@ class TestIncrementalFetch:
         self, monkeypatch: pytest.MonkeyPatch
     ):
         """Test that Chess.com filters out archives before since date."""
-        from datetime import UTC, datetime
 
         archives_response = {
             "archives": [
@@ -618,7 +617,6 @@ class TestIncrementalFetch:
         self, monkeypatch: pytest.MonkeyPatch
     ):
         """Test that Chess.com filters out games before since timestamp."""
-        from datetime import UTC, datetime
 
         archives_response = {
             "archives": ["https://api.chess.com/pub/player/test/games/2024/01"]

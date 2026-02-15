@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from blunder_tutor.repositories.stats_repository import StatsRepository
+from blunder_tutor.repositories.stats_repository import StatsFilter, StatsRepository
+from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING, classify_game_type
 
 
 @pytest.fixture
@@ -17,8 +18,6 @@ async def stats_repo(db_path):
 async def _insert_game(
     stats_repo, game_id, username, white, black, time_control="300+0"
 ):
-    from blunder_tutor.utils.time_control import classify_game_type
-
     game_type = int(classify_game_type(time_control))
     conn = await stats_repo.get_connection()
     await conn.execute(
@@ -174,10 +173,10 @@ async def test_game_type_filter(stats_repo):
     )
     await _insert_move(stats_repo, "g2", 49, 0, classification=3, move_number=25)
 
-    from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
-
     bullet_id = GAME_TYPE_FROM_STRING["bullet"]
-    result = await stats_repo.get_collapse_point(game_types=[bullet_id])
+    result = await stats_repo.get_collapse_point(
+        filters=StatsFilter(game_types=[bullet_id])
+    )
     assert result["avg_collapse_move"] == 5
     assert result["total_games_with_blunders"] == 1
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
+import chess
 import pytest
 
 from blunder_tutor.analysis.filtering import is_valid_blunder
@@ -44,8 +45,6 @@ def _move_eval(
     score_before: MagicMock | None = None,
     ply: int = 1,
 ) -> dict:
-    import chess
-
     if score_before is None:
         score_before = _make_pov_score(cp=eval_before)
     return {
@@ -86,20 +85,14 @@ def _mock_context(move_evals: list[dict]) -> StepContext:
 
 class TestGetMateDepth:
     def test_returns_none_for_non_mate(self):
-        import chess
-
         score = _make_pov_score(cp=150)
         assert _get_mate_depth(score, chess.WHITE) is None
 
     def test_returns_depth_for_mate(self):
-        import chess
-
         score = _make_pov_score(mate=3)
         assert _get_mate_depth(score, chess.WHITE) == 3
 
     def test_returns_negative_for_getting_mated(self):
-        import chess
-
         score = _make_pov_score(mate=-2)
         assert _get_mate_depth(score, chess.WHITE) == -2
 

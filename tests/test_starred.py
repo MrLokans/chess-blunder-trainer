@@ -2,10 +2,16 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import chess
+import chess.engine
 import pytest
+from fastapi.testclient import TestClient
 
+from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.starred_puzzle_repository import StarredPuzzleRepository
+from blunder_tutor.web.app import create_app
 
 
 @pytest.fixture
@@ -135,14 +141,6 @@ class TestStarredAPI:
 class TestStarredDemoMode:
     @pytest.fixture
     def demo_app(self, test_config):
-        from unittest.mock import AsyncMock, MagicMock, patch
-
-        import chess
-        import chess.engine
-        from fastapi.testclient import TestClient
-
-        from blunder_tutor.web.app import create_app
-
         mock_engine = MagicMock()
         mock_engine.id = {"name": "Stockfish 17", "author": "test"}
         mock_engine.analyse = AsyncMock(
@@ -188,8 +186,6 @@ class TestDataWipeIncludesStarred:
     async def test_delete_all_clears_starred(
         self, db_path: Path, starred_repo: StarredPuzzleRepository
     ):
-        from blunder_tutor.repositories.data_management import DataManagementRepository
-
         await starred_repo.star("game1", 10)
         await starred_repo.star("game2", 20)
         assert await starred_repo.count_starred() == 2

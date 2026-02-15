@@ -22,8 +22,6 @@ async def settings_repo():
 
 
 async def test_defaults_all_enabled(settings_repo: SettingsRepository):
-    from blunder_tutor.features import DEFAULTS
-
     flags = await settings_repo.get_feature_flags()
     for feature in Feature:
         assert flags[feature.value] is DEFAULTS[feature]

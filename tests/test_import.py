@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import chess
+import chess.engine
 import pytest
 from fastapi.testclient import TestClient
 
@@ -114,9 +116,6 @@ def import_app(db_path: Path) -> TestClient:
             template_dir=Path(__file__).parent.parent / "templates",
         ),
     )
-
-    import chess
-    import chess.engine
 
     mock_engine = MagicMock()
     mock_engine.id = {"name": "Stockfish 17", "author": "Test"}

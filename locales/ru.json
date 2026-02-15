@@ -135,6 +135,7 @@
   "dashboard.filter.from": "С:",
   "dashboard.filter.to": "По:",
   "dashboard.filter.time_control": "Контроль времени:",
+  "dashboard.filter.game_phase": "Фаза игры:",
   "dashboard.filter.last_7d": "7 дней",
   "dashboard.filter.last_30d": "30 дней",
   "dashboard.filter.last_90d": "90 дней",

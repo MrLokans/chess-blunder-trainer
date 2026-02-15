@@ -76,6 +76,17 @@ export function dateAndGameTypeParams(gameTypeFilters) {
   return params;
 }
 
+export function allFilterParams(gameTypeFilters, gamePhaseFilters) {
+  const params = dateParams();
+  if (gameTypeFilters.length > 0 && gameTypeFilters.length < 4) {
+    params.game_types = gameTypeFilters;
+  }
+  if (gamePhaseFilters.length > 0 && gamePhaseFilters.length < 3) {
+    params.game_phases = gamePhaseFilters;
+  }
+  return params;
+}
+
 export function initDateFilters() {
   document.getElementById('applyDateBtn').addEventListener('click', applyDateFilter);
   document.getElementById('clearDateBtn').addEventListener('click', clearDateFilter);

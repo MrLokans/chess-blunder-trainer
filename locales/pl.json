@@ -135,6 +135,7 @@
   "dashboard.filter.from": "Od:",
   "dashboard.filter.to": "Do:",
   "dashboard.filter.time_control": "Tempo gry:",
+  "dashboard.filter.game_phase": "Faza gry:",
   "dashboard.filter.last_7d": "Ostatnie 7 dni",
   "dashboard.filter.last_30d": "Ostatnie 30 dni",
   "dashboard.filter.last_90d": "Ostatnie 90 dni",

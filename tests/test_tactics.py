@@ -4,6 +4,7 @@ import chess
 
 from blunder_tutor.analysis.tactics import (
     BlunderTactics,
+    TacticalMotif,
     TacticalPattern,
     analyze_move_tactics,
     analyze_position_weaknesses,
@@ -263,8 +264,6 @@ class TestBlunderTacticsDataclass:
 
     def test_primary_pattern_from_missed(self):
         """Primary pattern comes from missed_tactic."""
-        from blunder_tutor.analysis.tactics import TacticalMotif
-
         bt = BlunderTactics(
             missed_tactic=TacticalMotif(
                 pattern=TacticalPattern.FORK,
@@ -276,8 +275,6 @@ class TestBlunderTacticsDataclass:
 
     def test_primary_pattern_prefers_higher_material(self):
         """Primary pattern prefers higher material gain."""
-        from blunder_tutor.analysis.tactics import TacticalMotif
-
         bt = BlunderTactics(
             missed_tactic=TacticalMotif(
                 pattern=TacticalPattern.PIN,

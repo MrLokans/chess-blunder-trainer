@@ -39,7 +39,7 @@
   </div>
 </div>
 
-<div class="dashboard-filters" style="margin-top: var(--space-2);">
+<div class="dashboard-filters checkbox-filters">
   <div class="filter-group">
     <label>{{ t('dashboard.filter.time_control') }}</label>
     <div class="game-type-filters">
@@ -54,6 +54,20 @@
       </label>
       <label class="checkbox-label">
         <input type="checkbox" class="game-type-filter" value="classical" checked> {{ t('trainer.game_type.classical') }}
+      </label>
+    </div>
+  </div>
+  <div class="filter-group">
+    <label>{{ t('dashboard.filter.game_phase') }}</label>
+    <div class="game-phase-filters">
+      <label class="checkbox-label">
+        <input type="checkbox" class="game-phase-filter" value="opening" checked> {{ t('chess.phase.opening') }}
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" class="game-phase-filter" value="middlegame" checked> {{ t('chess.phase.middlegame') }}
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" class="game-phase-filter" value="endgame" checked> {{ t('chess.phase.endgame') }}
       </label>
     </div>
   </div>

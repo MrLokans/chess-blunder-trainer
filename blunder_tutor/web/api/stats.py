@@ -3,11 +3,13 @@ from __future__ import annotations
 from datetime import date
 from typing import Annotated, Any
 
-from fastapi import Query, Request
+from fastapi import Depends, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
+from blunder_tutor.constants import PHASE_FROM_STRING
+from blunder_tutor.repositories.stats_repository import StatsFilter
 from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
 from blunder_tutor.web.dependencies import (
     PuzzleAttemptRepoDep,
@@ -15,14 +17,43 @@ from blunder_tutor.web.dependencies import (
 )
 
 
-def _parse_game_types(
-    game_types: list[str] | None, mapping: dict[str, int]
+def _parse_string_list(
+    values: list[str] | None, mapping: dict[str, int]
 ) -> list[int] | None:
-    if not game_types:
+    if not values:
         return None
-    ids = [mapping.get(gt.lower()) for gt in game_types]
-    filtered = [gt for gt in ids if gt is not None]
+    ids = [mapping.get(v.lower()) for v in values]
+    filtered = [v for v in ids if v is not None]
     return filtered or None
+
+
+def _build_stats_filter(
+    start_date: Annotated[
+        date | None,
+        Query(description="Start date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    end_date: Annotated[
+        date | None,
+        Query(description="End date for filtering (YYYY-MM-DD)"),
+    ] = None,
+    game_types: Annotated[
+        list[str] | None,
+        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
+    ] = None,
+    game_phases: Annotated[
+        list[str] | None,
+        Query(description="Filter by game phases (opening, middlegame, endgame)"),
+    ] = None,
+) -> StatsFilter:
+    return StatsFilter(
+        start_date=start_date.isoformat() if start_date else None,
+        end_date=end_date.isoformat() if end_date else None,
+        game_types=_parse_string_list(game_types, GAME_TYPE_FROM_STRING),
+        game_phases=_parse_string_list(game_phases, PHASE_FROM_STRING),
+    )
+
+
+StatsFilterDep = Annotated[StatsFilter, Depends(_build_stats_filter)]
 
 
 class DashboardStats(BaseModel):
@@ -142,28 +173,9 @@ stats_router = APIRouter()
 )
 async def get_dashboard_stats(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    game_types: Annotated[
-        list[str] | None,
-        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
-    ] = None,
+    filters: StatsFilterDep,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
-
-    return await stats_repo.get_overview_stats(
-        start_date=start_date_str,
-        end_date=end_date_str,
-        game_types=game_type_ids,
-    )
+    return await stats_repo.get_overview_stats(filters=filters)
 
 
 @stats_router.get(
@@ -191,22 +203,9 @@ async def get_game_breakdown(
 )
 async def get_blunder_breakdown(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
+    filters: StatsFilterDep,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-
-    return await stats_repo.get_blunder_breakdown(
-        start_date=start_date_str,
-        end_date=end_date_str,
-    )
+    return await stats_repo.get_blunder_breakdown(filters=filters)
 
 
 @stats_router.get(
@@ -285,32 +284,9 @@ async def get_activity_heatmap(
 )
 async def get_blunders_by_phase(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    game_types: Annotated[
-        list[str] | None,
-        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
-    ] = None,
+    filters: StatsFilterDep,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-
-    game_type_ids = None
-    if game_types:
-        game_type_ids = [GAME_TYPE_FROM_STRING.get(gt.lower()) for gt in game_types]
-        game_type_ids = [gt for gt in game_type_ids if gt is not None]
-
-    return await stats_repo.get_blunders_by_phase_filtered(
-        start_date=start_date_str,
-        end_date=end_date_str,
-        game_types=game_type_ids if game_type_ids else None,
-    )
+    return await stats_repo.get_blunders_by_phase_filtered(filters=filters)
 
 
 @stats_router.get(
@@ -321,37 +297,13 @@ async def get_blunders_by_phase(
 )
 async def get_blunders_by_eco(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
+    filters: StatsFilterDep,
     limit: Annotated[
         int,
         Query(ge=1, le=50, description="Maximum number of openings to return"),
     ] = 10,
-    game_types: Annotated[
-        list[str] | None,
-        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
-    ] = None,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-
-    game_type_ids = None
-    if game_types:
-        game_type_ids = [GAME_TYPE_FROM_STRING.get(gt.lower()) for gt in game_types]
-        game_type_ids = [gt for gt in game_type_ids if gt is not None]
-
-    return await stats_repo.get_blunders_by_eco(
-        start_date=start_date_str,
-        end_date=end_date_str,
-        limit=limit,
-        game_types=game_type_ids if game_type_ids else None,
-    )
+    return await stats_repo.get_blunders_by_eco(filters=filters, limit=limit)
 
 
 @stats_router.get(
@@ -362,22 +314,9 @@ async def get_blunders_by_eco(
 )
 async def get_blunders_by_color(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
+    filters: StatsFilterDep,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-
-    return await stats_repo.get_blunders_by_color(
-        start_date=start_date_str,
-        end_date=end_date_str,
-    )
+    return await stats_repo.get_blunders_by_color(filters=filters)
 
 
 class GamesByDateItem(BaseModel):
@@ -408,28 +347,9 @@ class GamesByHour(BaseModel):
 )
 async def get_games_by_date(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    game_types: Annotated[
-        list[str] | None,
-        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
-    ] = None,
+    filters: StatsFilterDep,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
-
-    items = await stats_repo.get_games_by_date(
-        start_date=start_date_str,
-        end_date=end_date_str,
-        game_types=game_type_ids,
-    )
+    items = await stats_repo.get_games_by_date(filters=filters)
     return {"items": items}
 
 
@@ -441,28 +361,9 @@ async def get_games_by_date(
 )
 async def get_games_by_hour(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    game_types: Annotated[
-        list[str] | None,
-        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
-    ] = None,
+    filters: StatsFilterDep,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
-
-    items = await stats_repo.get_games_by_hour(
-        start_date=start_date_str,
-        end_date=end_date_str,
-        game_types=game_type_ids,
-    )
+    items = await stats_repo.get_games_by_hour(filters=filters)
     return {"items": items}
 
 
@@ -504,32 +405,9 @@ class BlundersByGameType(BaseModel):
 )
 async def get_blunders_by_tactical_pattern(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    game_types: Annotated[
-        list[str] | None,
-        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
-    ] = None,
+    filters: StatsFilterDep,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-
-    game_type_ids = None
-    if game_types:
-        game_type_ids = [GAME_TYPE_FROM_STRING.get(gt.lower()) for gt in game_types]
-        game_type_ids = [gt for gt in game_type_ids if gt is not None]
-
-    return await stats_repo.get_blunders_by_tactical_pattern(
-        start_date=start_date_str,
-        end_date=end_date_str,
-        game_types=game_type_ids if game_type_ids else None,
-    )
+    return await stats_repo.get_blunders_by_tactical_pattern(filters=filters)
 
 
 @stats_router.get(
@@ -540,22 +418,9 @@ async def get_blunders_by_tactical_pattern(
 )
 async def get_blunders_by_game_type(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
+    filters: StatsFilterDep,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-
-    return await stats_repo.get_blunders_by_game_type(
-        start_date=start_date_str,
-        end_date=end_date_str,
-    )
+    return await stats_repo.get_blunders_by_game_type(filters=filters)
 
 
 class CollapseDistributionItem(BaseModel):
@@ -624,30 +489,9 @@ class BlundersByDifficulty(BaseModel):
 )
 async def get_blunders_by_difficulty(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    game_types: Annotated[
-        list[str] | None,
-        Query(
-            description="Filter by game type names (bullet, blitz, rapid, classical)"
-        ),
-    ] = None,
+    filters: StatsFilterDep,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
-
-    return await stats_repo.get_blunders_by_difficulty(
-        start_date=start_date_str,
-        end_date=end_date_str,
-        game_types=game_type_ids,
-    )
+    return await stats_repo.get_blunders_by_difficulty(filters=filters)
 
 
 @stats_router.get(
@@ -658,28 +502,9 @@ async def get_blunders_by_difficulty(
 )
 async def get_collapse_point(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    game_types: Annotated[
-        list[str] | None,
-        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
-    ] = None,
+    filters: StatsFilterDep,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
-
-    return await stats_repo.get_collapse_point(
-        start_date=start_date_str,
-        end_date=end_date_str,
-        game_types=game_type_ids,
-    )
+    return await stats_repo.get_collapse_point(filters=filters)
 
 
 @stats_router.get(
@@ -690,25 +515,6 @@ async def get_collapse_point(
 )
 async def get_conversion_resilience(
     stats_repo: StatsRepoDep,
-    start_date: Annotated[
-        date | None,
-        Query(description="Start date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    end_date: Annotated[
-        date | None,
-        Query(description="End date for filtering (YYYY-MM-DD)"),
-    ] = None,
-    game_types: Annotated[
-        list[str] | None,
-        Query(description="Filter by game types (bullet, blitz, rapid, classical)"),
-    ] = None,
+    filters: StatsFilterDep,
 ) -> dict[str, Any]:
-    start_date_str = start_date.isoformat() if start_date else None
-    end_date_str = end_date.isoformat() if end_date else None
-    game_type_ids = _parse_game_types(game_types, GAME_TYPE_FROM_STRING)
-
-    return await stats_repo.get_conversion_resilience(
-        start_date=start_date_str,
-        end_date=end_date_str,
-        game_types=game_type_ids,
-    )
+    return await stats_repo.get_conversion_resilience(filters=filters)

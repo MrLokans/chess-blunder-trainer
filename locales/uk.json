@@ -135,6 +135,7 @@
   "dashboard.filter.from": "Від:",
   "dashboard.filter.to": "До:",
   "dashboard.filter.time_control": "Контроль часу:",
+  "dashboard.filter.game_phase": "Фаза гри:",
   "dashboard.filter.last_7d": "Останні 7 днів",
   "dashboard.filter.last_30d": "Останні 30 днів",
   "dashboard.filter.last_90d": "Останні 90 днів",

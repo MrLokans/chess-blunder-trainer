@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import statistics
 from collections import defaultdict
 
@@ -18,53 +19,37 @@ COLLAPSE_BUCKET_SIZE = 5
 COLLAPSE_MAX_BUCKET_START = 41
 
 
-def _append_date_filters(
-    clause: str,
-    params: list[object],
-    start_date: str | None,
-    end_date: str | None,
-    *,
-    table_alias: str = "g",
-) -> str:
-    if start_date:
-        clause += f" AND {table_alias}.end_time_utc >= ?"
-        params.append(start_date)
-    if end_date:
-        clause += f" AND {table_alias}.end_time_utc <= ?"
-        params.append(end_date + " 23:59:59")
-    return clause
+@dataclasses.dataclass(frozen=True)
+class StatsFilter:
+    start_date: str | None = None
+    end_date: str | None = None
+    game_types: list[int] | None = None
+    game_phases: list[int] | None = None
 
-
-def _append_game_type_filter(
-    clause: str,
-    params: list[object],
-    game_types: list[int] | None,
-    *,
-    table_alias: str = "g",
-) -> str:
-    if game_types:
-        placeholders = ",".join("?" for _ in game_types)
-        clause += f" AND {table_alias}.game_type IN ({placeholders})"
-        params.extend(game_types)
-    return clause
-
-
-def _append_common_filters(
-    clause: str,
-    params: list[object],
-    start_date: str | None,
-    end_date: str | None,
-    game_types: list[int] | None,
-    *,
-    table_alias: str = "g",
-) -> str:
-    clause = _append_date_filters(
-        clause, params, start_date, end_date, table_alias=table_alias
-    )
-    clause = _append_game_type_filter(
-        clause, params, game_types, table_alias=table_alias
-    )
-    return clause
+    def append_to(
+        self,
+        clause: str,
+        params: list[object],
+        *,
+        table_alias: str = "g",
+        moves_alias: str = "am",
+        include_phase: bool = True,
+    ) -> str:
+        if self.start_date:
+            clause += f" AND {table_alias}.end_time_utc >= ?"
+            params.append(self.start_date)
+        if self.end_date:
+            clause += f" AND {table_alias}.end_time_utc <= ?"
+            params.append(self.end_date + " 23:59:59")
+        if self.game_types:
+            placeholders = ",".join("?" for _ in self.game_types)
+            clause += f" AND {table_alias}.game_type IN ({placeholders})"
+            params.extend(self.game_types)
+        if include_phase and self.game_phases:
+            placeholders = ",".join("?" for _ in self.game_phases)
+            clause += f" AND {moves_alias}.game_phase IN ({placeholders})"
+            params.extend(self.game_phases)
+        return clause
 
 
 PLAYER_SIDE_FILTER = """
@@ -78,17 +63,14 @@ PLAYER_SIDE_FILTER = """
 class StatsRepository(BaseDbRepository):
     async def get_overview_stats(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        game_types: list[int] | None = None,
+        filters: StatsFilter | None = None,
     ) -> dict[str, object]:
+        filters = filters or StatsFilter()
         conn = await self.get_connection()
 
         game_where = "WHERE 1=1"
         game_params: list[object] = []
-        game_where = _append_common_filters(
-            game_where, game_params, start_date, end_date, game_types
-        )
+        game_where = filters.append_to(game_where, game_params, include_phase=False)
 
         async with conn.execute(
             f"""
@@ -111,9 +93,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         blunder_params: list[object] = []
-        blunder_where = _append_common_filters(
-            blunder_where, blunder_params, start_date, end_date, game_types
-        )
+        blunder_where = filters.append_to(blunder_where, blunder_params)
 
         async with conn.execute(
             f"""
@@ -177,9 +157,9 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunder_breakdown(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
+        filters: StatsFilter | None = None,
     ) -> dict[str, object]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 COUNT(*) as total_blunders,
@@ -189,15 +169,8 @@ class StatsRepository(BaseDbRepository):
             WHERE am.classification = 3
             {PLAYER_SIDE_FILTER}
         """
-        params: list[str] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
+        params: list[object] = []
+        query = filters.append_to(query, params)
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
@@ -215,16 +188,8 @@ class StatsRepository(BaseDbRepository):
             AND g.end_time_utc IS NOT NULL
             {PLAYER_SIDE_FILTER}
         """
-        date_params: list[str] = []
-
-        if start_date:
-            date_query += " AND g.end_time_utc >= ?"
-            date_params.append(start_date)
-
-        if end_date:
-            date_query += " AND g.end_time_utc <= ?"
-            date_params.append(end_date)
-
+        date_params: list[object] = []
+        date_query = filters.append_to(date_query, date_params)
         date_query += " GROUP BY DATE(g.end_time_utc) ORDER BY date DESC LIMIT 30"
 
         async with conn.execute(date_query, date_params) as cursor:
@@ -298,9 +263,9 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_phase(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
+        filters: StatsFilter | None = None,
     ) -> dict[str, object]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 game_phase,
@@ -311,16 +276,8 @@ class StatsRepository(BaseDbRepository):
             WHERE am.classification = 3
             {PLAYER_SIDE_FILTER}
         """
-        params: list[str] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
-
+        params: list[object] = []
+        query = filters.append_to(query, params)
         query += " GROUP BY game_phase ORDER BY game_phase"
 
         conn = await self.get_connection()
@@ -356,11 +313,10 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_eco(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
+        filters: StatsFilter | None = None,
         limit: int = 10,
-        game_types: list[int] | None = None,
     ) -> dict[str, object]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 ag.eco_code,
@@ -374,7 +330,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-        query = _append_common_filters(query, params, start_date, end_date, game_types)
+        query = filters.append_to(query, params)
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
@@ -429,9 +385,9 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_color(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
+        filters: StatsFilter | None = None,
     ) -> dict[str, object]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 CASE
@@ -446,15 +402,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-
-        if start_date:
-            query += " AND g.end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND g.end_time_utc <= ?"
-            params.append(end_date)
-
+        query = filters.append_to(query, params)
         query += " GROUP BY user_color ORDER BY user_color"
 
         conn = await self.get_connection()
@@ -498,15 +446,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         date_params: list[object] = []
-
-        if start_date:
-            date_query += " AND g.end_time_utc >= ?"
-            date_params.append(start_date)
-
-        if end_date:
-            date_query += " AND g.end_time_utc <= ?"
-            date_params.append(end_date)
-
+        date_query = filters.append_to(date_query, date_params)
         date_query += " GROUP BY date, user_color ORDER BY date DESC LIMIT 60"
 
         async with conn.execute(date_query, date_params) as cursor:
@@ -529,10 +469,9 @@ class StatsRepository(BaseDbRepository):
 
     async def get_games_by_date(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        game_types: list[int] | None = None,
+        filters: StatsFilter | None = None,
     ) -> list[dict[str, object]]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 g.game_id,
@@ -544,7 +483,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-        query = _append_common_filters(query, params, start_date, end_date, game_types)
+        query = filters.append_to(query, params)
         query += " ORDER BY game_date ASC"
 
         conn = await self.get_connection()
@@ -570,10 +509,9 @@ class StatsRepository(BaseDbRepository):
 
     async def get_games_by_hour(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        game_types: list[int] | None = None,
+        filters: StatsFilter | None = None,
     ) -> list[dict[str, object]]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 g.game_id,
@@ -585,7 +523,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-        query = _append_common_filters(query, params, start_date, end_date, game_types)
+        query = filters.append_to(query, params)
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
@@ -610,10 +548,9 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_tactical_pattern(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        game_types: list[int] | None = None,
+        filters: StatsFilter | None = None,
     ) -> dict[str, object]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 tactical_pattern,
@@ -625,7 +562,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-        query = _append_common_filters(query, params, start_date, end_date, game_types)
+        query = filters.append_to(query, params)
         query += " GROUP BY tactical_pattern ORDER BY count DESC"
 
         conn = await self.get_connection()
@@ -661,9 +598,9 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_game_type(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
+        filters: StatsFilter | None = None,
     ) -> dict[str, object]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 g.game_type,
@@ -675,7 +612,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-        query = _append_date_filters(query, params, start_date, end_date)
+        query = filters.append_to(query, params)
         query += " GROUP BY g.game_type ORDER BY g.game_type"
 
         conn = await self.get_connection()
@@ -707,11 +644,10 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_phase_filtered(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        game_types: list[int] | None = None,
+        filters: StatsFilter | None = None,
         player_colors: list[int] | None = None,
     ) -> dict[str, object]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 am.game_phase,
@@ -723,7 +659,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-        query = _append_common_filters(query, params, start_date, end_date, game_types)
+        query = filters.append_to(query, params)
 
         if player_colors:
             placeholders = ",".join("?" * len(player_colors))
@@ -765,10 +701,9 @@ class StatsRepository(BaseDbRepository):
 
     async def get_blunders_by_difficulty(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        game_types: list[int] | None = None,
+        filters: StatsFilter | None = None,
     ) -> dict[str, object]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 CASE
@@ -785,7 +720,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-        query = _append_common_filters(query, params, start_date, end_date, game_types)
+        query = filters.append_to(query, params)
         query += " GROUP BY diff_bucket"
 
         conn = await self.get_connection()
@@ -819,10 +754,9 @@ class StatsRepository(BaseDbRepository):
 
     async def get_conversion_resilience(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        game_types: list[int] | None = None,
+        filters: StatsFilter | None = None,
     ) -> dict[str, object]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 g.game_id,
@@ -837,7 +771,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-        query = _append_common_filters(query, params, start_date, end_date, game_types)
+        query = filters.append_to(query, params)
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
@@ -909,10 +843,9 @@ class StatsRepository(BaseDbRepository):
 
     async def get_collapse_point(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        game_types: list[int] | None = None,
+        filters: StatsFilter | None = None,
     ) -> dict[str, object]:
+        filters = filters or StatsFilter()
         query = f"""
             SELECT
                 am.game_id,
@@ -924,7 +857,7 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-        query = _append_common_filters(query, params, start_date, end_date, game_types)
+        query = filters.append_to(query, params)
         query += " ORDER BY am.game_id, am.ply"
 
         conn = await self.get_connection()
@@ -942,9 +875,7 @@ class StatsRepository(BaseDbRepository):
             WHERE g.analyzed = 1
         """
         total_params: list[object] = []
-        total_query = _append_common_filters(
-            total_query, total_params, start_date, end_date, game_types
-        )
+        total_query = filters.append_to(total_query, total_params, include_phase=False)
 
         async with conn.execute(total_query, total_params) as cursor:
             total_row = await cursor.fetchone()

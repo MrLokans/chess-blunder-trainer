@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+import aiosqlite
 import pytest
 
 from blunder_tutor.repositories.trap_repository import TrapRepository
 
 
 async def _create_test_db(db_path):
-    import aiosqlite
-
     async with aiosqlite.connect(str(db_path)) as conn:
         await conn.execute(
             """

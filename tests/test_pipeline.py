@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 from unittest.mock import AsyncMock, MagicMock
 
 import chess.pgn
@@ -113,8 +114,6 @@ class TestPipelineExecutor:
 
     @pytest.fixture
     def sample_game(self):
-        import io
-
         pgn_text = """[Event "Test"]
 [Site "?"]
 [Date "2024.01.01"]

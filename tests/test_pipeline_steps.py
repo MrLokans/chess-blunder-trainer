@@ -7,9 +7,11 @@ import chess.pgn
 import pytest
 
 from blunder_tutor.analysis.pipeline.context import StepContext, StepResult
+from blunder_tutor.analysis.pipeline.steps import get_all_steps
 from blunder_tutor.analysis.pipeline.steps.eco import ECOClassifyStep
 from blunder_tutor.analysis.pipeline.steps.move_quality import MoveQualityStep
 from blunder_tutor.analysis.pipeline.steps.phase import PhaseClassifyStep
+from blunder_tutor.analysis.pipeline.steps.stockfish import StockfishAnalysisStep
 from blunder_tutor.analysis.thresholds import Thresholds
 
 
@@ -180,10 +182,6 @@ class TestStockfishAnalysisStep:
         return score
 
     async def test_single_pass_analyse_call_count(self, short_game):
-        from blunder_tutor.analysis.pipeline.steps.stockfish import (
-            StockfishAnalysisStep,
-        )
-
         def analyse_side_effect(board, _limit, **_kwargs):
             legal_moves = list(board.legal_moves)
             pv = [legal_moves[0]] if legal_moves else []
@@ -219,10 +217,6 @@ class TestStockfishAnalysisStep:
         assert len(result.data["move_evals"]) == n_moves
 
     async def test_output_fields_present(self, short_game):
-        from blunder_tutor.analysis.pipeline.steps.stockfish import (
-            StockfishAnalysisStep,
-        )
-
         def analyse_side_effect(board, _limit, **_kwargs):
             legal_moves = list(board.legal_moves)
             pv = [legal_moves[0]] if legal_moves else []
@@ -266,15 +260,11 @@ class TestStockfishAnalysisStep:
 
 class TestStepIntegration:
     def test_all_steps_have_unique_ids(self):
-        from blunder_tutor.analysis.pipeline.steps import get_all_steps
-
         steps = get_all_steps()
         ids = [s.step_id for s in steps]
         assert len(ids) == len(set(ids))
 
     def test_all_steps_return_correct_types(self):
-        from blunder_tutor.analysis.pipeline.steps import get_all_steps
-
         steps = get_all_steps()
         for step in steps:
             assert isinstance(step.step_id, str)

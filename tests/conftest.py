@@ -5,8 +5,10 @@ from __future__ import annotations
 import tempfile
 from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import chess
+import chess.engine
 import pytest
 from fastapi.testclient import TestClient
 
@@ -91,11 +93,6 @@ async def trainer(
 
 @pytest.fixture
 def app(test_config: AppConfig) -> Generator[TestClient]:
-    from unittest.mock import patch
-
-    import chess
-    import chess.engine
-
     mock_engine = MagicMock()
     mock_engine.id = {
         "name": "Stockfish 17",

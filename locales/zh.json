@@ -135,6 +135,7 @@
   "dashboard.filter.from": "从：",
   "dashboard.filter.to": "到：",
   "dashboard.filter.time_control": "时间控制：",
+  "dashboard.filter.game_phase": "游戏阶段：",
   "dashboard.filter.last_7d": "最近 7 天",
   "dashboard.filter.last_30d": "最近 30 天",
   "dashboard.filter.last_90d": "最近 90 天",

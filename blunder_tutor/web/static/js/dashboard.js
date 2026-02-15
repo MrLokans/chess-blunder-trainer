@@ -5,7 +5,7 @@ import { loadHeatmap } from './heatmap.js';
 import { client } from './api.js';
 import { debounce } from './debounce.js';
 import { hasFeature } from './features.js';
-import { dateParams, dateAndGameTypeParams, initDateFilters } from './dashboard/date-filters.js';
+import { allFilterParams, initDateFilters } from './dashboard/date-filters.js';
 import { createDateChart, createHourChart } from './dashboard/charts.js';
 import {
   renderPhaseBreakdown, renderColorBreakdown, renderGameTypeBreakdown,
@@ -19,6 +19,7 @@ const wsClient = new WebSocketClient();
 let dateChart = null;
 let hourChart = null;
 let currentGameTypeFilters = ['bullet', 'blitz', 'rapid', 'classical'];
+let currentGamePhaseFilters = ['opening', 'middlegame', 'endgame'];
 
 const gameTypeFilter = new FilterPersistence({
   storageKey: 'dashboard-game-type-filters',
@@ -26,8 +27,14 @@ const gameTypeFilter = new FilterPersistence({
   defaultValues: ['bullet', 'blitz', 'rapid', 'classical'],
 });
 
+const gamePhaseFilter = new FilterPersistence({
+  storageKey: 'dashboard-game-phase-filters',
+  checkboxSelector: '.game-phase-filter',
+  defaultValues: ['opening', 'middlegame', 'endgame'],
+});
+
 function getParams() {
-  return dateAndGameTypeParams(currentGameTypeFilters);
+  return allFilterParams(currentGameTypeFilters, currentGamePhaseFilters);
 }
 
 function applyBreakdown(containerId, barContainerId, barId, legendId, result) {
@@ -76,10 +83,10 @@ async function loadStats() {
       applyBreakdown('phaseBreakdown', 'phaseBarContainer', 'phaseBar', null, renderPhaseBreakdown(phaseData));
     }
 
-    const colorData = await client.stats.blundersByColor(dateParams());
+    const colorData = await client.stats.blundersByColor(getParams());
     applyBreakdown('colorBreakdown', 'colorBarContainer', 'colorBar', null, renderColorBreakdown(colorData));
 
-    const gameTypeData = await client.stats.blundersByGameType(dateParams());
+    const gameTypeData = await client.stats.blundersByGameType(getParams());
     applyBreakdown('gameTypeBreakdown', 'gameTypeBarContainer', 'gameTypeBar', 'gameTypeLegend', renderGameTypeBreakdown(gameTypeData));
 
     if (hasFeature('dashboard.opening_breakdown') && document.getElementById('ecoBreakdown')) {
@@ -222,11 +229,19 @@ async function retryAnalysis() {
 // --- Init ---
 
 currentGameTypeFilters = gameTypeFilter.load();
+currentGamePhaseFilters = gamePhaseFilter.load();
 initDateFilters();
 
 document.querySelectorAll('.game-type-filter').forEach(checkbox => {
   checkbox.addEventListener('change', () => {
     currentGameTypeFilters = gameTypeFilter.save();
+    loadStats();
+  });
+});
+
+document.querySelectorAll('.game-phase-filter').forEach(checkbox => {
+  checkbox.addEventListener('change', () => {
+    currentGamePhaseFilters = gamePhaseFilter.save();
     loadStats();
   });
 });

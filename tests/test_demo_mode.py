@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import chess
+import chess.engine
 import pytest
 from fastapi.testclient import TestClient
 
@@ -28,9 +30,6 @@ def demo_config(db_path: Path) -> AppConfig:
 
 @pytest.fixture
 def demo_app(demo_config: AppConfig):
-    import chess
-    import chess.engine
-
     mock_engine = MagicMock()
     mock_engine.id = {"name": "Stockfish 17", "author": "Test"}
     mock_engine.analyse = AsyncMock(

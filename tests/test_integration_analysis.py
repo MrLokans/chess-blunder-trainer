@@ -10,6 +10,8 @@ import io
 import os
 from pathlib import Path
 
+import chess
+import chess.engine
 import chess.pgn
 import pytest
 
@@ -26,6 +28,7 @@ from blunder_tutor.constants import CLASSIFICATION_BLUNDER
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
+from blunder_tutor.trainer import Trainer
 
 STOCKFISH_PATHS = [
     os.environ.get("STOCKFISH_BINARY"),
@@ -126,8 +129,6 @@ async def store_test_game(
 class TestStockfishIntegration:
     async def test_stockfish_engine_starts(self, stockfish_path: str):
         """Verify that Stockfish can be started and responds to commands."""
-        import chess.engine
-
         transport, engine = await chess.engine.popen_uci(stockfish_path)
         try:
             assert "name" in engine.id
@@ -137,9 +138,6 @@ class TestStockfishIntegration:
 
     async def test_stockfish_analyzes_position(self, stockfish_path: str):
         """Verify that Stockfish can analyze a position."""
-        import chess
-        import chess.engine
-
         transport, engine = await chess.engine.popen_uci(stockfish_path)
         try:
             board = chess.Board()
@@ -383,8 +381,6 @@ class TestEngineReuse:
         game_repo: GameRepository,
     ):
         """Test that external engine can be passed and reused."""
-        import chess.engine
-
         game_id = "test_engine_reuse"
 
         await store_test_game(game_repo, game_id, SCHOLARS_MATE_PGN)
@@ -452,7 +448,6 @@ class TestTrainingPipelineIntegration:
         puzzle_attempt_repo: PuzzleAttemptRepository,
     ):
         """Store game, analyze it, then pick a puzzle from blunders."""
-        from blunder_tutor.trainer import Trainer
 
         game_id = "test_training_flow"
 
@@ -500,7 +495,6 @@ class TestTrainingPipelineIntegration:
         puzzle_attempt_repo: PuzzleAttemptRepository,
     ):
         """Verify puzzles are filtered to only show player's blunders."""
-        from blunder_tutor.trainer import Trainer
 
         game_id = "test_player_filter"
 
