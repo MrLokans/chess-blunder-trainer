@@ -5,6 +5,8 @@
 
 **Stop repeating the same chess mistakes.** Blunder Tutor pulls your games from Lichess and Chess.com, finds the positions where you went wrong, and turns them into puzzles you can practice — for free, on your own machine.
 
+**[Try the live demo →](https://blunders-demo.mrlokans.work/)**
+
 
 ## What It Does
 

@@ -29,8 +29,8 @@
     BLUNDER TUTOR
   </a>
   <div class="nav-links">
+    <a href="https://blunders-demo.mrlokans.work/" target="_blank" rel="noopener">DEMO</a>
     <a href="#method">METHOD</a>
-    <a href="#specimen">SPECIMEN</a>
     <a href="#deploy">DEPLOY</a>
     <a href="https://github.com/MrLokans/chess-blunder-trainer" class="nav-gh" target="_blank" rel="noopener">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -50,28 +50,15 @@
     </h1>
     <p class="hero-desc">Import your games from Lichess and Chess.com. Stockfish 18 finds the positions where you failed. Drill them as puzzles until the right move is reflex.</p>
     <div class="hero-cta">
-      <a href="#deploy" class="btn-red">DEPLOY NOW</a>
+      <a href="https://blunders-demo.mrlokans.work/" class="btn-red" target="_blank" rel="noopener">TRY LIVE DEMO</a>
+      <a href="#deploy" class="btn-wire">DEPLOY NOW</a>
       <a href="https://github.com/MrLokans/chess-blunder-trainer" class="btn-wire" target="_blank" rel="noopener">VIEW SOURCE ↗</a>
     </div>
   </div>
-  <div class="hero-right" aria-hidden="true">
-    <svg class="bauhaus-composition" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
-      <path d="M280,100 A120,120 0 0,1 280,340" fill="#D03020"/>
-      <rect x="40" y="60" width="40" height="200" fill="#1A1918"/>
-      <rect x="80" y="60" width="80" height="80" fill="#E8B820"/>
-      <rect x="80" y="180" width="80" height="80" fill="#2050C8"/>
-      <rect x="160" y="180" width="140" height="30" fill="#1A1918"/>
-      <rect x="120" y="300" width="60" height="120" fill="none" stroke="#1A1918" stroke-width="3"/>
-      <rect x="180" y="300" width="60" height="120" fill="none" stroke="#1A1918" stroke-width="3"/>
-      <rect x="40" y="340" width="80" height="80" fill="#E8B820"/>
-      <path d="M240,380 A80,80 0 0,1 400,380" fill="#D03020"/>
-      <line x1="320" y1="60" x2="320" y2="160" stroke="#1A1918" stroke-width="3"/>
-      <circle cx="320" cy="60" r="14" fill="#1A1918"/>
-      <line x1="340" y1="180" x2="340" y2="420" stroke="#1A1918" stroke-width="3"/>
-      <circle cx="340" cy="420" r="18" fill="#1A1918"/>
-      <circle cx="100" y="155" r="8" fill="#1A1918"/>
-      <line x1="40" y1="460" x2="380" y2="460" stroke="#1A1918" stroke-width="4"/>
-    </svg>
+  <div class="hero-right">
+    <div class="hero-screenshot">
+      <img src="images/main-screen.png" alt="Blunder Tutor trainer interface" width="2536" height="1638" loading="eager">
+    </div>
   </div>
 </section>
 
@@ -136,7 +123,7 @@
       </div>
       <div class="method-num">02</div>
       <h3>ANALYZE</h3>
-      <p>Stockfish 18 at configurable depth. Positions with <span class="mono">≥200cp</span> loss classified as blunders. Phase detection. Tactical patterns.</p>
+      <p>Your games are analyzed with Stockfish, openings detected, blunders marked and explained.</p>
     </div>
     <div class="method-card">
       <div class="method-shape">
@@ -166,36 +153,6 @@
   </svg>
 </div>
 
-<!-- SPECIMEN -->
-<section class="specimen-section" id="specimen">
-  <div class="specimen-inner">
-    <div class="section-label light">SPECIMEN</div>
-    <div class="specimen-layout">
-      <div class="specimen-board">
-        <div class="board-container" id="chessBoard"></div>
-      </div>
-      <div class="specimen-analysis">
-        <div class="specimen-meta">
-          <span>RAPID · 10+0 · MOVE 23</span>
-          <span class="specimen-badge">BLUNDER −3.2</span>
-        </div>
-        <div class="move-block bad">
-          <div class="move-label">PLAYED</div>
-          <div class="move-san">23. Bxf7+??</div>
-          <div class="move-eval">−1.8 → −5.0</div>
-          <p>Bishop trapped after Kh8. Black's counterplay on the c-file decides the game.</p>
-        </div>
-        <div class="move-block good">
-          <div class="move-label">BEST</div>
-          <div class="move-san">23. Nd5</div>
-          <div class="move-eval">−1.8 (stable)</div>
-          <p>Centralizes. Blocks the d-file. Maintains structure.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- COMPARISON -->
 <section class="comp-section">
   <div class="section-label">COMPARISON</div>
@@ -211,6 +168,7 @@
         <li class="no">No blunder library</li>
         <li class="yes">Free</li>
         <li class="no">Lichess only</li>
+        <li class="no">No data control</li>
       </ul>
     </div>
     <div class="comp-col">
@@ -222,8 +180,9 @@
         <li class="yes">Finds blunders</li>
         <li class="no">Can't drill them</li>
         <li class="no">No blunder library</li>
-        <li class="no">$50–100/yr</li>
+        <li class="no">Review paywalled</li>
         <li class="no">Chess.com only</li>
+        <li class="no">No data control</li>
       </ul>
     </div>
     <div class="comp-col highlight">
@@ -235,8 +194,9 @@
         <li class="yes">Finds blunders</li>
         <li class="yes">Drills as puzzles</li>
         <li class="yes">Full blunder library</li>
-        <li class="yes">Free forever</li>
+        <li class="yes">Free</li>
         <li class="yes">Both platforms</li>
+        <li class="yes">Self-hosted / your data</li>
       </ul>
     </div>
   </div>
@@ -247,13 +207,12 @@
   <div class="section-label">INTELLIGENCE</div>
   <h2 class="dash-title">THE DASHBOARD SHOWS<br>WHERE YOU'RE LOSING.</h2>
   <div class="dash-grid">
-    <figure class="dg-wide"><img src="images/dashboard-main.png" alt="Dashboard" loading="lazy"><figcaption>OVERVIEW</figcaption></figure>
-    <figure><img src="images/dashboard-accuracy.png" alt="Accuracy" loading="lazy"><figcaption>ACCURACY</figcaption></figure>
-    <figure><img src="images/dashboard-game-type-and-opening.png" alt="Openings" loading="lazy"><figcaption>OPENINGS</figcaption></figure>
-    <figure><img src="images/dashboard-phase-and-color.png" alt="Phase" loading="lazy"><figcaption>PHASE</figcaption></figure>
-    <figure><img src="images/dashboard-difficulty-and-critical-moments.png" alt="Difficulty" loading="lazy"><figcaption>DIFFICULTY</figcaption></figure>
-    <figure><img src="images/dashboard-resilience-and-tactics.png" alt="Tactics" loading="lazy"><figcaption>TACTICS</figcaption></figure>
-    <figure><img src="images/board-styling.png" alt="Styling" loading="lazy"><figcaption>BOARD STYLE</figcaption></figure>
+    <figure class="dg-wide"><a href="images/dashboard-main.png" class="lightbox-trigger"><img src="images/dashboard-main.png" alt="Dashboard" loading="lazy"></a><figcaption>OVERVIEW</figcaption></figure>
+    <figure><a href="images/dashboard-accuracy.png" class="lightbox-trigger"><img src="images/dashboard-accuracy.png" alt="Accuracy" loading="lazy"></a><figcaption>ACCURACY</figcaption></figure>
+    <figure><a href="images/dashboard-game-type-and-opening.png" class="lightbox-trigger"><img src="images/dashboard-game-type-and-opening.png" alt="Openings" loading="lazy"></a><figcaption>OPENINGS</figcaption></figure>
+    <figure><a href="images/dashboard-phase-and-color.png" class="lightbox-trigger"><img src="images/dashboard-phase-and-color.png" alt="Phase" loading="lazy"></a><figcaption>PHASE</figcaption></figure>
+    <figure><a href="images/dashboard-difficulty-and-critical-moments.png" class="lightbox-trigger"><img src="images/dashboard-difficulty-and-critical-moments.png" alt="Difficulty" loading="lazy"></a><figcaption>DIFFICULTY</figcaption></figure>
+    <figure><a href="images/dashboard-resilience-and-tactics.png" class="lightbox-trigger"><img src="images/dashboard-resilience-and-tactics.png" alt="Tactics" loading="lazy"></a><figcaption>TACTICS</figcaption></figure>
   </div>
 </section>
 
@@ -295,19 +254,24 @@
       <div class="status-item">Puzzle trainer + filters</div>
       <div class="status-item">Analytics dashboard</div>
       <div class="status-item">Background sync</div>
-      <div class="status-item">Multi-language</div>
-    </div>
-    <div class="status-col">
-      <div class="status-header"><div class="status-dot yellow"></div>IN PROGRESS</div>
+      <div class="status-item">Multi-language (7 locales)</div>
+      <div class="status-item">Board & piece customization</div>
       <div class="status-item">Spaced repetition</div>
     </div>
     <div class="status-col">
       <div class="status-header"><div class="status-dot gray"></div>PLANNED</div>
+      <div class="status-item">Traps detection</div>
       <div class="status-item">Pattern clustering</div>
       <div class="status-item">Hosted version</div>
     </div>
   </div>
 </section>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" aria-label="Close">&times;</button>
+  <img class="lightbox-img" id="lightboxImg" src="" alt="">
+</div>
 
 <!-- FOOTER -->
 <footer>
@@ -327,30 +291,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const position = [
-    ['♜','','','♛','','♜','♚',''],
-    ['♟','♟','','','','♟','♟','♟'],
-    ['','','♞','♟','','♞','',''],
-    ['','','','','♟','','',''],
-    ['','','','','♙','','',''],
-    ['','','♘','♗','','','',''],
-    ['♙','♙','♙','','','♙','♙','♙'],
-    ['♖','','','♕','','♖','♔',''],
-  ];
-  const board = document.getElementById('chessBoard');
-  if (board) {
-    for (let r = 0; r < 8; r++) {
-      for (let c = 0; c < 8; c++) {
-        const sq = document.createElement('div');
-        sq.className = 'sq ' + ((r + c) % 2 === 0 ? 'sq-l' : 'sq-d');
-        if (r === 1 && c === 5) sq.classList.add('hl-r');
-        if (r === 2 && c === 3) sq.classList.add('hl-g');
-        sq.textContent = position[r][c];
-        board.appendChild(sq);
-      }
-    }
-  }
-
   const copyBtn = document.querySelector('.copy-btn');
   if (copyBtn) {
     copyBtn.addEventListener('click', () => {
@@ -361,10 +301,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Lightbox
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  document.querySelectorAll('.lightbox-trigger').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      lightboxImg.src = a.href;
+      lightboxImg.alt = a.querySelector('img')?.alt || '';
+      lightbox.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox || e.target.classList.contains('lightbox-close')) {
+      lightbox.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+      lightbox.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  });
+
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }});
   }, { threshold: 0.08 });
-  document.querySelectorAll('.method-card, .specimen-layout, .comp-blocks, .deploy-inner, .status-grid, .dash-grid, figure, .problem-grid').forEach(el => obs.observe(el));
+  document.querySelectorAll('.method-card, .comp-blocks, .deploy-inner, .status-grid, .dash-grid, figure, .problem-grid').forEach(el => obs.observe(el));
 });
 </script>
 </body>
