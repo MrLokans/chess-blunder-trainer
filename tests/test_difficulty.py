@@ -3,8 +3,8 @@ from __future__ import annotations
 import chess
 
 from blunder_tutor.analysis.pipeline.steps.move_quality import (
-    compute_difficulty,
     _class_to_int,
+    compute_difficulty,
 )
 
 

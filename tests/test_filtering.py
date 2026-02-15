@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from blunder_tutor.analysis.filtering import filter_blunders, is_valid_blunder
 from blunder_tutor.constants import (
     ALREADY_LOST_THRESHOLD,

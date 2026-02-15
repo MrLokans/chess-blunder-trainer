@@ -1,0 +1,54 @@
+#:schema: https://www.schemastore.org/prek.json
+
+[[repos]]
+repo = "builtin"
+hooks = [
+    { id = "trailing-whitespace" },
+    { id = "end-of-file-fixer" },
+    { id = "check-added-large-files", args = ["--maxkb=500"] },
+    { id = "check-merge-conflict" },
+
+]
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "ruff-format"
+name = "ruff format"
+entry = "uv run ruff format"
+language = "system"
+types = ["python"]
+
+[[repos.hooks]]
+id = "ruff-check"
+name = "ruff check"
+entry = "uv run ruff check --fix --unsafe-fixes"
+language = "system"
+types = ["python"]
+
+[[repos.hooks]]
+id = "eslint"
+name = "eslint"
+entry = "npx eslint --fix"
+language = "system"
+types = ["javascript"]
+files = "blunder_tutor/web/static/js/"
+
+[[repos.hooks]]
+id = "pytest"
+name = "pytest"
+entry = "uv run pytest tests/ -x -q"
+language = "system"
+pass_filenames = false
+stages = ["pre-push"]
+
+[[repos.hooks]]
+id = "fe-tests"
+name = "frontend tests"
+entry = "node --test"
+language = "system"
+pass_filenames = false
+files = "(blunder_tutor/web/static/js/|tests_fe/)"
+types = ["javascript"]
+stages = ["pre-push"]

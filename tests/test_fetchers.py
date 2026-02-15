@@ -6,10 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from hyx.retry.exceptions import MaxAttemptsExceeded
-
 from blunder_tutor.fetchers import chesscom, lichess
-from blunder_tutor.fetchers.resilience import RetryableHTTPError, fetch_with_retry
 
 SAMPLE_PGN_1 = """[Event "Rated Blitz game"]
 [Site "https://lichess.org/abcd1234"]
@@ -172,7 +169,7 @@ class TestLichessFetch:
         )
 
         assert len(callback_calls) == 3
-        for current, total in callback_calls:
+        for _current, total in callback_calls:
             assert total == 3
 
     async def test_empty_response(self, monkeypatch: pytest.MonkeyPatch):
@@ -340,7 +337,7 @@ class TestChesscomFetch:
         )
 
         assert len(callback_calls) == 3
-        for current, total in callback_calls:
+        for _current, total in callback_calls:
             assert total == 3
 
     async def test_empty_archives(self, monkeypatch: pytest.MonkeyPatch):
@@ -527,7 +524,7 @@ class TestProgressCallbackBehavior:
             "testuser", max_games=2, progress_callback=progress_callback
         )
 
-        for current, total in callback_calls:
+        for _current, total in callback_calls:
             assert total == 2
 
 

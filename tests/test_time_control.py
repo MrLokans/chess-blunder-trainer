@@ -1,7 +1,5 @@
 """Tests for time control parsing and game type classification."""
 
-import pytest
-
 from blunder_tutor.utils.time_control import (
     GameType,
     classify_game_type,

@@ -67,10 +67,10 @@ BLUNDER_GAME_PGN = """[Event "Blunder Test"]
 [Black "Player2"]
 [Result "1-0"]
 
-1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 
-8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. Nbd2 Bb7 12. Bc2 Re8 13. Nf1 Bf8 
-14. Ng3 g6 15. Bg5 h6 16. Bd2 Bg7 17. Qc1 Kh7 18. Nh2 Qe7 19. f4 exf4 
-20. Bxf4 Ne5 21. Qd2 Rad8 22. Rf1 Bc8 23. Rae1 Neg4 24. hxg4 Nxg4 
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6
+8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. Nbd2 Bb7 12. Bc2 Re8 13. Nf1 Bf8
+14. Ng3 g6 15. Bg5 h6 16. Bd2 Bg7 17. Qc1 Kh7 18. Nh2 Qe7 19. f4 exf4
+20. Bxf4 Ne5 21. Qd2 Rad8 22. Rf1 Bc8 23. Rae1 Neg4 24. hxg4 Nxg4
 25. Nxg4 Bxg4 26. Qf2 Qe6 27. Bd3 Be2 1-0"""
 
 
@@ -430,7 +430,7 @@ HANGING_QUEEN_PGN = """[Event "Blunder Test"]
 
 # Game where white blunders with 4.Qh5?? allowing 4...Nxe5
 BLUNDER_BY_WHITE_PGN = """[Event "White Blunder"]
-[Site "Integration Test"]  
+[Site "Integration Test"]
 [Date "2024.01.01"]
 [White "Blunderer"]
 [Black "Opponent"]

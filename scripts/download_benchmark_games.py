@@ -21,7 +21,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from blunder_tutor.fetchers import lichess
-from blunder_tutor.utils.pgn_utils import normalize_pgn, compute_game_id
 
 BENCHMARK_DIR = Path("fixtures/benchmark")
 

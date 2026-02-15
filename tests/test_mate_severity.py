@@ -13,9 +13,9 @@ from blunder_tutor.analysis.pipeline.steps.move_quality import (
 )
 from blunder_tutor.analysis.thresholds import Thresholds
 from blunder_tutor.constants import (
-    MAX_CP_LOSS,
-    MATE_SCORE_ANALYSIS,
     LONG_MATE_DEPTH_THRESHOLD,
+    MATE_SCORE_ANALYSIS,
+    MAX_CP_LOSS,
 )
 from blunder_tutor.trainer import Trainer
 

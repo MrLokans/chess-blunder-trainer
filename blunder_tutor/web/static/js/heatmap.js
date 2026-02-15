@@ -34,7 +34,7 @@ function renderHeatmap(containerId, data) {
   // Calculate date range (52 weeks ending today, aligned to start on Sunday)
   const today = new Date();
   const endDate = new Date(today);
-  
+
   // Go back to find the start of the current week (Sunday)
   const startDate = new Date(today);
   startDate.setDate(startDate.getDate() - 364); // Go back ~52 weeks
@@ -47,12 +47,12 @@ function renderHeatmap(containerId, data) {
   const weeks = [];
   const currentDate = new Date(startDate);
   let currentWeek = [];
-  
+
   while (currentDate <= endDate) {
     const dateStr = formatDate(currentDate);
     const dayData = daily_counts[dateStr] || { total: 0, correct: 0, incorrect: 0 };
     const level = getActivityLevel(dayData.total);
-    
+
     currentWeek.push({
       date: dateStr,
       total: dayData.total,
@@ -63,15 +63,15 @@ function renderHeatmap(containerId, data) {
       month: currentDate.getMonth(),
       dayOfMonth: currentDate.getDate()
     });
-    
+
     if (currentDate.getDay() === 6) {
       weeks.push(currentWeek);
       currentWeek = [];
     }
-    
+
     currentDate.setDate(currentDate.getDate() + 1);
   }
-  
+
   if (currentWeek.length > 0) {
     weeks.push(currentWeek);
   }
@@ -108,10 +108,10 @@ function renderHeatmap(containerId, data) {
                 ${Array(7).fill(0).map((_, dayIndex) => {
                   const day = week.find(d => d.dayOfWeek === dayIndex);
                   if (!day) return '<div class="heatmap-cell empty"></div>';
-                  const tooltip = day.total === 0 
+                  const tooltip = day.total === 0
                     ? t('common.no_activity', { date: day.date })
                     : t('heatmap.tooltip', { date: day.date, total: day.total, correct: day.correct, incorrect: day.incorrect });
-                  return `<div class="heatmap-cell level-${day.level}" 
+                  return `<div class="heatmap-cell level-${day.level}"
                     data-tooltip="${tooltip}"
                     data-date="${day.date}" data-total="${day.total}"></div>`;
                 }).join('')}

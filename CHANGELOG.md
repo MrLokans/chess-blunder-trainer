@@ -285,4 +285,3 @@ Initial release of Blunder-Tutor with core functionality:
 - Analyze games with Stockfish to identify blunders
 - Training interface to practice blunder positions
 - Web UI and CLI interfaces
-

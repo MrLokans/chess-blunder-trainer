@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import chess
-
 from blunder_tutor.utils.explanation import (
     BlunderExplanation,
     ResolvedExplanation,

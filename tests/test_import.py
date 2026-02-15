@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import chess.pgn
 import pytest
 from fastapi.testclient import TestClient
 

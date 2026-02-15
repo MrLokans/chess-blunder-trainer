@@ -63,6 +63,22 @@ make train-ui       # Start on localhost:8000
 
 Requires Python 3.13+ and Stockfish on your PATH (or set `STOCKFISH_BINARY`).
 
+### Pre-commit Hooks
+
+We use [prek](https://prek.j178.dev/) for pre-commit hooks (configured in `prek.toml`). To skip certain files or directories from hook processing, add an `exclude` pattern at the top level or per-hook:
+
+```toml
+# Global exclude — applies to all hooks
+exclude = "node_modules|^\\.git"
+
+# Per-hook exclude
+[[repos.hooks]]
+id = "ruff-check"
+exclude = "migrations\\.py"
+```
+
+See [prek exclude docs](https://prek.j178.dev/configuration/#exclude) for details.
+
 ## Contributing
 
 Issues and pull requests are welcome. Run `make install-dev` and `make test` before submitting.

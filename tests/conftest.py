@@ -91,9 +91,10 @@ async def trainer(
 
 @pytest.fixture
 def app(test_config: AppConfig) -> Generator[TestClient]:
+    from unittest.mock import patch
+
     import chess
     import chess.engine
-    from unittest.mock import patch
 
     mock_engine = MagicMock()
     mock_engine.id = {

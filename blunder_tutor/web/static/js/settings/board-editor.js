@@ -64,9 +64,9 @@ function renderPieceSetGrid() {
 
 function renderBoardColorPresets() {
   boardColorPresetsEl.innerHTML = boardColorPresets.map(preset => `
-    <div class="board-color-preset ${activeBoardColorPreset === preset.id ? 'active' : ''}" 
-         data-preset-id="${preset.id}" 
-         data-light="${preset.light}" 
+    <div class="board-color-preset ${activeBoardColorPreset === preset.id ? 'active' : ''}"
+         data-preset-id="${preset.id}"
+         data-light="${preset.light}"
          data-dark="${preset.dark}"
          title="${preset.name}">
       <div class="light" style="background: ${preset.light};"></div>

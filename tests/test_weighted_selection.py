@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
 
-import chess
-import chess.pgn
 import pytest
 
 from blunder_tutor.trainer import Trainer

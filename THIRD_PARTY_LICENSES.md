@@ -177,4 +177,3 @@ Installed at runtime via `uv`/pip. Not vendored in this repository.
 - **Lichess API** — used to fetch games. Free, open-source platform. [https://lichess.org](https://lichess.org)
 - **Chess.com API** — used to fetch games. [https://chess.com](https://chess.com)
 - **Stockfish** — chess engine used for analysis (installed separately by user or distributed in the Docker container). GPL-3.0. [https://stockfishchess.org](https://stockfishchess.org)
-

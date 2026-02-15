@@ -1,7 +1,6 @@
 """Tests for tactical pattern detection."""
 
 import chess
-import pytest
 
 from blunder_tutor.analysis.tactics import (
     BlunderTactics,
@@ -40,7 +39,7 @@ class TestForkDetection:
         )
         move = chess.Move.from_uci("g5e6")  # Ne6 if it forks
         # This specific position may or may not create a fork - test the mechanism
-        fork = detect_fork(board, move)
+        detect_fork(board, move)
         # Just verify detection doesn't crash
 
     def test_no_fork_single_target(self):
@@ -134,7 +133,7 @@ class TestDoubleCheck:
         board = chess.Board("4k3/8/4N3/8/8/8/8/4RK2 w - - 0 1")
         move = chess.Move.from_uci("e6d4")
         # Just verify it doesn't crash
-        double_check = detect_double_check(board, move)
+        detect_double_check(board, move)
 
 
 class TestAnalyzeMoveTactics:
@@ -191,7 +190,7 @@ class TestClassifyBlunderTactics:
         blunder = chess.Move.from_uci("c3a4")  # Move knight away
         best_move = chess.Move.from_uci("c3d5")  # Take pawn
 
-        result = classify_blunder_tactics(board, blunder, best_move, None)
+        classify_blunder_tactics(board, blunder, best_move, None)
         # This tests the mechanism - specific result depends on position
 
     def test_blunder_with_no_obvious_tactic(self):
