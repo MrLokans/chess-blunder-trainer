@@ -52,8 +52,8 @@
     <div class="hero-cta">
       <a href="https://blunders-demo.mrlokans.work/" class="btn-red" target="_blank" rel="noopener">TRY LIVE DEMO</a>
       <a href="#deploy" class="btn-wire">DEPLOY NOW</a>
-      <a href="https://github.com/MrLokans/chess-blunder-trainer" class="btn-wire" target="_blank" rel="noopener">VIEW SOURCE ↗</a>
     </div>
+    <a href="https://github.com/MrLokans/chess-blunder-trainer" class="hero-source-link" target="_blank" rel="noopener">View source on GitHub ↗</a>
   </div>
   <div class="hero-right">
     <div class="hero-screenshot">
@@ -65,16 +65,48 @@
 <!-- BLACK DIVIDER BAR -->
 <div class="divider-bar"></div>
 
-<!-- PRODUCT -->
-<section class="product-section">
+<!-- INTERFACE CAROUSEL -->
+<section class="carousel-section">
   <div class="product-label">
     <span class="label-line"></span>
     <span class="label-text">THE INTERFACE</span>
     <span class="label-line"></span>
   </div>
-  <div class="product-frame">
-    <img src="images/main-screen.png" alt="Blunder Tutor trainer" width="2536" height="1638" loading="eager">
+  <div class="carousel" id="carousel">
+    <div class="carousel-track" id="carouselTrack">
+      <div class="carousel-slide">
+        <a href="images/main-screen.png" class="carousel-img-wrap lightbox-trigger"><img src="images/main-screen.png" alt="Puzzle trainer" loading="eager"></a>
+        <div class="carousel-caption">TRAINER</div>
+      </div>
+      <div class="carousel-slide">
+        <a href="images/dashboard-main.png" class="carousel-img-wrap lightbox-trigger"><img src="images/dashboard-main.png" alt="Dashboard overview" loading="lazy"></a>
+        <div class="carousel-caption">DASHBOARD</div>
+      </div>
+      <div class="carousel-slide">
+        <a href="images/dashboard-accuracy.png" class="carousel-img-wrap lightbox-trigger"><img src="images/dashboard-accuracy.png" alt="Accuracy analytics" loading="lazy"></a>
+        <div class="carousel-caption">ACCURACY</div>
+      </div>
+      <div class="carousel-slide">
+        <a href="images/dashboard-game-type-and-opening.png" class="carousel-img-wrap lightbox-trigger"><img src="images/dashboard-game-type-and-opening.png" alt="Openings breakdown" loading="lazy"></a>
+        <div class="carousel-caption">OPENINGS</div>
+      </div>
+      <div class="carousel-slide">
+        <a href="images/dashboard-phase-and-color.png" class="carousel-img-wrap lightbox-trigger"><img src="images/dashboard-phase-and-color.png" alt="Game phase analytics" loading="lazy"></a>
+        <div class="carousel-caption">PHASE</div>
+      </div>
+      <div class="carousel-slide">
+        <a href="images/dashboard-difficulty-and-critical-moments.png" class="carousel-img-wrap lightbox-trigger"><img src="images/dashboard-difficulty-and-critical-moments.png" alt="Difficulty distribution" loading="lazy"></a>
+        <div class="carousel-caption">DIFFICULTY</div>
+      </div>
+      <div class="carousel-slide">
+        <a href="images/dashboard-resilience-and-tactics.png" class="carousel-img-wrap lightbox-trigger"><img src="images/dashboard-resilience-and-tactics.png" alt="Tactics patterns" loading="lazy"></a>
+        <div class="carousel-caption">TACTICS</div>
+      </div>
+    </div>
+    <button class="carousel-btn carousel-prev" aria-label="Previous slide">&#8592;</button>
+    <button class="carousel-btn carousel-next" aria-label="Next slide">&#8594;</button>
   </div>
+  <div class="carousel-dots" id="carouselDots"></div>
 </section>
 
 <!-- PROBLEM -->
@@ -139,20 +171,6 @@
   </div>
 </section>
 
-<!-- GEOMETRIC DIVIDER -->
-<div class="geo-divider" aria-hidden="true">
-  <svg viewBox="0 0 1200 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="0" y="20" width="1200" height="4" fill="#1A1918"/>
-    <circle cx="200" cy="22" r="12" fill="#D03020"/>
-    <circle cx="600" cy="22" r="12" fill="#E8B820"/>
-    <circle cx="1000" cy="22" r="12" fill="#2050C8"/>
-    <line x1="200" y1="34" x2="200" y2="58" stroke="#1A1918" stroke-width="3"/>
-    <circle cx="200" cy="58" r="5" fill="#1A1918"/>
-    <line x1="1000" y1="34" x2="1000" y2="58" stroke="#1A1918" stroke-width="3"/>
-    <circle cx="1000" cy="58" r="5" fill="#1A1918"/>
-  </svg>
-</div>
-
 <!-- COMPARISON -->
 <section class="comp-section">
   <div class="section-label">COMPARISON</div>
@@ -187,7 +205,7 @@
     </div>
     <div class="comp-col highlight">
       <div class="comp-header">
-        <svg width="16" height="16" viewBox="0 0 16 16"><polygon points="8,0 16,16 0,16" fill="#F2F0EB"/></svg>
+        <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" fill="#D03020"/></svg>
         <h3>BLUNDER TUTOR</h3>
       </div>
       <ul>
@@ -202,19 +220,7 @@
   </div>
 </section>
 
-<!-- DASHBOARD -->
-<section class="dash-section">
-  <div class="section-label">INTELLIGENCE</div>
-  <h2 class="dash-title">THE DASHBOARD SHOWS<br>WHERE YOU'RE LOSING.</h2>
-  <div class="dash-grid">
-    <figure class="dg-wide"><a href="images/dashboard-main.png" class="lightbox-trigger"><img src="images/dashboard-main.png" alt="Dashboard" loading="lazy"></a><figcaption>OVERVIEW</figcaption></figure>
-    <figure><a href="images/dashboard-accuracy.png" class="lightbox-trigger"><img src="images/dashboard-accuracy.png" alt="Accuracy" loading="lazy"></a><figcaption>ACCURACY</figcaption></figure>
-    <figure><a href="images/dashboard-game-type-and-opening.png" class="lightbox-trigger"><img src="images/dashboard-game-type-and-opening.png" alt="Openings" loading="lazy"></a><figcaption>OPENINGS</figcaption></figure>
-    <figure><a href="images/dashboard-phase-and-color.png" class="lightbox-trigger"><img src="images/dashboard-phase-and-color.png" alt="Phase" loading="lazy"></a><figcaption>PHASE</figcaption></figure>
-    <figure><a href="images/dashboard-difficulty-and-critical-moments.png" class="lightbox-trigger"><img src="images/dashboard-difficulty-and-critical-moments.png" alt="Difficulty" loading="lazy"></a><figcaption>DIFFICULTY</figcaption></figure>
-    <figure><a href="images/dashboard-resilience-and-tactics.png" class="lightbox-trigger"><img src="images/dashboard-resilience-and-tactics.png" alt="Tactics" loading="lazy"></a><figcaption>TACTICS</figcaption></figure>
-  </div>
-</section>
+
 
 <!-- DEPLOY -->
 <section class="deploy-section" id="deploy">
@@ -282,6 +288,7 @@
       <span class="footer-license">AGPL-3.0</span>
     </div>
     <div class="footer-right">
+      <a href="https://blunders-demo.mrlokans.work/" target="_blank" rel="noopener">TRY DEMO</a>
       <a href="https://github.com/MrLokans/chess-blunder-trainer" target="_blank" rel="noopener">GITHUB</a>
       <a href="https://github.com/MrLokans/chess-blunder-trainer/blob/main/CHANGELOG.md" target="_blank" rel="noopener">CHANGELOG</a>
       <a href="https://github.com/MrLokans/chess-blunder-trainer/blob/main/docs/DOCKER.md" target="_blank" rel="noopener">DOCS</a>
@@ -291,6 +298,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // Copy button
   const copyBtn = document.querySelector('.copy-btn');
   if (copyBtn) {
     copyBtn.addEventListener('click', () => {
@@ -304,9 +312,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Lightbox
   const lightbox = document.getElementById('lightbox');
   const lightboxImg = document.getElementById('lightboxImg');
+  let wasSwiping = false;
   document.querySelectorAll('.lightbox-trigger').forEach(a => {
     a.addEventListener('click', (e) => {
       e.preventDefault();
+      if (wasSwiping) { wasSwiping = false; return; }
       lightboxImg.src = a.href;
       lightboxImg.alt = a.querySelector('img')?.alt || '';
       lightbox.classList.add('active');
@@ -326,10 +336,80 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Carousel
+  const track = document.getElementById('carouselTrack');
+  const dotsWrap = document.getElementById('carouselDots');
+  const slides = track.querySelectorAll('.carousel-slide');
+  const total = slides.length;
+  let current = 0;
+
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+    dot.addEventListener('click', () => goTo(i));
+    dotsWrap.appendChild(dot);
+  }
+  const dots = dotsWrap.querySelectorAll('.carousel-dot');
+
+  function goTo(idx) {
+    current = ((idx % total) + total) % total;
+    track.style.transform = 'translateX(-' + (current * 100) + '%)';
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+  }
+
+  document.querySelector('.carousel-prev').addEventListener('click', () => goTo(current - 1));
+  document.querySelector('.carousel-next').addEventListener('click', () => goTo(current + 1));
+
+  // Touch / pointer swipe
+  let startX = 0, deltaX = 0, dragging = false;
+  const carousel = document.getElementById('carousel');
+
+  carousel.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    dragging = true;
+    startX = e.clientX;
+    deltaX = 0;
+    track.classList.add('dragging');
+    carousel.setPointerCapture(e.pointerId);
+  });
+
+  carousel.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    deltaX = e.clientX - startX;
+    const base = -(current * 100);
+    const pct = (deltaX / carousel.offsetWidth) * 100;
+    track.style.transform = 'translateX(' + (base + pct) + '%)';
+  });
+
+  carousel.addEventListener('pointerup', (e) => {
+    if (!dragging) return;
+    dragging = false;
+    track.classList.remove('dragging');
+    if (Math.abs(deltaX) > 5) wasSwiping = true;
+    const threshold = carousel.offsetWidth * 0.15;
+    if (deltaX < -threshold) goTo(current + 1);
+    else if (deltaX > threshold) goTo(current - 1);
+    else goTo(current);
+  });
+
+  carousel.addEventListener('pointercancel', () => {
+    dragging = false;
+    track.classList.remove('dragging');
+    goTo(current);
+  });
+
+  // Keyboard navigation when carousel is focused
+  carousel.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') goTo(current - 1);
+    else if (e.key === 'ArrowRight') goTo(current + 1);
+  });
+
+  // Intersection observer for animations
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }});
   }, { threshold: 0.08 });
-  document.querySelectorAll('.method-card, .comp-blocks, .deploy-inner, .status-grid, .dash-grid, figure, .problem-grid').forEach(el => obs.observe(el));
+  document.querySelectorAll('.method-card, .comp-blocks, .deploy-inner, .status-grid, .problem-grid').forEach(el => obs.observe(el));
 });
 </script>
 </body>
