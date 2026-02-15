@@ -5,7 +5,8 @@ from __future__ import annotations
 import pytest
 
 from blunder_tutor.repositories.stats_repository import StatsFilter, StatsRepository
-from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING, classify_game_type
+from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
+from tests.helpers.stats_db import insert_test_game, insert_test_move
 
 
 @pytest.fixture
@@ -13,49 +14,6 @@ async def stats_repo(db_path):
     repo = StatsRepository(db_path)
     yield repo
     await repo.close()
-
-
-async def _insert_game(
-    stats_repo, game_id, username, white, black, time_control="300+0"
-):
-    game_type = int(classify_game_type(time_control))
-    conn = await stats_repo.get_connection()
-    await conn.execute(
-        """
-        INSERT INTO game_index_cache
-            (game_id, source, username, white, black, result, time_control,
-             end_time_utc, pgn_content, analyzed, indexed_at, game_type)
-        VALUES (?, 'lichess', ?, ?, ?, '1-0', ?, '2025-01-15T10:00:00Z', '', 1, '2025-01-15T10:00:00Z', ?)
-        """,
-        (game_id, username, white, black, time_control, game_type),
-    )
-    await conn.execute(
-        """
-        INSERT INTO analysis_games (game_id, pgn_path, analyzed_at, engine_path, depth, time_limit,
-                                    inaccuracy, mistake, blunder)
-        VALUES (?, '', '2025-01-15', '', 20, 1.0, 0, 0, 1)
-        """,
-        (game_id,),
-    )
-    await conn.commit()
-
-
-async def _insert_move(
-    stats_repo, game_id, ply, player, classification=0, move_number=None
-):
-    if move_number is None:
-        move_number = (ply + 1) // 2
-    conn = await stats_repo.get_connection()
-    await conn.execute(
-        """
-        INSERT INTO analysis_moves
-            (game_id, ply, move_number, player, uci, san, eval_before, eval_after,
-             delta, cp_loss, classification)
-        VALUES (?, ?, ?, ?, 'e2e4', 'e4', 0, 0, 0, 100, ?)
-        """,
-        (game_id, ply, move_number, player, classification),
-    )
-    await conn.commit()
 
 
 async def test_no_username_returns_empty(stats_repo):
@@ -68,9 +26,9 @@ async def test_no_username_returns_empty(stats_repo):
 
 
 async def test_single_game_single_blunder(stats_repo):
-    await _insert_game(stats_repo, "g1", "testuser", "testuser", "opponent")
-    await _insert_move(stats_repo, "g1", 1, 0, classification=0)
-    await _insert_move(stats_repo, "g1", 3, 0, classification=3, move_number=2)
+    await insert_test_game(stats_repo, "g1", "testuser", "testuser", "opponent")
+    await insert_test_move(stats_repo, "g1", 1, 0, classification=0)
+    await insert_test_move(stats_repo, "g1", 3, 0, classification=3, move_number=2)
 
     result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] == 2
@@ -82,9 +40,9 @@ async def test_single_game_single_blunder(stats_repo):
 
 
 async def test_multiple_blunders_takes_first(stats_repo):
-    await _insert_game(stats_repo, "g1", "testuser", "testuser", "opponent")
-    await _insert_move(stats_repo, "g1", 19, 0, classification=3, move_number=10)
-    await _insert_move(stats_repo, "g1", 39, 0, classification=3, move_number=20)
+    await insert_test_game(stats_repo, "g1", "testuser", "testuser", "opponent")
+    await insert_test_move(stats_repo, "g1", 19, 0, classification=3, move_number=10)
+    await insert_test_move(stats_repo, "g1", 39, 0, classification=3, move_number=20)
 
     result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] == 10
@@ -93,12 +51,12 @@ async def test_multiple_blunders_takes_first(stats_repo):
 
 async def test_multiple_games_average(stats_repo):
     # Game 1: first blunder at move 10
-    await _insert_game(stats_repo, "g1", "testuser", "testuser", "opp1")
-    await _insert_move(stats_repo, "g1", 19, 0, classification=3, move_number=10)
+    await insert_test_game(stats_repo, "g1", "testuser", "testuser", "opp1")
+    await insert_test_move(stats_repo, "g1", 19, 0, classification=3, move_number=10)
 
     # Game 2: first blunder at move 30
-    await _insert_game(stats_repo, "g2", "testuser", "testuser", "opp2")
-    await _insert_move(stats_repo, "g2", 59, 0, classification=3, move_number=30)
+    await insert_test_game(stats_repo, "g2", "testuser", "testuser", "opp2")
+    await insert_test_move(stats_repo, "g2", 59, 0, classification=3, move_number=30)
 
     result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] == 20
@@ -108,12 +66,12 @@ async def test_multiple_games_average(stats_repo):
 
 async def test_clean_games_counted(stats_repo):
     # Game with blunder
-    await _insert_game(stats_repo, "g1", "testuser", "testuser", "opp1")
-    await _insert_move(stats_repo, "g1", 19, 0, classification=3, move_number=10)
+    await insert_test_game(stats_repo, "g1", "testuser", "testuser", "opp1")
+    await insert_test_move(stats_repo, "g1", 19, 0, classification=3, move_number=10)
 
     # Game without blunder
-    await _insert_game(stats_repo, "g2", "testuser", "testuser", "opp2")
-    await _insert_move(stats_repo, "g2", 1, 0, classification=0)
+    await insert_test_game(stats_repo, "g2", "testuser", "testuser", "opp2")
+    await insert_test_move(stats_repo, "g2", 1, 0, classification=0)
 
     result = await stats_repo.get_collapse_point()
     assert result["total_games_with_blunders"] == 1
@@ -121,19 +79,19 @@ async def test_clean_games_counted(stats_repo):
 
 
 async def test_only_user_blunders_counted(stats_repo):
-    await _insert_game(stats_repo, "g1", "testuser", "testuser", "opponent")
+    await insert_test_game(stats_repo, "g1", "testuser", "testuser", "opponent")
     # Opponent blunder at move 5 (player=1 is black)
-    await _insert_move(stats_repo, "g1", 10, 1, classification=3, move_number=5)
+    await insert_test_move(stats_repo, "g1", 10, 1, classification=3, move_number=5)
     # User blunder at move 15
-    await _insert_move(stats_repo, "g1", 29, 0, classification=3, move_number=15)
+    await insert_test_move(stats_repo, "g1", 29, 0, classification=3, move_number=15)
 
     result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] == 15
 
 
 async def test_black_player_blunders(stats_repo):
-    await _insert_game(stats_repo, "g1", "testuser", "opponent", "testuser")
-    await _insert_move(stats_repo, "g1", 20, 1, classification=3, move_number=10)
+    await insert_test_game(stats_repo, "g1", "testuser", "opponent", "testuser")
+    await insert_test_move(stats_repo, "g1", 20, 1, classification=3, move_number=10)
 
     result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] == 10
@@ -142,16 +100,16 @@ async def test_black_player_blunders(stats_repo):
 
 async def test_distribution_buckets(stats_repo):
     # Game 1: blunder at move 3 -> bucket 1-5
-    await _insert_game(stats_repo, "g1", "testuser", "testuser", "o1")
-    await _insert_move(stats_repo, "g1", 5, 0, classification=3, move_number=3)
+    await insert_test_game(stats_repo, "g1", "testuser", "testuser", "o1")
+    await insert_test_move(stats_repo, "g1", 5, 0, classification=3, move_number=3)
 
     # Game 2: blunder at move 8 -> bucket 6-10
-    await _insert_game(stats_repo, "g2", "testuser", "testuser", "o2")
-    await _insert_move(stats_repo, "g2", 15, 0, classification=3, move_number=8)
+    await insert_test_game(stats_repo, "g2", "testuser", "testuser", "o2")
+    await insert_test_move(stats_repo, "g2", 15, 0, classification=3, move_number=8)
 
     # Game 3: blunder at move 42 -> bucket 41+
-    await _insert_game(stats_repo, "g3", "testuser", "testuser", "o3")
-    await _insert_move(stats_repo, "g3", 83, 0, classification=3, move_number=42)
+    await insert_test_game(stats_repo, "g3", "testuser", "testuser", "o3")
+    await insert_test_move(stats_repo, "g3", 83, 0, classification=3, move_number=42)
 
     result = await stats_repo.get_collapse_point()
     dist = {d["move_range"]: d["count"] for d in result["distribution"]}
@@ -162,16 +120,16 @@ async def test_distribution_buckets(stats_repo):
 
 async def test_game_type_filter(stats_repo):
     # Bullet game with blunder at move 5
-    await _insert_game(
+    await insert_test_game(
         stats_repo, "g1", "testuser", "testuser", "o1", time_control="60+0"
     )
-    await _insert_move(stats_repo, "g1", 9, 0, classification=3, move_number=5)
+    await insert_test_move(stats_repo, "g1", 9, 0, classification=3, move_number=5)
 
     # Rapid game with blunder at move 25
-    await _insert_game(
+    await insert_test_game(
         stats_repo, "g2", "testuser", "testuser", "o2", time_control="600+0"
     )
-    await _insert_move(stats_repo, "g2", 49, 0, classification=3, move_number=25)
+    await insert_test_move(stats_repo, "g2", 49, 0, classification=3, move_number=25)
 
     bullet_id = GAME_TYPE_FROM_STRING["bullet"]
     result = await stats_repo.get_collapse_point(
@@ -182,8 +140,8 @@ async def test_game_type_filter(stats_repo):
 
 
 async def test_no_blunders_at_all(stats_repo):
-    await _insert_game(stats_repo, "g1", "testuser", "testuser", "opponent")
-    await _insert_move(stats_repo, "g1", 1, 0, classification=0)
+    await insert_test_game(stats_repo, "g1", "testuser", "testuser", "opponent")
+    await insert_test_move(stats_repo, "g1", 1, 0, classification=0)
 
     result = await stats_repo.get_collapse_point()
     assert result["avg_collapse_move"] is None

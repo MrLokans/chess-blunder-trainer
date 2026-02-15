@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
-import chess
-import chess.engine
 import pytest
 from fastapi.testclient import TestClient
 
 from blunder_tutor.web.api.import_game import _generate_game_id, _validate_and_parse_pgn
-from blunder_tutor.web.app import create_app
 from blunder_tutor.web.config import AppConfig, DataConfig, EngineConfig
+from tests.helpers.engine import make_test_client
 
 VALID_PGN = """[Event "Test"]
 [Site "Test"]
@@ -116,28 +113,7 @@ def import_app(db_path: Path) -> TestClient:
             template_dir=Path(__file__).parent.parent / "templates",
         ),
     )
-
-    mock_engine = MagicMock()
-    mock_engine.id = {"name": "Stockfish 17", "author": "Test"}
-    mock_engine.analyse = AsyncMock(
-        return_value={
-            "score": chess.engine.PovScore(chess.engine.Cp(50), chess.WHITE),
-            "pv": [],
-        }
-    )
-    mock_engine.quit = AsyncMock()
-    rc_future = MagicMock()
-    rc_future.done.return_value = False
-    mock_engine.returncode = rc_future
-    mock_transport = MagicMock()
-
-    async def mock_popen_uci(path):
-        return (mock_transport, mock_engine)
-
-    with patch("chess.engine.popen_uci", mock_popen_uci):
-        fastapi_app = create_app(config)
-        with TestClient(fastapi_app) as client:
-            yield client
+    yield from make_test_client(config)
 
 
 class TestImportEndpoint:
@@ -187,21 +163,6 @@ class TestImportEndpoint:
             ),
             demo_mode=True,
         )
-
-        mock_engine = MagicMock()
-        mock_engine.id = {"name": "Stockfish 17", "author": "Test"}
-        mock_engine.analyse = AsyncMock()
-        mock_engine.quit = AsyncMock()
-        rc_future = MagicMock()
-        rc_future.done.return_value = False
-        mock_engine.returncode = rc_future
-        mock_transport = MagicMock()
-
-        async def mock_popen_uci(path):
-            return (mock_transport, mock_engine)
-
-        with patch("chess.engine.popen_uci", mock_popen_uci):
-            fastapi_app = create_app(config)
-            with TestClient(fastapi_app) as client:
-                resp = client.post("/api/import/pgn", json={"pgn": VALID_PGN})
-                assert resp.status_code == 403
+        for client in make_test_client(config):
+            resp = client.post("/api/import/pgn", json={"pgn": VALID_PGN})
+            assert resp.status_code == 403

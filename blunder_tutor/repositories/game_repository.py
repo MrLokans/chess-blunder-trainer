@@ -204,15 +204,15 @@ class GameRepository(BaseDbRepository):
 
         query += " ORDER BY end_time_utc DESC"
 
-        if limit is not None:
-            query += " LIMIT ? OFFSET ?"
-            params.extend([limit, offset])
-
         conn = await self.get_connection()
-        count_params = [p for p in params if not isinstance(p, int) or p < 1000]
+        count_params = list(params)
         async with conn.execute(count_query, count_params) as cursor:
             count_row = await cursor.fetchone()
             total_count = count_row[0]
+
+        if limit is not None:
+            query += " LIMIT ? OFFSET ?"
+            params.extend([limit, offset])
 
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()

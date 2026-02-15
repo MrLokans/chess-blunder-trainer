@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from blunder_tutor.analysis.filtering import filter_blunders, is_valid_blunder
 from blunder_tutor.constants import (
     ALREADY_LOST_THRESHOLD,
@@ -26,65 +28,40 @@ def _blunder(
     }
 
 
+VALID_BLUNDER_CASES = [
+    (100, -150, "normal blunder"),
+    (0, -250, "equal to losing"),
+    (200, -50, "slightly winning to losing"),
+    (ALREADY_LOST_THRESHOLD + 1, -600, "just above already-lost threshold"),
+    (800, STILL_WINNING_THRESHOLD - 1, "just below still-winning threshold"),
+    (250, 50, "winning to equal"),
+    (200, -200, "winning to losing"),
+]
+
+FILTERED_BLUNDER_CASES = [
+    (MATE_THRESHOLD + 1, 500, "mate delivery"),
+    (500, MATE_THRESHOLD + 1, "eval after still mate"),
+    (ALREADY_LOST_THRESHOLD - 1, -800, "already lost position"),
+    (ALREADY_LOST_THRESHOLD, -600, "exactly at already-lost threshold"),
+    (800, STILL_WINNING_THRESHOLD + 1, "still winning after blunder"),
+    (800, STILL_WINNING_THRESHOLD, "exactly at still-winning threshold"),
+    (-600, -900, "deeply lost position"),
+    (700, 400, "large drop but still comfortable"),
+]
+
+
 class TestIsValidBlunder:
-    def test_normal_blunder_is_valid(self):
-        assert is_valid_blunder(_blunder(eval_before=100, eval_after=-150))
-
-    def test_equal_to_losing_is_valid(self):
-        assert is_valid_blunder(_blunder(eval_before=0, eval_after=-250))
-
-    def test_slightly_winning_to_losing_is_valid(self):
-        assert is_valid_blunder(_blunder(eval_before=200, eval_after=-50))
-
-    def test_mate_delivery_filtered(self):
-        assert not is_valid_blunder(
-            _blunder(eval_before=MATE_THRESHOLD + 1, eval_after=500)
+    @pytest.mark.parametrize("eval_before,eval_after,desc", VALID_BLUNDER_CASES)
+    def test_valid_blunders(self, eval_before, eval_after, desc):
+        assert is_valid_blunder(
+            _blunder(eval_before=eval_before, eval_after=eval_after)
         )
 
-    def test_eval_after_still_mate_filtered(self):
+    @pytest.mark.parametrize("eval_before,eval_after,desc", FILTERED_BLUNDER_CASES)
+    def test_filtered_blunders(self, eval_before, eval_after, desc):
         assert not is_valid_blunder(
-            _blunder(eval_before=500, eval_after=MATE_THRESHOLD + 1)
+            _blunder(eval_before=eval_before, eval_after=eval_after)
         )
-
-    def test_already_lost_position_filtered(self):
-        b = _blunder(eval_before=ALREADY_LOST_THRESHOLD - 1, eval_after=-800)
-        assert not is_valid_blunder(b)
-
-    def test_exactly_at_already_lost_threshold_filtered(self):
-        b = _blunder(eval_before=ALREADY_LOST_THRESHOLD, eval_after=-600)
-        assert not is_valid_blunder(b)
-
-    def test_just_above_already_lost_threshold_valid(self):
-        b = _blunder(eval_before=ALREADY_LOST_THRESHOLD + 1, eval_after=-600)
-        assert is_valid_blunder(b)
-
-    def test_still_winning_after_blunder_filtered(self):
-        b = _blunder(eval_before=800, eval_after=STILL_WINNING_THRESHOLD + 1)
-        assert not is_valid_blunder(b)
-
-    def test_exactly_at_still_winning_threshold_filtered(self):
-        b = _blunder(eval_before=800, eval_after=STILL_WINNING_THRESHOLD)
-        assert not is_valid_blunder(b)
-
-    def test_just_below_still_winning_threshold_valid(self):
-        b = _blunder(eval_before=800, eval_after=STILL_WINNING_THRESHOLD - 1)
-        assert is_valid_blunder(b)
-
-    def test_deeply_lost_position_filtered(self):
-        b = _blunder(eval_before=-600, eval_after=-900)
-        assert not is_valid_blunder(b)
-
-    def test_large_drop_but_still_comfortable_filtered(self):
-        b = _blunder(eval_before=700, eval_after=400)
-        assert not is_valid_blunder(b)
-
-    def test_winning_to_equal_is_valid(self):
-        b = _blunder(eval_before=250, eval_after=50)
-        assert is_valid_blunder(b)
-
-    def test_winning_to_losing_is_valid(self):
-        b = _blunder(eval_before=200, eval_after=-200)
-        assert is_valid_blunder(b)
 
 
 class TestFilterBlunders:
@@ -105,8 +82,8 @@ class TestFilterBlunders:
 
     def test_filters_invalid_blunders(self):
         blunders = [
-            _blunder(eval_before=-500, eval_after=-800),  # already lost
-            _blunder(eval_before=100, eval_after=-200),  # valid
+            _blunder(eval_before=-500, eval_after=-800),
+            _blunder(eval_before=100, eval_after=-200),
         ]
         game_side_map = {"g1": 0}
         result = filter_blunders(blunders, game_side_map)
@@ -115,17 +92,11 @@ class TestFilterBlunders:
 
     def test_combined_filtering(self):
         blunders = [
-            _blunder(eval_before=100, eval_after=-200, game_id="g1", player=0),  # valid
-            _blunder(
-                eval_before=800, eval_after=400, game_id="g1", player=0
-            ),  # still winning
-            _blunder(
-                eval_before=-400, eval_after=-700, game_id="g2", player=1
-            ),  # already lost
-            _blunder(eval_before=50, eval_after=-250, game_id="g2", player=1),  # valid
-            _blunder(
-                eval_before=50, eval_after=-100, game_id="g3", player=0
-            ),  # wrong game
+            _blunder(eval_before=100, eval_after=-200, game_id="g1", player=0),
+            _blunder(eval_before=800, eval_after=400, game_id="g1", player=0),
+            _blunder(eval_before=-400, eval_after=-700, game_id="g2", player=1),
+            _blunder(eval_before=50, eval_after=-250, game_id="g2", player=1),
+            _blunder(eval_before=50, eval_after=-100, game_id="g3", player=0),
         ]
         game_side_map = {"g1": 0, "g2": 1}
         result = filter_blunders(blunders, game_side_map)

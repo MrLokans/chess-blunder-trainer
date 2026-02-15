@@ -2,16 +2,12 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
-import chess
-import chess.engine
 import pytest
-from fastapi.testclient import TestClient
 
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.starred_puzzle_repository import StarredPuzzleRepository
-from blunder_tutor.web.app import create_app
+from tests.helpers.engine import make_test_client
 
 
 @pytest.fixture
@@ -141,29 +137,8 @@ class TestStarredAPI:
 class TestStarredDemoMode:
     @pytest.fixture
     def demo_app(self, test_config):
-        mock_engine = MagicMock()
-        mock_engine.id = {"name": "Stockfish 17", "author": "test"}
-        mock_engine.analyse = AsyncMock(
-            return_value={
-                "score": chess.engine.PovScore(chess.engine.Cp(50), chess.WHITE),
-                "pv": [],
-            }
-        )
-        mock_engine.quit = AsyncMock()
-        rc_future = MagicMock()
-        rc_future.done.return_value = False
-        mock_engine.returncode = rc_future
-        mock_transport = MagicMock()
-
-        async def mock_popen_uci(path):
-            return (mock_transport, mock_engine)
-
         test_config.demo_mode = True
-
-        with patch("chess.engine.popen_uci", mock_popen_uci):
-            fastapi_app = create_app(test_config)
-            with TestClient(fastapi_app) as client:
-                yield client
+        yield from make_test_client(test_config)
 
     def test_demo_blocks_star(self, demo_app):
         resp = demo_app.put("/api/starred/game1/10", json={})

@@ -5,6 +5,11 @@ import pytest
 
 from blunder_tutor.i18n.manager import TranslationManager, format_message
 
+EN_PLURAL_MSG = "{count, plural, one {# item} other {# items}}"
+RU_PLURAL_MSG = (
+    "{count, plural, one {# задача} few {# задачи} many {# задач} other {# задач}}"
+)
+
 
 class TestFormatMessage:
     def test_simple_string(self):
@@ -20,37 +25,22 @@ class TestFormatMessage:
     def test_missing_placeholder_kept(self):
         assert format_message("Hello {name}") == "Hello {name}"
 
-    def test_english_plural_one(self):
-        msg = "{count, plural, one {# item} other {# items}}"
-        assert format_message(msg, {"count": 1}, "en") == "1 item"
-
-    def test_english_plural_other(self):
-        msg = "{count, plural, one {# item} other {# items}}"
-        assert format_message(msg, {"count": 5}, "en") == "5 items"
-
-    def test_english_plural_zero(self):
-        msg = "{count, plural, one {# item} other {# items}}"
-        assert format_message(msg, {"count": 0}, "en") == "0 items"
-
-    def test_russian_plural_one(self):
-        msg = "{count, plural, one {# задача} few {# задачи} many {# задач} other {# задач}}"
-        assert format_message(msg, {"count": 1}, "ru") == "1 задача"
-
-    def test_russian_plural_few(self):
-        msg = "{count, plural, one {# задача} few {# задачи} many {# задач} other {# задач}}"
-        assert format_message(msg, {"count": 3}, "ru") == "3 задачи"
-
-    def test_russian_plural_many(self):
-        msg = "{count, plural, one {# задача} few {# задачи} many {# задач} other {# задач}}"
-        assert format_message(msg, {"count": 5}, "ru") == "5 задач"
-
-    def test_russian_plural_11(self):
-        msg = "{count, plural, one {# задача} few {# задачи} many {# задач} other {# задач}}"
-        assert format_message(msg, {"count": 11}, "ru") == "11 задач"
-
-    def test_russian_plural_21(self):
-        msg = "{count, plural, one {# задача} few {# задачи} many {# задач} other {# задач}}"
-        assert format_message(msg, {"count": 21}, "ru") == "21 задача"
+    @pytest.mark.parametrize(
+        "count,locale,msg,expected",
+        [
+            (1, "en", EN_PLURAL_MSG, "1 item"),
+            (5, "en", EN_PLURAL_MSG, "5 items"),
+            (0, "en", EN_PLURAL_MSG, "0 items"),
+            (1, "ru", RU_PLURAL_MSG, "1 задача"),
+            (3, "ru", RU_PLURAL_MSG, "3 задачи"),
+            (5, "ru", RU_PLURAL_MSG, "5 задач"),
+            (11, "ru", RU_PLURAL_MSG, "11 задач"),
+            (21, "ru", RU_PLURAL_MSG, "21 задача"),
+            (1, "xx", EN_PLURAL_MSG, "1 item"),
+        ],
+    )
+    def test_plural_forms(self, count, locale, msg, expected):
+        assert format_message(msg, {"count": count}, locale) == expected
 
     def test_exact_match(self):
         msg = "{count, plural, =0 {no items} one {# item} other {# items}}"
@@ -59,10 +49,6 @@ class TestFormatMessage:
     def test_plural_with_surrounding_text(self):
         msg = "You have {count, plural, one {# puzzle} other {# puzzles}} to solve"
         assert format_message(msg, {"count": 3}, "en") == "You have 3 puzzles to solve"
-
-    def test_unknown_locale_falls_back_to_english(self):
-        msg = "{count, plural, one {# item} other {# items}}"
-        assert format_message(msg, {"count": 1}, "xx") == "1 item"
 
 
 class TestTranslationManager:
@@ -143,18 +129,21 @@ class TestRealLocales:
     def test_russian_available(self, mgr):
         assert "ru" in mgr.available_locales()
 
-    def test_russian_plural_heatmap(self, mgr):
-        assert mgr.t("ru", "heatmap.total", count=1) == "1 задача"
-        assert mgr.t("ru", "heatmap.total", count=3) == "3 задачи"
-        assert mgr.t("ru", "heatmap.total", count=5) == "5 задач"
-        assert mgr.t("ru", "heatmap.total", count=21) == "21 задача"
+    @pytest.mark.parametrize(
+        "count,expected",
+        [
+            (1, "1 задача"),
+            (3, "3 задачи"),
+            (5, "5 задач"),
+            (21, "21 задача"),
+        ],
+    )
+    def test_russian_plural_heatmap(self, mgr, count, expected):
+        assert mgr.t("ru", "heatmap.total", count=count) == expected
 
     def test_russian_fallback_for_missing_key(self, mgr):
-        # settings.locale.label exists in both, but if we add a new en key not in ru
-        # it should fall back
         en_keys = set(mgr.get_all("en").keys())
         ru_keys = set(mgr.get_all("ru").keys())
-        # All ru keys should be a subset of en keys (since get_all merges)
         assert en_keys == ru_keys
 
     def test_russian_trainer_feedback(self, mgr):

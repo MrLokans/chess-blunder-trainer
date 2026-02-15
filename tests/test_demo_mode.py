@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
-import chess
-import chess.engine
 import pytest
 from fastapi.testclient import TestClient
 
-from blunder_tutor.web.app import create_app
 from blunder_tutor.web.config import AppConfig, DataConfig, EngineConfig
+from tests.helpers.engine import make_test_client
 
 
 @pytest.fixture
@@ -30,27 +27,7 @@ def demo_config(db_path: Path) -> AppConfig:
 
 @pytest.fixture
 def demo_app(demo_config: AppConfig):
-    mock_engine = MagicMock()
-    mock_engine.id = {"name": "Stockfish 17", "author": "Test"}
-    mock_engine.analyse = AsyncMock(
-        return_value={
-            "score": chess.engine.PovScore(chess.engine.Cp(50), chess.WHITE),
-            "pv": [],
-        }
-    )
-    mock_engine.quit = AsyncMock()
-    rc_future = MagicMock()
-    rc_future.done.return_value = False
-    mock_engine.returncode = rc_future
-    mock_transport = MagicMock()
-
-    async def mock_popen_uci(path):
-        return (mock_transport, mock_engine)
-
-    with patch("chess.engine.popen_uci", mock_popen_uci):
-        fastapi_app = create_app(demo_config)
-        with TestClient(fastapi_app) as client:
-            yield client
+    yield from make_test_client(demo_config)
 
 
 BLOCKED_ENDPOINTS = [
