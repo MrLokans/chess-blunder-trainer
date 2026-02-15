@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1]
+
+### Added
+
+- **Play full engine line**: In the trainer, you can now step through the entire best engine continuation instead of seeing only the first move.
+
+### Changed
+
+- **Smoother onboarding**: Platform usernames are validated before saving, and game download + analysis starts automatically after setup — no extra clicks needed.
+- **Frontend modularization**: Split large trainer and dashboard scripts into focused modules (state, filters, UI, charts, etc.) with a shared event bus. Added comprehensive frontend tests.
+
+---
+
 ## [2.0.0]
 
 ### Changed
