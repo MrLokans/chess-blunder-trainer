@@ -172,6 +172,10 @@ form.addEventListener('submit', async (e) => {
       await waitForAnalysis(jobIds);
     }
 
+    trackEvent('Setup Completed', {
+      has_lichess: lichess ? 'yes' : 'no',
+      has_chesscom: chesscom ? 'yes' : 'no',
+    });
     window.location.href = '/';
   } catch (err) {
     showError(err.message || t('setup.failed'));

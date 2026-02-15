@@ -14,6 +14,7 @@ export default [
         htmx: 'readonly',
         Chart: 'readonly',
         t: 'readonly',
+        trackEvent: 'readonly',
         formatNumber: 'readonly',
         formatDate: 'readonly',
       },

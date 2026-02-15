@@ -73,6 +73,12 @@ async function loadSpecificPuzzle(gameId, ply) {
 function setupPuzzle(data) {
   ui.hideEmptyState();
   state.set('puzzle', data);
+  trackEvent('Puzzle Loaded', {
+    phase: data.game_phase || '',
+    color: data.player_color || '',
+    difficulty: data.difficulty || '',
+    tactical_pattern: data.tactical_pattern || '',
+  });
   const game = new Chess(data.fen);
   state.set('game', game);
 
@@ -186,6 +192,12 @@ async function submitMoveAction() {
   try {
     const data = await client.trainer.submitMove(payload);
     state.set('submitted', true);
+
+    trackEvent('Puzzle Submitted', {
+      result: data.is_best ? 'correct' : 'incorrect',
+      phase: puzzle.game_phase || '',
+      difficulty: puzzle.difficulty || '',
+    });
 
     if (data.is_best) {
       ui.showCorrectFeedback();
@@ -301,22 +313,26 @@ function flipBoard() {
 // --- Wire up event bus actions ---
 
 bus.on('action:submit', submitMoveAction);
-bus.on('action:next', loadPuzzle);
+bus.on('action:next', () => { trackEvent('Puzzle Next'); loadPuzzle(); });
 bus.on('action:reset', resetPosition);
-bus.on('action:undo', undoMove);
-bus.on('action:flip', flipBoard);
+bus.on('action:undo', () => { trackEvent('Puzzle Undo'); undoMove(); });
+bus.on('action:flip', () => { trackEvent('Board Flipped'); flipBoard(); });
 bus.on('action:lichess', openLichessAnalysis);
-bus.on('action:playBest', () => linePlayer.playBestMove());
+bus.on('action:playBest', () => { trackEvent('Puzzle Try Best'); linePlayer.playBestMove(); });
 bus.on('action:reveal', () => {
   if (state.get('bestRevealed')) {
     ui.toggleBoardResultOverlay();
   } else {
+    trackEvent('Puzzle Best Move Revealed');
     ui.showBoardResult('accent-revealed', t('trainer.feedback.best_revealed'), t('trainer.feedback.best_revealed_detail'));
     revealBestMove();
   }
 });
 
-bus.on('filters:changed', loadPuzzle);
+bus.on('filters:changed', (detail) => {
+  trackEvent('Filter Changed', { filter_type: detail?.filterType || '' });
+  loadPuzzle();
+});
 
 // --- Wire up DOM event listeners ---
 

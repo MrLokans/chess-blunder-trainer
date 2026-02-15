@@ -25,6 +25,15 @@ class ThrottleConfig(BaseModel):
     engine_window_seconds: int = 60
 
 
+class AnalyticsConfig(BaseModel):
+    plausible_domain: str | None = None
+    plausible_script_url: str = "https://plausible.io/js/script.js"
+
+    @property
+    def enabled(self) -> bool:
+        return self.plausible_domain is not None
+
+
 class AppConfig(BaseModel):
     username: str | None = None
     engine_path: str
@@ -32,6 +41,7 @@ class AppConfig(BaseModel):
     data: DataConfig = DataConfig()
     demo_mode: bool = False
     throttle: ThrottleConfig = ThrottleConfig()
+    analytics: AnalyticsConfig = AnalyticsConfig()
 
 
 def get_engine_path(environ: typing.Mapping) -> str:
@@ -82,4 +92,10 @@ def config_factory(
         ),
         demo_mode=environ.get("DEMO_MODE", "").lower() in ("true", "1", "yes"),
         throttle=throttle,
+        analytics=AnalyticsConfig(
+            plausible_domain=environ.get("PLAUSIBLE_DOMAIN"),
+            plausible_script_url=environ.get(
+                "PLAUSIBLE_SCRIPT_URL", "https://plausible.io/js/script.js"
+            ),
+        ),
     )

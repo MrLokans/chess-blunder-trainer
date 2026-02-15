@@ -236,6 +236,7 @@ bus.on('dashboard:reload', loadStats);
 loadStats();
 
 if (hasFeature('dashboard.heatmap')) {
+  trackEvent('Heatmap Opened');
   loadHeatmap('activityHeatmap');
 }
 

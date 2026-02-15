@@ -32,6 +32,20 @@
   <!-- Page-specific CSS -->
   {% block extra_css %}{% endblock %}
 
+  <!-- Analytics (Plausible) -->
+  {% if analytics_enabled %}
+  <script defer data-domain="{{ plausible_domain }}"
+          src="{{ plausible_script_url }}"></script>
+  {% endif %}
+  <script>
+    window.plausible = window.plausible || function() {
+      (window.plausible.q = window.plausible.q || []).push(arguments);
+    };
+    window.trackEvent = function(name, props) {
+      window.plausible(name, { props: props || {} });
+    };
+  </script>
+
   <!-- Page-specific head content -->
   {% block extra_head %}{% endblock %}
 </head>

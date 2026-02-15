@@ -73,7 +73,10 @@ form.addEventListener('submit', async (e) => {
       theme
     });
 
+    trackEvent('Theme Changed', { theme: 'custom' });
+
     await saveBoardSettings();
+    trackEvent('Board Style Changed', { piece_set: 'saved' });
     localStorage.setItem('theme', JSON.stringify(theme));
 
     showSuccess(t('settings.saved'));
@@ -90,6 +93,7 @@ form.addEventListener('submit', async (e) => {
 
 if (localeSelect) {
   localeSelect.addEventListener('change', () => {
+    trackEvent('Locale Changed', { locale: localeSelect.value });
     client.settings.setLocale(localeSelect.value).then(() => {
       window.location.reload();
     }).catch(() => {

@@ -132,6 +132,13 @@ def create_app(
     app.state.demo_mode = config.demo_mode
     templates.env.globals["demo_mode"] = config.demo_mode
 
+    # Inject analytics config into templates
+    templates.env.globals["analytics_enabled"] = config.analytics.enabled
+    templates.env.globals["plausible_domain"] = config.analytics.plausible_domain
+    templates.env.globals["plausible_script_url"] = (
+        config.analytics.plausible_script_url
+    )
+
     # Set up per-IP engine throttle for demo mode
     app.state.engine_throttle = create_engine_throttle(config)
 
