@@ -15,7 +15,7 @@
 
 {% block body %}
 {% include '_demo_banner.html' %}
-
+<div class="trainer-page">
 <!-- Header -->
 <header class="trainer-header">
   <div class="trainer-header-left">
@@ -23,23 +23,9 @@
       <span class="trainer-logo-icon"></span>
       Blunder Tutor
     </h1>
-    <button class="shortcuts-hint-btn" id="shortcutsHintBtn" title="Keyboard shortcuts (?)">?</button>
   </div>
   {{ render_nav('trainer') }}
 </header>
-
-<!-- Session Bar -->
-<div class="session-bar" id="sessionBar">
-  <div class="session-left">
-    <span class="session-label">{{ t('trainer.session_label') }}</span>
-    <div class="session-dots" id="sessionDots"></div>
-  </div>
-  <div class="session-stats" id="sessionStats"
-    hx-get="/api/stats/training/html"
-    hx-trigger="load, statsUpdate from:body"
-    hx-swap="innerHTML transition:true">
-  </div>
-</div>
 
 <!-- Empty state -->
 <div class="card empty-state" id="emptyState" style="display: none;">
@@ -190,10 +176,11 @@
 
       <!-- Action buttons (clickable + shortcut hints) -->
       <div class="action-keys">
-        <button class="action-key" id="submitBtn" style="display: none;"><kbd>Enter</kbd> {{ t('trainer.shortcuts.submit') }}</button>
-        <button class="action-key" id="resetBtn"><kbd>R</kbd> {{ t('trainer.shortcuts.reset') }}</button>
-        <button class="action-key" id="showBestBtn"><kbd>B</kbd> {{ t('trainer.shortcuts.show_best') }}</button>
-        <button class="action-key" id="nextBtn"><kbd>N</kbd> {{ t('trainer.shortcuts.next') }}</button>
+        <button class="action-key" id="submitBtn" style="display: none;"><kbd>Enter</kbd><span class="action-label">{{ t('trainer.shortcuts.submit') }}</span></button>
+        <button class="action-key" id="resetBtn"><kbd>R</kbd><span class="action-label">{{ t('trainer.shortcuts.reset') }}</span></button>
+        <button class="action-key" id="showBestBtn"><kbd>B</kbd><span class="action-label">{{ t('trainer.shortcuts.show_best') }}</span></button>
+        <button class="action-key" id="nextBtn"><kbd>N</kbd><span class="action-label">{{ t('trainer.shortcuts.next') }}</span></button>
+        <button class="action-key action-key-muted" id="shortcutsHintBtn" title="Keyboard shortcuts (?)"><kbd>?</kbd><span class="action-label">{{ t('trainer.shortcuts.title') }}</span></button>
       </div>
     </div>
 
@@ -390,6 +377,7 @@
       </tbody>
     </table>
   </div>
+</div>
 </div>
 {% endblock %}
 

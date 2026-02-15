@@ -52,19 +52,19 @@
 <body>
   {% block body %}
   {% include '_demo_banner.html' %}
-  <div class="container">
-    {% block header %}
-    <header class="trainer-header">
-      <div class="trainer-header-left">
-        <h1 class="trainer-logo">
-          <span class="trainer-logo-icon"></span>
-          Blunder Tutor
-        </h1>
-      </div>
-      {% block header_nav %}{% endblock %}
-    </header>
-    {% endblock %}
+  {% block header %}
+  <header class="trainer-header">
+    <div class="trainer-header-left">
+      <h1 class="trainer-logo">
+        <span class="trainer-logo-icon"></span>
+        Blunder Tutor
+      </h1>
+    </div>
+    {% block header_nav %}{% endblock %}
+  </header>
+  {% endblock %}
 
+  <div class="container">
     {% block navigation %}{% endblock %}
 
     {% block content %}{% endblock %}

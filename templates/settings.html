@@ -7,18 +7,11 @@
 <link rel="stylesheet" href="/static/css/settings.css">
 {% endblock %}
 
-{% block body %}
-{% include '_demo_banner.html' %}
-<header class="trainer-header">
-  <div class="trainer-header-left">
-    <h1 class="trainer-logo">
-      <span class="trainer-logo-icon"></span>
-      Blunder Tutor
-    </h1>
-  </div>
-  {{ render_nav('settings') }}
-</header>
-<div class="container">
+{% block header_nav %}
+{{ render_nav('settings') }}
+{% endblock %}
+
+{% block content %}
   <div class="card">
     <h2>{{ t('settings.title') }}</h2>
     <p class="subtitle">{{ t('settings.subtitle') }}</p>
@@ -387,7 +380,6 @@
       </div>
     </form>
   </div>
-</div>
 {% endblock %}
 
 {% block extra_scripts %}

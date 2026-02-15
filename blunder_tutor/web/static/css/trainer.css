@@ -11,111 +11,19 @@
 }
 
 /* ==========================================================================
-   Session Bar
-   ========================================================================== */
-
-.session-bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  background: var(--black);
-  padding: var(--s-sm) var(--s-xl);
-  color: var(--white);
-  gap: var(--s-lg);
-}
-
-.session-left {
-  display: flex;
-  align-items: center;
-  gap: var(--s-md);
-  margin-right: auto;
-}
-
-.session-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.session-dots {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
-  padding-left: var(--s-md);
-}
-
-.session-dot {
-  width: 12px;
-  height: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.session-dot.correct {
-  background: var(--correct);
-  border-color: var(--correct);
-}
-
-.session-dot.incorrect {
-  background: var(--red);
-  border-color: var(--red);
-}
-
-.session-dot.current {
-  background: var(--yellow);
-  border-color: var(--yellow);
-  transform: scale(1.3);
-}
-
-.session-stats {
-  display: flex;
-  align-items: center;
-  gap: var(--s-lg);
-}
-
-.session-stat {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s-xs);
-}
-
-.session-stat-value {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.session-stat-value.correct-count {
-  color: var(--correct);
-}
-
-.session-stat-value.incorrect-count {
-  color: var(--red);
-}
-
-.session-stat-value.accuracy-value {
-  color: var(--correct);
-  font-size: 20px;
-}
-
-.session-stat-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-/* ==========================================================================
    Main Layout
    ========================================================================== */
+
+.trainer-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
 
 .trainer-main {
   display: grid;
   grid-template-columns: 1fr 380px;
-  min-height: calc(100vh - 120px);
+  flex: 1;
 }
 
 .trainer-board-area {
@@ -129,10 +37,12 @@
   border-left: 3px solid var(--black);
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 120px);
+  align-self: stretch;
+}
+
+.trainer-panel > :first-child {
   position: sticky;
   top: 0;
-  overflow-y: auto;
 }
 
 @media (max-width: 1080px) {
@@ -749,30 +659,30 @@
 .action-keys {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: var(--s-xs);
   margin-top: var(--s-md);
+  padding: 0 var(--s-md);
 }
 
 .action-key {
   display: flex;
   align-items: center;
   gap: var(--s-md);
-  padding: var(--s-sm) 0;
+  padding: var(--s-sm) var(--s-md);
   background: none;
-  border: none;
-  border-bottom: 1px solid var(--warm-gray);
+  border: 2px solid transparent;
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 1px;
   color: var(--black);
   text-align: left;
-  transition: color 0.15s ease;
+  transition: all 0.15s ease;
   width: 100%;
 }
 
-.action-key:last-child {
-  border-bottom: none;
+.action-key:hover {
+  background: var(--warm-gray);
 }
 
 .action-key:hover kbd {
@@ -784,16 +694,26 @@
   cursor: default;
 }
 
+.action-key:disabled:hover {
+  background: none;
+}
+
+.action-label {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
 .action-key kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
-  height: 24px;
+  min-width: 32px;
+  height: 28px;
   padding: 0 var(--s-sm);
-  border: 3px solid var(--black);
+  border: 2px solid var(--black);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
   color: var(--black);
@@ -820,6 +740,24 @@
 .action-key#nextBtn kbd {
   background: var(--yellow);
   border-color: var(--yellow);
+  color: var(--black);
+}
+
+.action-key-muted {
+  color: var(--mid-gray);
+}
+
+.action-key-muted kbd {
+  border-color: var(--mid-gray);
+  color: var(--mid-gray);
+}
+
+.action-key-muted:hover {
+  color: var(--black);
+}
+
+.action-key-muted:hover kbd {
+  border-color: var(--black);
   color: var(--black);
 }
 
@@ -1260,22 +1198,7 @@
    Keyboard Shortcuts Overlay
    ========================================================================== */
 
-.shortcuts-hint-btn {
-  background: none;
-  border: 2px solid var(--mid-gray);
-  cursor: pointer;
-  padding: 2px 8px;
-  line-height: 1;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--mid-gray);
-  transition: all 0.15s ease;
-}
 
-.shortcuts-hint-btn:hover {
-  border-color: var(--black);
-  color: var(--black);
-}
 
 .shortcuts-overlay {
   display: none;

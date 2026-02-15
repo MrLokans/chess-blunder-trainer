@@ -1052,6 +1052,13 @@ tr:hover td {
   padding: var(--s-sm);
   font-size: var(--text-sm);
   width: auto;
+  box-sizing: border-box;
+  height: 36px;
+}
+
+.dashboard-filters .btn {
+  box-sizing: border-box;
+  height: 36px;
 }
 
 .filter-presets {

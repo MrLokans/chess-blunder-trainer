@@ -18,7 +18,7 @@ export function initUI() {
     'tacticalInfoTitle', 'tacticalInfoReason',
     'emptyState', 'trainerLayout',
     'emptyStateTitle', 'emptyStateMessage', 'emptyStateAction',
-    'statsCard', 'sessionBar',
+    'statsCard',
     'shortcutsOverlay', 'shortcutsClose', 'shortcutsHintBtn',
     'blunderSection',
     'explanationBlunder', 'explanationBest',
@@ -42,7 +42,6 @@ export function showEmptyState(errorType, onClearFilters) {
   els.trainerLayout.style.display = 'none';
   els.emptyState.style.display = 'block';
   if (els.statsCard) els.statsCard.style.display = 'none';
-  if (els.sessionBar) els.sessionBar.style.display = 'none';
   els.emptyStateAction.onclick = null;
 
   if (errorType === 'analyzing') {
@@ -81,7 +80,6 @@ export function hideEmptyState() {
   els.emptyState.style.display = 'none';
   els.trainerLayout.style.display = 'grid';
   if (els.statsCard) els.statsCard.style.display = 'block';
-  if (els.sessionBar) els.sessionBar.style.display = 'flex';
 }
 
 export function showBoardResult(accentClass, titleText, detail) {
