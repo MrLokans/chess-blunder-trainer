@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2]
+
+### Added
+
+- **Demo mode database**: Ship a pre-built SQLite database so the hosted demo starts with real games and blunders out of the box, no setup required.
+- **Plausible analytics**: Optional, privacy-friendly analytics via Plausible for the demo server — configured through `PLAUSIBLE_DOMAIN` / `PLAUSIBLE_SCRIPT_URL` env vars.
+- **Pre-commit hooks**: Added prek pre-commit configuration to enforce linting and formatting on commit.
+
+---
+
 ## [2.0.1]
 
 ### Added
