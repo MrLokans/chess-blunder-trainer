@@ -1,15 +1,21 @@
+import { bus } from './event-bus.js';
 import { WebSocketClient } from './websocket-client.js';
 import { FilterPersistence } from './filter-persistence.js';
 import { loadHeatmap } from './heatmap.js';
 import { client } from './api.js';
-import { groupOpeningsByBase, openingNameSlug } from './opening-group.js';
 import { debounce } from './debounce.js';
 import { hasFeature } from './features.js';
+import { dateParams, dateAndGameTypeParams, initDateFilters } from './dashboard/date-filters.js';
+import { createDateChart, createHourChart } from './dashboard/charts.js';
+import {
+  renderPhaseBreakdown, renderColorBreakdown, renderGameTypeBreakdown,
+  renderEcoBreakdown, renderTacticalBreakdown, renderDifficultyBreakdown,
+  renderCollapsePoint, renderConversionResilience, renderTrapsSummary,
+  renderGameBreakdown, initOpeningGroupToggles,
+} from './dashboard/renderers.js';
 
 const wsClient = new WebSocketClient();
 
-let currentDateFrom = null;
-let currentDateTo = null;
 let dateChart = null;
 let hourChart = null;
 let currentGameTypeFilters = ['bullet', 'blitz', 'rapid', 'classical'];
@@ -17,158 +23,35 @@ let currentGameTypeFilters = ['bullet', 'blitz', 'rapid', 'classical'];
 const gameTypeFilter = new FilterPersistence({
   storageKey: 'dashboard-game-type-filters',
   checkboxSelector: '.game-type-filter',
-  defaultValues: ['bullet', 'blitz', 'rapid', 'classical']
+  defaultValues: ['bullet', 'blitz', 'rapid', 'classical'],
 });
 
-function getPresetDates(preset) {
-  const now = new Date();
-  const to = now.toISOString().split('T')[0];
-  let from = null;
-
-  switch (preset) {
-    case '7d':
-      from = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      break;
-    case '30d':
-      from = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      break;
-    case '90d':
-      from = new Date(now - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      break;
-    case '1y':
-      from = new Date(now - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      break;
-    case 'all':
-      return { from: null, to: null };
-  }
-  return { from, to };
+function getParams() {
+  return dateAndGameTypeParams(currentGameTypeFilters);
 }
 
-function setPreset(preset) {
-  const dates = getPresetDates(preset);
-  document.getElementById('dateFrom').value = dates.from || '';
-  document.getElementById('dateTo').value = dates.to || '';
-  currentDateFrom = dates.from;
-  currentDateTo = dates.to;
+function applyBreakdown(containerId, barContainerId, barId, legendId, result) {
+  const container = document.getElementById(containerId);
+  const barContainer = document.getElementById(barContainerId);
+  const bar = document.getElementById(barId);
+  if (!container) return;
 
-  document.querySelectorAll('.filter-presets button').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.preset === preset);
-  });
+  container.innerHTML = result.cards;
 
-  loadStats();
-}
-
-function applyDateFilter() {
-  currentDateFrom = document.getElementById('dateFrom').value || null;
-  currentDateTo = document.getElementById('dateTo').value || null;
-
-  document.querySelectorAll('.filter-presets button').forEach(btn => btn.classList.remove('active'));
-
-  loadStats();
-}
-
-function clearDateFilter() {
-  document.getElementById('dateFrom').value = '';
-  document.getElementById('dateTo').value = '';
-  currentDateFrom = null;
-  currentDateTo = null;
-
-  document.querySelectorAll('.filter-presets button').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.preset === 'all');
-  });
-
-  loadStats();
-}
-
-function dateParams() {
-  const params = {};
-  if (currentDateFrom) params.start_date = currentDateFrom;
-  if (currentDateTo) params.end_date = currentDateTo;
-  return params;
-}
-
-function dateAndGameTypeParams() {
-  const params = dateParams();
-  if (currentGameTypeFilters.length > 0 && currentGameTypeFilters.length < 4) {
-    params.game_types = currentGameTypeFilters;
-  }
-  return params;
-}
-
-function renderOpeningName(ecoCode, ecoName) {
-  const colonIdx = ecoName.indexOf(': ');
-  const lichessUrl = `https://lichess.org/opening/${openingNameSlug(ecoName)}`;
-  const ecoUrl = `https://www.365chess.com/eco/${ecoCode}`;
-
-  let nameHtml;
-  if (colonIdx > -1) {
-    const base = ecoName.substring(0, colonIdx);
-    const variation = ecoName.substring(colonIdx + 2);
-    const commaIdx = variation.indexOf(', ');
-    if (commaIdx > -1) {
-      nameHtml = `<span class="eco-name-base">${base}</span>: <span class="eco-name-variation">${variation.substring(0, commaIdx)}</span>, <span class="eco-name-subvariation">${variation.substring(commaIdx + 2)}</span>`;
-    } else {
-      nameHtml = `<span class="eco-name-base">${base}</span>: <span class="eco-name-variation">${variation}</span>`;
-    }
-  } else {
-    nameHtml = `<span class="eco-name-base">${ecoName}</span>`;
+  if (barContainer) {
+    barContainer.style.display = result.showBar ? 'block' : 'none';
+    if (bar && result.bar) bar.innerHTML = result.bar;
   }
 
-  return `<a href="${ecoUrl}" target="_blank" rel="noopener" class="eco-code" title="${ecoCode}">${ecoCode}</a> <a href="${lichessUrl}" target="_blank" rel="noopener" class="eco-name-link" title="${t('dashboard.opening.learn_link_tooltip')}">${nameHtml} <span class="eco-external-icon">↗</span></a>`;
-}
-
-function renderOpeningGroup(group) {
-  if (group.variations.length === 1) {
-    const item = group.variations[0];
-    return `
-      <tr>
-        <td>${renderOpeningName(item.eco_code, item.eco_name)}</td>
-        <td>${item.count} <span class="eco-percent">(${item.percentage}%)</span></td>
-        <td>${(item.avg_cp_loss / 100).toFixed(2)} pawns</td>
-        <td>${item.game_count}</td>
-      </tr>`;
+  if (legendId) {
+    const legend = document.getElementById(legendId);
+    if (legend && result.legend) legend.innerHTML = result.legend;
   }
-
-  const groupId = `eco-group-${openingNameSlug(group.baseName)}`;
-  const variationsLabel = t('dashboard.opening.variations_count', { count: group.variations.length });
-  return `
-    <tr class="eco-group-header" data-group="${groupId}">
-      <td>
-        <span class="eco-group-toggle">▶</span>
-        <span class="eco-name-base">${group.baseName}</span>
-        <span class="eco-variations-badge">${variationsLabel}</span>
-      </td>
-      <td>${group.totalCount}</td>
-      <td>${(group.avgCpLoss / 100).toFixed(2)} pawns</td>
-      <td>${group.totalGames}</td>
-    </tr>
-    ${group.variations.map(item => `
-      <tr class="eco-group-child ${groupId}" style="display: none;">
-        <td class="eco-child-indent">${renderOpeningName(item.eco_code, item.eco_name)}</td>
-        <td>${item.count} <span class="eco-percent">(${item.percentage}%)</span></td>
-        <td>${(item.avg_cp_loss / 100).toFixed(2)} pawns</td>
-        <td>${item.game_count}</td>
-      </tr>
-    `).join('')}`;
-}
-
-function initOpeningGroupToggles(container) {
-  container.querySelectorAll('.eco-group-header').forEach(header => {
-    header.style.cursor = 'pointer';
-    header.addEventListener('click', () => {
-      const groupId = header.dataset.group;
-      const children = container.querySelectorAll(`.${groupId}`);
-      const toggle = header.querySelector('.eco-group-toggle');
-      const isExpanded = toggle.textContent === '▼';
-      toggle.textContent = isExpanded ? '▶' : '▼';
-      children.forEach(child => { child.style.display = isExpanded ? 'none' : ''; });
-    });
-  });
 }
 
 async function loadStats() {
   try {
-    const overview = await client.stats.overview(dateAndGameTypeParams());
+    const overview = await client.stats.overview(getParams());
 
     document.getElementById('totalGames').textContent = overview.total_games || 0;
     document.getElementById('analyzedGames').textContent = overview.analyzed_games || 0;
@@ -177,467 +60,95 @@ async function loadStats() {
     const totalGames = overview.total_games || 0;
     const analyzedGames = overview.analyzed_games || 0;
     const progressPercent = totalGames > 0 ? Math.round((analyzedGames / totalGames) * 100) : 0;
-
     document.getElementById('progressPercent').textContent = progressPercent + '%';
     document.getElementById('progressFill').style.width = progressPercent + '%';
 
     const analysisStatus = await client.analysis.status();
-
-    const statusEl = document.getElementById('analysisJobStatus');
-    if (analysisStatus.status === 'running') {
-      const percent = analysisStatus.progress_total > 0
-        ? Math.round((analysisStatus.progress_current / analysisStatus.progress_total) * 100)
-        : 0;
-      statusEl.textContent = t('dashboard.analysis.running', { current: analysisStatus.progress_current || 0, total: analysisStatus.progress_total || 0, percent });
-      statusEl.style.color = 'var(--primary)';
-    } else if (analysisStatus.status === 'completed') {
-      statusEl.textContent = t('dashboard.analysis.completed');
-      statusEl.style.color = 'var(--success)';
-    } else if (analysisStatus.status === 'failed') {
-      statusEl.innerHTML = t('dashboard.analysis.failed') + ' <button class="btn btn-sm" id="retryAnalysisBtn" style="margin-left: 8px; padding: 4px 10px; font-size: 0.75rem;">' + t('dashboard.analysis.retry') + '</button>';
-      statusEl.style.color = 'var(--error)';
-      document.getElementById('retryAnalysisBtn').addEventListener('click', retryAnalysis);
-    } else {
-      statusEl.textContent = '';
-    }
+    renderAnalysisStatus(analysisStatus);
 
     if (hasFeature('dashboard.accuracy')) {
       await loadDateChart();
       await loadHourChart();
     }
 
-    // Blunders by phase
     if (hasFeature('dashboard.phase_breakdown') && document.getElementById('phaseBreakdown')) {
-    const phaseData = await client.stats.blundersByPhase(dateAndGameTypeParams());
-
-    const phaseBreakdown = document.getElementById('phaseBreakdown');
-    const phaseBarContainer = document.getElementById('phaseBarContainer');
-    const phaseBar = document.getElementById('phaseBar');
-
-    if (phaseData.total_blunders > 0 && phaseData.by_phase.length > 0) {
-      phaseBarContainer.style.display = 'block';
-
-      phaseBar.innerHTML = phaseData.by_phase
-        .filter(p => p.percentage > 0)
-        .map(p => `<div class="phase-bar-segment ${p.phase}" style="width: ${p.percentage}%">${p.percentage > 10 ? p.percentage + '%' : ''}</div>`)
-        .join('');
-
-      phaseBreakdown.innerHTML = phaseData.by_phase.map(p => `
-        <div class="phase-card ${p.phase}">
-          <div class="phase-name">${t('chess.phase.' + p.phase)}</div>
-          <div class="phase-count">${p.count}</div>
-          <div class="phase-percent">${t('dashboard.chart.phase_percent', { percentage: p.percentage })}</div>
-          <div class="phase-cpl">${t('dashboard.chart.avg_loss', { loss: (p.avg_cp_loss / 100).toFixed(1) })}</div>
-        </div>
-      `).join('');
-    } else {
-      phaseBarContainer.style.display = 'none';
-      phaseBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_phase_data') + '</div>';
-    }
+      const phaseData = await client.stats.blundersByPhase(getParams());
+      applyBreakdown('phaseBreakdown', 'phaseBarContainer', 'phaseBar', null, renderPhaseBreakdown(phaseData));
     }
 
-    // Blunders by color
-    const colorParams = { ...dateParams() };
-    const colorData = await client.stats.blundersByColor(colorParams);
+    const colorData = await client.stats.blundersByColor(dateParams());
+    applyBreakdown('colorBreakdown', 'colorBarContainer', 'colorBar', null, renderColorBreakdown(colorData));
 
-    const colorBreakdown = document.getElementById('colorBreakdown');
-    const colorBarContainer = document.getElementById('colorBarContainer');
-    const colorBar = document.getElementById('colorBar');
-
-    if (colorData.total_blunders > 0 && colorData.by_color.length > 0) {
-      colorBarContainer.style.display = 'block';
-
-      colorBar.innerHTML = colorData.by_color
-        .filter(c => c.percentage > 0)
-        .map(c => `<div class="color-bar-segment ${c.color}" style="width: ${c.percentage}%">${c.percentage > 15 ? c.percentage + '%' : ''}</div>`)
-        .join('');
-
-      colorBreakdown.innerHTML = colorData.by_color.map(c => `
-        <div class="color-card ${c.color}">
-          <div class="color-name">${t('dashboard.chart.as_color', { color: t('chess.color.' + c.color) })}</div>
-          <div class="color-count">${c.count}</div>
-          <div class="color-percent">${t('dashboard.chart.phase_percent', { percentage: c.percentage })}</div>
-          <div class="color-cpl">${t('dashboard.chart.avg_loss', { loss: (c.avg_cp_loss / 100).toFixed(1) })}</div>
-        </div>
-      `).join('');
-    } else {
-      colorBarContainer.style.display = 'none';
-      colorBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_color_data') + '</div>';
-    }
-
-    // Blunders by game type
     const gameTypeData = await client.stats.blundersByGameType(dateParams());
+    applyBreakdown('gameTypeBreakdown', 'gameTypeBarContainer', 'gameTypeBar', 'gameTypeLegend', renderGameTypeBreakdown(gameTypeData));
 
-    const gameTypeBreakdown = document.getElementById('gameTypeBreakdown');
-    const gameTypeBarContainer = document.getElementById('gameTypeBarContainer');
-    const gameTypeBar = document.getElementById('gameTypeBar');
-    const gameTypeLegend = document.getElementById('gameTypeLegend');
-
-    const gameTypeLabels = {
-      'ultrabullet': t('dashboard.game_type.ultrabullet'),
-      'bullet': t('dashboard.game_type.bullet'),
-      'blitz': t('dashboard.game_type.blitz'),
-      'rapid': t('dashboard.game_type.rapid'),
-      'classical': t('dashboard.game_type.classical'),
-      'correspondence': t('dashboard.game_type.correspondence'),
-      'unknown': t('dashboard.game_type.unknown')
-    };
-
-    if (gameTypeData.total_blunders > 0 && gameTypeData.by_game_type.length > 0) {
-      gameTypeBarContainer.style.display = 'block';
-
-      gameTypeBar.innerHTML = gameTypeData.by_game_type
-        .filter(g => g.percentage > 0)
-        .map(g => `<div class="game-type-bar-segment ${g.game_type}" style="flex: ${g.percentage}">${g.percentage > 8 ? g.percentage + '%' : ''}</div>`)
-        .join('');
-
-      const usedTypes = gameTypeData.by_game_type.filter(g => g.count > 0).map(g => g.game_type);
-      gameTypeLegend.innerHTML = usedTypes.map(type => `
-        <div class="game-type-legend-item">
-          <span class="game-type-legend-color ${type}"></span>
-          <span>${gameTypeLabels[type] || type}</span>
-        </div>
-      `).join('');
-
-      gameTypeBreakdown.innerHTML = gameTypeData.by_game_type
-        .filter(g => g.count > 0)
-        .map(g => `
-          <div class="game-type-card ${g.game_type}">
-            <div class="game-type-name">${gameTypeLabels[g.game_type] || g.game_type}</div>
-            <div class="game-type-count">${g.count}</div>
-            <div class="game-type-percent">${g.percentage}%</div>
-          </div>
-        `).join('');
-    } else {
-      gameTypeBarContainer.style.display = 'none';
-      gameTypeBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_game_type_data') + '</div>';
-    }
-
-    // Blunders by ECO opening
     if (hasFeature('dashboard.opening_breakdown') && document.getElementById('ecoBreakdown')) {
-    const ecoData = await client.stats.blundersByEco(dateAndGameTypeParams());
-
-    const ecoBreakdown = document.getElementById('ecoBreakdown');
-
-    if (ecoData.total_blunders > 0 && ecoData.by_opening.length > 0) {
-      const grouped = groupOpeningsByBase(ecoData.by_opening);
-      ecoBreakdown.innerHTML = `
-        <table class="eco-table">
-          <thead>
-            <tr>
-              <th>${t('dashboard.chart.eco_opening')}</th>
-              <th>${t('dashboard.chart.eco_blunders')}</th>
-              <th>${t('dashboard.chart.eco_avg_loss')}</th>
-              <th>${t('dashboard.chart.eco_games')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${grouped.map(group => renderOpeningGroup(group)).join('')}
-          </tbody>
-        </table>
-      `;
+      const ecoData = await client.stats.blundersByEco(getParams());
+      const ecoBreakdown = document.getElementById('ecoBreakdown');
+      ecoBreakdown.innerHTML = renderEcoBreakdown(ecoData);
       initOpeningGroupToggles(ecoBreakdown);
-    } else {
-      ecoBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_opening_data') + '</div>';
-    }
     }
 
-    // Blunders by difficulty
     if (hasFeature('dashboard.difficulty_breakdown') && document.getElementById('difficultyBreakdown')) {
-      const diffData = await client.stats.blundersByDifficulty(dateAndGameTypeParams());
-
-      const diffBreakdown = document.getElementById('difficultyBreakdown');
-      const diffBarContainer = document.getElementById('difficultyBarContainer');
-      const diffBar = document.getElementById('difficultyBar');
-      const diffLegend = document.getElementById('difficultyLegend');
-
-      const diffToClass = {
-        easy: 'diff-easy',
-        medium: 'diff-medium',
-        hard: 'diff-hard',
-        unscored: 'diff-unscored',
-      };
-
-      const diffLabels = {
-        easy: t('dashboard.difficulty.easy'),
-        medium: t('dashboard.difficulty.medium'),
-        hard: t('dashboard.difficulty.hard'),
-        unscored: t('dashboard.difficulty.unscored'),
-      };
-
-      if (diffData.total_blunders > 0 && diffData.by_difficulty.length > 0) {
-        diffBarContainer.style.display = 'block';
-
-        diffBar.innerHTML = diffData.by_difficulty
-          .filter(d => d.percentage > 0)
-          .map(d => {
-            const cls = diffToClass[d.difficulty] || 'diff-unscored';
-            return `<div class="difficulty-bar-segment ${cls}" style="flex: ${d.percentage}">${d.percentage > 8 ? d.percentage + '%' : ''}</div>`;
-          })
-          .join('');
-
-        diffLegend.innerHTML = diffData.by_difficulty
-          .filter(d => d.count > 0)
-          .map(d => {
-            const cls = diffToClass[d.difficulty] || 'diff-unscored';
-            return `
-              <div class="difficulty-legend-item">
-                <span class="difficulty-legend-color ${cls}"></span>
-                <span>${diffLabels[d.difficulty] || d.difficulty}</span>
-              </div>
-            `;
-          })
-          .join('');
-
-        diffBreakdown.innerHTML = diffData.by_difficulty
-          .filter(d => d.count > 0)
-          .map(d => {
-            const cls = diffToClass[d.difficulty] || 'diff-unscored';
-            const label = diffLabels[d.difficulty] || d.difficulty;
-            return `
-              <div class="difficulty-card ${cls}">
-                <div class="difficulty-name">${label}</div>
-                <div class="difficulty-count">${d.count}</div>
-                <div class="difficulty-percent">${d.percentage}%</div>
-                <div class="difficulty-avg-loss">${t('dashboard.chart.avg_loss', { loss: (d.avg_cp_loss / 100).toFixed(1) })}</div>
-              </div>
-            `;
-          })
-          .join('');
-      } else {
-        diffBarContainer.style.display = 'none';
-        diffBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_difficulty_data') + '</div>';
-      }
+      const diffData = await client.stats.blundersByDifficulty(getParams());
+      applyBreakdown('difficultyBreakdown', 'difficultyBarContainer', 'difficultyBar', 'difficultyLegend', renderDifficultyBreakdown(diffData));
     }
 
-    // Collapse point
     if (hasFeature('dashboard.collapse_point') && document.getElementById('collapsePointContainer')) {
-      const cpData = await client.stats.collapsePoint(dateAndGameTypeParams());
-      const cpContainer = document.getElementById('collapsePointContainer');
-
-      if (cpData.avg_collapse_move !== null && cpData.total_games_with_blunders > 0) {
-        const totalGamesForClean = cpData.total_games_with_blunders + cpData.total_games_without_blunders;
-        const cleanPercent = totalGamesForClean > 0
-          ? Math.round(cpData.total_games_without_blunders / totalGamesForClean * 100)
-          : 0;
-
-        const maxCount = Math.max(...cpData.distribution.map(d => d.count), 1);
-
-        const zoneColor = (label) => {
-          const start = parseInt(label.split('-')[0]);
-          if (start <= 10) return 'var(--success, #2D8F3E)';
-          if (start <= 25) return 'var(--warning, #F2C12E)';
-          return 'var(--error, #D42828)';
-        };
-
-        const zoneLabel = (label) => {
-          const start = parseInt(label.split('-')[0]);
-          if (start <= 10) return t('dashboard.collapse.zone_opening');
-          if (start <= 25) return t('dashboard.collapse.zone_middle');
-          return t('dashboard.collapse.zone_late');
-        };
-
-        const barsHtml = cpData.distribution.map(d => {
-          const pct = Math.round(d.count / maxCount * 100);
-          const color = zoneColor(d.move_range);
-          return `
-            <div class="collapse-bar-row">
-              <span class="collapse-bar-label">${d.move_range}</span>
-              <div class="collapse-bar-track">
-                <div class="collapse-bar-fill" style="width: ${pct}%; background: ${color};" title="${zoneLabel(d.move_range)}"></div>
-              </div>
-              <span class="collapse-bar-count">${d.count}</span>
-            </div>
-          `;
-        }).join('');
-
-        cpContainer.innerHTML = `
-          <div class="collapse-summary">
-            <div class="collapse-big-number">${t('dashboard.collapse.avg_move', { move: cpData.avg_collapse_move })}</div>
-            <div class="collapse-meta">
-              <span>${t('dashboard.collapse.median_move', { move: cpData.median_collapse_move })}</span>
-              <span class="collapse-separator">·</span>
-              <span>${t('dashboard.collapse.games_with_blunders', { count: cpData.total_games_with_blunders })}</span>
-            </div>
-            <div class="collapse-clean">${t('dashboard.collapse.clean_games', { count: cpData.total_games_without_blunders, percentage: cleanPercent })}</div>
-          </div>
-          <div class="collapse-distribution">
-            <div class="collapse-dist-title">${t('dashboard.collapse.distribution_title')}</div>
-            ${barsHtml}
-          </div>
-          <div class="collapse-zone-legend">
-            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--success, #2D8F3E);"></span>${t('dashboard.collapse.zone_opening')}</span>
-            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--warning, #F2C12E);"></span>${t('dashboard.collapse.zone_middle')}</span>
-            <span class="collapse-zone-item"><span class="collapse-zone-dot" style="background: var(--error, #D42828);"></span>${t('dashboard.collapse.zone_late')}</span>
-          </div>
-        `;
-      } else {
-        cpContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.collapse.no_data') + '</div>';
-      }
+      const cpData = await client.stats.collapsePoint(getParams());
+      document.getElementById('collapsePointContainer').innerHTML = renderCollapsePoint(cpData);
     }
 
-    // Conversion & Resilience
     if (hasFeature('dashboard.conversion_resilience') && document.getElementById('conversionResilienceContainer')) {
-      const crData = await client.stats.conversionResilience(dateAndGameTypeParams());
-      const crContainer = document.getElementById('conversionResilienceContainer');
-
-      if (crData.games_with_advantage > 0 || crData.games_with_disadvantage > 0) {
-        const conversionColor = crData.conversion_rate >= 70 ? 'var(--success, #2D8F3E)' : crData.conversion_rate >= 50 ? 'var(--warning, #F2C12E)' : 'var(--error, #D42828)';
-        const resilienceColor = crData.resilience_rate >= 20 ? 'var(--success, #2D8F3E)' : crData.resilience_rate >= 10 ? 'var(--warning, #F2C12E)' : 'var(--error, #D42828)';
-
-        crContainer.innerHTML = `
-          <div class="cr-metrics">
-            <div class="cr-metric-card">
-              <div class="cr-metric-label">${t('dashboard.conversion.title')}</div>
-              <div class="cr-metric-value" style="color: ${conversionColor}">${crData.conversion_rate}%</div>
-              <div class="cr-metric-detail">${t('dashboard.conversion.detail', { converted: crData.games_converted, total: crData.games_with_advantage })}</div>
-            </div>
-            <div class="cr-metric-card">
-              <div class="cr-metric-label">${t('dashboard.resilience.title')}</div>
-              <div class="cr-metric-value" style="color: ${resilienceColor}">${crData.resilience_rate}%</div>
-              <div class="cr-metric-detail">${t('dashboard.resilience.detail', { saved: crData.games_saved, total: crData.games_with_disadvantage })}</div>
-            </div>
-          </div>
-        `;
-      } else {
-        crContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.conversion.no_data') + '</div>';
-      }
+      const crData = await client.stats.conversionResilience(getParams());
+      document.getElementById('conversionResilienceContainer').innerHTML = renderConversionResilience(crData);
     }
 
-    // Traps summary card
     if (hasFeature('dashboard.traps') && document.getElementById('trapsDashboardCard')) {
       try {
         const trapsData = await client.traps.stats();
-        const card = document.getElementById('trapsDashboardCard');
-        const summary = trapsData.summary || {};
-        const stats = trapsData.stats || [];
-
-        if (summary.total_sprung > 0 || summary.total_entered > 0) {
-          const topItems = (summary.top_traps || []).slice(0, 3).map(tt => {
-            const match = stats.find(s => s.trap_id === tt.trap_id);
-            return `<span style="display:inline-block;background:var(--primary);color:var(--bg);padding:2px 8px;border-radius:var(--radius);font-size:0.8rem;margin-right:4px;">${match ? match.name : tt.trap_id} (${tt.count})</span>`;
-          }).join('');
-
-          card.innerHTML = `
-            <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-2);">
-              <div><strong style="font-size:1.5rem;color:var(--error);">${summary.total_sprung}</strong> <span style="color:var(--text-muted);font-size:0.85rem;">${t('traps.times_fell')}</span></div>
-              <div><strong style="font-size:1.5rem;color:var(--warning);">${summary.total_entered}</strong> <span style="color:var(--text-muted);font-size:0.85rem;">${t('traps.times_entered')}</span></div>
-            </div>
-            ${topItems ? `<div>${topItems}</div>` : ''}
-            <a href="/traps" style="display:inline-block;margin-top:var(--space-2);color:var(--primary);">${t('traps.view_all')} →</a>
-          `;
-        } else {
-          card.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);">${t('traps.no_data')}<br><a href="/traps">${t('traps.view_all')}</a></div>`;
-        }
+        document.getElementById('trapsDashboardCard').innerHTML = renderTrapsSummary(trapsData);
       } catch {
         const card = document.getElementById('trapsDashboardCard');
         if (card) card.innerHTML = '';
       }
     }
 
-    // Blunders by tactical pattern
     if (hasFeature('dashboard.tactical_breakdown') && document.getElementById('tacticalBreakdown')) {
-    const tacticalData = await client.stats.blundersByTacticalPattern(dateAndGameTypeParams());
-
-    const tacticalBreakdown = document.getElementById('tacticalBreakdown');
-    const tacticalBarContainer = document.getElementById('tacticalBarContainer');
-    const tacticalBar = document.getElementById('tacticalBar');
-    const tacticalLegend = document.getElementById('tacticalLegend');
-
-    const patternToClass = {
-      'Fork': 'fork',
-      'Pin': 'pin',
-      'Skewer': 'skewer',
-      'Discovered Attack': 'discovered',
-      'Discovered Check': 'discovered',
-      'Double Check': 'discovered',
-      'Hanging Piece': 'hanging',
-      'Back Rank Threat': 'back_rank',
-      'Trapped Piece': 'other',
-      'None': 'other'
-    };
-
-    const patternLabels = {
-      'Fork': t('dashboard.tactical.fork'),
-      'Pin': t('dashboard.tactical.pin'),
-      'Skewer': t('dashboard.tactical.skewer'),
-      'Discovered Attack': t('dashboard.tactical.discovery'),
-      'Discovered Check': t('dashboard.tactical.disc_check'),
-      'Double Check': t('dashboard.tactical.double_check'),
-      'Hanging Piece': t('dashboard.tactical.hanging'),
-      'Back Rank Threat': t('dashboard.tactical.back_rank'),
-      'Trapped Piece': t('dashboard.tactical.trapped'),
-      'None': t('dashboard.tactical.other')
-    };
-
-    if (tacticalData.total_blunders > 0 && tacticalData.by_pattern.length > 0) {
-      tacticalBarContainer.style.display = 'block';
-
-      tacticalBar.innerHTML = tacticalData.by_pattern
-        .filter(p => p.percentage > 0)
-        .map(p => {
-          const cls = patternToClass[p.pattern] || 'other';
-          return `<div class="tactical-bar-segment ${cls}" style="flex: ${p.percentage}">${p.percentage > 8 ? p.percentage + '%' : ''}</div>`;
-        })
-        .join('');
-
-      const uniqueClasses = [...new Set(tacticalData.by_pattern.map(p => patternToClass[p.pattern] || 'other'))];
-      tacticalLegend.innerHTML = uniqueClasses.map(cls => {
-        const label = Object.entries(patternToClass).find(([_k, v]) => v === cls)?.[0] || cls;
-        return `
-          <div class="tactical-legend-item">
-            <span class="tactical-legend-color ${cls}"></span>
-            <span>${patternLabels[label] || label}</span>
-          </div>
-        `;
-      }).join('');
-
-      tacticalBreakdown.innerHTML = tacticalData.by_pattern
-        .filter(p => p.count > 0)
-        .map(p => {
-          const cls = patternToClass[p.pattern] || 'other';
-          const label = patternLabels[p.pattern] || p.pattern;
-          return `
-            <div class="tactical-card ${cls}">
-              <div class="tactical-name">${label}</div>
-              <div class="tactical-count">${p.count}</div>
-              <div class="tactical-percent">${p.percentage}%</div>
-            </div>
-          `;
-        }).join('');
-    } else {
-      tacticalBarContainer.style.display = 'none';
-      tacticalBreakdown.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">' + t('dashboard.chart.no_tactical_data') + '</div>';
-    }
+      const tacticalData = await client.stats.blundersByTacticalPattern(getParams());
+      applyBreakdown('tacticalBreakdown', 'tacticalBarContainer', 'tacticalBar', 'tacticalLegend', renderTacticalBreakdown(tacticalData));
     }
 
-    // Game breakdown
     const breakdown = await client.stats.gameBreakdown();
-
-    const tbody = document.querySelector('#gameBreakdownTable tbody');
-    tbody.innerHTML = '';
-    (breakdown.items || []).forEach(row => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${row.source}</td>
-          <td>${row.username}</td>
-          <td>${row.total_games}</td>
-          <td>${row.analyzed_games}</td>
-          <td>${row.pending_games}</td>
-        </tr>
-      `;
-    });
-
+    document.querySelector('#gameBreakdownTable tbody').innerHTML = renderGameBreakdown(breakdown.items || []);
   } catch (err) {
     console.error('Failed to load stats:', err);
+  }
+}
+
+function renderAnalysisStatus(status) {
+  const statusEl = document.getElementById('analysisJobStatus');
+  if (status.status === 'running') {
+    const percent = status.progress_total > 0
+      ? Math.round((status.progress_current / status.progress_total) * 100) : 0;
+    statusEl.textContent = t('dashboard.analysis.running', { current: status.progress_current || 0, total: status.progress_total || 0, percent });
+    statusEl.style.color = 'var(--primary)';
+  } else if (status.status === 'completed') {
+    statusEl.textContent = t('dashboard.analysis.completed');
+    statusEl.style.color = 'var(--success)';
+  } else if (status.status === 'failed') {
+    statusEl.innerHTML = t('dashboard.analysis.failed') + ' <button class="btn btn-sm" id="retryAnalysisBtn" style="margin-left: 8px; padding: 4px 10px; font-size: 0.75rem;">' + t('dashboard.analysis.retry') + '</button>';
+    statusEl.style.color = 'var(--error)';
+    document.getElementById('retryAnalysisBtn').addEventListener('click', retryAnalysis);
+  } else {
+    statusEl.textContent = '';
   }
 }
 
 async function loadDateChart() {
   if (!document.getElementById('dateChartContainer')) return;
   try {
-    const data = await client.stats.gamesByDate(dateAndGameTypeParams());
-
+    const data = await client.stats.gamesByDate(getParams());
     const container = document.getElementById('dateChartContainer');
     const emptyMsg = document.getElementById('dateChartEmpty');
 
@@ -650,101 +161,14 @@ async function loadDateChart() {
     container.style.display = 'block';
     emptyMsg.style.display = 'none';
 
-    const labels = data.items.map(d => d.date);
-    const gameCounts = data.items.map(d => d.game_count);
-    const accuracies = data.items.map(d => d.avg_accuracy);
-
-    if (dateChart) {
-      dateChart.destroy();
-    }
-
+    if (dateChart) dateChart.destroy();
     const ctx = document.getElementById('dateChart').getContext('2d');
-    dateChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: t('dashboard.chart.games_played'),
-            data: gameCounts,
-            backgroundColor: 'rgba(26, 58, 143, 0.7)',
-            borderColor: 'rgba(26, 58, 143, 1)',
-            borderWidth: 1,
-            yAxisID: 'y',
-            order: 2
-          },
-          {
-            label: t('dashboard.chart.accuracy'),
-            data: accuracies,
-            type: 'line',
-            borderColor: 'rgba(45, 143, 62, 1)',
-            backgroundColor: 'rgba(45, 143, 62, 0.1)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.3,
-            pointRadius: 3,
-            yAxisID: 'y1',
-            order: 1
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false
-        },
-        plugins: {
-          legend: {
-            position: 'top'
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                if (context.dataset.yAxisID === 'y1') {
-                  return `${t('dashboard.chart.accuracy')}: ${context.raw.toFixed(1)}%`;
-                }
-                return `${context.dataset.label}: ${context.raw}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            ticks: {
-              maxRotation: 45,
-              minRotation: 45,
-              maxTicksLimit: 15
-            }
-          },
-          y: {
-            type: 'linear',
-            display: true,
-            position: 'left',
-            title: {
-              display: true,
-              text: t('dashboard.chart.games_axis')
-            },
-            beginAtZero: true
-          },
-          y1: {
-            type: 'linear',
-            display: true,
-            position: 'right',
-            title: {
-              display: true,
-              text: t('dashboard.chart.accuracy_axis')
-            },
-            min: 0,
-            max: 100,
-            grid: {
-              drawOnChartArea: false
-            }
-          }
-        }
-      }
-    });
+    dateChart = createDateChart(
+      ctx,
+      data.items.map(d => d.date),
+      data.items.map(d => d.game_count),
+      data.items.map(d => d.avg_accuracy),
+    );
   } catch (err) {
     console.error('Failed to load date chart:', err);
   }
@@ -753,8 +177,7 @@ async function loadDateChart() {
 async function loadHourChart() {
   if (!document.getElementById('hourChartContainer')) return;
   try {
-    const data = await client.stats.gamesByHour(dateAndGameTypeParams());
-
+    const data = await client.stats.gamesByHour(getParams());
     const container = document.getElementById('hourChartContainer');
     const emptyMsg = document.getElementById('hourChartEmpty');
 
@@ -770,107 +193,17 @@ async function loadHourChart() {
     const hourMap = new Map(data.items.map(d => [d.hour, d]));
     const fullData = [];
     for (let h = 0; h < 24; h++) {
-      if (hourMap.has(h)) {
-        fullData.push(hourMap.get(h));
-      } else {
-        fullData.push({ hour: h, game_count: 0, avg_accuracy: 0 });
-      }
+      fullData.push(hourMap.get(h) || { hour: h, game_count: 0, avg_accuracy: 0 });
     }
 
-    const labels = fullData.map(d => `${d.hour.toString().padStart(2, '0')}:00`);
-    const gameCounts = fullData.map(d => d.game_count);
-    const accuracies = fullData.map(d => d.avg_accuracy);
-
-    if (hourChart) {
-      hourChart.destroy();
-    }
-
+    if (hourChart) hourChart.destroy();
     const ctx = document.getElementById('hourChart').getContext('2d');
-    hourChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: t('dashboard.chart.games_played'),
-            data: gameCounts,
-            backgroundColor: 'rgba(26, 58, 143, 0.7)',
-            borderColor: 'rgba(26, 58, 143, 1)',
-            borderWidth: 1,
-            yAxisID: 'y',
-            order: 2
-          },
-          {
-            label: t('dashboard.chart.accuracy'),
-            data: accuracies,
-            type: 'line',
-            borderColor: 'rgba(45, 143, 62, 1)',
-            backgroundColor: 'rgba(45, 143, 62, 0.1)',
-            borderWidth: 2,
-            fill: false,
-            tension: 0.3,
-            pointRadius: 3,
-            yAxisID: 'y1',
-            order: 1
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false
-        },
-        plugins: {
-          legend: {
-            position: 'top'
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                if (context.dataset.yAxisID === 'y1') {
-                  return `${t('dashboard.chart.accuracy')}: ${context.raw.toFixed(1)}%`;
-                }
-                return `${context.dataset.label}: ${context.raw}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: t('dashboard.chart.hour_axis')
-            }
-          },
-          y: {
-            type: 'linear',
-            display: true,
-            position: 'left',
-            title: {
-              display: true,
-              text: t('dashboard.chart.games_axis')
-            },
-            beginAtZero: true
-          },
-          y1: {
-            type: 'linear',
-            display: true,
-            position: 'right',
-            title: {
-              display: true,
-              text: t('dashboard.chart.accuracy_axis')
-            },
-            min: 0,
-            max: 100,
-            grid: {
-              drawOnChartArea: false
-            }
-          }
-        }
-      }
-    });
+    hourChart = createHourChart(
+      ctx,
+      fullData.map(d => `${d.hour.toString().padStart(2, '0')}:00`),
+      fullData.map(d => d.game_count),
+      fullData.map(d => d.avg_accuracy),
+    );
   } catch (err) {
     console.error('Failed to load hour chart:', err);
   }
@@ -886,10 +219,11 @@ async function retryAnalysis() {
   }
 }
 
-// Load game type filters from localStorage
-currentGameTypeFilters = gameTypeFilter.load();
+// --- Init ---
 
-// Add event listeners for game type filter checkboxes
+currentGameTypeFilters = gameTypeFilter.load();
+initDateFilters();
+
 document.querySelectorAll('.game-type-filter').forEach(checkbox => {
   checkbox.addEventListener('change', () => {
     currentGameTypeFilters = gameTypeFilter.save();
@@ -897,30 +231,13 @@ document.querySelectorAll('.game-type-filter').forEach(checkbox => {
   });
 });
 
-// Load stats on page load
+bus.on('dashboard:reload', loadStats);
+
 loadStats();
 
 if (hasFeature('dashboard.heatmap')) {
   loadHeatmap('activityHeatmap');
 }
-
-// WebSocket
-wsClient.connect();
-wsClient.subscribe(['stats.updated', 'job.completed', 'job.progress_updated', 'job.status_changed']);
-
-const debouncedLoadStats = debounce(loadStats, 2000);
-
-wsClient.on('stats.updated', () => loadStats());
-wsClient.on('job.completed', () => loadStats());
-wsClient.on('job.progress_updated', () => debouncedLoadStats());
-wsClient.on('job.status_changed', () => loadStats());
-
-// Wire up date filter buttons
-document.getElementById('applyDateBtn').addEventListener('click', applyDateFilter);
-document.getElementById('clearDateBtn').addEventListener('click', clearDateFilter);
-document.querySelectorAll('.filter-presets button[data-preset]').forEach(btn => {
-  btn.addEventListener('click', () => setPreset(btn.dataset.preset));
-});
 
 // Difficulty help modal
 const diffHelpBtn = document.getElementById('difficultyHelpBtn');
@@ -939,3 +256,14 @@ if (diffHelpBtn && diffHelpOverlay) {
     }
   });
 }
+
+// WebSocket
+wsClient.connect();
+wsClient.subscribe(['stats.updated', 'job.completed', 'job.progress_updated', 'job.status_changed']);
+
+const debouncedLoadStats = debounce(loadStats, 2000);
+
+wsClient.on('stats.updated', () => loadStats());
+wsClient.on('job.completed', () => loadStats());
+wsClient.on('job.progress_updated', () => debouncedLoadStats());
+wsClient.on('job.status_changed', () => loadStats());

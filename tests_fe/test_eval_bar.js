@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { updateEvalBar } from '../blunder_tutor/web/static/js/trainer/eval-bar.js';
 
 function makeMockEl() {
-  return { style: { width: '' }, textContent: '', className: '' };
+  return { style: { height: '' }, textContent: '', className: '' };
 }
 
 describe('updateEvalBar', () => {
@@ -12,7 +12,7 @@ describe('updateEvalBar', () => {
     const value = makeMockEl();
     updateEvalBar(0, 'white', fill, value);
     assert.equal(value.textContent, '+0.0');
-    assert.equal(fill.style.width, '50%');
+    assert.equal(fill.style.height, '50%');
     assert.equal(value.className, 'eval-value positive');
   });
 
@@ -21,7 +21,7 @@ describe('updateEvalBar', () => {
     const value = makeMockEl();
     updateEvalBar(200, 'white', fill, value);
     assert.equal(value.textContent, '+2.0');
-    assert(parseFloat(fill.style.width) > 50);
+    assert.ok(parseFloat(fill.style.height) > 50);
     assert.equal(value.className, 'eval-value positive');
   });
 
@@ -29,8 +29,7 @@ describe('updateEvalBar', () => {
     const fill = makeMockEl();
     const value = makeMockEl();
     updateEvalBar(200, 'black', fill, value);
-    // White is +2.0, but from black's perspective the bar should be < 50%
-    assert(parseFloat(fill.style.width) < 50);
+    assert.ok(parseFloat(fill.style.height) < 50);
     assert.equal(value.className, 'eval-value negative');
   });
 
@@ -38,7 +37,7 @@ describe('updateEvalBar', () => {
     const fill = makeMockEl();
     const value = makeMockEl();
     updateEvalBar(9999, 'white', fill, value);
-    assert.equal(fill.style.width, '100%');
+    assert.equal(fill.style.height, '100%');
   });
 
   it('displays mate symbol for very large values', () => {
@@ -60,7 +59,7 @@ describe('updateEvalBar', () => {
     const value = makeMockEl();
     updateEvalBar(-150, 'white', fill, value);
     assert.equal(value.textContent, '-1.5');
-    assert(parseFloat(fill.style.width) < 50);
+    assert.ok(parseFloat(fill.style.height) < 50);
     assert.equal(value.className, 'eval-value negative');
   });
 });
