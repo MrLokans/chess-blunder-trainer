@@ -16,6 +16,7 @@ from blunder_tutor.utils.pgn_utils import (
 )
 
 CHESSCOM_BASE_URL = "https://api.chess.com"
+CHESSCOM_USER_URL = f"{CHESSCOM_BASE_URL}/pub/player/{{username}}"
 ARCHIVE_URL_PATTERN = re.compile(r"/games/(\d{4})/(\d{2})$")
 
 
@@ -113,3 +114,16 @@ async def fetch(
                 archive_bar.update(1)
 
     return games, seen_ids
+
+
+async def validate_username(username: str) -> bool:
+    url = CHESSCOM_USER_URL.format(username=username.lower())
+    headers = {"User-Agent": USER_AGENT}
+    async with httpx.AsyncClient(
+        timeout=10, follow_redirects=True, headers=headers
+    ) as client:
+        try:
+            response = await client.get(url)
+            return response.status_code == 200
+        except httpx.HTTPError:
+            return False

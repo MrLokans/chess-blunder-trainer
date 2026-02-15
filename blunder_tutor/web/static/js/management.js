@@ -129,11 +129,65 @@ async function initialize() {
   }
 }
 
+const usernameStatus = document.getElementById('usernameStatus');
+let importUsernameValid = null;
+
+function setUsernameFieldStatus(state) {
+  usernameStatus.className = 'field-validation';
+  usernameStatus.textContent = '';
+  if (state === 'checking') {
+    usernameStatus.classList.add('checking');
+    usernameStatus.textContent = t('setup.validating');
+  } else if (state === 'valid') {
+    usernameStatus.classList.add('valid');
+    usernameStatus.textContent = t('setup.username_valid');
+  } else if (state === 'invalid') {
+    usernameStatus.classList.add('invalid');
+    usernameStatus.textContent = t('setup.username_invalid');
+  }
+}
+
+async function validateImportUsername() {
+  const source = document.getElementById('source').value;
+  const username = document.getElementById('username').value.trim();
+  if (!source || !username) {
+    importUsernameValid = null;
+    setUsernameFieldStatus(null);
+    return;
+  }
+  setUsernameFieldStatus('checking');
+  try {
+    const result = await client.setup.validateUsername(source, username);
+    if (document.getElementById('username').value.trim() !== username) return;
+    importUsernameValid = result.valid;
+    setUsernameFieldStatus(result.valid ? 'valid' : 'invalid');
+  } catch {
+    importUsernameValid = null;
+    setUsernameFieldStatus(null);
+  }
+}
+
+const debouncedValidateImportUsername = debounce(validateImportUsername, 500);
+
 document.getElementById('source').addEventListener('change', (e) => {
   prefillUsername(e.target.value);
   saveFormValues();
+  importUsernameValid = null;
+  if (document.getElementById('username').value.trim()) {
+    debouncedValidateImportUsername();
+  }
 });
-document.getElementById('username').addEventListener('input', saveFormValues);
+document.getElementById('username').addEventListener('input', () => {
+  saveFormValues();
+  importUsernameValid = null;
+  const username = document.getElementById('username').value.trim();
+  if (username) {
+    setUsernameFieldStatus('checking');
+    debouncedValidateImportUsername();
+  } else {
+    setUsernameFieldStatus(null);
+  }
+});
 document.getElementById('maxGames').addEventListener('input', saveFormValues);
 
 const importTracker = new ProgressTracker({
@@ -149,8 +203,25 @@ document.getElementById('importForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const source = document.getElementById('source').value;
-  const username = document.getElementById('username').value;
+  const username = document.getElementById('username').value.trim();
   const maxGames = parseInt(document.getElementById('maxGames').value);
+
+  if (importUsernameValid === null && source && username) {
+    setUsernameFieldStatus('checking');
+    try {
+      const result = await client.setup.validateUsername(source, username);
+      importUsernameValid = result.valid;
+      setUsernameFieldStatus(result.valid ? 'valid' : 'invalid');
+    } catch {
+      importUsernameValid = null;
+      setUsernameFieldStatus(null);
+    }
+  }
+
+  if (importUsernameValid === false) {
+    showMessage('importMessage', 'error', t('setup.username_invalid'));
+    return;
+  }
 
   try {
     const data = await client.jobs.startImport(source, username, maxGames);

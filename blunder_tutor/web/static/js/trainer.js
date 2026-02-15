@@ -107,16 +107,35 @@ function setupPuzzle(data) {
   }, 100);
 }
 
-function handleLoadError(err) {
+async function hasActiveJobs() {
+  try {
+    const jobs = await client.jobs.list({ status: 'running' });
+    if (Array.isArray(jobs) && jobs.length > 0) return true;
+    const pending = await client.jobs.list({ status: 'pending' });
+    return Array.isArray(pending) && pending.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+async function handleLoadError(err) {
   if (err instanceof ApiError) {
     const msg = err.message.toLowerCase();
-    if (msg.includes('no games found')) {
-      ui.showEmptyState('no_games');
-    } else if (msg.includes('no blunders found')) {
-      ui.showEmptyState(
-        filters.hasActiveFilters() ? 'no_blunders_filtered' : 'no_blunders',
-        filters.clearAllFilters,
-      );
+    if (msg.includes('no games found') || msg.includes('no blunders found')) {
+      const active = await hasActiveJobs();
+      if (active) {
+        ui.showEmptyState('analyzing');
+        scheduleAnalyzingRetry();
+        return;
+      }
+      if (msg.includes('no games found')) {
+        ui.showEmptyState('no_games');
+      } else {
+        ui.showEmptyState(
+          filters.hasActiveFilters() ? 'no_blunders_filtered' : 'no_blunders',
+          filters.clearAllFilters,
+        );
+      }
     } else {
       ui.showEmptyState('unknown');
     }
@@ -124,6 +143,16 @@ function handleLoadError(err) {
     console.error('Failed to load puzzle:', err);
     ui.showEmptyState('unknown');
   }
+}
+
+let analyzingRetryTimer = null;
+
+function scheduleAnalyzingRetry() {
+  if (analyzingRetryTimer) clearTimeout(analyzingRetryTimer);
+  analyzingRetryTimer = setTimeout(() => {
+    analyzingRetryTimer = null;
+    loadPuzzle();
+  }, 5000);
 }
 
 async function submitMoveAction() {

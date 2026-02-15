@@ -8,8 +8,20 @@ from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
 from blunder_tutor.events import JobExecutionRequestEvent
+from blunder_tutor.fetchers.validation import validate_username
 from blunder_tutor.web.api.schemas import ErrorResponse, SuccessResponse
 from blunder_tutor.web.dependencies import EventBusDep, JobServiceDep, SettingsRepoDep
+
+
+class ValidateUsernameRequest(BaseModel):
+    platform: str = Field(description="Platform: 'lichess' or 'chesscom'")
+    username: str = Field(description="Username to validate")
+
+
+class ValidateUsernameResponse(BaseModel):
+    valid: bool = Field(description="Whether the username exists on the platform")
+    platform: str = Field(description="Platform that was checked")
+    username: str = Field(description="Username that was checked")
 
 
 class SetupRequest(BaseModel):
@@ -87,8 +99,39 @@ settings_router = APIRouter()
 
 
 @settings_router.post(
+    "/api/validate-username",
+    response_model=ValidateUsernameResponse,
+    summary="Validate chess platform username",
+    description="Check whether a username exists on the specified chess platform.",
+)
+async def validate_username_endpoint(
+    payload: ValidateUsernameRequest,
+) -> dict[str, Any]:
+    username = payload.username.strip()
+    platform = payload.platform.strip().lower()
+
+    if platform not in ("lichess", "chesscom"):
+        raise HTTPException(
+            status_code=400, detail="Platform must be 'lichess' or 'chesscom'"
+        )
+
+    if not username:
+        raise HTTPException(status_code=400, detail="Username is required")
+
+    valid = await validate_username(platform, username)
+    return {"valid": valid, "platform": platform, "username": username}
+
+
+class SetupResponse(BaseModel):
+    success: bool = Field(description="Operation success status")
+    import_job_ids: list[str] = Field(
+        default_factory=list, description="Job IDs for triggered imports"
+    )
+
+
+@settings_router.post(
     "/api/setup",
-    response_model=SuccessResponse,
+    response_model=SetupResponse,
     responses={
         400: {
             "model": ErrorResponse,
@@ -96,11 +139,15 @@ settings_router = APIRouter()
         }
     },
     summary="Complete initial setup",
-    description="Configure usernames for Lichess and/or Chess.com accounts.",
+    description="Configure usernames for Lichess and/or Chess.com accounts. Triggers background import.",
 )
 async def setup_submit(
-    request: Request, payload: SetupRequest, settings_repo: SettingsRepoDep
-) -> dict[str, bool]:
+    request: Request,
+    payload: SetupRequest,
+    settings_repo: SettingsRepoDep,
+    job_service: JobServiceDep,
+    event_bus: EventBusDep,
+) -> dict[str, Any]:
     lichess = payload.lichess.strip()
     chesscom = payload.chesscom.strip()
 
@@ -110,6 +157,15 @@ async def setup_submit(
             detail="At least one username is required (Lichess or Chess.com)",
         )
 
+    invalid_usernames: list[str] = []
+    if lichess and not await validate_username("lichess", lichess):
+        invalid_usernames.append(f"Lichess user '{lichess}' not found")
+    if chesscom and not await validate_username("chesscom", chesscom):
+        invalid_usernames.append(f"Chess.com user '{chesscom}' not found")
+
+    if invalid_usernames:
+        raise HTTPException(status_code=400, detail="; ".join(invalid_usernames))
+
     await settings_repo.set_setting("lichess_username", lichess if lichess else None)
     await settings_repo.set_setting("chesscom_username", chesscom if chesscom else None)
     await settings_repo.mark_setup_completed()
@@ -117,7 +173,30 @@ async def setup_submit(
     if hasattr(request.app.state, "_setup_completed_cache"):
         delattr(request.app.state, "_setup_completed_cache")
 
-    return {"success": True}
+    import_job_ids: list[str] = []
+    max_games_str = await settings_repo.get_setting("sync_max_games")
+    max_games = int(max_games_str) if max_games_str else 100
+
+    for source, username in [("lichess", lichess), ("chesscom", chesscom)]:
+        if not username:
+            continue
+        job_id = await job_service.create_job(
+            job_type="import",
+            username=username,
+            source=source,
+            max_games=max_games,
+        )
+        event = JobExecutionRequestEvent.create(
+            job_id=job_id,
+            job_type="import",
+            source=source,
+            username=username,
+            max_games=max_games,
+        )
+        await event_bus.publish(event)
+        import_job_ids.append(job_id)
+
+    return {"success": True, "import_job_ids": import_job_ids}
 
 
 @settings_router.get(

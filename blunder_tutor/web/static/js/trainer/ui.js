@@ -45,7 +45,12 @@ export function showEmptyState(errorType, onClearFilters) {
   if (els.sessionBar) els.sessionBar.style.display = 'none';
   els.emptyStateAction.onclick = null;
 
-  if (errorType === 'no_games') {
+  if (errorType === 'analyzing') {
+    els.emptyStateTitle.textContent = t('trainer.empty.analyzing_title');
+    els.emptyStateMessage.textContent = t('trainer.empty.analyzing_message');
+    els.emptyStateAction.textContent = t('trainer.empty.analyzing_action');
+    els.emptyStateAction.href = '/management';
+  } else if (errorType === 'no_games') {
     els.emptyStateTitle.textContent = t('trainer.empty.no_games_title');
     els.emptyStateMessage.textContent = t('trainer.empty.no_games_message');
     els.emptyStateAction.textContent = t('trainer.empty.no_games_action');

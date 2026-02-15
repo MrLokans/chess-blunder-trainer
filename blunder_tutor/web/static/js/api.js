@@ -89,6 +89,8 @@ export const client = {
     startImport: (source, username, maxGames) =>
       post('/api/import/start', { source, username, max_games: maxGames }),
     startSync: () => post('/api/sync/start', {}),
+    list: (params) => request(withQuery('/api/jobs', params)),
+    getImportStatus: (jobId) => request(`/api/import/status/${jobId}`),
   },
 
   backfill: {
@@ -147,5 +149,6 @@ export const client = {
 
   setup: {
     complete: (data) => post('/api/setup', data),
+    validateUsername: (platform, username) => post('/api/validate-username', { platform, username }),
   },
 };

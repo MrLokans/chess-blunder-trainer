@@ -23,3 +23,20 @@ body {
 .footer a:hover {
   border-bottom: 1px solid var(--blue);
 }
+
+/* Setup progress */
+.setup-progress-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--text-muted, var(--mid-gray));
+  border-top-color: var(--primary, var(--blue));
+  border-radius: 50%;
+  animation: field-validation-spin 0.8s linear infinite;
+  margin: 24px auto 16px;
+}
+
+.setup-progress-message {
+  text-align: center;
+  color: var(--text-muted, var(--mid-gray));
+  font-size: var(--text-sm);
+}

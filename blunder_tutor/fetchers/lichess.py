@@ -18,6 +18,7 @@ from blunder_tutor.utils.pgn_utils import (
 )
 
 LICHESS_BASE_URL = "https://lichess.org"
+LICHESS_USER_URL = f"{LICHESS_BASE_URL}/api/user/{{username}}"
 
 
 def _split_pgn_stream(pgn_text: str) -> Iterable[tuple[str, int | None]]:
@@ -105,3 +106,14 @@ async def fetch(
                 until_ms = oldest_time_ms - 1
 
     return games, seen_ids
+
+
+async def validate_username(username: str) -> bool:
+    url = LICHESS_USER_URL.format(username=username)
+    headers = {"User-Agent": USER_AGENT}
+    async with httpx.AsyncClient(timeout=10, headers=headers) as client:
+        try:
+            response = await client.get(url)
+            return response.status_code == 200
+        except httpx.HTTPError:
+            return False

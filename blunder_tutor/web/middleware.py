@@ -16,6 +16,7 @@ DEMO_ALLOWED_MUTATIONS: list[tuple[str, re.Pattern]] = [
     ("POST", re.compile(r"^/api/submit$")),
     ("POST", re.compile(r"^/api/analyze$")),
     ("POST", re.compile(r"^/api/settings/locale$")),
+    ("POST", re.compile(r"^/api/validate-username$")),
 ]
 
 

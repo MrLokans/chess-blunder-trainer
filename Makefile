@@ -35,6 +35,7 @@ FORCE :=
 .PHONY: format lint lint/be lint/fe check test test/be test/fe download-pieces migrate
 .PHONY: docker/build docker/run docker/stop
 .PHONY: landing
+.PHONY: db/backup db/restore db/rm
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*##"; print "Available targets:"} \
@@ -165,3 +166,12 @@ landing: ## Serve the landing page locally on port 8080
 clean: ## Remove Python cache files
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
+
+db/backup:
+	mv ./data/main.sqlite3 ./data/main.sqlite3.BAK
+
+db/restore:
+	mv ./data/main.sqlite3.BAK ./data/main.sqlite3
+
+db/rm:
+	rm ./data/main.sqlite3
