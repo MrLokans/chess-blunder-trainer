@@ -92,6 +92,7 @@ function setupPuzzle(data) {
     orientation,
     game,
     onMove: onBoardMove,
+    coordinates: filters.getShowCoordinates(),
   });
   state.set('board', board);
 
@@ -385,6 +386,11 @@ function initEventListeners() {
   if (showArrowsEl) showArrowsEl.addEventListener('change', () => visuals.redrawArrows());
   if (showThreatsEl) showThreatsEl.addEventListener('change', () => visuals.redrawAllHighlights());
   if (showTacticsEl) showTacticsEl.addEventListener('change', () => visuals.redrawAllHighlights());
+
+  bus.on('coordinates:changed', () => {
+    const board = state.get('board');
+    if (board) board.setCoordinates(filters.getShowCoordinates());
+  });
 }
 
 // --- Initialize ---

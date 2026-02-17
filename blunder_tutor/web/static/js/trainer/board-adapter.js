@@ -16,7 +16,7 @@ function buildDests(game) {
 }
 
 export class BoardAdapter {
-  constructor(elementId, { fen, orientation, game, onMove }) {
+  constructor(elementId, { fen, orientation, game, onMove, coordinates = false }) {
     this._elementId = elementId;
     this._orientation = orientation;
     this._game = game;
@@ -26,6 +26,8 @@ export class BoardAdapter {
     this._el = document.getElementById(elementId);
     this._el.innerHTML = '';
 
+    this.setCoordinates(coordinates);
+
     const cgColor = orientation === 'black' ? 'black' : 'white';
     const turnColor = game.turn() === 'w' ? 'white' : 'black';
 
@@ -33,7 +35,8 @@ export class BoardAdapter {
       fen: fen,
       orientation: cgColor,
       turnColor: turnColor,
-      coordinates: false,
+      coordinates: true,
+      ranksPosition: 'left',
       animation: { enabled: true, duration: 150 },
       movable: {
         free: false,
@@ -91,6 +94,10 @@ export class BoardAdapter {
   setOrientation(color) {
     this._orientation = color;
     this._cg.set({ orientation: color });
+  }
+
+  setCoordinates(enabled) {
+    this._el.classList.toggle('hide-coords', !enabled);
   }
 
   drawArrows(arrows) {

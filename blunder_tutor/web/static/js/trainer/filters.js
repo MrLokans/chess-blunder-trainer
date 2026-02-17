@@ -5,6 +5,7 @@ const COLOR_FILTER_STORAGE_KEY = 'blunder-tutor-color-filter';
 const FILTERS_COLLAPSED_KEY = 'blunder-tutor-filters-collapsed';
 const PLAY_FULL_LINE_KEY = 'blunder-tutor-play-full-line';
 const BOARD_SETTINGS_COLLAPSED_KEY = 'boardSettingsCollapsed';
+const SHOW_COORDINATES_KEY = 'blunder-tutor-show-coordinates';
 
 let currentPhaseFilters = [];
 let currentTacticalFilter = 'all';
@@ -162,6 +163,16 @@ function loadPlayFullLineSetting() {
   el.checked = localStorage.getItem(PLAY_FULL_LINE_KEY) === 'true';
 }
 
+function loadShowCoordinatesSetting() {
+  const el = document.getElementById('showCoordinates');
+  if (!el) return;
+  el.checked = localStorage.getItem(SHOW_COORDINATES_KEY) === 'true';
+}
+
+export function getShowCoordinates() {
+  return localStorage.getItem(SHOW_COORDINATES_KEY) === 'true';
+}
+
 export function initFilters() {
   currentPhaseFilters = phaseFilter.load();
   loadTacticalFilterFromStorage();
@@ -171,6 +182,7 @@ export function initFilters() {
   loadFiltersPanelState();
   loadBoardSettingsPanelState();
   loadPlayFullLineSetting();
+  loadShowCoordinatesSetting();
   updateFilterCountBadge();
 
   document.querySelectorAll('.phase-filter-checkbox').forEach(checkbox => {
@@ -242,6 +254,14 @@ export function initFilters() {
   if (playFullLineCheckbox) {
     playFullLineCheckbox.addEventListener('change', () => {
       localStorage.setItem(PLAY_FULL_LINE_KEY, playFullLineCheckbox.checked ? 'true' : 'false');
+    });
+  }
+
+  const showCoordinatesCheckbox = document.getElementById('showCoordinates');
+  if (showCoordinatesCheckbox) {
+    showCoordinatesCheckbox.addEventListener('change', () => {
+      localStorage.setItem(SHOW_COORDINATES_KEY, showCoordinatesCheckbox.checked ? 'true' : 'false');
+      bus.emit('coordinates:changed');
     });
   }
 }

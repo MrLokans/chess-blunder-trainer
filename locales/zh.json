@@ -598,5 +598,6 @@
   "growth.cpl_help_average": "进步中棋手的典型水平。战术疏忽较为常见。",
   "growth.cpl_help_high": "较多失误和严重错误。专注基础战术可快速提升。",
   "growth.cpl_help_note": "越低越好。下降趋势意味着您的着法越来越接近引擎的完美走法——这是真正进步最可靠的标志。",
-  "settings.features.dashboard_growth": "成长指标"
+  "settings.features.dashboard_growth": "成长指标",
+  "trainer.toggle.show_coordinates": "显示棋盘坐标"
 }

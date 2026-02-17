@@ -598,5 +598,6 @@
   "growth.cpl_help_average": "Typowe dla rozwijających się graczy. Taktyczne przeoczenia zdarzają się często.",
   "growth.cpl_help_high": "Wiele niedokładności i poważnych błędów. Skup się na podstawowej taktyce, by szybko się poprawić.",
   "growth.cpl_help_note": "Im niżej, tym lepiej. Trend spadkowy oznacza, że Twoje ruchy zbliżają się do idealnej gry silnika — najbardziej wiarygodny znak prawdziwego postępu.",
-  "settings.features.dashboard_growth": "Metryki postępów"
+  "settings.features.dashboard_growth": "Metryki postępów",
+  "trainer.toggle.show_coordinates": "Pokaż współrzędne szachownicy"
 }

@@ -598,5 +598,6 @@
   "growth.cpl_help_average": "Típico de jugadores en mejora. Los descuidos tácticos son comunes.",
   "growth.cpl_help_high": "Muchas imprecisiones y errores graves. Enfócate en táctica básica para mejorar rápido.",
   "growth.cpl_help_note": "Cuanto más bajo, mejor. Una tendencia descendente significa que tus jugadas se acercan al juego perfecto del motor — la señal más fiable de mejora real.",
-  "settings.features.dashboard_growth": "Métricas de progreso"
+  "settings.features.dashboard_growth": "Métricas de progreso",
+  "trainer.toggle.show_coordinates": "Mostrar coordenadas del tablero"
 }
