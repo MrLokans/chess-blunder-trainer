@@ -59,21 +59,20 @@ function renderOpeningGroup(group) {
 
 export function initOpeningGroupToggles(container) {
   container.querySelectorAll('.eco-group-header').forEach(header => {
-    header.style.cursor = 'pointer';
     header.addEventListener('click', () => {
       const groupId = header.dataset.group;
       const children = container.querySelectorAll(`.${groupId}`);
       const toggle = header.querySelector('.eco-group-toggle');
       const isExpanded = toggle.textContent === '▼';
       toggle.textContent = isExpanded ? '▶' : '▼';
-      children.forEach(child => { child.style.display = isExpanded ? 'none' : ''; });
+      children.forEach(child => { child.classList.toggle('hidden', isExpanded); });
     });
   });
 }
 
 export function renderPhaseBreakdown(phaseData) {
   if (phaseData.total_blunders <= 0 || phaseData.by_phase.length === 0) {
-    return { bar: '', cards: `<div style="text-align: center; padding: 20px; color: var(--text-muted);">${t('dashboard.chart.no_phase_data')}</div>`, showBar: false };
+    return { bar: '', cards: `<div class="no-data-message">${t('dashboard.chart.no_phase_data')}</div>`, showBar: false };
   }
 
   const bar = phaseData.by_phase
@@ -95,7 +94,7 @@ export function renderPhaseBreakdown(phaseData) {
 
 export function renderColorBreakdown(colorData) {
   if (colorData.total_blunders <= 0 || colorData.by_color.length === 0) {
-    return { bar: '', cards: `<div style="text-align: center; padding: 20px; color: var(--text-muted);">${t('dashboard.chart.no_color_data')}</div>`, showBar: false };
+    return { bar: '', cards: `<div class="no-data-message">${t('dashboard.chart.no_color_data')}</div>`, showBar: false };
   }
 
   const bar = colorData.by_color
@@ -132,7 +131,7 @@ function gameTypeLabel(type) {
 
 export function renderGameTypeBreakdown(data) {
   if (data.total_blunders <= 0 || data.by_game_type.length === 0) {
-    return { bar: '', legend: '', cards: `<div style="text-align: center; padding: 20px; color: var(--text-muted);">${t('dashboard.chart.no_game_type_data')}</div>`, showBar: false };
+    return { bar: '', legend: '', cards: `<div class="no-data-message">${t('dashboard.chart.no_game_type_data')}</div>`, showBar: false };
   }
 
   const bar = data.by_game_type
@@ -163,7 +162,7 @@ export function renderGameTypeBreakdown(data) {
 
 export function renderEcoBreakdown(ecoData) {
   if (ecoData.total_blunders <= 0 || ecoData.by_opening.length === 0) {
-    return `<div style="text-align: center; padding: 20px; color: var(--text-muted);">${t('dashboard.chart.no_opening_data')}</div>`;
+    return `<div class="no-data-message">${t('dashboard.chart.no_opening_data')}</div>`;
   }
 
   const grouped = groupOpeningsByBase(ecoData.by_opening);
@@ -206,7 +205,7 @@ function patternLabel(pattern) {
 
 export function renderTacticalBreakdown(data) {
   if (data.total_blunders <= 0 || data.by_pattern.length === 0) {
-    return { bar: '', legend: '', cards: `<div style="text-align: center; padding: 20px; color: var(--text-muted);">${t('dashboard.chart.no_tactical_data')}</div>`, showBar: false };
+    return { bar: '', legend: '', cards: `<div class="no-data-message">${t('dashboard.chart.no_tactical_data')}</div>`, showBar: false };
   }
 
   const bar = data.by_pattern
@@ -252,7 +251,7 @@ export function renderDifficultyBreakdown(data) {
   };
 
   if (data.total_blunders <= 0 || data.by_difficulty.length === 0) {
-    return { bar: '', legend: '', cards: `<div style="text-align: center; padding: 20px; color: var(--text-muted);">${t('dashboard.chart.no_difficulty_data')}</div>`, showBar: false };
+    return { bar: '', legend: '', cards: `<div class="no-data-message">${t('dashboard.chart.no_difficulty_data')}</div>`, showBar: false };
   }
 
   const bar = data.by_difficulty
@@ -297,7 +296,7 @@ export function renderDifficultyBreakdown(data) {
 
 export function renderCollapsePoint(cpData) {
   if (cpData.avg_collapse_move === null || cpData.total_games_with_blunders <= 0) {
-    return `<div style="text-align: center; padding: 20px; color: var(--text-muted);">${t('dashboard.collapse.no_data')}</div>`;
+    return `<div class="no-data-message">${t('dashboard.collapse.no_data')}</div>`;
   }
 
   const totalGamesForClean = cpData.total_games_with_blunders + cpData.total_games_without_blunders;
@@ -357,7 +356,7 @@ export function renderCollapsePoint(cpData) {
 
 export function renderConversionResilience(crData) {
   if (crData.games_with_advantage <= 0 && crData.games_with_disadvantage <= 0) {
-    return `<div style="text-align: center; padding: 20px; color: var(--text-muted);">${t('dashboard.conversion.no_data')}</div>`;
+    return `<div class="no-data-message">${t('dashboard.conversion.no_data')}</div>`;
   }
 
   const conversionColor = crData.conversion_rate >= 70 ? 'var(--success, #2D8F3E)' : crData.conversion_rate >= 50 ? 'var(--warning, #F2C12E)' : 'var(--error, #D42828)';
@@ -384,21 +383,21 @@ export function renderTrapsSummary(trapsData) {
   const stats = trapsData.stats || [];
 
   if (summary.total_sprung <= 0 && summary.total_entered <= 0) {
-    return `<div style="text-align:center;padding:20px;color:var(--text-muted);">${t('traps.no_data')}<br><a href="/traps">${t('traps.view_all')}</a></div>`;
+    return `<div class="no-data-message">${t('traps.no_data')}<br><a href="/traps">${t('traps.view_all')}</a></div>`;
   }
 
   const topItems = (summary.top_traps || []).slice(0, 3).map(tt => {
     const match = stats.find(s => s.trap_id === tt.trap_id);
-    return `<span style="display:inline-block;background:var(--primary);color:var(--bg);padding:2px 8px;border-radius:var(--radius);font-size:0.8rem;margin-right:4px;">${match ? match.name : tt.trap_id} (${tt.count})</span>`;
+    return `<span class="traps-tag">${match ? match.name : tt.trap_id} (${tt.count})</span>`;
   }).join('');
 
   return `
-    <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-2);">
-      <div><strong style="font-size:1.5rem;color:var(--error);">${summary.total_sprung}</strong> <span style="color:var(--text-muted);font-size:0.85rem;">${t('traps.times_fell')}</span></div>
-      <div><strong style="font-size:1.5rem;color:var(--warning);">${summary.total_entered}</strong> <span style="color:var(--text-muted);font-size:0.85rem;">${t('traps.times_entered')}</span></div>
+    <div class="traps-summary">
+      <div><strong class="traps-summary-stat fell">${summary.total_sprung}</strong> <span class="traps-summary-label">${t('traps.times_fell')}</span></div>
+      <div><strong class="traps-summary-stat entered">${summary.total_entered}</strong> <span class="traps-summary-label">${t('traps.times_entered')}</span></div>
     </div>
     ${topItems ? `<div>${topItems}</div>` : ''}
-    <a href="/traps" style="display:inline-block;margin-top:var(--space-2);color:var(--primary);">${t('traps.view_all')} →</a>
+    <a href="/traps" class="traps-view-all">${t('traps.view_all')} →</a>
   `;
 }
 

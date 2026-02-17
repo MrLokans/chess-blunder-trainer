@@ -87,7 +87,7 @@ function renderTable(stats) {
 
 async function openDetail(trapId) {
   const panel = document.getElementById('trapDetailPanel');
-  panel.style.display = 'block';
+  panel.classList.remove('hidden');
 
   const data = await client.traps.detail(trapId);
   const trap = data.trap;
@@ -133,6 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('trapDetailClose').addEventListener('click', () => {
-    document.getElementById('trapDetailPanel').style.display = 'none';
+    document.getElementById('trapDetailPanel').classList.add('hidden');
   });
 });

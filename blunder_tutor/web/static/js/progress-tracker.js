@@ -20,9 +20,9 @@ export class ProgressTracker {
   }
 
   show(job) {
-    this.progressContainer.style.display = 'block';
-    this.startBtn.style.display = 'none';
-    if (this.stopBtn) this.stopBtn.style.display = 'inline-block';
+    this.progressContainer.classList.remove('hidden');
+    this.startBtn.classList.add('hidden');
+    if (this.stopBtn) this.stopBtn.classList.remove('hidden');
 
     if (job && job.progress_total > 0) {
       this.updateProgress(job.progress_current, job.progress_total,
@@ -31,9 +31,9 @@ export class ProgressTracker {
   }
 
   hide() {
-    this.progressContainer.style.display = 'none';
-    this.startBtn.style.display = 'inline-block';
-    if (this.stopBtn) this.stopBtn.style.display = 'none';
+    this.progressContainer.classList.add('hidden');
+    this.startBtn.classList.remove('hidden');
+    if (this.stopBtn) this.stopBtn.classList.add('hidden');
   }
 
   updateProgress(current, total, percent) {

@@ -61,7 +61,7 @@ export function updateFilterCountBadge() {
   if (currentColorFilter && currentColorFilter !== 'both') count++;
   if (currentDifficultyFilters.length > 0 && currentDifficultyFilters.length < 3) count++;
   badge.textContent = count > 0 ? count + ' active' : '0 active';
-  badge.style.display = count > 0 ? '' : 'none';
+  badge.classList.toggle('hidden', count === 0);
 }
 
 export function clearAllFilters() {

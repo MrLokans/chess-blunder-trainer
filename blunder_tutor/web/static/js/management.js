@@ -87,8 +87,8 @@ function showMessage(elementId, type, text) {
   const el = document.getElementById(elementId);
   el.className = 'message ' + type;
   el.textContent = text;
-  el.style.display = 'block';
-  setTimeout(() => { el.style.display = 'none'; }, 5000);
+  el.classList.remove('hidden');
+  setTimeout(() => { el.classList.add('hidden'); }, 5000);
 }
 
 // --- Import (form-driven, not a JobCard) ---
@@ -229,7 +229,7 @@ document.getElementById('importForm').addEventListener('submit', async (e) => {
   try {
     const data = await client.jobs.startImport(source, username, maxGames);
     currentJobId = data.job_id;
-    document.getElementById('importProgress').style.display = 'block';
+    document.getElementById('importProgress').classList.remove('hidden');
     showMessage('importMessage', 'success', t('management.import.started'));
   } catch (err) {
     showMessage('importMessage', 'error', t('management.import.start_failed', { error: err.message }));
@@ -385,11 +385,11 @@ wsClient.on('job.status_changed', (data) => {
   // Import (not a JobCard)
   if (data.job_id === currentJobId) {
     if (data.status === 'completed') {
-      document.getElementById('importProgress').style.display = 'none';
+      document.getElementById('importProgress').classList.add('hidden');
       showMessage('importMessage', 'success', t('management.import.completed'));
       currentJobId = null;
     } else if (data.status === 'failed') {
-      document.getElementById('importProgress').style.display = 'none';
+      document.getElementById('importProgress').classList.add('hidden');
       showMessage('importMessage', 'error', t('management.import.failed', { error: data.error_message || 'Unknown error' }));
       currentJobId = null;
     }

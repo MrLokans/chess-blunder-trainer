@@ -13,9 +13,9 @@
     const pgn = input.value.trim();
     if (!pgn) return;
 
-    errorsEl.style.display = 'none';
-    results.style.display = 'none';
-    spinner.style.display = 'flex';
+    errorsEl.classList.add('hidden');
+    results.classList.add('hidden');
+    spinner.classList.remove('hidden');
     btn.disabled = true;
 
     try {
@@ -29,7 +29,7 @@
 
       if (!resp.ok || !data.success) {
         showErrors(data.errors || [data.detail || 'Unknown error']);
-        spinner.style.display = 'none';
+        spinner.classList.add('hidden');
         btn.disabled = false;
         return;
       }
@@ -37,7 +37,7 @@
       pollJob(data.job_id);
     } catch (e) {
       showErrors([e.message || 'Network error']);
-      spinner.style.display = 'none';
+      spinner.classList.add('hidden');
       btn.disabled = false;
     }
   });
@@ -69,13 +69,13 @@
   }
 
   function done() {
-    spinner.style.display = 'none';
+    spinner.classList.add('hidden');
     btn.disabled = false;
   }
 
   function showErrors(errors) {
     errorsEl.innerHTML = '<ul>' + errors.map(e => '<li>' + escapeHtml(e) + '</li>').join('') + '</ul>';
-    errorsEl.style.display = 'block';
+    errorsEl.classList.remove('hidden');
   }
 
   function showResults(data) {
@@ -85,7 +85,7 @@
     document.getElementById('resBlunders').textContent = data.blunders || 0;
     document.getElementById('resMistakes').textContent = data.mistakes || 0;
     document.getElementById('resInaccuracies').textContent = data.inaccuracies || 0;
-    results.style.display = 'block';
+    results.classList.remove('hidden');
   }
 
   function escapeHtml(str) {

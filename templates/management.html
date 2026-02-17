@@ -12,7 +12,7 @@
 <section>
   <h2>{{ t('management.engine.title') }}</h2>
   <div id="engineStatus">
-    <p style="color: var(--text-muted); font-size: 0.875rem;">{{ t('management.engine.loading') }}</p>
+    <p class="section-description">{{ t('management.engine.loading') }}</p>
   </div>
 </section>
 
@@ -20,9 +20,9 @@
 
 <section>
   <h2>{{ t('management.import.title') }}</h2>
-  <div id="importMessage" style="display: none;"></div>
+  <div id="importMessage" class="hidden"></div>
   {% if demo_mode %}
-  <p style="color: var(--text-muted); font-size: 0.875rem;">{{ t('demo.disabled_action') }}</p>
+  <p class="section-description">{{ t('demo.disabled_action') }}</p>
   {% else %}
   <form id="importForm">
     <div class="form-group">
@@ -46,7 +46,7 @@
   </form>
   {% endif %}
 
-  <div id="importProgress" style="display: none; margin-top: 24px;">
+  <div id="importProgress" class="hidden progress-section">
     <p><strong>{{ t('management.import.in_progress') }}</strong></p>
     <div class="progress-bar">
       <div class="progress-fill" id="importProgressFill" style="width: 0%"></div>
@@ -59,25 +59,25 @@
 
 <section>
   <h2>{{ t('management.sync.title') }}</h2>
-  <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
+  <p class="section-description mb-4">
     {{ t('management.sync.description') }}
   </p>
   {% if not demo_mode %}
   <button class="btn" id="syncBtn">{{ t('management.sync.button') }}</button>
   {% else %}
-  <p style="color: var(--text-muted); font-size: 0.875rem;">{{ t('demo.disabled_action') }}</p>
+  <p class="section-description">{{ t('demo.disabled_action') }}</p>
   {% endif %}
-  <div id="syncStatus" style="margin-top: 16px;"></div>
+  <div id="syncStatus" class="mt-4"></div>
 </section>
 
 <hr class="section-divider">
 
 <section>
   <h2>{{ t('management.analysis.title') }}</h2>
-  <div id="analysisMessage" style="display: none;"></div>
+  <div id="analysisMessage" class="hidden"></div>
 
-  <div id="analysisInfo" style="margin-bottom: 16px;">
-    <p style="color: var(--text-muted); font-size: 0.875rem;" id="unanalyzedText">
+  <div id="analysisInfo" class="mb-4">
+    <p class="section-description" id="unanalyzedText">
       <span class="inline-spinner"></span>
     </p>
   </div>
@@ -85,11 +85,11 @@
   {% if not demo_mode %}
   <div id="analysisControls">
     <button class="btn" id="startAnalysisBtn">{{ t('management.analysis.start') }}</button>
-    <button class="btn btn-danger" id="stopAnalysisBtn" style="display: none;">{{ t('management.analysis.stop') }}</button>
+    <button class="btn btn-danger hidden" id="stopAnalysisBtn">{{ t('management.analysis.stop') }}</button>
   </div>
   {% endif %}
 
-  <div id="analysisProgress" style="display: none; margin-top: 24px;">
+  <div id="analysisProgress" class="hidden progress-section">
     <p><strong>{{ t('management.analysis.in_progress') }}</strong></p>
     <div class="progress-bar">
       <div class="progress-fill" id="analysisProgressFill" style="width: 0%"></div>
@@ -102,10 +102,10 @@
 
 <section>
   <h2>{{ t('management.backfill_phases.title') }}</h2>
-  <div id="backfillMessage" style="display: none;"></div>
+  <div id="backfillMessage" class="hidden"></div>
 
-  <div id="backfillInfo" style="margin-bottom: 16px;">
-    <p style="color: var(--text-muted); font-size: 0.875rem;">
+  <div id="backfillInfo" class="mb-4">
+    <p class="section-description">
       {{ t('management.backfill_phases.description') }}
       <br>
       <span id="backfillPendingText"><span class="inline-spinner"></span></span>
@@ -118,7 +118,7 @@
   </div>
   {% endif %}
 
-  <div id="backfillProgress" style="display: none; margin-top: 24px;">
+  <div id="backfillProgress" class="hidden progress-section">
     <p><strong>{{ t('management.backfill_phases.in_progress') }}</strong></p>
     <div class="progress-bar">
       <div class="progress-fill" id="backfillProgressFill" style="width: 0%"></div>
@@ -131,10 +131,10 @@
 
 <section>
   <h2>{{ t('management.backfill_eco.title') }}</h2>
-  <div id="ecoBackfillMessage" style="display: none;"></div>
+  <div id="ecoBackfillMessage" class="hidden"></div>
 
-  <div id="ecoBackfillInfo" style="margin-bottom: 16px;">
-    <p style="color: var(--text-muted); font-size: 0.875rem;">
+  <div id="ecoBackfillInfo" class="mb-4">
+    <p class="section-description">
       {{ t('management.backfill_eco.description') }}
       <br>
       <span id="ecoBackfillPendingText"><span class="inline-spinner"></span></span>
@@ -147,7 +147,7 @@
   </div>
   {% endif %}
 
-  <div id="ecoBackfillProgress" style="display: none; margin-top: 24px;">
+  <div id="ecoBackfillProgress" class="hidden progress-section">
     <p><strong>{{ t('management.backfill_eco.in_progress') }}</strong></p>
     <div class="progress-bar">
       <div class="progress-fill" id="ecoBackfillProgressFill" style="width: 0%"></div>
@@ -160,10 +160,10 @@
 
 <section>
   <h2>{{ t('management.backfill_traps.title') }}</h2>
-  <div id="trapsBackfillMessage" style="display: none;"></div>
+  <div id="trapsBackfillMessage" class="hidden"></div>
 
-  <div id="trapsBackfillInfo" style="margin-bottom: 16px;">
-    <p style="color: var(--text-muted); font-size: 0.875rem;">
+  <div id="trapsBackfillInfo" class="mb-4">
+    <p class="section-description">
       {{ t('management.backfill_traps.description') }}
     </p>
   </div>
@@ -174,7 +174,7 @@
   </div>
   {% endif %}
 
-  <div id="trapsBackfillProgress" style="display: none; margin-top: 24px;">
+  <div id="trapsBackfillProgress" class="hidden progress-section">
     <p><strong>{{ t('management.backfill_traps.in_progress') }}</strong></p>
     <div class="progress-bar">
       <div class="progress-fill" id="trapsBackfillProgressFill" style="width: 0%"></div>
@@ -187,7 +187,7 @@
 
 <section>
   <h2>{{ t('management.jobs.title') }}</h2>
-  <div style="overflow-x: auto;">
+  <div class="table-scroll">
   <table id="jobsTable">
     <thead>
       <tr>
@@ -205,7 +205,7 @@
            hx-trigger="load, jobsRefresh from:body"
            hx-swap="innerHTML">
       <tr>
-        <td colspan="7" style="text-align: center; color: var(--text-muted);">{{ t('common.loading') }}</td>
+        <td colspan="7" class="table-placeholder">{{ t('common.loading') }}</td>
       </tr>
     </tbody>
   </table>
@@ -216,9 +216,9 @@
 <hr class="section-divider">
 
 <section>
-  <h2 style="color: var(--error);">{{ t('management.danger.title') }}</h2>
-  <div id="deleteAllMessage" style="display: none;"></div>
-  <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
+  <h2 class="danger-title">{{ t('management.danger.title') }}</h2>
+  <div id="deleteAllMessage" class="hidden"></div>
+  <p class="section-description mb-4">
     {{ t('management.danger.description') }}
     <strong>{{ t('management.danger.warning') }}</strong> {{ t('management.danger.settings_preserved') }}
   </p>
@@ -226,10 +226,10 @@
     {{ t('management.danger.button') }}
   </button>
 
-  <div id="deleteAllProgress" style="display: none; margin-top: 24px;">
+  <div id="deleteAllProgress" class="hidden progress-section">
     <p><strong>{{ t('management.danger.deleting') }}</strong></p>
     <div class="progress-bar">
-      <div class="progress-fill" id="deleteAllProgressFill" style="width: 0%; background: var(--red);"></div>
+      <div class="progress-fill danger" id="deleteAllProgressFill" style="width: 0%"></div>
       <div class="progress-text" id="deleteAllProgressText">0%</div>
     </div>
   </div>

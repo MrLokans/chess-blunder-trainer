@@ -109,9 +109,9 @@ const SETUP_WAIT_MS = 15000;
 const POLL_INTERVAL_MS = 2000;
 
 function showProgress(message) {
-  progressSection.style.display = 'block';
+  progressSection.classList.remove('hidden');
   progressMessage.textContent = message;
-  form.style.display = 'none';
+  form.classList.add('hidden');
 }
 
 async function waitForAnalysis(jobIds) {
@@ -181,7 +181,7 @@ form.addEventListener('submit', async (e) => {
     showError(err.message || t('setup.failed'));
     submitBtn.disabled = false;
     submitBtn.textContent = t('setup.submit');
-    form.style.display = 'block';
-    progressSection.style.display = 'none';
+    form.classList.remove('hidden');
+    progressSection.classList.add('hidden');
   }
 });

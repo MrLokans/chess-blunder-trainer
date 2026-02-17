@@ -39,9 +39,9 @@ export function getEl(id) {
 }
 
 export function showEmptyState(errorType, onClearFilters) {
-  els.trainerLayout.style.display = 'none';
-  els.emptyState.style.display = 'block';
-  if (els.statsCard) els.statsCard.style.display = 'none';
+  els.trainerLayout.classList.add('hidden');
+  els.emptyState.classList.remove('hidden');
+  if (els.statsCard) els.statsCard.classList.add('hidden');
   els.emptyStateAction.onclick = null;
 
   if (errorType === 'analyzing') {
@@ -77,22 +77,22 @@ export function showEmptyState(errorType, onClearFilters) {
 }
 
 export function hideEmptyState() {
-  els.emptyState.style.display = 'none';
-  els.trainerLayout.style.display = 'grid';
-  if (els.statsCard) els.statsCard.style.display = 'block';
+  els.emptyState.classList.add('hidden');
+  els.trainerLayout.classList.remove('hidden');
+  if (els.statsCard) els.statsCard.classList.remove('hidden');
 }
 
 export function showBoardResult(accentClass, titleText, detail) {
   els.boardResultCard.className = 'board-result-card visible ' + accentClass;
   els.feedbackTitle.textContent = titleText;
   els.feedbackDetail.textContent = detail;
-  els.movePrompt.style.display = 'none';
+  els.movePrompt.classList.add('hidden');
 }
 
 export function hideBoardResult() {
   els.boardResultCard.classList.remove('visible');
-  els.movePrompt.style.display = '';
-  els.tryBestBtn.style.display = '';
+  els.movePrompt.classList.remove('hidden');
+  els.tryBestBtn.classList.remove('hidden');
   if (els.tacticalDetails) els.tacticalDetails.removeAttribute('open');
   if (els.explanationDetails) els.explanationDetails.removeAttribute('open');
 }
@@ -102,7 +102,7 @@ export function toggleBoardResultOverlay() {
     hideBoardResult();
   } else {
     els.boardResultCard.classList.add('visible');
-    els.movePrompt.style.display = 'none';
+    els.movePrompt.classList.add('hidden');
   }
 }
 
@@ -129,9 +129,9 @@ export function updatePhaseBadge(phase) {
   if (phase) {
     els.phaseBadge.textContent = phase.charAt(0).toUpperCase() + phase.slice(1);
     els.phaseBadge.className = 'context-tag phase-highlight';
-    els.phaseBadge.style.display = 'inline-block';
+    els.phaseBadge.classList.remove('hidden');
   } else {
-    els.phaseBadge.style.display = 'none';
+    els.phaseBadge.classList.add('hidden');
   }
 }
 
@@ -139,11 +139,11 @@ export function updateTacticalBadge(pattern) {
   if (!els.tacticalBadge) return;
   if (pattern && pattern !== 'None') {
     els.tacticalPatternName.textContent = pattern;
-    els.tacticalBadge.style.display = 'inline-flex';
-    if (els.tacticalSeparator) els.tacticalSeparator.style.display = '';
+    els.tacticalBadge.classList.remove('hidden');
+    if (els.tacticalSeparator) els.tacticalSeparator.classList.remove('hidden');
   } else {
-    els.tacticalBadge.style.display = 'none';
-    if (els.tacticalSeparator) els.tacticalSeparator.style.display = 'none';
+    els.tacticalBadge.classList.add('hidden');
+    if (els.tacticalSeparator) els.tacticalSeparator.classList.add('hidden');
   }
 }
 
@@ -152,39 +152,39 @@ export function showTacticalInfo(pattern, reason) {
   if (pattern && pattern !== 'None' && reason) {
     els.tacticalInfoTitle.textContent = pattern;
     els.tacticalInfoReason.textContent = reason;
-    els.tacticalDetails.style.display = '';
+    els.tacticalDetails.classList.remove('hidden');
   } else {
-    els.tacticalDetails.style.display = 'none';
+    els.tacticalDetails.classList.add('hidden');
   }
 }
 
 export function showExplanation(blunderText, bestText) {
   if (!els.explanationDetails) return;
   if (!blunderText && !bestText) {
-    els.explanationDetails.style.display = 'none';
+    els.explanationDetails.classList.add('hidden');
     return;
   }
   els.explanationBlunder.textContent = blunderText || '';
   els.explanationBest.textContent = bestText || '';
-  els.explanationDetails.style.display = '';
+  els.explanationDetails.classList.remove('hidden');
 }
 
 export function updateGameLink(url) {
   if (!els.gameLink) return;
   if (url) {
     els.gameLink.href = url;
-    els.gameLink.style.display = 'inline-flex';
-    if (els.gameLinkSeparator) els.gameLinkSeparator.style.display = '';
+    els.gameLink.classList.remove('hidden');
+    if (els.gameLinkSeparator) els.gameLinkSeparator.classList.remove('hidden');
   } else {
-    els.gameLink.style.display = 'none';
-    if (els.gameLinkSeparator) els.gameLinkSeparator.style.display = 'none';
+    els.gameLink.classList.add('hidden');
+    if (els.gameLinkSeparator) els.gameLinkSeparator.classList.add('hidden');
   }
 }
 
 export function updateCopyDebugBtn(gameId, ply) {
   const btn = els.copyDebugBtn;
   if (!btn) return;
-  btn.style.display = gameId ? 'inline-block' : 'none';
+  btn.classList.toggle('hidden', !gameId);
   btn.onclick = async () => {
     try {
       const params = ply != null ? { ply } : {};
@@ -202,7 +202,7 @@ export function updateCopyDebugBtn(gameId, ply) {
 export function updateStarButton(gameId, ply, getCurrentStarred, setCurrentStarred) {
   const btn = els.starPuzzleBtn;
   if (!btn) return;
-  btn.style.display = gameId ? 'inline-block' : 'none';
+  btn.classList.toggle('hidden', !gameId);
 
   async function refreshState() {
     try {
@@ -247,22 +247,22 @@ export function updateMoveHistory(moveHistory) {
 export function resetUIForNewPuzzle() {
   hideBoardResult();
   if (els.blunderSection) els.blunderSection.classList.remove('blunder-dimmed');
-  els.historySection.style.display = 'none';
+  els.historySection.classList.add('hidden');
   els.moveHistory.textContent = '';
   els.currentMove.textContent = '-';
   els.phaseIndicator.textContent = t('trainer.phase.guess');
   els.phaseIndicator.className = 'phase guess';
   els.submitBtn.disabled = false;
-  els.submitBtn.style.display = 'none';
+  els.submitBtn.classList.add('hidden');
   els.showBestBtn.disabled = false;
-  els.highlightLegend.style.display = 'none';
-  els.legendBest.style.display = 'none';
-  els.legendUser.style.display = 'none';
-  els.legendBlunder.style.display = 'flex';
-  if (els.legendTactic) els.legendTactic.style.display = 'none';
+  els.highlightLegend.classList.add('hidden');
+  els.legendBest.classList.add('hidden');
+  els.legendUser.classList.add('hidden');
+  els.legendBlunder.classList.remove('hidden');
+  if (els.legendTactic) els.legendTactic.classList.add('hidden');
   updateTacticalBadge(null);
-  if (els.tacticalDetails) els.tacticalDetails.style.display = 'none';
-  if (els.explanationDetails) els.explanationDetails.style.display = 'none';
+  if (els.tacticalDetails) els.tacticalDetails.classList.add('hidden');
+  if (els.explanationDetails) els.explanationDetails.classList.add('hidden');
 }
 
 export function showPuzzleData(puzzle) {
@@ -277,42 +277,42 @@ export function showPuzzleData(puzzle) {
 
 export function enterExplorePhase() {
   els.boardResultCard.classList.add('visible', 'best-revealed');
-  els.movePrompt.style.display = 'none';
+  els.movePrompt.classList.add('hidden');
   els.submitBtn.disabled = true;
-  els.submitBtn.style.display = 'none';
+  els.submitBtn.classList.add('hidden');
   els.phaseIndicator.textContent = t('trainer.phase.explore');
   els.phaseIndicator.className = 'phase explore';
 }
 
 export function showCorrectFeedback() {
   showBoardResult('accent-correct', t('trainer.feedback.excellent'), t('trainer.feedback.found_best'));
-  els.tryBestBtn.style.display = 'none';
+  els.tryBestBtn.classList.add('hidden');
   els.phaseIndicator.textContent = t('trainer.phase.correct');
   els.phaseIndicator.className = 'phase explore';
-  els.legendUser.style.display = 'none';
+  els.legendUser.classList.add('hidden');
 }
 
 export function showBlunderFeedback(userSan) {
   showBoardResult('accent-blunder', t('trainer.feedback.same_blunder'), t('trainer.feedback.same_blunder_detail', { userMove: userSan }));
-  els.legendUser.style.display = 'none';
+  els.legendUser.classList.add('hidden');
 }
 
 export function showNotQuiteFeedback(userSan, userEvalDisplay) {
   showBoardResult('accent-revealed', t('trainer.feedback.not_quite'), t('trainer.feedback.not_quite_detail', { userMove: userSan, userEval: userEvalDisplay }));
-  els.legendUser.style.display = 'flex';
+  els.legendUser.classList.remove('hidden');
 }
 
 export function showGoodMoveFeedback(userSan) {
   showBoardResult('accent-correct', t('trainer.feedback.good_move'), t('trainer.feedback.good_move_detail', { userMove: userSan }));
-  els.legendUser.style.display = 'flex';
+  els.legendUser.classList.remove('hidden');
 }
 
 export function showLegendBest() {
-  els.legendBest.style.display = 'flex';
+  els.legendBest.classList.remove('hidden');
 }
 
 export function showLegendTactic() {
-  if (els.legendTactic) els.legendTactic.style.display = 'flex';
+  if (els.legendTactic) els.legendTactic.classList.remove('hidden');
 }
 
 export function dimBlunderSection() {
@@ -333,5 +333,5 @@ export function isBoardResultVisible() {
 }
 
 export function showHistorySection() {
-  els.historySection.style.display = 'block';
+  els.historySection.classList.remove('hidden');
 }

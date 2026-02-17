@@ -29,7 +29,7 @@
 </header>
 
 <!-- Empty state -->
-<div class="card empty-state" id="emptyState" style="display: none;">
+<div class="card empty-state hidden" id="emptyState">
   <div class="empty-state-icon">
     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -56,15 +56,15 @@
         <span id="colorTagText">{{ t('chess.color.white') }}</span>
       </span>
       <span class="context-tag-separator">·</span>
-      <span class="context-tag phase-highlight" id="phaseBadge" style="display: none;"></span>
+      <span class="context-tag phase-highlight hidden" id="phaseBadge"></span>
       {% if has_feature('trainer.tactics') %}
-      <span class="context-tag-separator" id="tacticalSeparator" style="display: none;">·</span>
-      <span class="context-tag" id="tacticalBadge" style="display: none;">
+      <span class="context-tag-separator hidden" id="tacticalSeparator">·</span>
+      <span class="context-tag hidden" id="tacticalBadge">
         <span id="tacticalPatternName"></span>
       </span>
       {% endif %}
-      <span class="context-tag-separator" id="gameLinkSeparator" style="display: none;">·</span>
-      <a id="gameLink" href="#" target="_blank" rel="noopener noreferrer" class="context-tag-link" style="display: none;" title="{{ t('trainer.link.original_game') }}">
+      <span class="context-tag-separator hidden" id="gameLinkSeparator">·</span>
+      <a id="gameLink" href="#" target="_blank" rel="noopener noreferrer" class="context-tag-link hidden" title="{{ t('trainer.link.original_game') }}">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         {{ t('trainer.link.original_game') }}
       </a>
@@ -141,12 +141,12 @@
     </div>
 
     <!-- Hidden legend (kept for JS compat) -->
-    <div class="highlight-legend" id="highlightLegend" style="display: none;">
+    <div class="highlight-legend hidden" id="highlightLegend">
       <div class="legend-item" id="legendBlunder"><span class="legend-color blunder"></span><span>{{ t('trainer.legend.your_blunder') }}</span></div>
       <div class="legend-item" id="legendBest"><span class="legend-color best"></span><span>{{ t('trainer.legend.best_move') }}</span></div>
-      <div class="legend-item" id="legendUser" style="display: none;"><span class="legend-color user"></span><span>{{ t('trainer.legend.your_move') }}</span></div>
+      <div class="legend-item hidden" id="legendUser"><span class="legend-color user"></span><span>{{ t('trainer.legend.your_move') }}</span></div>
       {% if has_feature('trainer.tactics') %}
-      <div class="legend-item" id="legendTactic" style="display: none;"><span class="legend-color tactic"></span><span>{{ t('trainer.legend.tactical_squares') }}</span></div>
+      <div class="legend-item hidden" id="legendTactic"><span class="legend-color tactic"></span><span>{{ t('trainer.legend.tactical_squares') }}</span></div>
       {% endif %}
     </div>
   </div>
@@ -156,19 +156,19 @@
     <!-- Puzzle tools (star, debug) -->
     <div class="panel-section puzzle-tools" id="blunderSection">
       {% if has_feature('starred.puzzles') %}
-      <button class="btn btn-ghost" id="starPuzzleBtn" style="display: none;" title="{{ t('trainer.star.add') }}">
+      <button class="btn btn-ghost hidden" id="starPuzzleBtn" title="{{ t('trainer.star.add') }}">
         ☆ {{ t('trainer.star.add') }}
       </button>
       {% endif %}
       {% if has_feature('debug.copy') %}
-      <button class="btn btn-ghost" id="copyDebugBtn" style="display: none;" title="{{ t('trainer.debug.copy_title') }}">
+      <button class="btn btn-ghost hidden" id="copyDebugBtn" title="{{ t('trainer.debug.copy_title') }}">
         📋 {{ t('trainer.debug.copy') }}
       </button>
       {% endif %}
     </div>
 
     <!-- Hidden elements for blunder info (JS compat) -->
-    <div style="display: none;">
+    <div class="hidden">
       <span id="blunderMove"></span>
       <span id="evalBefore"></span>
       <span id="evalAfter"></span>
@@ -179,14 +179,14 @@
     <!-- Move Interaction Zone -->
     <div class="panel-section" id="moveInteractionZone">
       <!-- Move indicator (pending move) -->
-      <div class="move-indicator" style="display: none;">
+      <div class="move-indicator hidden">
         <span class="label">{{ t('trainer.move_indicator.label') }}</span>
         <span class="move" id="currentMove">-</span>
       </div>
 
       <!-- Action buttons (clickable + shortcut hints) -->
       <div class="action-keys">
-        <button class="action-key" id="submitBtn" style="display: none;"><kbd>Enter</kbd><span class="action-label">{{ t('trainer.shortcuts.submit') }}</span></button>
+        <button class="action-key hidden" id="submitBtn"><kbd>Enter</kbd><span class="action-label">{{ t('trainer.shortcuts.submit') }}</span></button>
         <button class="action-key" id="resetBtn"><kbd>R</kbd><span class="action-label">{{ t('trainer.shortcuts.reset') }}</span></button>
         <button class="action-key" id="showBestBtn"><kbd>B</kbd><span class="action-label">{{ t('trainer.shortcuts.show_best') }}</span></button>
         <button class="action-key" id="nextBtn"><kbd>N</kbd><span class="action-label">{{ t('trainer.shortcuts.next') }}</span></button>
@@ -351,7 +351,7 @@
     </div>
 
     <!-- Hidden elements for JS compat -->
-    <div style="display: none;">
+    <div class="hidden">
       <span class="phase" id="phaseIndicator"></span>
       <span class="color-badge" id="colorBadge"></span>
       <button class="btn" id="lichessBtn"><kbd>L</kbd></button>

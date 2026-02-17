@@ -37,7 +37,7 @@ function onBoardMove(_orig, _dest, move) {
     if (puzzle && uci === puzzle.best_move_uci) {
       setTimeout(() => submitMoveAction(), 150);
     } else {
-      ui.getEl('submitBtn').style.display = '';
+      ui.getEl('submitBtn').classList.remove('hidden');
     }
   }
 }

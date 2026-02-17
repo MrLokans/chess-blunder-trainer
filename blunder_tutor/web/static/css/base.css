@@ -1002,7 +1002,7 @@ tr:hover td {
 .eco-name-link:hover .eco-external-icon { opacity: 1; }
 
 .eco-percent { color: var(--mid-gray); font-size: 0.75rem; }
-.eco-group-header { background: var(--white); }
+.eco-group-header { background: var(--white); cursor: pointer; }
 .eco-group-header:hover { background: var(--warm-gray); }
 
 .eco-group-toggle {
@@ -1197,6 +1197,12 @@ kbd {
    ========================================================================== */
 
 .text-muted { color: var(--mid-gray); }
+.text-primary { color: var(--primary); }
+
+.section-description {
+  color: var(--text-muted);
+  font-size: var(--text-base);
+}
 .text-success { color: var(--correct); }
 .text-error { color: var(--red); }
 .text-sm { font-size: var(--text-sm); }
@@ -1207,6 +1213,20 @@ kbd {
 .mt-4 { margin-top: var(--s-md); }
 .mb-2 { margin-bottom: var(--s-sm); }
 .mb-4 { margin-bottom: var(--s-md); }
+
+.progress-section {
+  margin-top: var(--s-lg);
+}
+
+.danger-title { color: var(--error); }
+.table-placeholder { text-align: center; color: var(--text-muted); }
+.table-scroll { overflow-x: auto; }
+.progress-fill.danger { background: var(--red); }
+
+.mt-0 { margin-top: 0; }
+.mb-0 { margin-bottom: 0; }
+.mt-3 { margin-top: 12px; }
+.mt-8 { margin-top: var(--s-xl); }
 
 .inline-spinner {
   display: inline-block;
@@ -1573,7 +1593,7 @@ body:has(.demo-banner) {
    Additional Utility Classes
    ========================================================================== */
 
-.hidden { display: none; }
+.hidden { display: none !important; }
 .gap-sm { gap: var(--s-sm); }
 .gap-md { gap: var(--s-md); }
 .flex { display: flex; }

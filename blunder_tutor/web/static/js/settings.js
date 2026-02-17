@@ -122,7 +122,7 @@ function initFeatureToggles() {
         if (sectionId) {
           const section = document.getElementById(sectionId);
           if (section) {
-            section.style.display = newValue ? '' : 'none';
+            section.classList.toggle('hidden', !newValue);
           }
         }
       } catch (err) {

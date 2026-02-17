@@ -17,6 +17,47 @@
     margin-bottom: var(--s-md);
   }
 
+  .no-data-message {
+    text-align: center;
+    padding: var(--s-xl);
+    color: var(--text-muted);
+  }
+
+  .traps-summary {
+    display: flex;
+    gap: var(--s-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--s-sm);
+  }
+
+  .traps-summary-stat {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .traps-summary-stat.fell { color: var(--error); }
+  .traps-summary-stat.entered { color: var(--warning); }
+
+  .traps-summary-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .traps-tag {
+    display: inline-block;
+    background: var(--primary);
+    color: var(--bg);
+    padding: 2px 8px;
+    font-size: 0.8rem;
+    margin-right: var(--s-xs);
+  }
+
+  .traps-view-all {
+    display: inline-block;
+    margin-top: var(--s-sm);
+    color: var(--primary);
+  }
+
   .loading-placeholder {
     text-align: center;
     padding: var(--s-xl);

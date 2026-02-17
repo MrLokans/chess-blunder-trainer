@@ -2,6 +2,28 @@
     max-width: 580px;
   }
 
+  .settings-section-title {
+    font-size: 1.25rem;
+    margin-bottom: var(--s-md);
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--s-sm);
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: auto;
+  }
+
+  .settings-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
   .theme-section-title {
     font-size: var(--text-sm);
     font-weight: 600;
@@ -379,4 +401,9 @@
 
 .feature-toggle-row input[type="checkbox"] {
   width: auto;
+}
+
+.status.preview-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }

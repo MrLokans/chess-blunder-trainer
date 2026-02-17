@@ -46,7 +46,7 @@ function applyBreakdown(containerId, barContainerId, barId, legendId, result) {
   container.innerHTML = result.cards;
 
   if (barContainer) {
-    barContainer.style.display = result.showBar ? 'block' : 'none';
+    barContainer.classList.toggle('hidden', !result.showBar);
     if (bar && result.bar) bar.innerHTML = result.bar;
   }
 
@@ -133,19 +133,22 @@ async function loadStats() {
   }
 }
 
+const STATUS_COLOR_CLASSES = ['text-primary', 'text-success', 'text-error'];
+
 function renderAnalysisStatus(status) {
   const statusEl = document.getElementById('analysisJobStatus');
+  statusEl.classList.remove(...STATUS_COLOR_CLASSES);
   if (status.status === 'running') {
     const percent = status.progress_total > 0
       ? Math.round((status.progress_current / status.progress_total) * 100) : 0;
     statusEl.textContent = t('dashboard.analysis.running', { current: status.progress_current || 0, total: status.progress_total || 0, percent });
-    statusEl.style.color = 'var(--primary)';
+    statusEl.classList.add('text-primary');
   } else if (status.status === 'completed') {
     statusEl.textContent = t('dashboard.analysis.completed');
-    statusEl.style.color = 'var(--success)';
+    statusEl.classList.add('text-success');
   } else if (status.status === 'failed') {
     statusEl.innerHTML = t('dashboard.analysis.failed') + ' <button class="btn btn-sm" id="retryAnalysisBtn" style="margin-left: 8px; padding: 4px 10px; font-size: 0.75rem;">' + t('dashboard.analysis.retry') + '</button>';
-    statusEl.style.color = 'var(--error)';
+    statusEl.classList.add('text-error');
     document.getElementById('retryAnalysisBtn').addEventListener('click', retryAnalysis);
   } else {
     statusEl.textContent = '';
@@ -160,13 +163,13 @@ async function loadDateChart() {
     const emptyMsg = document.getElementById('dateChartEmpty');
 
     if (!data.items || data.items.length === 0) {
-      container.style.display = 'none';
-      emptyMsg.style.display = 'block';
+      container.classList.add('hidden');
+      emptyMsg.classList.remove('hidden');
       return;
     }
 
-    container.style.display = 'block';
-    emptyMsg.style.display = 'none';
+    container.classList.remove('hidden');
+    emptyMsg.classList.add('hidden');
 
     if (dateChart) dateChart.destroy();
     const ctx = document.getElementById('dateChart').getContext('2d');
@@ -189,13 +192,13 @@ async function loadHourChart() {
     const emptyMsg = document.getElementById('hourChartEmpty');
 
     if (!data.items || data.items.length === 0) {
-      container.style.display = 'none';
-      emptyMsg.style.display = 'block';
+      container.classList.add('hidden');
+      emptyMsg.classList.remove('hidden');
       return;
     }
 
-    container.style.display = 'block';
-    emptyMsg.style.display = 'none';
+    container.classList.remove('hidden');
+    emptyMsg.classList.add('hidden');
 
     const hourMap = new Map(data.items.map(d => [d.hour, d]));
     const fullData = [];

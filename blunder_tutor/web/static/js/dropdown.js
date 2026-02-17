@@ -81,7 +81,7 @@ function createDropdown(selectEl) {
     if (e.key === 'Escape') close();
   });
 
-  selectEl.style.display = 'none';
+  selectEl.classList.add('hidden');
   selectEl.parentNode.insertBefore(wrapper, selectEl);
   wrapper.appendChild(trigger);
   wrapper.appendChild(listbox);

@@ -20,19 +20,19 @@
   <textarea id="pgnInput" class="pgn-textarea" rows="14"
     placeholder="{{ t('import.placeholder') }}"></textarea>
 
-  <div class="import-errors" id="importErrors" style="display:none;"></div>
+  <div class="import-errors hidden" id="importErrors"></div>
 
   {% if not demo_mode %}
   <button id="importBtn" class="btn btn-primary">{{ t('import.submit') }}</button>
   {% endif %}
 
-  <div class="import-spinner" id="importSpinner" style="display:none;">
+  <div class="import-spinner hidden" id="importSpinner">
     <span class="spinner"></span>
     <span>{{ t('import.analyzing') }}</span>
   </div>
 </div>
 
-<div class="import-results" id="importResults" style="display:none;">
+<div class="import-results hidden" id="importResults">
   <h2>{{ t('import.success') }}</h2>
   <div class="results-grid">
     <div class="result-item">

@@ -17,16 +17,16 @@ async function loadStarred() {
   try {
     const data = await client.starred.list({ limit: 200 });
 
-    content.style.display = 'none';
+    content.classList.add('hidden');
 
     if (!data.items || data.items.length === 0) {
-      emptyEl.style.display = 'block';
-      listEl.style.display = 'none';
+      emptyEl.classList.remove('hidden');
+      listEl.classList.add('hidden');
       return;
     }
 
-    emptyEl.style.display = 'none';
-    listEl.style.display = 'block';
+    emptyEl.classList.add('hidden');
+    listEl.classList.remove('hidden');
     tbody.innerHTML = '';
 
     for (const item of data.items) {
@@ -82,8 +82,8 @@ async function loadStarred() {
           tr.remove();
           const remaining = tbody.querySelectorAll('tr');
           if (remaining.length === 0) {
-            listEl.style.display = 'none';
-            emptyEl.style.display = 'block';
+            listEl.classList.add('hidden');
+            emptyEl.classList.remove('hidden');
           }
         } catch (e) {
           console.error('Failed to unstar:', e);
