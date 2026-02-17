@@ -12,12 +12,12 @@ their licenses, and copyright holders.
 
 These files are shipped in `blunder_tutor/web/static/vendor/`.
 
-### chessground 9.1.1
+### chessground 10.0.2
 
 - **Author:** Lichess.org contributors
 - **License:** GPL-3.0
 - **Source:** [https://github.com/lichess-org/chessground](https://github.com/lichess-org/chessground)
-- **Files:** `chessground-9.1.1.min.js`, `chessground-9.1.1.base.css`
+- **Files:** `chessground-10.0.2.min.js`, `chessground-10.0.2.base.css`
 
 ### htmx 1.9.10
 

@@ -1,4 +1,4 @@
-import { Chessground } from '../vendor/chessground-9.1.1.min.js';
+import { Chessground } from '../vendor/chessground-10.0.2.min.js';
 
 class MoveSequence {
   constructor(moves, { startFen = 'start' } = {}) {
