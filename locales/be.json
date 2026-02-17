@@ -137,13 +137,14 @@
   "dashboard.title": "Панэль Blunder Tutor",
   "dashboard.filter.from": "Ад:",
   "dashboard.filter.to": "Да:",
-  "dashboard.filter.time_control": "Кантроль часу:",
-  "dashboard.filter.game_phase": "Фаза гульні:",
+  "dashboard.filter.time_control": "Кантроль часу",
+  "dashboard.filter.game_phase": "Фаза гульні",
   "dashboard.filter.last_7d": "Апошнія 7 дзён",
   "dashboard.filter.last_30d": "Апошнія 30 дзён",
   "dashboard.filter.last_90d": "Апошнія 90 дзён",
   "dashboard.filter.last_1y": "Апошні год",
   "dashboard.filter.all_time": "Увесь час",
+  "dashboard.filter.custom_range": "Свой дыяпазон",
   "dashboard.stat.total_games": "Усяго партый",
   "dashboard.stat.analyzed_games": "Прааналізаваныя партыі",
   "dashboard.stat.total_blunders": "Усяго грубых промахаў",
@@ -564,5 +565,6 @@
   "trainer.star.removed": "Выдалена",
   "settings.features.starred_puzzles": "Абраныя задачы",
   "trainer.details.tactical": "Тактычныя дэталі",
-  "trainer.details.explanation": "Чаму гэта быў грубы промах"
+  "trainer.details.explanation": "Чаму гэта быў грубы промах",
+  "dashboard.filter.title": "Фільтры"
 }

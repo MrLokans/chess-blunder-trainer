@@ -131,7 +131,7 @@
   --radius-lg: 0;
 
   /* Typography */
-  --font-mono: 'Space Mono', monospace;
+  --font-mono: 'Jost', sans-serif;
   --font-sans: 'DM Sans', sans-serif;
 
   --text-xs: 0.75rem;
@@ -203,8 +203,8 @@ h1 {
 }
 
 h2 {
-  font-size: 14px;
-  letter-spacing: 2px;
+  font-size: 17px;
+  letter-spacing: 0;
   text-transform: uppercase;
   margin-bottom: var(--s-md);
 }
@@ -1024,19 +1024,157 @@ tr:hover td {
 .eco-group-child { font-size: var(--text-xs); }
 
 /* ==========================================================================
-   Dashboard Filters
+   Dashboard Filter Bar — unified filter strip
    ========================================================================== */
 
-.dashboard-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-md);
-  align-items: center;
-  padding: var(--s-md);
-  background: var(--white);
+.dashboard-filter-bar {
   border: 2px solid var(--black);
-  border-radius: 0;
   margin-bottom: var(--s-lg);
+}
+
+.filter-bar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s-sm) var(--s-md);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.filter-bar-header:hover {
+  background: var(--warm-gray);
+}
+
+.filter-bar-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--dark-gray);
+}
+
+.filter-bar-body {
+  border-top: 1px solid var(--warm-gray);
+  overflow: hidden;
+  max-height: 500px;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+  opacity: 1;
+}
+
+.filter-bar-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+  border-top-color: transparent;
+}
+
+.filter-bar-row {
+  padding: var(--s-md);
+}
+
+.filter-bar-row + .filter-bar-row {
+  border-top: 1px solid var(--warm-gray);
+}
+
+/* Presets row */
+.filter-bar-presets {
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+  flex-wrap: wrap;
+}
+
+.filter-presets {
+  display: flex;
+  gap: var(--s-xs);
+}
+
+.filter-presets button {
+  padding: var(--s-xs) var(--s-md);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: transparent;
+  border: 2px solid var(--mid-gray);
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--dark-gray);
+}
+
+.filter-presets button:hover {
+  border-color: var(--black);
+  color: var(--black);
+  background: var(--warm-gray);
+}
+
+.filter-presets button.active {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+}
+
+/* Custom date toggle button — styled like a preset */
+.filter-bar-custom-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-xs);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--dark-gray);
+  padding: var(--s-xs) var(--s-md);
+  border: 2px solid var(--mid-gray);
+  border-radius: 0;
+  background: transparent;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.filter-bar-custom-toggle:hover {
+  border-color: var(--black);
+  color: var(--black);
+  background: var(--warm-gray);
+}
+
+.filter-bar-custom-toggle.active {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+}
+
+.filter-bar-custom-toggle.active svg {
+  stroke: var(--white);
+}
+
+/* Custom date row (collapsible) */
+.filter-bar-dates {
+  display: flex;
+  align-items: center;
+  gap: var(--s-md);
+  overflow: hidden;
+  max-height: 60px;
+  transition: max-height 0.2s ease, padding 0.2s ease, opacity 0.15s ease;
+  opacity: 1;
+}
+
+.filter-bar-dates.collapsed {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+  border-top-width: 0;
+}
+
+.filter-bar-dates .btn {
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .filter-group {
@@ -1062,41 +1200,74 @@ tr:hover td {
   height: 36px;
 }
 
-.dashboard-filters .btn {
-  box-sizing: border-box;
-  height: 36px;
-}
-
-.filter-presets {
+/* Chip filters row */
+.filter-bar-chips {
   display: flex;
-  gap: var(--s-sm);
-  margin-left: auto;
+  align-items: center;
+  gap: var(--s-md);
+  flex-wrap: wrap;
 }
 
-.filter-presets button {
-  padding: var(--s-xs) var(--s-md);
+.filter-chip-group {
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+}
+
+.filter-chip-label {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 400;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  background: transparent;
+  color: var(--mid-gray);
+  margin: 0;
+  margin-right: var(--s-xs);
+  white-space: nowrap;
+  padding: var(--s-xs) 0;
+  border: 2px solid transparent;
+  line-height: 1.5;
+}
+
+.filter-chip-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--mid-gray-light);
+  flex-shrink: 0;
+}
+
+/* Chip-style checkbox labels (shared with trainer) */
+.filter-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--dark-gray);
+  cursor: pointer;
+  user-select: none;
+  padding: var(--s-xs) var(--s-md);
+  margin: 0;
   border: 2px solid var(--mid-gray);
   border-radius: 0;
-  cursor: pointer;
   transition: all 0.15s ease;
-  color: var(--dark-gray);
+  letter-spacing: 1px;
 }
 
-.filter-presets button:hover {
+.filter-checkbox-label:hover {
   border-color: var(--black);
   color: var(--black);
-  background: var(--warm-gray);
 }
 
-.filter-presets button.active {
+.filter-checkbox-label:has(input:checked) {
   background: var(--black);
   border-color: var(--black);
   color: var(--white);
+}
+
+.filter-checkbox-label input[type="checkbox"] {
+  display: none;
 }
 
 /* ==========================================================================

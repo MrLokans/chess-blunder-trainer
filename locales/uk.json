@@ -137,13 +137,14 @@
   "dashboard.title": "Панель Blunder Tutor",
   "dashboard.filter.from": "Від:",
   "dashboard.filter.to": "До:",
-  "dashboard.filter.time_control": "Контроль часу:",
-  "dashboard.filter.game_phase": "Фаза гри:",
+  "dashboard.filter.time_control": "Контроль часу",
+  "dashboard.filter.game_phase": "Фаза гри",
   "dashboard.filter.last_7d": "Останні 7 днів",
   "dashboard.filter.last_30d": "Останні 30 днів",
   "dashboard.filter.last_90d": "Останні 90 днів",
   "dashboard.filter.last_1y": "Останній рік",
   "dashboard.filter.all_time": "Весь час",
+  "dashboard.filter.custom_range": "Свій діапазон",
   "dashboard.stat.total_games": "Усього партій",
   "dashboard.stat.analyzed_games": "Проаналізовані партії",
   "dashboard.stat.total_blunders": "Усього грубих промахів",
@@ -564,5 +565,6 @@
   "trainer.star.removed": "Видалено",
   "settings.features.starred_puzzles": "Обрані задачі",
   "trainer.details.tactical": "Тактичні деталі",
-  "trainer.details.explanation": "Чому це був промах"
+  "trainer.details.explanation": "Чому це був промах",
+  "dashboard.filter.title": "Фільтри"
 }

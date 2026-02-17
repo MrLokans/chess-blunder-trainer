@@ -137,13 +137,14 @@
   "dashboard.title": "Panel de Blunder Tutor",
   "dashboard.filter.from": "Desde:",
   "dashboard.filter.to": "Hasta:",
-  "dashboard.filter.time_control": "Control de tiempo:",
-  "dashboard.filter.game_phase": "Fase de juego:",
+  "dashboard.filter.time_control": "Control de tiempo",
+  "dashboard.filter.game_phase": "Fase de juego",
   "dashboard.filter.last_7d": "Últimos 7 días",
   "dashboard.filter.last_30d": "Últimos 30 días",
   "dashboard.filter.last_90d": "Últimos 90 días",
   "dashboard.filter.last_1y": "Último año",
   "dashboard.filter.all_time": "Todo el tiempo",
+  "dashboard.filter.custom_range": "Rango personalizado",
   "dashboard.stat.total_games": "Total de partidas",
   "dashboard.stat.analyzed_games": "Partidas analizadas",
   "dashboard.stat.total_blunders": "Total de errores graves",
@@ -564,5 +565,6 @@
   "trainer.star.removed": "Eliminado",
   "settings.features.starred_puzzles": "Puzzles favoritos",
   "trainer.details.tactical": "Detalles tácticos",
-  "trainer.details.explanation": "Por qué fue un error grave"
+  "trainer.details.explanation": "Por qué fue un error grave",
+  "dashboard.filter.title": "Filtros"
 }

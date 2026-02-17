@@ -64,41 +64,13 @@
     color: var(--mid-gray);
   }
 
-  /* Checkbox filter groups — each on its own row */
-  .checkbox-filters {
-    flex-direction: column;
-    gap: var(--s-sm);
-    align-items: flex-start;
-  }
-
-  .checkbox-filters .filter-group {
-    width: 100%;
-  }
-
-  .checkbox-filters .filter-group + .filter-group {
-    border-top: 1px solid var(--light-gray);
-    padding-top: var(--s-sm);
-  }
-
-  /* Game type / game phase filter styles */
-  .game-type-filters,
-  .game-phase-filters {
-    display: flex;
-    gap: var(--s-md);
-    flex-wrap: wrap;
-  }
-
+  /* Legacy checkbox-label kept for compat */
   .checkbox-label {
     display: flex;
     align-items: center;
     gap: var(--s-xs);
     cursor: pointer;
     font-size: var(--text-sm);
-  }
-
-  .checkbox-label input[type="checkbox"] {
-    width: auto;
-    cursor: pointer;
   }
 
   /* ==========================================================================

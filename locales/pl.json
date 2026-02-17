@@ -137,13 +137,14 @@
   "dashboard.title": "Panel Blunder Tutor",
   "dashboard.filter.from": "Od:",
   "dashboard.filter.to": "Do:",
-  "dashboard.filter.time_control": "Tempo gry:",
-  "dashboard.filter.game_phase": "Faza gry:",
+  "dashboard.filter.time_control": "Tempo gry",
+  "dashboard.filter.game_phase": "Faza gry",
   "dashboard.filter.last_7d": "Ostatnie 7 dni",
   "dashboard.filter.last_30d": "Ostatnie 30 dni",
   "dashboard.filter.last_90d": "Ostatnie 90 dni",
   "dashboard.filter.last_1y": "Ostatni rok",
   "dashboard.filter.all_time": "Cały czas",
+  "dashboard.filter.custom_range": "Własny zakres",
   "dashboard.stat.total_games": "Łączna liczba partii",
   "dashboard.stat.analyzed_games": "Przeanalizowane partie",
   "dashboard.stat.total_blunders": "Łączna liczba grubych błędów",
@@ -564,5 +565,6 @@
   "trainer.star.removed": "Usunięto",
   "settings.features.starred_puzzles": "Ulubione zagadki",
   "trainer.details.tactical": "Szczegóły taktyczne",
-  "trainer.details.explanation": "Dlaczego to był błąd"
+  "trainer.details.explanation": "Dlaczego to był błąd",
+  "dashboard.filter.title": "Filtry"
 }

@@ -137,13 +137,14 @@
   "dashboard.title": "Blunder Tutor 面板",
   "dashboard.filter.from": "从：",
   "dashboard.filter.to": "到：",
-  "dashboard.filter.time_control": "时间控制：",
-  "dashboard.filter.game_phase": "游戏阶段：",
+  "dashboard.filter.time_control": "时间控制",
+  "dashboard.filter.game_phase": "游戏阶段",
   "dashboard.filter.last_7d": "最近 7 天",
   "dashboard.filter.last_30d": "最近 30 天",
   "dashboard.filter.last_90d": "最近 90 天",
   "dashboard.filter.last_1y": "最近一年",
   "dashboard.filter.all_time": "所有时间",
+  "dashboard.filter.custom_range": "自定义范围",
   "dashboard.stat.total_games": "总对局数",
   "dashboard.stat.analyzed_games": "已分析对局",
   "dashboard.stat.total_blunders": "严重失误总数",
@@ -564,5 +565,6 @@
   "trainer.star.removed": "已取消",
   "settings.features.starred_puzzles": "收藏题目功能",
   "trainer.details.tactical": "战术详情",
-  "trainer.details.explanation": "为什么这是一步严重失误"
+  "trainer.details.explanation": "为什么这是一步严重失误",
+  "dashboard.filter.title": "筛选"
 }

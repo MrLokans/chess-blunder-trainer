@@ -1,7 +1,22 @@
 import { bus } from '../event-bus.js';
 
+const STORAGE_KEY = 'dashboard-date-filter';
+
 let currentDateFrom = null;
 let currentDateTo = null;
+
+function saveState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function getPresetDates(preset) {
   const now = new Date();
@@ -27,6 +42,22 @@ export function getPresetDates(preset) {
   return { from, to };
 }
 
+function updatePresetButtons(activePreset) {
+  document.querySelectorAll('.filter-presets button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === activePreset);
+  });
+}
+
+function updateCustomToggle(active) {
+  const customToggle = document.getElementById('customDateToggle');
+  if (customToggle) customToggle.classList.toggle('active', active);
+}
+
+function collapseCustomRow() {
+  const customRow = document.getElementById('customDateRow');
+  if (customRow) customRow.classList.add('collapsed');
+}
+
 export function setPreset(preset) {
   const dates = getPresetDates(preset);
   document.getElementById('dateFrom').value = dates.from || '';
@@ -34,17 +65,20 @@ export function setPreset(preset) {
   currentDateFrom = dates.from;
   currentDateTo = dates.to;
 
-  document.querySelectorAll('.filter-presets button').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.preset === preset);
-  });
-
+  updatePresetButtons(preset);
+  updateCustomToggle(false);
+  saveState({ type: 'preset', preset });
   bus.emit('dashboard:reload');
 }
 
 export function applyDateFilter() {
   currentDateFrom = document.getElementById('dateFrom').value || null;
   currentDateTo = document.getElementById('dateTo').value || null;
-  document.querySelectorAll('.filter-presets button').forEach(btn => btn.classList.remove('active'));
+
+  updatePresetButtons(null);
+  collapseCustomRow();
+  updateCustomToggle(!!(currentDateFrom || currentDateTo));
+  saveState({ type: 'custom', from: currentDateFrom, to: currentDateTo });
   bus.emit('dashboard:reload');
 }
 
@@ -54,10 +88,10 @@ export function clearDateFilter() {
   currentDateFrom = null;
   currentDateTo = null;
 
-  document.querySelectorAll('.filter-presets button').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.preset === 'all');
-  });
-
+  updatePresetButtons('all');
+  updateCustomToggle(false);
+  collapseCustomRow();
+  saveState({ type: 'preset', preset: 'all' });
   bus.emit('dashboard:reload');
 }
 
@@ -87,10 +121,43 @@ export function allFilterParams(gameTypeFilters, gamePhaseFilters) {
   return params;
 }
 
+function restoreState() {
+  const state = loadState();
+  if (!state) return;
+
+  if (state.type === 'preset' && state.preset) {
+    const dates = getPresetDates(state.preset);
+    document.getElementById('dateFrom').value = dates.from || '';
+    document.getElementById('dateTo').value = dates.to || '';
+    currentDateFrom = dates.from;
+    currentDateTo = dates.to;
+    updatePresetButtons(state.preset);
+    updateCustomToggle(false);
+  } else if (state.type === 'custom') {
+    document.getElementById('dateFrom').value = state.from || '';
+    document.getElementById('dateTo').value = state.to || '';
+    currentDateFrom = state.from || null;
+    currentDateTo = state.to || null;
+    updatePresetButtons(null);
+    updateCustomToggle(!!(currentDateFrom || currentDateTo));
+  }
+}
+
 export function initDateFilters() {
   document.getElementById('applyDateBtn').addEventListener('click', applyDateFilter);
   document.getElementById('clearDateBtn').addEventListener('click', clearDateFilter);
   document.querySelectorAll('.filter-presets button[data-preset]').forEach(btn => {
     btn.addEventListener('click', () => setPreset(btn.dataset.preset));
   });
+
+  const customToggle = document.getElementById('customDateToggle');
+  const customRow = document.getElementById('customDateRow');
+  if (customToggle && customRow) {
+    customToggle.addEventListener('click', () => {
+      const isCollapsed = customRow.classList.toggle('collapsed');
+      customToggle.classList.toggle('active', !isCollapsed);
+    });
+  }
+
+  restoreState();
 }

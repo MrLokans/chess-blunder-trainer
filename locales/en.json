@@ -137,13 +137,14 @@
   "dashboard.title": "Blunder Tutor Dashboard",
   "dashboard.filter.from": "From:",
   "dashboard.filter.to": "To:",
-  "dashboard.filter.time_control": "Time Control:",
-  "dashboard.filter.game_phase": "Game Phase:",
+  "dashboard.filter.time_control": "Time Control",
+  "dashboard.filter.game_phase": "Game Phase",
   "dashboard.filter.last_7d": "Last 7 days",
   "dashboard.filter.last_30d": "Last 30 days",
   "dashboard.filter.last_90d": "Last 90 days",
   "dashboard.filter.last_1y": "Last year",
   "dashboard.filter.all_time": "All time",
+  "dashboard.filter.custom_range": "Custom range",
   "dashboard.stat.total_games": "Total Games",
   "dashboard.stat.analyzed_games": "Analyzed Games",
   "dashboard.stat.total_blunders": "Total Blunders",
@@ -564,5 +565,6 @@
   "trainer.star.removed": "Unstarred",
   "settings.features.starred_puzzles": "Starred (favorite) puzzles",
   "trainer.details.tactical": "Tactical Details",
-  "trainer.details.explanation": "Why This Was a Blunder"
+  "trainer.details.explanation": "Why This Was a Blunder",
+  "dashboard.filter.title": "Filters"
 }
