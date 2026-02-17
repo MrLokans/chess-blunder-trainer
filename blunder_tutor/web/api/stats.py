@@ -6,7 +6,7 @@ from typing import Annotated, Any
 from fastapi import Depends, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from blunder_tutor.constants import PHASE_FROM_STRING
 from blunder_tutor.repositories.stats_repository import StatsFilter
@@ -160,6 +160,122 @@ class ActivityHeatmapResponse(BaseModel):
     max_count: int = Field(description="Maximum daily count for scaling")
     total_days: int = Field(description="Number of days with activity")
     total_attempts: int = Field(description="Total attempts in period")
+
+
+class GrowthWindow(BaseModel):
+    window_index: int = Field(description="Window index (0 = oldest)")
+    game_start: int = Field(description="1-based index of first game in window")
+    game_end: int = Field(description="1-based index of last game in window")
+    avg_blunders_per_game: float = Field(description="Average blunders per game")
+    avg_cpl: float = Field(description="Average centipawn loss per game")
+    avg_blunder_severity: float = Field(description="Average CPL of blunders only")
+    clean_game_rate: float = Field(description="Percentage of games with 0 blunders")
+    catastrophic_rate: float = Field(
+        description="Percentage of blunders with CPL > 500"
+    )
+
+
+class GrowthTrend(BaseModel):
+    blunder_frequency: str = Field(description="improving / stable / declining")
+    move_quality: str = Field(description="improving / stable / declining")
+    severity: str = Field(description="improving / stable / declining")
+    clean_rate: str = Field(description="improving / stable / declining")
+    catastrophic_rate: str = Field(description="improving / stable / declining")
+
+    @field_validator(
+        "blunder_frequency",
+        "move_quality",
+        "severity",
+        "clean_rate",
+        "catastrophic_rate",
+    )
+    @classmethod
+    def validate_direction(cls, v: str) -> str:
+        if v not in ("improving", "stable", "declining"):
+            msg = "Must be improving, stable, or declining"
+            raise ValueError(msg)
+        return v
+
+
+class GrowthMetricsResponse(BaseModel):
+    windows: list[GrowthWindow] = Field(description="Rolling window metrics")
+    trend: GrowthTrend | None = Field(description="Trend comparing last two windows")
+    total_games: int = Field(description="Total analyzed games")
+    window_size: int = Field(description="Games per window")
+
+
+TREND_THRESHOLD = 0.05
+
+
+def _compute_growth_windows(
+    per_game: list[dict], window_size: int
+) -> list[GrowthWindow]:
+    windows = []
+    for i in range(0, len(per_game) - window_size + 1, window_size):
+        chunk = per_game[i : i + window_size]
+        total_blunders = sum(g["blunder_count"] for g in chunk)
+        total_catastrophic = sum(g["catastrophic_count"] for g in chunk)
+        clean_games = sum(1 for g in chunk if g["blunder_count"] == 0)
+
+        windows.append(
+            GrowthWindow(
+                window_index=len(windows),
+                game_start=i + 1,
+                game_end=i + len(chunk),
+                avg_blunders_per_game=round(total_blunders / len(chunk), 2),
+                avg_cpl=round(sum(g["avg_cpl"] for g in chunk) / len(chunk), 1),
+                avg_blunder_severity=round(
+                    (
+                        sum(
+                            g["avg_blunder_cpl"]
+                            for g in chunk
+                            if g["avg_blunder_cpl"] > 0
+                        )
+                        / max(sum(1 for g in chunk if g["avg_blunder_cpl"] > 0), 1)
+                    ),
+                    1,
+                ),
+                clean_game_rate=round(clean_games / len(chunk) * 100, 1),
+                catastrophic_rate=round(
+                    total_catastrophic / max(total_blunders, 1) * 100, 1
+                ),
+            )
+        )
+    return windows
+
+
+def _trend_direction(old: float, new: float, *, lower_is_better: bool) -> str:
+    if old == 0:
+        return "stable"
+    change = (new - old) / abs(old)
+    if lower_is_better:
+        change = -change
+    if change > TREND_THRESHOLD:
+        return "improving"
+    if change < -TREND_THRESHOLD:
+        return "declining"
+    return "stable"
+
+
+def _compute_trend(windows: list[GrowthWindow]) -> GrowthTrend | None:
+    if len(windows) < 2:
+        return None
+    prev, last = windows[-2], windows[-1]
+    return GrowthTrend(
+        blunder_frequency=_trend_direction(
+            prev.avg_blunders_per_game, last.avg_blunders_per_game, lower_is_better=True
+        ),
+        move_quality=_trend_direction(prev.avg_cpl, last.avg_cpl, lower_is_better=True),
+        severity=_trend_direction(
+            prev.avg_blunder_severity, last.avg_blunder_severity, lower_is_better=True
+        ),
+        clean_rate=_trend_direction(
+            prev.clean_game_rate, last.clean_game_rate, lower_is_better=False
+        ),
+        catastrophic_rate=_trend_direction(
+            prev.catastrophic_rate, last.catastrophic_rate, lower_is_better=True
+        ),
+    )
 
 
 stats_router = APIRouter()
@@ -518,3 +634,28 @@ async def get_conversion_resilience(
     filters: StatsFilterDep,
 ) -> dict[str, Any]:
     return await stats_repo.get_conversion_resilience(filters=filters)
+
+
+@stats_router.get(
+    "/api/stats/growth",
+    response_model=GrowthMetricsResponse,
+    summary="Get growth metrics",
+    description="Returns rolling-window growth metrics showing how blunder frequency, severity, and move quality evolve over time.",
+)
+async def get_growth_metrics(
+    stats_repo: StatsRepoDep,
+    filters: StatsFilterDep,
+    window_size: Annotated[
+        int,
+        Query(ge=5, le=100, description="Number of games per window"),
+    ] = 20,
+) -> GrowthMetricsResponse:
+    per_game = await stats_repo.get_growth_metrics(filters=filters)
+    windows = _compute_growth_windows(per_game, window_size)
+    trend = _compute_trend(windows)
+    return GrowthMetricsResponse(
+        windows=windows,
+        trend=trend,
+        total_games=len(per_game),
+        window_size=window_size,
+    )

@@ -12,6 +12,7 @@ from blunder_tutor.utils.time_control import (
     GAME_TYPE_LABELS,
 )
 
+CATASTROPHIC_CP_LOSS = 500
 WINNING_THRESHOLD_CP = 200
 LOSING_THRESHOLD_CP = -200
 
@@ -924,3 +925,45 @@ class StatsRepository(BaseDbRepository):
             "total_games_with_blunders": total_with_blunders,
             "total_games_without_blunders": total_without_blunders,
         }
+
+    async def get_growth_metrics(
+        self,
+        filters: StatsFilter | None = None,
+    ) -> list[dict[str, object]]:
+        filters = filters or StatsFilter()
+        query = f"""
+            SELECT
+                g.game_id,
+                g.end_time_utc,
+                COUNT(CASE WHEN am.classification = 3 THEN 1 END) as blunder_count,
+                AVG(am.cp_loss) as avg_cpl,
+                AVG(CASE WHEN am.classification = 3 THEN am.cp_loss END) as avg_blunder_cpl,
+                COUNT(CASE WHEN am.classification = 3 AND am.cp_loss > {CATASTROPHIC_CP_LOSS} THEN 1 END) as catastrophic_count,
+                COUNT(CASE WHEN am.classification = 3 THEN 1 END) as total_blunders_for_rate
+            FROM analysis_moves am
+            JOIN game_index_cache g ON am.game_id = g.game_id
+            WHERE g.analyzed = 1
+            {PLAYER_SIDE_FILTER}
+        """
+        params: list[object] = []
+        query = filters.append_to(query, params, include_phase=False)
+        query += " GROUP BY g.game_id, g.end_time_utc ORDER BY g.end_time_utc ASC"
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        return [
+            {
+                "game_id": row[0],
+                "end_time_utc": row[1],
+                "blunder_count": row[2],
+                "avg_cpl": round(float(row[3]), 1) if row[3] is not None else 0.0,
+                "avg_blunder_cpl": round(float(row[4]), 1)
+                if row[4] is not None
+                else 0.0,
+                "catastrophic_count": row[5],
+                "total_blunders": row[6],
+            }
+            for row in rows
+        ]

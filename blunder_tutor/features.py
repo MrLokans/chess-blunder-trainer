@@ -21,6 +21,7 @@ class Feature(StrEnum):
     DASHBOARD_CONVERSION_RESILIENCE = "dashboard.conversion_resilience"
     DASHBOARD_COLLAPSE_POINT = "dashboard.collapse_point"
     DASHBOARD_TRAPS = "dashboard.traps"
+    DASHBOARD_GROWTH = "dashboard.growth"
 
     TRAINER_FILTER_DIFFICULTY = "trainer.filter.difficulty"
 
@@ -78,6 +79,7 @@ FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
             Feature.DASHBOARD_CONVERSION_RESILIENCE,
             Feature.DASHBOARD_COLLAPSE_POINT,
             Feature.DASHBOARD_TRAPS,
+            Feature.DASHBOARD_GROWTH,
         ],
     ),
     (
@@ -111,6 +113,7 @@ FEATURE_LABELS: dict[Feature, str] = {
     Feature.DASHBOARD_CONVERSION_RESILIENCE: "settings.features.dashboard_conversion_resilience",
     Feature.DASHBOARD_COLLAPSE_POINT: "settings.features.dashboard_collapse_point",
     Feature.DASHBOARD_TRAPS: "settings.features.dashboard_traps",
+    Feature.DASHBOARD_GROWTH: "settings.features.dashboard_growth",
     Feature.TRAINER_FILTER_DIFFICULTY: "settings.features.trainer_filter_difficulty",
     Feature.PAGE_IMPORT: "settings.features.page_import",
     Feature.AUTO_SYNC: "settings.features.auto_sync",

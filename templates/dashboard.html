@@ -126,12 +126,51 @@
   </div>
 </div>
 
-{% if has_feature('dashboard.heatmap') %}
+{# — Actionable insights — #}
+
+{% if has_feature('dashboard.growth') %}
+<div class="chart-container" id="growthMetrics">
+  <div class="chart-title">{{ t('dashboard.chart.growth') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.growth_desc') }}</p>
+  <div id="growthMetricsContent">
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
+  </div>
+</div>
+{% endif %}
+
+{% if has_feature('dashboard.accuracy') %}
 <div class="chart-container">
-  <div class="chart-title">{{ t('dashboard.chart.puzzle_activity') }}</div>
-  <p class="chart-description">{{ t('dashboard.chart.puzzle_activity_desc') }}</p>
-  <div id="activityHeatmap">
-    <div class="loading-placeholder">{{ t('dashboard.chart.loading_activity') }}</div>
+  <div class="chart-title">{{ t('dashboard.chart.accuracy_by_date') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.accuracy_by_date_desc') }}</p>
+  <div id="dateChartContainer" class="chart-canvas-container">
+    <canvas id="dateChart"></canvas>
+  </div>
+  <div id="dateChartEmpty" class="chart-empty-state">
+    {{ t('dashboard.chart.no_accuracy_data') }}
+  </div>
+</div>
+{% endif %}
+
+{% if has_feature('dashboard.collapse_point') %}
+<div class="chart-container">
+  <div class="chart-title">{{ t('dashboard.chart.collapse_point') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.collapse_point_desc') }}</p>
+  <div class="collapse-point-container" id="collapsePointContainer">
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
+  </div>
+</div>
+{% endif %}
+
+{% if has_feature('dashboard.tactical_breakdown') %}
+<div class="chart-container">
+  <div class="chart-title">{{ t('dashboard.chart.blunders_by_tactical') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.blunders_by_tactical_desc') }}</p>
+  <div class="tactical-bar-container hidden" id="tacticalBarContainer">
+    <div class="tactical-bar" id="tacticalBar"></div>
+    <div class="tactical-legend" id="tacticalLegend"></div>
+  </div>
+  <div class="tactical-breakdown" id="tacticalBreakdown">
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
   </div>
 </div>
 {% endif %}
@@ -158,6 +197,57 @@
     </div>
   </div>
   <div class="phase-breakdown" id="phaseBreakdown">
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
+  </div>
+</div>
+{% endif %}
+
+{% if has_feature('dashboard.conversion_resilience') %}
+<div class="chart-container">
+  <div class="chart-title">{{ t('dashboard.chart.conversion_resilience') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.conversion_resilience_desc') }}</p>
+  <div class="conversion-resilience-container" id="conversionResilienceContainer">
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
+  </div>
+</div>
+{% endif %}
+
+{# — Training engagement — #}
+
+{% if has_feature('dashboard.heatmap') %}
+<div class="chart-container">
+  <div class="chart-title">{{ t('dashboard.chart.puzzle_activity') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.puzzle_activity_desc') }}</p>
+  <div id="activityHeatmap">
+    <div class="loading-placeholder">{{ t('dashboard.chart.loading_activity') }}</div>
+  </div>
+</div>
+{% endif %}
+
+{# — Diagnostics — #}
+
+{% if has_feature('dashboard.opening_breakdown') %}
+<div class="chart-container">
+  <div class="chart-title">{{ t('dashboard.chart.blunders_by_opening') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.blunders_by_opening_desc') }}</p>
+  <div id="ecoBreakdown">
+    <div class="loading-placeholder">{{ t('common.loading') }}</div>
+  </div>
+</div>
+{% endif %}
+
+{% if has_feature('dashboard.difficulty_breakdown') %}
+<div class="chart-container">
+  <div class="chart-title">
+    {{ t('dashboard.chart.blunders_by_difficulty') }}
+    <button class="info-help-btn" id="difficultyHelpBtn" aria-label="{{ t('dashboard.difficulty.help_label') }}">?</button>
+  </div>
+  <p class="chart-description">{{ t('dashboard.chart.blunders_by_difficulty_desc') }}</p>
+  <div class="difficulty-bar-container hidden" id="difficultyBarContainer">
+    <div class="difficulty-bar" id="difficultyBar"></div>
+    <div class="difficulty-legend" id="difficultyLegend"></div>
+  </div>
+  <div class="difficulty-breakdown" id="difficultyBreakdown">
     <div class="loading-placeholder">{{ t('common.loading') }}</div>
   </div>
 </div>
@@ -196,42 +286,7 @@
   </div>
 </div>
 
-{% if has_feature('dashboard.opening_breakdown') %}
-<div class="chart-container">
-  <div class="chart-title">{{ t('dashboard.chart.blunders_by_opening') }}</div>
-  <p class="chart-description">{{ t('dashboard.chart.blunders_by_opening_desc') }}</p>
-  <div id="ecoBreakdown">
-    <div class="loading-placeholder">{{ t('common.loading') }}</div>
-  </div>
-</div>
-{% endif %}
-
-{% if has_feature('dashboard.difficulty_breakdown') %}
-<div class="chart-container">
-  <div class="chart-title">
-    {{ t('dashboard.chart.blunders_by_difficulty') }}
-    <button class="info-help-btn" id="difficultyHelpBtn" aria-label="{{ t('dashboard.difficulty.help_label') }}">?</button>
-  </div>
-  <p class="chart-description">{{ t('dashboard.chart.blunders_by_difficulty_desc') }}</p>
-  <div class="difficulty-bar-container hidden" id="difficultyBarContainer">
-    <div class="difficulty-bar" id="difficultyBar"></div>
-    <div class="difficulty-legend" id="difficultyLegend"></div>
-  </div>
-  <div class="difficulty-breakdown" id="difficultyBreakdown">
-    <div class="loading-placeholder">{{ t('common.loading') }}</div>
-  </div>
-</div>
-{% endif %}
-
-{% if has_feature('dashboard.collapse_point') %}
-<div class="chart-container">
-  <div class="chart-title">{{ t('dashboard.chart.collapse_point') }}</div>
-  <p class="chart-description">{{ t('dashboard.chart.collapse_point_desc') }}</p>
-  <div class="collapse-point-container" id="collapsePointContainer">
-    <div class="loading-placeholder">{{ t('common.loading') }}</div>
-  </div>
-</div>
-{% endif %}
+{# — Niche / reference — #}
 
 {% if has_feature('dashboard.traps') %}
 <div class="chart-container">
@@ -243,26 +298,15 @@
 </div>
 {% endif %}
 
-{% if has_feature('dashboard.conversion_resilience') %}
+{% if has_feature('dashboard.accuracy') %}
 <div class="chart-container">
-  <div class="chart-title">{{ t('dashboard.chart.conversion_resilience') }}</div>
-  <p class="chart-description">{{ t('dashboard.chart.conversion_resilience_desc') }}</p>
-  <div class="conversion-resilience-container" id="conversionResilienceContainer">
-    <div class="loading-placeholder">{{ t('common.loading') }}</div>
+  <div class="chart-title">{{ t('dashboard.chart.accuracy_by_hour') }}</div>
+  <p class="chart-description">{{ t('dashboard.chart.accuracy_by_hour_desc') }}</p>
+  <div id="hourChartContainer" class="chart-canvas-container">
+    <canvas id="hourChart"></canvas>
   </div>
-</div>
-{% endif %}
-
-{% if has_feature('dashboard.tactical_breakdown') %}
-<div class="chart-container">
-  <div class="chart-title">{{ t('dashboard.chart.blunders_by_tactical') }}</div>
-  <p class="chart-description">{{ t('dashboard.chart.blunders_by_tactical_desc') }}</p>
-  <div class="tactical-bar-container hidden" id="tacticalBarContainer">
-    <div class="tactical-bar" id="tacticalBar"></div>
-    <div class="tactical-legend" id="tacticalLegend"></div>
-  </div>
-  <div class="tactical-breakdown" id="tacticalBreakdown">
-    <div class="loading-placeholder">{{ t('common.loading') }}</div>
+  <div id="hourChartEmpty" class="chart-empty-state">
+    {{ t('dashboard.chart.no_hourly_data') }}
   </div>
 </div>
 {% endif %}
@@ -282,30 +326,6 @@
     <tbody></tbody>
   </table>
 </div>
-
-{% if has_feature('dashboard.accuracy') %}
-<div class="chart-container">
-  <div class="chart-title">{{ t('dashboard.chart.accuracy_by_date') }}</div>
-  <p class="chart-description">{{ t('dashboard.chart.accuracy_by_date_desc') }}</p>
-  <div id="dateChartContainer" class="chart-canvas-container">
-    <canvas id="dateChart"></canvas>
-  </div>
-  <div id="dateChartEmpty" class="chart-empty-state">
-    {{ t('dashboard.chart.no_accuracy_data') }}
-  </div>
-</div>
-
-<div class="chart-container">
-  <div class="chart-title">{{ t('dashboard.chart.accuracy_by_hour') }}</div>
-  <p class="chart-description">{{ t('dashboard.chart.accuracy_by_hour_desc') }}</p>
-  <div id="hourChartContainer" class="chart-canvas-container">
-    <canvas id="hourChart"></canvas>
-  </div>
-  <div id="hourChartEmpty" class="chart-empty-state">
-    {{ t('dashboard.chart.no_hourly_data') }}
-  </div>
-</div>
-{% endif %}
 
 <div class="mt-4">
   <a class="btn" href="/management">{{ t('dashboard.link.manage_imports') }}</a>
@@ -329,6 +349,31 @@
         <dd>{{ t('dashboard.difficulty.help_hard') }}</dd>
       </dl>
       <p class="info-modal-note">{{ t('dashboard.difficulty.help_factors') }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- CPL help modal -->
+<div class="info-modal-overlay" id="cplHelpOverlay">
+  <div class="info-modal">
+    <div class="info-modal-header">
+      <h3>{{ t('growth.cpl_help_title') }}</h3>
+      <button class="info-modal-close" id="cplHelpClose">&times;</button>
+    </div>
+    <div class="info-modal-body">
+      <p>{{ t('growth.cpl_help_intro') }}</p>
+      <p><strong>{{ t('growth.cpl_help_scale_title') }}</strong></p>
+      <dl class="info-modal-definitions">
+        <dt class="cpl-excellent">0–30</dt>
+        <dd>{{ t('growth.cpl_help_excellent') }}</dd>
+        <dt class="cpl-good">30–60</dt>
+        <dd>{{ t('growth.cpl_help_good') }}</dd>
+        <dt class="cpl-average">60–120</dt>
+        <dd>{{ t('growth.cpl_help_average') }}</dd>
+        <dt class="cpl-high">120+</dt>
+        <dd>{{ t('growth.cpl_help_high') }}</dd>
+      </dl>
+      <p class="info-modal-note">{{ t('growth.cpl_help_note') }}</p>
     </div>
   </div>
 </div>

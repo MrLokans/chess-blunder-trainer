@@ -36,9 +36,9 @@ describe('ProgressTracker', () => {
   it('show() displays progress and hides start button', () => {
     const tracker = makeTracker();
     tracker.show({ progress_current: 5, progress_total: 10 });
-    assert.equal(container.style.display, 'block');
-    assert.equal(startBtn.style.display, 'none');
-    assert.equal(stopBtn.style.display, 'inline-block');
+    assert.equal(container.classList.contains('hidden'), false);
+    assert.equal(startBtn.classList.contains('hidden'), true);
+    assert.equal(stopBtn.classList.contains('hidden'), false);
     assert.equal(text.textContent, '5/10 (50%)');
     assert.equal(fill.style.width, '50%');
   });
@@ -46,17 +46,17 @@ describe('ProgressTracker', () => {
   it('show() with null job still displays container', () => {
     const tracker = makeTracker();
     tracker.show(null);
-    assert.equal(container.style.display, 'block');
-    assert.equal(startBtn.style.display, 'none');
+    assert.equal(container.classList.contains('hidden'), false);
+    assert.equal(startBtn.classList.contains('hidden'), true);
   });
 
   it('hide() hides progress and shows start button', () => {
     const tracker = makeTracker();
     tracker.show({ progress_current: 0, progress_total: 0 });
     tracker.hide();
-    assert.equal(container.style.display, 'none');
-    assert.equal(startBtn.style.display, 'inline-block');
-    assert.equal(stopBtn.style.display, 'none');
+    assert.equal(container.classList.contains('hidden'), true);
+    assert.equal(startBtn.classList.contains('hidden'), false);
+    assert.equal(stopBtn.classList.contains('hidden'), true);
   });
 
   it('updateProgress() updates fill and text', () => {

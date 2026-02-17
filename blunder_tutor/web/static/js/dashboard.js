@@ -13,6 +13,7 @@ import {
   renderCollapsePoint, renderConversionResilience, renderTrapsSummary,
   renderGameBreakdown, initOpeningGroupToggles,
 } from './dashboard/renderers.js';
+import { loadGrowthMetrics } from './growth.js';
 
 const wsClient = new WebSocketClient();
 
@@ -119,6 +120,10 @@ async function loadStats() {
         const card = document.getElementById('trapsDashboardCard');
         if (card) card.innerHTML = '';
       }
+    }
+
+    if (hasFeature('dashboard.growth') && document.getElementById('growthMetricsContent')) {
+      await loadGrowthMetrics(getParams());
     }
 
     if (hasFeature('dashboard.tactical_breakdown') && document.getElementById('tacticalBreakdown')) {

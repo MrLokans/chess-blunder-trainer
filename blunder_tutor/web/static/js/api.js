@@ -77,6 +77,7 @@ export const client = {
     blundersByDifficulty: (params) => request(withQuery('/api/stats/blunders/by-difficulty', params)),
     collapsePoint: (params) => request(withQuery('/api/stats/collapse-point', params)),
     conversionResilience: (params) => request(withQuery('/api/stats/conversion-resilience', params)),
+    growth: (params) => request(withQuery('/api/stats/growth', params)),
   },
 
   analysis: {

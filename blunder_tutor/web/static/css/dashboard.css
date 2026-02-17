@@ -674,3 +674,58 @@
     border-radius: 50%;
     display: inline-block;
   }
+
+  .growth-metric-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .growth-metric-row:last-child {
+    border-bottom: none;
+  }
+
+  .growth-metric-label {
+    flex: 0 0 160px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .growth-sparkline {
+    flex: 1 1 120px;
+    height: 36px;
+    max-width: 160px;
+  }
+
+  .growth-value {
+    flex: 0 0 70px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .growth-trend {
+    flex: 0 0 24px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .growth-trend--improving { color: var(--success); }
+  .growth-trend--stable { color: var(--mid-gray); }
+  .growth-trend--declining { color: var(--error); }
+
+  .info-modal-definitions dt.cpl-excellent { color: var(--success); }
+  .info-modal-definitions dt.cpl-good { color: var(--correct); }
+  .info-modal-definitions dt.cpl-average { color: var(--warning); }
+  .info-modal-definitions dt.cpl-high { color: var(--error); }
+
+  .growth-insufficient {
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-align: center;
+  }
