@@ -31,7 +31,7 @@ select::-ms-expand {
   width: 100%;
   padding: var(--s-sm) var(--s-sm);
   padding-right: 40px;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-base);
   color: var(--black);
   background: var(--white);
@@ -91,7 +91,7 @@ select::-ms-expand {
 
 .custom-dropdown__option {
   padding: var(--s-sm) var(--s-sm);
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-base);
   color: var(--black);
   cursor: pointer;

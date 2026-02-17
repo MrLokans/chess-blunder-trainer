@@ -426,7 +426,7 @@
     flex-direction: column;
     justify-content: space-around;
     padding-top: 20px;
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--mid-gray);
   }
 
@@ -437,7 +437,7 @@
 
   .heatmap-months {
     display: grid;
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--mid-gray);
     margin-bottom: 4px;
     height: 16px;
@@ -476,7 +476,7 @@
     align-items: center;
     gap: var(--s-xs);
     margin-top: var(--s-md);
-    font-size: 10px;
+    font-size: var(--text-xs);
     color: var(--mid-gray);
     justify-content: flex-end;
   }
@@ -505,7 +505,7 @@
     padding: 4px 8px;
     background: var(--black);
     color: var(--white);
-    font-size: 11px;
+    font-size: var(--text-xs);
     white-space: nowrap;
     border-radius: 0;
     z-index: 100;
@@ -553,7 +553,7 @@
     font-weight: 600;
     color: var(--mid-gray);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: var(--ls-normal);
     margin-bottom: var(--s-sm);
   }
 

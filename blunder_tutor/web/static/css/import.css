@@ -9,7 +9,7 @@
 
 .pgn-textarea {
   width: 100%;
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: var(--text-base);
   padding: var(--s-sm);
   border: 2px solid var(--black);

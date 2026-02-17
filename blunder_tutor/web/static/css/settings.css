@@ -30,7 +30,7 @@
     color: var(--mid-gray);
     margin: var(--s-xl) 0 var(--s-md) 0;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: var(--ls-normal);
   }
 
   .theme-section-title:first-child {
@@ -143,7 +143,7 @@
 
   .color-hex-input {
     width: 80px !important;
-    font-family: var(--font-mono);
+    font-family: var(--font-ui);
     font-size: var(--text-xs);
     text-transform: uppercase;
     padding: var(--s-sm) !important;
@@ -160,7 +160,7 @@
   .preview-label {
     font-size: var(--text-xs);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: var(--ls-normal);
     color: var(--mid-gray);
     margin-bottom: var(--s-md);
   }
@@ -381,12 +381,12 @@
 }
 
 .feature-group-title {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-weight: 600;
   font-size: var(--text-base);
   color: var(--mid-gray);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--ls-normal);
   margin-bottom: var(--s-sm);
 }
 
