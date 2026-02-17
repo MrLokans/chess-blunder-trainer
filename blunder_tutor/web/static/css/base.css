@@ -504,6 +504,12 @@ input[type="checkbox"] {
   font-family: var(--font-sans);
 }
 
+.section-divider {
+  margin: var(--s-xl) 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
 /* ==========================================================================
    Tables
    ========================================================================== */

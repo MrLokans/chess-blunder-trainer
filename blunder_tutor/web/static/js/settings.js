@@ -1,6 +1,7 @@
 import { client } from './api.js';
 import { getCurrentTheme, initThemeEditor } from './settings/theme-editor.js';
 import { initBoardEditor, saveBoardSettings } from './settings/board-editor.js';
+import { initDropdowns } from './dropdown.js';
 
 const form = document.getElementById('settingsForm');
 const errorAlert = document.getElementById('errorAlert');
@@ -135,3 +136,4 @@ function initFeatureToggles() {
 loadSyncSettings();
 initBoardEditor();
 initFeatureToggles();
+initDropdowns();

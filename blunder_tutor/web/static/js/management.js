@@ -4,6 +4,9 @@ import { JobCard } from './job-card.js';
 import { loadConfiguredUsernames } from './usernames.js';
 import { client } from './api.js';
 import { debounce } from './debounce.js';
+import { initDropdowns } from './dropdown.js';
+
+initDropdowns();
 
 const wsClient = new WebSocketClient();
 

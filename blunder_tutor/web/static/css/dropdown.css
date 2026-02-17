@@ -1,0 +1,108 @@
+/* ==========================================================================
+   Custom Dropdown Component
+   Replaces native <select> with a fully styled dropdown.
+   Used via dropdown.js: initDropdowns() or createDropdown(selectEl).
+   ========================================================================== */
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231A1A1A' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+
+select::-ms-expand {
+  display: none;
+}
+
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.custom-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--s-sm) var(--s-sm);
+  padding-right: 40px;
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  color: var(--black);
+  background: var(--white);
+  border: 2px solid var(--black);
+  border-radius: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease;
+}
+
+.custom-dropdown__trigger:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.custom-dropdown__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-dropdown__arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  transition: transform 0.15s ease;
+}
+
+[aria-expanded="true"] .custom-dropdown__arrow {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.custom-dropdown__options {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--white);
+  border: 2px solid var(--black);
+  border-top: none;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.custom-dropdown__options--open {
+  display: block;
+}
+
+.custom-dropdown__option {
+  padding: var(--s-sm) var(--s-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-base);
+  color: var(--black);
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.custom-dropdown__option:hover {
+  background: var(--warm-gray);
+}
+
+.custom-dropdown__option--selected {
+  background: var(--warm-gray);
+  font-weight: 700;
+}

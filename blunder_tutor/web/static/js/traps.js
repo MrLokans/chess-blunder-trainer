@@ -1,4 +1,5 @@
 import { client } from './api.js';
+import { initDropdowns } from './dropdown.js';
 
 let trapStats = [];
 const trapCatalog = {};
@@ -120,6 +121,7 @@ async function openDetail(trapId) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initDropdowns();
   loadData().catch(err => {
     console.error('Failed to load trap data:', err);
     document.getElementById('trapsSummary').innerHTML =

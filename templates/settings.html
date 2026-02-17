@@ -24,7 +24,7 @@
 
       <div class="form-group">
         <label for="localeSelect">{{ t('settings.locale.label') }}</label>
-        <select id="localeSelect" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
+        <select id="localeSelect">
           {% for code in available_locales() %}
           <option value="{{ code }}" {% if code == locale %}selected{% endif %}>
             {{ locale_display_names.get(code, code) }}
@@ -34,7 +34,7 @@
         <div class="help-text">{{ t('settings.locale.description') }}</div>
       </div>
 
-      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
+      <hr class="section-divider">
 
       <h2 style="font-size: 1.25rem; margin-bottom: 8px;">{{ t('settings.features.title') }}</h2>
       <p class="help-text" style="margin-bottom: 16px;">{{ t('settings.features.subtitle') }}</p>
@@ -55,7 +55,7 @@
       </div>
 
       <div id="autoSyncSection" style="{% if not has_feature('auto.sync') %}display: none;{% endif %}">
-      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
+      <hr class="section-divider">
 
       <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.auto_sync.title') }}</h2>
 
@@ -69,7 +69,7 @@
 
       <div class="form-group">
         <label for="syncInterval">{{ t('settings.sync_interval.label') }}</label>
-        <select id="syncInterval" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;">
+        <select id="syncInterval">
           <option value="6">{{ t('settings.sync_interval.6h') }}</option>
           <option value="12">{{ t('settings.sync_interval.12h') }}</option>
           <option value="24" selected>{{ t('settings.sync_interval.24h') }}</option>
@@ -94,7 +94,7 @@
       </div>
       </div>
 
-      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
+      <hr class="section-divider">
 
       <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.training.title') }}</h2>
 
@@ -104,7 +104,7 @@
         <div class="help-text">{{ t('settings.spaced_repetition.help') }}</div>
       </div>
 
-      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
+      <hr class="section-divider">
 
       <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.board.title') }}</h2>
       <p class="help-text" style="margin-bottom: 16px;">{{ t('settings.board.description') }}</p>
@@ -140,7 +140,7 @@
         </div>
       </div>
 
-      <hr style="margin: 32px 0; border: none; border-top: 1px solid var(--border);">
+      <hr class="section-divider">
 
       <h2 style="font-size: 1.25rem; margin-bottom: 16px;">{{ t('settings.theme.title') }}</h2>
       <p class="help-text" style="margin-bottom: 16px;">{{ t('settings.theme.description') }}</p>

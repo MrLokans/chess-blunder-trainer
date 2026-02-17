@@ -9,14 +9,16 @@
 
 {% block content %}
 
-<div class="card">
+<section>
   <h2>{{ t('management.engine.title') }}</h2>
   <div id="engineStatus">
     <p style="color: var(--text-muted); font-size: 0.875rem;">{{ t('management.engine.loading') }}</p>
   </div>
-</div>
+</section>
 
-<div class="card">
+<hr class="section-divider">
+
+<section>
   <h2>{{ t('management.import.title') }}</h2>
   <div id="importMessage" style="display: none;"></div>
   {% if demo_mode %}
@@ -51,9 +53,11 @@
       <div class="progress-text" id="importProgressText">0%</div>
     </div>
   </div>
-</div>
+</section>
 
-<div class="card">
+<hr class="section-divider">
+
+<section>
   <h2>{{ t('management.sync.title') }}</h2>
   <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
     {{ t('management.sync.description') }}
@@ -64,9 +68,11 @@
   <p style="color: var(--text-muted); font-size: 0.875rem;">{{ t('demo.disabled_action') }}</p>
   {% endif %}
   <div id="syncStatus" style="margin-top: 16px;"></div>
-</div>
+</section>
 
-<div class="card">
+<hr class="section-divider">
+
+<section>
   <h2>{{ t('management.analysis.title') }}</h2>
   <div id="analysisMessage" style="display: none;"></div>
 
@@ -90,9 +96,11 @@
       <div class="progress-text" id="analysisProgressText">0%</div>
     </div>
   </div>
-</div>
+</section>
 
-<div class="card">
+<hr class="section-divider">
+
+<section>
   <h2>{{ t('management.backfill_phases.title') }}</h2>
   <div id="backfillMessage" style="display: none;"></div>
 
@@ -117,9 +125,11 @@
       <div class="progress-text" id="backfillProgressText">0%</div>
     </div>
   </div>
-</div>
+</section>
 
-<div class="card">
+<hr class="section-divider">
+
+<section>
   <h2>{{ t('management.backfill_eco.title') }}</h2>
   <div id="ecoBackfillMessage" style="display: none;"></div>
 
@@ -144,9 +154,11 @@
       <div class="progress-text" id="ecoBackfillProgressText">0%</div>
     </div>
   </div>
-</div>
+</section>
 
-<div class="card">
+<hr class="section-divider">
+
+<section>
   <h2>{{ t('management.backfill_traps.title') }}</h2>
   <div id="trapsBackfillMessage" style="display: none;"></div>
 
@@ -169,9 +181,11 @@
       <div class="progress-text" id="trapsBackfillProgressText">0%</div>
     </div>
   </div>
-</div>
+</section>
 
-<div class="card">
+<hr class="section-divider">
+
+<section>
   <h2>{{ t('management.jobs.title') }}</h2>
   <div style="overflow-x: auto;">
   <table id="jobsTable">
@@ -196,10 +210,12 @@
     </tbody>
   </table>
   </div>
-</div>
+</section>
 
 {% if not demo_mode %}
-<div class="card" style="border-top-color: var(--red);">
+<hr class="section-divider">
+
+<section>
   <h2 style="color: var(--error);">{{ t('management.danger.title') }}</h2>
   <div id="deleteAllMessage" style="display: none;"></div>
   <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 16px;">
@@ -217,7 +233,7 @@
       <div class="progress-text" id="deleteAllProgressText">0%</div>
     </div>
   </div>
-</div>
+</section>
 {% endif %}
 {% endblock %}
 
