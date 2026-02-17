@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0]
+
+### Added
+
+- **Vim-like move input**: Type moves in algebraic notation (e.g., `Nf3`, `e4`) directly from the keyboard in the trainer — no need to drag pieces. Includes auto-completion, disambiguation prompts, and full localization across all languages.
+- **Custom dropdown component**: New reusable dropdown with dividers and improved styling, replacing native selects on management and settings pages.
+
+### Changed
+
+- **Dashboard filters redesigned**: Rebuilt the dashboard filter section from scratch with a cleaner layout, better date range controls, and improved responsive behavior. Changed default font.
+- **Heatmap reworked**: Improved heatmap rendering and styling on the dashboard.
+- **Design token consolidation**: Migrated hardcoded colors, spacing, and typography values across all pages to CSS custom properties for better theme consistency.
+- **CSS class cleanup**: Replaced inline styles and ad-hoc classes across all pages (trainer, dashboard, settings, management, setup, starred, traps) with shared utility classes.
+- **Chessboard always visible**: Fixed trainer layout so the board stays in the viewport without being clipped.
+
+---
+
 ## [2.0.4]
 
 ### Changed
