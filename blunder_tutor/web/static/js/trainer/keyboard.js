@@ -2,9 +2,11 @@ import { bus } from '../event-bus.js';
 import * as state from './state.js';
 import * as ui from './ui.js';
 import { navigateLine } from './line-player.js';
+import { isVimInputActive } from './vim-input.js';
 
 export function initKeyboard() {
   document.addEventListener('keydown', (e) => {
+    if (isVimInputActive()) return;
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
     if (state.get('animatingLine')) return;
@@ -56,6 +58,9 @@ export function initKeyboard() {
       navigateLine(-1);
     } else if (e.key === 'ArrowRight') {
       navigateLine(1);
+    } else if (e.key === ':') {
+      e.preventDefault();
+      bus.emit('action:vimInput');
     }
   });
 }

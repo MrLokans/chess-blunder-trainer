@@ -11,6 +11,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/trainer.css">
+<link rel="stylesheet" href="/static/css/vim-input.css">
 {% endblock %}
 
 {% block body %}
@@ -121,6 +122,15 @@
               </button>
             </div>
           </div>
+        </div>
+      <!-- Vim-like move input -->
+        <div id="vimInput" class="vim-input-overlay">
+          <span class="vim-input-prefix">:</span>
+          <input type="text" class="vim-input-field" id="vimInputField"
+                 autocomplete="off" spellcheck="false"
+                 placeholder="{{ t('trainer.vim.placeholder') }}">
+          <span class="vim-input-error" id="vimInputError"></span>
+          <div class="vim-suggestions" id="vimSuggestions"></div>
         </div>
       </div>
     </div>
@@ -372,6 +382,7 @@
         <tr><td><kbd>T</kbd></td><td>{{ t('trainer.shortcuts.threats') }}</td></tr>
         <tr><td><kbd>L</kbd></td><td>{{ t('trainer.shortcuts.lichess') }}</td></tr>
         <tr><td><kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd></td><td>{{ t('trainer.shortcuts.undo') }}</td></tr>
+        <tr><td><kbd>:</kbd></td><td>{{ t('trainer.shortcuts.type_move') }}</td></tr>
         <tr><td><kbd>?</kbd></td><td>{{ t('trainer.shortcuts.show_help') }}</td></tr>
         <tr><td><kbd>Esc</kbd></td><td>{{ t('trainer.shortcuts.close_help') }}</td></tr>
       </tbody>

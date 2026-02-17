@@ -9,6 +9,7 @@ import * as filters from './trainer/filters.js';
 import * as visuals from './trainer/board-visuals.js';
 import * as linePlayer from './trainer/line-player.js';
 import { initKeyboard } from './trainer/keyboard.js';
+import { initVimInput, show as showVimInput } from './trainer/vim-input.js';
 
 const wsClient = new WebSocketClient();
 
@@ -329,6 +330,12 @@ bus.on('action:reveal', () => {
   }
 });
 
+bus.on('action:vimInput', () => {
+  if (!state.get('animatingLine') && !state.get('submitted') && state.get('puzzle')) {
+    showVimInput();
+  }
+});
+
 bus.on('filters:changed', (detail) => {
   trackEvent('Filter Changed', { filter_type: detail?.filterType || '' });
   loadPuzzle();
@@ -386,6 +393,14 @@ async function init() {
   ui.initUI();
   filters.initFilters();
   initKeyboard();
+  initVimInput({
+    getGame: () => state.get('game'),
+    getBoard: () => state.get('board'),
+    isInteractive: () => !state.get('animatingLine') && !state.get('submitted') && !!state.get('puzzle'),
+    onMoveComplete: (move) => {
+      onBoardMove(move.from, move.to, move);
+    },
+  });
   initEventListeners();
 
   await visuals.loadBoardSettings();

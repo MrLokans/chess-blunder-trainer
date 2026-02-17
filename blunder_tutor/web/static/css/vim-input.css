@@ -1,0 +1,119 @@
+.vim-input-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  background: rgba(0, 0, 0, 0.88);
+  border-radius: 0 0 4px 4px;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  padding: 0 10px;
+  gap: 4px;
+}
+
+.vim-input-overlay.active {
+  display: flex;
+}
+
+.vim-input-prefix {
+  font-family: monospace;
+  font-size: 1rem;
+  color: #888;
+  user-select: none;
+  line-height: 36px;
+}
+
+.vim-input-field {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: monospace;
+  font-size: 1rem;
+  color: #e8e8e8;
+  caret-color: #7ec8e3;
+  line-height: 36px;
+  padding: 0;
+}
+
+.vim-input-field::placeholder {
+  color: #555;
+}
+
+.vim-input-error {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--error, #e74c3c);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.vim-input-error.visible {
+  opacity: 1;
+}
+
+@keyframes vim-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.vim-input-overlay.shake {
+  animation: vim-shake 0.3s ease;
+}
+
+.vim-suggestions {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  display: none;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.92);
+  border-radius: 4px 4px 0 0;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.vim-suggestions.visible {
+  display: flex;
+}
+
+.vim-suggestion {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #999;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s, color 0.1s;
+}
+
+.vim-suggestion b {
+  color: #7ec8e3;
+  font-weight: 600;
+}
+
+.vim-suggestion:hover {
+  background: rgba(126, 200, 227, 0.15);
+  color: #ccc;
+}
+
+.vim-suggestion.selected {
+  background: rgba(126, 200, 227, 0.25);
+  color: #e8e8e8;
+}
+
+.vim-suggestion.more {
+  color: #555;
+  cursor: default;
+  font-style: italic;
+}
