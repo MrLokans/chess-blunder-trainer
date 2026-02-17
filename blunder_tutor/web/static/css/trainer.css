@@ -138,7 +138,7 @@
   gap: var(--s-md);
   align-items: stretch;
   width: 100%;
-  max-width: 620px;
+  max-width: min(620px, calc(100vh - 200px));
 }
 
 .eval-bar-container {
@@ -189,7 +189,7 @@
 
 #boardWrapper {
   flex: 1;
-  max-width: 580px;
+  max-width: min(580px, calc(100vh - 240px));
   position: relative;
 }
 
