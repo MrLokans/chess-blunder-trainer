@@ -418,7 +418,6 @@
   .heatmap-container {
     display: flex;
     gap: var(--s-sm);
-    overflow-x: auto;
   }
 
   .heatmap-days-labels {
@@ -445,18 +444,18 @@
 
   .heatmap-grid {
     display: grid;
-    gap: 3px;
+    gap: 2px;
   }
 
   .heatmap-week {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
   }
 
   .heatmap-cell {
-    width: 12px;
-    height: 12px;
+    aspect-ratio: 1;
+    width: 100%;
     border-radius: 0;
     cursor: pointer;
   }
@@ -466,6 +465,7 @@
   }
 
   .heatmap-cell.level-0 { background: var(--heatmap-empty, var(--warm-gray)); }
+  .heatmap-cell.level-0.past { background: var(--heatmap-empty-past, #d5d0c5); }
   .heatmap-cell.level-1 { background: var(--heatmap-l1, #9be9a8); }
   .heatmap-cell.level-2 { background: var(--heatmap-l2, #40c463); }
   .heatmap-cell.level-3 { background: var(--heatmap-l3, #30a14e); }
@@ -482,6 +482,9 @@
   }
 
   .heatmap-legend .heatmap-cell {
+    width: 12px;
+    height: 12px;
+    aspect-ratio: unset;
     cursor: default;
   }
 

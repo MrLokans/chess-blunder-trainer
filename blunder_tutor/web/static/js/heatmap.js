@@ -31,16 +31,18 @@ function renderHeatmap(containerId, data) {
 
   const { daily_counts, total_days, total_attempts } = data;
 
-  // Calculate date range (52 weeks ending today, aligned to start on Sunday)
   const today = new Date();
-  const endDate = new Date(today);
+  const todayStr = formatDate(today);
+  const year = today.getFullYear();
 
-  // Go back to find the start of the current week (Sunday)
-  const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - 364); // Go back ~52 weeks
-  // Align to Sunday
+  // Full year: Jan 1 – Dec 31, aligned to start on Sunday
+  const startDate = new Date(year, 0, 1);
   while (startDate.getDay() !== 0) {
     startDate.setDate(startDate.getDate() - 1);
+  }
+  const endDate = new Date(year, 11, 31);
+  while (endDate.getDay() !== 6) {
+    endDate.setDate(endDate.getDate() + 1);
   }
 
   // Build grid data
@@ -52,6 +54,7 @@ function renderHeatmap(containerId, data) {
     const dateStr = formatDate(currentDate);
     const dayData = daily_counts[dateStr] || { total: 0, correct: 0, incorrect: 0 };
     const level = getActivityLevel(dayData.total);
+    const isPast = dateStr <= todayStr;
 
     currentWeek.push({
       date: dateStr,
@@ -59,6 +62,7 @@ function renderHeatmap(containerId, data) {
       correct: dayData.correct,
       incorrect: dayData.incorrect,
       level,
+      isPast,
       dayOfWeek: currentDate.getDay(),
       month: currentDate.getMonth(),
       dayOfMonth: currentDate.getDate()
@@ -99,10 +103,10 @@ function renderHeatmap(containerId, data) {
           ${DAYS_OF_WEEK.filter((_, i) => i % 2 === 1).map(d => `<span>${d}</span>`).join('')}
         </div>
         <div class="heatmap-grid-wrapper">
-          <div class="heatmap-months">
+          <div class="heatmap-months" style="grid-template-columns: repeat(${weeks.length}, 1fr)">
             ${monthLabels.map(m => `<span style="grid-column: ${m.weekIndex + 1}">${m.month}</span>`).join('')}
           </div>
-          <div class="heatmap-grid" style="grid-template-columns: repeat(${weeks.length}, 12px)">
+          <div class="heatmap-grid" style="grid-template-columns: repeat(${weeks.length}, 1fr)">
             ${weeks.map(week => `
               <div class="heatmap-week">
                 ${Array(7).fill(0).map((_, dayIndex) => {
@@ -111,7 +115,8 @@ function renderHeatmap(containerId, data) {
                   const tooltip = day.total === 0
                     ? t('common.no_activity', { date: day.date })
                     : t('heatmap.tooltip', { date: day.date, total: day.total, correct: day.correct, incorrect: day.incorrect });
-                  return `<div class="heatmap-cell level-${day.level}"
+                  const pastClass = day.level === 0 && day.isPast ? ' past' : '';
+                  return `<div class="heatmap-cell level-${day.level}${pastClass}"
                     data-tooltip="${tooltip}"
                     data-date="${day.date}" data-total="${day.total}"></div>`;
                 }).join('')}
