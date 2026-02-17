@@ -141,13 +141,28 @@
 
 .trap-detail-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: auto 1fr;
+  gap: var(--s-md);
+  align-items: start;
+}
+
+.trap-board-section {
+  max-width: 400px;
+}
+
+.trap-detail-info {
+  display: flex;
+  flex-direction: column;
   gap: var(--s-md);
 }
 
 @media (max-width: 768px) {
   .trap-detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .trap-board-section {
+    max-width: 100%;
   }
 }
 

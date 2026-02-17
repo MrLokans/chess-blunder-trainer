@@ -566,5 +566,14 @@
   "settings.features.starred_puzzles": "Обрані задачі",
   "trainer.details.tactical": "Тактичні деталі",
   "trainer.details.explanation": "Чому це був промах",
-  "dashboard.filter.title": "Фільтри"
+  "dashboard.filter.title": "Фільтри",
+  "traps.tab.trap_line": "Пастка",
+  "traps.tab.refutation_line": "Спростування",
+  "traps.player.play": "Відтворити",
+  "traps.player.pause": "Пауза",
+  "traps.player.step_forward": "Крок вперед",
+  "traps.player.step_back": "Крок назад",
+  "traps.player.go_start": "На початок",
+  "traps.player.go_end": "В кінець",
+  "traps.player.move_counter": "Хід {current} з {total}"
 }

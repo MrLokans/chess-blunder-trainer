@@ -566,5 +566,14 @@
   "settings.features.starred_puzzles": "收藏题目功能",
   "trainer.details.tactical": "战术详情",
   "trainer.details.explanation": "为什么这是一步严重失误",
-  "dashboard.filter.title": "筛选"
+  "dashboard.filter.title": "筛选",
+  "traps.tab.trap_line": "陷阱",
+  "traps.tab.refutation_line": "破解",
+  "traps.player.play": "播放",
+  "traps.player.pause": "暂停",
+  "traps.player.step_forward": "下一步",
+  "traps.player.step_back": "上一步",
+  "traps.player.go_start": "回到起点",
+  "traps.player.go_end": "跳到结尾",
+  "traps.player.move_counter": "第 {current} 步，共 {total} 步"
 }

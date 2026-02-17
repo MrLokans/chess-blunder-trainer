@@ -1,8 +1,10 @@
 import { client } from './api.js';
 import { initDropdowns } from './dropdown.js';
+import SequencePlayer from './sequence-player.js';
 
 let trapStats = [];
 const trapCatalog = {};
+let activePlayer = null;
 
 async function loadData() {
   const [statsResp, catalogResp] = await Promise.all([
@@ -85,6 +87,43 @@ function renderTable(stats) {
   });
 }
 
+function destroyPlayer() {
+  if (activePlayer) {
+    activePlayer.destroy();
+    activePlayer = null;
+  }
+}
+
+function initPlayer(trap) {
+  destroyPlayer();
+
+  const trapMoves = trap.trap_san_variants?.[0] || [];
+  const orientation = trap.victim_side === 'black' ? 'black' : 'white';
+  const playerEl = document.getElementById('trapSequencePlayer');
+
+  activePlayer = new SequencePlayer(playerEl, trapMoves, { orientation });
+
+  const trapTab = document.getElementById('trapTabTrap');
+  const refTab = document.getElementById('trapTabRefutation');
+
+  trapTab.classList.add('active');
+  refTab.classList.remove('active');
+
+  trapTab.onclick = () => {
+    if (trapTab.classList.contains('active')) return;
+    trapTab.classList.add('active');
+    refTab.classList.remove('active');
+    activePlayer.setMoves(trapMoves, { orientation });
+  };
+
+  refTab.onclick = () => {
+    if (refTab.classList.contains('active')) return;
+    refTab.classList.add('active');
+    trapTab.classList.remove('active');
+    activePlayer.setMoves(trap.refutation_san || [], { orientation });
+  };
+}
+
 async function openDetail(trapId) {
   const panel = document.getElementById('trapDetailPanel');
   panel.classList.remove('hidden');
@@ -103,6 +142,10 @@ async function openDetail(trapId) {
     trap ? `${t('traps.refutation')}: ${trap.refutation_move}` : '';
   document.getElementById('trapRecognitionTip').textContent =
     trap ? trap.recognition_tip : '';
+
+  if (trap) {
+    initPlayer(trap);
+  }
 
   const gamesEl = document.getElementById('trapGamesList');
   if (history.length === 0) {
@@ -133,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('trapDetailClose').addEventListener('click', () => {
+    destroyPlayer();
     document.getElementById('trapDetailPanel').classList.add('hidden');
   });
 });

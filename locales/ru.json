@@ -566,5 +566,14 @@
   "settings.features.starred_puzzles": "Избранные задачи",
   "trainer.details.tactical": "Тактические детали",
   "trainer.details.explanation": "Почему это был зевок",
-  "dashboard.filter.title": "Фильтры"
+  "dashboard.filter.title": "Фильтры",
+  "traps.tab.trap_line": "Ловушка",
+  "traps.tab.refutation_line": "Опровержение",
+  "traps.player.play": "Воспроизвести",
+  "traps.player.pause": "Пауза",
+  "traps.player.step_forward": "Шаг вперёд",
+  "traps.player.step_back": "Шаг назад",
+  "traps.player.go_start": "В начало",
+  "traps.player.go_end": "В конец",
+  "traps.player.move_counter": "Ход {current} из {total}"
 }

@@ -566,5 +566,14 @@
   "settings.features.starred_puzzles": "Starred (favorite) puzzles",
   "trainer.details.tactical": "Tactical Details",
   "trainer.details.explanation": "Why This Was a Blunder",
-  "dashboard.filter.title": "Filters"
+  "dashboard.filter.title": "Filters",
+  "traps.tab.trap_line": "The Trap",
+  "traps.tab.refutation_line": "Refutation",
+  "traps.player.play": "Play",
+  "traps.player.pause": "Pause",
+  "traps.player.step_forward": "Step forward",
+  "traps.player.step_back": "Step back",
+  "traps.player.go_start": "Go to start",
+  "traps.player.go_end": "Go to end",
+  "traps.player.move_counter": "Move {current} of {total}"
 }

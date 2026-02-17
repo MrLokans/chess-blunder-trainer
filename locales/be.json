@@ -566,5 +566,14 @@
   "settings.features.starred_puzzles": "Абраныя задачы",
   "trainer.details.tactical": "Тактычныя дэталі",
   "trainer.details.explanation": "Чаму гэта быў грубы промах",
-  "dashboard.filter.title": "Фільтры"
+  "dashboard.filter.title": "Фільтры",
+  "traps.tab.trap_line": "Пастка",
+  "traps.tab.refutation_line": "Абвяржэнне",
+  "traps.player.play": "Прайграць",
+  "traps.player.pause": "Паўза",
+  "traps.player.step_forward": "Крок наперад",
+  "traps.player.step_back": "Крок назад",
+  "traps.player.go_start": "На пачатак",
+  "traps.player.go_end": "У канец",
+  "traps.player.move_counter": "Ход {current} з {total}"
 }

@@ -566,5 +566,14 @@
   "settings.features.starred_puzzles": "Ulubione zagadki",
   "trainer.details.tactical": "Szczegóły taktyczne",
   "trainer.details.explanation": "Dlaczego to był błąd",
-  "dashboard.filter.title": "Filtry"
+  "dashboard.filter.title": "Filtry",
+  "traps.tab.trap_line": "Pułapka",
+  "traps.tab.refutation_line": "Obalenie",
+  "traps.player.play": "Odtwórz",
+  "traps.player.pause": "Pauza",
+  "traps.player.step_forward": "Krok naprzód",
+  "traps.player.step_back": "Krok wstecz",
+  "traps.player.go_start": "Na początek",
+  "traps.player.go_end": "Na koniec",
+  "traps.player.move_counter": "Ruch {current} z {total}"
 }

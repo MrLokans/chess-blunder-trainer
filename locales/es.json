@@ -566,5 +566,14 @@
   "settings.features.starred_puzzles": "Puzzles favoritos",
   "trainer.details.tactical": "Detalles tácticos",
   "trainer.details.explanation": "Por qué fue un error grave",
-  "dashboard.filter.title": "Filtros"
+  "dashboard.filter.title": "Filtros",
+  "traps.tab.trap_line": "La trampa",
+  "traps.tab.refutation_line": "Refutación",
+  "traps.player.play": "Reproducir",
+  "traps.player.pause": "Pausa",
+  "traps.player.step_forward": "Avanzar",
+  "traps.player.step_back": "Retroceder",
+  "traps.player.go_start": "Ir al inicio",
+  "traps.player.go_end": "Ir al final",
+  "traps.player.move_counter": "Jugada {current} de {total}"
 }

@@ -1,0 +1,85 @@
+.sequence-player {
+  max-width: 400px;
+  width: 100%;
+}
+
+.sequence-player-board {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.sequence-player-board .cg-wrap {
+  width: 100%;
+  height: 100%;
+}
+
+.sequence-player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-xs);
+  padding: var(--s-sm) 0;
+}
+
+.sequence-player-controls button {
+  background: none;
+  border: 2px solid var(--black);
+  color: var(--black);
+  width: 36px;
+  height: 36px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sequence-player-controls button:hover {
+  background: var(--black);
+  color: var(--white);
+}
+
+.sequence-player-controls button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.sequence-player-controls button:disabled:hover {
+  background: none;
+  color: var(--black);
+}
+
+.sequence-player-status {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--mid-gray);
+  padding-bottom: var(--s-xs);
+}
+
+.sequence-player-tabs {
+  display: flex;
+  gap: var(--s-xs);
+  margin-bottom: var(--s-sm);
+}
+
+.sequence-player-tabs .tab-btn {
+  padding: var(--s-xs) var(--s-md);
+  border: 2px solid var(--black);
+  background: none;
+  color: var(--black);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sequence-player-tabs .tab-btn.active {
+  background: var(--black);
+  color: var(--white);
+}
+
+.sequence-player-tabs .tab-btn:hover:not(.active) {
+  background: var(--warm-gray);
+}
