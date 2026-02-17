@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1]
+
+### Added
+
+- **Trap move previews**: Traps page now shows an interactive sequence player that animates the key moves for each trap, making it easier to understand the pattern at a glance.
+- **Growth tracking analytics**: New dashboard section with period-over-period comparisons for games played, blunders per game, and accuracy — helping you see improvement trends over time.
+
+### Changed
+
+- **Dashboard layout reordered**: Reorganized dashboard sections for a more logical flow, with growth metrics prominently placed.
+
+---
+
 ## [2.1.0]
 
 ### Added
