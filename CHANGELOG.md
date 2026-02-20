@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3]
+
+### Changed
+
+- **Draggable best-move panel**: The result card that shows after submitting a move is now a floating panel you can drag around the board area. Position is remembered across puzzles via localStorage.
+- **Move submission feedback**: Submit button now pulses and the move prompt shows a spinner while the engine evaluates your move.
+
+---
+
 ## [2.1.2]
 
 ### Changed
