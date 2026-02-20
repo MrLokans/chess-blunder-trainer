@@ -191,8 +191,10 @@ async function submitMoveAction() {
     best_move_eval: puzzle.best_move_eval || null,
   };
 
+  ui.showSubmitting();
   try {
     const data = await client.trainer.submitMove(payload);
+    ui.hideSubmitting();
     state.set('submitted', true);
 
     trackEvent('Puzzle Submitted', {
@@ -226,6 +228,7 @@ async function submitMoveAction() {
       htmx.trigger(document.body, 'statsUpdate');
     }
   } catch (err) {
+    ui.hideSubmitting();
     ui.showBoardResult('accent-revealed', t('trainer.feedback.error'), err.message || t('trainer.feedback.submit_failed'));
     console.error(err);
   }

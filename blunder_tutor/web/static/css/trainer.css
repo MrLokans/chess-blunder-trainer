@@ -31,6 +31,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
 .trainer-panel {
@@ -373,25 +374,37 @@
   text-align: center;
 }
 
-/* Board result overlay — covers the board with centered card */
+/* Submission spinner */
+.submit-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-sm);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--mid-gray);
+  padding: var(--s-sm) 0;
+}
+
+/* Board result card — floating draggable panel */
 .board-result-card {
   display: none;
   position: absolute;
-  inset: 0;
   z-index: 10;
-  background: rgba(0, 0, 0, 0.45);
-  justify-content: center;
-  align-items: center;
+  bottom: var(--s-md);
+  right: var(--s-md);
+  max-width: 340px;
+  width: 85%;
+  max-height: 80%;
 }
 
 .board-result-card.visible {
-  display: flex;
-  opacity: 1;
+  display: block;
   animation: fadeIn 0.2s ease;
 }
 
 .board-result-card.fading-out {
-  display: flex;
+  display: block;
   opacity: 0;
   transition: opacity 1s ease;
   pointer-events: none;
@@ -403,10 +416,38 @@
   border: 3px solid var(--black);
   border-left-width: 5px;
   padding: var(--s-lg);
-  max-width: 400px;
-  width: 85%;
-  max-height: 90%;
+  padding-top: 0;
+  max-height: inherit;
   overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Drag handle */
+.board-result-drag-handle {
+  padding: var(--s-sm) 0;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.board-result-drag-handle:active {
+  cursor: grabbing;
+}
+
+.board-result-drag-handle-bar {
+  width: 32px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--warm-gray);
+}
+
+.board-result-card.dragging {
+  user-select: none;
+}
+
+.board-result-card.dragging .board-result-drag-handle {
+  cursor: grabbing;
 }
 
 /* Accent left-border colors on inner panel */
@@ -727,6 +768,20 @@
   background: var(--blue);
   border-color: var(--blue);
   color: var(--white);
+}
+
+.action-key#submitBtn.submitting {
+  opacity: 1;
+  pointer-events: none;
+}
+
+.action-key#submitBtn.submitting kbd {
+  animation: pulse-kbd 1s ease-in-out infinite;
+}
+
+@keyframes pulse-kbd {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 /* Show Best — green key */

@@ -107,6 +107,7 @@
   "trainer.feedback.error": "错误",
   "trainer.feedback.submit_failed": "提交走法失败",
   "trainer.feedback.no_move": "请先拖动棋子走棋。",
+  "trainer.feedback.evaluating": "正在评估你的走法\u2026",
   "trainer.feedback.best_revealed": "最佳走法已揭示",
   "trainer.feedback.best_revealed_detail": "最佳后续走法如下",
   "trainer.shortcuts.title": "快捷键",

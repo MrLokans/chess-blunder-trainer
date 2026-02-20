@@ -80,49 +80,6 @@
       </div>
       <div id="boardWrapper">
         <div id="board"></div>
-        <!-- Board-anchored overlay result card -->
-        <div class="board-result-card" id="boardResultCard">
-          <div class="board-result-inner">
-            <!-- Feedback header -->
-            <div class="board-result-header" id="boardResultHeader">
-              <div class="board-result-title" id="feedbackTitle"></div>
-              <div class="board-result-detail" id="feedbackDetail"></div>
-            </div>
-            <!-- Best move section (visible only with .best-revealed) -->
-            <div class="board-result-body">
-              <div class="board-result-best">
-                <span class="board-result-move" id="bestMoveDisplay">...</span>
-                <span class="board-result-line" id="bestLineDisplay">...</span>
-              </div>
-              <div class="board-result-action">
-                <button class="btn btn-success" id="tryBestBtn">
-                  {{ t('trainer.button.play_best') }}<kbd>P</kbd>
-                </button>
-              </div>
-              {% if has_feature('trainer.tactics') %}
-              <details class="board-result-details" id="tacticalDetails">
-                <summary>{{ t('trainer.details.tactical') }} ▸</summary>
-                <div class="board-result-details-body">
-                  <div class="board-result-details-heading" id="tacticalInfoTitle"></div>
-                  <div class="board-result-details-text" id="tacticalInfoReason"></div>
-                </div>
-              </details>
-              {% endif %}
-              <details class="board-result-details" id="explanationDetails">
-                <summary>{{ t('trainer.details.explanation') }} ▸</summary>
-                <div class="board-result-details-body">
-                  <div id="explanationBlunder"></div>
-                  <div id="explanationBest"></div>
-                </div>
-              </details>
-            </div>
-            <div class="board-result-next">
-              <button class="btn btn-primary board-result-next-btn" id="overlayNextBtn">
-                {{ t('trainer.shortcuts.next') }}<kbd>N</kbd>
-              </button>
-            </div>
-          </div>
-        </div>
       <!-- Vim-like move input -->
         <div id="vimInput" class="vim-input-overlay">
           <span class="vim-input-prefix">:</span>
@@ -148,6 +105,50 @@
       {% if has_feature('trainer.tactics') %}
       <div class="legend-item hidden" id="legendTactic"><span class="legend-color tactic"></span><span>{{ t('trainer.legend.tactical_squares') }}</span></div>
       {% endif %}
+    </div>
+    <!-- Floating result card (draggable within board area) -->
+    <div class="board-result-card" id="boardResultCard">
+      <div class="board-result-inner">
+        <div class="board-result-drag-handle" id="boardResultDragHandle">
+          <div class="board-result-drag-handle-bar"></div>
+        </div>
+        <div class="board-result-header" id="boardResultHeader">
+          <div class="board-result-title" id="feedbackTitle"></div>
+          <div class="board-result-detail" id="feedbackDetail"></div>
+        </div>
+        <div class="board-result-body">
+          <div class="board-result-best">
+            <span class="board-result-move" id="bestMoveDisplay">...</span>
+            <span class="board-result-line" id="bestLineDisplay">...</span>
+          </div>
+          <div class="board-result-action">
+            <button class="btn btn-success" id="tryBestBtn">
+              {{ t('trainer.button.play_best') }}<kbd>P</kbd>
+            </button>
+          </div>
+          {% if has_feature('trainer.tactics') %}
+          <details class="board-result-details" id="tacticalDetails">
+            <summary>{{ t('trainer.details.tactical') }} ▸</summary>
+            <div class="board-result-details-body">
+              <div class="board-result-details-heading" id="tacticalInfoTitle"></div>
+              <div class="board-result-details-text" id="tacticalInfoReason"></div>
+            </div>
+          </details>
+          {% endif %}
+          <details class="board-result-details" id="explanationDetails">
+            <summary>{{ t('trainer.details.explanation') }} ▸</summary>
+            <div class="board-result-details-body">
+              <div id="explanationBlunder"></div>
+              <div id="explanationBest"></div>
+            </div>
+          </details>
+        </div>
+        <div class="board-result-next">
+          <button class="btn btn-primary board-result-next-btn" id="overlayNextBtn">
+            {{ t('trainer.shortcuts.next') }}<kbd>N</kbd>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 

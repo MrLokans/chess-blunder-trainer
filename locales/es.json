@@ -107,6 +107,7 @@
   "trainer.feedback.error": "Error",
   "trainer.feedback.submit_failed": "No se pudo enviar la jugada",
   "trainer.feedback.no_move": "Primero arrastra una pieza para hacer una jugada.",
+  "trainer.feedback.evaluating": "Evaluando tu jugada\u2026",
   "trainer.feedback.best_revealed": "Mejor jugada revelada",
   "trainer.feedback.best_revealed_detail": "La mejor continuación se muestra abajo",
   "trainer.shortcuts.title": "Atajos de teclado",

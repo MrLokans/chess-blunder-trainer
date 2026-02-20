@@ -27,10 +27,12 @@ export function initUI() {
     'gameLink', 'gameLinkSeparator',
     'copyDebugBtn', 'starPuzzleBtn',
     'tacticalSeparator',
+    'boardResultDragHandle',
   ];
   for (const id of ids) {
     els[id] = document.getElementById(id);
   }
+  initDrag();
   return els;
 }
 
@@ -82,15 +84,38 @@ export function hideEmptyState() {
   if (els.statsCard) els.statsCard.classList.remove('hidden');
 }
 
+let movePromptOriginalHTML = '';
+
+export function showSubmitting() {
+  els.submitBtn.disabled = true;
+  els.submitBtn.classList.add('submitting');
+  movePromptOriginalHTML = els.movePrompt.innerHTML;
+  els.movePrompt.innerHTML = '<div class="submit-spinner"><span class="inline-spinner"></span> ' + t('trainer.feedback.evaluating') + '</div>';
+}
+
+export function hideSubmitting() {
+  els.submitBtn.disabled = false;
+  els.submitBtn.classList.remove('submitting');
+  if (movePromptOriginalHTML) {
+    els.movePrompt.innerHTML = movePromptOriginalHTML;
+    movePromptOriginalHTML = '';
+  }
+}
+
 export function showBoardResult(accentClass, titleText, detail) {
   els.boardResultCard.className = 'board-result-card visible ' + accentClass;
   els.feedbackTitle.textContent = titleText;
   els.feedbackDetail.textContent = detail;
   els.movePrompt.classList.add('hidden');
+  requestAnimationFrame(() => restoreDragPosition());
 }
 
 export function hideBoardResult() {
   els.boardResultCard.classList.remove('visible');
+  els.boardResultCard.style.left = '';
+  els.boardResultCard.style.top = '';
+  els.boardResultCard.style.right = '';
+  els.boardResultCard.style.bottom = '';
   els.movePrompt.classList.remove('hidden');
   els.tryBestBtn.classList.remove('hidden');
   if (els.tacticalDetails) els.tacticalDetails.removeAttribute('open');
@@ -103,6 +128,7 @@ export function toggleBoardResultOverlay() {
   } else {
     els.boardResultCard.classList.add('visible');
     els.movePrompt.classList.add('hidden');
+    requestAnimationFrame(() => restoreDragPosition());
   }
 }
 
@@ -278,6 +304,7 @@ export function showPuzzleData(puzzle) {
 export function enterExplorePhase() {
   els.boardResultCard.classList.add('visible', 'best-revealed');
   els.movePrompt.classList.add('hidden');
+  requestAnimationFrame(() => restoreDragPosition());
   els.submitBtn.disabled = true;
   els.submitBtn.classList.add('hidden');
   els.phaseIndicator.textContent = t('trainer.phase.explore');
@@ -334,4 +361,93 @@ export function isBoardResultVisible() {
 
 export function showHistorySection() {
   els.historySection.classList.remove('hidden');
+}
+
+const DRAG_STORAGE_KEY = 'blunder-tutor-result-card-pos';
+
+function initDrag() {
+  const card = els.boardResultCard;
+  const handle = els.boardResultDragHandle;
+  if (!card || !handle) return;
+
+  let dragging = false;
+  let startX, startY, startLeft, startTop;
+
+  handle.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    dragging = true;
+    card.classList.add('dragging');
+
+    const rect = card.getBoundingClientRect();
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = rect.left;
+    startTop = rect.top;
+
+    handle.setPointerCapture(e.pointerId);
+  });
+
+  handle.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const parent = card.parentElement;
+    const parentRect = parent.getBoundingClientRect();
+
+    let newLeft = startLeft + (e.clientX - startX) - parentRect.left;
+    let newTop = startTop + (e.clientY - startY) - parentRect.top;
+
+    newLeft = Math.max(0, Math.min(newLeft, parentRect.width - card.offsetWidth));
+    newTop = Math.max(0, Math.min(newTop, parentRect.height - card.offsetHeight));
+
+    card.style.left = newLeft + 'px';
+    card.style.top = newTop + 'px';
+    card.style.right = 'auto';
+    card.style.bottom = 'auto';
+  });
+
+  handle.addEventListener('pointerup', (e) => {
+    if (!dragging) return;
+    dragging = false;
+    card.classList.remove('dragging');
+    handle.releasePointerCapture(e.pointerId);
+    saveDragPosition();
+  });
+}
+
+function saveDragPosition() {
+  const card = els.boardResultCard;
+  const parent = card.parentElement;
+  if (!parent) return;
+  const parentRect = parent.getBoundingClientRect();
+  const cardRect = card.getBoundingClientRect();
+
+  const pos = {
+    leftPct: (cardRect.left - parentRect.left) / parentRect.width,
+    topPct: (cardRect.top - parentRect.top) / parentRect.height,
+  };
+  localStorage.setItem(DRAG_STORAGE_KEY, JSON.stringify(pos));
+}
+
+export function restoreDragPosition() {
+  const card = els.boardResultCard;
+  const parent = card.parentElement;
+  if (!parent) return;
+
+  const stored = localStorage.getItem(DRAG_STORAGE_KEY);
+  if (!stored) return;
+
+  try {
+    const pos = JSON.parse(stored);
+    const parentRect = parent.getBoundingClientRect();
+
+    let left = pos.leftPct * parentRect.width;
+    let top = pos.topPct * parentRect.height;
+
+    left = Math.max(0, Math.min(left, parentRect.width - card.offsetWidth));
+    top = Math.max(0, Math.min(top, parentRect.height - card.offsetHeight));
+
+    card.style.left = left + 'px';
+    card.style.top = top + 'px';
+    card.style.right = 'auto';
+    card.style.bottom = 'auto';
+  } catch { /* ignore corrupt data */ }
 }

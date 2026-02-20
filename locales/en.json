@@ -107,6 +107,7 @@
   "trainer.feedback.error": "Error",
   "trainer.feedback.submit_failed": "Failed to submit move",
   "trainer.feedback.no_move": "Drag a piece to make a move first.",
+  "trainer.feedback.evaluating": "Evaluating your move…",
   "trainer.feedback.best_revealed": "Best move revealed",
   "trainer.feedback.best_revealed_detail": "See the best continuation below",
   "trainer.shortcuts.title": "Keyboard Shortcuts",
