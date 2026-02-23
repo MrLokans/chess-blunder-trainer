@@ -77,6 +77,15 @@ def extract_game_url(game: chess.pgn.Game) -> str | None:
     return None
 
 
+def extract_game_url_from_string(pgn_content: str) -> str | None:
+    for line in pgn_content.splitlines():
+        if line.startswith('[Link "') or line.startswith('[Site "https://'):
+            url = line.split('"')[1]
+            if url.startswith("https://"):
+                return url
+    return None
+
+
 def board_before_ply(game: chess.pgn.Game, target_ply: int) -> chess.Board:
     """Get the board state before a specific ply.
 

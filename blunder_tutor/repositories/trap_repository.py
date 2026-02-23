@@ -67,7 +67,8 @@ class TrapRepository(BaseDbRepository):
             """
             SELECT
                 tm.game_id, tm.match_type, tm.user_was_victim, tm.mistake_ply,
-                tm.created_at, g.white, g.black, g.result, g.date, g.source
+                tm.created_at, g.white, g.black, g.result, g.date, g.source,
+                g.pgn_content
             FROM trap_matches tm
             JOIN game_index_cache g ON tm.game_id = g.game_id
             WHERE tm.trap_id = ?
@@ -89,6 +90,7 @@ class TrapRepository(BaseDbRepository):
                 "result": row[7],
                 "date": row[8],
                 "source": row[9],
+                "pgn_content": row[10],
             }
             for row in rows
         ]

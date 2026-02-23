@@ -9,6 +9,7 @@ from blunder_tutor.analysis.traps import (
     _parse_pgn_to_san,
     get_trap_database,
 )
+from blunder_tutor.utils.pgn_utils import extract_game_url_from_string
 from blunder_tutor.web.dependencies import TrapRepoDep
 
 traps_router = APIRouter()
@@ -68,5 +69,9 @@ async def get_trap_detail(trap_id: str, trap_repo: TrapRepoDep) -> dict[str, Any
     catalog_info = _serialize_trap(trap_def) if trap_def else None
 
     history = await trap_repo.get_trap_history(trap_id)
+
+    for entry in history:
+        pgn = entry.pop("pgn_content", None)
+        entry["game_url"] = extract_game_url_from_string(pgn) if pgn else None
 
     return {"trap": catalog_info, "history": history}

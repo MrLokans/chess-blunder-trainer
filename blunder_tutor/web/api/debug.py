@@ -11,6 +11,7 @@ from blunder_tutor.constants import (
     CLASSIFICATION_MISTAKE,
     PHASE_LABELS,
 )
+from blunder_tutor.utils.pgn_utils import extract_game_url_from_string
 from blunder_tutor.web.dependencies import AnalysisRepoDep, GameRepoDep
 
 debug_router = APIRouter()
@@ -52,7 +53,7 @@ def _build_debug_text(
     if eco.get("eco_code"):
         lines.append(f"- **Opening**: {eco['eco_code']} {eco.get('eco_name', '')}")
 
-    game_url = _extract_game_url_from_pgn(game.get("pgn_content", ""))
+    game_url = extract_game_url_from_string(game.get("pgn_content", ""))
     if game_url:
         lines.append(f"- **Original game**: {game_url}")
 
@@ -144,15 +145,6 @@ def _build_debug_text(
         lines.append("_No analysis data available for this game._")
 
     return "\n".join(lines)
-
-
-def _extract_game_url_from_pgn(pgn_content: str) -> str | None:
-    for line in pgn_content.splitlines():
-        if line.startswith('[Link "') or line.startswith('[Site "https://'):
-            url = line.split('"')[1]
-            if url.startswith("https://"):
-                return url
-    return None
 
 
 @debug_router.get(

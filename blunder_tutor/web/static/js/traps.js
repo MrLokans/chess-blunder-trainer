@@ -153,9 +153,13 @@ async function openDetail(trapId) {
   } else {
     gamesEl.innerHTML = history.map(g => {
       const typeClass = `match-type-${g.match_type}`;
+      const label = `${g.white} vs ${g.black} (${g.result}) — ${g.date || ''}`;
+      const gameLink = g.game_url
+        ? `<a href="${g.game_url}" target="_blank" rel="noopener noreferrer">${label}</a>`
+        : label;
       return `<div class="trap-game-item">
         <span class="${typeClass}">${g.match_type}</span>
-        ${g.white} vs ${g.black} (${g.result}) — ${g.date || ''}
+        ${gameLink}
       </div>`;
     }).join('');
   }
