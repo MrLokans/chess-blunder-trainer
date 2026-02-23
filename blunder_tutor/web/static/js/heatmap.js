@@ -115,8 +115,8 @@ function renderHeatmap(containerId, data) {
                   const tooltip = day.total === 0
                     ? t('common.no_activity', { date: day.date })
                     : t('heatmap.tooltip', { date: day.date, total: day.total, correct: day.correct, incorrect: day.incorrect });
-                  const pastClass = day.level === 0 && day.isPast ? ' past' : '';
-                  return `<div class="heatmap-cell level-${day.level}${pastClass}"
+                  const futureClass = day.level === 0 && !day.isPast ? ' future' : '';
+                  return `<div class="heatmap-cell level-${day.level}${futureClass}"
                     data-tooltip="${tooltip}"
                     data-date="${day.date}" data-total="${day.total}"></div>`;
                 }).join('')}

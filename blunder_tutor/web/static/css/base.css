@@ -1052,6 +1052,9 @@ tr:hover td {
 }
 
 .filter-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   font-weight: 700;
