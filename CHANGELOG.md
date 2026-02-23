@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.4]
+
+### Changed
+
+- **Smarter blunder explanations for ignored threats**: The explanation engine now detects when a blunder ignores a piece that is already under profitable attack, and when the best move retreats a threatened piece to safety. Localized across all seven languages.
+
+---
+
 ## [2.1.3]
 
 ### Changed
