@@ -46,13 +46,20 @@ For Docker Compose, environment variables, and advanced options see [Docker Depl
 
 ## Features
 
-- **Multi-platform import** — Lichess + Chess.com in one place
-- **Stockfish 18 analysis** — configurable depth, runs locally
-- **Puzzle trainer** — practice your blunders with hints and best-move arrows
-- **Dashboard** — accuracy trends, blunder heatmap, opening breakdown, difficulty distribution
+- **Multi-platform import** — Lichess, Chess.com, or paste your own PGN
+- **Stockfish analysis** — configurable depth, runs locally on your machine
+- **Puzzle trainer** — practice your blunders with hints, best-move arrows, tactical patterns highlights and threat detector
+- **Smart filtering** — narrow puzzles by game phase, tactical pattern, difficulty, time control, color, or date range
+- **Spaced repetition** — recently solved puzzles are held back so you focus on fresh weaknesses
+- **Opening traps** — see which traps you've fallen into and learn the refutations
+- **Starred puzzles** — bookmark positions you want to revisit
+- **Dashboard** — accuracy trends, activity heatmap, opening breakdown, phase/color/difficulty distribution, growth metrics, conversion & resilience rates, collapse-point analysis
+- **Board & theme customization** — 16 piece sets, 6 board color presets, 7+ UI themes, or build your own
 - **Auto-sync** — scheduled background fetch and analysis of new games
-- **Self-hosted** — your data stays on your machine, no account needed
-- **Multilingual** — English, Russian, and more
+- **Self-hosted** — SQLite database, no external services, your data stays on your machine
+- **Docker-ready** — single `docker run` command to get started
+- **Multilingual** — English, Russian, Ukrainian, Spanish, Polish, Belarusian, and Chinese
+- **Demo mode** — read-only hosted demo for trying the app without installing anything
 
 ## Local Development
 
