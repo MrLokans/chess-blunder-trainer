@@ -328,6 +328,104 @@ def _find_hanging_piece(
     return (best[1], best[2])
 
 
+def _find_ignored_threat(
+    board: chess.Board,
+    blunder_move: chess.Move,
+    player_color: chess.Color,
+) -> tuple[chess.PieceType, chess.Square] | None:
+    board_after = board.copy()
+    board_after.push(blunder_move)
+    enemy = not player_color
+
+    best: tuple[int, chess.PieceType, chess.Square] | None = None
+    for sq in chess.SQUARES:
+        piece = board.piece_at(sq)
+        if (
+            piece is None
+            or piece.color != player_color
+            or piece.piece_type == chess.KING
+        ):
+            continue
+        piece_val = PIECE_VALUES.get(piece.piece_type, 0)
+        if piece_val < 3:
+            continue
+
+        if blunder_move.from_square == sq:
+            continue
+
+        attackers_before = board.attackers(enemy, sq)
+        if not attackers_before:
+            continue
+        min_attacker_val = min(
+            PIECE_VALUES.get(board.piece_at(a).piece_type, 0)
+            for a in attackers_before
+            if board.piece_at(a)
+        )
+        if min_attacker_val >= piece_val:
+            continue
+
+        if (
+            board.is_capture(blunder_move)
+            and blunder_move.to_square in attackers_before
+        ):
+            continue
+
+        piece_after = board_after.piece_at(sq)
+        if piece_after is None or piece_after.color != player_color:
+            continue
+        if not board_after.is_attacked_by(enemy, sq):
+            continue
+
+        if best is None or piece_val > best[0]:
+            best = (piece_val, piece.piece_type, sq)
+
+    if best is None:
+        return None
+    return (best[1], best[2])
+
+
+def _is_retreat_to_safety(
+    board: chess.Board,
+    best_move: chess.Move,
+) -> tuple[chess.PieceType, chess.Square] | None:
+    if board.is_capture(best_move):
+        return None
+
+    player = board.turn
+    enemy = not player
+    piece = board.piece_at(best_move.from_square)
+    if piece is None or piece.color != player or piece.piece_type == chess.KING:
+        return None
+
+    piece_val = PIECE_VALUES.get(piece.piece_type, 0)
+    if piece_val < 3:
+        return None
+
+    attackers = board.attackers(enemy, best_move.from_square)
+    if not attackers:
+        return None
+    min_attacker_val = min(
+        PIECE_VALUES.get(board.piece_at(a).piece_type, 0)
+        for a in attackers
+        if board.piece_at(a)
+    )
+    if min_attacker_val >= piece_val:
+        return None
+
+    board_after = board.copy()
+    board_after.push(best_move)
+    dest_attackers = board_after.attackers(enemy, best_move.to_square)
+    for a in dest_attackers:
+        attacker_piece = board_after.piece_at(a)
+        if (
+            attacker_piece
+            and PIECE_VALUES.get(attacker_piece.piece_type, 0) < piece_val
+        ):
+            return None
+
+    return (piece.piece_type, best_move.from_square)
+
+
 def _count_material(board: chess.Board, color: chess.Color) -> int:
     total = 0
     for sq in chess.SQUARES:
@@ -564,6 +662,19 @@ def _explain_blunder(
                 },
             )
 
+    # Ignored threat — a friendly piece (value ≥ 3) is under profitable attack
+    # both before and after the blunder, and the blunder doesn't address it
+    ignored = _find_ignored_threat(board, blunder_move, player_color)
+    if ignored:
+        piece_type, sq = ignored
+        return I18nMessage(
+            key="explanation.blunder.ignored_threat",
+            params={
+                "piece": _type_key(piece_type, "acc"),
+                "square": chess.square_name(sq),
+            },
+        )
+
     # Bad capture — instrumental ("Capturing with your {piece} ...")
     if board.is_capture(blunder_move):
         captured_piece = board.piece_at(blunder_move.to_square)
@@ -671,6 +782,18 @@ def _explain_best_static(
                 key="explanation.best.pattern_generic",
                 params={"san": san, "pattern": pattern_lower},
             )
+
+    # Retreat to safety — best move saves a piece from profitable attack
+    retreat = _is_retreat_to_safety(board, best_move)
+    if retreat:
+        piece_type, _from_sq = retreat
+        return I18nMessage(
+            key="explanation.best.saves_piece",
+            params={
+                "san": san,
+                "piece": _type_key(piece_type, "acc"),
+            },
+        )
 
     if board.is_capture(best_move):
         captured = board.piece_at(best_move.to_square)

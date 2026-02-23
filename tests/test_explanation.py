@@ -52,6 +52,8 @@ _EN_TEMPLATES = {
     "explanation.best.pv_wins_piece": "The best move {san} wins the {piece} after {line}",
     "explanation.best.pv_wins_piece_via_combination": "The best move {san} wins the {piece} through a combination: {line}",
     "explanation.best.pv_wins_piece_via_pattern": "The best move {san} wins the {piece} via {pattern}: {line}",
+    "explanation.blunder.ignored_threat": "This move leaves your {piece} on {square} to be captured.",
+    "explanation.best.saves_piece": "The best move {san} saves the {piece} from capture.",
     "explanation.best.avoids_loss": "The best move {san} avoids losing {loss} pawns worth of advantage.",
     "explanation.best.fallback": "The best move is {san}.",
 }
@@ -402,3 +404,42 @@ class TestI18nKeys:
         resolved = resolve_explanation(raw, _t)
         assert resolved.blunder_text == ""
         assert resolved.best_move_text == ""
+
+
+class TestIgnoredThreat:
+    # White Bc4 attacked by black pb5; blunder a2a3 ignores the threat; best Bf1 retreats
+    FEN = "r1bqkb1r/p1pp1ppp/2n1pn2/1p6/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 5"
+
+    def test_ignored_threat_fires_for_unaddressed_attack(self):
+        result = _resolve(
+            self.FEN, blunder_uci="a2a3", best_move_uci="c4f1", cp_loss=300
+        )
+        assert "bishop" in result.blunder_text.lower()
+        assert "c4" in result.blunder_text
+        assert "leaves" in result.blunder_text.lower()
+
+    def test_best_move_saves_piece_from_capture(self):
+        result = _resolve(
+            self.FEN, blunder_uci="a2a3", best_move_uci="c4f1", cp_loss=300
+        )
+        assert "saves" in result.best_move_text.lower()
+        assert "bishop" in result.best_move_text.lower()
+        assert "Bf1" in result.best_move_text
+
+    def test_no_ignored_threat_when_blunder_moves_threatened_piece(self):
+        result = _resolve(
+            self.FEN, blunder_uci="c4a2", best_move_uci="c4f1", cp_loss=200
+        )
+        assert "leaves" not in result.blunder_text.lower()
+
+    def test_no_ignored_threat_when_blunder_captures_attacker(self):
+        result = _resolve(
+            self.FEN, blunder_uci="c4b5", best_move_uci="c4f1", cp_loss=100
+        )
+        assert "leaves" not in result.blunder_text.lower()
+
+    def test_no_ignored_threat_for_pawns(self):
+        # White pawn on d4 attacked by black pe5 — pawn value < 3, should not trigger
+        fen = "rnbqkbnr/pppp1ppp/8/4p3/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 0 2"
+        result = _resolve(fen, blunder_uci="a2a3", best_move_uci="d4e5", cp_loss=200)
+        assert "leaves" not in result.blunder_text.lower()
