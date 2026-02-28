@@ -8,19 +8,13 @@ from fastapi.responses import PlainTextResponse
 from blunder_tutor.constants import (
     CLASSIFICATION_BLUNDER,
     CLASSIFICATION_INACCURACY,
-    CLASSIFICATION_MISTAKE,
+    CLASSIFICATION_LABELS,
     PHASE_LABELS,
 )
 from blunder_tutor.utils.pgn_utils import extract_game_url_from_string
 from blunder_tutor.web.dependencies import AnalysisRepoDep, GameRepoDep
 
 debug_router = APIRouter()
-
-CLASSIFICATION_LABELS = {
-    CLASSIFICATION_BLUNDER: "blunder",
-    CLASSIFICATION_MISTAKE: "mistake",
-    CLASSIFICATION_INACCURACY: "inaccuracy",
-}
 
 
 def _format_eval(cp: int) -> str:

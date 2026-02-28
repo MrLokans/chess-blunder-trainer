@@ -10,6 +10,7 @@
 {% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="/static/css/board-layout.css">
 <link rel="stylesheet" href="/static/css/trainer.css">
 <link rel="stylesheet" href="/static/css/vim-input.css">
 {% endblock %}
@@ -165,6 +166,9 @@
       <button class="btn btn-ghost hidden" id="copyDebugBtn" title="{{ t('trainer.debug.copy_title') }}">
         📋 {{ t('trainer.debug.copy') }}
       </button>
+      {% endif %}
+      {% if has_feature('page.game_review') %}
+      <a href="#" class="btn btn-ghost hidden" id="reviewGameLink">{{ t('game_review.link.review_game') }}</a>
       {% endif %}
     </div>
 

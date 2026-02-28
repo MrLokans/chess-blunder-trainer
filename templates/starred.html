@@ -32,6 +32,7 @@
         <th>{{ t('starred.col.eval_swing') }}</th>
         <th>{{ t('starred.col.phase') }}</th>
         <th>{{ t('starred.col.note') }}</th>
+        {% if has_feature('page.game_review') %}<th></th>{% endif %}
         <th></th>
       </tr>
     </thead>

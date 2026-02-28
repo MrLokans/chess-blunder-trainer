@@ -49,6 +49,13 @@ COLOR_WHITE = 0
 COLOR_BLACK = 1
 
 COLOR_LABELS = {0: "white", 1: "black"}
+
+CLASSIFICATION_LABELS = {
+    CLASSIFICATION_NORMAL: "normal",
+    CLASSIFICATION_INACCURACY: "inaccuracy",
+    CLASSIFICATION_MISTAKE: "mistake",
+    CLASSIFICATION_BLUNDER: "blunder",
+}
 COLOR_FROM_STRING = {"white": 0, "black": 1}
 
 ROOT_DIR = pathlib.Path(__file__).parent.parent

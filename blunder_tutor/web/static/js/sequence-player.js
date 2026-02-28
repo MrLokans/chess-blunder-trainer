@@ -89,16 +89,26 @@ class ReadOnlyBoard {
       drawable: { enabled: false },
     });
     this._applyBoardBackground();
+    this._observeBoardChanges();
   }
 
   _applyBoardBackground() {
     const style = getComputedStyle(document.documentElement);
     const light = style.getPropertyValue('--board-light').trim() || '#E0E0E0';
     const dark = style.getPropertyValue('--board-dark').trim() || '#A0A0A0';
+    this._boardBgUrl = `url("${buildBoardSvg(light, dark)}")`;
+    this._el.style.setProperty('--board-bg', this._boardBgUrl);
+    this._setBoardInline();
+  }
+
+  _setBoardInline() {
     const board = this._el.querySelector('cg-board');
-    if (board) {
-      board.style.backgroundImage = `url("${buildBoardSvg(light, dark)}")`;
-    }
+    if (board) board.style.backgroundImage = this._boardBgUrl;
+  }
+
+  _observeBoardChanges() {
+    this._observer = new MutationObserver(() => this._setBoardInline());
+    this._observer.observe(this._el, { childList: true });
   }
 
   setPosition(fen, lastMove) {
@@ -117,6 +127,10 @@ class ReadOnlyBoard {
   }
 
   destroy() {
+    if (this._observer) {
+      this._observer.disconnect();
+      this._observer = null;
+    }
     if (this._cg) {
       this._cg.destroy();
       this._cg = null;

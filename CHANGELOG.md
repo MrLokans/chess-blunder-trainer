@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0]
+
+### Added
+
+- **Game review page (experimental)**: Browse any analyzed game move-by-move with an interactive board, evaluation chart, and move classification highlights. Accessible from the trainer and starred puzzles via a "Review Game" link. Gated behind the `page.game_review` feature flag.
+
+### Changed
+
+- **Shared board layout CSS**: Extracted common board, context-tag, and layout styles from the trainer into a reusable `board-layout.css` stylesheet shared by both the trainer and game review pages.
+
+---
+
+## [2.1.6]
+
+### Changed
+
+- **Trap section game links**: Traps now link directly to the original game on Lichess or Chess.com.
+
+---
+
+## [2.1.5]
+
+### Fixed
+
+- **Dashboard style fixes**: Corrected visual issues in the dashboard layout.
+
+---
+
 ## [2.1.4]
 
 ### Changed

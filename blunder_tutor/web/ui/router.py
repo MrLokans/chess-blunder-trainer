@@ -55,6 +55,13 @@ async def import_page(request: Request) -> HTMLResponse:
     )
 
 
+async def game_review_page(request: Request, game_id: str) -> HTMLResponse:
+    return request.app.state.templates.TemplateResponse(
+        "game_review.html",
+        {"request": request, "title": "Game Review", "game_id": game_id},
+    )
+
+
 async def starred_page(request: Request) -> HTMLResponse:
     return request.app.state.templates.TemplateResponse(
         "starred.html",
@@ -88,6 +95,9 @@ ui_router.add_api_route(
 )
 ui_router.add_api_route(
     "/starred", starred_page, response_class=HTMLResponse, methods=["GET"]
+)
+ui_router.add_api_route(
+    "/game/{game_id}", game_review_page, response_class=HTMLResponse, methods=["GET"]
 )
 ui_router.add_api_route("/setup", setup, response_class=HTMLResponse, methods=["GET"])
 ui_router.add_api_route(

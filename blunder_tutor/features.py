@@ -32,6 +32,8 @@ class Feature(StrEnum):
 
     STARRED_PUZZLES = "starred.puzzles"
 
+    PAGE_GAME_REVIEW = "page.game_review"
+
     DEBUG_COPY = "debug.copy"
 
     @classmethod
@@ -44,6 +46,7 @@ DEFAULTS: dict[Feature, bool] = {
     Feature.DASHBOARD_TRAPS: False,
     Feature.PAGE_IMPORT: False,
     Feature.STARRED_PUZZLES: False,
+    Feature.PAGE_GAME_REVIEW: False,
     Feature.DEBUG_COPY: False,
 }
 
@@ -54,6 +57,7 @@ FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
             Feature.PAGE_DASHBOARD,
             Feature.PAGE_MANAGEMENT,
             Feature.PAGE_IMPORT,
+            Feature.PAGE_GAME_REVIEW,
         ],
     ),
     (
@@ -119,5 +123,6 @@ FEATURE_LABELS: dict[Feature, str] = {
     Feature.AUTO_SYNC: "settings.features.auto_sync",
     Feature.AUTO_ANALYZE: "settings.features.auto_analyze",
     Feature.STARRED_PUZZLES: "settings.features.starred_puzzles",
+    Feature.PAGE_GAME_REVIEW: "settings.features.page_game_review",
     Feature.DEBUG_COPY: "settings.features.debug_copy",
 }

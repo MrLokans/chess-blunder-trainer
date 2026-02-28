@@ -101,6 +101,7 @@ function setupPuzzle(data) {
   ui.updateTacticalBadge(data.tactical_pattern);
   ui.updateGameLink(data.game_url);
   ui.updateCopyDebugBtn(data.game_id, data.ply);
+  ui.updateReviewGameLink(data.game_id, data.ply);
   ui.updateStarButton(
     data.game_id, data.ply,
     () => state.get('currentStarred'),

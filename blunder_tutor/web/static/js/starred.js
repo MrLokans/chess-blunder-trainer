@@ -1,4 +1,5 @@
 import { client } from './api.js';
+import { hasFeature } from './features.js';
 
 const PHASE_LABELS = {
   0: 'Opening',
@@ -70,6 +71,16 @@ async function loadStarred() {
       noteCell.textContent = item.note || '';
       noteCell.title = item.note || '';
       tr.appendChild(noteCell);
+
+      if (hasFeature('page.game_review')) {
+        const reviewCell = document.createElement('td');
+        const reviewLink = document.createElement('a');
+        reviewLink.href = `/game/${encodeURIComponent(item.game_id)}?ply=${item.ply}`;
+        reviewLink.className = 'puzzle-link';
+        reviewLink.textContent = t('game_review.link.review_game');
+        reviewCell.appendChild(reviewLink);
+        tr.appendChild(reviewCell);
+      }
 
       const actionCell = document.createElement('td');
       const unstarBtn = document.createElement('button');

@@ -144,6 +144,10 @@ export const client = {
     list: (params) => request(withQuery('/api/starred', params)),
   },
 
+  gameReview: {
+    getReview: (gameId) => request(`/api/games/${encodeURIComponent(gameId)}/review`),
+  },
+
   debug: {
     gameInfo: (gameId, params) => requestText(withQuery(`/api/games/${encodeURIComponent(gameId)}/debug`, params)),
   },

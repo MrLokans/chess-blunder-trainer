@@ -25,7 +25,7 @@ export function initUI() {
     'playFullLine',
     'colorIndicator', 'colorTagText',
     'gameLink', 'gameLinkSeparator',
-    'copyDebugBtn', 'starPuzzleBtn',
+    'copyDebugBtn', 'starPuzzleBtn', 'reviewGameLink',
     'tacticalSeparator',
     'boardResultDragHandle',
   ];
@@ -223,6 +223,18 @@ export function updateCopyDebugBtn(gameId, ply) {
       console.error('Copy debug failed:', e);
     }
   };
+}
+
+export function updateReviewGameLink(gameId, ply) {
+  const link = els.reviewGameLink;
+  if (!link) return;
+  if (gameId) {
+    const url = `/game/${encodeURIComponent(gameId)}` + (ply != null ? `?ply=${ply}` : '');
+    link.href = url;
+    link.classList.remove('hidden');
+  } else {
+    link.classList.add('hidden');
+  }
 }
 
 export function updateStarButton(gameId, ply, getCurrentStarred, setCurrentStarred) {
