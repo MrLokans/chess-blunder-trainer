@@ -1,7 +1,0 @@
-{
-  "database": "dolt",
-  "backend": "dolt",
-  "dolt_mode": "server",
-  "dolt_database": "blunder_tutor",
-  "project_id": "9907041e-ecfb-47bd-9cb7-ae4cf86c26a2"
-}
