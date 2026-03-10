@@ -20,3 +20,6 @@ wheels/
 # Node
 node_modules/
 .DS_Store
+
+# Dolt database files (added by bd init)
+.dolt/
