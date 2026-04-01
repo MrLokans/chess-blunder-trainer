@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1]
+
+### Changed
+
+- **Smarter trap detection with transposition support**: The trap detection engine now recognizes traps reached via move transpositions, not just exact move order. Expanded the trap catalog with significantly more pattern variations. Localized new labels across all seven languages.
+
+### Fixed
+
+- **README link layout**: Fixed link formatting and added blog post link in README.
+
+---
+
 ## [2.2.0]
 
 ### Added
