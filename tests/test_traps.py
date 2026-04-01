@@ -18,8 +18,6 @@ def _make_board_from_pgn(pgn: str) -> chess.Board:
     return _replay_pgn(pgn)
 
 
-
-
 def _scholars_mate_trap() -> TrapDefinition:
     return TrapDefinition(
         id="scholars_mate",
@@ -27,7 +25,9 @@ def _scholars_mate_trap() -> TrapDefinition:
         category="checkmate",
         rating_range=(0, 800),
         victim_side="black",
-        positions=[_build_position_from_pgn_and_san("1. e4 e5 2. Bc4 Nc6 3. Qh5", "Nf6")],
+        positions=[
+            _build_position_from_pgn_and_san("1. e4 e5 2. Bc4 Nc6 3. Qh5", "Nf6")
+        ],
         mistake_san="Nf6",
         refutation_pgn="1. e4 e5 2. Bc4 Nc6 3. Qh5 g6 4. Qf3 Nf6",
         refutation_move="g6",
@@ -46,7 +46,9 @@ def _fried_liver_trap() -> TrapDefinition:
         victim_side="black",
         positions=[
             _build_position_from_pgn_and_san("1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5"),
-            _build_position_from_pgn_and_san("1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5", "Nxd5"),
+            _build_position_from_pgn_and_san(
+                "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5", "Nxd5"
+            ),
         ],
         mistake_san="Nxd5",
         refutation_pgn="1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Na5",

@@ -144,7 +144,9 @@ class TrapDatabase:
         return list(self._traps)
 
 
-def _build_position_from_pgn_and_san(pgn: str, mistake_san: str | None = None) -> TrapPosition:
+def _build_position_from_pgn_and_san(
+    pgn: str, mistake_san: str | None = None
+) -> TrapPosition:
     board = _replay_pgn(pgn)
     entry_hash = chess.polyglot.zobrist_hash(board)
     trigger_hash = None
