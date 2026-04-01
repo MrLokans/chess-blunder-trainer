@@ -3,560 +3,1697 @@
     "id": "scholars_mate",
     "name": "Scholar's Mate",
     "category": "checkmate",
-    "rating_range": [0, 800],
+    "rating_range": [
+      0,
+      800
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. Bc4 Nc6 3. Qh5", "1. e4 e5 2. Qh5 Nc6 3. Bc4"],
-    "trap_moves": ["1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7#", "1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7#"],
-    "mistake_ply": 6,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Bc4 Nc6 3. Qh5",
+        "mistake_san": "Nf6"
+      }
+    ],
     "mistake_san": "Nf6",
     "refutation_pgn": "1. e4 e5 2. Bc4 Nc6 3. Qh5 g6 4. Qf3 Nf6",
     "refutation_move": "g6",
     "refutation_note": "3...g6 defends f7 and chases the queen. White's early queen sortie wastes tempo.",
     "recognition_tip": "When White brings out the queen to h5 early, your f7 pawn is the target. Defend it with g6 before developing the knight.",
-    "tags": ["checkmate", "f7_attack", "queen_sortie"]
+    "tags": [
+      "checkmate",
+      "f7_attack",
+      "queen_sortie"
+    ]
   },
   {
     "id": "scholars_mate_v2",
     "name": "Scholar's Mate (Qf3 line)",
     "category": "checkmate",
-    "rating_range": [0, 800],
+    "rating_range": [
+      0,
+      800
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. Bc4 Nc6 3. Qf3"],
-    "trap_moves": ["1. e4 e5 2. Bc4 Nc6 3. Qf3 Bc5 4. Qxf7#"],
-    "mistake_ply": 6,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Bc4 Nc6 3. Qf3",
+        "mistake_san": "Bc5"
+      }
+    ],
     "mistake_san": "Bc5",
     "refutation_pgn": "1. e4 e5 2. Bc4 Nc6 3. Qf3 Nf6",
     "refutation_move": "Nf6",
     "refutation_note": "3...Nf6 defends f7 and develops a piece. The queen is misplaced on f3.",
     "recognition_tip": "When White plays Qf3 targeting f7, develop Nf6 to block the attack while gaining tempo.",
-    "tags": ["checkmate", "f7_attack", "queen_sortie"]
+    "tags": [
+      "checkmate",
+      "f7_attack",
+      "queen_sortie"
+    ]
   },
   {
     "id": "fools_mate",
     "name": "Fool's Mate",
     "category": "checkmate",
-    "rating_range": [0, 600],
+    "rating_range": [
+      0,
+      600
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. f3 e5 2. g4"],
-    "trap_moves": ["1. f3 e5 2. g4 Qh4#"],
-    "mistake_ply": 3,
+    "positions": [
+      {
+        "pgn": "1. f3 e5",
+        "mistake_san": "g4"
+      }
+    ],
     "mistake_san": "g4",
     "refutation_pgn": "1. f3 e5 2. e4",
     "refutation_move": "e4",
     "refutation_note": "Don't play f3 and g4 — these moves fatally weaken the king's diagonal. Play e4 instead.",
     "recognition_tip": "If you've played f3, never follow with g4. The h4-e1 diagonal is wide open for the queen.",
-    "tags": ["checkmate", "king_safety"]
+    "tags": [
+      "checkmate",
+      "king_safety"
+    ]
   },
   {
     "id": "fried_liver",
     "name": "Fried Liver Attack",
     "category": "attack",
-    "rating_range": [0, 1400],
+    "rating_range": [
+      0,
+      1400
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7"],
-    "mistake_ply": 10,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5"
+      },
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5",
+        "mistake_san": "Nxd5"
+      }
+    ],
     "mistake_san": "Nxd5",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Na5",
     "refutation_move": "Na5",
     "refutation_note": "5...Na5 attacks the bishop and avoids the Nxf7 sacrifice. Black wins the bishop pair and equalizes.",
     "recognition_tip": "When White plays Ng5 early against your Two Knights setup, don't recapture on d5 with the knight — it walks into Nxf7.",
-    "tags": ["sacrifice", "king_attack", "italian"]
+    "tags": [
+      "sacrifice",
+      "king_attack",
+      "italian"
+    ]
   },
   {
     "id": "fried_liver_b5",
     "name": "Fried Liver (5...b5 trap)",
     "category": "attack",
-    "rating_range": [0, 1200],
+    "rating_range": [
+      0,
+      1200
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 b5"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 b5 6. Bf1"],
-    "mistake_ply": 10,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5",
+        "mistake_san": "b5"
+      }
+    ],
     "mistake_san": "b5",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Na5",
     "refutation_move": "Na5",
     "refutation_note": "5...b5 tries to trap the bishop but fails — play 5...Na5 instead, which is theoretically sound.",
     "recognition_tip": "Don't try to trap the c4 bishop with b5 — White can simply retreat. Focus on counterplay with Na5.",
-    "tags": ["sacrifice", "king_attack", "italian"]
+    "tags": [
+      "sacrifice",
+      "king_attack",
+      "italian"
+    ]
   },
   {
     "id": "legals_mate",
     "name": "Légal's Mate",
     "category": "checkmate",
-    "rating_range": [0, 1200],
+    "rating_range": [
+      0,
+      1200
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. Nf3 d6 3. Bc4 Bg4 4. Nc3 g6 5. Nxe5"],
-    "trap_moves": ["1. e4 e5 2. Nf3 d6 3. Bc4 Bg4 4. Nc3 g6 5. Nxe5 Bxd1 6. Bxf7+ Ke7 7. Nd5#"],
-    "mistake_ply": 10,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 d6 3. Bc4 Bg4 4. Nc3 g6 5. Nxe5",
+        "mistake_san": "Bxd1"
+      }
+    ],
     "mistake_san": "Bxd1",
     "refutation_pgn": "1. e4 e5 2. Nf3 d6 3. Bc4 Bg4 4. Nc3 g6 5. Nxe5 dxe5",
     "refutation_move": "dxe5",
     "refutation_note": "Don't capture the queen! Take back on e5 instead — the queen sacrifice is a trap leading to checkmate.",
     "recognition_tip": "When a knight takes on e5 and it looks like a free queen, check for Bxf7+ and Nd5# mating patterns first.",
-    "tags": ["checkmate", "queen_sacrifice", "smothered"]
+    "tags": [
+      "checkmate",
+      "queen_sacrifice",
+      "smothered"
+    ]
   },
   {
     "id": "stafford_gambit_oh_no_queen",
     "name": "Stafford Gambit (Oh no my queen)",
     "category": "gambit_trap",
-    "rating_range": [0, 1400],
+    "rating_range": [
+      0,
+      1400
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nc6 4. Nxc6 dxc6"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nc6 4. Nxc6 dxc6 5. d3 Bc5 6. Bg5 Nxe4 7. Bxd8 Bxf2+ 8. Ke2 Bg4#"],
-    "mistake_ply": 13,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nc6 4. Nxc6 dxc6"
+      },
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nc6 4. Nxc6 dxc6 5. d3 Bc5 6. Bg5 Nxe4",
+        "mistake_san": "Bxd8"
+      }
+    ],
     "mistake_san": "Bxd8",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nc6 4. Nxc6 dxc6 5. d3 Bc5 6. Be2",
     "refutation_move": "Be2",
     "refutation_note": "Avoid Bg5 — it walks into the tactical sequence. Develop calmly with Be2 and castle quickly.",
     "recognition_tip": "In the Stafford Gambit, if you take on d8 after Nxe4, Black has Bxf2+ and Bg4# checkmate.",
-    "tags": ["gambit", "checkmate", "queen_sacrifice"]
+    "tags": [
+      "gambit",
+      "checkmate",
+      "queen_sacrifice"
+    ]
   },
   {
     "id": "stafford_gambit_ng4",
     "name": "Stafford Gambit (Ng4 attack)",
     "category": "gambit_trap",
-    "rating_range": [0, 1400],
+    "rating_range": [
+      0,
+      1400
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nc6 4. Nxc6 dxc6 5. d3 Bc5 6. Be2 h5"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nc6 4. Nxc6 dxc6 5. d3 Bc5 6. Be2 h5 7. O-O Ng4 8. h3 Qd6"],
-    "mistake_ply": 14,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nc6 4. Nxc6 dxc6 5. d3 Bc5 6. Be2 h5",
+        "mistake_san": "O-O"
+      }
+    ],
     "mistake_san": "O-O",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nc6 4. Nxc6 dxc6 5. d3 Bc5 6. Be2 h5 7. Bg5",
     "refutation_move": "Bg5",
     "refutation_note": "Don't castle into h5/Ng4 attack. Play Bg5 to pin the knight and neutralize Black's kingside threats.",
     "recognition_tip": "When Black plays h5 in the Stafford Gambit, they're preparing Ng4 with threats on h2. Don't castle kingside yet.",
-    "tags": ["gambit", "king_attack", "kingside"]
+    "tags": [
+      "gambit",
+      "king_attack",
+      "kingside"
+    ]
   },
   {
     "id": "englund_gambit_trap",
     "name": "Englund Gambit Trap",
     "category": "gambit_trap",
-    "rating_range": [0, 1200],
+    "rating_range": [
+      0,
+      1200
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. d4 e5 2. dxe5 Nc6 3. Nf3 Qe7 4. Bf4 Qb4+"],
-    "trap_moves": ["1. d4 e5 2. dxe5 Nc6 3. Nf3 Qe7 4. Bf4 Qb4+ 5. Bd2 Qxb2 6. Bc3 Bb4"],
-    "mistake_ply": 10,
+    "positions": [
+      {
+        "pgn": "1. d4 e5 2. dxe5 Nc6 3. Nf3 Qe7 4. Bf4 Qb4+"
+      },
+      {
+        "pgn": "1. d4 e5 2. dxe5 Nc6 3. Nf3 Qe7 4. Bf4 Qb4+ 5. Bd2",
+        "mistake_san": "Qxb2"
+      }
+    ],
     "mistake_san": "Qxb2",
     "refutation_pgn": "1. d4 e5 2. dxe5 Nc6 3. Nf3 Qe7 4. Nc3",
     "refutation_move": "Nc3",
     "refutation_note": "Don't play Bf4 — it allows Qb4+. Play Nc3 developing naturally and holding e5.",
     "recognition_tip": "After 1.d4 e5 2.dxe5 Nc6 3.Nf3 Qe7, watch out for Qb4+ check — develop with Nc3 instead of Bf4.",
-    "tags": ["gambit", "queen_attack", "opening_trap"]
+    "tags": [
+      "gambit",
+      "queen_attack",
+      "opening_trap"
+    ]
   },
   {
     "id": "budapest_gambit_trap",
     "name": "Budapest Gambit Trap",
     "category": "gambit_trap",
-    "rating_range": [0, 1300],
+    "rating_range": [
+      0,
+      1300
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. d4 Nf6 2. c4 e5 3. dxe5 Ng4"],
-    "trap_moves": ["1. d4 Nf6 2. c4 e5 3. dxe5 Ng4 4. Bf4 Nc6 5. Nf3 Bb4+ 6. Nbd2 Qe7 7. a3 Ngxe5 8. Nxe5 Nxe5 9. axb4 Nd3#"],
-    "mistake_ply": 16,
+    "positions": [
+      {
+        "pgn": "1. d4 Nf6 2. c4 e5 3. dxe5 Ng4"
+      },
+      {
+        "pgn": "1. d4 Nf6 2. c4 e5 3. dxe5 Ng4 4. Bf4 Nc6 5. Nf3 Bb4+ 6. Nbd2 Qe7 7. a3 Ngxe5 8. Nxe5 Nxe5",
+        "mistake_san": "axb4"
+      }
+    ],
     "mistake_san": "axb4",
     "refutation_pgn": "1. d4 Nf6 2. c4 e5 3. dxe5 Ng4 4. Bf4 Nc6 5. Nf3 Bb4+ 6. Nc3",
     "refutation_move": "Nc3",
     "refutation_note": "Block with Nc3 instead of Nbd2. The Nd3# smothered mate pattern only works when d2 is occupied by a knight.",
     "recognition_tip": "In the Budapest Gambit, if Black plays Bb4+ with a knight on g4, block with Nc3, not Nbd2 — watch for smothered mate on d3.",
-    "tags": ["gambit", "checkmate", "smothered"]
+    "tags": [
+      "gambit",
+      "checkmate",
+      "smothered"
+    ]
   },
   {
     "id": "elephant_trap",
     "name": "Elephant Trap",
     "category": "piece_trap",
-    "rating_range": [0, 1400],
+    "rating_range": [
+      0,
+      1400
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. cxd5 exd5 6. Nxd5"],
-    "trap_moves": ["1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. cxd5 exd5 6. Nxd5 Nxd5 7. Bxd8 Bb4+"],
-    "mistake_ply": 11,
+    "positions": [
+      {
+        "pgn": "1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. cxd5 exd5 6. Nxd5",
+        "mistake_san": "Nxd5"
+      }
+    ],
     "mistake_san": "Nxd5",
     "refutation_pgn": "1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. cxd5 exd5 6. e3",
     "refutation_move": "e3",
     "refutation_note": "Don't grab the d5 pawn with the knight — after Nxd5 Bxd8 Bb4+ you lose the queen. Play e3 developing naturally.",
     "recognition_tip": "In the QGD with Bg5 and Nbd7, taking on d5 with the knight allows Bb4+ winning the queen after Bxd8.",
-    "tags": ["piece_trap", "queen_trap", "qgd"]
+    "tags": [
+      "piece_trap",
+      "queen_trap",
+      "qgd"
+    ]
   },
   {
     "id": "noahs_ark_trap",
     "name": "Noah's Ark Trap",
     "category": "piece_trap",
-    "rating_range": [0, 1400],
+    "rating_range": [
+      0,
+      1400
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 d6 5. d4 b5 6. Bb3 exd4"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 d6 5. d4 b5 6. Bb3 exd4 7. Nxd4 Nxd4 8. Qxd4 c5 9. Qd5 Be6 10. Qc6+ Bd7 11. Qd5 c4"],
-    "mistake_ply": 21,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 d6 5. d4 b5 6. Bb3 exd4"
+      },
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 d6 5. d4 b5 6. Bb3 exd4 7. Nxd4 Nxd4 8. Qxd4 c5 9. Qd5 Be6 10. Qc6+ Bd7",
+        "mistake_san": "Qd5"
+      }
+    ],
     "mistake_san": "Qd5",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 d6 5. d4 b5 6. Bb3 exd4 7. Nxd4 Nxd4 8. Qxd4 c5 9. Qd3",
     "refutation_move": "Qd3",
     "refutation_note": "Retreat the queen to d3 to keep the bishop safe — the c4 pawn advance traps the bishop on b3 with no escape.",
     "recognition_tip": "In the Ruy Lopez, watch for ...a6, ...b5, ...c5, ...c4 trapping your bishop on b3. Keep an escape route open.",
-    "tags": ["piece_trap", "bishop_trap", "ruy_lopez"]
+    "tags": [
+      "piece_trap",
+      "bishop_trap",
+      "ruy_lopez"
+    ]
   },
   {
     "id": "lasker_trap",
     "name": "Lasker Trap",
     "category": "piece_trap",
-    "rating_range": [0, 1300],
+    "rating_range": [
+      0,
+      1300
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. d4 d5 2. c4 e5 3. dxe5 d4 4. e3 Bb4+ 5. Bd2 dxe3"],
-    "trap_moves": ["1. d4 d5 2. c4 e5 3. dxe5 d4 4. e3 Bb4+ 5. Bd2 dxe3 6. Bxb4 exf2+ 7. Ke2 fxg1=N+"],
-    "mistake_ply": 12,
+    "positions": [
+      {
+        "pgn": "1. d4 d5 2. c4 e5 3. dxe5 d4 4. e3 Bb4+ 5. Bd2 dxe3",
+        "mistake_san": "Bxb4"
+      }
+    ],
     "mistake_san": "Bxb4",
     "refutation_pgn": "1. d4 d5 2. c4 e5 3. dxe5 d4 4. e3 Bb4+ 5. Bd2 dxe3 6. fxe3",
     "refutation_move": "fxe3",
     "refutation_note": "Take with the f-pawn (fxe3) instead of Bxb4. After Bxb4 exf2+ Ke2 fxg1=N+ forks the king and rook.",
     "recognition_tip": "In the Albin Countergambit after dxe3, don't take the bishop — the underpromotion to a knight with check wins material.",
-    "tags": ["piece_trap", "underpromotion", "fork", "albin"]
+    "tags": [
+      "piece_trap",
+      "underpromotion",
+      "fork",
+      "albin"
+    ]
   },
   {
     "id": "fishing_pole_trap",
     "name": "Fishing Pole Trap",
     "category": "attack",
-    "rating_range": [0, 1400],
+    "rating_range": [
+      0,
+      1400
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Ng4"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Ng4 5. h3 h5"],
-    "mistake_ply": 9,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Ng4",
+        "mistake_san": "h3"
+      }
+    ],
     "mistake_san": "h3",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. O-O Ng4 5. d4",
     "refutation_move": "d4",
     "refutation_note": "Don't play h3 — it walks into h5 and a devastating kingside attack. Play d4 gaining center space and opening lines.",
     "recognition_tip": "When Black plays Ng4 in the Ruy Lopez, don't push h3 — it opens h-file attacking lines after ...h5.",
-    "tags": ["attack", "king_attack", "kingside", "ruy_lopez"]
+    "tags": [
+      "attack",
+      "king_attack",
+      "kingside",
+      "ruy_lopez"
+    ]
   },
   {
     "id": "blackburne_shilling_gambit",
     "name": "Blackburne-Shilling Gambit",
     "category": "gambit_trap",
-    "rating_range": [0, 1200],
+    "rating_range": [
+      0,
+      1200
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bc4 Nd4"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bc4 Nd4 4. Nxe5 Qg5 5. Nxf7 Qxg2 6. Rf1 Qxe4+ 7. Be2 Nf3#"],
-    "mistake_ply": 8,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nd4",
+        "mistake_san": "Nxe5"
+      }
+    ],
     "mistake_san": "Nxe5",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nd4 4. Nxd4 exd4 5. O-O",
     "refutation_move": "Nxd4",
     "refutation_note": "Take the knight on d4 instead of grabbing e5. After Nxe5 Qg5, White faces a deadly attack.",
     "recognition_tip": "If Black plays Nd4 in the Italian, don't take e5 — take the knight! The 'free' e5 pawn is a trap.",
-    "tags": ["gambit", "checkmate", "italian"]
+    "tags": [
+      "gambit",
+      "checkmate",
+      "italian"
+    ]
   },
   {
     "id": "caro_kann_smothered_mate",
     "name": "Caro-Kann Smothered Mate",
     "category": "checkmate",
-    "rating_range": [0, 1200],
+    "rating_range": [
+      0,
+      1200
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2 Ngf6 6. Nd6#"],
-    "trap_moves": ["1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2 Ngf6 6. Nd6#"],
-    "mistake_ply": 9,
+    "positions": [
+      {
+        "pgn": "1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2",
+        "mistake_san": "Ngf6"
+      }
+    ],
     "mistake_san": "Ngf6",
     "refutation_pgn": "1. e4 c6 2. d4 d5 3. Nc3 dxe4 4. Nxe4 Nd7 5. Qe2 Ndf6",
     "refutation_move": "Ndf6",
     "refutation_note": "Develop with Ndf6 (from d7), not Ngf6 (from g8). Ngf6 blocks the king's escape and allows Nd6#.",
     "recognition_tip": "In the Caro-Kann after Nd7, if White plays Qe2, develop the d7-knight to f6, not the g8-knight. The g8-knight on f6 blocks your king.",
-    "tags": ["checkmate", "smothered", "caro_kann"]
+    "tags": [
+      "checkmate",
+      "smothered",
+      "caro_kann"
+    ]
   },
   {
     "id": "petroff_piece_trap",
     "name": "Petroff Defense Piece Trap",
     "category": "piece_trap",
-    "rating_range": [0, 1400],
+    "rating_range": [
+      0,
+      1400
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nxe4"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nf6 3. Nxe5 Nxe4 4. Qe2 Nf6 5. Nc6+"],
-    "mistake_ply": 6,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nf6 3. Nxe5",
+        "mistake_san": "Nxe4"
+      }
+    ],
     "mistake_san": "Nxe4",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nf6 3. Nxe5 d6 4. Nf3 Nxe4",
     "refutation_move": "d6",
     "refutation_note": "Play 3...d6 first to kick the knight, then recapture on e4. Taking immediately with 3...Nxe4 allows Qe2 with discovered attack.",
     "recognition_tip": "In the Petroff, don't grab e4 immediately — first play d6 to force the knight back, then take on e4 safely.",
-    "tags": ["piece_trap", "discovered_attack", "petroff"]
+    "tags": [
+      "piece_trap",
+      "discovered_attack",
+      "petroff"
+    ]
   },
   {
     "id": "greek_gift_sacrifice",
     "name": "Greek Gift Sacrifice (Bxh7+)",
     "category": "attack",
-    "rating_range": [800, 1600],
+    "rating_range": [
+      800,
+      1600
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. d4 d5 2. Nf3 Nf6 3. Bf4 e6 4. e3 Be7 5. Bd3 O-O 6. Bxh7+"],
-    "trap_moves": ["1. d4 d5 2. Nf3 Nf6 3. Bf4 e6 4. e3 Be7 5. Bd3 O-O 6. Bxh7+ Kxh7 7. Ng5+ Kg6 8. Qg4"],
-    "mistake_ply": 12,
+    "positions": [
+      {
+        "pgn": "1. d4 d5 2. Nf3 Nf6 3. Bf4 e6 4. e3 Be7 5. Bd3 O-O 6. Bxh7+",
+        "mistake_san": "Kxh7"
+      }
+    ],
     "mistake_san": "Kxh7",
     "refutation_pgn": "1. d4 d5 2. Nf3 Nf6 3. Bf4 e6 4. e3 Be7 5. Bd3 O-O 6. Bxh7+ Kh8",
     "refutation_move": "Kh8",
     "refutation_note": "Decline the sacrifice with Kh8! Taking with Kxh7 allows Ng5+ and a devastating attack. After Kh8, White has sacrificed a bishop for nothing.",
     "recognition_tip": "When a bishop takes on h7 with check, consider declining with Kh8. The classic Greek Gift only works if you take the bishop.",
-    "tags": ["sacrifice", "king_attack", "kingside"]
+    "tags": [
+      "sacrifice",
+      "king_attack",
+      "kingside"
+    ]
   },
   {
     "id": "mortimer_trap",
     "name": "Mortimer Trap",
     "category": "piece_trap",
-    "rating_range": [0, 1300],
+    "rating_range": [
+      0,
+      1300
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d3 Ne7"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d3 Ne7 5. Nxe5 c6 6. Ba4 Qa5+"],
-    "mistake_ply": 9,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d3 Ne7",
+        "mistake_san": "Nxe5"
+      }
+    ],
     "mistake_san": "Nxe5",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6 4. d3 Ne7 5. O-O",
     "refutation_move": "O-O",
     "refutation_note": "Don't take e5 — after c6 and Qa5+, the knight on e5 and bishop are both attacked. Castle instead.",
     "recognition_tip": "When Black plays Ne7 in the Ruy Lopez, the e5 pawn looks free but c6/Qa5+ wins material back with interest.",
-    "tags": ["piece_trap", "fork", "ruy_lopez"]
+    "tags": [
+      "piece_trap",
+      "fork",
+      "ruy_lopez"
+    ]
   },
   {
     "id": "siberian_trap",
     "name": "Siberian Trap",
     "category": "piece_trap",
-    "rating_range": [800, 1400],
+    "rating_range": [
+      800,
+      1400
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Nf3 c6 5. Bg5 dxc4 6. e4"],
-    "trap_moves": ["1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Nf3 c6 5. Bg5 dxc4 6. e4 b5 7. e5 h6 8. Bh4 g5 9. Nxg5 hxg5 10. Bxg5 Nbd7 11. exf6 Bb7"],
-    "mistake_ply": 11,
+    "positions": [
+      {
+        "pgn": "1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Nf3 c6 5. Bg5 dxc4",
+        "mistake_san": "e4"
+      }
+    ],
     "mistake_san": "e4",
     "refutation_pgn": "1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Nf3 c6 5. Bg5 dxc4 6. a4",
     "refutation_move": "a4",
     "refutation_note": "Play a4 to prevent b5 and recover the c4 pawn. The e4 push allows Black to hold the pawn with b5 and create complications.",
     "recognition_tip": "In the Slav Defense after dxc4, don't rush e4 — Black can hold the pawn with b5 and create a dangerous counterattack.",
-    "tags": ["piece_trap", "pawn_grab", "slav"]
+    "tags": [
+      "piece_trap",
+      "pawn_grab",
+      "slav"
+    ]
   },
   {
     "id": "latvian_gambit_trap",
     "name": "Latvian Gambit Trap",
     "category": "gambit_trap",
-    "rating_range": [0, 1200],
+    "rating_range": [
+      0,
+      1200
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. e4 e5 2. Nf3 f5 3. Nxe5 Qf6"],
-    "trap_moves": ["1. e4 e5 2. Nf3 f5 3. Nxe5 Qf6 4. d4 d6 5. Nc4 fxe4 6. Nc3 Qg6"],
-    "mistake_ply": 7,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 f5 3. Nxe5 Qf6",
+        "mistake_san": "d4"
+      }
+    ],
     "mistake_san": "d4",
     "refutation_pgn": "1. e4 e5 2. Nf3 f5 3. Nxe5 Qf6 4. Nc4 fxe4 5. d3",
     "refutation_move": "Nc4",
     "refutation_note": "Retreat the knight to c4 rather than playing d4. Keep things simple and the extra pawn advantage.",
     "recognition_tip": "After the Latvian Gambit's Qf6, retreat the knight calmly. Don't overextend in the center.",
-    "tags": ["gambit", "center_control", "latvian"]
+    "tags": [
+      "gambit",
+      "center_control",
+      "latvian"
+    ]
   },
   {
     "id": "elephant_gambit_trap",
     "name": "Elephant Gambit Trap",
     "category": "gambit_trap",
-    "rating_range": [0, 1200],
+    "rating_range": [
+      0,
+      1200
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. e4 e5 2. Nf3 d5 3. exd5 e4"],
-    "trap_moves": ["1. e4 e5 2. Nf3 d5 3. exd5 e4 4. Qe2 Nf6 5. d3 Qxd5"],
-    "mistake_ply": 8,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 d5 3. exd5 e4",
+        "mistake_san": "Qe2"
+      }
+    ],
     "mistake_san": "Qe2",
     "refutation_pgn": "1. e4 e5 2. Nf3 d5 3. exd5 e4 4. Nd4",
     "refutation_move": "Nd4",
     "refutation_note": "Jump the knight to d4 instead of Qe2. The knight is well-placed and you keep the extra pawn.",
     "recognition_tip": "Against the Elephant Gambit, don't block your bishop with Qe2. Develop naturally and hold your extra pawn.",
-    "tags": ["gambit", "center_control"]
+    "tags": [
+      "gambit",
+      "center_control"
+    ]
   },
   {
     "id": "albin_countergambit_trap",
     "name": "Albin Countergambit Trap",
     "category": "gambit_trap",
-    "rating_range": [0, 1300],
+    "rating_range": [
+      0,
+      1300
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. d4 d5 2. c4 e5 3. dxe5 d4"],
-    "trap_moves": ["1. d4 d5 2. c4 e5 3. dxe5 d4 4. e3 Bb4+ 5. Bd2 dxe3 6. Bxb4 exf2+ 7. Ke2 fxg1=N+ 8. Rxg1 Bg4+"],
-    "mistake_ply": 7,
+    "positions": [
+      {
+        "pgn": "1. d4 d5 2. c4 e5 3. dxe5 d4",
+        "mistake_san": "e3"
+      }
+    ],
     "mistake_san": "e3",
     "refutation_pgn": "1. d4 d5 2. c4 e5 3. dxe5 d4 4. Nf3 Nc6 5. Nbd2",
     "refutation_move": "Nf3",
     "refutation_note": "Develop with Nf3 instead of e3. The e3 move walks into the Lasker Trap with the underpromotion knight fork.",
     "recognition_tip": "In the Albin Countergambit after d4, don't play e3 — develop pieces naturally with Nf3.",
-    "tags": ["gambit", "underpromotion", "fork", "albin"]
+    "tags": [
+      "gambit",
+      "underpromotion",
+      "fork",
+      "albin"
+    ]
   },
   {
     "id": "italian_fork_trick",
     "name": "Italian Game Fork Trick",
     "category": "pin_fork_trick",
-    "rating_range": [0, 1200],
+    "rating_range": [
+      0,
+      1200
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Nc3 Nxe4"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Nc3 Nxe4 5. Nxe4 d5"],
-    "mistake_ply": 9,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Nc3 Nxe4",
+        "mistake_san": "Nxe4"
+      }
+    ],
     "mistake_san": "Nxe4",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Nc3 Nxe4 5. Bxf7+ Ke7 6. d4",
     "refutation_move": "Bxf7+",
     "refutation_note": "After 4...Nxe4, play 5.Bxf7+ instead of 5.Nxe4, which allows d5 forking knight and bishop.",
     "recognition_tip": "When Black takes on e4 in the Italian, don't recapture with the knight — d5 forks your pieces. Try Bxf7+ instead.",
-    "tags": ["fork", "center", "italian"]
+    "tags": [
+      "fork",
+      "center",
+      "italian"
+    ]
   },
   {
     "id": "qgd_pin_trap",
     "name": "QGD Cambridge Springs Trap",
     "category": "pin_fork_trick",
-    "rating_range": [800, 1400],
+    "rating_range": [
+      800,
+      1400
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. Nf3 c6 6. e3 Qa5"],
-    "trap_moves": ["1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. Nf3 c6 6. e3 Qa5 7. Nd2 Bb4 8. Qc2 dxc4"],
-    "mistake_ply": 13,
+    "positions": [
+      {
+        "pgn": "1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. Nf3 c6 6. e3 Qa5",
+        "mistake_san": "Nd2"
+      }
+    ],
     "mistake_san": "Nd2",
     "refutation_pgn": "1. d4 d5 2. c4 e6 3. Nc3 Nf6 4. Bg5 Nbd7 5. Nf3 c6 6. e3 Qa5 7. Bxf6 Nxf6 8. Bd3",
     "refutation_move": "Bxf6",
     "refutation_note": "Exchange the bishop for the knight to remove the pin threats. Nd2 walks into Bb4 pinning the knight to the queen.",
     "recognition_tip": "In the Cambridge Springs variation, Black's Qa5 creates threats along the a5-d2 diagonal. Don't play Nd2 — the knight gets pinned.",
-    "tags": ["pin", "queen_attack", "qgd"]
+    "tags": [
+      "pin",
+      "queen_attack",
+      "qgd"
+    ]
   },
   {
     "id": "danish_gambit_trap",
     "name": "Danish Gambit Trap",
     "category": "gambit_trap",
-    "rating_range": [0, 1300],
+    "rating_range": [
+      0,
+      1300
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. d4 exd4 3. c3 dxc3 4. Bc4 cxb2 5. Bxb2"],
-    "trap_moves": ["1. e4 e5 2. d4 exd4 3. c3 dxc3 4. Bc4 cxb2 5. Bxb2 d5 6. Bxd5 Nf6 7. Bxf7+ Kxf7 8. Qxd8"],
-    "mistake_ply": 10,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. d4 exd4 3. c3 dxc3 4. Bc4 cxb2 5. Bxb2",
+        "mistake_san": "d5"
+      }
+    ],
     "mistake_san": "d5",
     "refutation_pgn": "1. e4 e5 2. d4 exd4 3. c3 dxc3 4. Bc4 cxb2 5. Bxb2 d6",
     "refutation_move": "d6",
     "refutation_note": "Play d6 (not d5) to solidify the position. After d5, White gets a powerful attack with Bxd5 and Bxf7+.",
     "recognition_tip": "In the Danish Gambit, don't play d5 trying to return material — White's bishops rip open your position. Play d6 and develop.",
-    "tags": ["gambit", "sacrifice", "development"]
+    "tags": [
+      "gambit",
+      "sacrifice",
+      "development"
+    ]
   },
   {
     "id": "scotch_gambit_trick",
     "name": "Scotch Game Knight Fork",
     "category": "pin_fork_trick",
-    "rating_range": [0, 1200],
+    "rating_range": [
+      0,
+      1200
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4 Nxd4"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4 Nxd4 5. Qxd4 d6 6. Bc4"],
-    "mistake_ply": 8,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4",
+        "mistake_san": "Nxd4"
+      }
+    ],
     "mistake_san": "Nxd4",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4 Nf6 5. Nc3",
     "refutation_move": "Nf6",
     "refutation_note": "Don't trade knights — develop with Nf6 instead. After Nxd4 Qxd4, White has a strong centralized queen.",
     "recognition_tip": "In the Scotch Game, don't exchange on d4 — it gives White a powerful central queen. Play Nf6 developing with tempo.",
-    "tags": ["fork", "center", "scotch"]
+    "tags": [
+      "fork",
+      "center",
+      "scotch"
+    ]
   },
   {
     "id": "halloween_gambit",
     "name": "Halloween Gambit",
     "category": "gambit_trap",
-    "rating_range": [0, 1200],
+    "rating_range": [
+      0,
+      1200
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Nxe5"],
-    "trap_moves": ["1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Nxe5 Nxe5 5. d4 Nc6 6. d5 Ne5 7. f4 Ng6 8. e5 Ng8"],
-    "mistake_ply": 8,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Nxe5",
+        "mistake_san": "Nxe5"
+      }
+    ],
     "mistake_san": "Nxe5",
     "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Nxe5 Nxe5 5. d4 Ng6 6. e5 Ng8 7. Bc4 d5",
     "refutation_move": "Ng6",
     "refutation_note": "After taking on e5, retreat to g6 (not c6). This avoids d5 kicking the knight and keeps material advantage.",
     "recognition_tip": "Against the Halloween Gambit (Nxe5 sacrifice), accept the knight but retreat to g6 to avoid getting pushed around.",
-    "tags": ["gambit", "sacrifice", "four_knights"]
+    "tags": [
+      "gambit",
+      "sacrifice",
+      "four_knights"
+    ]
   },
   {
     "id": "tennison_gambit",
     "name": "Tennison Gambit (Scholar's Mate reversed)",
     "category": "gambit_trap",
-    "rating_range": [0, 1000],
+    "rating_range": [
+      0,
+      1000
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 d5 2. Nf3 dxe4 3. Ng5"],
-    "trap_moves": ["1. e4 d5 2. Nf3 dxe4 3. Ng5 Nf6 4. Bc4 e6 5. Nc3 Be7 6. Ngxe4 Nxe4 7. Nxe4 O-O 8. d3"],
-    "mistake_ply": 6,
+    "positions": [
+      {
+        "pgn": "1. e4 d5 2. Nf3 dxe4 3. Ng5",
+        "mistake_san": "Nf6"
+      }
+    ],
     "mistake_san": "Nf6",
     "refutation_pgn": "1. e4 d5 2. Nf3 dxe4 3. Ng5 f5 4. d3 exd3 5. Bxd3",
     "refutation_move": "f5",
     "refutation_note": "Play f5 to defend the e4 pawn and block the Bc4 threat to f7. Nf6 allows Bc4 targeting your f7 pawn.",
     "recognition_tip": "After Ng5 targeting f7, defend with f5 to hold the extra pawn rather than developing the knight.",
-    "tags": ["gambit", "f7_attack", "queen_sortie"]
+    "tags": [
+      "gambit",
+      "f7_attack",
+      "queen_sortie"
+    ]
   },
   {
     "id": "kings_gambit_muzio",
     "name": "King's Gambit Muzio Gambit",
     "category": "attack",
-    "rating_range": [0, 1400],
+    "rating_range": [
+      0,
+      1400
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. f4 exf4 3. Nf3 g5 4. Bc4 g4 5. O-O"],
-    "trap_moves": ["1. e4 e5 2. f4 exf4 3. Nf3 g5 4. Bc4 g4 5. O-O gxf3 6. Qxf3"],
-    "mistake_ply": 10,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. f4 exf4 3. Nf3 g5 4. Bc4 g4 5. O-O",
+        "mistake_san": "gxf3"
+      }
+    ],
     "mistake_san": "gxf3",
     "refutation_pgn": "1. e4 e5 2. f4 exf4 3. Nf3 g5 4. Bc4 g4 5. O-O d5 6. exd5 gxf3",
     "refutation_move": "d5",
     "refutation_note": "Play d5! Open the center before taking the knight. This neutralizes White's attacking setup.",
     "recognition_tip": "In the Muzio Gambit, White sacrifices the knight for a massive attack. Counter with d5 to open the center and activate your pieces.",
-    "tags": ["sacrifice", "king_attack", "kings_gambit"]
+    "tags": [
+      "sacrifice",
+      "king_attack",
+      "kings_gambit"
+    ]
   },
   {
     "id": "sicilian_smith_morra_trap",
     "name": "Smith-Morra Gambit Trap",
     "category": "gambit_trap",
-    "rating_range": [800, 1400],
+    "rating_range": [
+      800,
+      1400
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 c5 2. d4 cxd4 3. c3 dxc3 4. Nxc3 Nc6 5. Nf3 d6 6. Bc4 e6 7. O-O Nf6 8. Qe2 Be7 9. Rd1 e5"],
-    "trap_moves": ["1. e4 c5 2. d4 cxd4 3. c3 dxc3 4. Nxc3 Nc6 5. Nf3 d6 6. Bc4 e6 7. O-O Nf6 8. Qe2 Be7 9. Rd1 e5 10. Nb5"],
-    "mistake_ply": 18,
+    "positions": [
+      {
+        "pgn": "1. e4 c5 2. d4 cxd4 3. c3 dxc3 4. Nxc3 Nc6 5. Nf3 d6 6. Bc4 e6 7. O-O Nf6 8. Qe2 Be7 9. Rd1",
+        "mistake_san": "e5"
+      }
+    ],
     "mistake_san": "e5",
     "refutation_pgn": "1. e4 c5 2. d4 cxd4 3. c3 dxc3 4. Nxc3 Nc6 5. Nf3 d6 6. Bc4 e6 7. O-O Nf6 8. Qe2 Be7 9. Rd1 O-O",
     "refutation_move": "O-O",
     "refutation_note": "Castle first instead of playing e5. The e5 push allows Nb5 hitting d6 and threatening forks.",
     "recognition_tip": "In the Smith-Morra, don't push e5 too early — it weakens d5 and d6. Complete development first.",
-    "tags": ["gambit", "knight_fork", "sicilian"]
+    "tags": [
+      "gambit",
+      "knight_fork",
+      "sicilian"
+    ]
   },
   {
     "id": "wayward_queen_attack",
     "name": "Wayward Queen Attack (Parham)",
     "category": "attack",
-    "rating_range": [0, 1000],
+    "rating_range": [
+      0,
+      1000
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. Qh5"],
-    "trap_moves": ["1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7#"],
-    "mistake_ply": 6,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Qh5"
+      },
+      {
+        "pgn": "1. e4 e5 2. Qh5 Nc6 3. Bc4",
+        "mistake_san": "Nf6"
+      }
+    ],
     "mistake_san": "Nf6",
     "refutation_pgn": "1. e4 e5 2. Qh5 Nc6 3. Bc4 g6 4. Qf3 Nf6",
     "refutation_move": "g6",
     "refutation_note": "Play g6 to defend f7 before developing Nf6. The queen on h5 targets f7 — neutralize the threat first.",
     "recognition_tip": "Against the Wayward Queen (2.Qh5), always defend f7 before developing the knight to f6.",
-    "tags": ["checkmate", "f7_attack", "queen_sortie"]
+    "tags": [
+      "checkmate",
+      "f7_attack",
+      "queen_sortie"
+    ]
   },
   {
     "id": "benoni_fork_trick",
     "name": "Benoni Fork Trick",
     "category": "pin_fork_trick",
-    "rating_range": [800, 1400],
+    "rating_range": [
+      800,
+      1400
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. d4 Nf6 2. c4 c5 3. d5 e6 4. Nc3 exd5 5. cxd5 d6 6. Nf3 g6 7. Nd2 Nbd7 8. Nc4 Nb6"],
-    "trap_moves": ["1. d4 Nf6 2. c4 c5 3. d5 e6 4. Nc3 exd5 5. cxd5 d6 6. Nf3 g6 7. Nd2 Nbd7 8. Nc4 Nb6 9. Nxb6 axb6"],
-    "mistake_ply": 17,
+    "positions": [
+      {
+        "pgn": "1. d4 Nf6 2. c4 c5 3. d5 e6 4. Nc3 exd5 5. cxd5 d6 6. Nf3 g6 7. Nd2 Nbd7 8. Nc4 Nb6",
+        "mistake_san": "Nxb6"
+      }
+    ],
     "mistake_san": "Nxb6",
     "refutation_pgn": "1. d4 Nf6 2. c4 c5 3. d5 e6 4. Nc3 exd5 5. cxd5 d6 6. Nf3 g6 7. Nd2 Nbd7 8. Nc4 Nb6 9. Ne3",
     "refutation_move": "Ne3",
     "refutation_note": "Retreat the knight to e3 — don't exchange on b6 which opens the a-file for Black's rook.",
     "recognition_tip": "In the Benoni, exchanging Nxb6 opens the a-file and gives Black powerful counterplay. Keep the knight active.",
-    "tags": ["fork", "open_file", "benoni"]
+    "tags": [
+      "fork",
+      "open_file",
+      "benoni"
+    ]
   },
   {
     "id": "vienna_frankenstein_dracula",
     "name": "Frankenstein-Dracula Variation",
     "category": "attack",
-    "rating_range": [800, 1400],
+    "rating_range": [
+      800,
+      1400
+    ],
     "victim_side": "white",
-    "entry_moves": ["1. e4 e5 2. Nc3 Nf6 3. Bc4 Nxe4 4. Qh5 Nd6 5. Bb3 Nc6"],
-    "trap_moves": ["1. e4 e5 2. Nc3 Nf6 3. Bc4 Nxe4 4. Qh5 Nd6 5. Bb3 Nc6 6. Nb5 g6 7. Qf3 f5 8. Qd5 Qe7 9. Nxc7+ Kd8 10. Nxa8 b6"],
-    "mistake_ply": 17,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nc3 Nf6 3. Bc4 Nxe4 4. Qh5 Nd6 5. Bb3 Nc6"
+      },
+      {
+        "pgn": "1. e4 e5 2. Nc3 Nf6 3. Bc4 Nxe4 4. Qh5 Nd6 5. Bb3 Nc6 6. Nb5 g6 7. Qf3 f5 8. Qd5 Qe7",
+        "mistake_san": "Nxc7+"
+      }
+    ],
     "mistake_san": "Nxc7+",
     "refutation_pgn": "1. e4 e5 2. Nc3 Nf6 3. Bc4 Nxe4 4. Qh5 Nd6 5. Bb3 Nc6 6. Nb5 g6 7. Qf3 f5 8. Qd5 Qe7 9. Nf3",
     "refutation_move": "Nf3",
     "refutation_note": "Develop with Nf3 instead of grabbing the rook. The knight on a8 gets trapped and Black's pieces are very active.",
     "recognition_tip": "Don't grab the rook on a8 — the knight gets trapped in the corner while Black's pieces swarm your king.",
-    "tags": ["attack", "piece_trap", "vienna"]
+    "tags": [
+      "attack",
+      "piece_trap",
+      "vienna"
+    ]
   },
   {
     "id": "philidor_legall_variation",
     "name": "Philidor Defense Legal Variation",
     "category": "checkmate",
-    "rating_range": [0, 1200],
+    "rating_range": [
+      0,
+      1200
+    ],
     "victim_side": "black",
-    "entry_moves": ["1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3"],
-    "trap_moves": ["1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5"],
-    "mistake_ply": 14,
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3",
+        "mistake_san": "Qe7"
+      }
+    ],
     "mistake_san": "Qe7",
     "refutation_pgn": "1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qd7",
     "refutation_move": "Qd7",
     "refutation_note": "Play Qd7 defending f7 and b7 simultaneously. Qe7 blocks the bishop and leaves f7 weak.",
     "recognition_tip": "When White plays Qb3 targeting b7 and f7, respond with Qd7 to defend both squares at once.",
-    "tags": ["checkmate", "f7_attack", "philidor"]
+    "tags": [
+      "checkmate",
+      "f7_attack",
+      "philidor"
+    ]
+  },
+  {
+    "id": "traxler_counterattack",
+    "name": "Traxler Counterattack",
+    "category": "attack",
+    "rating_range": [
+      800,
+      1600
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 Bc5"
+      },
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 Bc5 5. Nxf7 Bxf2+",
+        "mistake_san": "Kxf2"
+      }
+    ],
+    "mistake_san": "Kxf2",
+    "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 Bc5 5. Nxf7 Bxf2+ 6. Kf1",
+    "refutation_move": "Kf1",
+    "refutation_note": "Decline with Kf1 — taking with Kxf2 allows a vicious attack with d5 and Ng4+.",
+    "recognition_tip": "After Bc5 Nxf7 Bxf2+, do NOT take the bishop. Kf1 keeps the king safer.",
+    "tags": [
+      "counterattack",
+      "sacrifice",
+      "italian"
+    ]
+  },
+  {
+    "id": "evans_gambit_declined_trap",
+    "name": "Evans Gambit Declined Trap",
+    "category": "gambit_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bb6 5. a4 a6",
+        "mistake_san": "a5"
+      }
+    ],
+    "mistake_san": "a5",
+    "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bb6 5. a4 a5 6. b5 Nd4",
+    "refutation_move": "Nd4",
+    "refutation_note": "After a5, White plays a5 trapping the bishop on b6. Black should play Nf6 or d6 instead.",
+    "recognition_tip": "In the Evans Gambit declined, watch for a4 — if you play a6, the a5 pawn push traps your bishop.",
+    "tags": [
+      "piece_trap",
+      "bishop_trap",
+      "italian"
+    ]
+  },
+  {
+    "id": "sicilian_magnus_smith_trap",
+    "name": "Sicilian Magnus Smith Trap",
+    "category": "piece_trap",
+    "rating_range": [
+      800,
+      1600
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 Nc6 6. Bc4 g6"
+      },
+      {
+        "pgn": "1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 Nc6 6. Bc4 g6 7. Nxc6 bxc6 8. e5 dxe5",
+        "mistake_san": "Bxf7+"
+      }
+    ],
+    "mistake_san": "Bxf7+",
+    "refutation_pgn": "1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 Nc6 6. Bc4 e6",
+    "refutation_move": "e6",
+    "refutation_note": "Play e6 instead of g6 to guard f7 and avoid the Bxf7+ sacrifice.",
+    "recognition_tip": "In the Sicilian with Bc4, playing g6 can be dangerous — e5/Bxf7+ wins the queen after Kxf7 Qxd8.",
+    "tags": [
+      "sacrifice",
+      "queen_trap",
+      "sicilian"
+    ]
+  },
+  {
+    "id": "french_winawer_poisoned_pawn",
+    "name": "French Winawer Poisoned Pawn",
+    "category": "gambit_trap",
+    "rating_range": [
+      800,
+      1600
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. e4 e6 2. d4 d5 3. Nc3 Bb4 4. e5 c5 5. a3 Bxc3+ 6. bxc3 Ne7 7. Qg4 Qc7",
+        "mistake_san": "Qxg7"
+      }
+    ],
+    "mistake_san": "Qxg7",
+    "refutation_pgn": "1. e4 e6 2. d4 d5 3. Nc3 Bb4 4. e5 c5 5. a3 Bxc3+ 6. bxc3 Ne7 7. Qg4 O-O",
+    "refutation_move": "O-O",
+    "refutation_note": "Don't grab the g7 pawn — Black gets Rg8 trapping the queen. Castle instead.",
+    "recognition_tip": "In the Winawer French, the g7 pawn is poisoned — Qxg7 gets trapped by Rg8.",
+    "tags": [
+      "queen_trap",
+      "poisoned_pawn",
+      "french"
+    ]
+  },
+  {
+    "id": "caro_kann_advance_trap",
+    "name": "Caro-Kann Advance Variation Trap",
+    "category": "attack",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. e4 c6 2. d4 d5 3. e5 Bf5 4. Nc3 e6 5. g4 Bg6 6. Nge2 c5 7. h4 h5",
+        "mistake_san": "Nf4"
+      }
+    ],
+    "mistake_san": "Nf4",
+    "refutation_pgn": "1. e4 c6 2. d4 d5 3. e5 Bf5 4. Nc3 e6 5. g4 Bg6 6. Nge2 c5 7. h4 h6",
+    "refutation_move": "h6",
+    "refutation_note": "Don't allow Nf4 — play h6 to prevent the knight landing with a strong attack.",
+    "recognition_tip": "In the Caro-Kann advance with g4, watch for Nf5 landing with devastating effect.",
+    "tags": [
+      "attack",
+      "kingside",
+      "caro_kann"
+    ]
+  },
+  {
+    "id": "scandinavian_icelandic_gambit",
+    "name": "Scandinavian Icelandic Gambit",
+    "category": "gambit_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. e4 d5 2. exd5 Nf6 3. c4 e6",
+        "mistake_san": "dxe6"
+      }
+    ],
+    "mistake_san": "dxe6",
+    "refutation_pgn": "1. e4 d5 2. exd5 Nf6 3. c4 e6 4. d4",
+    "refutation_move": "d4",
+    "refutation_note": "Don't take on e6 — Black gets rapid development with Bxe6 targeting c4 and quick castling. Hold the center with d4.",
+    "recognition_tip": "In the Scandinavian with c4, taking dxe6 opens lines for Black's pieces too quickly.",
+    "tags": [
+      "gambit",
+      "development",
+      "scandinavian"
+    ]
+  },
+  {
+    "id": "dutch_staunton_gambit_trap",
+    "name": "Dutch Staunton Gambit Trap",
+    "category": "gambit_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. d4 f5 2. e4 fxe4 3. Nc3 Nf6 4. Bg5 Nc6",
+        "mistake_san": "d5"
+      }
+    ],
+    "mistake_san": "d5",
+    "refutation_pgn": "1. d4 f5 2. e4 fxe4 3. Nc3 Nf6 4. Bg5 e6",
+    "refutation_move": "e6",
+    "refutation_note": "Don't push d5 — it allows Bxf6 followed by Bb5. Play e6 solidifying the position.",
+    "recognition_tip": "Against the Staunton Gambit with Bg5, don't weaken your queenside with d5.",
+    "tags": [
+      "gambit",
+      "pin",
+      "dutch"
+    ]
+  },
+  {
+    "id": "italian_fried_liver_na5_counter",
+    "name": "Fried Liver Na5 Counter-Trap",
+    "category": "piece_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Na5 6. Bb5+",
+        "mistake_san": "c6"
+      }
+    ],
+    "mistake_san": "c6",
+    "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Na5 6. Bb5+ Bd7",
+    "refutation_move": "Bd7",
+    "refutation_note": "Block with Bd7 instead of c6 — after c6 dxc6 bxc6 the bishop on b5 is harassed but White keeps the extra pawn.",
+    "recognition_tip": "After Na5 Bb5+, block with Bd7. Playing c6 weakens your pawn structure.",
+    "tags": [
+      "piece_trap",
+      "italian",
+      "counter_trap"
+    ]
+  },
+  {
+    "id": "sicilian_pin_trap",
+    "name": "Sicilian Najdorf Pin Trap",
+    "category": "pin_fork_trick",
+    "rating_range": [
+      800,
+      1600
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Bg5 e6 7. f4 Qb6",
+        "mistake_san": "Nb3"
+      }
+    ],
+    "mistake_san": "Nb3",
+    "refutation_pgn": "1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6 6. Bg5 e6 7. f4 Qb6 8. Qd2",
+    "refutation_move": "Qd2",
+    "refutation_note": "After Qb6, don't play Nb3 — Black wins a pawn with Qe3+. Play Qd2 defending b2 and keeping the knight active.",
+    "recognition_tip": "In the Najdorf with Bg5, if Black plays Qb6, Nb3 drops the e4 pawn to Qe3+.",
+    "tags": [
+      "pin",
+      "fork",
+      "sicilian",
+      "najdorf"
+    ]
+  },
+  {
+    "id": "queens_gambit_accepted_trap",
+    "name": "Queen's Gambit Accepted Trap",
+    "category": "piece_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. d4 d5 2. c4 dxc4 3. e3 b5",
+        "mistake_san": "a4"
+      }
+    ],
+    "mistake_san": "a4",
+    "refutation_pgn": "1. d4 d5 2. c4 dxc4 3. e3 b5 4. a4 c6 5. axb5 cxb5 6. Qf3",
+    "refutation_move": "c6",
+    "refutation_note": "After a4, Black should play c6 to hold the pawn chain. But White's Qf3 hits the rook on a8.",
+    "recognition_tip": "In the QGA, trying to hold the c4 pawn with b5 often fails to a4 undermining the chain.",
+    "tags": [
+      "piece_trap",
+      "pawn_attack",
+      "qga"
+    ]
+  },
+  {
+    "id": "kings_indian_bayonet_trap",
+    "name": "King's Indian Bayonet Attack Trap",
+    "category": "attack",
+    "rating_range": [
+      1000,
+      1600
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 e5 7. O-O Nc6 8. d5 Ne7 9. b4 Nh5 10. Re1",
+        "mistake_san": "f5"
+      }
+    ],
+    "mistake_san": "f5",
+    "refutation_pgn": "1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 e5 7. O-O Nc6 8. d5 Ne7 9. b4 a5",
+    "refutation_move": "a5",
+    "refutation_note": "Challenge the bayonet with a5 on the queenside instead of premature f5.",
+    "recognition_tip": "In the King's Indian Bayonet, premature f5 without preparation can backfire. Play a5 first.",
+    "tags": [
+      "attack",
+      "kingside",
+      "kings_indian"
+    ]
+  },
+  {
+    "id": "pirc_austrian_attack_trap",
+    "name": "Pirc Austrian Attack Trap",
+    "category": "attack",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. e4 d6 2. d4 Nf6 3. Nc3 g6 4. f4 Bg7 5. Nf3 O-O 6. e5 Nfd7",
+        "mistake_san": "e6"
+      }
+    ],
+    "mistake_san": "e6",
+    "refutation_pgn": "1. e4 d6 2. d4 Nf6 3. Nc3 g6 4. f4 Bg7 5. Nf3 O-O 6. e5 dxe5",
+    "refutation_move": "dxe5",
+    "refutation_note": "Take immediately with dxe5 instead of retreating to d7. After Nfd7 e6, the pawn cramps Black fatally.",
+    "recognition_tip": "In the Pirc Austrian Attack, don't let e5-e6 land — challenge it immediately.",
+    "tags": [
+      "attack",
+      "pawn_storm",
+      "pirc"
+    ]
+  },
+  {
+    "id": "ruy_lopez_marshall_trap",
+    "name": "Ruy Lopez Marshall Trap",
+    "category": "attack",
+    "rating_range": [
+      1000,
+      1800
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 O-O 8. c3 d5 9. exd5 Nxd5 10. Nxe5 Nxe5 11. Rxe5 c6",
+        "mistake_san": "d4"
+      }
+    ],
+    "mistake_san": "d4",
+    "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 O-O 8. c3 d5 9. exd5 Nxd5 10. Nxe5 Nxe5 11. Rxe5 c6 12. Re1",
+    "refutation_move": "Re1",
+    "refutation_note": "Retreat the rook instead of playing d4. The Marshall Attack gives Black powerful attacking chances after d4.",
+    "recognition_tip": "In the Marshall Attack, Black sacrifices a pawn for a massive kingside attack. Re1 is safer than d4.",
+    "tags": [
+      "attack",
+      "sacrifice",
+      "ruy_lopez",
+      "marshall"
+    ]
+  },
+  {
+    "id": "queens_gambit_baltic_trap",
+    "name": "Queen's Gambit Baltic Defense Trap",
+    "category": "piece_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. d4 d5 2. c4 Bf5 3. cxd5 Bxb1",
+        "mistake_san": "Qa4+"
+      }
+    ],
+    "mistake_san": "Qa4+",
+    "refutation_pgn": "1. d4 d5 2. c4 Bf5 3. cxd5 Bxb1 4. Rxb1",
+    "refutation_move": "Rxb1",
+    "refutation_note": "Take the bishop with Rxb1 instead of Qa4+. After Qa4+ c6 dxc6 Qxc6, Black has equalized.",
+    "recognition_tip": "In the Baltic Defense after Bxb1, simply recapture — don't get greedy with Qa4+.",
+    "tags": [
+      "piece_trap",
+      "queen_trap",
+      "qgd"
+    ]
+  },
+  {
+    "id": "london_system_trap",
+    "name": "London System Trap",
+    "category": "piece_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. d4 d5 2. Bf4 c5 3. e3 Nc6 4. c3 Qb6",
+        "mistake_san": "Qb3"
+      }
+    ],
+    "mistake_san": "Qb3",
+    "refutation_pgn": "1. d4 d5 2. Bf4 c5 3. e3 Nc6 4. c3 Qb6 5. Qc1",
+    "refutation_move": "Qc1",
+    "refutation_note": "Don't play Qb3 exchanging queens — it leaves the b2 pawn backward and weak. Retreat Qc1 keeping the bishop protected.",
+    "recognition_tip": "In the London, when Black plays Qb6 pressuring b2, don't trade queens — it damages your structure.",
+    "tags": [
+      "piece_trap",
+      "queen_trap",
+      "london"
+    ]
+  },
+  {
+    "id": "catalan_pawn_trap",
+    "name": "Catalan Pawn Trap",
+    "category": "piece_trap",
+    "rating_range": [
+      1000,
+      1600
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. d4 Nf6 2. c4 e6 3. g3 d5 4. Bg2 dxc4 5. Nf3 Nc6",
+        "mistake_san": "Qa4"
+      }
+    ],
+    "mistake_san": "Qa4",
+    "refutation_pgn": "1. d4 Nf6 2. c4 e6 3. g3 d5 4. Bg2 dxc4 5. Nf3 a6",
+    "refutation_move": "a6",
+    "refutation_note": "Play a6 to hold the c4 pawn instead of Nc6. After Nc6, White recovers the pawn with Qa4.",
+    "recognition_tip": "In the Catalan, holding c4 with Nc6 fails to Qa4 forking knight and pawn.",
+    "tags": [
+      "piece_trap",
+      "fork",
+      "catalan"
+    ]
+  },
+  {
+    "id": "reti_gambit_trap",
+    "name": "Réti Gambit Trap",
+    "category": "gambit_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. Nf3 d5 2. c4 dxc4 3. e3 Nf6",
+        "mistake_san": "Bxc4"
+      }
+    ],
+    "mistake_san": "Bxc4",
+    "refutation_pgn": "1. Nf3 d5 2. c4 dxc4 3. e3 b5",
+    "refutation_move": "b5",
+    "refutation_note": "Hold the pawn with b5 — giving it back with Nf6 Bxc4 lets White develop quickly.",
+    "recognition_tip": "In the Réti gambit, don't give back c4 easily — hold it with b5 or Be6.",
+    "tags": [
+      "gambit",
+      "development",
+      "reti"
+    ]
+  },
+  {
+    "id": "sicilian_dragon_exchange_trap",
+    "name": "Sicilian Dragon Exchange Sacrifice",
+    "category": "attack",
+    "rating_range": [
+      1000,
+      1600
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 g6 6. Be3 Bg7 7. f3 O-O 8. Qd2 Nc6 9. Bc4 Bd7 10. O-O-O Rc8",
+        "mistake_san": "Bb3"
+      }
+    ],
+    "mistake_san": "Bb3",
+    "refutation_pgn": "1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 g6 6. Be3 Bg7 7. f3 O-O 8. Qd2 Nc6 9. Bc4 Bd7 10. O-O-O Ne5 11. Bb3 Rc8 12. h4",
+    "refutation_move": "h4",
+    "refutation_note": "In the Yugoslav Attack, don't play Bb3 too early — start the h4-h5 pawn storm first.",
+    "recognition_tip": "In the Dragon Yugoslav Attack, prioritize the h-pawn storm over retreating the bishop.",
+    "tags": [
+      "attack",
+      "kingside",
+      "sicilian",
+      "dragon"
+    ]
+  },
+  {
+    "id": "nimzo_indian_classical_trap",
+    "name": "Nimzo-Indian Classical Trap",
+    "category": "pin_fork_trick",
+    "rating_range": [
+      1000,
+      1600
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. Qc2 d5 5. cxd5 exd5 6. Bg5 h6",
+        "mistake_san": "Bh4"
+      }
+    ],
+    "mistake_san": "Bh4",
+    "refutation_pgn": "1. d4 Nf6 2. c4 e6 3. Nc3 Bb4 4. Qc2 d5 5. cxd5 exd5 6. Bg5 c5",
+    "refutation_move": "c5",
+    "refutation_note": "After h6, retreat with Bxf6 rather than Bh4 — the bishop gets trapped after g5.",
+    "recognition_tip": "In the Nimzo-Indian with Bg5, if Black plays h6, exchange rather than retreating to h4 where g5 traps it.",
+    "tags": [
+      "pin",
+      "bishop_trap",
+      "nimzo_indian"
+    ]
+  },
+  {
+    "id": "benko_gambit_trap",
+    "name": "Benko Gambit Trap",
+    "category": "gambit_trap",
+    "rating_range": [
+      1000,
+      1600
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. d4 Nf6 2. c4 c5 3. d5 b5 4. cxb5 a6 5. bxa6 Bxa6",
+        "mistake_san": "Nc3"
+      }
+    ],
+    "mistake_san": "Nc3",
+    "refutation_pgn": "1. d4 Nf6 2. c4 c5 3. d5 b5 4. cxb5 a6 5. bxa6 Bxa6 6. e4",
+    "refutation_move": "e4",
+    "refutation_note": "Play e4 grabbing the center, not Nc3 which allows Black's powerful queenside pressure with d6/Nbd7/g6/Bg7.",
+    "recognition_tip": "In the Benko Gambit, don't develop passively. Seize the center with e4 immediately.",
+    "tags": [
+      "gambit",
+      "queenside",
+      "benko"
+    ]
+  },
+  {
+    "id": "slav_exchange_trap",
+    "name": "Slav Exchange Variation Trap",
+    "category": "piece_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. d4 d5 2. c4 c6 3. cxd5 cxd5 4. Bf4 Nc6 5. e3 Nf6 6. Nc3 Bg4",
+        "mistake_san": "Qb3"
+      }
+    ],
+    "mistake_san": "Qb3",
+    "refutation_pgn": "1. d4 d5 2. c4 c6 3. cxd5 cxd5 4. Bf4 Nc6 5. e3 Nf6 6. Nc3 a6",
+    "refutation_move": "a6",
+    "refutation_note": "After Bg4, Qb3 forks b7 and d5. Play a6 to prevent Bb5 ideas and keep the position solid.",
+    "recognition_tip": "In the Exchange Slav, developing with Bg4 can walk into Qb3 hitting b7 and d5.",
+    "tags": [
+      "piece_trap",
+      "fork",
+      "slav"
+    ]
+  },
+  {
+    "id": "sicilian_alapin_trap",
+    "name": "Sicilian Alapin Trap",
+    "category": "gambit_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. e4 c5 2. c3 d5 3. exd5 Qxd5 4. d4 Nc6 5. Nf3 cxd4",
+        "mistake_san": "cxd4"
+      }
+    ],
+    "mistake_san": "cxd4",
+    "refutation_pgn": "1. e4 c5 2. c3 d5 3. exd5 Qxd5 4. d4 e6",
+    "refutation_move": "e6",
+    "refutation_note": "Play e6 developing naturally. After cxd4 cxd4, White gets a strong isolated queen pawn.",
+    "recognition_tip": "In the Alapin Sicilian, don't trade pawns on d4 too early — it helps White's development.",
+    "tags": [
+      "gambit",
+      "center",
+      "sicilian",
+      "alapin"
+    ]
+  },
+  {
+    "id": "benoni_taimanov_trap",
+    "name": "Benoni Taimanov Attack Trap",
+    "category": "attack",
+    "rating_range": [
+      1000,
+      1600
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. d4 Nf6 2. c4 c5 3. d5 e6 4. Nc3 exd5 5. cxd5 d6 6. e4 g6 7. f4 Bg7 8. Bb5+",
+        "mistake_san": "Nfd7"
+      }
+    ],
+    "mistake_san": "Nfd7",
+    "refutation_pgn": "1. d4 Nf6 2. c4 c5 3. d5 e6 4. Nc3 exd5 5. cxd5 d6 6. e4 g6 7. f4 Bg7 8. Bb5+ Bd7",
+    "refutation_move": "Bd7",
+    "refutation_note": "Block with Bd7 instead of Nfd7 — the knight retreating gives White too much central control with e5.",
+    "recognition_tip": "Against Bb5+ in the Modern Benoni, block with Bd7 to keep the knight active on f6.",
+    "tags": [
+      "attack",
+      "center",
+      "benoni"
+    ]
+  },
+  {
+    "id": "grunfeld_exchange_trap",
+    "name": "Grünfeld Exchange Variation Trap",
+    "category": "piece_trap",
+    "rating_range": [
+      1000,
+      1600
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. d4 Nf6 2. c4 g6 3. Nc3 d5 4. cxd5 Nxd5 5. e4 Nxc3 6. bxc3 Bg7 7. Bc4 c5 8. Ne2 O-O 9. O-O Nc6 10. Be3 Bg4",
+        "mistake_san": "f3"
+      }
+    ],
+    "mistake_san": "f3",
+    "refutation_pgn": "1. d4 Nf6 2. c4 g6 3. Nc3 d5 4. cxd5 Nxd5 5. e4 Nxc3 6. bxc3 Bg7 7. Bc4 c5 8. Ne2 O-O 9. O-O Nc6 10. Be3 Bg4 11. Qd3",
+    "refutation_move": "Qd3",
+    "refutation_note": "After Bg4, play Qd3 instead of f3 — chasing the bishop with f3 weakens the king and allows tactical shots.",
+    "recognition_tip": "In the Grünfeld Exchange, f3 against Bg4 weakens the kingside. Prefer Qd3 keeping the structure intact.",
+    "tags": [
+      "piece_trap",
+      "kingside",
+      "grunfeld"
+    ]
+  },
+  {
+    "id": "scotch_four_knights_trap",
+    "name": "Scotch Four Knights Trap",
+    "category": "pin_fork_trick",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4 Nf6 5. Nc3 Bb4 6. Nxc6 bxc6 7. Bd3 d5 8. exd5 cxd5",
+        "mistake_san": "O-O"
+      }
+    ],
+    "mistake_san": "O-O",
+    "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Nxd4 Nf6 5. Nc3 Bb4 6. Nxc6 bxc6 7. Bd3 d5 8. exd5 cxd5 9. Qe2+",
+    "refutation_move": "Qe2+",
+    "refutation_note": "Play Qe2+ before castling — after O-O, Black has O-O with strong piece activity and initiative.",
+    "recognition_tip": "In the Scotch with Bb4, check with Qe2+ to disrupt Black's development before castling.",
+    "tags": [
+      "pin",
+      "fork",
+      "scotch"
+    ]
+  },
+  {
+    "id": "kings_gambit_falkbeer_trap",
+    "name": "King's Gambit Falkbeer Counter-Gambit Trap",
+    "category": "gambit_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "white",
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. f4 d5 3. exd5 e4",
+        "mistake_san": "d3"
+      }
+    ],
+    "mistake_san": "d3",
+    "refutation_pgn": "1. e4 e5 2. f4 d5 3. exd5 e4 4. Nc3",
+    "refutation_move": "Nc3",
+    "refutation_note": "Play Nc3 developing and pressuring e4 — d3 opens lines for Black's bishops dangerously.",
+    "recognition_tip": "In the Falkbeer Counter-Gambit, don't play d3 returning the pawn — develop with Nc3 instead.",
+    "tags": [
+      "gambit",
+      "counter_gambit",
+      "kings_gambit"
+    ]
+  },
+  {
+    "id": "vienna_game_copycat_trap",
+    "name": "Vienna Game Copycat Trap",
+    "category": "checkmate",
+    "rating_range": [
+      0,
+      1200
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nc3 Nc6 3. Bc4 Bc5 4. Qg4 Qf6",
+        "mistake_san": "Nd5"
+      }
+    ],
+    "mistake_san": "Nd5",
+    "refutation_pgn": "1. e4 e5 2. Nc3 Nc6 3. Bc4 Bc5 4. Qg4 g6",
+    "refutation_move": "g6",
+    "refutation_note": "Defend g7 with g6 or Kf8, don't play Qf6 which allows Nd5 forking queen and c7.",
+    "recognition_tip": "In the Vienna Game, if White plays Qg4 threatening g7, don't mirror with Qf6 — Nd5 forks.",
+    "tags": [
+      "fork",
+      "queen_attack",
+      "vienna"
+    ]
+  },
+  {
+    "id": "philidor_exchange_trap",
+    "name": "Philidor Defense Exchange Trap",
+    "category": "piece_trap",
+    "rating_range": [
+      800,
+      1400
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 d6 3. d4 Nd7",
+        "mistake_san": "Bc4"
+      }
+    ],
+    "mistake_san": "Bc4",
+    "refutation_pgn": "1. e4 e5 2. Nf3 d6 3. d4 exd4 4. Nxd4 Nf6",
+    "refutation_move": "exd4",
+    "refutation_note": "Exchange on d4 instead of blocking with Nd7. After Nd7, Bc4 targets f7 and Black is cramped.",
+    "recognition_tip": "In the Philidor, don't block with Nd7 too early — exchange on d4 to relieve pressure on f7.",
+    "tags": [
+      "piece_trap",
+      "f7_attack",
+      "philidor"
+    ]
+  },
+  {
+    "id": "two_knights_max_lange",
+    "name": "Max Lange Attack Trap",
+    "category": "attack",
+    "rating_range": [
+      800,
+      1600
+    ],
+    "victim_side": "black",
+    "positions": [
+      {
+        "pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d4 exd4 5. O-O Bc5 6. e5",
+        "mistake_san": "d5"
+      }
+    ],
+    "mistake_san": "d5",
+    "refutation_pgn": "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d4 exd4 5. O-O Bc5 6. e5 Ng4",
+    "refutation_move": "Ng4",
+    "refutation_note": "Play Ng4 keeping the knight active — d5 blocks the bishop and leads to a sharp attack for White after exf6.",
+    "recognition_tip": "In the Max Lange Attack after e5, don't block with d5 — keep pieces active with Ng4.",
+    "tags": [
+      "attack",
+      "sacrifice",
+      "italian",
+      "max_lange"
+    ]
   }
 ]

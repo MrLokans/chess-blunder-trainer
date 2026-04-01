@@ -97,7 +97,7 @@ function destroyPlayer() {
 function initPlayer(trap) {
   destroyPlayer();
 
-  const trapMoves = trap.trap_san_variants?.[0] || [];
+  const trapMoves = trap.trap_san?.[0] || [];
   const orientation = trap.victim_side === 'black' ? 'black' : 'white';
   const playerEl = document.getElementById('trapSequencePlayer');
 
@@ -135,7 +135,7 @@ async function openDetail(trapId) {
   document.getElementById('trapDetailName').textContent = trap ? trap.name : trapId;
 
   document.getElementById('trapMistakeInfo').textContent =
-    trap ? `${t('traps.mistake_at_ply')} ${trap.mistake_ply}: ${trap.mistake_san}` : '';
+    trap ? `${t('traps.mistake')}: ${trap.mistake_san}` : '';
   document.getElementById('trapRefutationInfo').textContent =
     trap ? trap.refutation_note : '';
   document.getElementById('trapRefutationMove').textContent =

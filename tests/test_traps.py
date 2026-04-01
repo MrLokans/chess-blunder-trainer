@@ -1,21 +1,23 @@
 from __future__ import annotations
 
 import chess
+import chess.polyglot
 
 from blunder_tutor.analysis.traps import (
     TrapDatabase,
     TrapDefinition,
+    TrapPosition,
+    _build_position_from_pgn_and_san,
     _parse_pgn_to_san,
+    _replay_pgn,
     get_trap_database,
 )
 
 
 def _make_board_from_pgn(pgn: str) -> chess.Board:
-    moves = _parse_pgn_to_san(pgn)
-    board = chess.Board()
-    for m in moves:
-        board.push_san(m)
-    return board
+    return _replay_pgn(pgn)
+
+
 
 
 def _scholars_mate_trap() -> TrapDefinition:
@@ -25,9 +27,7 @@ def _scholars_mate_trap() -> TrapDefinition:
         category="checkmate",
         rating_range=(0, 800),
         victim_side="black",
-        entry_san_variants=[["e4", "e5", "Bc4", "Nc6", "Qh5"]],
-        trap_san_variants=[["e4", "e5", "Bc4", "Nc6", "Qh5", "Nf6", "Qxf7#"]],
-        mistake_ply=6,
+        positions=[_build_position_from_pgn_and_san("1. e4 e5 2. Bc4 Nc6 3. Qh5", "Nf6")],
         mistake_san="Nf6",
         refutation_pgn="1. e4 e5 2. Bc4 Nc6 3. Qh5 g6 4. Qf3 Nf6",
         refutation_move="g6",
@@ -44,23 +44,10 @@ def _fried_liver_trap() -> TrapDefinition:
         category="attack",
         rating_range=(0, 1400),
         victim_side="black",
-        entry_san_variants=[["e4", "e5", "Nf3", "Nc6", "Bc4", "Nf6", "Ng5"]],
-        trap_san_variants=[
-            [
-                "e4",
-                "e5",
-                "Nf3",
-                "Nc6",
-                "Bc4",
-                "Nf6",
-                "Ng5",
-                "d5",
-                "exd5",
-                "Nxd5",
-                "Nxf7",
-            ]
+        positions=[
+            _build_position_from_pgn_and_san("1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5"),
+            _build_position_from_pgn_and_san("1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5", "Nxd5"),
         ],
-        mistake_ply=10,
         mistake_san="Nxd5",
         refutation_pgn="1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Na5",
         refutation_move="Na5",
@@ -101,7 +88,6 @@ class TestTrapDatabaseMatching:
 
     def test_entered_but_not_sprung(self):
         db = TrapDatabase([_scholars_mate_trap()])
-        # Enters the trap line but plays g6 instead of Nf6
         board = _make_board_from_pgn("1. e4 e5 2. Bc4 Nc6 3. Qh5 g6 4. Qf3 Nf6")
         matches = db.match_game(board, chess.BLACK)
         assert len(matches) == 1
@@ -146,30 +132,72 @@ class TestTrapDatabaseMatching:
         assert db.get_trap("fried_liver") is not None
         assert db.get_trap("nonexistent") is None
 
+    def test_fried_liver_dynamic_mistake_ply(self):
+        db = TrapDatabase([_fried_liver_trap()])
+        board = _make_board_from_pgn(
+            "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7"
+        )
+        matches = db.match_game(board, chess.BLACK)
+        assert matches[0].mistake_ply == 10
+
+
+class TestTranspositionDetection:
+    def test_scholars_mate_transposed_move_order(self):
+        db = TrapDatabase([_scholars_mate_trap()])
+        # Qh5 before Bc4 — different move order, same position
+        board = _make_board_from_pgn("1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7#")
+        matches = db.match_game(board, chess.BLACK)
+        assert len(matches) == 1
+        assert matches[0].match_type == "sprung"
+
+    def test_scholars_mate_transposed_entered(self):
+        db = TrapDatabase([_scholars_mate_trap()])
+        board = _make_board_from_pgn("1. e4 e5 2. Qh5 Nc6 3. Bc4 g6 4. Qf3 Nf6")
+        matches = db.match_game(board, chess.BLACK)
+        assert len(matches) == 1
+        assert matches[0].match_type == "entered"
+
+    def test_fried_liver_transposed_bc4_before_nf3(self):
+        db = TrapDatabase([_fried_liver_trap()])
+        # Bc4 before Nf3 — Italian move order
+        board = _make_board_from_pgn(
+            "1. e4 e5 2. Bc4 Nc6 3. Nf3 Nf6 4. Ng5 d5 5. exd5 Nxd5 6. Nxf7"
+        )
+        matches = db.match_game(board, chess.BLACK)
+        assert len(matches) == 1
+        assert matches[0].match_type == "sprung"
+
+    def test_fried_liver_transposed_entered_only(self):
+        db = TrapDatabase([_fried_liver_trap()])
+        board = _make_board_from_pgn(
+            "1. e4 e5 2. Bc4 Nc6 3. Nf3 Nf6 4. Ng5 d5 5. exd5 Na5"
+        )
+        matches = db.match_game(board, chess.BLACK)
+        assert len(matches) == 1
+        assert matches[0].match_type == "entered"
+
 
 class TestTrapDatabaseLoading:
     def test_loads_from_fixture(self):
         db = get_trap_database()
         assert len(db.all_traps) > 0
-        # Check a known trap exists
         trap = db.get_trap("scholars_mate")
         assert trap is not None
         assert trap.victim_side == "black"
 
-    def test_all_traps_have_valid_entry_moves(self):
+    def test_all_positions_have_valid_entry_pgn(self):
         db = get_trap_database()
         for trap in db.all_traps:
-            assert len(trap.entry_san_variants) > 0
-            for variant in trap.entry_san_variants:
-                board = chess.Board()
-                for m in variant:
-                    board.push_san(m)
+            assert len(trap.positions) > 0
+            for pos in trap.positions:
+                board = _replay_pgn(pos.pgn)
+                assert chess.polyglot.zobrist_hash(board) == pos.entry_hash
 
-    def test_all_traps_have_valid_trap_moves(self):
+    def test_all_trigger_positions_have_legal_mistake(self):
         db = get_trap_database()
         for trap in db.all_traps:
-            assert len(trap.trap_san_variants) > 0
-            for variant in trap.trap_san_variants:
-                board = chess.Board()
-                for m in variant:
-                    board.push_san(m)
+            for pos in trap.positions:
+                if pos.mistake_san:
+                    board = _replay_pgn(pos.pgn)
+                    board.push_san(pos.mistake_san)
+                    assert chess.polyglot.zobrist_hash(board) == pos.trigger_hash

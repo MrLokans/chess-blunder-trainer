@@ -10,15 +10,14 @@ EXPECTED_CATALOG_KEYS = {
     "category",
     "rating_range",
     "victim_side",
-    "mistake_ply",
     "mistake_san",
     "refutation_pgn",
     "refutation_move",
     "refutation_note",
     "recognition_tip",
     "tags",
-    "entry_san_variants",
-    "trap_san_variants",
+    "entry_san",
+    "trap_san",
     "refutation_san",
 }
 
@@ -48,13 +47,13 @@ class TestGetTrapCatalog:
         response = app.get("/api/traps/catalog")
         data = response.json()
         for item in data:
-            assert isinstance(item["entry_san_variants"], list)
-            assert isinstance(item["trap_san_variants"], list)
+            assert isinstance(item["entry_san"], list)
+            assert isinstance(item["trap_san"], list)
             assert isinstance(item["refutation_san"], list)
-            for variant in item["entry_san_variants"]:
+            for variant in item["entry_san"]:
                 assert isinstance(variant, list)
                 assert all(isinstance(m, str) for m in variant)
-            for variant in item["trap_san_variants"]:
+            for variant in item["trap_san"]:
                 assert isinstance(variant, list)
                 assert all(isinstance(m, str) for m in variant)
 
@@ -85,8 +84,8 @@ class TestGetTrapDetail:
         response = app.get("/api/traps/scholars_mate")
         data = response.json()
         trap = data["trap"]
-        assert isinstance(trap["entry_san_variants"], list)
-        assert isinstance(trap["trap_san_variants"], list)
+        assert isinstance(trap["entry_san"], list)
+        assert isinstance(trap["trap_san"], list)
         assert isinstance(trap["refutation_san"], list)
         assert len(trap["refutation_san"]) > 0
 

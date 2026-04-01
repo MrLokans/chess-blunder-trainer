@@ -1,13 +1,23 @@
 from __future__ import annotations
 
 import json
+from collections import defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
 import chess
+import chess.polyglot
 
 from blunder_tutor.constants import DEFAULT_FIXTURES_PATH
+
+
+@dataclass(frozen=True)
+class TrapPosition:
+    pgn: str
+    entry_hash: int
+    mistake_san: str | None
+    trigger_hash: int | None
 
 
 @dataclass(frozen=True)
@@ -17,9 +27,7 @@ class TrapDefinition:
     category: str
     rating_range: tuple[int, int]
     victim_side: str
-    entry_san_variants: list[list[str]]
-    trap_san_variants: list[list[str]]
-    mistake_ply: int
+    positions: list[TrapPosition]
     mistake_san: str
     refutation_pgn: str
     refutation_move: str
@@ -51,76 +59,108 @@ def _parse_pgn_to_san(pgn_str: str) -> list[str]:
     return moves
 
 
-def _game_san_sequence(game_board: chess.Board) -> list[str]:
-    moves = []
-    temp = game_board.root()
-    for move in game_board.move_stack:
-        try:
-            san = temp.san(move)
-        except (AssertionError, ValueError):
-            break
-        moves.append(san)
-        temp.push(move)
-    return moves
-
-
-def _starts_with(game_moves: list[str], prefix: list[str]) -> bool:
-    if len(game_moves) < len(prefix):
-        return False
-    return game_moves[: len(prefix)] == prefix
+def _replay_pgn(pgn_str: str) -> chess.Board:
+    board = chess.Board()
+    for san in _parse_pgn_to_san(pgn_str):
+        board.push_san(san)
+    return board
 
 
 class TrapDatabase:
     def __init__(self, traps: list[TrapDefinition]) -> None:
         self._traps = traps
+        self._by_id: dict[str, TrapDefinition] = {t.id: t for t in traps}
+        self._entry_lookup: dict[int, list[TrapDefinition]] = defaultdict(list)
+        self._trigger_lookup: dict[int, list[tuple[TrapDefinition, TrapPosition]]] = (
+            defaultdict(list)
+        )
+
+        for trap in traps:
+            for pos in trap.positions:
+                self._entry_lookup[pos.entry_hash].append(trap)
+                if pos.mistake_san is not None:
+                    self._trigger_lookup[pos.entry_hash].append((trap, pos))
 
     def match_game(
         self, board: chess.Board, user_color: chess.Color
     ) -> list[TrapMatch]:
-        game_moves = _game_san_sequence(board)
-        matches: list[TrapMatch] = []
+        temp = board.root()
+        entered: dict[str, int] = {}
+        triggered: dict[str, int] = {}
 
-        for trap in self._traps:
-            entered = any(
-                _starts_with(game_moves, variant) for variant in trap.entry_san_variants
-            )
-            if not entered:
-                continue
+        for ply, move in enumerate(board.move_stack):
+            h = chess.polyglot.zobrist_hash(temp)
 
-            sprung = any(
-                _starts_with(game_moves, variant) for variant in trap.trap_san_variants
-            )
+            if h in self._trigger_lookup:
+                san = temp.san(move)
+                for trap, pos in self._trigger_lookup[h]:
+                    if san == pos.mistake_san and trap.id not in triggered:
+                        triggered[trap.id] = ply + 1
 
+            if h in self._entry_lookup:
+                for trap in self._entry_lookup[h]:
+                    if trap.id not in entered:
+                        entered[trap.id] = ply
+
+            temp.push(move)
+
+        h = chess.polyglot.zobrist_hash(temp)
+        if h in self._entry_lookup:
+            for trap in self._entry_lookup[h]:
+                if trap.id not in entered:
+                    entered[trap.id] = len(board.move_stack)
+
+        results: list[TrapMatch] = []
+        for trap_id in entered.keys() | triggered.keys():
+            trap = self._by_id[trap_id]
             victim_is_white = trap.victim_side == "white"
             user_is_victim = (user_color == chess.WHITE and victim_is_white) or (
                 user_color == chess.BLACK and not victim_is_white
             )
 
-            if sprung:
+            if trap_id in triggered:
                 match_type = "sprung" if user_is_victim else "executed"
+                mistake_ply = triggered[trap_id]
             else:
                 match_type = "entered"
+                mistake_ply = None
 
-            matches.append(
+            results.append(
                 TrapMatch(
-                    trap_id=trap.id,
+                    trap_id=trap_id,
                     match_type=match_type,
                     user_was_victim=user_is_victim,
-                    mistake_ply=trap.mistake_ply if sprung else None,
+                    mistake_ply=mistake_ply,
                 )
             )
 
-        return matches
+        return results
 
     def get_trap(self, trap_id: str) -> TrapDefinition | None:
-        for trap in self._traps:
-            if trap.id == trap_id:
-                return trap
-        return None
+        return self._by_id.get(trap_id)
 
     @property
     def all_traps(self) -> list[TrapDefinition]:
         return list(self._traps)
+
+
+def _build_position_from_pgn_and_san(pgn: str, mistake_san: str | None = None) -> TrapPosition:
+    board = _replay_pgn(pgn)
+    entry_hash = chess.polyglot.zobrist_hash(board)
+    trigger_hash = None
+    if mistake_san:
+        board.push_san(mistake_san)
+        trigger_hash = chess.polyglot.zobrist_hash(board)
+    return TrapPosition(
+        pgn=pgn,
+        entry_hash=entry_hash,
+        mistake_san=mistake_san,
+        trigger_hash=trigger_hash,
+    )
+
+
+def _build_position_from_entry(entry: dict) -> TrapPosition:
+    return _build_position_from_pgn_and_san(entry["pgn"], entry.get("mistake_san"))
 
 
 def _load_trap_definitions(path: Path) -> list[TrapDefinition]:
@@ -129,9 +169,7 @@ def _load_trap_definitions(path: Path) -> list[TrapDefinition]:
 
     traps = []
     for entry in data:
-        entry_variants = [_parse_pgn_to_san(em) for em in entry["entry_moves"]]
-        trap_variants = [_parse_pgn_to_san(tm) for tm in entry["trap_moves"]]
-
+        positions = [_build_position_from_entry(p) for p in entry["positions"]]
         traps.append(
             TrapDefinition(
                 id=entry["id"],
@@ -139,9 +177,7 @@ def _load_trap_definitions(path: Path) -> list[TrapDefinition]:
                 category=entry["category"],
                 rating_range=tuple(entry["rating_range"]),
                 victim_side=entry["victim_side"],
-                entry_san_variants=entry_variants,
-                trap_san_variants=trap_variants,
-                mistake_ply=entry["mistake_ply"],
+                positions=positions,
                 mistake_san=entry["mistake_san"],
                 refutation_pgn=entry["refutation_pgn"],
                 refutation_move=entry["refutation_move"],

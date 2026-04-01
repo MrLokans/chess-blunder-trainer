@@ -622,5 +622,6 @@
   "game_review.controls.pause": "Pause",
   "game_review.eval_chart": "Evaluation Chart",
   "game_review.link.review_game": "Review Game",
-  "game_review.vs": "vs"
+  "game_review.vs": "vs",
+  "traps.mistake": "The mistake"
 }

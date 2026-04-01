@@ -16,21 +16,28 @@ traps_router = APIRouter()
 
 
 def _serialize_trap(t: TrapDefinition) -> dict[str, Any]:
+    entry_san = [_parse_pgn_to_san(p.pgn) for p in t.positions]
+    trap_san = []
+    for p in t.positions:
+        moves = _parse_pgn_to_san(p.pgn)
+        if p.mistake_san:
+            moves = [*moves, p.mistake_san]
+        trap_san.append(moves)
+
     return {
         "id": t.id,
         "name": t.name,
         "category": t.category,
         "rating_range": list(t.rating_range),
         "victim_side": t.victim_side,
-        "mistake_ply": t.mistake_ply,
         "mistake_san": t.mistake_san,
         "refutation_pgn": t.refutation_pgn,
         "refutation_move": t.refutation_move,
         "refutation_note": t.refutation_note,
         "recognition_tip": t.recognition_tip,
         "tags": t.tags,
-        "entry_san_variants": t.entry_san_variants,
-        "trap_san_variants": t.trap_san_variants,
+        "entry_san": entry_san,
+        "trap_san": trap_san,
         "refutation_san": _parse_pgn_to_san(t.refutation_pgn),
     }
 

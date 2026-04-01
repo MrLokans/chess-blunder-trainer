@@ -107,7 +107,7 @@
   "trainer.feedback.error": "Помилка",
   "trainer.feedback.submit_failed": "Не вдалося надіслати хід",
   "trainer.feedback.no_move": "Спочатку перетягніть фігуру, щоб зробити хід.",
-  "trainer.feedback.evaluating": "Оцінюємо ваш хід\u2026",
+  "trainer.feedback.evaluating": "Оцінюємо ваш хід…",
   "trainer.feedback.best_revealed": "Найкращий хід показано",
   "trainer.feedback.best_revealed_detail": "Найкраще продовження показано нижче",
   "trainer.shortcuts.title": "Гарячі клавіші",
@@ -622,5 +622,6 @@
   "game_review.controls.pause": "Пауза",
   "game_review.eval_chart": "Графік оцінки",
   "game_review.link.review_game": "Огляд партії",
-  "game_review.vs": "проти"
+  "game_review.vs": "проти",
+  "traps.mistake": "Помилка"
 }
