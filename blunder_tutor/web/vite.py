@@ -8,7 +8,7 @@ from markupsafe import Markup
 
 ENTRY_MAP = {
     "trainer": "src/trainer/index.ts",
-    "dashboard": "src/dashboard/index.ts",
+    "dashboard": "src/dashboard/index.tsx",
     "settings": "src/settings/index.tsx",
     "management": "src/management/index.ts",
     "import": "src/import/index.ts",

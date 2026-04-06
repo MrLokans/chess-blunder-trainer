@@ -17,7 +17,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         trainer: resolve(__dirname, 'src/trainer/index.ts'),
-        dashboard: resolve(__dirname, 'src/dashboard/index.ts'),
+        dashboard: resolve(__dirname, 'src/dashboard/index.tsx'),
         settings: resolve(__dirname, 'src/settings/index.tsx'),
         management: resolve(__dirname, 'src/management/index.ts'),
         'import': resolve(__dirname, 'src/import/index.ts'),
