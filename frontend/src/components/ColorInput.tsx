@@ -1,6 +1,6 @@
-import { useCallback } from 'preact/hooks';
+import { useState, useEffect, useCallback } from 'preact/hooks';
 
-interface ColorInputProps {
+export interface ColorInputProps {
   value: string;
   onChange: (value: string) => void;
 }
@@ -8,13 +8,22 @@ interface ColorInputProps {
 const HEX_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 
 export function ColorInput({ value, onChange }: ColorInputProps) {
+  const [localHex, setLocalHex] = useState(value.toUpperCase());
+
+  useEffect(() => {
+    setLocalHex(value.toUpperCase());
+  }, [value]);
+
   const handleColorChange = useCallback((e: Event) => {
     const input = e.target as HTMLInputElement;
-    onChange(input.value.toUpperCase());
+    const upper = input.value.toUpperCase();
+    setLocalHex(upper);
+    onChange(upper);
   }, [onChange]);
 
-  const handleHexChange = useCallback((e: Event) => {
+  const handleHexInput = useCallback((e: Event) => {
     const input = e.target as HTMLInputElement;
+    setLocalHex(input.value);
     let val = input.value.trim();
     if (!val.startsWith('#')) val = '#' + val;
     if (HEX_PATTERN.test(val)) {
@@ -32,9 +41,9 @@ export function ColorInput({ value, onChange }: ColorInputProps) {
       />
       <input
         type="text"
-        value={value.toUpperCase()}
+        value={localHex}
         aria-label="hex value"
-        onInput={handleHexChange}
+        onInput={handleHexInput}
       />
     </span>
   );

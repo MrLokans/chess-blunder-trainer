@@ -41,6 +41,7 @@ export function useWebSocket(events: string[]): UseWebSocketResult {
     return () => {
       ws.close();
       wsRef.current = null;
+      handlersRef.current.clear();
     };
   }, [eventsKey]);
 

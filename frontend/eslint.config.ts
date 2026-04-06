@@ -1,5 +1,6 @@
 import tseslint from 'typescript-eslint';
 import vitest from 'eslint-plugin-vitest';
+import reactHooks from 'eslint-plugin-react-hooks';
 import { resolve } from 'path';
 
 const allPageModules = [
@@ -56,6 +57,14 @@ export default tseslint.config(
     },
   },
   ...crossPageRestrictions(),
+  {
+    files: ['src/**/*.tsx'],
+    plugins: { 'react-hooks': reactHooks },
+    rules: {
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+    },
+  },
   {
     files: ['tests/**/*.test.{ts,tsx}'],
     plugins: { vitest },

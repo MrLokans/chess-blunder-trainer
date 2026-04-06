@@ -1,4 +1,4 @@
-interface AlertProps {
+export interface AlertProps {
   type: 'error' | 'success';
   message: string | null;
 }

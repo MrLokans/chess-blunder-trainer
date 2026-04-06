@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'preact/hooks';
 import { ProgressBar } from './ProgressBar';
 import { Alert } from './Alert';
 
+export type JobState = 'idle' | 'running' | 'completed' | 'failed';
+
 interface JobStatus {
-  status: string;
+  status: JobState;
   job_id?: string;
   progress_current?: number;
   progress_total?: number;
@@ -11,14 +13,14 @@ interface JobStatus {
 
 export interface ExternalJobStatus {
   job_id: string;
-  status: string;
+  status: JobState;
   error_message?: string;
   current?: number;
   total?: number;
   percent?: number;
 }
 
-interface JobCardProps {
+export interface JobCardProps {
   fetchStatus: () => Promise<JobStatus>;
   startJob: () => Promise<{ job_id: string }>;
   stopJob?: (jobId: string) => Promise<unknown>;
@@ -96,7 +98,8 @@ export function JobCard({
       setTotal(0);
       setMessage({ type: 'success', text: startedMessage });
     } catch (err) {
-      setMessage({ type: 'error', text: failedPrefix + (err as Error).message });
+      const msg = err instanceof Error ? err.message : String(err);
+      setMessage({ type: 'error', text: failedPrefix + msg });
     }
   }, [startJob, startedMessage, failedPrefix]);
 
@@ -107,7 +110,8 @@ export function JobCard({
       setJobId(null);
       setMessage({ type: 'success', text: 'Stopped!' });
     } catch (err) {
-      setMessage({ type: 'error', text: 'Failed to stop: ' + (err as Error).message });
+      const msg = err instanceof Error ? err.message : String(err);
+      setMessage({ type: 'error', text: 'Failed to stop: ' + msg });
     }
   }, [jobId, stopJob]);
 

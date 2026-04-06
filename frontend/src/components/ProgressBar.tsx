@@ -1,4 +1,4 @@
-interface ProgressBarProps {
+export interface ProgressBarProps {
   current: number;
   total: number;
   textFormat?: (current: number, total: number) => string;

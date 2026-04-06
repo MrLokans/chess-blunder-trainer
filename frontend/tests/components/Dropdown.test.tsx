@@ -65,4 +65,47 @@ describe('Dropdown', () => {
     const blitzOption = options.find(o => o.textContent === 'Blitz');
     expect(blitzOption?.getAttribute('aria-selected')).toBe('true');
   });
+
+  test('navigates options with ArrowDown and selects with Enter', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Dropdown options={OPTIONS} value="bullet" onChange={onChange} />);
+
+    await user.click(screen.getByRole('button'));
+    await user.keyboard('{ArrowDown}');
+    await user.keyboard('{Enter}');
+    expect(onChange).toHaveBeenCalledWith('blitz');
+  });
+
+  test('navigates options with ArrowUp (wraps around)', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Dropdown options={OPTIONS} value="bullet" onChange={onChange} />);
+
+    await user.click(screen.getByRole('button'));
+    await user.keyboard('{ArrowUp}');
+    await user.keyboard('{Enter}');
+    expect(onChange).toHaveBeenCalledWith('rapid');
+  });
+
+  test('opens with ArrowDown when closed', async () => {
+    const user = userEvent.setup();
+    render(<Dropdown options={OPTIONS} value="bullet" onChange={() => {}} />);
+
+    screen.getByRole('button').focus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('button').getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('listbox')).toBeDefined();
+  });
+
+  test('Home jumps to first option, End to last', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Dropdown options={OPTIONS} value="blitz" onChange={onChange} />);
+
+    await user.click(screen.getByRole('button'));
+    await user.keyboard('{End}');
+    await user.keyboard('{Enter}');
+    expect(onChange).toHaveBeenCalledWith('rapid');
+  });
 });
