@@ -152,6 +152,14 @@ class PuzzleResponse(BaseModel):
         default=None,
         description="Beginner-friendly explanation of what the best move achieves",
     )
+    pre_move_uci: str | None = Field(
+        default=None,
+        description="Opponent's preceding move in UCI notation (e.g., 'e7e5'), null for ply 1",
+    )
+    pre_move_fen: str | None = Field(
+        default=None,
+        description="Position FEN before the opponent's preceding move, null for ply 1",
+    )
 
 
 class SubmitMoveResponse(BaseModel):
@@ -316,6 +324,8 @@ async def puzzle(
         "game_url": puzzle_data.game_url,
         "explanation_blunder": explanation.blunder_text or None,
         "explanation_best": explanation.best_move_text or None,
+        "pre_move_uci": puzzle_data.pre_move_uci,
+        "pre_move_fen": puzzle_data.pre_move_fen,
     }
 
 
@@ -390,6 +400,8 @@ async def specific_puzzle(
         "game_url": puzzle_data.game_url,
         "explanation_blunder": explanation.blunder_text or None,
         "explanation_best": explanation.best_move_text or None,
+        "pre_move_uci": puzzle_data.pre_move_uci,
+        "pre_move_fen": puzzle_data.pre_move_fen,
     }
 
 

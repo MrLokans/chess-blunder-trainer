@@ -66,6 +66,6 @@ def make_mock_game(
 
     mock_game = MagicMock(spec=chess.pgn.Game)
     mock_game.headers = headers or {}
-    mock_game.board.return_value = chess.Board()
+    mock_game.board.side_effect = lambda: chess.Board()
     mock_game.mainline_moves.return_value = STANDARD_MOVES[:n_moves]
     return mock_game

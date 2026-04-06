@@ -107,3 +107,12 @@ def board_before_ply(game: chess.pgn.Game, target_ply: int) -> chess.Board:
         board.push(move)
         ply += 1
     raise ValueError(f"Ply not found: {target_ply}")
+
+
+def move_uci_at_ply(game: chess.pgn.Game, target_ply: int) -> str:
+    ply = 1
+    for move in game.mainline_moves():
+        if ply == target_ply:
+            return move.uci()
+        ply += 1
+    raise ValueError(f"Ply not found: {target_ply}")

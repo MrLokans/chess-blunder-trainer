@@ -16,7 +16,7 @@ function buildDests(game) {
 }
 
 export class BoardAdapter {
-  constructor(elementId, { fen, orientation, game, onMove, coordinates = false }) {
+  constructor(elementId, { fen, orientation, game, onMove, coordinates = false, interactive = true }) {
     this._elementId = elementId;
     this._orientation = orientation;
     this._game = game;
@@ -29,7 +29,7 @@ export class BoardAdapter {
     this.setCoordinates(coordinates);
 
     const cgColor = orientation === 'black' ? 'black' : 'white';
-    const turnColor = game.turn() === 'w' ? 'white' : 'black';
+    const turnColor = fen.split(' ')[1] === 'w' ? 'white' : 'black';
 
     this._cg = Chessground(this._el, {
       fen: fen,
@@ -40,8 +40,8 @@ export class BoardAdapter {
       animation: { enabled: true, duration: 150 },
       movable: {
         free: false,
-        color: cgColor,
-        dests: buildDests(game),
+        color: interactive ? cgColor : undefined,
+        dests: interactive ? buildDests(game) : new Map(),
         showDests: true,
         events: {
           after: (orig, dest) => this._handleMove(orig, dest)
@@ -89,6 +89,38 @@ export class BoardAdapter {
     this._shapes = [];
     this._highlightShapes = [];
     this._cg.setAutoShapes([]);
+  }
+
+  animatePreMove(puzzleFen, from, to, game, callback) {
+    this._game = game;
+    this._clearPreMoveTimers();
+
+    this._preMoveTimer1 = setTimeout(() => {
+      if (!this._cg) return;
+      this._cg.set({
+        animation: { duration: 350 },
+        fen: puzzleFen,
+        lastMove: [from, to],
+        turnColor: game.turn() === 'w' ? 'white' : 'black',
+      });
+
+      this._preMoveTimer2 = setTimeout(() => {
+        if (!this._cg) return;
+        this._cg.set({
+          animation: { duration: 150 },
+          movable: {
+            color: this._orientation === 'black' ? 'black' : 'white',
+            dests: buildDests(game),
+          },
+        });
+        if (callback) callback();
+      }, 400);
+    }, 400);
+  }
+
+  _clearPreMoveTimers() {
+    if (this._preMoveTimer1) { clearTimeout(this._preMoveTimer1); this._preMoveTimer1 = null; }
+    if (this._preMoveTimer2) { clearTimeout(this._preMoveTimer2); this._preMoveTimer2 = null; }
   }
 
   setOrientation(color) {
@@ -154,6 +186,7 @@ export class BoardAdapter {
   }
 
   destroy() {
+    this._clearPreMoveTimers();
     if (this._cg) {
       this._cg.destroy();
       this._cg = null;

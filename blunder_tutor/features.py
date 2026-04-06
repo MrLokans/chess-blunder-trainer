@@ -11,6 +11,7 @@ class Feature(StrEnum):
     TRAINER_TACTICS = "trainer.tactics"
     TRAINER_FILTER_PHASE = "trainer.filter.phase"
     TRAINER_FILTER_TACTICAL = "trainer.filter.tactical"
+    TRAINER_PRE_MOVE = "trainer.pre_move"
 
     DASHBOARD_HEATMAP = "dashboard.heatmap"
     DASHBOARD_PHASE_BREAKDOWN = "dashboard.phase_breakdown"
@@ -67,6 +68,7 @@ FEATURE_GROUPS: list[tuple[str, list[Feature]]] = [
             Feature.TRAINER_TACTICS,
             Feature.TRAINER_FILTER_PHASE,
             Feature.TRAINER_FILTER_TACTICAL,
+            Feature.TRAINER_PRE_MOVE,
             Feature.TRAINER_FILTER_DIFFICULTY,
             Feature.STARRED_PUZZLES,
         ],
@@ -108,6 +110,7 @@ FEATURE_LABELS: dict[Feature, str] = {
     Feature.TRAINER_TACTICS: "settings.features.trainer_tactics",
     Feature.TRAINER_FILTER_PHASE: "settings.features.trainer_filter_phase",
     Feature.TRAINER_FILTER_TACTICAL: "settings.features.trainer_filter_tactical",
+    Feature.TRAINER_PRE_MOVE: "settings.features.trainer_pre_move",
     Feature.DASHBOARD_HEATMAP: "settings.features.dashboard_heatmap",
     Feature.DASHBOARD_PHASE_BREAKDOWN: "settings.features.dashboard_phase_breakdown",
     Feature.DASHBOARD_OPENING_BREAKDOWN: "settings.features.dashboard_opening_breakdown",

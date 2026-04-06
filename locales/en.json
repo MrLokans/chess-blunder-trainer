@@ -382,6 +382,7 @@
   "settings.features.trainer_tactics": "Tactical patterns",
   "settings.features.trainer_filter_phase": "Phase filter",
   "settings.features.trainer_filter_tactical": "Tactical pattern filter",
+  "settings.features.trainer_pre_move": "Show preceding move",
   "settings.features.dashboard_heatmap": "Activity heatmap",
   "settings.features.dashboard_phase_breakdown": "Blunders by phase",
   "settings.features.dashboard_opening_breakdown": "Blunders by opening",

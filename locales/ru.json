@@ -386,6 +386,7 @@
   "settings.features.trainer_tactics": "Тактические паттерны",
   "settings.features.trainer_filter_phase": "Фильтр по фазе",
   "settings.features.trainer_filter_tactical": "Фильтр по тактике",
+  "settings.features.trainer_pre_move": "Показ предыдущего хода",
   "settings.features.dashboard_heatmap": "Тепловая карта активности",
   "settings.features.dashboard_phase_breakdown": "Зевки по фазам",
   "settings.features.dashboard_opening_breakdown": "Зевки по дебютам",

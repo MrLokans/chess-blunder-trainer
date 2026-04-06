@@ -12,6 +12,7 @@ from blunder_tutor.utils.pgn_utils import (
     extract_game_url,
     load_game,
     load_game_from_string,
+    move_uci_at_ply,
     normalize_pgn,
 )
 
@@ -205,6 +206,33 @@ class TestExtractGameUrl:
     def test_missing_both_headers(self):
         game = load_game_from_string('[White "A"]\n[Black "B"]\n[Result "*"]\n\n*\n')
         assert extract_game_url(game) is None
+
+
+class TestMoveUciAtPly:
+    def test_returns_first_move(self):
+        game = load_game_from_string(
+            '[White "A"]\n[Black "B"]\n[Result "*"]\n\n1. e4 e5 2. Nf3 *\n'
+        )
+        assert move_uci_at_ply(game, 1) == "e2e4"
+
+    def test_returns_second_move(self):
+        game = load_game_from_string(
+            '[White "A"]\n[Black "B"]\n[Result "*"]\n\n1. e4 e5 2. Nf3 *\n'
+        )
+        assert move_uci_at_ply(game, 2) == "e7e5"
+
+    def test_returns_third_move(self):
+        game = load_game_from_string(
+            '[White "A"]\n[Black "B"]\n[Result "*"]\n\n1. e4 e5 2. Nf3 *\n'
+        )
+        assert move_uci_at_ply(game, 3) == "g1f3"
+
+    def test_invalid_ply_raises(self):
+        game = load_game_from_string(
+            '[White "A"]\n[Black "B"]\n[Result "*"]\n\n1. e4 e5 *\n'
+        )
+        with pytest.raises(ValueError, match="Ply not found"):
+            move_uci_at_ply(game, 5)
 
 
 class TestBuildGameMetadata:

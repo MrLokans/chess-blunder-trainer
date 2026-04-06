@@ -386,6 +386,7 @@
   "settings.features.trainer_tactics": "Тактычныя патэрны",
   "settings.features.trainer_filter_phase": "Фільтр па фазе",
   "settings.features.trainer_filter_tactical": "Фільтр па тактыцы",
+  "settings.features.trainer_pre_move": "Паказ папярэдняга хаду",
   "settings.features.dashboard_heatmap": "Цеплавая карта актыўнасці",
   "settings.features.dashboard_phase_breakdown": "Памылкі па фазах",
   "settings.features.dashboard_opening_breakdown": "Памылкі па дэбютах",

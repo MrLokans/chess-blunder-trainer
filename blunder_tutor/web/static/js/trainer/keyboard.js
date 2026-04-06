@@ -9,7 +9,7 @@ export function initKeyboard() {
     if (isVimInputActive()) return;
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-    if (state.get('animatingLine')) return;
+    if (state.isAnimating()) return;
 
     if (e.key === 'Escape') {
       if (ui.isShortcutsOverlayVisible()) {

@@ -82,7 +82,7 @@ async function playFullLineAnimated() {
 export function playBestMove() {
   const puzzle = state.get('puzzle');
   if (!puzzle || !puzzle.best_move_uci) return;
-  if (state.get('animatingLine')) return;
+  if (state.isAnimating()) return;
 
   const useFullLine = isPlayFullLineEnabled()
     && puzzle.best_line && puzzle.best_line.length > 1;

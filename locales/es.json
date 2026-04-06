@@ -386,6 +386,7 @@
   "settings.features.trainer_tactics": "Patrones tácticos",
   "settings.features.trainer_filter_phase": "Filtro por fase",
   "settings.features.trainer_filter_tactical": "Filtro por táctica",
+  "settings.features.trainer_pre_move": "Mostrar jugada anterior",
   "settings.features.dashboard_heatmap": "Mapa de actividad",
   "settings.features.dashboard_phase_breakdown": "Errores por fase",
   "settings.features.dashboard_opening_breakdown": "Errores por apertura",

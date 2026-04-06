@@ -386,6 +386,7 @@
   "settings.features.trainer_tactics": "Wzorce taktyczne",
   "settings.features.trainer_filter_phase": "Filtr fazy",
   "settings.features.trainer_filter_tactical": "Filtr taktyki",
+  "settings.features.trainer_pre_move": "Pokaż poprzedni ruch",
   "settings.features.dashboard_heatmap": "Mapa aktywności",
   "settings.features.dashboard_phase_breakdown": "Błędy wg fazy",
   "settings.features.dashboard_opening_breakdown": "Błędy wg debiutu",

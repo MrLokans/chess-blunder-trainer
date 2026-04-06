@@ -20,7 +20,7 @@ function getLastMove() {
 }
 
 function onBoardMove(_orig, _dest, move) {
-  if (state.get('animatingLine')) return;
+  if (state.isAnimating()) return;
   const game = state.get('game');
   ui.updateCurrentMove(game);
   state.get('board').clearArrows();
@@ -42,8 +42,12 @@ function onBoardMove(_orig, _dest, move) {
   }
 }
 
+let _loadCooldown = false;
+
 async function loadPuzzle() {
-  if (state.get('animatingLine')) return;
+  if (state.isAnimating() || _loadCooldown) return;
+  _loadCooldown = true;
+  setTimeout(() => { _loadCooldown = false; }, 500);
   state.resetForNewPuzzle();
   linePlayer.clearLineNavigation();
   ui.resetUIForNewPuzzle();
@@ -58,6 +62,7 @@ async function loadPuzzle() {
 }
 
 async function loadSpecificPuzzle(gameId, ply) {
+  if (state.isAnimating()) return;
   state.resetForNewPuzzle();
   linePlayer.clearLineNavigation();
   ui.resetUIForNewPuzzle();
@@ -87,12 +92,18 @@ function setupPuzzle(data) {
   const oldBoard = state.get('board');
   if (oldBoard) oldBoard.destroy();
 
+  const shouldAnimate = data.pre_move_uci
+    && data.pre_move_fen
+    && window.__features
+    && window.__features['trainer.pre_move'];
+
   const board = new BoardAdapter('board', {
-    fen: data.fen,
+    fen: shouldAnimate ? data.pre_move_fen : data.fen,
     orientation,
     game,
     onMove: onBoardMove,
     coordinates: filters.getShowCoordinates(),
+    interactive: !shouldAnimate,
   });
   state.set('board', board);
 
@@ -110,10 +121,23 @@ function setupPuzzle(data) {
   ui.showPuzzleData(data);
   updateEvalBar(data.eval_before, data.player_color, ui.getEl('evalBarFill'), ui.getEl('evalValue'));
 
-  setTimeout(() => {
-    visuals.redrawAllHighlights();
-    visuals.redrawArrows();
-  }, 100);
+  if (shouldAnimate) {
+    const from = data.pre_move_uci.slice(0, 2);
+    const to = data.pre_move_uci.slice(2, 4);
+    state.set('animatingPreMove', true);
+    board.animatePreMove(data.fen, from, to, game, () => {
+      state.set('animatingPreMove', false);
+      setTimeout(() => {
+        visuals.redrawAllHighlights();
+        visuals.redrawArrows();
+      }, 100);
+    });
+  } else {
+    setTimeout(() => {
+      visuals.redrawAllHighlights();
+      visuals.redrawArrows();
+    }, 100);
+  }
 }
 
 async function hasActiveJobs() {
@@ -165,7 +189,7 @@ function scheduleAnalyzingRetry() {
 }
 
 async function submitMoveAction() {
-  if (state.get('animatingLine')) return;
+  if (state.isAnimating()) return;
   const puzzle = state.get('puzzle');
   const game = state.get('game');
   if (!puzzle || !game) return;
@@ -251,7 +275,7 @@ function revealBestMove() {
 }
 
 function resetPosition() {
-  if (state.get('animatingLine')) return;
+  if (state.isAnimating()) return;
   const puzzle = state.get('puzzle');
   if (!puzzle) return;
 
@@ -274,7 +298,7 @@ function resetPosition() {
 }
 
 function undoMove() {
-  if (state.get('animatingLine')) return;
+  if (state.isAnimating()) return;
   const game = state.get('game');
   if (game.history().length === 0) return;
   game.undo();
@@ -336,7 +360,7 @@ bus.on('action:reveal', () => {
 });
 
 bus.on('action:vimInput', () => {
-  if (!state.get('animatingLine') && !state.get('submitted') && state.get('puzzle')) {
+  if (!state.isAnimating() && !state.get('submitted') && state.get('puzzle')) {
     showVimInput();
   }
 });
@@ -406,7 +430,7 @@ async function init() {
   initVimInput({
     getGame: () => state.get('game'),
     getBoard: () => state.get('board'),
-    isInteractive: () => !state.get('animatingLine') && !state.get('submitted') && !!state.get('puzzle'),
+    isInteractive: () => !state.isAnimating() && !state.get('submitted') && !!state.get('puzzle'),
     onMoveComplete: (move) => {
       onBoardMove(move.from, move.to, move);
     },

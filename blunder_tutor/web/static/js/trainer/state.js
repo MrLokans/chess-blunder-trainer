@@ -9,6 +9,7 @@ const INITIAL_STATE = {
   moveHistory: [],
   boardFlipped: false,
   animatingLine: false,
+  animatingPreMove: false,
   animationGeneration: 0,
   linePositions: [],
   lineViewIndex: -1,
@@ -21,6 +22,10 @@ const INITIAL_STATE = {
 };
 
 const state = { ...INITIAL_STATE, moveHistory: [], linePositions: [], boardSettings: { ...INITIAL_STATE.boardSettings } };
+
+export function isAnimating() {
+  return state.animatingLine || state.animatingPreMove;
+}
 
 export function get(key) {
   return state[key];
@@ -41,6 +46,7 @@ export function resetForNewPuzzle() {
   state.linePositions = [];
   state.lineViewIndex = -1;
   state.animatingLine = false;
+  state.animatingPreMove = false;
   state.currentStarred = false;
   bus.emit('state:reset');
 }

@@ -11,7 +11,11 @@ from blunder_tutor.analysis.tactics import classify_blunder_tactics
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
-from blunder_tutor.utils.pgn_utils import board_before_ply, extract_game_url
+from blunder_tutor.utils.pgn_utils import (
+    board_before_ply,
+    extract_game_url,
+    move_uci_at_ply,
+)
 
 
 @dataclass(frozen=True)
@@ -38,6 +42,8 @@ class BlunderPuzzle:
     missed_mate_depth: int | None = None
     tactical_squares: list[str] | None = None
     game_url: str | None = None
+    pre_move_uci: str | None = None
+    pre_move_fen: str | None = None
 
 
 class Trainer:
@@ -146,6 +152,12 @@ class Trainer:
         board = board_before_ply(game, ply)
         game_url = extract_game_url(game)
 
+        pre_move_uci = None
+        pre_move_fen = None
+        if ply > 1:
+            pre_move_uci = move_uci_at_ply(game, ply - 1)
+            pre_move_fen = board_before_ply(game, ply - 1).fen()
+
         game_metadata = await self.games.get_game(game_id)
         actual_source = game_metadata.get("source", "any") if game_metadata else "any"
         actual_username = game_metadata.get("username", "") if game_metadata else ""
@@ -178,6 +190,8 @@ class Trainer:
             missed_mate_depth=blunder_missed_mate_depth,
             tactical_squares=tactical_squares,
             game_url=game_url,
+            pre_move_uci=pre_move_uci,
+            pre_move_fen=pre_move_fen,
         )
 
     async def get_specific_blunder(self, game_id: str, ply: int) -> BlunderPuzzle:
@@ -201,6 +215,12 @@ class Trainer:
         game = await self.games.load_game(game_id)
         board = board_before_ply(game, ply)
         game_url = extract_game_url(game)
+
+        pre_move_uci = None
+        pre_move_fen = None
+        if ply > 1:
+            pre_move_uci = move_uci_at_ply(game, ply - 1)
+            pre_move_fen = board_before_ply(game, ply - 1).fen()
 
         game_metadata = await self.games.get_game(game_id)
         actual_source = game_metadata.get("source", "any") if game_metadata else "any"
@@ -233,6 +253,8 @@ class Trainer:
             missed_mate_depth=blunder.get("missed_mate_depth"),
             tactical_squares=tactical_squares,
             game_url=game_url,
+            pre_move_uci=pre_move_uci,
+            pre_move_fen=pre_move_fen,
         )
 
     async def _compute_weights(

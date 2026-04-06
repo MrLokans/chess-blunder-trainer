@@ -386,6 +386,7 @@
   "settings.features.trainer_tactics": "战术模式",
   "settings.features.trainer_filter_phase": "阶段筛选",
   "settings.features.trainer_filter_tactical": "战术筛选",
+  "settings.features.trainer_pre_move": "显示前一步棋",
   "settings.features.dashboard_heatmap": "活动热力图",
   "settings.features.dashboard_phase_breakdown": "按阶段分析失误",
   "settings.features.dashboard_opening_breakdown": "按开局分析失误",

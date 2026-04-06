@@ -84,3 +84,57 @@ class TestPickRandomBlunder:
 
         assert puzzle.ply == 10
         assert puzzle.blunder_uci == "d2d4"
+
+
+class TestPreMoveFields:
+    async def test_pre_move_fields_present(self, trainer):
+        trainer.games.get_all_game_side_map = AsyncMock(return_value={"game1": 0})
+        trainer.attempts.get_recently_solved_puzzles = AsyncMock(return_value=set())
+        trainer.analysis.fetch_blunders_with_tactics = AsyncMock(
+            return_value=[
+                make_blunder(
+                    game_id="game1",
+                    ply=5,
+                    eval_before=50,
+                    eval_after=-100,
+                    cp_loss=150,
+                    game_phase=None,
+                )
+            ]
+        )
+        trainer.games.load_game = AsyncMock(
+            return_value=make_mock_game(headers={"Site": "https://lichess.org/abc123"})
+        )
+
+        puzzle = await trainer.pick_random_blunder()
+
+        assert puzzle.pre_move_uci is not None
+        assert puzzle.pre_move_fen is not None
+        # Ply 5 means there's a ply 4 before it — the previous move is Nc6 (b8c6)
+        assert puzzle.pre_move_uci == "b8c6"
+
+    async def test_pre_move_none_at_ply_1(self, trainer):
+        trainer.games.get_all_game_side_map = AsyncMock(return_value={"game1": 0})
+        trainer.attempts.get_recently_solved_puzzles = AsyncMock(return_value=set())
+        trainer.analysis.fetch_blunders_with_tactics = AsyncMock(
+            return_value=[
+                make_blunder(
+                    game_id="game1",
+                    ply=1,
+                    uci="e2e4",
+                    san="e4",
+                    eval_before=0,
+                    eval_after=-100,
+                    cp_loss=100,
+                    game_phase=None,
+                )
+            ]
+        )
+        trainer.games.load_game = AsyncMock(
+            return_value=make_mock_game(headers={"Site": "https://lichess.org/abc123"})
+        )
+
+        puzzle = await trainer.pick_random_blunder()
+
+        assert puzzle.pre_move_uci is None
+        assert puzzle.pre_move_fen is None
