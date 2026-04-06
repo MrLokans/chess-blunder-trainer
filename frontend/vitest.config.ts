@@ -1,14 +1,16 @@
 import { defineConfig } from 'vitest/config';
 import { resolve } from 'path';
+import preact from '@preact/preset-vite';
 
 export default defineConfig({
+  plugins: [preact()],
   test: {
     root: resolve(__dirname),
     environment: 'jsdom',
-    include: ['tests/**/*.test.ts'],
+    include: ['tests/**/*.test.{ts,tsx}'],
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.ts'],
+      include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/vendor.d.ts', 'src/types/**'],
       thresholds: {
         statements: 70,

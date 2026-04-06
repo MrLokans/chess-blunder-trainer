@@ -9,7 +9,7 @@ const allPageModules = [
 
 function crossPageRestrictions(): Array<Record<string, unknown>> {
   return allPageModules.map(mod => ({
-    files: [`src/${mod}/**/*.ts`],
+    files: [`src/${mod}/**/*.{ts,tsx}`],
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [{
@@ -57,7 +57,7 @@ export default tseslint.config(
   },
   ...crossPageRestrictions(),
   {
-    files: ['tests/**/*.test.ts'],
+    files: ['tests/**/*.test.{ts,tsx}'],
     plugins: { vitest },
     rules: {
       'vitest/expect-expect': 'error',

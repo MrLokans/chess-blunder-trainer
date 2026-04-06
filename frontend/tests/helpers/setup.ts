@@ -1,4 +1,9 @@
-import { vi } from 'vitest';
+import { vi, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/preact';
+
+afterEach(() => {
+  cleanup();
+});
 
 // Mock vendored globals that would normally be loaded via script in base.html
 vi.stubGlobal('Chess', undefined);

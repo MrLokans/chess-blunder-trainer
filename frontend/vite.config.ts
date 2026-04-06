@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import preact from '@preact/preset-vite';
 
 export default defineConfig({
   root: resolve(__dirname),
+  plugins: [preact()],
   resolve: {
     alias: {
       '@vendor/chessground': resolve(__dirname, '../blunder_tutor/web/static/vendor/chessground-10.0.2.min.js'),
