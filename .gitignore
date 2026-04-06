@@ -23,3 +23,9 @@ node_modules/
 
 # Dolt database files (added by bd init)
 .dolt/
+
+# Claude Code local settings (personal overrides)
+.claude/settings.local.json
+
+# Vite build output
+blunder_tutor/web/static/dist/

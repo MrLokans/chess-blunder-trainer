@@ -32,7 +32,7 @@ FORCE :=
 .PHONY: help install install-dev cli clean
 .PHONY: fetch-lichess fetch-chesscom list show index
 .PHONY: analyze analyze-bulk train-ui
-.PHONY: format lint lint/be lint/fe check test test/be test/fe download-pieces migrate
+.PHONY: format lint lint/be lint/fe check test test/be test/fe typecheck/fe build/fe download-pieces migrate
 .PHONY: docker/build docker/run docker/stop
 .PHONY: landing
 .PHONY: db/backup db/restore db/rm
@@ -118,21 +118,27 @@ lint: lint/be lint/fe ## Lint all code
 lint/be: ## Lint Python with ruff
 	$(UV) run ruff check blunder_tutor/ main.py
 
-lint/fe: ## Lint JavaScript with ESLint
-	npx eslint blunder_tutor/web/static/js/
+lint/fe: ## Lint TypeScript with ESLint
+	npm run lint
 
 fix: ## Auto-fix linting issues
 	$(UV) run ruff format
 	$(UV) run ruff check --fix --unsafe-fixes blunder_tutor/ main.py
-	npx eslint blunder_tutor/web/static/js/ --fix
+	npm run lint:fix
 
 test: test/be test/fe ## Run all tests
 
 test/be: ## Run Python tests with pytest
 	$(UV) run pytest tests/ -v
 
-test/fe: ## Run JavaScript tests with Node test runner
-	node --test 'tests_fe/test_*.js'
+test/fe: ## Run frontend tests with Vitest
+	npm run test
+
+typecheck/fe: ## Run TypeScript type checking
+	npm run typecheck
+
+build/fe: ## Build frontend assets with Vite
+	npm run build
 
 # Docker
 DOCKER_IMAGE := blunder-tutor

@@ -1,0 +1,36 @@
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
+
+export default defineConfig({
+  root: resolve(__dirname),
+  resolve: {
+    alias: {
+      '@vendor/chessground': resolve(__dirname, '../blunder_tutor/web/static/vendor/chessground-10.0.2.min.js'),
+    },
+  },
+  build: {
+    outDir: resolve(__dirname, '../blunder_tutor/web/static/dist'),
+    emptyOutDir: true,
+    manifest: true,
+    rollupOptions: {
+      input: {
+        trainer: resolve(__dirname, 'src/trainer/index.ts'),
+        dashboard: resolve(__dirname, 'src/dashboard/index.ts'),
+        settings: resolve(__dirname, 'src/settings/index.ts'),
+        management: resolve(__dirname, 'src/management/index.ts'),
+        'import': resolve(__dirname, 'src/import/index.ts'),
+        setup: resolve(__dirname, 'src/setup/index.ts'),
+        starred: resolve(__dirname, 'src/starred/index.ts'),
+        'game-review': resolve(__dirname, 'src/game-review/index.ts'),
+        traps: resolve(__dirname, 'src/traps/index.ts'),
+        heatmap: resolve(__dirname, 'src/heatmap/index.ts'),
+        growth: resolve(__dirname, 'src/growth/index.ts'),
+      },
+    },
+  },
+  server: {
+    port: 5173,
+    strictPort: true,
+    origin: 'http://localhost:5173',
+  },
+});

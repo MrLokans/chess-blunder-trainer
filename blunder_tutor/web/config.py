@@ -40,6 +40,7 @@ class AppConfig(BaseModel):
     engine: EngineConfig
     data: DataConfig = DataConfig()
     demo_mode: bool = False
+    vite_dev: bool = False
     throttle: ThrottleConfig = ThrottleConfig()
     analytics: AnalyticsConfig = AnalyticsConfig()
 
@@ -91,6 +92,7 @@ def config_factory(
             path=final_engine_path,
         ),
         demo_mode=environ.get("DEMO_MODE", "").lower() in ("true", "1", "yes"),
+        vite_dev=environ.get("VITE_DEV", "").lower() in ("true", "1", "yes"),
         throttle=throttle,
         analytics=AnalyticsConfig(
             plausible_domain=environ.get("PLAUSIBLE_DOMAIN"),
