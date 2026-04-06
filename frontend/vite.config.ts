@@ -18,7 +18,7 @@ export default defineConfig({
       input: {
         trainer: resolve(__dirname, 'src/trainer/index.ts'),
         dashboard: resolve(__dirname, 'src/dashboard/index.ts'),
-        settings: resolve(__dirname, 'src/settings/index.ts'),
+        settings: resolve(__dirname, 'src/settings/index.tsx'),
         management: resolve(__dirname, 'src/management/index.ts'),
         'import': resolve(__dirname, 'src/import/index.ts'),
         setup: resolve(__dirname, 'src/setup/index.ts'),

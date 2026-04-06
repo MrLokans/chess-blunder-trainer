@@ -102,4 +102,6 @@ interface Window {
   __features: Record<string, boolean>;
   __i18n__: Record<string, string>;
   __locale__: string;
+  __settingsInit?: import('./settings/types').SettingsInit;
+  adjustColor?: (hex: string, lightness: number, saturation?: number) => string;
 }
