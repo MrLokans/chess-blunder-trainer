@@ -25,8 +25,6 @@ export default defineConfig({
         starred: resolve(__dirname, 'src/starred/index.tsx'),
         'game-review': resolve(__dirname, 'src/game-review/index.tsx'),
         traps: resolve(__dirname, 'src/traps/index.tsx'),
-        heatmap: resolve(__dirname, 'src/heatmap/index.ts'),
-        growth: resolve(__dirname, 'src/growth/index.ts'),
       },
     },
   },
