@@ -99,7 +99,7 @@ export function Dropdown({ options, value, onChange }: DropdownProps) {
         class="custom-dropdown__trigger"
         aria-haspopup="listbox"
         aria-expanded={open}
-        onClick={() => { open ? setOpen(false) : handleOpen(); }}
+        onClick={() => { if (open) { setOpen(false); } else { handleOpen(); } }}
         onKeyDown={handleKeyDown}
       >
         <span class="custom-dropdown__label">{selectedLabel}</span>

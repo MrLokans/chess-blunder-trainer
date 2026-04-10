@@ -20,7 +20,8 @@ describe('query params (via client calls)', () => {
       ok: true, json: () => Promise.resolve({}),
     }));
     await client.stats.gamesByDate({ source: 'lichess' });
-    const url = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]![0] as string;
+    const calls = (fetch as ReturnType<typeof vi.fn>).mock.calls;
+    const url = (calls[0] as [string])[0];
     expect(url).toContain('source=lichess');
   });
 
@@ -29,7 +30,8 @@ describe('query params (via client calls)', () => {
       ok: true, json: () => Promise.resolve({}),
     }));
     await client.stats.blundersByPhase({ game_types: ['bullet', 'blitz'] });
-    const url = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]![0] as string;
+    const calls = (fetch as ReturnType<typeof vi.fn>).mock.calls;
+    const url = (calls[0] as [string])[0];
     expect(url).toContain('game_types=bullet');
     expect(url).toContain('game_types=blitz');
   });
@@ -39,7 +41,8 @@ describe('query params (via client calls)', () => {
       ok: true, json: () => Promise.resolve({}),
     }));
     await client.stats.gamesByDate({ source: null, days: '30' });
-    const url = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]![0] as string;
+    const calls = (fetch as ReturnType<typeof vi.fn>).mock.calls;
+    const url = (calls[0] as [string])[0];
     expect(url).not.toContain('source');
     expect(url).toContain('days=30');
   });
@@ -49,7 +52,8 @@ describe('query params (via client calls)', () => {
       ok: true, json: () => Promise.resolve({}),
     }));
     await client.stats.overview();
-    const url = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]![0] as string;
+    const calls = (fetch as ReturnType<typeof vi.fn>).mock.calls;
+    const url = (calls[0] as [string])[0];
     expect(url).toBe('/api/stats');
   });
 });
@@ -64,7 +68,7 @@ describe('request error handling', () => {
       ok: false, status: 400, json: () => Promise.resolve({ detail: 'Bad input' }),
     }));
     await expect(client.stats.overview()).rejects.toThrow(ApiError);
-    await vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: false, status: 400, json: () => Promise.resolve({ detail: 'Bad input' }),
     }));
     try {
@@ -122,8 +126,9 @@ describe('POST requests', () => {
     }));
     const result = await client.jobs.startImport('lichess', 'bob', 100);
     expect(result).toEqual({ job_id: '123' });
-    const call = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]!;
-    const body = JSON.parse(call[1].body as string);
+    const calls = (fetch as ReturnType<typeof vi.fn>).mock.calls;
+    const call = calls[0] as [string, { body: string }];
+    const body: unknown = JSON.parse(call[1].body);
     expect(body).toEqual({ source: 'lichess', username: 'bob', max_games: 100 });
   });
 });

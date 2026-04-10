@@ -47,15 +47,15 @@ describe('useWebSocket', () => {
 
     await vi.waitFor(() => {
       expect(MockWebSocket.instances).toHaveLength(1);
-      const ws = MockWebSocket.instances[0]!;
+      const ws = MockWebSocket.instances[0] as MockWebSocket;
       expect(ws.sent.length).toBeGreaterThan(0);
     });
 
-    const ws = MockWebSocket.instances[0]!;
+    const ws = MockWebSocket.instances[0] as MockWebSocket;
     const subMessage = ws.sent.find(s => s.includes('subscribe'));
     expect(subMessage).toBeDefined();
 
-    const parsed = JSON.parse(subMessage!) as { action: string; events: string[] };
+    const parsed = JSON.parse(subMessage as string) as { action: string; events: string[] };
     expect(parsed.events).toContain('stats.updated');
     expect(parsed.events).toContain('job.progress');
   });
@@ -69,9 +69,9 @@ describe('useWebSocket', () => {
     });
 
     result.current.on('stats.updated', handler);
-    const ws = MockWebSocket.instances[0]!;
+    const ws = MockWebSocket.instances[0] as MockWebSocket;
 
-    act(() => {
+    await act(() => {
       ws.simulateMessage({ type: 'stats.updated', data: { total: 42 } });
     });
 
@@ -85,7 +85,7 @@ describe('useWebSocket', () => {
       expect(MockWebSocket.instances).toHaveLength(1);
     });
 
-    const ws = MockWebSocket.instances[0]!;
+    const ws = MockWebSocket.instances[0] as MockWebSocket;
     unmount();
     expect(ws.readyState).toBe(3);
   });

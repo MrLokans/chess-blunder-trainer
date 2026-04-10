@@ -25,8 +25,8 @@ export function useDrag(cardRef: preact.RefObject<HTMLDivElement | null>): {
       let top = pos.topPct * parentRect.height;
       left = Math.max(0, Math.min(left, parentRect.width - card.offsetWidth));
       top = Math.max(0, Math.min(top, parentRect.height - card.offsetHeight));
-      card.style.left = `${left}px`;
-      card.style.top = `${top}px`;
+      card.style.left = `${String(left)}px`;
+      card.style.top = `${String(top)}px`;
       card.style.right = 'auto';
       card.style.bottom = 'auto';
     } catch { /* ignore corrupt data */ }
@@ -71,8 +71,8 @@ export function useDrag(cardRef: preact.RefObject<HTMLDivElement | null>): {
     let newTop = s.top + (e.clientY - s.y) - parentRect.top;
     newLeft = Math.max(0, Math.min(newLeft, parentRect.width - card.offsetWidth));
     newTop = Math.max(0, Math.min(newTop, parentRect.height - card.offsetHeight));
-    card.style.left = `${newLeft}px`;
-    card.style.top = `${newTop}px`;
+    card.style.left = `${String(newLeft)}px`;
+    card.style.top = `${String(newTop)}px`;
     card.style.right = 'auto';
     card.style.bottom = 'auto';
   }, [cardRef]);

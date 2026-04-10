@@ -92,7 +92,7 @@ function fillHours(items: HourChartItem[]): HourChartItem[] {
 }
 
 export function DashboardApp() {
-  const [state, setState] = useState<DashboardState>(INITIAL_STATE);
+  const [state, setState] = useState(INITIAL_STATE);
   const [difficultyHelpOpen, setDifficultyHelpOpen] = useState(false);
 
   const filters = useDashboardFilters();
@@ -161,7 +161,7 @@ export function DashboardApp() {
         collapseData: collapseData ?? null,
         conversionData: conversionData ?? null,
         trapsData: trapsResp ?? null,
-        gameBreakdown: gameBreakdownResp.items ?? [],
+        gameBreakdown: gameBreakdownResp.items,
         error: null,
       });
     } catch (err) {
@@ -173,7 +173,6 @@ export function DashboardApp() {
     }
   }, [getParams, hasAccuracy, hasPhase, hasOpening, hasDifficulty, hasTactical, hasCollapse, hasConversion, hasTraps]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedLoadData = useCallback(debounce(() => { void loadData(); }, 2000), [loadData]);
 
   useEffect(() => {

@@ -4,7 +4,7 @@ import { GameReviewApp } from './GameReviewApp';
 function getGameId(): string | null {
   const path = window.location.pathname;
   const match = path.match(/^\/game\/(.+)$/);
-  return match ? decodeURIComponent(match[1]!) : null;
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
 
 function getStartPly(): number | null {

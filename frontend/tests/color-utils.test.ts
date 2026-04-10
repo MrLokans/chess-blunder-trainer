@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { adjustColor } from '../src/shared/color-utils';
+import { adjustColor } from '../src/global/theme-loader';
 
 describe('adjustColor', () => {
   it('returns a 7-char hex string', () => {

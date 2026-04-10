@@ -1,8 +1,6 @@
 import { useRef, useEffect } from 'preact/hooks';
 import { useDrag } from '../hooks/useDrag';
-import type { PuzzleData } from '../context';
-
-type FeedbackType = 'correct' | 'blunder' | 'good' | 'not-quite' | null;
+import type { PuzzleData, FeedbackType } from '../context';
 
 interface ResultCardProps {
   visible: boolean;
@@ -26,14 +24,14 @@ const ACCENT_MAP: Record<string, string> = {
 
 export function ResultCard({
   visible, feedbackType, feedbackTitle, feedbackDetail, puzzle,
-  bestRevealed, moveHistory, onPlayBest, onNext, onClose,
+  bestRevealed, moveHistory, onPlayBest, onNext, onClose: _onClose,
 }: ResultCardProps): preact.JSX.Element | null {
   const cardRef = useRef<HTMLDivElement>(null);
   const { handleRef, restorePosition } = useDrag(cardRef);
 
   useEffect(() => {
     if (visible) {
-      requestAnimationFrame(() => restorePosition());
+      requestAnimationFrame(() => { restorePosition(); });
     } else if (cardRef.current) {
       cardRef.current.style.left = '';
       cardRef.current.style.top = '';

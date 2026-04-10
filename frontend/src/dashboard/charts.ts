@@ -11,7 +11,7 @@ function sharedChartOptions(xAxisConfig: Record<string, unknown> = {}): Record<s
             if (context.dataset.yAxisID === 'y1') {
               return `${t('dashboard.chart.accuracy')}: ${context.raw.toFixed(1)}%`;
             }
-            return `${context.dataset.label}: ${context.raw}`;
+            return `${context.dataset.label ?? ''}: ${String(context.raw)}`;
           },
         },
       },

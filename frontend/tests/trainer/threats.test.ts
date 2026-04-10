@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { loadChessGlobal } from '../helpers/chess';
 import { buildThreatHighlights } from '../../src/trainer/threats';
 

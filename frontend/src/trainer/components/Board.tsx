@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Chessground } from '@vendor/chessground';
+import type { HighlightMap } from '../highlights';
+import type { Arrow } from '../hooks/useBoardState';
 
 interface ChessgroundShape {
   orig: string;
@@ -11,14 +13,6 @@ interface ChessgroundApi {
   set(config: Record<string, unknown>): void;
   setAutoShapes(shapes: ChessgroundShape[]): void;
   destroy(): void;
-}
-
-type HighlightMap = Map<string, string>;
-
-interface Arrow {
-  from: string;
-  to: string;
-  color: string;
 }
 
 interface BoardProps {
@@ -38,7 +32,7 @@ function buildDests(game: ChessInstance): Map<string, string[]> {
   const files = 'abcdefgh';
   for (let f = 0; f < 8; f++) {
     for (let r = 1; r <= 8; r++) {
-      const sq = files[f]! + r;
+      const sq = (files[f] ?? '') + String(r);
       const moves = game.moves({ square: sq, verbose: true });
       if (moves.length > 0) {
         dests.set(sq, moves.map(m => m.to));
@@ -115,7 +109,7 @@ export function Board({
       cg.destroy();
       cgRef.current = null;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // mount-only: Chessground initializes once
 
   // Sync fen + movable when position changes
   useEffect(() => {
@@ -167,6 +161,7 @@ export function Board({
     const cg = cgRef.current;
     if (!cg) return;
     const game = gameRef.current;
+    let t2: ReturnType<typeof setTimeout> | undefined;
 
     const t1 = setTimeout(() => {
       cg.set({
@@ -176,7 +171,7 @@ export function Board({
         turnColor: game?.turn() === 'w' ? 'white' : 'black',
       });
 
-      const t2 = setTimeout(() => {
+      t2 = setTimeout(() => {
         cg.set({
           animation: { duration: 150 },
           movable: {
@@ -186,10 +181,12 @@ export function Board({
         });
         animateFrom.onComplete();
       }, 400);
-      return () => clearTimeout(t2);
     }, 400);
 
-    return () => clearTimeout(t1);
+    return () => {
+      clearTimeout(t1);
+      if (t2 !== undefined) clearTimeout(t2);
+    };
   }, [animateFrom, fen, gameRef]);
 
   return <div ref={containerRef} class="cg-wrap" id="board" />;

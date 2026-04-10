@@ -28,8 +28,8 @@ export function StarredApp() {
   useEffect(() => {
     void (async () => {
       try {
-        const data = await client.starred.list<StarredItem>({ limit: 200 });
-        setItems(data.items ?? []);
+        const data = await client.starred.list({ limit: 200 });
+        setItems((data.items ?? []) as StarredItem[]);
       } catch (err) {
         console.error('Failed to load starred puzzles:', err);
         setError(err instanceof Error ? err.message : String(err));
@@ -79,7 +79,7 @@ export function StarredApp() {
         </thead>
         <tbody>
           {items.map(item => (
-            <tr key={`${item.game_id}-${item.ply}`}>
+            <tr key={`${item.game_id}-${String(item.ply)}`}>
               <td>
                 {item.date
                   ? formatDate(item.date, { year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -93,9 +93,9 @@ export function StarredApp() {
               <td>
                 <a
                   class="puzzle-link"
-                  href={`/?game_id=${encodeURIComponent(item.game_id)}&ply=${item.ply}`}
+                  href={`/?game_id=${encodeURIComponent(item.game_id)}&ply=${String(item.ply)}`}
                 >
-                  {item.san ?? `ply ${item.ply}`}
+                  {item.san ?? `ply ${String(item.ply)}`}
                 </a>
               </td>
               <td class="eval-swing">
@@ -103,13 +103,13 @@ export function StarredApp() {
                   ? `-${(item.cp_loss / 100).toFixed(1)}`
                   : '\u2014'}
               </td>
-              <td>{PHASE_KEYS[item.game_phase ?? -1] ? t(PHASE_KEYS[item.game_phase ?? -1]!) : '\u2014'}</td>
+              <td>{PHASE_KEYS[item.game_phase ?? -1] ? t(PHASE_KEYS[item.game_phase ?? -1] ?? '') : '\u2014'}</td>
               <td class="note-text" title={item.note ?? ''}>{item.note ?? ''}</td>
               {hasGameReview && (
                 <td>
                   <a
                     class="puzzle-link"
-                    href={`/game/${encodeURIComponent(item.game_id)}?ply=${item.ply}`}
+                    href={`/game/${encodeURIComponent(item.game_id)}?ply=${String(item.ply)}`}
                   >
                     {t('game_review.link.review_game')}
                   </a>

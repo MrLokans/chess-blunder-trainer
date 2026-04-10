@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
 import { MoveSequence, ReadOnlyBoard, PlaybackController } from '../shared/sequence-player';
 import { applyBoardBackground, applyPieceSet } from '../shared/board-theme';
-import { updateEvalBar } from '../trainer/eval-bar';
+import { updateEvalBar } from '../shared/eval-bar';
 import { EvalChart, evalFromWhite } from './eval-chart';
 
 interface ReviewMove {
@@ -28,12 +28,6 @@ interface ReviewData {
   analyzed: boolean;
 }
 
-interface BoardSettings {
-  board_light: string;
-  board_dark: string;
-  piece_set?: string;
-}
-
 interface MovePair {
   white: (ReviewMove & { index: number }) | null;
   black: (ReviewMove & { index: number }) | null;
@@ -49,12 +43,14 @@ function deriveOutcome(result: string, playerColor: string): string {
 function buildMovePairs(moves: ReviewMove[]): Map<number, MovePair> {
   const pairs = new Map<number, MovePair>();
   for (let i = 0; i < moves.length; i++) {
-    const m = moves[i]!;
+    const m = moves[i];
+    if (!m) continue;
     const num = m.move_number;
     if (!pairs.has(num)) {
       pairs.set(num, { white: null, black: null });
     }
-    const entry = pairs.get(num)!;
+    const entry = pairs.get(num);
+    if (!entry) continue;
     if (m.player === 'white') {
       entry.white = { ...m, index: i };
     } else {
@@ -80,7 +76,7 @@ function MoveCell({ moveInfo, activeIndex, onSelect }: MoveCellProps) {
     <span
       class={cls}
       data-index={moveInfo.index}
-      onClick={() => onSelect(moveInfo.index)}
+      onClick={() => { onSelect(moveInfo.index); }}
     >
       {moveInfo.classification && moveInfo.classification !== 'normal' && (
         <span class={`review-move-dot ${moveInfo.classification}`} />
@@ -158,7 +154,8 @@ function EvalBar({ moves, activeIndex }: EvalBarProps) {
   useEffect(() => {
     if (!fillRef.current || !valueRef.current) return;
     if (moves.length > 0 && activeIndex >= 0 && activeIndex < moves.length) {
-      const move = moves[activeIndex]!;
+      const move = moves[activeIndex];
+      if (!move) return;
       updateEvalBar(evalFromWhite(move), 'white', fillRef.current, valueRef.current);
     } else {
       updateEvalBar(0, 'white', fillRef.current, valueRef.current);
@@ -380,7 +377,7 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
       }
     };
     document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    return () => { document.removeEventListener('keydown', handler); };
   }, [goPrev, goNext, goFirst, goLast, flipBoard, togglePlayPause]);
 
   if (error) {

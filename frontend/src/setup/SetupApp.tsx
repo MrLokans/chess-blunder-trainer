@@ -70,14 +70,14 @@ export function SetupApp() {
 
   const debouncedValidateLichess = useCallback(
     debounce((username: string) => {
-      validateField('lichess', username, setLichess, lichessValueRef);
+      void validateField('lichess', username, setLichess, lichessValueRef);
     }, 500),
     [],
   );
 
   const debouncedValidateChesscom = useCallback(
     debounce((username: string) => {
-      validateField('chesscom', username, setChesscom, chesscomValueRef);
+      void validateField('chesscom', username, setChesscom, chesscomValueRef);
     }, 500),
     [],
   );
@@ -217,7 +217,7 @@ export function SetupApp() {
         )}
 
         {!showProgress && (
-          <form id="setupForm" onSubmit={handleSubmit}>
+          <form id="setupForm" onSubmit={(e) => { void handleSubmit(e); }}>
             <div class="form-group">
               <label for="lichess">{t('setup.lichess_label')}</label>
               <input
@@ -261,7 +261,6 @@ export function SetupApp() {
 
         <div class="footer">
           <span
-            // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{
               __html: t('setup.help', { link: `<a href="https://github.com/anthropics/blunder-tutor">${t('setup.documentation')}</a>` }),
             }}

@@ -3,8 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/preact';
 import { VimInput } from '../../src/trainer/components/VimInput';
 import { loadChessGlobal } from '../helpers/chess';
 
-beforeEach(async () => {
-  await loadChessGlobal();
+beforeEach(() => {
+  loadChessGlobal();
   vi.clearAllMocks();
 });
 

@@ -54,7 +54,7 @@ export function createElement(id: string, tag = 'div'): MockElement {
     },
     dispatchEvent(evt: { type: string }) {
       const handlers = this._listeners[evt.type] ?? [];
-      handlers.forEach(h => h(evt));
+      handlers.forEach(h => { h(evt); });
     },
   };
   elements.set(id, el);

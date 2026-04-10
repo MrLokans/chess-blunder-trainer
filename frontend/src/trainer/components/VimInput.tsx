@@ -32,7 +32,7 @@ export function VimInput({ visible, game, interactive, onMove, onClose }: VimInp
       setSelectedIndex(-1);
       return;
     }
-    const moves = game.moves() as string[];
+    const moves = game.moves();
     const filtered = moves.filter(m => m.toLowerCase().startsWith(text.toLowerCase()));
     setSuggestions(filtered.slice(0, 8));
     setSelectedIndex(-1);

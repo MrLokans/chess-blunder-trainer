@@ -1,10 +1,12 @@
+import { MAX_EVAL_CP } from '../../shared/eval-bar';
+
 interface EvalBarProps {
   cp: number;
   playerColor: string;
 }
 
 export function EvalBar({ cp, playerColor }: EvalBarProps): preact.JSX.Element {
-  const maxCp = 500;
+  const maxCp = MAX_EVAL_CP;
   const normalized = Math.max(-maxCp, Math.min(maxCp, cp));
   const whitePercent = 50 + (normalized / maxCp) * 50;
   const fillPercent = playerColor === 'white' ? whitePercent : 100 - whitePercent;
@@ -21,7 +23,7 @@ export function EvalBar({ cp, playerColor }: EvalBarProps): preact.JSX.Element {
     <div class="eval-bar-container">
       <div class="eval-value" id="evalValue">{display}</div>
       <div class="eval-bar" id="evalBar">
-        <div class="eval-bar-fill" id="evalBarFill" style={{ height: `${fillPercent}%` }} />
+        <div class="eval-bar-fill" id="evalBarFill" style={{ height: `${String(fillPercent)}%` }} />
       </div>
     </div>
   );

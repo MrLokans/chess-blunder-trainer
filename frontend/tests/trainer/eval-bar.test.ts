@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { updateEvalBar } from '../../src/trainer/eval-bar';
+import { updateEvalBar } from '../../src/shared/eval-bar';
 
 function makeMockEl(): HTMLElement {
   return { style: { height: '' }, textContent: '', className: '' } as unknown as HTMLElement;

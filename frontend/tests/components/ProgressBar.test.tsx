@@ -20,7 +20,7 @@ describe('ProgressBar', () => {
   });
 
   test('supports custom text format', () => {
-    const fmt = (current: number, total: number) => `${current} of ${total} games`;
+    const fmt = (current: number, total: number) => `${String(current)} of ${String(total)} games`;
     render(<ProgressBar current={5} total={20} textFormat={fmt} />);
     expect(screen.getByText('5 of 20 games')).toBeDefined();
   });

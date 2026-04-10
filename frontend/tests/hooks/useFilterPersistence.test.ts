@@ -19,15 +19,16 @@ describe('useFilterPersistence', () => {
     expect(result.current[0]).toEqual(['blitz']);
   });
 
-  test('persists values to localStorage on update', () => {
+  test('persists values to localStorage on update', async () => {
     const { result } = renderHook(() => useFilterPersistence('test-filters', ['bullet', 'blitz']));
 
-    act(() => {
+    await act(() => {
       result.current[1](['rapid', 'classical']);
     });
 
     expect(result.current[0]).toEqual(['rapid', 'classical']);
-    expect(JSON.parse(localStorage.getItem('test-filters')!)).toEqual(['rapid', 'classical']);
+    const stored = localStorage.getItem('test-filters');
+    expect(JSON.parse(stored ?? '[]')).toEqual(['rapid', 'classical']);
   });
 
   test('falls back to defaults on corrupt stored data', () => {

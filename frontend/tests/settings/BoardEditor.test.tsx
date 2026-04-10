@@ -32,7 +32,7 @@ describe('BoardEditor', () => {
       <BoardEditor pieceSets={PIECE_SETS} colorPresets={COLOR_PRESETS} settings={SETTINGS} onChange={() => {}} />
     );
     const activeCard = container.querySelector('.piece-set-card.active');
-    expect(activeCard?.textContent?.trim()).toBe('Gioco');
+    expect((activeCard as HTMLElement).textContent.trim()).toBe('Gioco');
   });
 
   test('calls onChange when piece set is selected', async () => {

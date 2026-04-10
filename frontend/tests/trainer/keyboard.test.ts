@@ -31,7 +31,7 @@ describe('Keyboard shortcuts', () => {
   it('skips shortcuts when focused on input elements', () => {
     let called = false;
     document.addEventListener('keydown', ((e: KeyboardEvent) => {
-      const tag = ((e.target as HTMLElement)?.tagName || '').toLowerCase();
+      const tag = ((e.target as HTMLElement).tagName || '').toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
       called = true;
     }) as EventListener);
@@ -53,13 +53,13 @@ describe('Keyboard shortcuts', () => {
 describe('flipBoard', () => {
   it('toggles orientation between white and black', () => {
     let boardFlipped = false;
-    const playerColor = 'white';
+    const playerColor: 'white' | 'black' = 'white';
     const orientations: string[] = [];
 
     function flipBoard() {
       boardFlipped = !boardFlipped;
-      const base = playerColor === 'black' ? 'black' : 'white';
-      const newOrientation = boardFlipped ? (base === 'white' ? 'black' : 'white') : base;
+      const base: 'white' | 'black' = playerColor === 'black' ? 'black' : 'white';
+      const newOrientation: 'white' | 'black' = boardFlipped ? (base === 'white' ? 'black' : 'white') : base;
       orientations.push(newOrientation);
     }
 
@@ -75,13 +75,13 @@ describe('flipBoard', () => {
 
   it('flips correctly when playing as black', () => {
     let boardFlipped = false;
-    const playerColor = 'black';
+    const playerColor: 'white' | 'black' = 'black';
     const orientations: string[] = [];
 
     function flipBoard() {
       boardFlipped = !boardFlipped;
-      const base = playerColor === 'black' ? 'black' : 'white';
-      const newOrientation = boardFlipped ? (base === 'white' ? 'black' : 'white') : base;
+      const base: 'white' | 'black' = playerColor === 'black' ? 'black' : 'white';
+      const newOrientation: 'white' | 'black' = boardFlipped ? (base === 'white' ? 'black' : 'white') : base;
       orientations.push(newOrientation);
     }
 

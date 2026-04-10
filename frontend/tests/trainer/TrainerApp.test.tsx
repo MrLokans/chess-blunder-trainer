@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, waitFor } from '@testing-library/preact';
 
-const { mockCg, mockChessground } = vi.hoisted(() => {
+const { mockChessground } = vi.hoisted(() => {
   const mockCg = {
     set: vi.fn(),
     setAutoShapes: vi.fn(),

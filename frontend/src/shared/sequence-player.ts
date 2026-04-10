@@ -44,14 +44,17 @@ export class MoveSequence {
   get lastMove(): MoveResult | null {
     const hist = this._game.history({ verbose: true });
     if (hist.length === 0) return null;
-    const last = hist[hist.length - 1]!;
+    const last = hist[hist.length - 1];
+    if (!last) return null;
     return { from: last.from, to: last.to };
   }
 
   stepForward(): StepResult | null {
     if (this.isAtEnd) return null;
     this._index++;
-    const move = this._game.move(this._moves[this._index]!);
+    const moveSan = this._moves[this._index];
+    if (!moveSan) return null;
+    const move = this._game.move(moveSan);
     if (!move) return null;
     return { fen: this.fen, lastMove: { from: move.from, to: move.to } };
   }
@@ -84,7 +87,9 @@ export class MoveSequence {
     this._game = this._startFen ? new Chess(this._startFen) : new Chess();
     this._index = -1;
     for (let i = 0; i <= targetIndex && i < this._moves.length; i++) {
-      const move = this._game.move(this._moves[i]!);
+      const moveSan = this._moves[i];
+      if (!moveSan) break;
+      const move = this._game.move(moveSan);
       if (!move) break;
       this._index = i;
     }
@@ -94,7 +99,7 @@ export class MoveSequence {
 function buildBoardSvg(light: string, dark: string): string {
   const squares = Array.from({ length: 64 }, (_, i) => {
     const x = i % 8, y = Math.floor(i / 8);
-    return (x + y) % 2 === 1 ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${dark}"/>` : '';
+    return (x + y) % 2 === 1 ? `<rect x="${String(x)}" y="${String(y)}" width="1" height="1" fill="${dark}"/>` : '';
   }).join('');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" shape-rendering="crispEdges">` +
     `<rect width="8" height="8" fill="${light}"/>${squares}</svg>`;
@@ -135,12 +140,12 @@ export class ReadOnlyBoard {
   }
 
   private _setBoardInline(): void {
-    const board = this._el.querySelector('cg-board') as HTMLElement | null;
-    if (board) board.style.backgroundImage = this._boardBgUrl;
+    const board = this._el.querySelector('cg-board');
+    if (board instanceof HTMLElement) board.style.backgroundImage = this._boardBgUrl;
   }
 
   private _observeBoardChanges(): void {
-    this._observer = new MutationObserver(() => this._setBoardInline());
+    this._observer = new MutationObserver(() => { this._setBoardInline(); });
     this._observer.observe(this._el, { childList: true });
   }
 
@@ -198,7 +203,7 @@ export class PlaybackController {
   }
 
   toggle(): void {
-    this.isPlaying ? this.pause() : this.play();
+    if (this.isPlaying) { this.pause(); } else { this.play(); }
   }
 
   setSpeed(ms: number): void {
@@ -266,7 +271,7 @@ export default class SequencePlayer {
 
     this._playback = new PlaybackController({
       speed,
-      onTick: () => this._onTick(),
+      onTick: () => { this._onTick(); },
     });
 
     if (showControls) {
@@ -308,11 +313,11 @@ export default class SequencePlayer {
       return b;
     };
 
-    this._btnStart = btn('traps.player.go_start', '\u23EE', () => this._goToStart());
-    this._btnBack = btn('traps.player.step_back', '\u25C0', () => this._stepBack());
-    this._btnPlay = btn('traps.player.play', '\u25B6', () => this._togglePlay());
-    this._btnForward = btn('traps.player.step_forward', '\u25B6', () => this._stepForward());
-    this._btnEnd = btn('traps.player.go_end', '\u23ED', () => this._goToEnd());
+    this._btnStart = btn('traps.player.go_start', '\u23EE', () => { this._goToStart(); });
+    this._btnBack = btn('traps.player.step_back', '\u25C0', () => { this._stepBack(); });
+    this._btnPlay = btn('traps.player.play', '\u25B6', () => { this._togglePlay(); });
+    this._btnForward = btn('traps.player.step_forward', '\u25B6', () => { this._stepForward(); });
+    this._btnEnd = btn('traps.player.go_end', '\u23ED', () => { this._goToEnd(); });
 
     bar.append(this._btnStart, this._btnBack, this._btnPlay, this._btnForward, this._btnEnd);
     this._containerEl.appendChild(bar);
@@ -382,10 +387,10 @@ export default class SequencePlayer {
     const atEnd = this._sequence.isAtEnd;
     const playing = this._playback.isPlaying;
 
-    this._btnStart!.disabled = atStart;
-    this._btnBack!.disabled = atStart;
-    this._btnForward!.disabled = atEnd;
-    this._btnEnd!.disabled = atEnd;
+    if (this._btnStart) this._btnStart.disabled = atStart;
+    if (this._btnBack) this._btnBack.disabled = atStart;
+    if (this._btnForward) this._btnForward.disabled = atEnd;
+    if (this._btnEnd) this._btnEnd.disabled = atEnd;
 
     this._btnPlay.textContent = playing ? '\u23F8' : '\u25B6';
     this._btnPlay.title = playing ? t('traps.player.pause') : t('traps.player.play');

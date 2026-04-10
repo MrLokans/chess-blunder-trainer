@@ -16,12 +16,12 @@ interface DateState {
 
 function getPresetDates(preset: string): { from: string | null; to: string | null } {
   const now = new Date();
-  const to = now.toISOString().split('T')[0]!;
+  const to = now.toISOString().split('T')[0] ?? '';
   const msPerDay = 24 * 60 * 60 * 1000;
   const daysMap: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
   const days = daysMap[preset];
   if (!days) return { from: null, to: null };
-  const from = new Date(now.getTime() - days * msPerDay).toISOString().split('T')[0]!;
+  const from = new Date(now.getTime() - days * msPerDay).toISOString().split('T')[0] ?? '';
   return { from, to };
 }
 

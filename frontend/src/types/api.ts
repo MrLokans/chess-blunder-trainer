@@ -27,6 +27,13 @@ export interface ApiErrorResponse {
 
 export type JobState = 'idle' | 'running' | 'completed' | 'failed';
 
+export interface JobStatus {
+  status: JobState;
+  job_id?: string;
+  progress_current?: number;
+  progress_total?: number;
+}
+
 export interface StatsOverview {
   total_games: number;
   analyzed_games: number;
@@ -50,7 +57,7 @@ export interface ImportStartResponse {
 }
 
 export interface JobStatusResponse {
-  status: string;
+  status: JobState;
   result?: ImportResult;
   error_message?: string;
 }

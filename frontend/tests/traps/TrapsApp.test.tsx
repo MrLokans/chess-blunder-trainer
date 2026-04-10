@@ -252,9 +252,9 @@ describe('TrapsApp', () => {
       expect(screen.getByText(t('traps.filter_category'))).toBeDefined();
     });
 
-    const select = document.querySelector('#trapCategoryFilter') as HTMLSelectElement;
-    expect(select).not.toBeNull();
-    expect(select.options.length).toBeGreaterThan(1);
+    const trigger = document.querySelector('.custom-dropdown__trigger') as HTMLButtonElement;
+    expect(trigger).not.toBeNull();
+    expect(trigger.textContent).toBe(t('traps.category.all'));
   });
 
   test('category filter changes visible traps', async () => {
@@ -265,8 +265,11 @@ describe('TrapsApp', () => {
       expect(screen.getByText('Fried Liver Attack')).toBeDefined();
     });
 
-    const select = document.querySelector('#trapCategoryFilter') as HTMLSelectElement;
-    await user.selectOptions(select, 'checkmate');
+    const trigger = document.querySelector('.custom-dropdown__trigger') as HTMLButtonElement;
+    await user.click(trigger);
+
+    const checkmateOption = screen.getByRole('option', { name: t('traps.category.checkmate') });
+    await user.click(checkmateOption);
 
     await waitFor(() => {
       expect(screen.queryByText('Fried Liver Attack')).toBeNull();

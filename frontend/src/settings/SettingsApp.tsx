@@ -7,7 +7,7 @@ import { ThemeEditor } from './ThemeEditor';
 import { BoardEditor } from './BoardEditor';
 import type {
   SettingsInit, SyncSettings as SyncSettingsData,
-  ThemeColors, ThemePreset, PieceSet, BoardColorPreset, BoardSettings,
+  ThemeColors, ThemePreset, PieceSet, BoardColorPreset,
 } from './types';
 
 interface SettingsAppProps {
@@ -30,7 +30,7 @@ export function SettingsApp({ init }: SettingsAppProps) {
   });
   const [theme, setTheme] = useState<ThemeColors | null>(null);
   const [themePresets, setThemePresets] = useState<ThemePreset[]>([]);
-  const [boardSettings, setBoardSettings] = useState<BoardSettings>({
+  const [boardSettings, setBoardSettings] = useState({
     piece_set: 'gioco', board_light: '#f0d9b5', board_dark: '#b58863',
   });
   const [pieceSets, setPieceSets] = useState<PieceSet[]>([]);

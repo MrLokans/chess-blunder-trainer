@@ -1,16 +1,9 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { ProgressBar } from './ProgressBar';
 import { Alert } from './Alert';
-import type { JobState } from '../types/api';
+import type { JobState, JobStatus } from '../types/api';
 
-export type { JobState };
-
-interface JobStatus {
-  status: JobState;
-  job_id?: string;
-  progress_current?: number;
-  progress_total?: number;
-}
+export type { JobState, JobStatus };
 
 export interface ExternalJobStatus {
   job_id: string;

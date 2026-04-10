@@ -162,7 +162,7 @@ describe('ImportApp', () => {
 
   test('submit button disabled when textarea is empty', () => {
     render(<ImportApp demoMode={false} />);
-    const btn = screen.getByText(t('import.submit')) as HTMLButtonElement;
+    const btn = screen.getByText(t('import.submit'));
     expect(btn.disabled).toBe(true);
   });
 

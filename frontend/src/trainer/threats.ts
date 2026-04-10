@@ -1,4 +1,4 @@
-type HighlightMap = Map<string, string>;
+import type { HighlightMap } from './highlights';
 
 interface ChessPiece {
   type: string;
@@ -18,7 +18,7 @@ function getAttackers(gameObj: ChessInstance, square: string, byColor: 'w' | 'b'
 
   for (let f = 0; f < 8; f++) {
     for (let r = 1; r <= 8; r++) {
-      const sq = FILES[f]! + r;
+      const sq = (FILES[f] ?? '') + String(r);
       const piece = testGame.get(sq);
       if (piece && piece.color === byColor) {
         const moves = testGame.moves({ square: sq, verbose: true });
@@ -43,7 +43,7 @@ function getDefenders(gameObj: ChessInstance, square: string, piece: ChessPiece)
   const defenders: Attacker[] = [];
   for (let f = 0; f < 8; f++) {
     for (let r = 1; r <= 8; r++) {
-      const sq = FILES[f]! + r;
+      const sq = (FILES[f] ?? '') + String(r);
       const p = testGame.get(sq);
       if (p && p.color === defenderColor) {
         const moves = testGame.moves({ square: sq, verbose: true });
@@ -64,7 +64,7 @@ function findHangingPieces(gameObj: ChessInstance): string[] {
 
   for (let f = 0; f < 8; f++) {
     for (let r = 1; r <= 8; r++) {
-      const sq = FILES[f]! + r;
+      const sq = (FILES[f] ?? '') + String(r);
       const piece = gameObj.get(sq);
       if (piece && piece.type !== 'k') {
         const attackers = getAttackers(gameObj, sq, piece.color === 'w' ? 'b' : 'w');
@@ -85,7 +85,7 @@ function findKingInCheck(gameObj: ChessInstance): string | null {
     const turnColor = gameObj.turn();
     for (let f = 0; f < 8; f++) {
       for (let r = 1; r <= 8; r++) {
-        const sq = FILES[f]! + r;
+        const sq = (FILES[f] ?? '') + String(r);
         const piece = gameObj.get(sq);
         if (piece && piece.type === 'k' && piece.color === turnColor) {
           return sq;
@@ -105,7 +105,7 @@ function findCheckableKing(gameObj: ChessInstance): string | null {
       const oppColor = gameObj.turn() === 'w' ? 'b' : 'w';
       for (let f = 0; f < 8; f++) {
         for (let r = 1; r <= 8; r++) {
-          const sq = FILES[f]! + r;
+          const sq = (FILES[f] ?? '') + String(r);
           const piece = testGame.get(sq);
           if (piece && piece.type === 'k' && piece.color === oppColor) {
             return sq;

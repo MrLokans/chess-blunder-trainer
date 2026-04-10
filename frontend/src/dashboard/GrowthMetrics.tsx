@@ -113,7 +113,7 @@ export function GrowthMetrics({ params }: GrowthMetricsProps) {
     <>
       {METRICS.map(metric => {
         const values = data.windows.map(w => w[metric.key] ?? 0);
-        const current = values[values.length - 1]!;
+        const current = values[values.length - 1] ?? 0;
         const suffix = metric.suffix ?? '';
         const trendDir = metric.trendKey && data.trend ? (data.trend[metric.trendKey] ?? null) : null;
 

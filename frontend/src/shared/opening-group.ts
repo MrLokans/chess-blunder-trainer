@@ -24,7 +24,8 @@ export function groupOpeningsByBase(openings: OpeningItem[]): OpeningGroup[] {
     if (!groups.has(baseName)) {
       groups.set(baseName, { baseName, variations: [], totalCount: 0, totalGames: 0, totalCpLossWeighted: 0, avgCpLoss: 0 });
     }
-    const group = groups.get(baseName)!;
+    const group = groups.get(baseName);
+    if (!group) continue;
     group.variations.push(item);
     group.totalCount += item.count;
     group.totalGames += item.game_count;

@@ -67,7 +67,7 @@ vi.mock('../../src/trainer/board-visuals', () => ({
   applyPieceSet: vi.fn(),
 }));
 
-vi.mock('../../src/trainer/eval-bar', () => ({
+vi.mock('../../src/shared/eval-bar', () => ({
   updateEvalBar: vi.fn(),
 }));
 
@@ -226,7 +226,7 @@ describe('GameReviewApp', () => {
       expect(screen.getByText(t('chess.color.white'))).toBeDefined();
     });
 
-    const flipBtn = document.getElementById('reviewFlip')!;
+    const flipBtn = document.getElementById('reviewFlip') as HTMLElement;
     await user.click(flipBtn);
 
     await waitFor(() => {

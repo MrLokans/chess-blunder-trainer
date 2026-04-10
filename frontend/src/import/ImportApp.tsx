@@ -49,7 +49,7 @@ export function ImportApp({ demoMode }: Props) {
         return;
       }
       if (data.job_id) {
-        pollJob(data.job_id);
+        void pollJob(data.job_id);
       } else {
         setAnalyzing(false);
       }
@@ -74,7 +74,7 @@ export function ImportApp({ demoMode }: Props) {
           rows={14}
           placeholder={t('import.placeholder')}
           value={pgn}
-          onInput={(e) => setPgn(e.currentTarget.value)}
+          onInput={(e) => { setPgn(e.currentTarget.value); }}
           disabled={analyzing}
         />
 
@@ -89,7 +89,7 @@ export function ImportApp({ demoMode }: Props) {
         {!demoMode && (
           <button
             class="btn btn-primary"
-            onClick={handleSubmit}
+            onClick={() => { void handleSubmit(); }}
             disabled={analyzing || !pgn.trim()}
           >
             {t('import.submit')}

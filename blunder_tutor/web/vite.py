@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from functools import lru_cache
 from pathlib import Path
 
 from markupsafe import Markup
@@ -21,7 +20,6 @@ ENTRY_MAP = {
 DEFAULT_DIST_DIR = Path(__file__).resolve().parent / "static" / "dist"
 
 
-@lru_cache(maxsize=1)
 def _load_manifest(dist_dir: Path) -> dict:
     manifest_path = dist_dir / ".vite" / "manifest.json"
     with manifest_path.open() as f:

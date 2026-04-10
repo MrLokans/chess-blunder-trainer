@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'preact/hooks';
 
-type QueryParams = Record<string, string | number | boolean | null | undefined | string[]>;
+export type QueryParams = Record<string, string | number | boolean | null | undefined | string[]>;
 
 interface FilterState {
   phases: string[];
@@ -33,8 +33,8 @@ function loadArray(key: string, defaults: string[]): string[] {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return defaults;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : defaults;
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as string[]) : defaults;
   } catch { return defaults; }
 }
 
@@ -92,7 +92,7 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
     if (Array.isArray(value) || typeof value === 'object') {
       localStorage.setItem(key, JSON.stringify(value));
     } else {
-      localStorage.setItem(key, String(value));
+      localStorage.setItem(key, typeof value === 'boolean' || typeof value === 'number' ? String(value) : (value as string));
     }
   }, []);
 

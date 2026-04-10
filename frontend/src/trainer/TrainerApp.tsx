@@ -2,7 +2,7 @@ import { useReducer, useContext, useState, useCallback, useEffect, useRef, useMe
 import { TrainerContext, trainerReducer, initialState } from './context';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useFeature } from '../hooks/useFeature';
-import { useFilters } from './hooks/useFilters';
+import { useFilters, type FiltersAPI } from './hooks/useFilters';
 import { usePuzzle } from './hooks/usePuzzle';
 import { useBoardState } from './hooks/useBoardState';
 import { useBoardSettings } from './hooks/useBoardSettings';
@@ -56,10 +56,13 @@ function TrainerCore(): preact.JSX.Element {
   useBoardSettings();
 
   // Filters — onFilterChange triggers a new puzzle load
+  const filtersRef = useRef<FiltersAPI | null>(null);
   const filtersApi = useFilters(useCallback(() => {
     setUserMoveUci(null);
-    void puzzleApi.loadPuzzle(filtersApi.getFilterParams());
+    const params = filtersRef.current?.getFilterParams();
+    void puzzleApi.loadPuzzle(params);
   }, [puzzleApi]));
+  filtersRef.current = filtersApi;
 
   // Line player
   const { playBestMove, navigateLine } = useLinePlayer(gameRef, filtersApi.state.playFullLine);
@@ -92,28 +95,9 @@ function TrainerCore(): preact.JSX.Element {
       fen: puzzle.pre_move_fen,
       from: puzzle.pre_move_uci.slice(0, 2),
       to: puzzle.pre_move_uci.slice(2, 4),
-      onComplete: () => dispatch({ type: 'SET_ANIMATING', animating: false }),
+      onComplete: () => { dispatch({ type: 'SET_ANIMATING', animating: false }); },
     };
   }, [state.puzzle, hasPreMove, dispatch]);
-
-  // Board move handler
-  const onBoardMove = useCallback((orig: string, dest: string, move: { san: string; from: string; to: string; promotion?: string }) => {
-    if (state.animating) return;
-    const game = gameRef.current;
-    if (!game) return;
-
-    dispatch({ type: 'SET_FEN', fen: game.fen() });
-
-    if (state.bestRevealed) {
-      dispatch({ type: 'PUSH_MOVE', san: move.san });
-    } else if (!state.submitted) {
-      const puzzle = state.puzzle;
-      const uci = move.from + move.to + (move.promotion || '');
-      if (puzzle && uci === puzzle.best_move_uci) {
-        setTimeout(() => void handleSubmit(), 150);
-      }
-    }
-  }, [state.animating, state.bestRevealed, state.submitted, state.puzzle, dispatch]);
 
   // Submit move
   const handleSubmit = useCallback(async () => {
@@ -164,6 +148,28 @@ function TrainerCore(): preact.JSX.Element {
       htmx.trigger(document.body, 'statsUpdate');
     }
   }, [puzzleApi, state.puzzle, dispatch]);
+
+  // Board move handler
+  const handleSubmitRef = useRef(handleSubmit);
+  handleSubmitRef.current = handleSubmit;
+
+  const onBoardMove = useCallback((orig: string, dest: string, move: { san: string; from: string; to: string; promotion?: string }) => {
+    if (state.animating) return;
+    const game = gameRef.current;
+    if (!game) return;
+
+    dispatch({ type: 'SET_FEN', fen: game.fen() });
+
+    if (state.bestRevealed) {
+      dispatch({ type: 'PUSH_MOVE', san: move.san });
+    } else if (!state.submitted) {
+      const puzzle = state.puzzle;
+      const uci = move.from + move.to + (move.promotion || '');
+      if (puzzle && uci === puzzle.best_move_uci) {
+        setTimeout(() => { void handleSubmitRef.current(); }, 150);
+      }
+    }
+  }, [state.animating, state.bestRevealed, state.submitted, state.puzzle, dispatch]);
 
   // Reveal best move
   const handleReveal = useCallback(() => {
@@ -218,8 +224,8 @@ function TrainerCore(): preact.JSX.Element {
     const fen = game.fen().replace(/ /g, '_');
     const lichessArrows: string[] = [];
     if (game.fen() === puzzle.fen) {
-      if (puzzle.blunder_uci?.length >= 4) lichessArrows.push(`R${puzzle.blunder_uci.slice(0, 2)}${puzzle.blunder_uci.slice(2, 4)}`);
-      if (puzzle.best_move_uci?.length >= 4) lichessArrows.push(`G${puzzle.best_move_uci.slice(0, 2)}${puzzle.best_move_uci.slice(2, 4)}`);
+      if (puzzle.blunder_uci && puzzle.blunder_uci.length >= 4) lichessArrows.push(`R${puzzle.blunder_uci.slice(0, 2)}${puzzle.blunder_uci.slice(2, 4)}`);
+      if (puzzle.best_move_uci && puzzle.best_move_uci.length >= 4) lichessArrows.push(`G${puzzle.best_move_uci.slice(0, 2)}${puzzle.best_move_uci.slice(2, 4)}`);
     }
     const hash = lichessArrows.length > 0 ? '#' + lichessArrows.join(',') : '';
     window.open(`https://lichess.org/analysis/${fen}?color=${puzzle.player_color}${hash}`, '_blank');
@@ -240,7 +246,7 @@ function TrainerCore(): preact.JSX.Element {
 
   // Keyboard shortcuts
   useKeyboard({
-    submit: handleSubmit,
+    submit: () => { void handleSubmit(); },
     next: handleNext,
     reset: handleReset,
     undo: handleUndo,
@@ -253,15 +259,15 @@ function TrainerCore(): preact.JSX.Element {
         setVimInputVisible(true);
       }
     },
-    toggleShortcuts: () => dispatch({ type: 'TOGGLE_SHORTCUTS' }),
+    toggleShortcuts: () => { dispatch({ type: 'TOGGLE_SHORTCUTS' }); },
     navigateLine,
-    toggleArrows: () => filtersApi.setShowArrows(!filtersApi.state.showArrows),
-    toggleThreats: () => filtersApi.setShowThreats(!filtersApi.state.showThreats),
+    toggleArrows: () => { filtersApi.setShowArrows(!filtersApi.state.showArrows); },
+    toggleThreats: () => { filtersApi.setShowThreats(!filtersApi.state.showThreats); },
     isAnimating: state.animating,
     isVimInputActive: vimInputVisible,
     isShortcutsVisible: state.shortcutsVisible,
     isResultVisible: state.resultVisible,
-    hideResult: () => dispatch({ type: 'SET_RESULT_VISIBLE', visible: false }),
+    hideResult: () => { dispatch({ type: 'SET_RESULT_VISIBLE', visible: false }); },
   });
 
   // Initial load
@@ -274,7 +280,7 @@ function TrainerCore(): preact.JSX.Element {
     } else {
       void puzzleApi.loadPuzzle(filtersApi.getFilterParams());
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // mount-only: deep-link check runs once
 
   // Retry for analyzing state
   useEffect(() => {
@@ -293,14 +299,14 @@ function TrainerCore(): preact.JSX.Element {
     return (
       <div class="trainer-page">
         <div class="empty-state" id="emptyState">
-          <h2>{state.error || t(`trainer.empty.${state.emptyState}_title`)}</h2>
-          <p>{t(`trainer.empty.${state.emptyState || 'default'}_message`)}</p>
+          <h2>{state.error || t(`trainer.empty.${state.emptyState ?? 'default'}_title`)}</h2>
+          <p>{t(`trainer.empty.${state.emptyState ?? 'default'}_message`)}</p>
           {state.emptyState === 'no_blunders_filtered' ? (
             <button onClick={filtersApi.clearAllFilters}>
               {t('trainer.empty.no_matching_action')}
             </button>
           ) : (
-            <a href="/management">{t(`trainer.empty.${state.emptyState || 'default'}_action`)}</a>
+            <a href="/management">{t(`trainer.empty.${state.emptyState ?? 'default'}_action`)}</a>
           )}
         </div>
       </div>
@@ -338,7 +344,7 @@ function TrainerCore(): preact.JSX.Element {
               onBoardMove(move.from, move.to, move);
               setVimInputVisible(false);
             }}
-            onClose={() => setVimInputVisible(false)}
+            onClose={() => { setVimInputVisible(false); }}
           />
             </div>
           </div>
@@ -358,7 +364,7 @@ function TrainerCore(): preact.JSX.Element {
             moveHistory={state.moveHistory}
             onPlayBest={playBestMove}
             onNext={handleNext}
-            onClose={() => dispatch({ type: 'SET_RESULT_VISIBLE', visible: false })}
+            onClose={() => { dispatch({ type: 'SET_RESULT_VISIBLE', visible: false }); }}
           />
         </div>
 
@@ -366,7 +372,7 @@ function TrainerCore(): preact.JSX.Element {
           <PuzzleTools
             puzzle={state.puzzle}
             starred={state.currentStarred}
-            onStarredChange={(starred) => dispatch({ type: 'SET_STARRED', starred })}
+            onStarredChange={(starred: boolean) => { dispatch({ type: 'SET_STARRED', starred }); }}
           />
           <MoveActions
             hasPuzzle={!!state.puzzle}
@@ -374,12 +380,12 @@ function TrainerCore(): preact.JSX.Element {
             bestRevealed={state.bestRevealed}
             submitting={submitting}
             hasMove={hasMove}
-            onSubmit={handleSubmit}
+            onSubmit={() => { void handleSubmit(); }}
             onReset={handleReset}
             onReveal={handleReveal}
             onNext={handleNext}
             onUndo={handleUndo}
-            onShowShortcuts={() => dispatch({ type: 'TOGGLE_SHORTCUTS' })}
+            onShowShortcuts={() => { dispatch({ type: 'TOGGLE_SHORTCUTS' }); }}
           />
           <FiltersPanel filters={filtersApi} />
         </div>
@@ -387,7 +393,7 @@ function TrainerCore(): preact.JSX.Element {
 
       <ShortcutsOverlay
         visible={state.shortcutsVisible}
-        onClose={() => dispatch({ type: 'TOGGLE_SHORTCUTS' })}
+        onClose={() => { dispatch({ type: 'TOGGLE_SHORTCUTS' }); }}
       />
     </div>
   );

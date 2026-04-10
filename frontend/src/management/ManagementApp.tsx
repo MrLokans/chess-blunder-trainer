@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { client } from '../shared/api';
 import { JobCard } from '../components/JobCard';
-import { Alert } from '../components/Alert';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { debounce } from '../shared/debounce';
 import type { ExternalJobStatus } from '../components/JobCard';
+import { ImportSection } from './ImportSection';
+import type { ConfiguredUsernames } from './ImportSection';
+import { DangerSection } from './DangerSection';
 
 interface ManagementInit {
   demoMode: boolean;
@@ -14,35 +16,6 @@ interface EngineStatus {
   available: boolean;
   name?: string;
   path?: string;
-}
-
-interface ConfiguredUsernames {
-  lichess_username?: string;
-  chesscom_username?: string;
-}
-
-const STORAGE_KEYS = {
-  source: 'blunder_import_source',
-  username: 'blunder_import_username',
-  maxGames: 'blunder_import_maxGames',
-} as const;
-
-const APP_STORAGE_KEYS = [
-  STORAGE_KEYS.source,
-  STORAGE_KEYS.username,
-  STORAGE_KEYS.maxGames,
-  'blunder-tutor-phase-filters',
-  'blunder-tutor-game-type-filters',
-  'blunder-tutor-difficulty-filters',
-  'blunder-tutor-tactical-filter',
-  'blunder-tutor-color-filter',
-  'blunder-tutor-filters-collapsed',
-  'dashboard-game-type-filters',
-  'blunder-tutor-play-full-line',
-];
-
-function clearAppLocalStorage(): void {
-  APP_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
 }
 
 function EngineStatusSection() {
@@ -64,9 +37,9 @@ function EngineStatusSection() {
 
   if (error) {
     return (
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--error);" />
-        <span style="color: var(--error);">{error}</span>
+      <div class="engine-status-row">
+        <span class="status-dot status-dot--error" />
+        <span class="text-error">{error}</span>
       </div>
     );
   }
@@ -78,18 +51,18 @@ function EngineStatusSection() {
   if (status.available) {
     return (
       <div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--success);" />
-          <span style="font-weight: 600; color: var(--success);">{t('management.engine.available')}</span>
+        <div class="engine-status-row">
+          <span class="status-dot status-dot--success" />
+          <span class="text-success font-semibold">{t('management.engine.available')}</span>
         </div>
-        <table style="font-size: 0.875rem; color: var(--text-muted);">
+        <table class="engine-details">
           <tr>
-            <td style="padding-right: 16px;">{t('management.engine.name')}</td>
-            <td style="font-family: monospace;">{status.name ?? t('common.unknown')}</td>
+            <td>{t('management.engine.name')}</td>
+            <td class="font-mono">{status.name ?? t('common.unknown')}</td>
           </tr>
           <tr>
-            <td style="padding-right: 16px;">{t('management.engine.path')}</td>
-            <td style="font-family: monospace;">{status.path ?? t('common.unknown')}</td>
+            <td>{t('management.engine.path')}</td>
+            <td class="font-mono">{status.path ?? t('common.unknown')}</td>
           </tr>
         </table>
       </div>
@@ -98,221 +71,16 @@ function EngineStatusSection() {
 
   return (
     <div>
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--error);" />
-        <span style="font-weight: 600; color: var(--error);">{t('management.engine.unavailable')}</span>
+      <div class="engine-status-row">
+        <span class="status-dot status-dot--error" />
+        <span class="text-error font-semibold">{t('management.engine.unavailable')}</span>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.875rem;">
+      <p class="section-description">
         {t('management.engine.path')} <code>{status.path ?? t('management.engine.not_configured')}</code>
         <br />
         {t('management.engine.install_hint')}
       </p>
     </div>
-  );
-}
-
-interface ImportSectionProps {
-  demoMode: boolean;
-  configuredUsernames: ConfiguredUsernames;
-  onImportStarted: (jobId: string) => void;
-  importJobStatus: ExternalJobStatus | undefined;
-}
-
-function ImportSection({ demoMode, configuredUsernames, onImportStarted, importJobStatus }: ImportSectionProps) {
-  const [source, setSource] = useState(() => localStorage.getItem(STORAGE_KEYS.source) ?? '');
-  const [username, setUsername] = useState(() => localStorage.getItem(STORAGE_KEYS.username) ?? '');
-  const [maxGames, setMaxGames] = useState(() => localStorage.getItem(STORAGE_KEYS.maxGames) ?? '1000');
-  const [usernameValid, setUsernameValid] = useState<boolean | null>(null);
-  const [validationState, setValidationState] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
-  const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
-  const [importing, setImporting] = useState(false);
-  const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(null);
-  const currentJobIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!source || username) return;
-    if (source === 'lichess' && configuredUsernames.lichess_username) {
-      setUsername(configuredUsernames.lichess_username);
-    } else if (source === 'chesscom' && configuredUsernames.chesscom_username) {
-      setUsername(configuredUsernames.chesscom_username);
-    }
-  }, [source, configuredUsernames]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.source, source);
-  }, [source]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.username, username);
-  }, [username]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.maxGames, maxGames);
-  }, [maxGames]);
-
-  const validateUsername = useCallback(async (src: string, uname: string) => {
-    if (!src || !uname) {
-      setUsernameValid(null);
-      setValidationState('idle');
-      return;
-    }
-    setValidationState('checking');
-    try {
-      const result = await client.setup.validateUsername(src, uname);
-      setUsernameValid(result.valid);
-      setValidationState(result.valid ? 'valid' : 'invalid');
-    } catch {
-      setUsernameValid(null);
-      setValidationState('idle');
-    }
-  }, []);
-
-  const debouncedValidate = useCallback(
-    debounce((src: string, uname: string) => { void validateUsername(src, uname); }, 500),
-    [validateUsername],
-  );
-
-  const handleSourceChange = (e: Event) => {
-    const val = (e.currentTarget as HTMLSelectElement).value;
-    setSource(val);
-    setUsernameValid(null);
-    if (username) {
-      debouncedValidate(val, username);
-    }
-  };
-
-  const handleUsernameChange = (e: Event) => {
-    const val = (e.currentTarget as HTMLInputElement).value;
-    setUsername(val);
-    setUsernameValid(null);
-    if (val) {
-      setValidationState('checking');
-      debouncedValidate(source, val);
-    } else {
-      setValidationState('idle');
-    }
-  };
-
-  useEffect(() => {
-    if (!importJobStatus) return;
-    if (importJobStatus.job_id !== currentJobIdRef.current) return;
-
-    if (importJobStatus.status === 'completed') {
-      setImporting(false);
-      setImportProgress(null);
-      currentJobIdRef.current = null;
-      setMessage({ type: 'success', text: t('management.import.completed') });
-    } else if (importJobStatus.status === 'failed') {
-      setImporting(false);
-      setImportProgress(null);
-      currentJobIdRef.current = null;
-      setMessage({ type: 'error', text: t('management.import.failed', { error: importJobStatus.error_message ?? t('common.unknown_error') }) });
-    } else if (importJobStatus.current != null && importJobStatus.total != null) {
-      setImportProgress({ current: importJobStatus.current, total: importJobStatus.total });
-    }
-  }, [importJobStatus]);
-
-  const handleSubmit = async (e: Event) => {
-    e.preventDefault();
-
-    if (usernameValid === null && source && username) {
-      setValidationState('checking');
-      try {
-        const result = await client.setup.validateUsername(source, username);
-        setUsernameValid(result.valid);
-        setValidationState(result.valid ? 'valid' : 'invalid');
-      } catch {
-        setUsernameValid(null);
-        setValidationState('idle');
-      }
-    }
-
-    if (usernameValid === false) {
-      setMessage({ type: 'error', text: t('setup.username_invalid') });
-      return;
-    }
-
-    try {
-      const data = await client.jobs.startImport(source, username, parseInt(maxGames));
-      currentJobIdRef.current = data.job_id;
-      onImportStarted(data.job_id);
-      setImporting(true);
-      setImportProgress(null);
-      setMessage({ type: 'success', text: t('management.import.started') });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : t('common.error');
-      setMessage({ type: 'error', text: t('management.import.start_failed', { error: msg }) });
-    }
-  };
-
-  const percent = importProgress && importProgress.total > 0
-    ? Math.round((importProgress.current / importProgress.total) * 100)
-    : 0;
-
-  return (
-    <section>
-      <h2>{t('management.import.title')}</h2>
-      <Alert type={message?.type ?? 'success'} message={message?.text ?? null} />
-
-      {demoMode ? (
-        <p class="section-description">{t('demo.disabled_action')}</p>
-      ) : (
-        <form onSubmit={(e) => { void handleSubmit(e); }}>
-          <div class="form-group">
-            <label for="source">{t('management.import.source')}</label>
-            <select id="source" required value={source} onChange={handleSourceChange}>
-              <option value="">{t('management.import.select_source')}</option>
-              <option value="lichess">{t('management.import.lichess')}</option>
-              <option value="chesscom">{t('management.import.chesscom')}</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="username">{t('management.import.username')}</label>
-            <input
-              type="text"
-              id="username"
-              required
-              placeholder={t('management.import.username_placeholder')}
-              value={username}
-              onInput={handleUsernameChange}
-            />
-            {validationState !== 'idle' && (
-              <span class={`field-validation ${validationState}`}>
-                {validationState === 'checking' && t('setup.validating')}
-                {validationState === 'valid' && t('setup.username_valid')}
-                {validationState === 'invalid' && t('setup.username_invalid')}
-              </span>
-            )}
-          </div>
-          <div class="form-group">
-            <label for="maxGames">{t('management.import.max_games')}</label>
-            <input
-              type="number"
-              id="maxGames"
-              min="1"
-              max="10000"
-              value={maxGames}
-              onInput={(e) => setMaxGames((e.currentTarget as HTMLInputElement).value)}
-            />
-          </div>
-          <button type="submit" class="btn">{t('management.import.start')}</button>
-        </form>
-      )}
-
-      {importing && (
-        <div class="progress-section">
-          <p><strong>{t('management.import.in_progress')}</strong></p>
-          <div class="progress-bar">
-            <div class="progress-fill" style={{ width: `${String(percent)}%` }} />
-            <div class="progress-text">
-              {importProgress
-                ? `${String(importProgress.current)}/${String(importProgress.total)} (${String(percent)}%)`
-                : '0%'}
-            </div>
-          </div>
-        </div>
-      )}
-    </section>
   );
 }
 
@@ -403,93 +171,6 @@ function JobsSection({ jobsRefreshKey }: JobsSectionProps) {
   );
 }
 
-interface DangerSectionProps {
-  externalStatus?: ExternalJobStatus;
-}
-
-function DangerSection({ externalStatus }: DangerSectionProps) {
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [current, setCurrent] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
-
-  useEffect(() => {
-    async function loadStatus() {
-      try {
-        const status = await client.data.deleteStatus();
-        if (status.status === 'running' && status.job_id) {
-          setJobId(status.job_id);
-          setCurrent(status.progress_current ?? 0);
-          setTotal(status.progress_total ?? 0);
-        }
-      } catch (err) {
-        console.error('Failed to load delete status:', err);
-      }
-    }
-    void loadStatus();
-  }, []);
-
-  useEffect(() => {
-    if (!externalStatus || externalStatus.job_id !== jobId) return;
-
-    if (externalStatus.status === 'completed') {
-      setJobId(null);
-      setMessage({ type: 'success', text: t('management.danger.completed') });
-      clearAppLocalStorage();
-      setTimeout(() => window.location.reload(), 2000);
-    } else if (externalStatus.status === 'failed') {
-      setJobId(null);
-      setMessage({ type: 'error', text: t('management.danger.failed', { error: '' }) + (externalStatus.error_message ?? t('common.unknown_error')) });
-    } else if (externalStatus.current != null && externalStatus.total != null) {
-      setCurrent(externalStatus.current);
-      setTotal(externalStatus.total);
-    }
-  }, [externalStatus, jobId]);
-
-  const handleDeleteAll = useCallback(async () => {
-    if (!confirm(t('management.danger.confirm1'))) return;
-    if (!confirm(t('management.danger.confirm2'))) return;
-
-    try {
-      const data = await client.data.deleteAll();
-      setJobId(data.job_id);
-      setCurrent(0);
-      setTotal(0);
-      setMessage({ type: 'success', text: t('management.danger.started') });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : t('common.error');
-      setMessage({ type: 'error', text: t('management.danger.failed', { error: '' }) + msg });
-    }
-  }, []);
-
-  const percent = total > 0 ? Math.round((current / total) * 100) : 0;
-
-  return (
-    <section>
-      <h2 class="danger-title">{t('management.danger.title')}</h2>
-      <Alert type={message?.type ?? 'success'} message={message?.text ?? null} />
-      <p class="section-description mb-4">
-        {t('management.danger.description')}
-        <strong>{t('management.danger.warning')}</strong> {t('management.danger.settings_preserved')}
-      </p>
-      {!jobId && (
-        <button class="btn btn-danger" type="button" onClick={() => { void handleDeleteAll(); }}>
-          {t('management.danger.button')}
-        </button>
-      )}
-      {jobId && (
-        <div class="progress-section">
-          <p><strong>{t('management.danger.deleting')}</strong></p>
-          <div class="progress-bar">
-            <div class="progress-fill danger" style={{ width: `${String(percent)}%` }} />
-            <div class="progress-text">{`${String(current)}/${String(total)} (${String(percent)}%)`}</div>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
 export function ManagementApp({ demoMode }: ManagementInit) {
   const [configuredUsernames, setConfiguredUsernames] = useState<ConfiguredUsernames>({});
   const [importJobId, setImportJobId] = useState<string | null>(null);
@@ -515,7 +196,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
   }, []);
 
   const debouncedRefresh = useCallback(
-    debounce(() => setJobsRefreshKey(k => k + 1), 1000),
+    debounce(() => { setJobsRefreshKey(k => k + 1); }, 1000),
     [],
   );
 

@@ -28,7 +28,7 @@ export class EvalChart {
 
   constructor(canvasEl: HTMLCanvasElement) {
     this._canvas = canvasEl;
-    this._ctx = canvasEl.getContext('2d')!;
+    this._ctx = canvasEl.getContext('2d') ?? (() => { throw new Error('2d context unavailable'); })();
 
     this._canvas.addEventListener('click', (e) => {
       if (!this._onClick || this._moves.length === 0) return;
@@ -82,7 +82,7 @@ export class EvalChart {
     ctx.moveTo(0, zeroY);
     for (let i = 0; i < moves.length; i++) {
       const x = i * step;
-      const y = cpToY(evalFromWhite(moves[i]!), h);
+      const y = cpToY(evalFromWhite(moves[i] ?? { player: 'white', eval_after: 0 }), h);
       ctx.lineTo(x, Math.min(y, zeroY));
     }
     ctx.lineTo((moves.length - 1) * step, zeroY);
@@ -94,7 +94,7 @@ export class EvalChart {
     ctx.moveTo(0, zeroY);
     for (let i = 0; i < moves.length; i++) {
       const x = i * step;
-      const y = cpToY(evalFromWhite(moves[i]!), h);
+      const y = cpToY(evalFromWhite(moves[i] ?? { player: 'white', eval_after: 0 }), h);
       ctx.lineTo(x, Math.max(y, zeroY));
     }
     ctx.lineTo((moves.length - 1) * step, zeroY);
@@ -112,7 +112,7 @@ export class EvalChart {
     ctx.beginPath();
     for (let i = 0; i < moves.length; i++) {
       const x = i * step;
-      const y = cpToY(evalFromWhite(moves[i]!), h);
+      const y = cpToY(evalFromWhite(moves[i] ?? { player: 'white', eval_after: 0 }), h);
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
@@ -121,10 +121,12 @@ export class EvalChart {
     ctx.stroke();
 
     for (let i = 0; i < moves.length; i++) {
-      const cls = moves[i]!.classification;
+      const move = moves[i];
+      if (!move) continue;
+      const cls = move.classification;
       if (cls !== 'blunder' && cls !== 'mistake') continue;
       const x = i * step;
-      const y = cpToY(evalFromWhite(moves[i]!), h);
+      const y = cpToY(evalFromWhite(move), h);
       ctx.beginPath();
       ctx.arc(x, y, 3, 0, Math.PI * 2);
       ctx.fillStyle = cls === 'blunder' ? '#D32F2F' : '#F57C00';

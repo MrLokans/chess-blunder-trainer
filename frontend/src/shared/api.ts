@@ -1,4 +1,4 @@
-import type { ApiErrorResponse, ImportStartResponse, JobStatusResponse, JobState } from '../types/api';
+import type { ApiErrorResponse, ImportStartResponse, JobStatusResponse, JobStatus } from '../types/api';
 import type {
   OverviewData,
   AnalysisStatus,
@@ -10,13 +10,12 @@ import type {
   DifficultyData,
   CollapsePointData,
   ConversionResilienceData,
-  TrapsData,
   GameBreakdownItem,
   DateChartItem,
   HourChartItem,
   GrowthData,
   HeatmapData,
-} from '../dashboard/types';
+} from '../types/dashboard';
 import type {
   SyncSettings,
   ThemeColors,
@@ -25,7 +24,7 @@ import type {
   BoardColorPreset,
   BoardSettings,
   FeatureGroup,
-} from '../settings/types';
+} from '../types/settings';
 
 export class ApiError extends Error {
   status: number;
@@ -81,20 +80,13 @@ function withQuery(url: string, params?: QueryParams): string {
   for (const [key, value] of Object.entries(params)) {
     if (value === null || value === undefined) continue;
     if (Array.isArray(value)) {
-      value.forEach(v => searchParams.append(key, v));
+      value.forEach(v => { searchParams.append(key, v); });
     } else {
       searchParams.set(key, String(value));
     }
   }
   const qs = searchParams.toString();
   return qs ? `${url}?${qs}` : url;
-}
-
-interface JobStatus {
-  status: JobState;
-  job_id?: string;
-  progress_current?: number;
-  progress_total?: number;
 }
 
 interface JobStarted {
@@ -115,7 +107,7 @@ export const client = {
     gameBreakdown: () => request<{ items: GameBreakdownItem[] }>('/api/stats/games'),
     gamesByDate: (params?: QueryParams) => request<{ items: DateChartItem[] }>(withQuery('/api/stats/games/by-date', params)),
     gamesByHour: (params?: QueryParams) => request<{ items: HourChartItem[] }>(withQuery('/api/stats/games/by-hour', params)),
-    activityHeatmap: (days = 365) => request<HeatmapData>(`/api/stats/activity-heatmap?days=${days}`),
+    activityHeatmap: (days = 365) => request<HeatmapData>(`/api/stats/activity-heatmap?days=${String(days)}`),
     blundersByPhase: (params?: QueryParams) => request<PhaseData>(withQuery('/api/stats/blunders/by-phase', params)),
     blundersByColor: (params?: QueryParams) => request<ColorData>(withQuery('/api/stats/blunders/by-color', params)),
     blundersByGameType: (params?: QueryParams) => request<GameTypeData>(withQuery('/api/stats/blunders/by-game-type', params)),
@@ -190,12 +182,12 @@ export const client = {
 
   starred: {
     star: (gameId: string, ply: number, note?: string) =>
-      put(`/api/starred/${encodeURIComponent(gameId)}/${ply}`, note ? { note } : {}),
+      put(`/api/starred/${encodeURIComponent(gameId)}/${String(ply)}`, note ? { note } : {}),
     unstar: (gameId: string, ply: number) =>
-      del(`/api/starred/${encodeURIComponent(gameId)}/${ply}`),
+      del(`/api/starred/${encodeURIComponent(gameId)}/${String(ply)}`),
     isStarred: (gameId: string, ply: number) =>
-      request(`/api/starred/${encodeURIComponent(gameId)}/${ply}`),
-    list: <T = unknown>(params?: QueryParams) => request<{ items?: T[] }>(withQuery('/api/starred', params)),
+      request(`/api/starred/${encodeURIComponent(gameId)}/${String(ply)}`),
+    list: (params?: QueryParams) => request<{ items?: unknown[] }>(withQuery('/api/starred', params)),
   },
 
   gameReview: {

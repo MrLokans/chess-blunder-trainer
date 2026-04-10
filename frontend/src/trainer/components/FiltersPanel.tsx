@@ -36,7 +36,7 @@ function CheckboxGroup({ items, selected, onChange, labelPrefix }: {
           <input
             type="checkbox"
             checked={selected.includes(item)}
-            onChange={() => toggle(item)}
+            onChange={() => { toggle(item); }}
           />
           {t(`${labelPrefix}.${item}`)}
         </label>
@@ -123,9 +123,9 @@ export function FiltersPanel({ filters }: FiltersPanelProps): preact.JSX.Element
                     <button
                       key={value}
                       class={`tactical-filter-btn ${state.tacticalPattern === value ? 'active' : ''}`}
-                      onClick={() => filters.setTacticalPattern(
+                      onClick={() => { filters.setTacticalPattern(
                         state.tacticalPattern === value ? null : value,
-                      )}
+                      ); }}
                     >
                       {t(key)}
                     </button>
@@ -143,7 +143,7 @@ export function FiltersPanel({ filters }: FiltersPanelProps): preact.JSX.Element
                       type="radio"
                       name="colorFilter"
                       checked={state.color === c}
-                      onChange={() => filters.setColor(c)}
+                      onChange={() => { filters.setColor(c); }}
                     />
                     <span class={`color-option ${c}`}>
                       {c === 'white' ? '\u2654 ' : c === 'black' ? '\u265a ' : ''}
@@ -172,27 +172,27 @@ export function FiltersPanel({ filters }: FiltersPanelProps): preact.JSX.Element
             <div class="filter-group">
               <div class="board-toggles-vertical">
                 <div class="arrow-toggle">
-                  <input type="checkbox" id="showArrows" checked={state.showArrows} onChange={(e) => filters.setShowArrows(e.currentTarget.checked)} />
+                  <input type="checkbox" id="showArrows" checked={state.showArrows} onChange={(e) => { filters.setShowArrows(e.currentTarget.checked); }} />
                   <label for="showArrows">{t('trainer.toggle.show_arrows')}</label>
                 </div>
                 {hasThreats && (
                   <div class="arrow-toggle">
-                    <input type="checkbox" id="showThreats" checked={state.showThreats} onChange={(e) => filters.setShowThreats(e.currentTarget.checked)} />
+                    <input type="checkbox" id="showThreats" checked={state.showThreats} onChange={(e) => { filters.setShowThreats(e.currentTarget.checked); }} />
                     <label for="showThreats">{t('trainer.toggle.show_threats')}</label>
                   </div>
                 )}
                 {hasTactics && (
                   <div class="arrow-toggle">
-                    <input type="checkbox" id="showTactics" checked={state.showTactics} onChange={(e) => filters.setShowTactics(e.currentTarget.checked)} />
+                    <input type="checkbox" id="showTactics" checked={state.showTactics} onChange={(e) => { filters.setShowTactics(e.currentTarget.checked); }} />
                     <label for="showTactics">{t('trainer.toggle.show_tactics')}</label>
                   </div>
                 )}
                 <div class="arrow-toggle">
-                  <input type="checkbox" id="playFullLine" checked={state.playFullLine} onChange={(e) => filters.setPlayFullLine(e.currentTarget.checked)} />
+                  <input type="checkbox" id="playFullLine" checked={state.playFullLine} onChange={(e) => { filters.setPlayFullLine(e.currentTarget.checked); }} />
                   <label for="playFullLine">{t('trainer.toggle.play_full_line')}</label>
                 </div>
                 <div class="arrow-toggle">
-                  <input type="checkbox" id="showCoordinates" checked={state.showCoordinates} onChange={(e) => filters.setShowCoordinates(e.currentTarget.checked)} />
+                  <input type="checkbox" id="showCoordinates" checked={state.showCoordinates} onChange={(e) => { filters.setShowCoordinates(e.currentTarget.checked); }} />
                   <label for="showCoordinates">{t('trainer.toggle.show_coordinates')}</label>
                 </div>
               </div>

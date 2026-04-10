@@ -15,9 +15,9 @@ const DEFAULTS: SyncSettingsData = {
 describe('SyncSettings', () => {
   test('renders form fields with loaded values', () => {
     render(<SyncSettings settings={DEFAULTS} syncVisible={true} analyzeVisible={true} onChange={() => {}} />);
-    expect((screen.getByLabelText('settings.auto_sync.enable') as HTMLInputElement).checked).toBe(false);
-    expect((screen.getByLabelText('settings.max_games.label') as HTMLInputElement).value).toBe('1000');
-    expect((screen.getByLabelText('settings.spaced_repetition.label') as HTMLInputElement).value).toBe('30');
+    expect((screen.getByLabelText('settings.auto_sync.enable')).checked).toBe(false);
+    expect((screen.getByLabelText('settings.max_games.label')).value).toBe('1000');
+    expect((screen.getByLabelText('settings.spaced_repetition.label')).value).toBe('30');
   });
 
   test('hides sync section when syncVisible is false', () => {

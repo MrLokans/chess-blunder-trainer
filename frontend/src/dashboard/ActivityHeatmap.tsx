@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { client } from '../shared/api';
-import type { HeatmapData, DailyCount } from './types';
+import type { HeatmapData } from './types';
 
 const DAY_KEYS = [
   'common.day.sun', 'common.day.mon', 'common.day.tue', 'common.day.wed',
@@ -27,7 +27,7 @@ function getActivityLevel(count: number): number {
 }
 
 function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0]!;
+  return date.toISOString().split('T')[0] ?? '';
 }
 
 interface DayData {
@@ -97,7 +97,7 @@ function buildWeeks(data: HeatmapData): { weeks: DayData[][], monthLabels: Array
   weeks.forEach((week, weekIndex) => {
     const firstDay = week[0];
     if (firstDay && firstDay.month !== lastMonth && firstDay.dayOfMonth <= 7) {
-      monthLabels.push({ weekIndex, month: t(MONTH_KEYS[firstDay.month]!) });
+      monthLabels.push({ weekIndex, month: t(MONTH_KEYS[firstDay.month] ?? '') });
       lastMonth = firstDay.month;
     }
   });

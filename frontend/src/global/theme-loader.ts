@@ -17,7 +17,7 @@ interface ThemeColors {
   text_muted?: string;
 }
 
-function adjustColor(hex: string, lightness: number, saturation?: number): string {
+export function adjustColor(hex: string, lightness: number | null, saturation?: number): string {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
   const g = parseInt(hex.slice(3, 5), 16) / 255;
   const b = parseInt(hex.slice(5, 7), 16) / 255;
@@ -115,7 +115,7 @@ if (cached) {
   try { applyTheme(JSON.parse(cached) as ThemeColors); } catch { /* ignore */ }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+ 
 (window as unknown as Record<string, unknown>).adjustColor = adjustColor;
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+ 
 (window as unknown as Record<string, unknown>).applyTheme = applyTheme;

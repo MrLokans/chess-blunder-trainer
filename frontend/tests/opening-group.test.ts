@@ -34,14 +34,14 @@ describe('groupOpeningsByBase', () => {
 
     const sicilian = groups.find(g => g.baseName === 'Sicilian Defense');
     expect(sicilian).toBeDefined();
-    expect(sicilian!.variations.length).toBe(2);
-    expect(sicilian!.totalCount).toBe(8);
-    expect(sicilian!.totalGames).toBe(18);
+    expect(sicilian?.variations.length).toBe(2);
+    expect(sicilian?.totalCount).toBe(8);
+    expect(sicilian?.totalGames).toBe(18);
 
     const italian = groups.find(g => g.baseName === 'Italian Game');
     expect(italian).toBeDefined();
-    expect(italian!.variations.length).toBe(1);
-    expect(italian!.totalCount).toBe(2);
+    expect(italian?.variations.length).toBe(1);
+    expect(italian?.totalCount).toBe(2);
   });
 
   it('sorts groups by total blunder count descending', () => {
@@ -52,8 +52,8 @@ describe('groupOpeningsByBase', () => {
     ];
 
     const groups = groupOpeningsByBase(items);
-    expect(groups[0]!.baseName).toBe('Italian Game');
-    expect(groups[1]!.baseName).toBe('Sicilian Defense');
+    expect(groups[0]?.baseName).toBe('Italian Game');
+    expect(groups[1]?.baseName).toBe('Sicilian Defense');
   });
 
   it('computes weighted average cp loss', () => {
@@ -63,9 +63,9 @@ describe('groupOpeningsByBase', () => {
     ];
 
     const groups = groupOpeningsByBase(items);
-    const sicilian = groups[0]!;
+    const sicilian = groups[0];
     // (2*400 + 3*200) / 5 = 1400 / 5 = 280
-    expect(sicilian.avgCpLoss).toBe(280);
+    expect(sicilian?.avgCpLoss).toBe(280);
   });
 
   it('handles openings without variations (no colon)', () => {
@@ -75,8 +75,8 @@ describe('groupOpeningsByBase', () => {
 
     const groups = groupOpeningsByBase(items);
     expect(groups.length).toBe(1);
-    expect(groups[0]!.baseName).toBe('Van Geet Opening');
-    expect(groups[0]!.variations.length).toBe(1);
+    expect(groups[0]?.baseName).toBe('Van Geet Opening');
+    expect(groups[0]?.variations.length).toBe(1);
   });
 
   it('returns empty array for empty input', () => {

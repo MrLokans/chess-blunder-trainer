@@ -14,7 +14,7 @@ interface MoveActionsProps {
 
 export function MoveActions({
   hasPuzzle, submitted, bestRevealed, submitting, hasMove,
-  onSubmit, onReset, onReveal, onNext, onUndo, onShowShortcuts,
+  onSubmit, onReset, onReveal, onNext, onUndo: _onUndo, onShowShortcuts,
 }: MoveActionsProps): preact.JSX.Element | null {
   if (!hasPuzzle) return null;
 

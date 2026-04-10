@@ -208,7 +208,7 @@ function OpeningRow({ item, isChild, hidden }: OpeningRowProps) {
 }
 
 export function EcoBreakdown({ data }: { data: EcoData }) {
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
 
   if (data.total_blunders <= 0 || data.by_opening.length === 0) {
     return <div class="no-data-message">{t('dashboard.chart.no_opening_data')}</div>;
@@ -241,7 +241,8 @@ export function EcoBreakdown({ data }: { data: EcoData }) {
       <tbody>
         {grouped.map(group => {
           if (group.variations.length === 1) {
-            const item = group.variations[0]!;
+            const item = group.variations[0];
+            if (!item) return null;
             return <OpeningRow key={item.eco_code} item={item} />;
           }
 
@@ -395,14 +396,14 @@ export function DifficultyBreakdown({ data }: { data: DifficultyData }) {
 }
 
 function zoneColor(label: string): string {
-  const start = parseInt(label.split('-')[0]!);
+  const start = parseInt(label.split('-')[0] ?? '0');
   if (start <= 10) return 'var(--success, #2D8F3E)';
   if (start <= 25) return 'var(--warning, #F2C12E)';
   return 'var(--error, #D42828)';
 }
 
 function zoneLabel(label: string): string {
-  const start = parseInt(label.split('-')[0]!);
+  const start = parseInt(label.split('-')[0] ?? '0');
   if (start <= 10) return t('dashboard.collapse.zone_opening');
   if (start <= 25) return t('dashboard.collapse.zone_middle');
   return t('dashboard.collapse.zone_late');
@@ -498,8 +499,7 @@ export function ConversionResilienceBreakdown({ data }: { data: ConversionResili
 }
 
 export function TrapsSummary({ data }: { data: TrapsData }) {
-  const summary = data.summary ?? { total_sprung: 0, total_entered: 0 };
-  const stats = data.stats ?? [];
+  const { summary, stats } = data;
 
   if (summary.total_sprung <= 0 && summary.total_entered <= 0) {
     return (

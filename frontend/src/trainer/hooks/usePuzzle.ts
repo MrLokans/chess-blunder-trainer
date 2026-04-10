@@ -2,8 +2,7 @@ import { useCallback, useRef, useContext } from 'preact/hooks';
 import { client, ApiError } from '../../shared/api';
 import { TrainerContext } from '../context';
 import type { PuzzleData } from '../context';
-
-type QueryParams = Record<string, string | number | boolean | null | undefined | string[]>;
+import type { QueryParams } from './useFilters';
 
 export interface SubmitResponse {
   is_best: boolean;
@@ -36,7 +35,7 @@ export function usePuzzle(): PuzzleAPI {
   const cooldownRef = useRef(false);
 
   const loadPuzzle = useCallback(async (filterParams?: QueryParams) => {
-    if (state.animating || cooldownRef.current) return;
+    if (cooldownRef.current) return;
     cooldownRef.current = true;
     setTimeout(() => { cooldownRef.current = false; }, 500);
 
@@ -50,7 +49,7 @@ export function usePuzzle(): PuzzleAPI {
       dispatch({ type: 'SET_ORIENTATION', orientation: data.player_color === 'black' ? 'black' : 'white' });
       trackEvent('Puzzle Loaded', {
         phase: data.game_phase || '',
-        color: data.player_color || '',
+        color: data.player_color,
         difficulty: data.difficulty || '',
         tactical_pattern: data.tactical_pattern || '',
       });
@@ -72,10 +71,9 @@ export function usePuzzle(): PuzzleAPI {
         dispatch({ type: 'SET_ERROR', error: t('common.error') });
       }
     }
-  }, [state.animating, dispatch]);
+  }, [dispatch]);
 
   const loadSpecificPuzzle = useCallback(async (gameId: string, ply: string) => {
-    if (state.animating) return;
     dispatch({ type: 'RESET_FOR_NEW_PUZZLE' });
     dispatch({ type: 'SET_LOADING', loading: true });
 
@@ -89,10 +87,9 @@ export function usePuzzle(): PuzzleAPI {
       dispatch({ type: 'SET_ERROR', error: t('common.error') });
       dispatch({ type: 'SET_LOADING', loading: false });
     }
-  }, [state.animating, dispatch]);
+  }, [dispatch]);
 
   const submitMove = useCallback(async (uci: string): Promise<SubmitResponse | null> => {
-    if (state.animating) return null;
     const puzzle = state.puzzle;
     if (!puzzle) return null;
 
@@ -105,8 +102,8 @@ export function usePuzzle(): PuzzleAPI {
       blunder_san: puzzle.blunder_san || '',
       best_move_uci: puzzle.best_move_uci || '',
       best_move_san: puzzle.best_move_san || '',
-      best_line: puzzle.best_line || [],
-      player_color: puzzle.player_color || 'white',
+      best_line: puzzle.best_line,
+      player_color: puzzle.player_color,
       eval_after: puzzle.eval_after || 0,
       best_move_eval: puzzle.best_move_eval ?? null,
     };
@@ -124,7 +121,7 @@ export function usePuzzle(): PuzzleAPI {
       console.error('Submit failed:', err);
       return null;
     }
-  }, [state.animating, state.puzzle, dispatch]);
+  }, [state.puzzle, dispatch]);
 
   return { loadPuzzle, loadSpecificPuzzle, submitMove };
 }

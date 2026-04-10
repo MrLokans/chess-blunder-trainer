@@ -40,7 +40,7 @@ describe('DashboardFilters', () => {
 
   test('renders game type checkboxes all checked', () => {
     render(<DashboardFilters {...defaultProps} />);
-    const bullet = screen.getByLabelText(t('trainer.game_type.bullet')) as HTMLInputElement;
+    const bullet = screen.getByLabelText(t('trainer.game_type.bullet'));
     expect(bullet.checked).toBe(true);
   });
 

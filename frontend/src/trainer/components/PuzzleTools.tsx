@@ -33,11 +33,11 @@ export function PuzzleTools({ puzzle, starred, onStarredChange }: PuzzleToolsPro
   const handleCopyDebug = useCallback(async () => {
     if (!puzzle) return;
     try {
-      const params = puzzle.ply != null ? { ply: puzzle.ply } : {};
+      const params = { ply: puzzle.ply };
       const text = await client.debug.gameInfo(puzzle.game_id, params);
       await navigator.clipboard.writeText(text);
       setCopyLabel(t('trainer.debug.copied'));
-      setTimeout(() => setCopyLabel(null), 1500);
+      setTimeout(() => { setCopyLabel(null); }, 1500);
     } catch (e) {
       console.error('Copy debug failed:', e);
     }
@@ -45,18 +45,18 @@ export function PuzzleTools({ puzzle, starred, onStarredChange }: PuzzleToolsPro
 
   if (!puzzle) return null;
 
-  const reviewUrl = `/game/${encodeURIComponent(puzzle.game_id)}${puzzle.ply != null ? `?ply=${puzzle.ply}` : ''}`;
+  const reviewUrl = `/game/${encodeURIComponent(puzzle.game_id)}?ply=${String(puzzle.ply)}`;
 
   return (
     <div class="panel-section puzzle-tools" id="blunderSection">
       {hasStarred && (
-        <button class="btn btn-ghost" id="starPuzzleBtn" onClick={handleStar} title={starred ? t('trainer.star.remove') : t('trainer.star.add')}>
+        <button class="btn btn-ghost" id="starPuzzleBtn" onClick={() => { void handleStar(); }} title={starred ? t('trainer.star.remove') : t('trainer.star.add')}>
           {starred ? '\u2605' : '\u2606'} {starred ? t('trainer.star.remove') : t('trainer.star.add')}
         </button>
       )}
 
       {hasDebug && (
-        <button class="btn btn-ghost" id="copyDebugBtn" onClick={handleCopyDebug} title={t('trainer.debug.copy_title')}>
+        <button class="btn btn-ghost" id="copyDebugBtn" onClick={() => { void handleCopyDebug(); }} title={t('trainer.debug.copy_title')}>
           {copyLabel ? `\u2705 ${copyLabel}` : `\ud83d\udccb ${t('trainer.debug.copy')}`}
         </button>
       )}

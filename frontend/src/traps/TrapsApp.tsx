@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
-import { initDropdowns } from '../shared/dropdown';
+import { Dropdown } from '../components/Dropdown';
 import SequencePlayer from '../shared/sequence-player';
 
 interface TrapStat {
@@ -258,13 +258,12 @@ export function TrapsApp() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedTrapId, setSelectedTrapId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const filterRef = useRef<HTMLSelectElement>(null);
 
   const loadData = useCallback(async () => {
     try {
       const [statsResp, catalogResp] = await Promise.all([
         client.traps.stats<{ stats?: TrapStat[]; summary?: TrapSummary }>(),
-        client.traps.catalog<TrapCatalogEntry>(),
+        client.traps.catalog(),
       ]);
 
       const catalogMap: Record<string, TrapCatalogEntry> = {};
@@ -283,11 +282,10 @@ export function TrapsApp() {
     void loadData();
   }, [loadData]);
 
-  useEffect(() => {
-    if (filterRef.current) {
-      initDropdowns(filterRef.current.parentElement ?? undefined);
-    }
-  }, [stats]);
+  const categoryOptions = CATEGORIES.map(cat => ({
+    value: cat,
+    label: t(`traps.category.${cat}`),
+  }));
 
   const filteredStats = stats
     ? (categoryFilter === 'all' ? stats : stats.filter(s => s.category === categoryFilter))
@@ -312,17 +310,12 @@ export function TrapsApp() {
       )}
 
       <div class="traps-filter">
-        <label for="trapCategoryFilter">{t('traps.filter_category')}</label>
-        <select
-          id="trapCategoryFilter"
-          ref={filterRef}
+        <label>{t('traps.filter_category')}</label>
+        <Dropdown
+          options={categoryOptions}
           value={categoryFilter}
-          onChange={(e) => { setCategoryFilter(e.currentTarget.value); }}
-        >
-          {CATEGORIES.map(cat => (
-            <option key={cat} value={cat}>{t(`traps.category.${cat}`)}</option>
-          ))}
-        </select>
+          onChange={setCategoryFilter}
+        />
       </div>
 
       <div class="traps-table-container">

@@ -40,8 +40,8 @@ describe('FeatureToggles', () => {
 
   test('checkboxes reflect initial enabled state', () => {
     render(<FeatureToggles groups={GROUPS} onSave={mockSaveFeatures} />);
-    expect((screen.getByLabelText('features.auto_sync') as HTMLInputElement).checked).toBe(true);
-    expect((screen.getByLabelText('features.auto_analyze') as HTMLInputElement).checked).toBe(false);
+    expect((screen.getByLabelText('features.auto_sync')).checked).toBe(true);
+    expect((screen.getByLabelText('features.auto_analyze')).checked).toBe(false);
   });
 
   test('calls onSave with feature id and new value on toggle', async () => {
@@ -57,7 +57,7 @@ describe('FeatureToggles', () => {
     const user = userEvent.setup();
     render(<FeatureToggles groups={GROUPS} onSave={mockSaveFeatures} />);
 
-    const checkbox = screen.getByLabelText('features.auto_analyze') as HTMLInputElement;
+    const checkbox = screen.getByLabelText('features.auto_analyze');
     expect(checkbox.checked).toBe(false);
 
     await user.click(checkbox);

@@ -33,7 +33,7 @@ export function buildTacticalHighlights(
   bestRevealed: boolean,
   showTactics: boolean,
 ): HighlightMap {
-  if (!showTactics || !bestRevealed || !puzzle || !puzzle.tactical_squares) return new Map();
+  if (!showTactics || !bestRevealed || !puzzle || puzzle.tactical_squares.length === 0) return new Map();
 
   const atOriginalPosition = game !== null && game.fen() === puzzle.fen;
   if (!atOriginalPosition) return new Map();
@@ -41,9 +41,11 @@ export function buildTacticalHighlights(
   const squares = puzzle.tactical_squares;
   const highlights: HighlightMap = new Map();
   if (squares.length > 0) {
-    highlights.set(squares[0]!, 'highlight-tactic-primary');
+    const primary = squares[0];
+    if (primary) highlights.set(primary, 'highlight-tactic-primary');
     for (let i = 1; i < squares.length; i++) {
-      highlights.set(squares[i]!, 'highlight-tactic-secondary');
+      const sq = squares[i];
+      if (sq) highlights.set(sq, 'highlight-tactic-secondary');
     }
   }
   return highlights;

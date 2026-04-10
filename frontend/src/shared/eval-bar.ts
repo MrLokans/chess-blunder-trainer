@@ -1,3 +1,5 @@
+export const MAX_EVAL_CP = 500;
+
 export function updateEvalBar(
   cp: number,
   playerColor: string,
@@ -6,11 +8,10 @@ export function updateEvalBar(
 ): void {
   const playerCp = playerColor === 'black' ? -cp : cp;
 
-  const maxCp = 500;
-  const normalized = Math.max(-maxCp, Math.min(maxCp, playerCp));
-  const percentage = 50 + (normalized / maxCp) * 50;
+  const normalized = Math.max(-MAX_EVAL_CP, Math.min(MAX_EVAL_CP, playerCp));
+  const percentage = 50 + (normalized / MAX_EVAL_CP) * 50;
 
-  fillEl.style.height = percentage + '%';
+  fillEl.style.height = String(percentage) + '%';
 
   let displayVal: string;
   if (Math.abs(cp) >= 10000) {

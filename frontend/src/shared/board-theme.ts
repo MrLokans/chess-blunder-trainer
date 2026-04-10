@@ -10,7 +10,7 @@ export function applyBoardBackground(light: string, dark: string): void {
     `<rect width="8" height="8" fill="${light}"/>` +
     Array.from({ length: 64 }, (_, i) => {
       const x = i % 8, y = Math.floor(i / 8);
-      return (x + y) % 2 === 1 ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${dark}"/>` : '';
+      return (x + y) % 2 === 1 ? `<rect x="${String(x)}" y="${String(y)}" width="1" height="1" fill="${dark}"/>` : '';
     }).join('') +
     `</svg>`;
   const encoded = 'data:image/svg+xml;base64,' + btoa(svg);
@@ -33,7 +33,7 @@ export function applyPieceSet(pieceSet: string): void {
   let css = '';
   for (const color of ['white', 'black']) {
     for (const role of pieces) {
-      const file = `${colorMap[color]}${pieceMap[role]}`;
+      const file = `${colorMap[color] ?? ''}${pieceMap[role] ?? ''}`;
       const url = `/static/pieces/${pieceSet}/${file}.svg`;
       css += `.cg-wrap piece.${role}.${color} { background-image: url(${url}); }\n`;
       css += `.cg-wrap piece.ghost.${role}.${color} { background-image: url(${url}); }\n`;

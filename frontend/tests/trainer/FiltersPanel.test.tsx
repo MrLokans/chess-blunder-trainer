@@ -72,6 +72,6 @@ describe('FiltersPanel', () => {
     const { container } = render(<FiltersPanel filters={filters} />);
     const badge = container.querySelector('.filters-count-badge');
     expect(badge).not.toBeNull();
-    expect(badge!.textContent).toBe('3 active');
+    expect((badge as HTMLElement).textContent).toBe('3 active');
   });
 });

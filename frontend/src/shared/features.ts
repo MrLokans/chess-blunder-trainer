@@ -1,3 +1,5 @@
 export function hasFeature(name: string): boolean {
-  return (window.__features ?? {})[name] !== false;
+  const features = window.__features as Record<string, boolean> | undefined;
+  if (!features) return true;
+  return features[name] !== false;
 }

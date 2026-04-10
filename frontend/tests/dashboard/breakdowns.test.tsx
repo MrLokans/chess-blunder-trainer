@@ -204,17 +204,20 @@ describe('EcoBreakdown', () => {
     );
 
     const childRows = container.querySelectorAll<HTMLElement>('.eco-group-child');
-    expect(childRows[0]!.style.display).toBe('none');
+    const firstChild = childRows[0] as HTMLElement;
+    expect(firstChild.style.display).toBe('none');
 
     const header = container.querySelector('.eco-group-header') as HTMLElement;
     fireEvent.click(header);
 
     const childRowsAfter = container.querySelectorAll<HTMLElement>('.eco-group-child');
-    expect(childRowsAfter[0]!.style.display).not.toBe('none');
+    const firstChildAfter = childRowsAfter[0] as HTMLElement;
+    expect(firstChildAfter.style.display).not.toBe('none');
 
     fireEvent.click(header);
     const childRowsCollapsed = container.querySelectorAll<HTMLElement>('.eco-group-child');
-    expect(childRowsCollapsed[0]!.style.display).toBe('none');
+    const firstChildCollapsed = childRowsCollapsed[0] as HTMLElement;
+    expect(firstChildCollapsed.style.display).toBe('none');
   });
 });
 

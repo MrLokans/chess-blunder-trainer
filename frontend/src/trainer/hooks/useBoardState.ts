@@ -7,7 +7,7 @@ import {
 import type { HighlightMap } from '../highlights';
 import { buildThreatHighlights } from '../threats';
 
-interface Arrow {
+export interface Arrow {
   from: string;
   to: string;
   color: string;

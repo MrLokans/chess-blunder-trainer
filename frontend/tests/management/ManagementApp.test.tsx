@@ -107,10 +107,10 @@ describe('ManagementApp', () => {
       await waitFor(() => {
         expect(screen.getByLabelText(t('management.import.source'))).toBeDefined();
       });
-      const sourceSelect = screen.getByLabelText(t('management.import.source')) as HTMLSelectElement;
+      const sourceSelect = screen.getByLabelText(t('management.import.source'));
       fireEvent.change(sourceSelect, { target: { value: 'lichess' } });
       await waitFor(() => {
-        const usernameInput = screen.getByLabelText(t('management.import.username')) as HTMLInputElement;
+        const usernameInput = screen.getByLabelText(t('management.import.username'));
         expect(usernameInput.value).toBe('testuser');
       });
     });

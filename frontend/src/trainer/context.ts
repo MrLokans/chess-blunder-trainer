@@ -36,7 +36,7 @@ export interface LinePosition {
   moveHistory: string[];
 }
 
-type FeedbackType = 'correct' | 'blunder' | 'good' | 'not-quite' | null;
+export type FeedbackType = 'correct' | 'blunder' | 'good' | 'not-quite' | null;
 type EmptyStateType = 'no-puzzles' | 'no_games' | 'no_blunders' | 'no_blunders_filtered' | 'analyzing' | null;
 
 export interface TrainerState {
