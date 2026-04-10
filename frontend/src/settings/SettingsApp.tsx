@@ -52,12 +52,12 @@ export function SettingsApp({ init }: SettingsAppProps) {
       try {
         const [settings, themeData, presetsData, boardData, pieceSetsData, colorPresetsData] =
           await Promise.all([
-            client.settings.get() as Promise<SyncSettingsData>,
-            client.settings.getTheme() as Promise<ThemeColors>,
-            client.settings.getThemePresets() as Promise<{ presets: ThemePreset[] }>,
-            client.settings.getBoard() as Promise<BoardSettings>,
-            client.settings.getPieceSets() as Promise<{ piece_sets: PieceSet[] }>,
-            client.settings.getBoardColorPresets() as Promise<{ presets: BoardColorPreset[] }>,
+            client.settings.get(),
+            client.settings.getTheme(),
+            client.settings.getThemePresets(),
+            client.settings.getBoard(),
+            client.settings.getPieceSets(),
+            client.settings.getBoardColorPresets(),
           ]);
 
         setSyncSettings(settings);

@@ -1,4 +1,5 @@
 import type { OpeningItem } from '../shared/opening-group';
+import type { JobState } from '../types/api';
 
 export interface DateFilterParams {
   start_date?: string;
@@ -128,7 +129,7 @@ export interface OverviewData {
 }
 
 export interface AnalysisStatus {
-  status: string;
+  status: JobState;
   progress_current?: number;
   progress_total?: number;
 }
@@ -143,4 +144,23 @@ export interface HourChartItem {
   hour: number;
   game_count: number;
   avg_accuracy: number;
+}
+
+export interface GrowthData {
+  total_games: number;
+  window_size: number;
+  windows: Array<Record<string, number>>;
+  trend?: Record<string, string>;
+}
+
+export interface DailyCount {
+  total: number;
+  correct: number;
+  incorrect: number;
+}
+
+export interface HeatmapData {
+  daily_counts: Record<string, DailyCount>;
+  total_days: number;
+  total_attempts: number;
 }

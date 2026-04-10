@@ -25,9 +25,32 @@ export interface ApiErrorResponse {
   error?: string;
 }
 
+export type JobState = 'idle' | 'running' | 'completed' | 'failed';
+
 export interface StatsOverview {
   total_games: number;
   analyzed_games: number;
   total_blunders: number;
   [key: string]: unknown;
+}
+
+export interface ImportResult {
+  eco_code?: string;
+  eco_name?: string;
+  total_moves?: number;
+  blunders?: number;
+  mistakes?: number;
+  inaccuracies?: number;
+}
+
+export interface ImportStartResponse {
+  success: boolean;
+  job_id?: string;
+  errors?: string[];
+}
+
+export interface JobStatusResponse {
+  status: string;
+  result?: ImportResult;
+  error_message?: string;
 }

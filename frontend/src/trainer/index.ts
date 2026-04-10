@@ -67,7 +67,7 @@ async function loadPuzzle(): Promise<void> {
   filters.updateFilterCountBadge();
 
   try {
-    const data = await client.trainer.getPuzzle(filters.getFilterParams()) as PuzzleData;
+    const data = await client.trainer.getPuzzle<PuzzleData>(filters.getFilterParams());
     setupPuzzle(data);
   } catch (err) {
     handleLoadError(err);
@@ -81,7 +81,7 @@ async function loadSpecificPuzzle(gameId: string, ply: string): Promise<void> {
   ui.resetUIForNewPuzzle();
 
   try {
-    const data = await client.trainer.getSpecificPuzzle(gameId, parseInt(ply, 10)) as PuzzleData;
+    const data = await client.trainer.getSpecificPuzzle<PuzzleData>(gameId, parseInt(ply, 10));
     setupPuzzle(data);
   } catch (err) {
     console.error('Failed to load specific puzzle:', err);

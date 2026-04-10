@@ -1,4 +1,31 @@
-import type { ApiErrorResponse } from '../types/api';
+import type { ApiErrorResponse, ImportStartResponse, JobStatusResponse, JobState } from '../types/api';
+import type {
+  OverviewData,
+  AnalysisStatus,
+  PhaseData,
+  ColorData,
+  GameTypeData,
+  EcoData,
+  TacticalData,
+  DifficultyData,
+  CollapsePointData,
+  ConversionResilienceData,
+  TrapsData,
+  GameBreakdownItem,
+  DateChartItem,
+  HourChartItem,
+  GrowthData,
+  HeatmapData,
+} from '../dashboard/types';
+import type {
+  SyncSettings,
+  ThemeColors,
+  ThemePreset,
+  PieceSet,
+  BoardColorPreset,
+  BoardSettings,
+  FeatureGroup,
+} from '../settings/types';
 
 export class ApiError extends Error {
   status: number;
@@ -63,83 +90,101 @@ function withQuery(url: string, params?: QueryParams): string {
   return qs ? `${url}?${qs}` : url;
 }
 
+interface JobStatus {
+  status: JobState;
+  job_id?: string;
+  progress_current?: number;
+  progress_total?: number;
+}
+
+interface JobStarted {
+  job_id: string;
+}
+
+interface UsernameValidation {
+  valid: boolean;
+}
+
 export const client = {
   system: {
-    engineStatus: () => request('/api/system/engine'),
+    engineStatus: () => request<{ available: boolean; name?: string; path?: string }>('/api/system/engine'),
   },
 
   stats: {
-    overview: (params?: QueryParams) => request(withQuery('/api/stats', params)),
-    gameBreakdown: () => request('/api/stats/games'),
-    gamesByDate: (params?: QueryParams) => request(withQuery('/api/stats/games/by-date', params)),
-    gamesByHour: (params?: QueryParams) => request(withQuery('/api/stats/games/by-hour', params)),
-    activityHeatmap: (days = 365) => request(`/api/stats/activity-heatmap?days=${days}`),
-    blundersByPhase: (params?: QueryParams) => request(withQuery('/api/stats/blunders/by-phase', params)),
-    blundersByColor: (params?: QueryParams) => request(withQuery('/api/stats/blunders/by-color', params)),
-    blundersByGameType: (params?: QueryParams) => request(withQuery('/api/stats/blunders/by-game-type', params)),
-    blundersByEco: (params?: QueryParams) => request(withQuery('/api/stats/blunders/by-eco', params)),
-    blundersByTacticalPattern: (params?: QueryParams) => request(withQuery('/api/stats/blunders/by-tactical-pattern', params)),
-    blundersByDifficulty: (params?: QueryParams) => request(withQuery('/api/stats/blunders/by-difficulty', params)),
-    collapsePoint: (params?: QueryParams) => request(withQuery('/api/stats/collapse-point', params)),
-    conversionResilience: (params?: QueryParams) => request(withQuery('/api/stats/conversion-resilience', params)),
-    growth: (params?: QueryParams) => request(withQuery('/api/stats/growth', params)),
+    overview: (params?: QueryParams) => request<OverviewData>(withQuery('/api/stats', params)),
+    gameBreakdown: () => request<{ items: GameBreakdownItem[] }>('/api/stats/games'),
+    gamesByDate: (params?: QueryParams) => request<{ items: DateChartItem[] }>(withQuery('/api/stats/games/by-date', params)),
+    gamesByHour: (params?: QueryParams) => request<{ items: HourChartItem[] }>(withQuery('/api/stats/games/by-hour', params)),
+    activityHeatmap: (days = 365) => request<HeatmapData>(`/api/stats/activity-heatmap?days=${days}`),
+    blundersByPhase: (params?: QueryParams) => request<PhaseData>(withQuery('/api/stats/blunders/by-phase', params)),
+    blundersByColor: (params?: QueryParams) => request<ColorData>(withQuery('/api/stats/blunders/by-color', params)),
+    blundersByGameType: (params?: QueryParams) => request<GameTypeData>(withQuery('/api/stats/blunders/by-game-type', params)),
+    blundersByEco: (params?: QueryParams) => request<EcoData>(withQuery('/api/stats/blunders/by-eco', params)),
+    blundersByTacticalPattern: (params?: QueryParams) => request<TacticalData>(withQuery('/api/stats/blunders/by-tactical-pattern', params)),
+    blundersByDifficulty: (params?: QueryParams) => request<DifficultyData>(withQuery('/api/stats/blunders/by-difficulty', params)),
+    collapsePoint: (params?: QueryParams) => request<CollapsePointData>(withQuery('/api/stats/collapse-point', params)),
+    conversionResilience: (params?: QueryParams) => request<ConversionResilienceData>(withQuery('/api/stats/conversion-resilience', params)),
+    growth: (params?: QueryParams) => request<GrowthData>(withQuery('/api/stats/growth', params)),
   },
 
   analysis: {
-    status: () => request('/api/analysis/status'),
-    start: () => post('/api/analysis/start', {}),
+    status: () => request<AnalysisStatus>('/api/analysis/status'),
+    start: () => post<JobStarted>('/api/analysis/start', {}),
     stop: (jobId: string) => post(`/api/analysis/stop/${jobId}`, {}),
   },
 
   jobs: {
     startImport: (source: string, username: string, maxGames: number) =>
-      post('/api/import/start', { source, username, max_games: maxGames }),
+      post<JobStarted>('/api/import/start', { source, username, max_games: maxGames }),
     startSync: () => post('/api/sync/start', {}),
     list: (params?: QueryParams) => request(withQuery('/api/jobs', params)),
-    getImportStatus: (jobId: string) => request(`/api/import/status/${jobId}`),
+    getImportStatus: (jobId: string) => request<JobStatusResponse>(`/api/import/status/${jobId}`),
   },
+
+  importPgn: (pgn: string) => post<ImportStartResponse>('/api/import/pgn', { pgn }),
 
   backfill: {
     phasesPending: () => request('/api/backfill-phases/pending'),
-    phasesStatus: () => request('/api/backfill-phases/status'),
-    startPhases: () => post('/api/backfill-phases/start', {}),
+    phasesStatus: () => request<JobStatus>('/api/backfill-phases/status'),
+    startPhases: () => post<JobStarted>('/api/backfill-phases/start', {}),
     ecoPending: () => request('/api/backfill-eco/pending'),
-    ecoStatus: () => request('/api/backfill-eco/status'),
-    startEco: () => post('/api/backfill-eco/start', {}),
-    trapsStatus: () => request('/api/backfill-traps/status'),
-    startTraps: () => post('/api/backfill-traps/start', {}),
+    ecoStatus: () => request<JobStatus>('/api/backfill-eco/status'),
+    startEco: () => post<JobStarted>('/api/backfill-eco/start', {}),
+    trapsStatus: () => request<JobStatus>('/api/backfill-traps/status'),
+    startTraps: () => post<JobStarted>('/api/backfill-traps/start', {}),
   },
 
   data: {
-    deleteAll: () => del('/api/data/all'),
-    deleteStatus: () => request('/api/data/delete-status'),
+    deleteAll: () => del<JobStarted>('/api/data/all'),
+    deleteStatus: () => request<JobStatus>('/api/data/delete-status'),
   },
 
   settings: {
-    get: () => request('/api/settings'),
+    get: () => request<SyncSettings>('/api/settings'),
     save: (data: unknown) => post('/api/settings', data),
-    getUsernames: () => request('/api/settings/usernames'),
-    getTheme: () => request('/api/settings/theme'),
-    getThemePresets: () => request('/api/settings/theme/presets'),
-    getBoard: () => request('/api/settings/board'),
+    getUsernames: () => request<{ lichess_username?: string; chesscom_username?: string }>('/api/settings/usernames'),
+    getTheme: () => request<ThemeColors>('/api/settings/theme'),
+    getThemePresets: () => request<{ presets: ThemePreset[] }>('/api/settings/theme/presets'),
+    getBoard: () => request<BoardSettings>('/api/settings/board'),
     saveBoard: (data: unknown) => post('/api/settings/board', data),
-    getPieceSets: () => request('/api/settings/board/piece-sets'),
-    getBoardColorPresets: () => request('/api/settings/board/color-presets'),
+    getPieceSets: () => request<{ piece_sets: PieceSet[] }>('/api/settings/board/piece-sets'),
+    getBoardColorPresets: () => request<{ presets: BoardColorPreset[] }>('/api/settings/board/color-presets'),
     setLocale: (locale: string) => post('/api/settings/locale', { locale }),
-    getFeatures: () => request('/api/settings/features'),
+    getFeatures: () => request<{ groups: FeatureGroup[] }>('/api/settings/features'),
     saveFeatures: (features: unknown) => post('/api/settings/features', { features }),
   },
 
   traps: {
-    catalog: () => request('/api/traps/catalog'),
-    stats: () => request('/api/traps/stats'),
-    detail: (trapId: string) => request(`/api/traps/${trapId}`),
+    catalog: <T = { id: string; name: string }>() => request<T[]>('/api/traps/catalog'),
+    stats: <T = unknown>() => request<T>('/api/traps/stats'),
+    detail: <T = unknown>(trapId: string) => request<T>(`/api/traps/${trapId}`),
   },
 
   trainer: {
-    getPuzzle: (params?: QueryParams) => request(withQuery('/api/puzzle', params)),
-    getSpecificPuzzle: (gameId: string, ply: number) =>
-      request(withQuery('/api/puzzle/specific', { game_id: gameId, ply })),
+    // Return type varies between TS (PuzzleData) and legacy callers; keep generic
+    getPuzzle: <T = unknown>(params?: QueryParams) => request<T>(withQuery('/api/puzzle', params)),
+    getSpecificPuzzle: <T = unknown>(gameId: string, ply: number) =>
+      request<T>(withQuery('/api/puzzle/specific', { game_id: gameId, ply })),
     submitMove: (payload: unknown) => post('/api/submit', payload),
   },
 
@@ -150,11 +195,11 @@ export const client = {
       del(`/api/starred/${encodeURIComponent(gameId)}/${ply}`),
     isStarred: (gameId: string, ply: number) =>
       request(`/api/starred/${encodeURIComponent(gameId)}/${ply}`),
-    list: (params?: QueryParams) => request(withQuery('/api/starred', params)),
+    list: <T = unknown>(params?: QueryParams) => request<{ items?: T[] }>(withQuery('/api/starred', params)),
   },
 
   gameReview: {
-    getReview: (gameId: string) => request(`/api/games/${encodeURIComponent(gameId)}/review`),
+    getReview: <T = unknown>(gameId: string) => request<T>(`/api/games/${encodeURIComponent(gameId)}/review`),
   },
 
   debug: {
@@ -163,8 +208,8 @@ export const client = {
   },
 
   setup: {
-    complete: (data: unknown) => post('/api/setup', data),
+    complete: (data: unknown) => post<{ import_job_ids?: string[] }>('/api/setup', data),
     validateUsername: (platform: string, username: string) =>
-      post('/api/validate-username', { platform, username }),
+      post<UsernameValidation>('/api/validate-username', { platform, username }),
   },
 };

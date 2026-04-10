@@ -9,9 +9,9 @@ import { StatsOverview } from './StatsOverview';
 import { ChartPanel } from './ChartPanel';
 import { BreakdownSection } from './BreakdownSection';
 import { InfoModal } from './InfoModal';
+import { GrowthMetrics } from './GrowthMetrics';
 import { createDateChart, createHourChart } from './charts';
-import { loadGrowthMetrics } from '../growth/index';
-import { loadHeatmap } from '../heatmap/index';
+import { ActivityHeatmap } from './ActivityHeatmap';
 import {
   PhaseBreakdown,
   ColorBreakdown,
@@ -116,42 +116,51 @@ export function DashboardApp() {
       const qp = toQueryParams(getParams());
 
       const [overview, analysisStatus, gameBreakdownResp] = await Promise.all([
-        client.stats.overview(qp) as Promise<OverviewData>,
-        client.analysis.status() as Promise<AnalysisStatus>,
-        client.stats.gameBreakdown() as Promise<{ items: GameBreakdownItem[] }>,
+        client.stats.overview(qp),
+        client.analysis.status(),
+        client.stats.gameBreakdown(),
       ]);
 
-      const conditionalResults = await Promise.all([
-        hasAccuracy ? client.stats.gamesByDate(qp) as Promise<{ items: DateChartItem[] }> : Promise.resolve(null),
-        hasAccuracy ? client.stats.gamesByHour(qp) as Promise<{ items: HourChartItem[] }> : Promise.resolve(null),
-        hasPhase ? client.stats.blundersByPhase(qp) as Promise<PhaseData> : Promise.resolve(null),
-        client.stats.blundersByColor(qp) as Promise<ColorData>,
-        client.stats.blundersByGameType(qp) as Promise<GameTypeData>,
-        hasOpening ? client.stats.blundersByEco(qp) as Promise<EcoData> : Promise.resolve(null),
-        hasDifficulty ? client.stats.blundersByDifficulty(qp) as Promise<DifficultyData> : Promise.resolve(null),
-        hasTactical ? client.stats.blundersByTacticalPattern(qp) as Promise<TacticalData> : Promise.resolve(null),
-        hasCollapse ? client.stats.collapsePoint(qp) as Promise<CollapsePointData> : Promise.resolve(null),
-        hasConversion ? client.stats.conversionResilience(qp) as Promise<ConversionResilienceData> : Promise.resolve(null),
-        hasTraps ? client.traps.stats() as Promise<TrapsData> : Promise.resolve(null),
-      ]);
-
-      const dateResp = conditionalResults[0] as { items: DateChartItem[] } | null;
-      const hourResp = conditionalResults[1] as { items: HourChartItem[] } | null;
+      const [
+        dateResp,
+        hourResp,
+        phaseData,
+        colorData,
+        gameTypeData,
+        ecoData,
+        difficultyData,
+        tacticalData,
+        collapseData,
+        conversionData,
+        trapsResp,
+      ] = await Promise.all([
+        hasAccuracy ? client.stats.gamesByDate(qp) : Promise.resolve(null),
+        hasAccuracy ? client.stats.gamesByHour(qp) : Promise.resolve(null),
+        hasPhase ? client.stats.blundersByPhase(qp) : Promise.resolve(null),
+        client.stats.blundersByColor(qp),
+        client.stats.blundersByGameType(qp),
+        hasOpening ? client.stats.blundersByEco(qp) : Promise.resolve(null),
+        hasDifficulty ? client.stats.blundersByDifficulty(qp) : Promise.resolve(null),
+        hasTactical ? client.stats.blundersByTacticalPattern(qp) : Promise.resolve(null),
+        hasCollapse ? client.stats.collapsePoint(qp) : Promise.resolve(null),
+        hasConversion ? client.stats.conversionResilience(qp) : Promise.resolve(null),
+        hasTraps ? client.traps.stats<TrapsData>() : Promise.resolve(null),
+      ] as const);
 
       setState({
         overview,
         analysisStatus,
         dateItems: dateResp?.items ?? null,
         hourItems: hourResp?.items ?? null,
-        phaseData: conditionalResults[2] as PhaseData | null,
-        colorData: conditionalResults[3] as ColorData,
-        gameTypeData: conditionalResults[4] as GameTypeData,
-        ecoData: conditionalResults[5] as EcoData | null,
-        difficultyData: conditionalResults[6] as DifficultyData | null,
-        tacticalData: conditionalResults[7] as TacticalData | null,
-        collapseData: conditionalResults[8] as CollapsePointData | null,
-        conversionData: conditionalResults[9] as ConversionResilienceData | null,
-        trapsData: conditionalResults[10] as TrapsData | null,
+        phaseData: phaseData ?? null,
+        colorData,
+        gameTypeData,
+        ecoData: ecoData ?? null,
+        difficultyData: difficultyData ?? null,
+        tacticalData: tacticalData ?? null,
+        collapseData: collapseData ?? null,
+        conversionData: conversionData ?? null,
+        trapsData: trapsResp ?? null,
         gameBreakdown: gameBreakdownResp.items ?? [],
         error: null,
       });
@@ -178,16 +187,6 @@ export function DashboardApp() {
     const unsub4 = ws.on('job.status_changed', () => { void loadData(); });
     return () => { unsub1(); unsub2(); unsub3(); unsub4(); };
   }, [ws, loadData, debouncedLoadData]);
-
-  useEffect(() => {
-    if (!hasGrowth || !state.overview) return;
-    void loadGrowthMetrics(toQueryParams(getParams()));
-  }, [hasGrowth, state.overview, getParams]);
-
-  useEffect(() => {
-    if (!hasHeatmap || !state.overview) return;
-    void loadHeatmap('activityHeatmap');
-  }, [hasHeatmap, state.overview]);
 
   const handleRetryAnalysis = useCallback(async () => {
     try {
@@ -247,9 +246,7 @@ export function DashboardApp() {
           title={t('dashboard.chart.growth')}
           description={t('dashboard.chart.growth_desc')}
         >
-          <div id="growthMetricsContent">
-            <div class="loading-placeholder">{t('common.loading')}</div>
-          </div>
+          <GrowthMetrics params={toQueryParams(getParams())} />
         </BreakdownSection>
       )}
 
@@ -304,9 +301,7 @@ export function DashboardApp() {
           title={t('dashboard.chart.puzzle_activity')}
           description={t('dashboard.chart.puzzle_activity_desc')}
         >
-          <div id="activityHeatmap">
-            <div class="loading-placeholder">{t('dashboard.chart.loading_activity')}</div>
-          </div>
+          <ActivityHeatmap />
         </BreakdownSection>
       )}
 

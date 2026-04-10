@@ -16,77 +16,10 @@
 
 {% block content %}
 {% include '_demo_banner.html' %}
-
-<div class="traps-summary" id="trapsSummary">
-  <p class="loading">{{ t('common.loading') }}</p>
-</div>
-
-<div class="traps-filter">
-  <label for="trapCategoryFilter">{{ t('traps.filter_category') }}</label>
-  <select id="trapCategoryFilter">
-    <option value="all">{{ t('traps.category.all') }}</option>
-    <option value="checkmate">{{ t('traps.category.checkmate') }}</option>
-    <option value="attack">{{ t('traps.category.attack') }}</option>
-    <option value="gambit_trap">{{ t('traps.category.gambit_trap') }}</option>
-    <option value="piece_trap">{{ t('traps.category.piece_trap') }}</option>
-    <option value="pin_fork_trick">{{ t('traps.category.pin_fork_trick') }}</option>
-  </select>
-</div>
-
-<div class="traps-table-container" id="trapsTable">
-  <table class="traps-table">
-    <thead>
-      <tr>
-        <th>{{ t('traps.col_name') }}</th>
-        <th>{{ t('traps.col_category') }}</th>
-        <th>{{ t('traps.col_entered') }}</th>
-        <th>{{ t('traps.col_fell') }}</th>
-        <th>{{ t('traps.col_executed') }}</th>
-        <th>{{ t('traps.col_last_seen') }}</th>
-      </tr>
-    </thead>
-    <tbody id="trapsTableBody">
-      <tr><td colspan="6" class="loading">{{ t('common.loading') }}</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<div class="trap-detail-panel hidden" id="trapDetailPanel">
-  <button class="trap-detail-close" id="trapDetailClose">&times;</button>
-  <h2 id="trapDetailName"></h2>
-  <div class="trap-detail-grid">
-    <div class="trap-detail-section trap-board-section">
-      <div class="sequence-player-tabs">
-        <button class="tab-btn active" id="trapTabTrap">{{ t('traps.tab.trap_line') }}</button>
-        <button class="tab-btn" id="trapTabRefutation">{{ t('traps.tab.refutation_line') }}</button>
-      </div>
-      <div id="trapSequencePlayer"></div>
-    </div>
-    <div class="trap-detail-info">
-      <div class="trap-detail-section">
-        <h3>{{ t('traps.the_mistake') }}</h3>
-        <p id="trapMistakeInfo"></p>
-      </div>
-      <div class="trap-detail-section">
-        <h3>{{ t('traps.refutation') }}</h3>
-        <p id="trapRefutationInfo"></p>
-        <p class="trap-refutation-move" id="trapRefutationMove"></p>
-      </div>
-      <div class="trap-detail-section">
-        <h3>{{ t('traps.recognition_tip') }}</h3>
-        <p id="trapRecognitionTip"></p>
-      </div>
-      <div class="trap-detail-section">
-        <h3>{{ t('traps.your_games') }}</h3>
-        <div id="trapGamesList" class="trap-games-list"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
+<div id="traps-root"></div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script src="/static/vendor/chess-0.10.3.min.js"></script>
-<script type="module" src="/static/js/traps.js"></script>
+{{ vite_asset('traps') }}
 {% endblock %}
