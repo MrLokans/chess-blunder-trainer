@@ -6,7 +6,7 @@ import {
   buildTacticalHighlights,
   mergeHighlights,
 } from '../../src/trainer/highlights';
-import type { PuzzleData } from '../../src/trainer/state';
+import type { PuzzleData } from '../../src/trainer/context';
 
 function makePuzzle(overrides: Partial<PuzzleData> = {}): PuzzleData {
   return {

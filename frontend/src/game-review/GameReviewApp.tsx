@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
 import { MoveSequence, ReadOnlyBoard, PlaybackController } from '../shared/sequence-player';
-import { applyBoardBackground, applyPieceSet } from '../trainer/board-visuals';
+import { applyBoardBackground, applyPieceSet } from '../shared/board-theme';
 import { updateEvalBar } from '../trainer/eval-bar';
 import { EvalChart, evalFromWhite } from './eval-chart';
 

@@ -1,6 +1,6 @@
-import type { PuzzleData } from './state';
+import type { PuzzleData } from './context';
 
-type HighlightMap = Map<string, string>;
+export type HighlightMap = Map<string, string>;
 
 interface GameLike {
   fen(): string;

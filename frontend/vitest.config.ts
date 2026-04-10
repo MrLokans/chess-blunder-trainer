@@ -4,6 +4,11 @@ import preact from '@preact/preset-vite';
 
 export default defineConfig({
   plugins: [preact()],
+  resolve: {
+    alias: {
+      '@vendor/chessground': resolve(__dirname, '../blunder_tutor/web/static/vendor/chessground-10.0.2.min.js'),
+    },
+  },
   test: {
     root: resolve(__dirname),
     environment: 'jsdom',

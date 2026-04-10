@@ -7,7 +7,7 @@ from pathlib import Path
 from markupsafe import Markup
 
 ENTRY_MAP = {
-    "trainer": "src/trainer/index.ts",
+    "trainer": "src/trainer/index.tsx",
     "dashboard": "src/dashboard/index.tsx",
     "settings": "src/settings/index.tsx",
     "management": "src/management/index.tsx",
@@ -16,8 +16,6 @@ ENTRY_MAP = {
     "starred": "src/starred/index.tsx",
     "game-review": "src/game-review/index.tsx",
     "traps": "src/traps/index.tsx",
-    "heatmap": "src/heatmap/index.ts",
-    "growth": "src/growth/index.ts",
 }
 
 DEFAULT_DIST_DIR = Path(__file__).resolve().parent / "static" / "dist"
