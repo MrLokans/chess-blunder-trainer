@@ -33,12 +33,11 @@ export function buildTacticalHighlights(
   bestRevealed: boolean,
   showTactics: boolean,
 ): HighlightMap {
-  if (!showTactics || !bestRevealed || !puzzle || puzzle.tactical_squares.length === 0) return new Map();
+  const squares = puzzle?.tactical_squares;
+  if (!showTactics || !bestRevealed || !puzzle || !squares || squares.length === 0) return new Map();
 
   const atOriginalPosition = game !== null && game.fen() === puzzle.fen;
   if (!atOriginalPosition) return new Map();
-
-  const squares = puzzle.tactical_squares;
   const highlights: HighlightMap = new Map();
   if (squares.length > 0) {
     const primary = squares[0];

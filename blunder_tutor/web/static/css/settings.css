@@ -102,6 +102,12 @@
     }
   }
 
+  .theme-color-section + .theme-color-section {
+    margin-top: var(--s-xl);
+    padding-top: var(--s-xl);
+    border-top: 1px solid var(--mid-gray-light);
+  }
+
   .color-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

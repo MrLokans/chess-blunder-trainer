@@ -82,7 +82,7 @@ export interface PuzzleData {
   game_phase: string;
   tactical_pattern: string | null;
   tactical_reason: string | null;
-  tactical_squares: string[];
+  tactical_squares: string[] | null;
   explanation_blunder: string | null;
   explanation_best: string | null;
   game_url: string | null;

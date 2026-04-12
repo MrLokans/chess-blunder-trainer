@@ -32,7 +32,7 @@ export function ColorInput({ value, onChange }: ColorInputProps) {
   }, [onChange]);
 
   return (
-    <span class="color-input-pair">
+    <>
       <input
         type="color"
         value={value.toLowerCase()}
@@ -41,10 +41,11 @@ export function ColorInput({ value, onChange }: ColorInputProps) {
       />
       <input
         type="text"
+        class="color-hex-input"
         value={localHex}
         aria-label="hex value"
         onInput={handleHexInput}
       />
-    </span>
+    </>
   );
 }

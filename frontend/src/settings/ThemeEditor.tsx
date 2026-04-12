@@ -27,6 +27,13 @@ const COLOR_LABELS: Record<ThemeColorKey, string> = {
   heatmap_l3: 'settings.theme.heatmap_l3', heatmap_l4: 'settings.theme.heatmap_l4',
 };
 
+const COLOR_HELP: Partial<Record<ThemeColorKey, string>> = {
+  primary: 'settings.theme.primary_help',
+  success: 'settings.theme.success_help',
+  error: 'settings.theme.error_help',
+  warning: 'settings.theme.warning_help',
+};
+
 const HEATMAP_GRID = [
   [0, 1, 0, 2, 0, 1, 0],
   [1, 2, 3, 1, 0, 2, 1],
@@ -89,7 +96,7 @@ export function ThemeEditor({ theme, presets, onChange }: ThemeEditorProps) {
       </div>
 
       {SECTIONS.map(section => (
-        <div key={section.titleKey}>
+        <div class="theme-color-section" key={section.titleKey}>
           <h3 class="theme-section-title">{t(section.titleKey)}</h3>
           <div class="color-grid">
             {section.keys.map(key => (
@@ -101,6 +108,7 @@ export function ThemeEditor({ theme, presets, onChange }: ThemeEditorProps) {
                     onChange={(val) => { handleColorChange(key, val); }}
                   />
                 </div>
+                {COLOR_HELP[key] && <div class="help-text">{t(COLOR_HELP[key])}</div>}
               </div>
             ))}
           </div>
