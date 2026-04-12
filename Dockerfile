@@ -43,6 +43,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY frontend/ ./frontend/
+# Vite config references vendored chessground via alias
+COPY blunder_tutor/web/static/vendor/ ./blunder_tutor/web/static/vendor/
 RUN npm run build
 
 # Stage 3: Export dependencies to requirements.txt (separate stage for better caching)
