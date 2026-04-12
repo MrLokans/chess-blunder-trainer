@@ -8,7 +8,7 @@ from blunder_tutor.web.vite import vite_asset
 class TestViteAssetProduction:
     def test_resolves_entry_from_manifest(self, tmp_path):
         manifest = {
-            "src/trainer/index.ts": {
+            "src/trainer/index.tsx": {
                 "file": "assets/trainer-abc123.js",
                 "isEntry": True,
             }
@@ -34,7 +34,7 @@ class TestViteAssetDev:
         result = vite_asset(
             "trainer", dev_mode=True, dev_origin="http://localhost:5173"
         )
-        assert 'src="http://localhost:5173/src/trainer/index.ts"' in result
+        assert 'src="http://localhost:5173/src/trainer/index.tsx"' in result
         assert 'type="module"' in result
 
     def test_includes_vite_client_script(self):
