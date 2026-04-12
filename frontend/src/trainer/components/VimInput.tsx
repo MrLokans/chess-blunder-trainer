@@ -16,27 +16,29 @@ export function VimInput({ visible, game, interactive, onMove, onClose }: VimInp
   const [shaking, setShaking] = useState(false);
   const fieldRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (visible && fieldRef.current) {
-      setValue('');
-      setError('');
-      setSuggestions([]);
-      setSelectedIndex(-1);
-      fieldRef.current.focus();
-    }
-  }, [visible]);
-
   const updateSuggestions = useCallback((text: string) => {
-    if (!game || !text) {
+    if (!game) {
       setSuggestions([]);
       setSelectedIndex(-1);
       return;
     }
     const moves = game.moves();
-    const filtered = moves.filter(m => m.toLowerCase().startsWith(text.toLowerCase()));
-    setSuggestions(filtered.slice(0, 8));
+    const filtered = text
+      ? moves.filter(m => m.toLowerCase().startsWith(text.toLowerCase()))
+      : moves;
+    setSuggestions(filtered);
     setSelectedIndex(-1);
   }, [game]);
+
+  useEffect(() => {
+    if (visible && fieldRef.current) {
+      setValue('');
+      setError('');
+      setSelectedIndex(-1);
+      fieldRef.current.focus();
+      updateSuggestions('');
+    }
+  }, [visible, updateSuggestions]);
 
   const tryMove = useCallback((moveStr: string) => {
     if (!game || !interactive) return;
@@ -112,37 +114,45 @@ export function VimInput({ visible, game, interactive, onMove, onClose }: VimInp
 
   if (!visible) return null;
 
+  const maxVisible = 8;
+  const visibleSuggestions = suggestions.slice(0, maxVisible);
+  const hasMore = suggestions.length > maxVisible;
+  const showSuggestions = suggestions.length > 0
+    && !(suggestions.length === 1 && suggestions[0] === value.trim());
+
   return (
-    <div class="vim-input-overlay active" id="vimInput">
-      <div class={`vim-input-container ${shaking ? 'shake' : ''}`} onAnimationEnd={handleAnimationEnd}>
-        <span class="vim-input-prefix">:</span>
-        <input
-          ref={fieldRef}
-          type="text"
-          class="vim-input-field"
-          id="vimInputField"
-          value={value}
-          onInput={handleInput}
-          onKeyDown={handleKeyDown}
-          autocomplete="off"
-          spellcheck={false}
-          placeholder={t('trainer.vim.placeholder')}
-        />
-      </div>
+    <div class={`vim-input-overlay active ${shaking ? 'shake' : ''}`} id="vimInput" onAnimationEnd={handleAnimationEnd}>
+      <span class="vim-input-prefix">:</span>
+      <input
+        ref={fieldRef}
+        type="text"
+        class="vim-input-field"
+        id="vimInputField"
+        value={value}
+        onInput={handleInput}
+        onKeyDown={handleKeyDown}
+        autocomplete="off"
+        spellcheck={false}
+        placeholder={t('trainer.vim.placeholder')}
+      />
       {error && <div class="vim-input-error visible" id="vimInputError">{error}</div>}
-      {suggestions.length > 0 && (
-        <div class="vim-suggestions" id="vimSuggestions">
-          {suggestions.map((s, i) => (
-            <div
+      <div class={`vim-suggestions ${showSuggestions ? 'visible' : ''}`} id="vimSuggestions">
+        {visibleSuggestions.map((s, i) => {
+          const matchLen = value.trim().length;
+          return (
+            <span
               key={s}
               class={`vim-suggestion ${i === selectedIndex ? 'selected' : ''}`}
               onMouseDown={(e) => { e.preventDefault(); tryMove(s); }}
             >
-              {s}
-            </div>
-          ))}
-        </div>
-      )}
+              {matchLen > 0 ? <b>{s.slice(0, matchLen)}</b> : null}{s.slice(matchLen)}
+            </span>
+          );
+        })}
+        {hasMore && (
+          <span class="vim-suggestion more">+{suggestions.length - maxVisible}</span>
+        )}
+      </div>
     </div>
   );
 }
