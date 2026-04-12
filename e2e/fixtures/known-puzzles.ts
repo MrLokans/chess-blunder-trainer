@@ -3,6 +3,8 @@ export interface KnownPuzzle {
   ply: number;
   blunderSan: string;
   bestMoveSan: string;
+  bestMoveFrom: string;
+  bestMoveTo: string;
   phase: 'opening' | 'middlegame' | 'endgame';
   pattern: string;
   playerColor: 'white' | 'black';
@@ -14,6 +16,8 @@ export const PUZZLES = {
     ply: 42,
     blunderSan: 'Qxg5+',
     bestMoveSan: 'Nf3+',
+    bestMoveFrom: 'e5',
+    bestMoveTo: 'f3',
     phase: 'middlegame',
     pattern: 'Fork',
     playerColor: 'white',
@@ -23,6 +27,8 @@ export const PUZZLES = {
     ply: 51,
     blunderSan: 'Qh4',
     bestMoveSan: 'Nxd5+',
+    bestMoveFrom: 'c3',
+    bestMoveTo: 'd5',
     phase: 'middlegame',
     pattern: 'Fork',
     playerColor: 'black',
@@ -32,6 +38,8 @@ export const PUZZLES = {
     ply: 42,
     blunderSan: 'dxc4',
     bestMoveSan: 'a6',
+    bestMoveFrom: 'a7',
+    bestMoveTo: 'a6',
     phase: 'middlegame',
     pattern: 'Hanging piece',
     playerColor: 'black',
@@ -42,6 +50,8 @@ export const PUZZLES = {
     ply: 16,
     blunderSan: 'cxd5',
     bestMoveSan: 'Nf6',
+    bestMoveFrom: 'g8',
+    bestMoveTo: 'f6',
     phase: 'opening',
     pattern: 'Pin',
     playerColor: 'white',
@@ -51,6 +61,8 @@ export const PUZZLES = {
     ply: 85,
     blunderSan: 'f5',
     bestMoveSan: 'Kh3',
+    bestMoveFrom: 'g2',
+    bestMoveTo: 'h3',
     phase: 'endgame',
     pattern: 'Hanging piece',
     playerColor: 'white',
@@ -61,6 +73,8 @@ export const PUZZLES = {
     ply: 17,
     blunderSan: 'Nxd5',
     bestMoveSan: 'Bb5+',
+    bestMoveFrom: 'c4',
+    bestMoveTo: 'b5',
     phase: 'opening',
     pattern: 'None',
     playerColor: 'white',

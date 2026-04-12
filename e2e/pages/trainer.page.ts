@@ -77,9 +77,43 @@ export class TrainerPage extends BasePage {
   }
 
   // --- Click-based moves ---
-  // TODO: Add clickSquare(square) and makeMove(from, to) methods.
-  // Requires spike on how Chessground renders squares and handles orientation.
-  // Vim mode covers move submission flow; click-based interaction is untested.
+
+  private async getSquareCenter(square: string): Promise<{ x: number; y: number }> {
+    const box = await this.board.boundingBox();
+    if (!box) throw new Error('Board not visible');
+
+    const file = square.charCodeAt(0) - 97; // a=0, h=7
+    const rank = parseInt(square.charAt(1), 10) - 1; // 1=0, 8=7
+
+    const orientation = await this.board.evaluate(
+      (el) => el.classList.contains('orientation-black') ? 'black' : 'white',
+    );
+
+    const cellSize = box.width / 8;
+    const col = orientation === 'white' ? file : 7 - file;
+    const row = orientation === 'white' ? 7 - rank : rank;
+
+    return {
+      x: box.x + col * cellSize + cellSize / 2,
+      y: box.y + row * cellSize + cellSize / 2,
+    };
+  }
+
+  async clickSquare(square: string): Promise<void> {
+    const { x, y } = await this.getSquareCenter(square);
+    await this.page.mouse.click(x, y);
+  }
+
+  async makeMove(from: string, to: string): Promise<void> {
+    await this.clickSquare(from);
+    await this.clickSquare(to);
+  }
+
+  async makeMoveAndWaitForSubmit(from: string, to: string): Promise<void> {
+    const responsePromise = this.page.waitForResponse('**/api/submit');
+    await this.makeMove(from, to);
+    await responsePromise;
+  }
 
   // --- Vim mode ---
 
