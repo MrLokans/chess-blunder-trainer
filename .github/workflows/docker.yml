@@ -9,8 +9,8 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  build:
-    name: Build and Push
+  build-and-test:
+    name: Build, E2E, Push
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -52,6 +52,61 @@ jobs:
             type=sha
             type=raw,value=latest
 
+      # Build for amd64 only and load into local Docker for e2e testing
+      - name: Build image for testing
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: blunder-tutor:e2e-test
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            COMMIT=${{ github.sha }}
+            STOCKFISH_VERSION=sf_17
+          cache-from: |
+            type=gha
+            type=registry,ref=${{ steps.image.outputs.name }}:buildcache
+
+      - name: Start container
+        run: |
+          docker run -d --name e2e-app \
+            -p 8000:8000 \
+            -v ${{ github.workspace }}/demo/demo.sqlite3:/app/data/main.sqlite3:ro \
+            blunder-tutor:e2e-test
+          # Wait for health check
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+              echo "App is ready"
+              break
+            fi
+            echo "Waiting for app... ($i/30)"
+            sleep 2
+          done
+          curl -sf http://localhost:8000/health || (docker logs e2e-app && exit 1)
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install Playwright
+        working-directory: e2e
+        run: npm ci && npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        working-directory: e2e
+        run: npx playwright test
+        env:
+          E2E_BASE_URL: http://localhost:8000
+
+      - name: Stop container
+        if: always()
+        run: docker stop e2e-app && docker logs e2e-app
+
+      # E2E passed — rebuild multi-platform and push
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -64,9 +119,6 @@ jobs:
             VERSION=${{ github.ref_name }}
             COMMIT=${{ github.sha }}
             STOCKFISH_VERSION=sf_17
-          # Use both GHA cache and registry cache for maximum cache hits
-          # Registry cache persists longer and works better for multi-platform builds
-          # GHA cache is faster for same-workflow rebuilds
           cache-from: |
             type=gha
             type=registry,ref=${{ steps.image.outputs.name }}:buildcache
@@ -76,7 +128,7 @@ jobs:
 
   release:
     name: Create GitHub Release
-    needs: build
+    needs: build-and-test
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -95,7 +147,7 @@ jobs:
             ## Docker
 
             ```bash
-            docker run -p 8000:8000 -v $(pwd)/data:/app/data ${{ needs.build.outputs.image-name }}:${{ github.ref_name }}
+            docker run -p 8000:8000 -v $(pwd)/data:/app/data ${{ needs.build-and-test.outputs.image-name }}:${{ github.ref_name }}
             ```
 
             Platforms: `linux/amd64`, `linux/arm64`
