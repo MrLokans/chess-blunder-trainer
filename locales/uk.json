@@ -1,6 +1,8 @@
 {
   "common.loading": "Завантаження...",
   "common.error": "Помилка",
+  "common.error_boundary_message": "Щось пішло не так. Будь ласка, спробуйте перезавантажити сторінку.",
+  "common.reload": "Перезавантажити",
   "common.no_move_made": "Хід не зроблено",
   "common.less": "Менше",
   "common.more": "Більше",

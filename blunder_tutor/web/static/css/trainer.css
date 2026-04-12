@@ -41,10 +41,6 @@
   align-self: stretch;
 }
 
-.trainer-panel > :first-child {
-  position: sticky;
-  top: 0;
-}
 
 @media (max-width: 1080px) {
   .trainer-main {

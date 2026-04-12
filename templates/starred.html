@@ -14,33 +14,9 @@
 {% block content %}
 {% include '_demo_banner.html' %}
 
-<div id="starredContent">
-  <p class="loading">{{ t('common.loading') }}</p>
-</div>
-
-<div id="starredEmpty" class="empty-state hidden">
-  <p>{{ t('starred.empty') }}</p>
-</div>
-
-<div id="starredList" class="hidden">
-  <table class="starred-table">
-    <thead>
-      <tr>
-        <th>{{ t('starred.col.date') }}</th>
-        <th>{{ t('starred.col.players') }}</th>
-        <th>{{ t('starred.col.move') }}</th>
-        <th>{{ t('starred.col.eval_swing') }}</th>
-        <th>{{ t('starred.col.phase') }}</th>
-        <th>{{ t('starred.col.note') }}</th>
-        {% if has_feature('page.game_review') %}<th></th>{% endif %}
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="starredTableBody"></tbody>
-  </table>
-</div>
+<div id="starred-root"></div>
 {% endblock %}
 
 {% block extra_scripts %}
-<script type="module" src="/static/js/starred.js"></script>
+{{ vite_asset('starred') }}
 {% endblock %}

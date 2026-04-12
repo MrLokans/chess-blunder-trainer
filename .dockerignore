@@ -48,3 +48,9 @@ docker-compose*.yml
 # Misc
 .DS_Store
 *.log
+
+# Frontend development
+node_modules/
+frontend/tests/
+frontend/node_modules/
+tests_fe/

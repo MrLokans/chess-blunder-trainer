@@ -34,7 +34,20 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
         make -j$(nproc) profile-build ARCH=general-64 COMP=gcc; \
     fi
 
-# Stage 2: Export dependencies to requirements.txt (separate stage for better caching)
+# Stage 2: Build frontend assets
+FROM node:22-slim AS frontend-builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY frontend/ ./frontend/
+# Vite config references vendored chessground via alias
+COPY blunder_tutor/web/static/vendor/ ./blunder_tutor/web/static/vendor/
+RUN npm run build
+
+# Stage 3: Export dependencies to requirements.txt (separate stage for better caching)
 FROM python:3.13-slim AS deps-exporter
 
 RUN --mount=type=cache,target=/root/.cache/pip \
@@ -99,6 +112,9 @@ COPY --from=python-builder /app/.venv /app/.venv
 # Copy application code
 COPY . /app
 WORKDIR /app
+
+# Copy Vite build output (overwrite any stale dist from COPY . /app)
+COPY --from=frontend-builder /app/blunder_tutor/web/static/dist /app/blunder_tutor/web/static/dist
 
 # Set environment variables
 ENV PATH="/app/.venv/bin:$PATH"

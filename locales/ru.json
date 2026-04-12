@@ -1,6 +1,8 @@
 {
   "common.loading": "Загрузка...",
   "common.error": "Ошибка",
+  "common.error_boundary_message": "Что-то пошло не так. Пожалуйста, попробуйте перезагрузить страницу.",
+  "common.reload": "Перезагрузить",
   "common.no_move_made": "Ход не сделан",
   "common.less": "Меньше",
   "common.more": "Больше",

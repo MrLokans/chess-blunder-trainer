@@ -27,16 +27,47 @@ async def management(request: Request) -> HTMLResponse:
 
 
 async def settings(request: Request) -> HTMLResponse:
-    feature_groups = [
+    feature_groups_tuples = [
         (group_label, [(f.value, FEATURE_LABELS[f]) for f in group_features])
         for group_label, group_features in FEATURE_GROUPS
     ]
+
+    features = request.app.state.templates.env.globals.get("features", {})
+    feature_groups_data = [
+        {
+            "label": group_label,
+            "features": [
+                {
+                    "id": fid,
+                    "label": label_key,
+                    "enabled": features.get(fid, True),
+                }
+                for fid, label_key in group_features
+            ],
+        }
+        for group_label, group_features in feature_groups_tuples
+    ]
+
+    locale_display_names = request.app.state.templates.env.globals.get(
+        "locale_display_names", {}
+    )
+    available_locales_fn = request.app.state.templates.env.globals.get(
+        "available_locales", lambda: []
+    )
+    available_locales_data = [
+        {"code": code, "name": locale_display_names.get(code, code)}
+        for code in available_locales_fn()
+    ]
+
+    current_locale = request.app.state.templates.env.globals.get("locale", "en")
 
     return request.app.state.templates.TemplateResponse(
         "settings.html",
         {
             "request": request,
-            "feature_groups": feature_groups,
+            "feature_groups_data": feature_groups_data,
+            "available_locales_data": available_locales_data,
+            "current_locale": current_locale,
         },
     )
 

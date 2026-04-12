@@ -26,6 +26,7 @@ from blunder_tutor.web.middleware import (
     SetupCheckMiddleware,
 )
 from blunder_tutor.web.throttle import create_engine_throttle
+from blunder_tutor.web.vite import vite_asset
 
 
 @asynccontextmanager
@@ -85,6 +86,9 @@ def create_app(
         lambda key, **kwargs: key
     )  # placeholder, overridden per-request
     templates.env.globals["available_locales"] = i18n.available_locales
+    templates.env.globals["vite_asset"] = lambda entry: vite_asset(
+        entry, dev_mode=config.vite_dev
+    )
 
     limit = (
         chess.engine.Limit(time=config.engine.time_limit)

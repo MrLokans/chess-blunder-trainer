@@ -32,7 +32,7 @@ FORCE :=
 .PHONY: help install install-dev cli clean
 .PHONY: fetch-lichess fetch-chesscom list show index
 .PHONY: analyze analyze-bulk train-ui
-.PHONY: format lint lint/be lint/fe check test test/be test/fe download-pieces migrate
+.PHONY: format lint lint/be lint/fe check test test/be test/fe typecheck/fe build/fe download-pieces migrate
 .PHONY: docker/build docker/run docker/stop
 .PHONY: landing
 .PHONY: db/backup db/restore db/rm
@@ -113,26 +113,58 @@ migrate: ## Run database migrations
 	$(UV) run blunder-tutor-db
 
 # Code quality
-lint: lint/be lint/fe ## Lint all code
+lint: lint/be lint/fe lint/e2e ## Lint all code
 
 lint/be: ## Lint Python with ruff
 	$(UV) run ruff check blunder_tutor/ main.py
 
-lint/fe: ## Lint JavaScript with ESLint
-	npx eslint blunder_tutor/web/static/js/
+lint/fe: ## Lint TypeScript with ESLint
+	npm run lint
+
+lint/e2e: ## Lint E2E tests with ESLint
+	cd e2e && npm run lint
+
+typecheck/e2e: ## Run TypeScript type checking on E2E tests
+	cd e2e && npm run typecheck
 
 fix: ## Auto-fix linting issues
 	$(UV) run ruff format
 	$(UV) run ruff check --fix --unsafe-fixes blunder_tutor/ main.py
-	npx eslint blunder_tutor/web/static/js/ --fix
+	npm run lint:fix
+	cd e2e && npm run lint:fix
 
 test: test/be test/fe ## Run all tests
 
 test/be: ## Run Python tests with pytest
 	$(UV) run pytest tests/ -v
 
-test/fe: ## Run JavaScript tests with Node test runner
-	node --test 'tests_fe/test_*.js'
+test/fe: ## Run frontend tests with Vitest
+	npm run test
+
+test/e2e: ## Run E2E tests locally
+	mkdir -p e2e/.tmp
+	cd e2e && npx playwright test
+
+test/e2e/headed: ## Run E2E tests with browser visible
+	mkdir -p e2e/.tmp
+	cd e2e && npx playwright test --headed
+
+test/e2e/docker: ## Run E2E tests against Docker image
+	cp demo/demo.sqlite3 /tmp/e2e-test.sqlite3
+	docker run -d --name e2e-app \
+		-v /tmp/e2e-test.sqlite3:/app/data/main.sqlite3 \
+		-p 8000:8000 blunder-tutor
+	cd e2e && E2E_BASE_URL=http://localhost:8000 npx playwright test; \
+		EXIT=$$?; docker rm -f e2e-app; exit $$EXIT
+
+test/e2e/report: ## Open last E2E test report
+	cd e2e && npx playwright show-report
+
+typecheck/fe: ## Run TypeScript type checking
+	npm run typecheck
+
+build/fe: ## Build frontend assets with Vite
+	npm run build
 
 # Docker
 DOCKER_IMAGE := blunder-tutor

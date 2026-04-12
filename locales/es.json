@@ -1,6 +1,8 @@
 {
   "common.loading": "Cargando...",
   "common.error": "Error",
+  "common.error_boundary_message": "Algo salió mal. Por favor, intente recargar la página.",
+  "common.reload": "Recargar",
   "common.no_move_made": "No se ha realizado ningún movimiento",
   "common.less": "Menos",
   "common.more": "Más",

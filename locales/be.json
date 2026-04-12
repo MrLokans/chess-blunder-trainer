@@ -1,6 +1,8 @@
 {
   "common.loading": "Загрузка...",
   "common.error": "Памылка",
+  "common.error_boundary_message": "Нешта пайшло не так. Калі ласка, паспрабуйце перазагрузіць старонку.",
+  "common.reload": "Перазагрузіць",
   "common.no_move_made": "Ход не зроблены",
   "common.less": "Менш",
   "common.more": "Больш",
