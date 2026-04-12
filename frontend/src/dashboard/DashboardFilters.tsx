@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import type { DatePreset } from './types';
+import { GAME_TYPES, GAME_PHASES } from '../shared/constants';
 
 const DATE_PRESETS: { key: DatePreset; label: string }[] = [
   { key: '7d', label: 'dashboard.filter.last_7d' },
@@ -8,9 +9,6 @@ const DATE_PRESETS: { key: DatePreset; label: string }[] = [
   { key: '1y', label: 'dashboard.filter.last_1y' },
   { key: 'all', label: 'dashboard.filter.all_time' },
 ];
-
-const GAME_TYPES = ['bullet', 'blitz', 'rapid', 'classical'] as const;
-const GAME_PHASES = ['opening', 'middlegame', 'endgame'] as const;
 
 export interface DashboardFiltersProps {
   datePreset: DatePreset | null;

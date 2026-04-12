@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
-import { client } from '../shared/api';
+import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
+import { client, isAbortError } from '../shared/api';
 import { useFeature } from '../hooks/useFeature';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { debounce } from '../shared/debounce';
@@ -38,9 +38,9 @@ import type {
   DifficultyData,
   CollapsePointData,
   ConversionResilienceData,
-  TrapsData,
   GameBreakdownItem,
 } from './types';
+import type { TrapStatsResponse } from '../types/api';
 
 interface DashboardState {
   overview: OverviewData | null;
@@ -55,7 +55,7 @@ interface DashboardState {
   difficultyData: DifficultyData | null;
   collapseData: CollapsePointData | null;
   conversionData: ConversionResilienceData | null;
-  trapsData: TrapsData | null;
+  trapsData: TrapStatsResponse | null;
   gameBreakdown: GameBreakdownItem[] | null;
   error: string | null;
 }
@@ -108,10 +108,15 @@ export function DashboardApp() {
   const hasHeatmap = useFeature('dashboard.heatmap');
 
   const ws = useWebSocket(['stats.updated', 'job.completed', 'job.progress_updated', 'job.status_changed']);
+  const abortRef = useRef<AbortController | null>(null);
 
   const getParams = filters.getParams;
 
   const loadData = useCallback(async () => {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       const qp = toQueryParams(getParams());
 
@@ -144,8 +149,10 @@ export function DashboardApp() {
         hasTactical ? client.stats.blundersByTacticalPattern(qp) : Promise.resolve(null),
         hasCollapse ? client.stats.collapsePoint(qp) : Promise.resolve(null),
         hasConversion ? client.stats.conversionResilience(qp) : Promise.resolve(null),
-        hasTraps ? client.traps.stats<TrapsData>() : Promise.resolve(null),
+        hasTraps ? client.traps.stats() : Promise.resolve(null),
       ] as const);
+
+      if (controller.signal.aborted) return;
 
       setState({
         overview,
@@ -165,6 +172,7 @@ export function DashboardApp() {
         error: null,
       });
     } catch (err) {
+      if (isAbortError(err)) return;
       console.error('Failed to load dashboard data:', err);
       setState(prev => ({
         ...prev,
@@ -177,6 +185,7 @@ export function DashboardApp() {
 
   useEffect(() => {
     void loadData();
+    return () => { if (abortRef.current) abortRef.current.abort(); };
   }, [loadData]);
 
   useEffect(() => {

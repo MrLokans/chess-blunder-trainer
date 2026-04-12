@@ -1,4 +1,7 @@
 import { useState, useCallback } from 'preact/hooks';
+import { GAME_TYPES, GAME_PHASES, DIFFICULTIES } from '../../shared/constants';
+import { STORAGE_KEYS } from '../../shared/storage-keys';
+import { loadFromStorage } from '../../hooks/useFilterPersistence';
 
 export type QueryParams = Record<string, string | number | boolean | null | undefined | string[]>;
 
@@ -17,26 +20,17 @@ interface FilterState {
   boardSettingsCollapsed: boolean;
 }
 
-const STORAGE_KEYS = {
-  phases: 'blunder-tutor-phase-filters',
-  gameTypes: 'blunder-tutor-game-type-filters',
-  difficulties: 'blunder-tutor-difficulty-filters',
-  tactical: 'blunder-tutor-tactical-filter',
-  color: 'blunder-tutor-color-filter',
-  filtersCollapsed: 'blunder-tutor-filters-collapsed',
-  playFullLine: 'blunder-tutor-play-full-line',
-  boardSettingsCollapsed: 'boardSettingsCollapsed',
-  showCoordinates: 'blunder-tutor-show-coordinates',
+const SK = {
+  phases: STORAGE_KEYS.trainerPhases,
+  gameTypes: STORAGE_KEYS.trainerGameTypes,
+  difficulties: STORAGE_KEYS.trainerDifficulties,
+  tactical: STORAGE_KEYS.trainerTactical,
+  color: STORAGE_KEYS.trainerColor,
+  filtersCollapsed: STORAGE_KEYS.trainerFiltersCollapsed,
+  playFullLine: STORAGE_KEYS.trainerPlayFullLine,
+  boardSettingsCollapsed: STORAGE_KEYS.trainerBoardSettingsCollapsed,
+  showCoordinates: STORAGE_KEYS.trainerShowCoordinates,
 } as const;
-
-function loadArray(key: string, defaults: string[]): string[] {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return defaults;
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as string[]) : defaults;
-  } catch { return defaults; }
-}
 
 function loadBool(key: string, defaultVal: boolean): boolean {
   const raw = localStorage.getItem(key);
@@ -48,9 +42,9 @@ function loadString(key: string, defaultVal: string): string {
   return localStorage.getItem(key) ?? defaultVal;
 }
 
-const DEFAULT_PHASES = ['opening', 'middlegame', 'endgame'];
-const DEFAULT_GAME_TYPES = ['bullet', 'blitz', 'rapid', 'classical'];
-const DEFAULT_DIFFICULTIES = ['easy', 'medium', 'hard'];
+const DEFAULT_PHASES = [...GAME_PHASES];
+const DEFAULT_GAME_TYPES = [...GAME_TYPES];
+const DEFAULT_DIFFICULTIES = [...DIFFICULTIES];
 
 export interface FiltersAPI {
   state: FilterState;
@@ -74,18 +68,18 @@ export interface FiltersAPI {
 
 export function useFilters(onFilterChange: () => void): FiltersAPI {
   const [state, setState] = useState<FilterState>(() => ({
-    phases: loadArray(STORAGE_KEYS.phases, DEFAULT_PHASES),
-    gameTypes: loadArray(STORAGE_KEYS.gameTypes, DEFAULT_GAME_TYPES),
-    difficulties: loadArray(STORAGE_KEYS.difficulties, DEFAULT_DIFFICULTIES),
-    tacticalPattern: loadString(STORAGE_KEYS.tactical, '') || null,
-    color: loadString(STORAGE_KEYS.color, 'both'),
-    playFullLine: loadBool(STORAGE_KEYS.playFullLine, false),
-    showCoordinates: loadBool(STORAGE_KEYS.showCoordinates, true),
+    phases: loadFromStorage(SK.phases, DEFAULT_PHASES),
+    gameTypes: loadFromStorage(SK.gameTypes, DEFAULT_GAME_TYPES),
+    difficulties: loadFromStorage(SK.difficulties, DEFAULT_DIFFICULTIES),
+    tacticalPattern: loadString(SK.tactical, '') || null,
+    color: loadString(SK.color, 'both'),
+    playFullLine: loadBool(SK.playFullLine, false),
+    showCoordinates: loadBool(SK.showCoordinates, true),
     showArrows: true,
     showThreats: false,
     showTactics: true,
-    filtersCollapsed: loadBool(STORAGE_KEYS.filtersCollapsed, false),
-    boardSettingsCollapsed: loadBool(STORAGE_KEYS.boardSettingsCollapsed, false),
+    filtersCollapsed: loadBool(SK.filtersCollapsed, false),
+    boardSettingsCollapsed: loadBool(SK.boardSettingsCollapsed, false),
   }));
 
   const persist = useCallback((key: string, value: unknown) => {
@@ -98,42 +92,42 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
 
   const setPhases = useCallback((phases: string[]) => {
     setState(s => ({ ...s, phases }));
-    persist(STORAGE_KEYS.phases, phases);
+    persist(SK.phases, phases);
     onFilterChange();
   }, [persist, onFilterChange]);
 
   const setGameTypes = useCallback((types: string[]) => {
     setState(s => ({ ...s, gameTypes: types }));
-    persist(STORAGE_KEYS.gameTypes, types);
+    persist(SK.gameTypes, types);
     onFilterChange();
   }, [persist, onFilterChange]);
 
   const setDifficulties = useCallback((diffs: string[]) => {
     setState(s => ({ ...s, difficulties: diffs }));
-    persist(STORAGE_KEYS.difficulties, diffs);
+    persist(SK.difficulties, diffs);
     onFilterChange();
   }, [persist, onFilterChange]);
 
   const setTacticalPattern = useCallback((pattern: string | null) => {
     setState(s => ({ ...s, tacticalPattern: pattern }));
-    persist(STORAGE_KEYS.tactical, pattern ?? '');
+    persist(SK.tactical, pattern ?? '');
     onFilterChange();
   }, [persist, onFilterChange]);
 
   const setColor = useCallback((color: string) => {
     setState(s => ({ ...s, color }));
-    persist(STORAGE_KEYS.color, color);
+    persist(SK.color, color);
     onFilterChange();
   }, [persist, onFilterChange]);
 
   const setPlayFullLine = useCallback((enabled: boolean) => {
     setState(s => ({ ...s, playFullLine: enabled }));
-    persist(STORAGE_KEYS.playFullLine, enabled);
+    persist(SK.playFullLine, enabled);
   }, [persist]);
 
   const setShowCoordinates = useCallback((enabled: boolean) => {
     setState(s => ({ ...s, showCoordinates: enabled }));
-    persist(STORAGE_KEYS.showCoordinates, enabled);
+    persist(SK.showCoordinates, enabled);
   }, [persist]);
 
   const setShowArrows = useCallback((enabled: boolean) => {
@@ -151,7 +145,7 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
   const toggleFiltersCollapsed = useCallback(() => {
     setState(s => {
       const next = !s.filtersCollapsed;
-      persist(STORAGE_KEYS.filtersCollapsed, next);
+      persist(SK.filtersCollapsed, next);
       return { ...s, filtersCollapsed: next };
     });
   }, [persist]);
@@ -159,7 +153,7 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
   const toggleBoardSettingsCollapsed = useCallback(() => {
     setState(s => {
       const next = !s.boardSettingsCollapsed;
-      persist(STORAGE_KEYS.boardSettingsCollapsed, next);
+      persist(SK.boardSettingsCollapsed, next);
       return { ...s, boardSettingsCollapsed: next };
     });
   }, [persist]);
@@ -205,11 +199,11 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
       tacticalPattern: null,
       color: 'both',
     }));
-    persist(STORAGE_KEYS.phases, DEFAULT_PHASES);
-    persist(STORAGE_KEYS.gameTypes, DEFAULT_GAME_TYPES);
-    persist(STORAGE_KEYS.difficulties, DEFAULT_DIFFICULTIES);
-    persist(STORAGE_KEYS.tactical, '');
-    persist(STORAGE_KEYS.color, 'both');
+    persist(SK.phases, DEFAULT_PHASES);
+    persist(SK.gameTypes, DEFAULT_GAME_TYPES);
+    persist(SK.difficulties, DEFAULT_DIFFICULTIES);
+    persist(SK.tactical, '');
+    persist(SK.color, 'both');
     onFilterChange();
   }, [persist, onFilterChange]);
 

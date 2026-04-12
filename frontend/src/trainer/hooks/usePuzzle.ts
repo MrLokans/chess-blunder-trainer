@@ -1,22 +1,13 @@
 import { useCallback, useRef, useContext } from 'preact/hooks';
 import { client, ApiError } from '../../shared/api';
 import { TrainerContext } from '../context';
-import type { PuzzleData } from '../context';
+import type { SubmitMoveResponse } from '../../types/api';
 import type { QueryParams } from './useFilters';
-
-export interface SubmitResponse {
-  is_best: boolean;
-  is_blunder: boolean;
-  user_san: string;
-  user_eval: number;
-  user_eval_display: string;
-  user_uci: string;
-}
 
 export interface PuzzleAPI {
   loadPuzzle: (filterParams?: QueryParams) => Promise<void>;
   loadSpecificPuzzle: (gameId: string, ply: string) => Promise<void>;
-  submitMove: (uci: string) => Promise<SubmitResponse | null>;
+  submitMove: (uci: string) => Promise<SubmitMoveResponse | null>;
 }
 
 async function hasActiveJobs(): Promise<boolean> {
@@ -43,7 +34,7 @@ export function usePuzzle(): PuzzleAPI {
     dispatch({ type: 'SET_LOADING', loading: true });
 
     try {
-      const data = await client.trainer.getPuzzle<PuzzleData>(filterParams);
+      const data = await client.trainer.getPuzzle(filterParams);
       dispatch({ type: 'SET_PUZZLE', puzzle: data });
       dispatch({ type: 'SET_FEN', fen: data.fen });
       dispatch({ type: 'SET_ORIENTATION', orientation: data.player_color === 'black' ? 'black' : 'white' });
@@ -78,7 +69,7 @@ export function usePuzzle(): PuzzleAPI {
     dispatch({ type: 'SET_LOADING', loading: true });
 
     try {
-      const data = await client.trainer.getSpecificPuzzle<PuzzleData>(gameId, parseInt(ply, 10));
+      const data = await client.trainer.getSpecificPuzzle(gameId, parseInt(ply, 10));
       dispatch({ type: 'SET_PUZZLE', puzzle: data });
       dispatch({ type: 'SET_FEN', fen: data.fen });
       dispatch({ type: 'SET_ORIENTATION', orientation: data.player_color === 'black' ? 'black' : 'white' });
@@ -89,7 +80,7 @@ export function usePuzzle(): PuzzleAPI {
     }
   }, [dispatch]);
 
-  const submitMove = useCallback(async (uci: string): Promise<SubmitResponse | null> => {
+  const submitMove = useCallback(async (uci: string): Promise<SubmitMoveResponse | null> => {
     const puzzle = state.puzzle;
     if (!puzzle) return null;
 
@@ -109,7 +100,7 @@ export function usePuzzle(): PuzzleAPI {
     };
 
     try {
-      const data = await client.trainer.submitMove(payload) as SubmitResponse;
+      const data = await client.trainer.submitMove(payload);
       dispatch({ type: 'SET_SUBMITTED' });
       trackEvent('Puzzle Submitted', {
         result: data.is_best ? 'correct' : 'incorrect',

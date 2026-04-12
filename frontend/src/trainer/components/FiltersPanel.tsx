@@ -1,13 +1,10 @@
 import type { FiltersAPI } from '../hooks/useFilters';
 import { useFeature } from '../../hooks/useFeature';
+import { GAME_TYPES, GAME_PHASES, DIFFICULTIES } from '../../shared/constants';
 
 interface FiltersPanelProps {
   filters: FiltersAPI;
 }
-
-const GAME_TYPES = ['bullet', 'blitz', 'rapid', 'classical'] as const;
-const PHASES = ['opening', 'middlegame', 'endgame'] as const;
-const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 const TACTICAL_PATTERNS = [
   { value: 'fork', key: 'trainer.filters.tactical_fork' },
   { value: 'pin', key: 'trainer.filters.tactical_pin' },
@@ -92,7 +89,7 @@ export function FiltersPanel({ filters }: FiltersPanelProps): preact.JSX.Element
                 <div class="filter-label">{t('trainer.filters.phase')}</div>
                 <div class="phase-filter">
                   <CheckboxGroup
-                    items={PHASES}
+                    items={GAME_PHASES}
                     selected={state.phases}
                     onChange={filters.setPhases}
                     labelPrefix="chess.phase"

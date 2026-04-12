@@ -1,24 +1,11 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
 import { Alert } from '../components/Alert';
+import { ALL_STORAGE_KEYS } from '../shared/storage-keys';
 import type { ExternalJobStatus } from '../components/JobCard';
 
-const APP_STORAGE_KEYS = [
-  'blunder_import_source',
-  'blunder_import_username',
-  'blunder_import_maxGames',
-  'blunder-tutor-phase-filters',
-  'blunder-tutor-game-type-filters',
-  'blunder-tutor-difficulty-filters',
-  'blunder-tutor-tactical-filter',
-  'blunder-tutor-color-filter',
-  'blunder-tutor-filters-collapsed',
-  'dashboard-game-type-filters',
-  'blunder-tutor-play-full-line',
-];
-
 function clearAppLocalStorage(): void {
-  APP_STORAGE_KEYS.forEach(key => { localStorage.removeItem(key); });
+  ALL_STORAGE_KEYS.forEach(key => { localStorage.removeItem(key); });
 }
 
 interface DangerSectionProps {

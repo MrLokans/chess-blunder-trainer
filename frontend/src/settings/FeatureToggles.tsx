@@ -23,7 +23,7 @@ export function FeatureToggles({ groups, onSave, onFeatureChanged }: FeatureTogg
 
     try {
       await onSave({ [featureId]: newValue });
-      window.__features[featureId] = newValue;
+      if (window.__features) window.__features[featureId] = newValue;
       if (onFeatureChanged) onFeatureChanged(featureId, newValue);
     } catch {
       setFeatures(prev => ({ ...prev, [featureId]: !newValue }));

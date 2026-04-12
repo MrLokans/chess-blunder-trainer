@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'preact/hooks';
 import type { DateFilterParams, DatePreset } from './types';
+import { GAME_TYPES, GAME_PHASES } from '../shared/constants';
+import { STORAGE_KEYS } from '../shared/storage-keys';
+import { loadFromStorage } from '../hooks/useFilterPersistence';
 
-const DATE_STORAGE_KEY = 'dashboard-date-filter';
-const GAME_TYPE_STORAGE_KEY = 'dashboard-game-type-filters';
-const GAME_PHASE_STORAGE_KEY = 'dashboard-game-phase-filters';
-
-const ALL_GAME_TYPES = ['bullet', 'blitz', 'rapid', 'classical'];
-const ALL_GAME_PHASES = ['opening', 'middlegame', 'endgame'];
+const DATE_STORAGE_KEY = STORAGE_KEYS.dashboardDate;
+const GAME_TYPE_STORAGE_KEY = STORAGE_KEYS.dashboardGameTypes;
+const GAME_PHASE_STORAGE_KEY = STORAGE_KEYS.dashboardGamePhases;
 
 interface DateState {
   preset: DatePreset | null;
@@ -23,17 +23,6 @@ function getPresetDates(preset: string): { from: string | null; to: string | nul
   if (!days) return { from: null, to: null };
   const from = new Date(now.getTime() - days * msPerDay).toISOString().split('T')[0] ?? '';
   return { from, to };
-}
-
-function loadArray(key: string, defaults: string[]): string[] {
-  const stored = localStorage.getItem(key);
-  if (!stored) return defaults;
-  try {
-    const parsed: unknown = JSON.parse(stored);
-    return Array.isArray(parsed) ? (parsed as string[]) : defaults;
-  } catch {
-    return defaults;
-  }
 }
 
 function loadDateState(): DateState {
@@ -68,8 +57,8 @@ export interface DashboardFiltersResult {
 
 export function useDashboardFilters(): DashboardFiltersResult {
   const [dateState, setDateState] = useState<DateState>(loadDateState);
-  const [gameTypes, setGameTypesState] = useState(() => loadArray(GAME_TYPE_STORAGE_KEY, ALL_GAME_TYPES));
-  const [gamePhases, setGamePhasesState] = useState(() => loadArray(GAME_PHASE_STORAGE_KEY, ALL_GAME_PHASES));
+  const [gameTypes, setGameTypesState] = useState(() => loadFromStorage(GAME_TYPE_STORAGE_KEY, GAME_TYPES));
+  const [gamePhases, setGamePhasesState] = useState(() => loadFromStorage(GAME_PHASE_STORAGE_KEY, GAME_PHASES));
 
   const setDatePreset = useCallback((preset: DatePreset) => {
     const dates = getPresetDates(preset);
@@ -101,10 +90,10 @@ export function useDashboardFilters(): DashboardFiltersResult {
     const params: DateFilterParams = {};
     if (dateState.from) params.start_date = dateState.from;
     if (dateState.to) params.end_date = dateState.to;
-    if (gameTypes.length > 0 && gameTypes.length < ALL_GAME_TYPES.length) {
+    if (gameTypes.length > 0 && gameTypes.length < GAME_TYPES.length) {
       params.game_types = gameTypes;
     }
-    if (gamePhases.length > 0 && gamePhases.length < ALL_GAME_PHASES.length) {
+    if (gamePhases.length > 0 && gamePhases.length < GAME_PHASES.length) {
       params.game_phases = gamePhases;
     }
     return params;

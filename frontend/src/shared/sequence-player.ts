@@ -1,4 +1,5 @@
 import { Chessground } from '@vendor/chessground';
+import { buildBoardSvgDataUrl } from './board-theme';
 
 interface ChessgroundApi {
   set(config: Record<string, unknown>): void;
@@ -96,16 +97,6 @@ export class MoveSequence {
   }
 }
 
-function buildBoardSvg(light: string, dark: string): string {
-  const squares = Array.from({ length: 64 }, (_, i) => {
-    const x = i % 8, y = Math.floor(i / 8);
-    return (x + y) % 2 === 1 ? `<rect x="${String(x)}" y="${String(y)}" width="1" height="1" fill="${dark}"/>` : '';
-  }).join('');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" shape-rendering="crispEdges">` +
-    `<rect width="8" height="8" fill="${light}"/>${squares}</svg>`;
-  return 'data:image/svg+xml;base64,' + btoa(svg);
-}
-
 export class ReadOnlyBoard {
   private _el: HTMLElement;
   private _cg: ChessgroundApi | null;
@@ -134,7 +125,7 @@ export class ReadOnlyBoard {
     const style = getComputedStyle(document.documentElement);
     const light = style.getPropertyValue('--board-light').trim() || '#E0E0E0';
     const dark = style.getPropertyValue('--board-dark').trim() || '#A0A0A0';
-    this._boardBgUrl = `url("${buildBoardSvg(light, dark)}")`;
+    this._boardBgUrl = `url("${buildBoardSvgDataUrl(light, dark)}")`;
     this._el.style.setProperty('--board-bg', this._boardBgUrl);
     this._setBoardInline();
   }

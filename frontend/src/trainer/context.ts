@@ -1,35 +1,9 @@
 import { createContext } from 'preact';
 import type { Dispatch } from 'preact/hooks';
+export type { PuzzleData } from '../types/api';
+import type { PuzzleData } from '../types/api';
 
 type Color = 'white' | 'black';
-
-export interface PuzzleData {
-  game_id: string;
-  fen: string;
-  ply: number;
-  blunder_uci: string;
-  blunder_san: string;
-  best_move_uci: string;
-  best_move_san: string;
-  best_line: string[];
-  player_color: 'white' | 'black';
-  eval_before: number;
-  eval_after: number;
-  eval_before_display: string;
-  eval_after_display: string;
-  cp_loss: number;
-  game_phase: string;
-  tactical_pattern: string | null;
-  tactical_reason: string | null;
-  tactical_squares: string[];
-  explanation_blunder: string | null;
-  explanation_best: string | null;
-  game_url: string | null;
-  difficulty: string;
-  pre_move_uci: string | null;
-  pre_move_fen: string | null;
-  best_move_eval: number | null;
-}
 
 export interface LinePosition {
   fen: string;

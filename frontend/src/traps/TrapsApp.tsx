@@ -2,54 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
 import { Dropdown } from '../components/Dropdown';
 import SequencePlayer from '../shared/sequence-player';
-
-interface TrapStat {
-  trap_id: string;
-  name: string;
-  category: string;
-  entered: number;
-  sprung: number;
-  executed: number;
-  last_seen?: string;
-}
-
-interface TrapSummary {
-  total_sprung: number;
-  total_entered: number;
-  total_executed: number;
-  games_with_traps: number;
-  top_traps?: Array<{ trap_id: string; count: number }>;
-}
-
-interface TrapCatalogEntry {
-  id: string;
-  name: string;
-}
-
-interface TrapDetail {
-  name: string;
-  victim_side: string;
-  trap_san?: string[][];
-  refutation_san?: string[];
-  mistake_san?: string;
-  refutation_note?: string;
-  refutation_move?: string;
-  recognition_tip?: string;
-}
-
-interface TrapHistory {
-  white: string;
-  black: string;
-  result: string;
-  date?: string;
-  game_url?: string;
-  match_type: string;
-}
-
-interface TrapDetailData {
-  trap: TrapDetail | null;
-  history: TrapHistory[];
-}
+import type {
+  TrapStat, TrapSummary, TrapCatalogEntry,
+  TrapDetail, TrapDetailData,
+} from '../types/api';
 
 type TabKey = 'trap' | 'refutation';
 
@@ -106,9 +62,9 @@ function DetailPanel({ trapId, catalog, onClose }: DetailPanelProps) {
     setError(null);
     setActiveTab('trap');
 
-    client.traps.detail<{ trap: TrapDetail | null; history?: TrapHistory[] }>(trapId)
+    client.traps.detail(trapId)
       .then(resp => {
-        setDetail({ trap: resp.trap, history: resp.history ?? [] });
+        setDetail({ trap: resp.trap, history: resp.history });
       })
       .catch((err: unknown) => {
         console.error('Failed to load trap detail:', err);
@@ -262,15 +218,15 @@ export function TrapsApp() {
   const loadData = useCallback(async () => {
     try {
       const [statsResp, catalogResp] = await Promise.all([
-        client.traps.stats<{ stats?: TrapStat[]; summary?: TrapSummary }>(),
+        client.traps.stats(),
         client.traps.catalog(),
       ]);
 
       const catalogMap: Record<string, TrapCatalogEntry> = {};
       catalogResp.forEach(c => { catalogMap[c.id] = c; });
 
-      setStats(statsResp.stats ?? []);
-      setSummary(statsResp.summary ?? { total_sprung: 0, total_entered: 0, total_executed: 0, games_with_traps: 0 });
+      setStats(statsResp.stats);
+      setSummary(statsResp.summary);
       setCatalog(catalogMap);
     } catch (err) {
       console.error('Failed to load trap data:', err);

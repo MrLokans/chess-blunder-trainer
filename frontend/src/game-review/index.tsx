@@ -1,4 +1,5 @@
 import { render } from 'preact';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { GameReviewApp } from './GameReviewApp';
 
 function getGameId(): string | null {
@@ -17,5 +18,5 @@ const root = document.getElementById('game-review-root');
 if (root) {
   const gameId = getGameId();
   const startPly = getStartPly();
-  render(<GameReviewApp gameId={gameId} startPly={startPly} />, root);
+  render(<ErrorBoundary><GameReviewApp gameId={gameId} startPly={startPly} /></ErrorBoundary>, root);
 }

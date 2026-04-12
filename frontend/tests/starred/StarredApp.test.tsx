@@ -84,15 +84,6 @@ describe('StarredApp', () => {
     });
   });
 
-  test('shows empty state when items is undefined', async () => {
-    mockList.mockResolvedValue({});
-    render(<StarredApp />);
-
-    await waitFor(() => {
-      expect(screen.getByText(t('starred.empty'))).toBeDefined();
-    });
-  });
-
   test('click on puzzle link navigates to trainer with params', async () => {
     mockList.mockResolvedValue({ items: STARRED_ITEMS });
     render(<StarredApp />);

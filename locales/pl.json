@@ -1,6 +1,8 @@
 {
   "common.loading": "Ładowanie...",
   "common.error": "Błąd",
+  "common.error_boundary_message": "Coś poszło nie tak. Spróbuj ponownie załadować stronę.",
+  "common.reload": "Załaduj ponownie",
   "common.no_move_made": "Nie wykonano ruchu",
   "common.less": "Mniej",
   "common.more": "Więcej",

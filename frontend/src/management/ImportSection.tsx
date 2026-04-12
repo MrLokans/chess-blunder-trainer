@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { client } from '../shared/api';
 import { Alert } from '../components/Alert';
 import { debounce } from '../shared/debounce';
+import { STORAGE_KEYS } from '../shared/storage-keys';
 import type { ExternalJobStatus } from '../components/JobCard';
 
 interface ConfiguredUsernames {
@@ -11,13 +12,11 @@ interface ConfiguredUsernames {
 
 export type { ConfiguredUsernames };
 
-const STORAGE_KEYS = {
-  source: 'blunder_import_source',
-  username: 'blunder_import_username',
-  maxGames: 'blunder_import_maxGames',
+const IMPORT_KEYS = {
+  source: STORAGE_KEYS.importSource,
+  username: STORAGE_KEYS.importUsername,
+  maxGames: STORAGE_KEYS.importMaxGames,
 } as const;
-
-export { STORAGE_KEYS as IMPORT_STORAGE_KEYS };
 
 interface ImportSectionProps {
   demoMode: boolean;
@@ -27,9 +26,9 @@ interface ImportSectionProps {
 }
 
 export function ImportSection({ demoMode, configuredUsernames, onImportStarted, importJobStatus }: ImportSectionProps) {
-  const [source, setSource] = useState(() => localStorage.getItem(STORAGE_KEYS.source) ?? '');
-  const [username, setUsername] = useState(() => localStorage.getItem(STORAGE_KEYS.username) ?? '');
-  const [maxGames, setMaxGames] = useState(() => localStorage.getItem(STORAGE_KEYS.maxGames) ?? '1000');
+  const [source, setSource] = useState(() => localStorage.getItem(IMPORT_KEYS.source) ?? '');
+  const [username, setUsername] = useState(() => localStorage.getItem(IMPORT_KEYS.username) ?? '');
+  const [maxGames, setMaxGames] = useState(() => localStorage.getItem(IMPORT_KEYS.maxGames) ?? '1000');
   const [usernameValid, setUsernameValid] = useState<boolean | null>(null);
   const [validationState, setValidationState] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
@@ -47,15 +46,15 @@ export function ImportSection({ demoMode, configuredUsernames, onImportStarted, 
   }, [source, configuredUsernames]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.source, source);
+    localStorage.setItem(IMPORT_KEYS.source, source);
   }, [source]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.username, username);
+    localStorage.setItem(IMPORT_KEYS.username, username);
   }, [username]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.maxGames, maxGames);
+    localStorage.setItem(IMPORT_KEYS.maxGames, maxGames);
   }, [maxGames]);
 
   const validateUsername = useCallback(async (src: string, uname: string) => {

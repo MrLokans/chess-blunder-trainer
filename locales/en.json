@@ -1,6 +1,8 @@
 {
   "common.loading": "Loading...",
   "common.error": "Error",
+  "common.error_boundary_message": "Something went wrong. Please try reloading the page.",
+  "common.reload": "Reload",
   "common.no_move_made": "No move made",
   "common.less": "Less",
   "common.more": "More",

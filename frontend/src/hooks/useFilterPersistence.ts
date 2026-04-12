@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'preact/hooks';
 
-function loadFromStorage(key: string, defaults: string[]): string[] {
+export function loadFromStorage(key: string, defaults: readonly string[]): string[] {
   const stored = localStorage.getItem(key);
-  if (!stored) return defaults;
+  if (!stored) return [...defaults];
 
   try {
     const parsed: unknown = JSON.parse(stored);
-    return Array.isArray(parsed) ? parsed as string[] : defaults;
+    return Array.isArray(parsed) ? (parsed as string[]) : [...defaults];
   } catch {
-    return defaults;
+    return [...defaults];
   }
 }
 

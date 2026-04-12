@@ -90,25 +90,6 @@ export interface ConversionResilienceData {
   resilience_rate: number;
 }
 
-export interface TrapTop {
-  trap_id: string;
-  count: number;
-}
-
-export interface TrapStat {
-  trap_id: string;
-  name: string;
-}
-
-export interface TrapsData {
-  summary: {
-    total_sprung: number;
-    total_entered: number;
-    top_traps?: TrapTop[];
-  };
-  stats: TrapStat[];
-}
-
 export interface GameBreakdownItem {
   source: string;
   username: string;

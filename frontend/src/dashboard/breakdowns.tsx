@@ -10,9 +10,9 @@ import type {
   DifficultyData,
   CollapsePointData,
   ConversionResilienceData,
-  TrapsData,
   GameBreakdownItem,
 } from './types';
+import type { TrapStatsResponse } from '../types/api';
 
 export function renderOpeningName(ecoCode: string, ecoName: string): import('preact').JSX.Element {
   const colonIdx = ecoName.indexOf(': ');
@@ -498,7 +498,7 @@ export function ConversionResilienceBreakdown({ data }: { data: ConversionResili
   );
 }
 
-export function TrapsSummary({ data }: { data: TrapsData }) {
+export function TrapsSummary({ data }: { data: TrapStatsResponse }) {
   const { summary, stats } = data;
 
   if (summary.total_sprung <= 0 && summary.total_entered <= 0) {

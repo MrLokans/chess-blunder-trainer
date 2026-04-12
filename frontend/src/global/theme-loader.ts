@@ -115,7 +115,5 @@ if (cached) {
   try { applyTheme(JSON.parse(cached) as ThemeColors); } catch { /* ignore */ }
 }
 
- 
-(window as unknown as Record<string, unknown>).adjustColor = adjustColor;
- 
-(window as unknown as Record<string, unknown>).applyTheme = applyTheme;
+window.adjustColor = adjustColor;
+window.applyTheme = applyTheme;

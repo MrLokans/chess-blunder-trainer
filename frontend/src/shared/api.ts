@@ -1,4 +1,10 @@
-import type { ApiErrorResponse, ImportStartResponse, JobStatusResponse, JobStatus } from '../types/api';
+import type {
+  ApiErrorResponse, ImportStartResponse, JobStatusResponse, JobStatus,
+  PuzzleData, SubmitMovePayload, SubmitMoveResponse,
+  ReviewData, StarredItem,
+  TrapCatalogEntry, TrapStatsResponse, TrapDetailData,
+  SetupPayload,
+} from '../types/api';
 import type {
   OverviewData,
   AnalysisStatus,
@@ -54,11 +60,12 @@ async function requestText(url: string, options: RequestInit = {}): Promise<stri
   return resp.text();
 }
 
-function post<T = unknown>(url: string, body: unknown): Promise<T> {
+function post<T = unknown>(url: string, body: unknown, signal?: AbortSignal): Promise<T> {
   return request<T>(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    signal,
   });
 }
 
@@ -68,6 +75,10 @@ function put<T = unknown>(url: string, body?: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
+}
+
+export function isAbortError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === 'AbortError';
 }
 
 function del<T = unknown>(url: string): Promise<T> {
@@ -87,6 +98,10 @@ function withQuery(url: string, params?: QueryParams): string {
   }
   const qs = searchParams.toString();
   return qs ? `${url}?${qs}` : url;
+}
+
+export function requestWithSignal<T = unknown>(url: string, signal: AbortSignal): Promise<T> {
+  return request<T>(url, { signal });
 }
 
 interface JobStarted {
@@ -153,31 +168,30 @@ export const client = {
 
   settings: {
     get: () => request<SyncSettings>('/api/settings'),
-    save: (data: unknown) => post('/api/settings', data),
+    save: (data: SyncSettings & { theme: ThemeColors }) => post('/api/settings', data),
     getUsernames: () => request<{ lichess_username?: string; chesscom_username?: string }>('/api/settings/usernames'),
     getTheme: () => request<ThemeColors>('/api/settings/theme'),
     getThemePresets: () => request<{ presets: ThemePreset[] }>('/api/settings/theme/presets'),
     getBoard: () => request<BoardSettings>('/api/settings/board'),
-    saveBoard: (data: unknown) => post('/api/settings/board', data),
+    saveBoard: (data: BoardSettings) => post('/api/settings/board', data),
     getPieceSets: () => request<{ piece_sets: PieceSet[] }>('/api/settings/board/piece-sets'),
     getBoardColorPresets: () => request<{ presets: BoardColorPreset[] }>('/api/settings/board/color-presets'),
     setLocale: (locale: string) => post('/api/settings/locale', { locale }),
     getFeatures: () => request<{ groups: FeatureGroup[] }>('/api/settings/features'),
-    saveFeatures: (features: unknown) => post('/api/settings/features', { features }),
+    saveFeatures: (features: Record<string, boolean>) => post('/api/settings/features', { features }),
   },
 
   traps: {
-    catalog: <T = { id: string; name: string }>() => request<T[]>('/api/traps/catalog'),
-    stats: <T = unknown>() => request<T>('/api/traps/stats'),
-    detail: <T = unknown>(trapId: string) => request<T>(`/api/traps/${trapId}`),
+    catalog: () => request<TrapCatalogEntry[]>('/api/traps/catalog'),
+    stats: () => request<TrapStatsResponse>('/api/traps/stats'),
+    detail: (trapId: string) => request<TrapDetailData>(`/api/traps/${trapId}`),
   },
 
   trainer: {
-    // Return type varies between TS (PuzzleData) and legacy callers; keep generic
-    getPuzzle: <T = unknown>(params?: QueryParams) => request<T>(withQuery('/api/puzzle', params)),
-    getSpecificPuzzle: <T = unknown>(gameId: string, ply: number) =>
-      request<T>(withQuery('/api/puzzle/specific', { game_id: gameId, ply })),
-    submitMove: (payload: unknown) => post('/api/submit', payload),
+    getPuzzle: (params?: QueryParams) => request<PuzzleData>(withQuery('/api/puzzle', params)),
+    getSpecificPuzzle: (gameId: string, ply: number) =>
+      request<PuzzleData>(withQuery('/api/puzzle/specific', { game_id: gameId, ply })),
+    submitMove: (payload: SubmitMovePayload) => post<SubmitMoveResponse>('/api/submit', payload),
   },
 
   starred: {
@@ -187,11 +201,11 @@ export const client = {
       del(`/api/starred/${encodeURIComponent(gameId)}/${String(ply)}`),
     isStarred: (gameId: string, ply: number) =>
       request(`/api/starred/${encodeURIComponent(gameId)}/${String(ply)}`),
-    list: (params?: QueryParams) => request<{ items?: unknown[] }>(withQuery('/api/starred', params)),
+    list: (params?: QueryParams) => request<{ items: StarredItem[] }>(withQuery('/api/starred', params)),
   },
 
   gameReview: {
-    getReview: <T = unknown>(gameId: string) => request<T>(`/api/games/${encodeURIComponent(gameId)}/review`),
+    getReview: (gameId: string) => request<ReviewData>(`/api/games/${encodeURIComponent(gameId)}/review`),
   },
 
   debug: {
@@ -200,7 +214,7 @@ export const client = {
   },
 
   setup: {
-    complete: (data: unknown) => post<{ import_job_ids?: string[] }>('/api/setup', data),
+    complete: (data: SetupPayload) => post<{ import_job_ids?: string[] }>('/api/setup', data),
     validateUsername: (platform: string, username: string) =>
       post<UsernameValidation>('/api/validate-username', { platform, username }),
   },

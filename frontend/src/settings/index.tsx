@@ -1,4 +1,5 @@
 import { render } from 'preact';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { SettingsApp } from './SettingsApp';
 
 const init = window.__settingsInit;
@@ -7,6 +8,6 @@ if (!init) {
 } else {
   const root = document.getElementById('settings-root');
   if (root) {
-    render(<SettingsApp init={init} />, root);
+    render(<ErrorBoundary><SettingsApp init={init} /></ErrorBoundary>, root);
   }
 }

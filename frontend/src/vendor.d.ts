@@ -99,9 +99,10 @@ declare function trackEvent(name: string, props?: Record<string, unknown>): void
 
 // Feature flags (injected by base.html inline script)
 interface Window {
-  __features: Record<string, boolean>;
+  __features?: Record<string, boolean>;
   __i18n__: Record<string, string>;
   __locale__: string;
   __settingsInit?: import('./settings/types').SettingsInit;
-  adjustColor?: (hex: string, lightness: number, saturation?: number) => string;
+  adjustColor?: (hex: string, lightness: number | null, saturation?: number) => string;
+  applyTheme?: (theme: Record<string, string | undefined>) => void;
 }

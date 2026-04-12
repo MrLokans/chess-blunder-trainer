@@ -1,17 +1,11 @@
 import { render } from 'preact';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { SetupApp } from './SetupApp';
+import { ALL_STORAGE_KEYS } from '../shared/storage-keys';
 
-const APP_STORAGE_KEYS = [
-  'theme',
-  'dashboard-date-filter',
-  'dashboard-game-type-filters',
-  'dashboard-game-phase-filters',
-  'blunder-tutor-tactical-filter',
-];
-
-for (const key of APP_STORAGE_KEYS) {
+for (const key of ALL_STORAGE_KEYS) {
   localStorage.removeItem(key);
 }
 
 const root = document.getElementById('setup-root');
-if (root) render(<SetupApp />, root);
+if (root) render(<ErrorBoundary><SetupApp /></ErrorBoundary>, root);

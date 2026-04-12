@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect } from 'preact/hooks';
+import { STORAGE_KEYS } from '../../shared/storage-keys';
 
-const DRAG_STORAGE_KEY = 'blunder-tutor-result-card-pos';
+const DRAG_STORAGE_KEY = STORAGE_KEYS.trainerResultCardPos;
 
 export function useDrag(cardRef: preact.RefObject<HTMLDivElement | null>): {
   handleRef: (el: HTMLDivElement | null) => void;

@@ -1,24 +1,13 @@
 import { useState, useEffect } from 'preact/hooks';
 import { client } from '../shared/api';
 import { useFeature } from '../hooks/useFeature';
+import type { StarredItem } from '../types/api';
 
 const PHASE_KEYS: Record<number, string> = {
   0: 'chess.phase.opening',
   1: 'chess.phase.middlegame',
   2: 'chess.phase.endgame',
 };
-
-interface StarredItem {
-  game_id: string;
-  ply: number;
-  san?: string;
-  date?: string;
-  white?: string;
-  black?: string;
-  cp_loss?: number | null;
-  game_phase?: number;
-  note?: string;
-}
 
 export function StarredApp() {
   const [items, setItems] = useState<StarredItem[] | null>(null);
@@ -29,7 +18,7 @@ export function StarredApp() {
     void (async () => {
       try {
         const data = await client.starred.list({ limit: 200 });
-        setItems((data.items ?? []) as StarredItem[]);
+        setItems(data.items);
       } catch (err) {
         console.error('Failed to load starred puzzles:', err);
         setError(err instanceof Error ? err.message : String(err));

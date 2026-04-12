@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
+import { STORAGE_KEYS } from '../shared/storage-keys';
 import { Alert } from '../components/Alert';
 import { FeatureToggles } from './FeatureToggles';
 import { SyncSettings } from './SyncSettings';
@@ -104,7 +105,7 @@ export function SettingsApp({ init }: SettingsAppProps) {
       await client.settings.saveBoard(boardSettings);
       trackEvent('Board Style Changed', { piece_set: boardSettings.piece_set });
 
-      localStorage.setItem('theme', JSON.stringify(theme));
+      localStorage.setItem(STORAGE_KEYS.theme, JSON.stringify(theme));
       setMessage({ type: 'success', text: t('settings.saved') });
       setTimeout(() => { window.location.href = '/'; }, 1500);
     } catch {

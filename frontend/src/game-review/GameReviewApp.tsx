@@ -4,29 +4,7 @@ import { MoveSequence, ReadOnlyBoard, PlaybackController } from '../shared/seque
 import { applyBoardBackground, applyPieceSet } from '../shared/board-theme';
 import { updateEvalBar } from '../shared/eval-bar';
 import { EvalChart, evalFromWhite } from './eval-chart';
-
-interface ReviewMove {
-  san: string;
-  move_number: number;
-  player: string;
-  ply: number;
-  eval_after: number;
-  classification?: string;
-}
-
-interface ReviewGame {
-  username?: string;
-  white: string;
-  black: string;
-  result?: string;
-  game_url?: string;
-}
-
-interface ReviewData {
-  moves: ReviewMove[];
-  game: ReviewGame;
-  analyzed: boolean;
-}
+import type { ReviewMove, ReviewData } from '../types/api';
 
 interface MovePair {
   white: (ReviewMove & { index: number }) | null;
@@ -278,7 +256,7 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
     }
 
     Promise.all([
-      client.gameReview.getReview<ReviewData>(gameId),
+      client.gameReview.getReview(gameId),
       client.settings.getBoard().catch(() => null),
     ]).then(([reviewData, boardSettings]) => {
       let orient: 'white' | 'black' = 'white';
