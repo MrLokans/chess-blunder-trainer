@@ -313,6 +313,11 @@ function TrainerCore(): preact.JSX.Element {
     );
   }
 
+  // Initial load — hide layout until first puzzle arrives to prevent layout shift
+  if (!state.puzzle) {
+    return <div class="trainer-page" />;
+  }
+
   const interactive = !state.animating && !state.submitted && !!state.puzzle;
 
   return (

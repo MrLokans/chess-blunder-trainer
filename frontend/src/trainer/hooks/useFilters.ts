@@ -30,6 +30,9 @@ const SK = {
   playFullLine: STORAGE_KEYS.trainerPlayFullLine,
   boardSettingsCollapsed: STORAGE_KEYS.trainerBoardSettingsCollapsed,
   showCoordinates: STORAGE_KEYS.trainerShowCoordinates,
+  showArrows: STORAGE_KEYS.trainerShowArrows,
+  showThreats: STORAGE_KEYS.trainerShowThreats,
+  showTactics: STORAGE_KEYS.trainerShowTactics,
 } as const;
 
 function loadBool(key: string, defaultVal: boolean): boolean {
@@ -75,9 +78,9 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
     color: loadString(SK.color, 'both'),
     playFullLine: loadBool(SK.playFullLine, false),
     showCoordinates: loadBool(SK.showCoordinates, true),
-    showArrows: true,
-    showThreats: false,
-    showTactics: true,
+    showArrows: loadBool(SK.showArrows, true),
+    showThreats: loadBool(SK.showThreats, false),
+    showTactics: loadBool(SK.showTactics, true),
     filtersCollapsed: loadBool(SK.filtersCollapsed, false),
     boardSettingsCollapsed: loadBool(SK.boardSettingsCollapsed, false),
   }));
@@ -132,15 +135,18 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
 
   const setShowArrows = useCallback((enabled: boolean) => {
     setState(s => ({ ...s, showArrows: enabled }));
-  }, []);
+    persist(SK.showArrows, enabled);
+  }, [persist]);
 
   const setShowThreats = useCallback((enabled: boolean) => {
     setState(s => ({ ...s, showThreats: enabled }));
-  }, []);
+    persist(SK.showThreats, enabled);
+  }, [persist]);
 
   const setShowTactics = useCallback((enabled: boolean) => {
     setState(s => ({ ...s, showTactics: enabled }));
-  }, []);
+    persist(SK.showTactics, enabled);
+  }, [persist]);
 
   const toggleFiltersCollapsed = useCallback(() => {
     setState(s => {

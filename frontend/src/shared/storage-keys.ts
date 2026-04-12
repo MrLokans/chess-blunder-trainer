@@ -12,6 +12,9 @@ export const STORAGE_KEYS = {
   trainerPlayFullLine: 'blunder-tutor-play-full-line',
   trainerBoardSettingsCollapsed: 'boardSettingsCollapsed',
   trainerShowCoordinates: 'blunder-tutor-show-coordinates',
+  trainerShowArrows: 'blunder-tutor-show-arrows',
+  trainerShowThreats: 'blunder-tutor-show-threats',
+  trainerShowTactics: 'blunder-tutor-show-tactics',
   trainerResultCardPos: 'blunder-tutor-result-card-pos',
 
   // Dashboard filters
