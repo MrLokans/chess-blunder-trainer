@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0]
+
+### Changed
+
+- **Frontend rewritten to TypeScript and Preact**: Migrated the entire frontend from vanilla JavaScript to TypeScript with Preact islands architecture. Covers the trainer, dashboard, and settings pages.
+- **Trainer page overhaul**: Major rewrite of the trainer page as Preact components with improved structure and interactivity.
+- **Pre-move animations**: Puzzle transitions now play smooth piece animations before the user's turn, making the training flow feel more natural.
+
+### Fixed
+
+- **Settings persistence and panel stickiness**: Resolved issues with settings not saving correctly and side panels losing their sticky positioning.
+- **Vim mode**: Fixed broken keyboard-driven navigation in the trainer.
+- **Tactical puzzles empty state**: Corrected handling when no tactical puzzles are available.
+- **Docker image vendored libs**: Fixed missing vendored libraries in the Docker build.
+
+### Added
+
+- **End-to-end test suite**: Introduced Playwright-based e2e tests with click interaction coverage, now required to pass before release.
+
+---
+
 ## [2.2.1]
 
 ### Changed
