@@ -61,7 +61,9 @@ class BackfillECOJob(BaseJob):
         available_steps = get_all_steps()
 
         try:
-            config = PipelineConfig.from_preset(PipelinePreset.BACKFILL_ECO, force_rerun=force)
+            config = PipelineConfig.from_preset(
+                PipelinePreset.BACKFILL_ECO, force_rerun=force
+            )
             pipeline = AnalysisPipeline(config, available_steps)
 
             for i, game_id in enumerate(game_ids):

@@ -265,9 +265,7 @@ class AnalysisRepository(BaseDbRepository):
 
     async def get_all_analyzed_game_ids(self) -> list[str]:
         conn = await self.get_connection()
-        async with conn.execute(
-            "SELECT game_id FROM analysis_games"
-        ) as cursor:
+        async with conn.execute("SELECT game_id FROM analysis_games") as cursor:
             rows = await cursor.fetchall()
         return [row[0] for row in rows]
 

@@ -134,8 +134,21 @@ class TestTranspositions:
 
     def test_non_book_moves_after_opening_still_finds_opening(self):
         board = _make_board_from_moves(
-            ["e4", "c5", "Nf3", "d6", "d4", "cxd4", "Nxd4", "Nf6", "Nc3", "a6",
-             "h3", "h6", "g4"]
+            [
+                "e4",
+                "c5",
+                "Nf3",
+                "d6",
+                "d4",
+                "cxd4",
+                "Nxd4",
+                "Nf6",
+                "Nc3",
+                "a6",
+                "h3",
+                "h6",
+                "g4",
+            ]
         )
         eco = classify_opening(board)
         assert eco is not None
