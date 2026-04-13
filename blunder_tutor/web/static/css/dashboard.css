@@ -5,7 +5,6 @@
   }
 
   .chart-empty-state {
-    display: none;
     text-align: center;
     padding: var(--s-2xl);
     color: var(--mid-gray);
@@ -191,6 +190,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: var(--s-md);
+    margin-top: var(--s-md);
   }
 
   .game-type-breakdown {
