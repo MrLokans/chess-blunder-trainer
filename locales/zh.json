@@ -286,6 +286,7 @@
   "management.backfill_eco.in_progress": "ECO 回填进行中...",
   "management.backfill_eco.pending": "{count, plural, other {# 局对局待 ECO 分类}}",
   "management.backfill_eco.start": "回填 ECO 代码",
+  "management.backfill_eco.force_start": "强制重新分类全部",
   "management.backfill_eco.started": "ECO 回填已开始！",
   "management.backfill_eco.title": "回填 ECO 代码",
   "management.backfill_phases.completed": "回填完成！",

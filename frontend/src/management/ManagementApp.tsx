@@ -341,6 +341,17 @@ export function ManagementApp({ demoMode }: ManagementInit) {
             startLabel={t('management.backfill_eco.start')}
           />
         )}
+        {!demoMode && (
+          <JobCard
+            fetchStatus={() => client.backfill.ecoStatus()}
+            startJob={() => client.backfill.startEcoForce()}
+            startedMessage={t('management.backfill_eco.started')}
+            completedMessage={t('management.backfill_eco.completed')}
+            failedPrefix={t('management.backfill_eco.failed', { error: '' })}
+            externalStatus={ecoBackfillStatus}
+            startLabel={t('management.backfill_eco.force_start')}
+          />
+        )}
       </section>
 
       <hr class="section-divider" />

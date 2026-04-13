@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import logging
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -8,6 +9,8 @@ from pathlib import Path
 import chess
 
 from blunder_tutor.constants import DEFAULT_FIXTURES_PATH
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -18,59 +21,57 @@ class ECOClassification:
 
 
 class ECODatabase:
-    def __init__(self, entries: list[tuple[str, ECOClassification]]):
-        self._entries = sorted(entries, key=lambda x: -len(x[0]))
+    def __init__(self, entries: dict[str, ECOClassification]):
+        self._positions = entries
 
     def classify(self, board: chess.Board) -> ECOClassification | None:
-        moves_san = self._extract_moves_san(board)
-        if not moves_san:
-            return None
+        temp = board.copy()
+        for _ in range(len(temp.move_stack)):
+            epd = temp.epd()
+            if epd in self._positions:
+                return self._positions[epd]
+            temp.pop()
 
-        for prefix, eco in self._entries:
-            if moves_san.startswith(prefix):
-                return eco
+        epd = temp.epd()
+        if epd in self._positions:
+            return self._positions[epd]
+
         return None
 
-    def _extract_moves_san(self, board: chess.Board) -> str:
-        moves = []
-        temp_board = board.root()
-        for move in board.move_stack:
-            try:
-                san = temp_board.san(move)
-            except (AssertionError, ValueError):
-                break
-            moves.append(san)
-            temp_board.push(move)
-        return " ".join(moves)
 
+def _load_eco_entries(path: Path) -> dict[str, ECOClassification]:
+    positions: dict[str, ECOClassification] = {}
+    move_counts: dict[str, int] = {}
 
-def _parse_pgn_moves(pgn: str) -> str:
-    parts = pgn.split()
-    moves = []
-    for part in parts:
-        if part.endswith("."):
-            continue
-        if part[0].isdigit() and "." in part:
-            part = part.split(".")[-1]
-            if part:
-                moves.append(part)
-        else:
-            moves.append(part)
-    return " ".join(moves)
-
-
-def _load_eco_entries(path: Path) -> list[tuple[str, ECOClassification]]:
-    entries = []
     with open(path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f, delimiter="\t")
         for row in reader:
             eco_code = row["eco"]
             name = row["name"]
             pgn = row["pgn"]
-            moves_san = _parse_pgn_moves(pgn)
-            eco = ECOClassification(code=eco_code, name=name, moves=pgn)
-            entries.append((moves_san, eco))
-    return entries
+
+            try:
+                board = chess.Board()
+                for token in pgn.split():
+                    if token.endswith(".") or (token[0].isdigit() and "." not in token):
+                        continue
+                    if "." in token:
+                        token = token.split(".")[-1]
+                        if not token:
+                            continue
+                    board.push_san(token)
+            except (ValueError, chess.InvalidMoveError, chess.AmbiguousMoveError):
+                logger.warning("Skipping invalid ECO entry: %s %s", eco_code, name)
+                continue
+
+            epd = board.epd()
+            num_moves = len(board.move_stack)
+
+            if epd not in positions or num_moves >= move_counts[epd]:
+                positions[epd] = ECOClassification(code=eco_code, name=name, moves=pgn)
+                move_counts[epd] = num_moves
+
+    return positions
 
 
 @lru_cache(maxsize=1)

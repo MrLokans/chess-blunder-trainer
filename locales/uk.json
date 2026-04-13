@@ -286,6 +286,7 @@
   "management.backfill_eco.in_progress": "Заповнення ECO виконується...",
   "management.backfill_eco.pending": "{count, plural, one {# партія очікує класифікації ECO} few {# партії очікують класифікації ECO} many {# партій очікують класифікації ECO} other {# партій очікують класифікації ECO}}",
   "management.backfill_eco.start": "Заповнити коди ECO",
+  "management.backfill_eco.force_start": "Перекласифікувати всі",
   "management.backfill_eco.started": "Заповнення ECO розпочато!",
   "management.backfill_eco.title": "Заповнити коди ECO",
   "management.backfill_phases.completed": "Заповнення завершено!",

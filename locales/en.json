@@ -286,6 +286,7 @@
   "management.backfill_eco.in_progress": "ECO backfill in progress...",
   "management.backfill_eco.pending": "{count, plural, one {# game} other {# games}} pending ECO classification",
   "management.backfill_eco.start": "Backfill ECO Codes",
+  "management.backfill_eco.force_start": "Force Reclassify All",
   "management.backfill_eco.started": "ECO backfill started!",
   "management.backfill_eco.title": "Backfill ECO Codes",
   "management.backfill_phases.completed": "Backfill completed!",

@@ -157,6 +157,7 @@ export const client = {
     ecoPending: () => request('/api/backfill-eco/pending'),
     ecoStatus: () => request<JobStatus>('/api/backfill-eco/status'),
     startEco: () => post<JobStarted>('/api/backfill-eco/start', {}),
+    startEcoForce: () => post<JobStarted>('/api/backfill-eco/start?force=true', {}),
     trapsStatus: () => request<JobStatus>('/api/backfill-traps/status'),
     startTraps: () => post<JobStarted>('/api/backfill-traps/start', {}),
   },

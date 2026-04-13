@@ -263,6 +263,14 @@ class AnalysisRepository(BaseDbRepository):
             rows = await cursor.fetchall()
         return [row[0] for row in rows]
 
+    async def get_all_analyzed_game_ids(self) -> list[str]:
+        conn = await self.get_connection()
+        async with conn.execute(
+            "SELECT game_id FROM analysis_games"
+        ) as cursor:
+            rows = await cursor.fetchall()
+        return [row[0] for row in rows]
+
     async def update_game_eco(
         self, game_id: str, eco_code: str | None, eco_name: str | None
     ) -> None:

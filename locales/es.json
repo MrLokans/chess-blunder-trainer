@@ -286,6 +286,7 @@
   "management.backfill_eco.in_progress": "Relleno ECO en curso...",
   "management.backfill_eco.pending": "{count, plural, one {# partida pendiente de clasificación ECO} other {# partidas pendientes de clasificación ECO}}",
   "management.backfill_eco.start": "Rellenar códigos ECO",
+  "management.backfill_eco.force_start": "Reclasificar todo",
   "management.backfill_eco.started": "¡Relleno ECO iniciado!",
   "management.backfill_eco.title": "Rellenar códigos ECO",
   "management.backfill_phases.completed": "¡Relleno completado!",

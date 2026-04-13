@@ -376,20 +376,25 @@ async def start_backfill_eco_job(
     job_service: JobServiceDep,
     analysis_repo: AnalysisRepoDep,
     event_bus: EventBusDep,
+    force: bool = False,
 ) -> dict[str, str]:
-    games_needing_backfill = await analysis_repo.get_game_ids_missing_eco()
+    if force:
+        games = await analysis_repo.get_all_analyzed_game_ids()
+    else:
+        games = await analysis_repo.get_game_ids_missing_eco()
 
-    if not games_needing_backfill:
+    if not games:
         raise HTTPException(status_code=400, detail="No games need ECO backfill")
 
     job_id = await job_service.create_job(
         job_type="backfill_eco",
-        max_games=len(games_needing_backfill),
+        max_games=len(games),
     )
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
         job_type="backfill_eco",
+        force=force,
     )
     await event_bus.publish(event)
 

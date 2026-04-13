@@ -286,6 +286,7 @@
   "management.backfill_eco.in_progress": "Бэкфилл ECO выполняется...",
   "management.backfill_eco.pending": "{count, plural, one {# партия ожидает классификации ECO} few {# партии ожидают классификации ECO} many {# партий ожидают классификации ECO} other {# партий ожидают классификации ECO}}",
   "management.backfill_eco.start": "Запустить бэкфилл ECO",
+  "management.backfill_eco.force_start": "Переклассифицировать все",
   "management.backfill_eco.started": "Бэкфилл ECO запущен!",
   "management.backfill_eco.title": "Бэкфилл ECO-кодов",
   "management.backfill_phases.completed": "Бэкфилл завершён!",

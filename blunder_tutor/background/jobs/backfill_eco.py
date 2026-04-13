@@ -42,7 +42,11 @@ class BackfillECOJob(BaseJob):
         )
 
     async def execute(self, job_id: str, **kwargs: Any) -> dict[str, Any]:
-        game_ids = await self.analysis_repo.get_game_ids_missing_eco()
+        force = kwargs.get("force", False)
+        if force:
+            game_ids = await self.analysis_repo.get_all_analyzed_game_ids()
+        else:
+            game_ids = await self.analysis_repo.get_game_ids_missing_eco()
 
         if not game_ids:
             result = {"games_processed": 0, "games_classified": 0}
@@ -57,7 +61,7 @@ class BackfillECOJob(BaseJob):
         available_steps = get_all_steps()
 
         try:
-            config = PipelineConfig.from_preset(PipelinePreset.BACKFILL_ECO)
+            config = PipelineConfig.from_preset(PipelinePreset.BACKFILL_ECO, force_rerun=force)
             pipeline = AnalysisPipeline(config, available_steps)
 
             for i, game_id in enumerate(game_ids):

@@ -140,6 +140,7 @@ async def run_backfill_eco_job(
     job_service: Annotated[JobService, Depends(get_job_service)],
     analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
     game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+    force: bool = False,
 ) -> dict[str, Any]:
     ctx = get_context()
     job = BackfillECOJob(
@@ -148,7 +149,7 @@ async def run_backfill_eco_job(
         game_repo=game_repo,
         engine_path=ctx.engine_path,
     )
-    return await job.execute(job_id=job_id)
+    return await job.execute(job_id=job_id, force=force)
 
 
 @inject

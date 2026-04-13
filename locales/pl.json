@@ -286,6 +286,7 @@
   "management.backfill_eco.in_progress": "Uzupełnianie ECO w toku...",
   "management.backfill_eco.pending": "{count, plural, one {# partia oczekuje na klasyfikację ECO} few {# partie oczekują na klasyfikację ECO} many {# partii oczekuje na klasyfikację ECO}}",
   "management.backfill_eco.start": "Uzupełnij kody ECO",
+  "management.backfill_eco.force_start": "Przeklasyfikuj wszystkie",
   "management.backfill_eco.started": "Uzupełnianie ECO rozpoczęte!",
   "management.backfill_eco.title": "Uzupełnij kody ECO",
   "management.backfill_phases.completed": "Uzupełnianie zakończone!",
