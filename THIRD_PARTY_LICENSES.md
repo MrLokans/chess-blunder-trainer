@@ -105,6 +105,21 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ---
 
+## Vendored Data Files
+
+### Lichess Chess Openings (ECO database)
+
+- **Author:** Lichess.org contributors
+- **License:** CC0-1.0 (Public Domain)
+- **Source:** [https://github.com/lichess-org/chess-openings](https://github.com/lichess-org/chess-openings)
+- **Files:** `fixtures/eco.tsv`
+
+This work is dedicated to the public domain under the CC0 1.0 Universal
+(CC0 1.0) Public Domain Dedication. No rights are reserved.
+See: https://creativecommons.org/publicdomain/zero/1.0/
+
+---
+
 ## Chess Piece Sets
 
 Piece images in `blunder_tutor/web/static/pieces/`. These originate from the
