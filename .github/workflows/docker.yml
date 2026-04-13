@@ -70,9 +70,10 @@ jobs:
 
       - name: Start container
         run: |
+          cp demo/demo.sqlite3 /tmp/e2e-test.sqlite3
           docker run -d --name e2e-app \
             -p 8000:8000 \
-            -v ${{ github.workspace }}/demo/demo.sqlite3:/app/data/main.sqlite3:ro \
+            -v /tmp/e2e-test.sqlite3:/app/data/main.sqlite3 \
             blunder-tutor:e2e-test
           # Wait for health check
           for i in $(seq 1 30); do
