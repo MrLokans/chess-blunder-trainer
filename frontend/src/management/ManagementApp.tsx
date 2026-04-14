@@ -331,26 +331,26 @@ export function ManagementApp({ demoMode }: ManagementInit) {
         <h2>{t('management.backfill_eco.title')}</h2>
         <p class="section-description mb-4">{t('management.backfill_eco.description')}</p>
         {!demoMode && (
-          <JobCard
-            fetchStatus={() => client.backfill.ecoStatus()}
-            startJob={() => client.backfill.startEco()}
-            startedMessage={t('management.backfill_eco.started')}
-            completedMessage={t('management.backfill_eco.completed')}
-            failedPrefix={t('management.backfill_eco.failed', { error: '' })}
-            externalStatus={ecoBackfillStatus}
-            startLabel={t('management.backfill_eco.start')}
-          />
-        )}
-        {!demoMode && (
-          <JobCard
-            fetchStatus={() => client.backfill.ecoStatus()}
-            startJob={() => client.backfill.startEcoForce()}
-            startedMessage={t('management.backfill_eco.started')}
-            completedMessage={t('management.backfill_eco.completed')}
-            failedPrefix={t('management.backfill_eco.failed', { error: '' })}
-            externalStatus={ecoBackfillStatus}
-            startLabel={t('management.backfill_eco.force_start')}
-          />
+          <div class="btn-row">
+            <JobCard
+              fetchStatus={() => client.backfill.ecoStatus()}
+              startJob={() => client.backfill.startEco()}
+              startedMessage={t('management.backfill_eco.started')}
+              completedMessage={t('management.backfill_eco.completed')}
+              failedPrefix={t('management.backfill_eco.failed', { error: '' })}
+              externalStatus={ecoBackfillStatus}
+              startLabel={t('management.backfill_eco.start')}
+            />
+            <JobCard
+              fetchStatus={() => client.backfill.ecoStatus()}
+              startJob={() => client.backfill.startEcoForce()}
+              startedMessage={t('management.backfill_eco.started')}
+              completedMessage={t('management.backfill_eco.completed')}
+              failedPrefix={t('management.backfill_eco.failed', { error: '' })}
+              externalStatus={ecoBackfillStatus}
+              startLabel={t('management.backfill_eco.force_start')}
+            />
+          </div>
         )}
       </section>
 
