@@ -34,6 +34,7 @@ from blunder_tutor.core.dependencies import (
     get_work_coordinator,
 )
 from blunder_tutor.events import EventBus
+from blunder_tutor.events.event_types import TrapsEvent
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
@@ -187,6 +188,7 @@ async def run_backfill_traps_job(
     job_id: str,
     job_service: Annotated[JobService, Depends(get_job_service)],
     game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+    event_bus: Annotated[EventBus, Depends(get_event_bus)],
 ) -> dict[str, Any]:
     ctx = get_context()
     trap_repo = TrapRepository(db_path=ctx.db_path)
@@ -196,7 +198,14 @@ async def run_backfill_traps_job(
             game_repo=game_repo,
             trap_repo=trap_repo,
         )
-        return await job.execute(job_id=job_id)
+        result = await job.execute(job_id=job_id)
+
+        job_record = await job_service.get_job(job_id)
+        user_key = (job_record.get("username") if job_record else None) or "default"
+        traps_event = TrapsEvent.create_traps_updated(user_key=user_key)
+        await event_bus.publish(traps_event)
+
+        return result
     finally:
         await trap_repo.close()
 

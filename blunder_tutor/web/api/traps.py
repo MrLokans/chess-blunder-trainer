@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from fastapi import Depends, Request
 from fastapi.routing import APIRouter
 
 from blunder_tutor.analysis.traps import (
@@ -9,10 +10,11 @@ from blunder_tutor.analysis.traps import (
     _parse_pgn_to_san,
     get_trap_database,
 )
+from blunder_tutor.cache.decorator import cached
 from blunder_tutor.utils.pgn_utils import extract_game_url_from_string
-from blunder_tutor.web.dependencies import TrapRepoDep
+from blunder_tutor.web.dependencies import TrapRepoDep, set_request_username
 
-traps_router = APIRouter()
+traps_router = APIRouter(dependencies=[Depends(set_request_username)])
 
 
 def _serialize_trap(t: TrapDefinition) -> dict[str, Any]:
@@ -43,13 +45,15 @@ def _serialize_trap(t: TrapDefinition) -> dict[str, Any]:
 
 
 @traps_router.get("/api/traps/catalog")
-async def get_trap_catalog() -> list[dict[str, Any]]:
+@cached(tag="traps", ttl=300, version=1, key_params=[])
+async def get_trap_catalog(request: Request) -> list[dict[str, Any]]:
     db = get_trap_database()
     return [_serialize_trap(t) for t in db.all_traps]
 
 
 @traps_router.get("/api/traps/stats")
-async def get_trap_stats(trap_repo: TrapRepoDep) -> dict[str, Any]:
+@cached(tag="traps", ttl=300, version=1, key_params=[])
+async def get_trap_stats(request: Request, trap_repo: TrapRepoDep) -> dict[str, Any]:
     stats = await trap_repo.get_trap_stats()
     summary = await trap_repo.get_trap_summary()
 
@@ -69,7 +73,10 @@ async def get_trap_stats(trap_repo: TrapRepoDep) -> dict[str, Any]:
 
 
 @traps_router.get("/api/traps/{trap_id}")
-async def get_trap_detail(trap_id: str, trap_repo: TrapRepoDep) -> dict[str, Any]:
+@cached(tag="traps", ttl=300, version=1, key_params=["trap_id"])
+async def get_trap_detail(
+    request: Request, trap_id: str, trap_repo: TrapRepoDep
+) -> dict[str, Any]:
     db = get_trap_database()
     trap_def = db.get_trap(trap_id)
 

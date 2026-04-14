@@ -14,6 +14,9 @@ class EventType(str, Enum):
     JOB_FAILED = "job.failed"
     JOB_EXECUTION_REQUESTED = "job.execution_requested"
     STATS_UPDATED = "stats.updated"
+    TRAPS_UPDATED = "traps.updated"
+    TRAINING_UPDATED = "training.updated"
+    CACHE_INVALIDATED = "cache.invalidated"
 
 
 @dataclass
@@ -73,10 +76,43 @@ class ProgressEvent(Event):
 @dataclass
 class StatsEvent(Event):
     @classmethod
-    def create_stats_updated(cls) -> "StatsEvent":
+    def create_stats_updated(cls, user_key: str = "default") -> "StatsEvent":
         return cls(
             type=EventType.STATS_UPDATED,
-            data={"trigger": "job_completed"},
+            data={"trigger": "job_completed", "user_key": user_key},
+            timestamp=datetime.utcnow().isoformat(),
+        )
+
+
+@dataclass
+class TrapsEvent(Event):
+    @classmethod
+    def create_traps_updated(cls, user_key: str) -> "TrapsEvent":
+        return cls(
+            type=EventType.TRAPS_UPDATED,
+            data={"trigger": "trap_detection_completed", "user_key": user_key},
+            timestamp=datetime.utcnow().isoformat(),
+        )
+
+
+@dataclass
+class TrainingEvent(Event):
+    @classmethod
+    def create_training_updated(cls, user_key: str) -> "TrainingEvent":
+        return cls(
+            type=EventType.TRAINING_UPDATED,
+            data={"trigger": "puzzle_attempt", "user_key": user_key},
+            timestamp=datetime.utcnow().isoformat(),
+        )
+
+
+@dataclass
+class CacheEvent(Event):
+    @classmethod
+    def create_cache_invalidated(cls, tags: list[str]) -> "CacheEvent":
+        return cls(
+            type=EventType.CACHE_INVALIDATED,
+            data={"tags": tags},
             timestamp=datetime.utcnow().isoformat(),
         )
 

@@ -10,12 +10,15 @@ from pydantic import BaseModel, Field
 
 from blunder_tutor.analysis.tactics import PATTERN_LABELS, TacticalPattern
 from blunder_tutor.constants import PHASE_FROM_STRING, PHASE_LABELS
+from blunder_tutor.events.event_types import TrainingEvent
 from blunder_tutor.utils.chess_utils import format_eval
 from blunder_tutor.utils.explanation import generate_explanation, resolve_explanation
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     AnalysisServiceDep,
+    ConfigDep,
     EngineThrottleDep,
+    EventBusDep,
     PuzzleAttemptRepoDep,
     PuzzleServiceDep,
     SettingsRepoDep,
@@ -415,9 +418,12 @@ async def specific_puzzle(
     description="Submit a move attempt for the current puzzle and receive evaluation feedback.",
 )
 async def submit(
+    request: Request,
     payload: SubmitMoveRequest,
     attempt_repo: PuzzleAttemptRepoDep,
     analysis_service: AnalysisServiceDep,
+    event_bus: EventBusDep,
+    config: ConfigDep,
     _throttle: EngineThrottleDep,
 ) -> dict[str, Any]:
     try:
@@ -450,6 +456,11 @@ async def submit(
         user_move_uci=payload.move,
         best_move_uci=payload.best_move_uci,
     )
+
+    training_event = TrainingEvent.create_training_updated(
+        user_key=config.username or "default"
+    )
+    await event_bus.publish(training_event)
 
     return {
         "user_san": user_san,

@@ -13,6 +13,12 @@ from fastapi.templating import Jinja2Templates
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.background.executor import JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
+from blunder_tutor.cache import (
+    CacheInvalidator,
+    InMemoryCacheBackend,
+    NullCacheBackend,
+)
+from blunder_tutor.cache.decorator import set_cache_backend
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.websocket_manager import ConnectionManager
 from blunder_tutor.i18n import TranslationManager
@@ -55,10 +61,12 @@ async def lifespan(app: FastAPI):
 
     # Start JobExecutor to handle job execution requests
     asyncio.create_task(app.state.job_executor.start())
+    asyncio.create_task(app.state.cache_invalidator.start())
 
     yield
 
     # Shutdown
+    await app.state.cache_invalidator.stop()
     await app.state.job_executor.shutdown()
     app.state.scheduler.shutdown()
     await coordinator.shutdown()
@@ -106,6 +114,16 @@ def create_app(
     # Initialize event bus and WebSocket manager
     event_bus = EventBus()
     app.state.event_bus = event_bus
+
+    if config.cache.enabled:
+        cache_backend = InMemoryCacheBackend()
+    else:
+        cache_backend = NullCacheBackend()
+    app.state.cache = cache_backend
+    set_cache_backend(cache_backend, default_ttl=config.cache.default_ttl)
+
+    cache_invalidator = CacheInvalidator(cache=cache_backend, event_bus=event_bus)
+    app.state.cache_invalidator = cache_invalidator
 
     connection_manager = ConnectionManager(event_bus)
     app.state.connection_manager = connection_manager

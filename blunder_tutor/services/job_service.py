@@ -87,7 +87,9 @@ class JobService:
             await self.event_bus.publish(event)
 
             if status == "completed":
-                stats_event = StatsEvent.create_stats_updated()
+                stats_event = StatsEvent.create_stats_updated(
+                    user_key=job.get("username", "default") or "default"
+                )
                 await self.event_bus.publish(stats_event)
 
     async def update_job_progress(
@@ -147,7 +149,9 @@ class JobService:
             )
             await self.event_bus.publish(event)
 
-            stats_event = StatsEvent.create_stats_updated()
+            stats_event = StatsEvent.create_stats_updated(
+                user_key=job.get("username", "default") or "default"
+            )
             await self.event_bus.publish(stats_event)
 
     async def get_job(self, job_id: str) -> dict[str, object] | None:

@@ -177,6 +177,13 @@ async def get_puzzle_service(
     return PuzzleService(trainer=trainer, analysis_service=analysis_service)
 
 
+async def set_request_username(
+    request: Request,
+    config: Annotated[AppConfig, Depends(get_config)],
+) -> None:
+    request.state.username = config.username or "default"
+
+
 # Type annotations for dependency injection in route handlers
 ConfigDep = Annotated[AppConfig, Depends(get_config)]
 EventBusDep = Annotated[EventBus, Depends(get_event_bus)]

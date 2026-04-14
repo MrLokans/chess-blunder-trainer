@@ -7,6 +7,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from blunder_tutor import constants
+from blunder_tutor.cache.config import CacheConfig
 
 
 class DataConfig(BaseModel):
@@ -43,6 +44,7 @@ class AppConfig(BaseModel):
     vite_dev: bool = False
     throttle: ThrottleConfig = ThrottleConfig()
     analytics: AnalyticsConfig = AnalyticsConfig()
+    cache: CacheConfig = CacheConfig()
 
 
 def get_engine_path(environ: typing.Mapping) -> str:
@@ -85,6 +87,12 @@ def config_factory(
     db_path_env = environ.get("DB_PATH")
     data = DataConfig(db_path=Path(db_path_env)) if db_path_env else DataConfig()
 
+    cache = CacheConfig(
+        enabled=environ.get("CACHE_ENABLED", "true").lower()
+        not in ("false", "0", "no"),
+        default_ttl=int(environ.get("CACHE_DEFAULT_TTL", "300")),
+    )
+
     return AppConfig(
         data=data,
         engine_path=final_engine_path,
@@ -100,4 +108,5 @@ def config_factory(
                 "PLAUSIBLE_SCRIPT_URL", "https://plausible.io/js/script.js"
             ),
         ),
+        cache=cache,
     )

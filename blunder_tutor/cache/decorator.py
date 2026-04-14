@@ -1,0 +1,121 @@
+from __future__ import annotations
+
+import dataclasses
+import functools
+import hashlib
+import json
+import logging
+from collections.abc import Callable
+from typing import Any
+
+from fastapi import Request
+from pydantic import BaseModel
+
+from blunder_tutor.cache.backend import CacheBackend
+
+logger = logging.getLogger(__name__)
+
+
+@dataclasses.dataclass(slots=True)
+class _CacheWrapper:
+    value: Any
+
+
+_cache_backend: CacheBackend | None = None
+_default_ttl: int = 300
+
+
+def set_cache_backend(backend: CacheBackend | None, *, default_ttl: int = 300) -> None:
+    global _cache_backend, _default_ttl
+    _cache_backend = backend
+    _default_ttl = default_ttl
+
+
+def get_cache_backend() -> CacheBackend | None:
+    return _cache_backend
+
+
+def resolve_user_key(request: Request) -> str:
+    return getattr(request.state, "username", "default")
+
+
+def _serialize_param(value: Any) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, BaseModel):
+        return value.model_dump_json()
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        return json.dumps(dataclasses.asdict(value), sort_keys=True, default=str)
+    if isinstance(value, (str, int, float, bool)):
+        return json.dumps(value)
+    if isinstance(value, (list, tuple)):
+        return json.dumps([_serialize_param(v) for v in value], sort_keys=True)
+    if isinstance(value, dict):
+        return json.dumps(
+            {k: _serialize_param(v) for k, v in sorted(value.items())},
+            sort_keys=True,
+        )
+    return str(value)
+
+
+def _build_cache_key(
+    func: Callable,
+    version: int,
+    user_key: str,
+    key_params: list[str],
+    kwargs: dict[str, Any],
+) -> str:
+    parts = [
+        f"v{version}",
+        f"{func.__module__}.{func.__qualname__}",
+        user_key,
+    ]
+    for name in sorted(key_params):
+        value = kwargs.get(name)
+        parts.append(f"{name}={_serialize_param(value)}")
+
+    raw = ":".join(parts)
+    return hashlib.sha256(raw.encode()).hexdigest()[:32]
+
+
+def cached(
+    *,
+    tag: str,
+    ttl: int | None = None,
+    version: int = 1,
+    key_params: list[str],
+) -> Callable:
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            backend = get_cache_backend()
+            if backend is None:
+                return await func(*args, **kwargs)
+
+            request: Request | None = kwargs.get("request")
+            if request is None:
+                for arg in args:
+                    if isinstance(arg, Request):
+                        request = arg
+                        break
+
+            user_key = resolve_user_key(request) if request else "default"
+            cache_key = _build_cache_key(func, version, user_key, key_params, kwargs)
+            scoped_tag = f"{tag}:{user_key}"
+
+            cached_entry = await backend.get(cache_key)
+            if isinstance(cached_entry, _CacheWrapper):
+                return cached_entry.value
+
+            result = await func(*args, **kwargs)
+
+            effective_ttl = ttl if ttl is not None else _default_ttl
+
+            await backend.set(
+                cache_key, _CacheWrapper(result), ttl=effective_ttl, tags={scoped_tag}
+            )
+            return result
+
+        return wrapper
+
+    return decorator
