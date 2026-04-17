@@ -8,6 +8,7 @@ dependencies = [
   "aiosqlite>=0.20.0",
   "alembic>=1.13.0",
   "apscheduler>=3.10.0",
+  "bcrypt>=4.1",
   "fast-depends>=2.4.0",
   "fastapi>=0.116.1",
   "fastapi-throttle>=0.1.8",

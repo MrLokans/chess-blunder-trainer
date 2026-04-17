@@ -3,16 +3,76 @@ from __future__ import annotations
 import argparse
 import typing
 from pathlib import Path
+from typing import Literal, Self
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from blunder_tutor import constants
 from blunder_tutor.cache.config import CacheConfig
+
+AuthMode = Literal["none", "credentials"]
+
+# 64 hex chars = 32 random bytes = the canonical output of
+# `secrets.token_hex(32)` / `secrets.token_urlsafe(32)`. We reject anything
+# shorter because `SECRET_KEY` is used for HMAC invite codes and future
+# CSRF tokens; 128+ bits of entropy is the operational floor.
+SECRET_KEY_MIN_LEN = 64
+
+_TRUTHY = frozenset({"true", "1", "yes"})
+_FALSY = frozenset({"false", "0", "no"})
+
+
+def _parse_bool(raw: str | None, *, default: bool) -> bool:
+    if raw is None or raw == "":
+        return default
+    low = raw.lower()
+    if low in _TRUTHY:
+        return True
+    if low in _FALSY:
+        return False
+    raise ValueError(f"expected boolean-like value, got {raw!r}")
 
 
 class DataConfig(BaseModel):
     db_path: Path = constants.DEFAULT_DB_PATH
     template_dir: Path = constants.TEMPLATES_PATH
+
+
+class AuthConfig(BaseModel):
+    mode: AuthMode = "none"
+    secret_key: str | None = None
+    max_users: int = 1
+    session_max_age_seconds: int = 60 * 60 * 24 * 30
+    session_idle_seconds: int = 60 * 60 * 24 * 7
+
+    @model_validator(mode="after")
+    def _check_invariants(self) -> Self:
+        if self.max_users < 1:
+            raise ValueError(f"MAX_USERS must be >= 1, got {self.max_users}")
+        if self.session_max_age_seconds < 1:
+            raise ValueError(
+                f"SESSION_MAX_AGE_SECONDS must be >= 1, got {self.session_max_age_seconds}"
+            )
+        if self.session_idle_seconds < 1:
+            raise ValueError(
+                f"SESSION_IDLE_SECONDS must be >= 1, got {self.session_idle_seconds}"
+            )
+        if self.session_idle_seconds > self.session_max_age_seconds:
+            raise ValueError(
+                "SESSION_IDLE_SECONDS must be <= SESSION_MAX_AGE_SECONDS "
+                f"({self.session_idle_seconds} > {self.session_max_age_seconds})"
+            )
+        if self.mode == "credentials":
+            if not self.secret_key:
+                raise ValueError(
+                    "SECRET_KEY env var is required when AUTH_MODE=credentials"
+                )
+            if len(self.secret_key) < SECRET_KEY_MIN_LEN:
+                raise ValueError(
+                    f"SECRET_KEY must be at least {SECRET_KEY_MIN_LEN} chars "
+                    f"when AUTH_MODE=credentials (got {len(self.secret_key)})"
+                )
+        return self
 
 
 class EngineConfig(BaseModel):
@@ -45,6 +105,54 @@ class AppConfig(BaseModel):
     throttle: ThrottleConfig = ThrottleConfig()
     analytics: AnalyticsConfig = AnalyticsConfig()
     cache: CacheConfig = CacheConfig()
+    auth: AuthConfig = AuthConfig()
+
+    @model_validator(mode="after")
+    def _check_mode_compatibility(self) -> Self:
+        if self.demo_mode and self.auth.mode == "credentials":
+            raise ValueError("DEMO_MODE cannot be combined with AUTH_MODE=credentials")
+        return self
+
+
+def _parse_positive_int(environ: typing.Mapping, key: str, default: int) -> int:
+    raw = environ.get(key)
+    if raw is None:
+        return default
+    if raw == "":
+        raise ValueError(
+            f"{key} is set to an empty string; unset it to use the default"
+        )
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{key} must be a positive integer, got {raw!r}") from exc
+    if value < 1:
+        raise ValueError(f"{key} must be >= 1, got {value}")
+    return value
+
+
+def _parse_auth_mode(raw: str | None) -> AuthMode:
+    mode_raw = (raw or "").strip().lower()
+    if mode_raw in ("", "none"):
+        return "none"
+    if mode_raw == "credentials":
+        return "credentials"
+    raise ValueError(f"AUTH_MODE must be 'none' or 'credentials', got {mode_raw!r}")
+
+
+def _build_auth_config(environ: typing.Mapping) -> AuthConfig:
+    """Extract auth-related env vars and let AuthConfig validate them."""
+    return AuthConfig(
+        mode=_parse_auth_mode(environ.get("AUTH_MODE")),
+        secret_key=environ.get("SECRET_KEY") or None,
+        max_users=_parse_positive_int(environ, "MAX_USERS", 1),
+        session_max_age_seconds=_parse_positive_int(
+            environ, "SESSION_MAX_AGE_SECONDS", 60 * 60 * 24 * 30
+        ),
+        session_idle_seconds=_parse_positive_int(
+            environ, "SESSION_IDLE_SECONDS", 60 * 60 * 24 * 7
+        ),
+    )
 
 
 def get_engine_path(environ: typing.Mapping) -> str:
@@ -69,11 +177,6 @@ def config_factory(
     final_engine_path = (
         parsed_args and parsed_args.engine_path or get_engine_path(environ)
     )
-    (
-        parsed_args
-        and getattr(parsed_args, "depth", None)
-        or constants.DEFAULT_ENGINE_DEPTH
-    )
     throttle = ThrottleConfig()
     throttle_env = environ.get("DEMO_THROTTLE_RATE")
     if throttle_env:
@@ -88,8 +191,7 @@ def config_factory(
     data = DataConfig(db_path=Path(db_path_env)) if db_path_env else DataConfig()
 
     cache = CacheConfig(
-        enabled=environ.get("CACHE_ENABLED", "true").lower()
-        not in ("false", "0", "no"),
+        enabled=_parse_bool(environ.get("CACHE_ENABLED"), default=True),
         default_ttl=int(environ.get("CACHE_DEFAULT_TTL", "300")),
     )
 
@@ -99,8 +201,8 @@ def config_factory(
         engine=EngineConfig(
             path=final_engine_path,
         ),
-        demo_mode=environ.get("DEMO_MODE", "").lower() in ("true", "1", "yes"),
-        vite_dev=environ.get("VITE_DEV", "").lower() in ("true", "1", "yes"),
+        demo_mode=_parse_bool(environ.get("DEMO_MODE"), default=False),
+        vite_dev=_parse_bool(environ.get("VITE_DEV"), default=False),
         throttle=throttle,
         analytics=AnalyticsConfig(
             plausible_domain=environ.get("PLAUSIBLE_DOMAIN"),
@@ -109,4 +211,5 @@ def config_factory(
             ),
         ),
         cache=cache,
+        auth=_build_auth_config(environ),
     )
