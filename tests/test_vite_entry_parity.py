@@ -5,9 +5,7 @@ from pathlib import Path
 
 from blunder_tutor.web.vite import ENTRY_MAP
 
-VITE_CONFIG = (
-    Path(__file__).resolve().parent.parent / "frontend" / "vite.config.ts"
-)
+VITE_CONFIG = Path(__file__).resolve().parent.parent / "frontend" / "vite.config.ts"
 
 
 def _parse_vite_inputs(config_source: str) -> dict[str, str]:
@@ -23,8 +21,7 @@ def _parse_vite_inputs(config_source: str) -> dict[str, str]:
         r"(?:'([\w\-]+)'|(\w+))\s*:\s*resolve\(\s*__dirname\s*,\s*'([^']+)'\s*\)"
     )
     return {
-        (quoted or bare): path
-        for quoted, bare, path in pattern.findall(config_source)
+        (quoted or bare): path for quoted, bare, path in pattern.findall(config_source)
     }
 
 

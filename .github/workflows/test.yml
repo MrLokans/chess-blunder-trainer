@@ -118,3 +118,68 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+
+  test-e2e-auth:
+    name: E2E (credentials auth)
+    runs-on: ubuntu-latest
+    # The docker-based e2e in `docker.yml` covers the demo flow against
+    # the production image. The auth flow needs credentials mode, a
+    # fresh per-run DB, and the fake-stockfish fixture — none of which
+    # the production image ships. Run it directly against a source
+    # checkout so the Python/uv/fake-stockfish dependencies are all in
+    # the workspace.
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install Python dependencies
+        run: uv sync --all-extras
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: |
+            package-lock.json
+            e2e/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        # Pre-warm `node_modules/.vite/` so the webServer's own
+        # `npm run build` counts under Playwright's test time, not
+        # under lifespan startup.
+        run: npm run build
+
+      - name: Ensure fake-stockfish is executable
+        # Belt-and-braces: the repo stores the exec bit, but rebase /
+        # checkout / worktree tooling occasionally strips it on
+        # cross-platform edits.
+        run: chmod +x e2e/fake-stockfish.sh
+
+      - name: Install Playwright
+        working-directory: e2e
+        run: npm ci && npx playwright install --with-deps chromium
+
+      - name: Run auth E2E tests
+        working-directory: e2e
+        run: npx playwright test --config playwright.auth.config.ts
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-auth
+          path: e2e/playwright-report-auth/
+          retention-days: 7

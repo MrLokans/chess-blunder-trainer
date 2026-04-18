@@ -107,8 +107,20 @@ def make_email(raw: str) -> Email:
     return Email(low)
 
 
+_USER_ID_RE = re.compile(r"^[0-9a-f]{32}$")
+
+
 def make_user_id() -> UserId:
     return UserId(uuid.uuid4().hex)
+
+
+def is_user_id_shape(candidate: str) -> bool:
+    """True iff ``candidate`` could plausibly be a ``UserId`` (32-char
+    lowercase hex). Used by orphan-directory scans to distinguish
+    per-user data dirs from operator artefacts like ``users/backups``
+    or ``users/README`` before any destructive action.
+    """
+    return bool(_USER_ID_RE.match(candidate))
 
 
 def make_identity_id() -> IdentityId:

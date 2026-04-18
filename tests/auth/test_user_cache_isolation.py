@@ -55,33 +55,25 @@ class TestDbPathFor:
                     session_token=None,
                 )
             ),
-            app=SimpleNamespace(
-                state=SimpleNamespace(auth_mode="credentials")
-            ),
+            app=SimpleNamespace(state=SimpleNamespace(auth_mode="credentials")),
         )
         assert _db_path_for(request) == db
 
     def test_returns_none_in_credentials_mode_without_ctx(self):
         request = SimpleNamespace(
             state=SimpleNamespace(),
-            app=SimpleNamespace(
-                state=SimpleNamespace(auth_mode="credentials")
-            ),
+            app=SimpleNamespace(state=SimpleNamespace(auth_mode="credentials")),
         )
         assert _db_path_for(request) is None
 
-    def test_returns_legacy_path_in_none_mode_without_ctx(
-        self, tmp_path: Path
-    ):
+    def test_returns_legacy_path_in_none_mode_without_ctx(self, tmp_path: Path):
         legacy = tmp_path / "main.sqlite3"
         request = SimpleNamespace(
             state=SimpleNamespace(),
             app=SimpleNamespace(
                 state=SimpleNamespace(
                     auth_mode="none",
-                    config=SimpleNamespace(
-                        data=SimpleNamespace(db_path=legacy)
-                    ),
+                    config=SimpleNamespace(data=SimpleNamespace(db_path=legacy)),
                 )
             ),
         )
@@ -103,12 +95,8 @@ async def two_user_app(auth_db: AuthDb, tmp_path: Path):
         session_idle=timedelta(days=1),
     )
 
-    user_a = await service.register(
-        username=Username("alice"), password="password123"
-    )
-    user_b = await service.register(
-        username=Username("bob"), password="password123"
-    )
+    user_a = await service.register(username=Username("alice"), password="password123")
+    user_b = await service.register(username=Username("bob"), password="password123")
 
     # Alice completes setup in her own DB; Bob leaves his DB in default
     # (not-setup) state. run_migrations already ran during register() so
@@ -165,16 +153,12 @@ class TestSetupCacheIsolation:
             follow_redirects=False,
         ) as client:
             # Warm the cache with user A (setup completed, no redirect).
-            r_a = await client.get(
-                "/some-page", cookies={"session_token": token_a}
-            )
+            r_a = await client.get("/some-page", cookies={"session_token": token_a})
             assert r_a.status_code == 200
 
             # User B must still be redirected to /setup; they don't share
             # user A's cache entry.
-            r_b = await client.get(
-                "/some-page", cookies={"session_token": token_b}
-            )
+            r_b = await client.get("/some-page", cookies={"session_token": token_b})
         assert r_b.status_code == 303
         assert r_b.headers["location"] == "/setup"
 

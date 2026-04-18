@@ -141,13 +141,24 @@ test/be: ## Run Python tests with pytest
 test/fe: ## Run frontend tests with Vitest
 	npm run test
 
-test/e2e: ## Run E2E tests locally
+test/e2e: ## Run demo E2E tests locally (auth suite excluded via testIgnore)
 	mkdir -p e2e/.tmp
 	cd e2e && npx playwright test
 
-test/e2e/headed: ## Run E2E tests with browser visible
+test/e2e/headed: ## Run demo E2E tests with browser visible
 	mkdir -p e2e/.tmp
 	cd e2e && npx playwright test --headed
+
+test/e2e/auth: ## Run credentials-mode auth E2E tests locally
+	mkdir -p e2e/.tmp-auth
+	cd e2e && npx playwright test --config playwright.auth.config.ts
+
+test/e2e/all: test/e2e test/e2e/auth ## Run every E2E suite (demo + credentials-mode auth)
+
+# Both suites run `npm run build` via their respective Playwright
+# webServer commands, so `make -j2 test/e2e/all` would race on
+# `blunder_tutor/web/static/dist/`. Keep children serial.
+.NOTPARALLEL: test/e2e/all
 
 test/e2e/docker: ## Run E2E tests against Docker image
 	cp demo/demo.sqlite3 /tmp/e2e-test.sqlite3

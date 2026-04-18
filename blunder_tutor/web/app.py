@@ -16,9 +16,10 @@ from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.invite import generate_invite_code
 from blunder_tutor.auth.middleware import AuthMiddleware
-from blunder_tutor.auth.repository import SetupRepository
+from blunder_tutor.auth.repository import SetupRepository, UserRepository
 from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
+from blunder_tutor.auth.types import is_user_id_shape
 from blunder_tutor.background.executor import JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.cache import (
@@ -102,12 +103,11 @@ async def lifespan(app: FastAPI):
 
 
 async def _bootstrap_auth(app: FastAPI) -> None:
-    """Initialize `auth.sqlite3`, wire an `AuthService`, and — when no
-    users exist yet — surface an invite code so an operator can finish
-    first-run setup. All side effects run on the app's own event loop so
-    `aiosqlite` connections are bound to the same loop as request handlers.
-
-    Orphan-directory scan is deliberately deferred to Task 16.
+    """Initialize `auth.sqlite3`, wire an `AuthService`, surface an
+    invite code when no users exist, and run the orphan-directory
+    scan. All side effects run on the app's own event loop so
+    `aiosqlite` connections are bound to the same loop as request
+    handlers.
     """
     auth_db_path: Path = app.state.auth_db_path
     users_dir: Path = app.state.users_dir
@@ -143,6 +143,27 @@ async def _bootstrap_auth(app: FastAPI) -> None:
             # from booting. Operators can always re-bootstrap via the CLI
             # (Task 17).
             log.exception("Failed to generate or persist first-user invite code")
+
+    await scan_orphans(auth_db, users_dir)
+
+
+async def scan_orphans(auth_db: AuthDb, users_dir: Path) -> None:
+    """Log any per-user directories on disk that don't match a row in
+    ``users``. Startup diagnostic only — deletion is the operator's
+    call via the CLI (Task 17). A silent auto-delete would be a
+    footgun: orphans can legitimately appear after a partial restore
+    from backup, a botched manual ``rm``, or a crash mid-``delete_account``.
+
+    Non-user-id-shaped entries (e.g. ``users/backups``, ``users/README``)
+    are skipped — they're operator artefacts, not stale data.
+    """
+    if not users_dir.exists():
+        return
+    repo = UserRepository(db=auth_db)
+    known = {u.id for u in await repo.list_all()}
+    for child in users_dir.iterdir():
+        if child.is_dir() and is_user_id_shape(child.name) and child.name not in known:
+            log.warning("Orphan user directory found (not deleted): %s", child)
 
 
 def create_app(

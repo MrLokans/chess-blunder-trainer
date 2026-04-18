@@ -9,6 +9,7 @@ from blunder_tutor.auth.types import (
     InvalidUsernameError,
     PasswordHash,
     hash_password,
+    is_user_id_shape,
     make_email,
     make_identity_id,
     make_session_token,
@@ -164,3 +165,36 @@ class TestIdFactories:
     )
     def test_values_are_unique(self, factory):
         assert factory() != factory()
+
+
+class TestIsUserIdShape:
+    def test_accepts_freshly_minted_user_id(self):
+        assert is_user_id_shape(make_user_id())
+
+    @pytest.mark.parametrize(
+        "candidate",
+        [
+            "0" * 32,
+            "a" * 32,
+            "0123456789abcdef0123456789abcdef",
+        ],
+    )
+    def test_accepts_valid_shapes(self, candidate: str):
+        assert is_user_id_shape(candidate)
+
+    @pytest.mark.parametrize(
+        "candidate",
+        [
+            "",
+            "a" * 31,  # too short
+            "a" * 33,  # too long
+            "A" * 32,  # uppercase — UserId is lowercase hex
+            "g" * 32,  # non-hex char
+            "backups",
+            "README",
+            "_archive",
+            "0123456789abcdef0123456789abcde!",
+        ],
+    )
+    def test_rejects_non_user_id_shapes(self, candidate: str):
+        assert not is_user_id_shape(candidate)

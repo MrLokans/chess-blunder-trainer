@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 from pathlib import Path
 
@@ -29,19 +30,11 @@ async def auth_db(tmp_path: Path) -> AuthDb:
     await db.close()
 
 
-@pytest.fixture
-async def credentials_app(tmp_path: Path, monkeypatch):
-    """Boot a full FastAPI app in ``AUTH_MODE=credentials`` with all
-    filesystem state rooted at ``tmp_path``. The engine pool is mocked
-    via ``mock_engine_context`` so no real Stockfish binary is required.
-
-    The lifespan context is entered here so ``_bootstrap_auth`` runs
-    before any request is dispatched — ``app.state.auth_service`` and
-    ``app.state.auth_db`` are guaranteed live when the fixture yields.
-    """
+@contextlib.asynccontextmanager
+async def _booted_credentials_app(tmp_path: Path, monkeypatch, *, max_users: str):
     monkeypatch.setenv("AUTH_MODE", "credentials")
     monkeypatch.setenv("SECRET_KEY", "x" * 64)
-    monkeypatch.setenv("MAX_USERS", "1")
+    monkeypatch.setenv("MAX_USERS", max_users)
     monkeypatch.setenv("STOCKFISH_BINARY", "/fake/stockfish")
     monkeypatch.setenv("DB_PATH", str(tmp_path / "main.sqlite3"))
     # `vite_asset` needs a built manifest otherwise — dev-mode emits tags
@@ -56,6 +49,34 @@ async def credentials_app(tmp_path: Path, monkeypatch):
         app = create_app(config)
         async with app.router.lifespan_context(app):
             yield app
+
+
+@pytest.fixture
+async def credentials_app(tmp_path: Path, monkeypatch):
+    """Boot a full FastAPI app in ``AUTH_MODE=credentials`` with
+    ``MAX_USERS=1`` (the common-case fixture — 99% of auth tests run
+    against a single-user instance). Filesystem state is rooted at
+    ``tmp_path`` and the engine pool is mocked via
+    ``mock_engine_context`` so no real Stockfish binary is required.
+
+    The lifespan context is entered here so ``_bootstrap_auth`` runs
+    before any request is dispatched — ``app.state.auth_service`` and
+    ``app.state.auth_db`` are guaranteed live when the fixture yields.
+    """
+    async with _booted_credentials_app(tmp_path, monkeypatch, max_users="1") as app:
+        yield app
+
+
+@pytest.fixture
+async def credentials_app_multi(tmp_path: Path, monkeypatch):
+    """Variant of :func:`credentials_app` with ``MAX_USERS=2`` — for
+    multi-user scenarios (data isolation, per-user DB separation). The
+    cap has to be lifted at boot time; monkeypatching ``MAX_USERS``
+    inside a test cannot affect the already-validated
+    ``config.auth.max_users``.
+    """
+    async with _booted_credentials_app(tmp_path, monkeypatch, max_users="2") as app:
+        yield app
 
 
 @pytest.fixture

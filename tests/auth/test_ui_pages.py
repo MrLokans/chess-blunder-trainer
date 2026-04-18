@@ -31,9 +31,7 @@ class TestLoginPage:
         invite_code: str,
     ):
         await _signup(client_credentials_mode, invite_code)
-        r = await client_credentials_mode.get(
-            "/login", follow_redirects=False
-        )
+        r = await client_credentials_mode.get("/login", follow_redirects=False)
         assert r.status_code == 302
         assert r.headers["location"] == "/"
 
@@ -42,9 +40,7 @@ class TestSignupPage:
     async def test_redirects_to_setup_when_no_users_exist(
         self, client_credentials_mode: httpx.AsyncClient
     ):
-        r = await client_credentials_mode.get(
-            "/signup", follow_redirects=False
-        )
+        r = await client_credentials_mode.get("/signup", follow_redirects=False)
         assert r.status_code == 302
         assert r.headers["location"] == "/setup"
 
@@ -57,9 +53,7 @@ class TestSignupPage:
         await _signup(client_credentials_mode, invite_code)
         client_credentials_mode.cookies.clear()
 
-        r = await client_credentials_mode.get(
-            "/signup", follow_redirects=False
-        )
+        r = await client_credentials_mode.get("/signup", follow_redirects=False)
         assert r.status_code == 403
         # Renders the signup_full template, not a JSON error page. The
         # user-cap message is the load-bearing copy.
@@ -72,9 +66,7 @@ class TestSignupPage:
         invite_code: str,
     ):
         await _signup(client_credentials_mode, invite_code)
-        r = await client_credentials_mode.get(
-            "/signup", follow_redirects=False
-        )
+        r = await client_credentials_mode.get("/signup", follow_redirects=False)
         assert r.status_code == 302
         assert r.headers["location"] == "/"
 
@@ -96,9 +88,7 @@ class TestSetupPage:
         await _signup(client_credentials_mode, invite_code)
         client_credentials_mode.cookies.clear()
 
-        r = await client_credentials_mode.get(
-            "/setup", follow_redirects=False
-        )
+        r = await client_credentials_mode.get("/setup", follow_redirects=False)
         assert r.status_code == 302
         assert r.headers["location"] == "/login"
 
@@ -111,9 +101,7 @@ class TestLogoutUi:
     ):
         await _signup(client_credentials_mode, invite_code)
 
-        r = await client_credentials_mode.post(
-            "/logout", follow_redirects=False
-        )
+        r = await client_credentials_mode.post("/logout", follow_redirects=False)
         assert r.status_code == 303
         assert r.headers["location"] == "/login"
 
@@ -125,8 +113,6 @@ class TestLogoutUi:
     async def test_post_logout_is_idempotent_without_session(
         self, client_credentials_mode: httpx.AsyncClient
     ):
-        r = await client_credentials_mode.post(
-            "/logout", follow_redirects=False
-        )
+        r = await client_credentials_mode.post("/logout", follow_redirects=False)
         assert r.status_code == 303
         assert r.headers["location"] == "/login"

@@ -77,9 +77,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         if ctx is None:
             if _wants_html(request):
-                return RedirectResponse(
-                    url=f"/login?next={path}", status_code=302
-                )
+                return RedirectResponse(url=f"/login?next={path}", status_code=302)
             return JSONResponse({"error": "unauthorized"}, status_code=401)
 
         request.state.user_ctx = ctx

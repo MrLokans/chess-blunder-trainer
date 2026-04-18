@@ -111,9 +111,7 @@ class TestLogout:
             "credentials", {"username": "alice", "password": "password123"}
         )
         assert user is not None
-        other = await service.create_session(
-            user_id=user.id, user_agent=None, ip=None
-        )
+        other = await service.create_session(user_id=user.id, user_agent=None, ip=None)
         sessions_before = await service.list_sessions(user.id)
         assert len(sessions_before) == 2
 
@@ -169,9 +167,7 @@ class TestDeleteAccount:
         # SetupCheckMiddleware + LocaleMiddleware.
         await client_credentials_mode.get("/api/auth/me")
 
-        setup_cache = getattr(
-            credentials_app.state, "_setup_completed_cache", {}
-        )
+        setup_cache = getattr(credentials_app.state, "_setup_completed_cache", {})
         locale_cache = getattr(credentials_app.state, "_locale_cache", {})
         # No assertion on pre-state — the caches may or may not have the
         # entry depending on whether any middleware path populated them

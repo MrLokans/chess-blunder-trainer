@@ -56,9 +56,7 @@ def invalidate_setup_cache(request: Request, key: str) -> None:
 
 
 def set_locale_cache(request: Request, key: str, locale: str) -> None:
-    cache: dict[str, str] | None = getattr(
-        request.app.state, "_locale_cache", None
-    )
+    cache: dict[str, str] | None = getattr(request.app.state, "_locale_cache", None)
     if cache is None:
         cache = {}
         request.app.state._locale_cache = cache

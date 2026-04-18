@@ -32,9 +32,7 @@ class TestPerUserDbInit:
         assert path.exists()
         assert path.name == "main.sqlite3"
 
-    async def test_signup_runs_migrations_on_per_user_db(
-        self, service: AuthService
-    ):
+    async def test_signup_runs_migrations_on_per_user_db(self, service: AuthService):
         user = await service.register(
             username=Username("alice"), password="password123"
         )
@@ -47,12 +45,8 @@ class TestPerUserDbInit:
             assert cur.fetchone() is not None
 
     async def test_two_users_get_isolated_dbs(self, service: AuthService):
-        a = await service.register(
-            username=Username("alice"), password="password123"
-        )
-        b = await service.register(
-            username=Username("bob"), password="password123"
-        )
+        a = await service.register(username=Username("alice"), password="password123")
+        b = await service.register(username=Username("bob"), password="password123")
         path_a = service.db_path_for(a.id)
         path_b = service.db_path_for(b.id)
         assert path_a != path_b

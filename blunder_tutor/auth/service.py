@@ -191,9 +191,7 @@ class AuthService:
                     (identity_id, user_id, username, credential, now),
                 )
                 if first_user:
-                    await conn.execute(
-                        "DELETE FROM setup WHERE key = 'invite_code'"
-                    )
+                    await conn.execute("DELETE FROM setup WHERE key = 'invite_code'")
         except sqlite3.IntegrityError as exc:
             message = str(exc)
             if "users.username" in message:

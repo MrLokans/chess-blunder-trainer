@@ -91,9 +91,7 @@ class TestModeNone:
         assert data["username"] == "_local"
         assert data["db_path"] == str(legacy_db)
 
-    async def test_mode_none_bypasses_exempt_check(
-        self, legacy_db: Path
-    ):
+    async def test_mode_none_bypasses_exempt_check(self, legacy_db: Path):
         app = _make_app(None, mode="none", legacy_db_path=legacy_db)
         async with _client(app) as client:
             r = await client.get("/api/echo")
@@ -112,9 +110,7 @@ class TestModeCredentials:
         assert r.headers["location"].startswith("/login")
         assert "next=/echo" in r.headers["location"]
 
-    async def test_returns_401_for_api(
-        self, service: AuthService, legacy_db: Path
-    ):
+    async def test_returns_401_for_api(self, service: AuthService, legacy_db: Path):
         app = _make_app(service, mode="credentials", legacy_db_path=legacy_db)
         async with _client(app) as client:
             r = await client.get("/api/echo")
@@ -155,7 +151,9 @@ class TestModeCredentials:
         self, service: AuthService, legacy_db: Path
     ):
         app = _make_app(service, mode="credentials", legacy_db_path=legacy_db)
-        async with _client(app, cookies={"session_token": "not-a-real-token"}) as client:
+        async with _client(
+            app, cookies={"session_token": "not-a-real-token"}
+        ) as client:
             r = await client.get("/api/echo")
         assert r.status_code == 401
 
@@ -224,9 +222,7 @@ class TestModeCredentials:
 
 
 class TestModeNoneIgnoresSessionCookie:
-    async def test_cookie_does_not_override_local_sentinel(
-        self, legacy_db: Path
-    ):
+    async def test_cookie_does_not_override_local_sentinel(self, legacy_db: Path):
         app = _make_app(None, mode="none", legacy_db_path=legacy_db)
         async with _client(app, cookies={"session_token": "anything"}) as client:
             r = await client.get("/echo")
