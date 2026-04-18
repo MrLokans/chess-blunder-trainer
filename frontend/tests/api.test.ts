@@ -58,6 +58,22 @@ describe('query params (via client calls)', () => {
   });
 });
 
+describe('204 no-content handling', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('resolves cleanly on 204 without trying to parse JSON', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+      json: () => Promise.reject(new SyntaxError('no body')),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(client.auth.logout()).resolves.toBeUndefined();
+  });
+});
+
 describe('request error handling', () => {
   beforeEach(() => {
     vi.restoreAllMocks();

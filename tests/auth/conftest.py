@@ -44,6 +44,10 @@ async def credentials_app(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("MAX_USERS", "1")
     monkeypatch.setenv("STOCKFISH_BINARY", "/fake/stockfish")
     monkeypatch.setenv("DB_PATH", str(tmp_path / "main.sqlite3"))
+    # `vite_asset` needs a built manifest otherwise — dev-mode emits tags
+    # that point at a local dev server and skip the manifest lookup, which
+    # is what we need for UI-page integration tests that render templates.
+    monkeypatch.setenv("VITE_DEV", "true")
 
     ns = argparse.Namespace(engine_path="/fake/stockfish", depth=20)
     config = config_factory(ns, dict(os.environ))

@@ -16,6 +16,7 @@ from blunder_tutor.web.api.starred import starred_router
 from blunder_tutor.web.api.stats import stats_router
 from blunder_tutor.web.api.system import system_router
 from blunder_tutor.web.api.traps import traps_router
+from blunder_tutor.web.ui.auth import auth_ui_router
 from blunder_tutor.web.ui.router import ui_router
 
 
@@ -33,6 +34,7 @@ def configure_router(app: FastAPI) -> FastAPI:
 
     app.include_router(router)
     app.include_router(auth_router)
+    app.include_router(auth_ui_router)
     app.include_router(ui_router)
     app.include_router(settings_router)
     app.include_router(jobs_router)

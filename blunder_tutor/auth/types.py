@@ -42,9 +42,14 @@ class AuthError(Exception):
 
 class _InputError(AuthError):
     """Invalid input from the caller. Error message is safe to surface;
-    the offending value is kept on `.offender` for logs only."""
+    the offending value is kept on `.offender` for logs only. `.code` is
+    the stable slug the HTTP layer emits — intentionally divorced from
+    the human-readable message so translations and renamed error strings
+    can't desync.
+    """
 
     _message: str = "invalid input"
+    code: str = "invalid_input"
 
     def __init__(self, offender: str = "") -> None:
         super().__init__(self._message)
@@ -53,18 +58,22 @@ class _InputError(AuthError):
 
 class InvalidUsernameError(_InputError):
     _message = "invalid username"
+    code = "invalid_username"
 
 
 class InvalidEmailError(_InputError):
     _message = "invalid email"
+    code = "invalid_email"
 
 
 class InvalidPasswordError(_InputError):
     _message = "invalid password"
+    code = "invalid_password"
 
 
 class InvalidInviteCodeError(_InputError):
     _message = "invalid invite code"
+    code = "invalid_invite_code"
 
 
 class DuplicateUsernameError(AuthError):
@@ -180,3 +189,10 @@ class UserContext:
     # single swap point.
     db_path: Path
     session_token: SessionToken | None
+
+    @property
+    def is_authenticated(self) -> bool:
+        # The AUTH_MODE=none middleware synthesizes a `_local` context
+        # with no session token; every other code path must check this
+        # instead of re-implementing `session_token is not None`.
+        return self.session_token is not None

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('auth.signup.title') }} - Blunder Tutor{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/auth.css">
+{% endblock %}
+
+{% block body %}
+{% include '_demo_banner.html' %}
+<div class="container">
+  <div class="auth-card">
+    <h1>{{ t('auth.signup.title') }}</h1>
+    <div class="alert alert-error visible" role="alert">
+      {{ t('auth.signup.error.user_cap_reached') }}
+    </div>
+    <div class="auth-footer">
+      <a href="/login">{{ t('auth.signup.have_account') }}</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

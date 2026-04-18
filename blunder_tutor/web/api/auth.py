@@ -108,9 +108,9 @@ async def signup(
         username = make_username(body.username)
         email = make_email(body.email) if body.email else None
     except InvalidUsernameError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail=exc.code) from exc
     except InvalidEmailError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail=exc.code) from exc
 
     try:
         user = await service.signup(
@@ -138,7 +138,7 @@ async def signup(
     except DuplicateEmailError as exc:
         raise HTTPException(status_code=409, detail="email_taken") from exc
     except InvalidPasswordError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail=exc.code) from exc
 
     session = await service.create_session(
         user_id=user.id,
@@ -194,7 +194,8 @@ async def logout(
     response: Response,
     service: Annotated[AuthService, Depends(_get_service)],
 ) -> None:
-    if ctx is not None and ctx.session_token:
+    if ctx is not None and ctx.is_authenticated:
+        assert ctx.session_token is not None
         await service.revoke_session(ctx.session_token)
     response.delete_cookie("session_token", path="/")
 

@@ -10,6 +10,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.features import DEFAULTS
 from blunder_tutor.repositories.settings import SettingsRepository
+from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
 
 # App-level per-user cache key for pre-auth / AUTH_MODE=none requests. The
 # sentinel matches the `_local` UserContext that AuthMiddleware synthesises
@@ -112,16 +113,13 @@ LOCALE_DISPLAY_NAMES = {
 
 
 class SetupCheckMiddleware(BaseHTTPMiddleware):
-    EXEMPT_PATHS = {
-        "/setup",
-        "/api/",
-        "/health",
-        "/static",
-        "/favicon.ico",
-        "/login",
-        "/signup",
-        "/api/auth/",
-    }
+    # `SetupCheckMiddleware` matches via ``startswith``, so `/api/` here
+    # covers every API surface (not just `/api/auth/`). We still list
+    # `AUTH_API_PREFIX` explicitly so a future refactor that tightens the
+    # `/api/` guard doesn't accidentally trap the auth API behind setup.
+    EXEMPT_PATHS = AUTH_UI_PATHS | frozenset(
+        {"/api/", "/health", "/static", "/favicon.ico", AUTH_API_PREFIX}
+    )
 
     async def dispatch(self, request: Request, call_next):
         if getattr(request.app.state, "demo_mode", False):

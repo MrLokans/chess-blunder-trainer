@@ -8,11 +8,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import UserContext, UserId, Username
+from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
 
-EXEMPT_PATHS = frozenset(
-    {"/login", "/signup", "/setup", "/health", "/favicon.ico"}
-)
-EXEMPT_PREFIXES = ("/static", "/api/auth/")
+EXEMPT_PATHS = AUTH_UI_PATHS | frozenset({"/health", "/favicon.ico"})
+EXEMPT_PREFIXES = ("/static", AUTH_API_PREFIX)
 
 _LOCAL_USER_ID = UserId("_local")
 _LOCAL_USERNAME = Username("_local")

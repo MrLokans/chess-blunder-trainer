@@ -48,6 +48,10 @@ async function request<T = unknown>(url: string, options: RequestInit = {}): Pro
     const data = await resp.json().catch(() => ({})) as ApiErrorResponse;
     throw new ApiError(resp.status, data.detail ?? data.error ?? 'Request failed');
   }
+  // 204 No Content and same-class responses have empty bodies; calling
+  // .json() on them throws SyntaxError. Return `undefined` cast to T so
+  // callers that expect void (logout, delete_account) don't blow up.
+  if (resp.status === 204) return undefined as T;
   return resp.json() as Promise<T>;
 }
 
@@ -219,4 +223,25 @@ export const client = {
     validateUsername: (platform: string, username: string) =>
       post<UsernameValidation>('/api/validate-username', { platform, username }),
   },
+
+  auth: {
+    login: (username: string, password: string) =>
+      post<MeResponse>('/api/auth/login', { username, password }),
+    signup: (data: SignupPayload) => post<MeResponse>('/api/auth/signup', data),
+    logout: (): Promise<void> => post('/api/auth/logout', {}),
+    me: () => request<MeResponse>('/api/auth/me'),
+  },
 };
+
+export interface MeResponse {
+  id: string;
+  username: string;
+  email?: string | null;
+}
+
+export interface SignupPayload {
+  username: string;
+  password: string;
+  email?: string;
+  invite_code?: string;
+}

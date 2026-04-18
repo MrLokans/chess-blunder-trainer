@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 
 from blunder_tutor.features import FEATURE_GROUPS, FEATURE_LABELS
-from blunder_tutor.web.dependencies import SettingsRepoDep
 
 
 async def home(request: Request) -> HTMLResponse:
@@ -100,16 +99,6 @@ async def starred_page(request: Request) -> HTMLResponse:
     )
 
 
-async def setup(request: Request, settings_repo: SettingsRepoDep) -> HTMLResponse:
-    if await settings_repo.is_setup_completed():
-        return RedirectResponse(url="/", status_code=303)
-
-    return request.app.state.templates.TemplateResponse(
-        "setup.html",
-        {"request": request},
-    )
-
-
 ui_router = APIRouter()
 ui_router.add_api_route("/", home, response_class=HTMLResponse, methods=["GET"])
 ui_router.add_api_route(
@@ -130,7 +119,6 @@ ui_router.add_api_route(
 ui_router.add_api_route(
     "/game/{game_id}", game_review_page, response_class=HTMLResponse, methods=["GET"]
 )
-ui_router.add_api_route("/setup", setup, response_class=HTMLResponse, methods=["GET"])
 ui_router.add_api_route(
     "/settings", settings, response_class=HTMLResponse, methods=["GET"]
 )
