@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import hmac
 import shutil
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from blunder_tutor.auth.db import AuthDb
+from blunder_tutor.auth.invite import verify_invite_code
 from blunder_tutor.auth.providers.base import AuthProvider
 from blunder_tutor.auth.providers.credentials import CredentialsProvider
 from blunder_tutor.auth.repository import (
@@ -19,10 +21,12 @@ from blunder_tutor.auth.types import (
     DuplicateUsernameError,
     Email,
     Identity,
+    InvalidInviteCodeError,
     ProviderName,
     Session,
     SessionToken,
     User,
+    UserCapReachedError,
     UserContext,
     UserId,
     Username,
@@ -31,6 +35,7 @@ from blunder_tutor.auth.types import (
     make_session_token,
     make_user_id,
 )
+from blunder_tutor.migrations import run_migrations
 
 
 class AuthService:
@@ -98,6 +103,109 @@ class AuthService:
                 raise DuplicateEmailError(email or "") from exc
             raise
 
+        # Materialize the per-user data DB after the auth rows commit.
+        # run_migrations is sync + idempotent, safe to call on a missing
+        # file. Trade-off: if migrations fail mid-way, the user + identity
+        # rows already exist in auth.sqlite3 — the user can authenticate
+        # but has no data dir, and subsequent requests will 500. We accept
+        # this over (a) holding the auth write-lock for a multi-second sync
+        # operation, or (b) compensating rollback that duplicates logic
+        # already in CASCADE. Phase 4 may move migration to lazy-on-first
+        # -access inside `get_db_path` to close the gap entirely.
+        user_db_path = self.db_path_for(user_id)
+        user_db_path.parent.mkdir(parents=True, exist_ok=True)
+        run_migrations(user_db_path)
+
+        user = await self._users.get_by_id(user_id)
+        assert user is not None
+        return user
+
+    async def signup(
+        self,
+        *,
+        username: Username,
+        password: str,
+        max_users: int,
+        email: Email | None = None,
+        invite_code: str | None = None,
+        secret_key: str | None = None,
+    ) -> User:
+        """Atomic signup path for the HTTP surface.
+
+        Cap enforcement and first-user invite-consume happen inside the
+        same ``BEGIN IMMEDIATE`` transaction as the ``users`` /
+        ``identities`` INSERTs. Without this, two concurrent POSTs to
+        ``/api/auth/signup`` could both pass an API-level cap check and
+        both commit, exceeding ``max_users``. Single-transaction gating
+        makes the cap a DB invariant instead of a best-effort check.
+
+        ``register`` is the lower-level API and stays usable from tests
+        that don't care about cap/invite.
+        """
+        credential = hash_password(password)
+        user_id = make_user_id()
+        identity_id = make_identity_id()
+        now = _now_iso()
+
+        try:
+            async with self._db.transaction() as conn:
+                async with conn.execute(
+                    "SELECT COUNT(*) FROM users WHERE deleted_at IS NULL"
+                ) as cur:
+                    row = await cur.fetchone()
+                count = int(row[0]) if row else 0
+
+                if count >= max_users:
+                    raise UserCapReachedError()
+
+                first_user = count == 0
+                if first_user:
+                    if not invite_code:
+                        raise InvalidInviteCodeError("missing")
+                    async with conn.execute(
+                        "SELECT value FROM setup WHERE key = 'invite_code'"
+                    ) as cur:
+                        stored_row = await cur.fetchone()
+                    if stored_row is None:
+                        raise InvalidInviteCodeError("not_issued")
+                    stored = stored_row[0]
+                    # Two checks: the stored-equality enforces single-use
+                    # (already-consumed invites fail even if HMAC-valid),
+                    # the HMAC verifies authenticity against the server
+                    # secret (a hand-crafted "<payload>.<sig>" with the
+                    # right shape but wrong secret fails here).
+                    if not hmac.compare_digest(invite_code, stored):
+                        raise InvalidInviteCodeError("rotated")
+                    if not verify_invite_code(invite_code, secret_key or ""):
+                        raise InvalidInviteCodeError("hmac")
+
+                await conn.execute(
+                    "INSERT INTO users (id, username, email, created_at) "
+                    "VALUES (?, ?, ?, ?)",
+                    (user_id, username, email, now),
+                )
+                await conn.execute(
+                    "INSERT INTO identities "
+                    "(id, user_id, provider, provider_subject, credential, created_at) "
+                    "VALUES (?, ?, 'credentials', ?, ?, ?)",
+                    (identity_id, user_id, username, credential, now),
+                )
+                if first_user:
+                    await conn.execute(
+                        "DELETE FROM setup WHERE key = 'invite_code'"
+                    )
+        except sqlite3.IntegrityError as exc:
+            message = str(exc)
+            if "users.username" in message:
+                raise DuplicateUsernameError(username) from exc
+            if "users.email" in message:
+                raise DuplicateEmailError(email or "") from exc
+            raise
+
+        user_db_path = self.db_path_for(user_id)
+        user_db_path.parent.mkdir(parents=True, exist_ok=True)
+        run_migrations(user_db_path)
+
         user = await self._users.get_by_id(user_id)
         assert user is not None
         return user
@@ -134,8 +242,6 @@ class AuthService:
         return session
 
     async def resolve_session(self, token: str, ip: str | None) -> UserContext | None:
-        # Deliberately no token-shape pre-check: any early return would be a
-        # timing fork distinguishing "malformed token" from "unknown token".
         if not token:
             return None
         typed_token = SessionToken(token)
@@ -189,6 +295,9 @@ class AuthService:
 
     async def identities_for(self, user_id: UserId) -> list[Identity]:
         return await self._identities.list_for_user(user_id)
+
+    async def list_sessions(self, user_id: UserId) -> list[Session]:
+        return await self._sessions.list_for_user(user_id)
 
     def db_path_for(self, user_id: UserId) -> Path:
         return self._users_dir / user_id / "main.sqlite3"

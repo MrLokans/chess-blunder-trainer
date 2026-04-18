@@ -6,6 +6,7 @@ from fastapi.routing import APIRouter
 
 from blunder_tutor.web.api import websocket
 from blunder_tutor.web.api.analysis import analysis_router
+from blunder_tutor.web.api.auth import router as auth_router
 from blunder_tutor.web.api.debug import debug_router
 from blunder_tutor.web.api.game_review import game_review_router
 from blunder_tutor.web.api.import_game import import_router
@@ -31,6 +32,7 @@ def configure_router(app: FastAPI) -> FastAPI:
     )
 
     app.include_router(router)
+    app.include_router(auth_router)
     app.include_router(ui_router)
     app.include_router(settings_router)
     app.include_router(jobs_router)

@@ -11,6 +11,11 @@ from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.fetchers.validation import validate_username
 from blunder_tutor.web.api.schemas import ErrorResponse, SuccessResponse
 from blunder_tutor.web.dependencies import EventBusDep, JobServiceDep, SettingsRepoDep
+from blunder_tutor.web.middleware import (
+    _cache_key,
+    invalidate_setup_cache,
+    set_locale_cache,
+)
 
 
 class ValidateUsernameRequest(BaseModel):
@@ -170,8 +175,7 @@ async def setup_submit(
     await settings_repo.set_setting("chesscom_username", chesscom if chesscom else None)
     await settings_repo.mark_setup_completed()
 
-    if hasattr(request.app.state, "_setup_completed_cache"):
-        delattr(request.app.state, "_setup_completed_cache")
+    invalidate_setup_cache(request, _cache_key(request))
 
     import_job_ids: list[str] = []
     max_games_str = await settings_repo.get_setting("sync_max_games")
@@ -744,7 +748,7 @@ async def set_locale(
     if i18n and payload.locale not in i18n.available_locales():
         raise HTTPException(status_code=400, detail="Unsupported locale")
     await settings_repo.set_setting("locale", payload.locale)
-    request.app.state._locale_cache = payload.locale
+    set_locale_cache(request, _cache_key(request), payload.locale)
 
     response = JSONResponse(content={"success": True})
     response.set_cookie(

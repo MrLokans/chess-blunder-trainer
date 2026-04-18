@@ -1,11 +1,13 @@
 import asyncio
 from collections.abc import AsyncGenerator
+from pathlib import Path
 from typing import Annotated
 
 import chess.engine
-from fastapi import Depends, Request, Response
+from fastapi import Depends, HTTPException, Request, Response
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
+from blunder_tutor.auth.types import UserContext
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
@@ -36,10 +38,23 @@ def get_event_bus(request: Request) -> EventBus:
     return request.app.state.event_bus
 
 
+def get_user_context(request: Request) -> UserContext:
+    ctx = getattr(request.state, "user_ctx", None)
+    if ctx is None:
+        raise HTTPException(status_code=401, detail="unauthorized")
+    return ctx
+
+
+def get_db_path(
+    ctx: Annotated[UserContext, Depends(get_user_context)],
+) -> Path:
+    return ctx.db_path
+
+
 async def get_settings_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
+    db_path: Annotated[Path, Depends(get_db_path)],
 ) -> AsyncGenerator[SettingsRepository]:
-    repo = SettingsRepository(db_path=config.data.db_path)
+    repo = SettingsRepository(db_path=db_path)
     try:
         yield repo
     finally:
@@ -47,9 +62,9 @@ async def get_settings_repository(
 
 
 async def get_puzzle_attempt_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
+    db_path: Annotated[Path, Depends(get_db_path)],
 ) -> AsyncGenerator[PuzzleAttemptRepository]:
-    repo = PuzzleAttemptRepository(db_path=config.data.db_path)
+    repo = PuzzleAttemptRepository(db_path=db_path)
     try:
         yield repo
     finally:
@@ -57,9 +72,9 @@ async def get_puzzle_attempt_repository(
 
 
 async def get_stats_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
+    db_path: Annotated[Path, Depends(get_db_path)],
 ) -> AsyncGenerator[StatsRepository]:
-    repo = StatsRepository(db_path=config.data.db_path)
+    repo = StatsRepository(db_path=db_path)
     try:
         yield repo
     finally:
@@ -67,9 +82,9 @@ async def get_stats_repository(
 
 
 async def get_job_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
+    db_path: Annotated[Path, Depends(get_db_path)],
 ) -> AsyncGenerator[JobRepository]:
-    repo = JobRepository(db_path=config.data.db_path)
+    repo = JobRepository(db_path=db_path)
     try:
         yield repo
     finally:
@@ -86,9 +101,9 @@ async def get_job_service(
 
 
 async def get_game_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
+    db_path: Annotated[Path, Depends(get_db_path)],
 ) -> AsyncGenerator[GameRepository]:
-    repo = GameRepository(db_path=config.data.db_path)
+    repo = GameRepository(db_path=db_path)
     try:
         yield repo
     finally:
@@ -96,9 +111,9 @@ async def get_game_repository(
 
 
 async def get_analysis_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
+    db_path: Annotated[Path, Depends(get_db_path)],
 ) -> AsyncGenerator[AnalysisRepository]:
-    repo = AnalysisRepository(db_path=config.data.db_path)
+    repo = AnalysisRepository(db_path=db_path)
     try:
         yield repo
     finally:
@@ -106,9 +121,9 @@ async def get_analysis_repository(
 
 
 async def get_trap_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
+    db_path: Annotated[Path, Depends(get_db_path)],
 ) -> AsyncGenerator[TrapRepository]:
-    repo = TrapRepository(db_path=config.data.db_path)
+    repo = TrapRepository(db_path=db_path)
     try:
         yield repo
     finally:
@@ -116,9 +131,9 @@ async def get_trap_repository(
 
 
 async def get_starred_puzzle_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
+    db_path: Annotated[Path, Depends(get_db_path)],
 ) -> AsyncGenerator[StarredPuzzleRepository]:
-    repo = StarredPuzzleRepository(db_path=config.data.db_path)
+    repo = StarredPuzzleRepository(db_path=db_path)
     try:
         yield repo
     finally:
@@ -126,9 +141,9 @@ async def get_starred_puzzle_repository(
 
 
 async def get_data_management_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
+    db_path: Annotated[Path, Depends(get_db_path)],
 ) -> AsyncGenerator[DataManagementRepository]:
-    repo = DataManagementRepository(db_path=config.data.db_path)
+    repo = DataManagementRepository(db_path=db_path)
     try:
         yield repo
     finally:
@@ -181,6 +196,15 @@ async def set_request_username(
     request: Request,
     config: Annotated[AppConfig, Depends(get_config)],
 ) -> None:
+    """Set `request.state.username` as the per-user cache key for
+    `@cached` decorators. In credentials mode the key is the signed-in
+    user's id so cached results never cross accounts; in none mode the
+    legacy `config.username` (or `"default"`) is preserved.
+    """
+    ctx = getattr(request.state, "user_ctx", None)
+    if ctx is not None:
+        request.state.username = ctx.user_id
+        return
     request.state.username = config.username or "default"
 
 
@@ -217,3 +241,5 @@ async def check_engine_throttle(request: Request, response: Response) -> None:
 
 
 EngineThrottleDep = Annotated[None, Depends(check_engine_throttle)]
+UserContextDep = Annotated[UserContext, Depends(get_user_context)]
+DbPathDep = Annotated[Path, Depends(get_db_path)]

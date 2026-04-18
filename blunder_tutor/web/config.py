@@ -44,6 +44,11 @@ class AuthConfig(BaseModel):
     max_users: int = 1
     session_max_age_seconds: int = 60 * 60 * 24 * 30
     session_idle_seconds: int = 60 * 60 * 24 * 7
+    # Tri-state: `None` ⇒ "derive from request scheme + vite_dev" (dev
+    # convenience); `True` / `False` ⇒ explicit override for prod
+    # deployments behind a TLS-terminating reverse proxy where
+    # `request.url.scheme` still reads as `http`.
+    cookie_secure: bool | None = None
 
     @model_validator(mode="after")
     def _check_invariants(self) -> Self:
@@ -140,6 +145,17 @@ def _parse_auth_mode(raw: str | None) -> AuthMode:
     raise ValueError(f"AUTH_MODE must be 'none' or 'credentials', got {mode_raw!r}")
 
 
+def _parse_optional_bool(raw: str | None) -> bool | None:
+    if raw is None or raw == "":
+        return None
+    low = raw.lower()
+    if low in _TRUTHY:
+        return True
+    if low in _FALSY:
+        return False
+    raise ValueError(f"expected boolean-like value, got {raw!r}")
+
+
 def _build_auth_config(environ: typing.Mapping) -> AuthConfig:
     """Extract auth-related env vars and let AuthConfig validate them."""
     return AuthConfig(
@@ -152,6 +168,7 @@ def _build_auth_config(environ: typing.Mapping) -> AuthConfig:
         session_idle_seconds=_parse_positive_int(
             environ, "SESSION_IDLE_SECONDS", 60 * 60 * 24 * 7
         ),
+        cookie_secure=_parse_optional_bool(environ.get("AUTH_COOKIE_SECURE")),
     )
 
 

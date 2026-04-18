@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from pathlib import Path
 
 from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -9,6 +10,59 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.features import DEFAULTS
 from blunder_tutor.repositories.settings import SettingsRepository
+
+# App-level per-user cache key for pre-auth / AUTH_MODE=none requests. The
+# sentinel matches the `_local` UserContext that AuthMiddleware synthesises
+# in none mode, so the two modes share a single keying strategy.
+_NONE_MODE_CACHE_KEY = "_local"
+
+
+def _cache_key(request: Request) -> str:
+    """Per-user cache key. Preserves none-mode semantics (one key for the
+    single legacy user) and isolates credentials-mode users from each
+    other so setup/locale/feature caches do not leak across accounts.
+    """
+    ctx = getattr(request.state, "user_ctx", None)
+    if ctx is not None:
+        return ctx.user_id
+    return _NONE_MODE_CACHE_KEY
+
+
+def _db_path_for(request: Request) -> Path | None:
+    """Return the per-request DB path: the signed-in user's DB when an
+    `AuthMiddleware`-populated context is present, otherwise the legacy
+    single-user path (AUTH_MODE=none).
+
+    In credentials mode with no context (exempt paths before any user is
+    signed in) there is no legitimate DB to hit — return ``None`` and let
+    the caller fall back to defaults instead of silently opening the
+    un-migrated legacy ``data/main.sqlite3``.
+    """
+    ctx = getattr(request.state, "user_ctx", None)
+    if ctx is not None:
+        return ctx.db_path
+    if getattr(request.app.state, "auth_mode", "none") == "credentials":
+        return None
+    return request.app.state.config.data.db_path
+
+
+def invalidate_setup_cache(request: Request, key: str) -> None:
+    cache: dict[str, bool] | None = getattr(
+        request.app.state, "_setup_completed_cache", None
+    )
+    if cache is not None:
+        cache.pop(key, None)
+
+
+def set_locale_cache(request: Request, key: str, locale: str) -> None:
+    cache: dict[str, str] | None = getattr(
+        request.app.state, "_locale_cache", None
+    )
+    if cache is None:
+        cache = {}
+        request.app.state._locale_cache = cache
+    cache[key] = locale
+
 
 MUTATION_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
@@ -58,30 +112,50 @@ LOCALE_DISPLAY_NAMES = {
 
 
 class SetupCheckMiddleware(BaseHTTPMiddleware):
-    EXEMPT_PATHS = {"/setup", "/api/", "/health", "/static", "/favicon.ico"}
+    EXEMPT_PATHS = {
+        "/setup",
+        "/api/",
+        "/health",
+        "/static",
+        "/favicon.ico",
+        "/login",
+        "/signup",
+        "/api/auth/",
+    }
 
     async def dispatch(self, request: Request, call_next):
         if getattr(request.app.state, "demo_mode", False):
             return await call_next(request)
 
-        # Check if path is exempt
         if any(request.url.path.startswith(path) for path in self.EXEMPT_PATHS):
             return await call_next(request)
 
-        # Check if setup is completed (with caching to reduce DB load)
-        if not hasattr(request.app.state, "_setup_completed_cache"):
-            config = request.app.state.config
-            settings_repo = SettingsRepository(db_path=config.data.db_path)
-            try:
-                request.app.state._setup_completed_cache = (
-                    await settings_repo.is_setup_completed()
-                )
-            except Exception:
-                # If we can't check setup status, allow the request through
-                # (database might be initializing)
-                return await call_next(request)
+        db_path = _db_path_for(request)
+        if db_path is None:
+            # Credentials mode without a user context: the only requests
+            # reaching here are exempt-path misses, and we have no DB to
+            # consult. Fall through — the route will handle auth itself.
+            return await call_next(request)
 
-        if not request.app.state._setup_completed_cache:
+        cache: dict[str, bool] | None = getattr(
+            request.app.state, "_setup_completed_cache", None
+        )
+        if cache is None:
+            cache = {}
+            request.app.state._setup_completed_cache = cache
+
+        key = _cache_key(request)
+        if key not in cache:
+            settings_repo = SettingsRepository(db_path=db_path)
+            try:
+                cache[key] = await settings_repo.is_setup_completed()
+            except Exception:
+                # DB initializing or missing — let the request through.
+                return await call_next(request)
+            finally:
+                await settings_repo.close()
+
+        if not cache[key]:
             return RedirectResponse(url="/setup", status_code=303)
 
         return await call_next(request)
@@ -123,9 +197,11 @@ class LocaleMiddleware(BaseHTTPMiddleware):
         return response
 
     async def _load_features(self, request: Request) -> dict[str, bool]:
+        db_path = _db_path_for(request)
+        if db_path is None:
+            return {f.value: v for f, v in DEFAULTS.items()}
         try:
-            config = request.app.state.config
-            settings_repo = SettingsRepository(db_path=config.data.db_path)
+            settings_repo = SettingsRepository(db_path=db_path)
             try:
                 return await settings_repo.get_feature_flags()
             finally:
@@ -140,22 +216,26 @@ class LocaleMiddleware(BaseHTTPMiddleware):
         if cookie_locale and i18n and cookie_locale in i18n.available_locales():
             return cookie_locale
 
-        cached = getattr(request.app.state, "_locale_cache", None)
-        if cached:
-            return cached
+        locale_cache: dict[str, str] | None = getattr(
+            request.app.state, "_locale_cache", None
+        )
+        key = _cache_key(request)
+        if locale_cache is not None and key in locale_cache:
+            return locale_cache[key]
 
-        try:
-            config = request.app.state.config
-            settings_repo = SettingsRepository(db_path=config.data.db_path)
+        db_path = _db_path_for(request)
+        if db_path is not None:
             try:
-                db_locale = await settings_repo.get_setting("locale")
-            finally:
-                await settings_repo.close()
-            if db_locale and i18n and db_locale in i18n.available_locales():
-                request.app.state._locale_cache = db_locale
-                return db_locale
-        except Exception:
-            pass
+                settings_repo = SettingsRepository(db_path=db_path)
+                try:
+                    db_locale = await settings_repo.get_setting("locale")
+                finally:
+                    await settings_repo.close()
+                if db_locale and i18n and db_locale in i18n.available_locales():
+                    set_locale_cache(request, key, db_locale)
+                    return db_locale
+            except Exception:
+                pass
 
         accept = request.headers.get("accept-language", "")
         for part in accept.split(","):
