@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import argparse as ap
+import io
 import shutil
 from datetime import timedelta
 from pathlib import Path
@@ -13,6 +15,8 @@ from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import Username
 from blunder_tutor.cli.auth import (
+    AuthCommand,
+    _resolve_new_password,
     cmd_delete_user,
     cmd_list_users,
     cmd_prune_orphans,
@@ -94,6 +98,73 @@ class TestResetPassword:
     async def test_unknown_user_exits(self, ctx) -> None:
         with pytest.raises(SystemExit, match="No such user"):
             await cmd_reset_password(ctx, "ghost", "new-password-xyz")
+
+
+class TestResolveNewPassword:
+    """The new-password value must never reach argparse. These guard
+    the stdin + interactive-prompt paths in ``_resolve_new_password``.
+    """
+
+    def test_subparser_does_not_accept_positional_password(self):
+        parser = ap.ArgumentParser()
+        sub = parser.add_subparsers(dest="command", required=True)
+        AuthCommand().register_subparser(sub)
+
+        # `reset-password alice hunter2` used to be valid; now it must
+        # fail because the positional is gone.
+        with pytest.raises(SystemExit):
+            parser.parse_args(["auth", "reset-password", "alice", "hunter2"])
+
+        # Sanity: the new form with --password-stdin flag parses.
+        ns = parser.parse_args(
+            ["auth", "reset-password", "alice", "--password-stdin"]
+        )
+        assert ns.username == "alice"
+        assert ns.password_stdin is True
+        assert not hasattr(ns, "new_password")
+
+    def test_password_stdin_reads_line(self, monkeypatch):
+        monkeypatch.setattr(
+            "sys.stdin", io.StringIO("s3cret-password\n")
+        )
+        args = ap.Namespace(password_stdin=True)
+        assert _resolve_new_password(args) == "s3cret-password"
+
+    def test_password_stdin_empty_exits(self, monkeypatch):
+        monkeypatch.setattr("sys.stdin", io.StringIO("\n"))
+        args = ap.Namespace(password_stdin=True)
+        with pytest.raises(SystemExit, match="empty password"):
+            _resolve_new_password(args)
+
+    def test_interactive_prompts_twice_and_matches(self, monkeypatch):
+        responses = iter(["new-password-xyz", "new-password-xyz"])
+        monkeypatch.setattr(
+            "blunder_tutor.cli.auth.getpass.getpass",
+            lambda _prompt: next(responses),
+        )
+        monkeypatch.setattr("sys.stdin.isatty", lambda: True)
+        args = ap.Namespace(password_stdin=False)
+        assert _resolve_new_password(args) == "new-password-xyz"
+
+    def test_interactive_mismatch_exits(self, monkeypatch):
+        responses = iter(["pw-a", "pw-b"])
+        monkeypatch.setattr(
+            "blunder_tutor.cli.auth.getpass.getpass",
+            lambda _prompt: next(responses),
+        )
+        monkeypatch.setattr("sys.stdin.isatty", lambda: True)
+        args = ap.Namespace(password_stdin=False)
+        with pytest.raises(SystemExit, match="did not match"):
+            _resolve_new_password(args)
+
+    def test_no_tty_refuses_to_fall_back_to_input(self, monkeypatch):
+        """Without a TTY, getpass would silently call input() which
+        echoes. Refuse explicitly so the operator sees a clear error
+        instead of a password in scrollback."""
+        monkeypatch.setattr("sys.stdin.isatty", lambda: False)
+        args = ap.Namespace(password_stdin=False)
+        with pytest.raises(SystemExit, match="no TTY"):
+            _resolve_new_password(args)
 
 
 class TestRevokeSessions:

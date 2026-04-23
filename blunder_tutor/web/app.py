@@ -11,6 +11,8 @@ import chess.engine
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi_throttle import RateLimiter
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.auth.db import AuthDb
@@ -36,10 +38,13 @@ from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web import routes
 from blunder_tutor.web.config import AppConfig, config_factory
 from blunder_tutor.web.middleware import (
+    CsrfOriginMiddleware,
     DemoModeMiddleware,
     LocaleMiddleware,
+    SecurityHeadersMiddleware,
     SetupCheckMiddleware,
 )
+from blunder_tutor.web.template_context import i18n_context
 from blunder_tutor.web.throttle import create_engine_throttle
 from blunder_tutor.web.vite import vite_asset
 
@@ -127,6 +132,19 @@ async def _bootstrap_auth(app: FastAPI) -> None:
     )
     app.state.auth_service = auth_service
 
+    # Surface the most common insecure-default posture: credentials auth
+    # but the operator has not indicated either HTTPS-direct or a trusted
+    # reverse proxy. Without one of those, the session cookie ships
+    # without `Secure` and is sniffable on any plaintext hop.
+    if auth_config.cookie_secure is None and not auth_config.trust_proxy:
+        log.warning(
+            "AUTH_MODE=credentials is configured but neither "
+            "AUTH_COOKIE_SECURE nor AUTH_TRUST_PROXY is set. Session "
+            "cookies will drop the Secure flag on plain HTTP. Set "
+            "AUTH_COOKIE_SECURE=true (HTTPS-direct) or AUTH_TRUST_PROXY"
+            "=true + X-Forwarded-Proto in your reverse proxy."
+        )
+
     if await auth_service.user_count() == 0:
         try:
             setup_repo = SetupRepository(db=auth_db)
@@ -182,17 +200,21 @@ def create_app(
     else:
         settings = None
 
-    templates = Jinja2Templates(directory=str(config.data.template_dir))
+    templates = Jinja2Templates(
+        directory=str(config.data.template_dir),
+        context_processors=[i18n_context],
+    )
 
     # Initialize i18n
     locales_dir = Path(__file__).parent.parent.parent / "locales"
     i18n = TranslationManager(locales_dir)
     app.state.i18n = i18n
 
-    # Register Jinja2 global for translations
-    templates.env.globals["t"] = (
-        lambda key, **kwargs: key
-    )  # placeholder, overridden per-request
+    # Per-request template state (t, locale, features, translations_json,
+    # features_json) is plumbed via ``i18n_context`` from ``request.state``
+    # so concurrent renders can't observe each other's context. See
+    # ``template_context.py`` for the processor and the LocaleMiddleware
+    # for where the request state is populated.
     templates.env.globals["available_locales"] = i18n.available_locales
     templates.env.globals["vite_asset"] = lambda entry: vite_asset(
         entry, dev_mode=config.vite_dev
@@ -283,13 +305,57 @@ def create_app(
     # Set up per-IP engine throttle for demo mode
     app.state.engine_throttle = create_engine_throttle(config)
 
+    # Per-IP rate limiters for auth endpoints. `RateLimiter` is stateful
+    # (in-memory sliding-window), so it must be instantiated once per
+    # process and reused across requests — re-instantiating per-request
+    # would give every attempt a fresh bucket and defeat the limiter.
+    # ``trust_proxy`` is opt-in via `AUTH_TRUST_PROXY`: default ``False``
+    # keys the limiter on the direct client IP, so a direct-to-uvicorn
+    # deploy cannot be bypassed by spoofing ``X-Forwarded-For``. Flip
+    # to ``True`` only behind a reverse proxy that overwrites the
+    # header.
+    app.state.login_rate_limiter = RateLimiter(
+        times=config.auth.login_rate_limit,
+        seconds=config.auth.login_rate_window_seconds,
+        trust_proxy=config.auth.trust_proxy,
+        add_headers=True,
+        detail="Too many login attempts; please wait and try again.",
+    )
+    app.state.signup_rate_limiter = RateLimiter(
+        times=config.auth.signup_rate_limit,
+        seconds=config.auth.signup_rate_window_seconds,
+        trust_proxy=config.auth.trust_proxy,
+        add_headers=True,
+        detail="Too many signup attempts; please wait and try again.",
+    )
+
     # Add middleware (order matters: last added = first executed).
     # `AuthMiddleware` runs first so downstream middleware can read the
     # per-request `user_ctx` / `db_path` from `request.state`.
+    # `SecurityHeadersMiddleware` is added first (runs last on response)
+    # so it stamps headers regardless of what earlier middleware returned
+    # — including Auth's 401 and redirect responses.
+    # Host header allowlist. Without it, a shared-vhost deployment lets
+    # any cross-origin attacker pass the CSRF Origin/Host equality check
+    # by sending a spoofed Host header. When `allowed_hosts` is set,
+    # Starlette TrustedHostMiddleware returns 400 for any mismatch
+    # BEFORE other middleware sees the request. Default "*" preserves
+    # behavior for single-host dev setups; operators MUST configure
+    # this on any multi-tenant or shared-origin deploy.
+    app.add_middleware(
+        TrustedHostMiddleware, allowed_hosts=list(config.allowed_hosts)
+    )
+    app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(SetupCheckMiddleware)
     app.add_middleware(DemoModeMiddleware)
     app.add_middleware(LocaleMiddleware)
     app.add_middleware(AuthMiddleware)
+    # CsrfOriginMiddleware added LAST → runs FIRST on the request path.
+    # A cross-origin mutation must be rejected before Auth/Locale/Setup
+    # run any side effects (DB lookups, cache writes). AuthMiddleware's
+    # /login redirect would otherwise consume the request before CSRF
+    # sees it, violating the "CSRF rejects before side effects" invariant.
+    app.add_middleware(CsrfOriginMiddleware)
     app = routes.configure_router(app)
     return app
 

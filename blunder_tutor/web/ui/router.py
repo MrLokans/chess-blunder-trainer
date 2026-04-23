@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from blunder_tutor.features import FEATURE_GROUPS, FEATURE_LABELS
+from blunder_tutor.web.template_context import LOCALE_DISPLAY_NAMES
 
 
 async def home(request: Request) -> HTMLResponse:
@@ -31,7 +32,7 @@ async def settings(request: Request) -> HTMLResponse:
         for group_label, group_features in FEATURE_GROUPS
     ]
 
-    features = request.app.state.templates.env.globals.get("features", {})
+    features: dict[str, bool] = getattr(request.state, "features", {})
     feature_groups_data = [
         {
             "label": group_label,
@@ -47,18 +48,13 @@ async def settings(request: Request) -> HTMLResponse:
         for group_label, group_features in feature_groups_tuples
     ]
 
-    locale_display_names = request.app.state.templates.env.globals.get(
-        "locale_display_names", {}
-    )
-    available_locales_fn = request.app.state.templates.env.globals.get(
-        "available_locales", lambda: []
-    )
+    i18n = request.app.state.i18n
     available_locales_data = [
-        {"code": code, "name": locale_display_names.get(code, code)}
-        for code in available_locales_fn()
+        {"code": code, "name": LOCALE_DISPLAY_NAMES.get(code, code)}
+        for code in i18n.available_locales()
     ]
 
-    current_locale = request.app.state.templates.env.globals.get("locale", "en")
+    current_locale = getattr(request.state, "locale", "en")
 
     return request.app.state.templates.TemplateResponse(
         "settings.html",

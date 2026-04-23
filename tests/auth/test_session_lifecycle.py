@@ -114,6 +114,36 @@ class TestSessionResolution:
         after = (await repo.get(session.token)).last_seen_at
         assert after > before
 
+    async def test_resolve_debounces_last_seen_write(
+        self, service: AuthService, auth_db: AuthDb
+    ):
+        """With idle=30s the debounce threshold is 3s. A recently-seen
+        session must NOT trigger a write on every request — without the
+        debounce, N concurrent requests queue N writes behind the auth
+        DB write lock (a real DoS vector — see H9 in the security
+        review)."""
+        user = await service.register(
+            username=Username("alice"), password="password123"
+        )
+        session = await service.create_session(
+            user_id=user.id, user_agent=None, ip=None
+        )
+        await _force_column(
+            auth_db,
+            session.token,
+            "last_seen_at",
+            datetime.now(UTC) - timedelta(seconds=1),
+        )
+
+        repo = SessionRepository(db=auth_db)
+        before = (await repo.get(session.token)).last_seen_at
+
+        ctx = await service.resolve_session(session.token, None)
+        assert ctx is not None
+
+        after = (await repo.get(session.token)).last_seen_at
+        assert after == before, "last_seen should NOT be bumped within debounce window"
+
 
 class TestRevocation:
     async def test_revoke_single(self, service: AuthService):

@@ -46,6 +46,20 @@ Open http://localhost:8000 and enter your chess username. That's it.
 
 For Docker Compose, environment variables, and advanced options see [Docker Deployment Guide](docs/DOCKER.md).
 
+## Multi-User Mode (optional)
+
+By default Blunder Tutor runs single-user with no login. To host multiple accounts on one instance, enable credentials mode:
+
+```bash
+docker run -p 8000:8000 -v $(pwd)/data:/app/data \
+  -e AUTH_MODE=credentials \
+  -e SECRET_KEY="$(openssl rand -hex 32)" \
+  -e MAX_USERS=5 \
+  ghcr.io/mrlokans/blunder-tutor:latest
+```
+
+First signup uses a one-time invite code printed to the server log on boot. Each account gets an isolated SQLite database under `data/users/`. See [Authentication](docs/AUTH.md) for the full setup, CLI admin commands, and gotchas.
+
 ## Features
 
 - **Multi-platform import** — Lichess, Chess.com, or paste your own PGN
@@ -102,5 +116,6 @@ Issues and pull requests are welcome. Run `make install-dev` and `make test` bef
 
 - [Changelog](CHANGELOG.md)
 - [Docker Deployment Guide](docs/DOCKER.md)
+- [Authentication](docs/AUTH.md) — multi-user mode setup and admin
 - [Glossary](docs/GLOSSARY.md) — chess and engine terminology
 - [License](LICENSE) (AGPL-3.0)

@@ -121,8 +121,17 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV STOCKFISH_BINARY=/usr/local/bin/stockfish
 ENV PYTHONUNBUFFERED=1
 
-# Create data directory for persistence
-RUN mkdir -p /app/data
+# Create a non-root user and the data directory, then hand ownership
+# over. Running as root inside the container is dangerous: an RCE in
+# any handler would immediately write root-owned files to the bind
+# mount, and any future container-escape CVE would land as UID 0 on
+# the host. UID 1000 is the typical default for host developer
+# accounts so bind-mount ownership lines up without chown gymnastics.
+RUN groupadd --system --gid 1000 appuser \
+    && useradd --system --uid 1000 --gid 1000 --home /app --no-create-home appuser \
+    && mkdir -p /app/data \
+    && chown -R appuser:appuser /app
+USER appuser
 
 EXPOSE 8000
 

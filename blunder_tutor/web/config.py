@@ -49,6 +49,22 @@ class AuthConfig(BaseModel):
     # deployments behind a TLS-terminating reverse proxy where
     # `request.url.scheme` still reads as `http`.
     cookie_secure: bool | None = None
+    # Per-IP rate limits. Defaults match OWASP guidance for "low-risk"
+    # self-hosted deployments; tune via env for public instances. Login
+    # hits bcrypt on every request so the cap also caps CPU cost.
+    login_rate_limit: int = 5
+    login_rate_window_seconds: int = 60
+    signup_rate_limit: int = 3
+    signup_rate_window_seconds: int = 60 * 60
+    # Whether to trust ``X-Forwarded-For`` when keying rate limiters.
+    # MUST stay ``False`` (default) for direct-to-uvicorn deploys — a
+    # trusted proxy header on a publicly-reachable origin lets any
+    # client spoof the source IP and get a fresh bucket per forged
+    # value, trivially bypassing the rate limit. Set to ``True`` only
+    # behind a reverse proxy that overwrites the header (nginx
+    # ``proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;``
+    # and a trusted upstream).
+    trust_proxy: bool = False
 
     @model_validator(mode="after")
     def _check_invariants(self) -> Self:
@@ -111,6 +127,13 @@ class AppConfig(BaseModel):
     analytics: AnalyticsConfig = AnalyticsConfig()
     cache: CacheConfig = CacheConfig()
     auth: AuthConfig = AuthConfig()
+    # Host header allowlist passed to Starlette TrustedHostMiddleware.
+    # Default `["*"]` accepts any Host header — appropriate for single-
+    # tenant self-hosted instances. Shared-vhost or multi-tenant
+    # deployments MUST set `ALLOWED_HOSTS=example.com,www.example.com`
+    # to prevent Host-header spoofing from defeating the CSRF Origin
+    # check.
+    allowed_hosts: tuple[str, ...] = ("*",)
 
     @model_validator(mode="after")
     def _check_mode_compatibility(self) -> Self:
@@ -169,6 +192,17 @@ def _build_auth_config(environ: typing.Mapping) -> AuthConfig:
             environ, "SESSION_IDLE_SECONDS", 60 * 60 * 24 * 7
         ),
         cookie_secure=_parse_optional_bool(environ.get("AUTH_COOKIE_SECURE")),
+        login_rate_limit=_parse_positive_int(environ, "AUTH_LOGIN_RATE_LIMIT", 5),
+        login_rate_window_seconds=_parse_positive_int(
+            environ, "AUTH_LOGIN_RATE_WINDOW_SECONDS", 60
+        ),
+        signup_rate_limit=_parse_positive_int(
+            environ, "AUTH_SIGNUP_RATE_LIMIT", 3
+        ),
+        signup_rate_window_seconds=_parse_positive_int(
+            environ, "AUTH_SIGNUP_RATE_WINDOW_SECONDS", 60 * 60
+        ),
+        trust_proxy=_parse_bool(environ.get("AUTH_TRUST_PROXY"), default=False),
     )
 
 
@@ -207,6 +241,14 @@ def config_factory(
     db_path_env = environ.get("DB_PATH")
     data = DataConfig(db_path=Path(db_path_env)) if db_path_env else DataConfig()
 
+    allowed_hosts_env = environ.get("ALLOWED_HOSTS")
+    if allowed_hosts_env:
+        allowed_hosts = tuple(
+            h.strip() for h in allowed_hosts_env.split(",") if h.strip()
+        )
+    else:
+        allowed_hosts = ("*",)
+
     cache = CacheConfig(
         enabled=_parse_bool(environ.get("CACHE_ENABLED"), default=True),
         default_ttl=int(environ.get("CACHE_DEFAULT_TTL", "300")),
@@ -214,6 +256,7 @@ def config_factory(
 
     return AppConfig(
         data=data,
+        allowed_hosts=allowed_hosts,
         engine_path=final_engine_path,
         engine=EngineConfig(
             path=final_engine_path,

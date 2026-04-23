@@ -43,6 +43,8 @@ All data lives in `/app/data` inside the container. The `-v $(pwd)/data:/app/dat
 tar -czf blunder-tutor-backup-$(date +%Y%m%d).tar.gz data/
 ```
 
+**Host ownership:** the image runs as UID/GID 1000 (`appuser`). If your host `./data` directory is owned by a different UID, either `chown -R 1000:1000 data/` once, override `user:` in `docker-compose.yml`, or run `docker run --user $(id -u):$(id -g) ...`.
+
 ## Updating
 
 ```bash

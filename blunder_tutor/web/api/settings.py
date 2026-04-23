@@ -688,8 +688,9 @@ async def settings_submit(
             await settings_repo.set_setting(f"theme_{key}", value)
 
     scheduler = request.app.state.scheduler
-    settings = await settings_repo.get_all_settings()
-    scheduler.update_jobs(settings)
+    if scheduler is not None:
+        settings = await settings_repo.get_all_settings()
+        scheduler.update_jobs(settings)
 
     return {"success": True}
 
@@ -725,8 +726,9 @@ async def update_features(
     await settings_repo.set_feature_flags(payload.features)
 
     scheduler = request.app.state.scheduler
-    settings = await settings_repo.get_all_settings()
-    scheduler.update_jobs(settings)
+    if scheduler is not None:
+        settings = await settings_repo.get_all_settings()
+        scheduler.update_jobs(settings)
 
     return {"success": True}
 

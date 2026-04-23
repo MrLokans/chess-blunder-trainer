@@ -4,6 +4,8 @@ from pathlib import Path
 
 import aiosqlite
 
+from blunder_tutor.secure_fs import restrict_umask, secure_db_file
+
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS users (
     id           TEXT PRIMARY KEY,
@@ -47,7 +49,14 @@ CREATE TABLE IF NOT EXISTS setup (
 
 async def initialize_auth_schema(db_path: Path) -> None:
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    async with aiosqlite.connect(db_path) as conn:
-        await conn.execute("PRAGMA foreign_keys = ON")
-        await conn.executescript(SCHEMA_SQL)
-        await conn.commit()
+    # Tighten umask for the lifetime of the connect so the file lands
+    # with 0600 on creation, closing the race between file create and
+    # the explicit chmod that follows.
+    with restrict_umask():
+        async with aiosqlite.connect(db_path) as conn:
+            await conn.execute("PRAGMA foreign_keys = ON")
+            await conn.executescript(SCHEMA_SQL)
+            await conn.commit()
+    # Belt to the umask suspenders — ensures the file is 0600 even if
+    # some code path in the future changes the umask story.
+    secure_db_file(db_path)

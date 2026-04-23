@@ -36,6 +36,7 @@ from blunder_tutor.auth.types import (
     make_user_id,
 )
 from blunder_tutor.migrations import run_migrations
+from blunder_tutor.secure_fs import secure_user_dir
 
 
 class AuthService:
@@ -113,7 +114,7 @@ class AuthService:
         # already in CASCADE. Phase 4 may move migration to lazy-on-first
         # -access inside `get_db_path` to close the gap entirely.
         user_db_path = self.db_path_for(user_id)
-        user_db_path.parent.mkdir(parents=True, exist_ok=True)
+        secure_user_dir(user_db_path.parent)
         run_migrations(user_db_path)
 
         user = await self._users.get_by_id(user_id)
@@ -201,7 +202,7 @@ class AuthService:
             raise
 
         user_db_path = self.db_path_for(user_id)
-        user_db_path.parent.mkdir(parents=True, exist_ok=True)
+        secure_user_dir(user_db_path.parent)
         run_migrations(user_db_path)
 
         user = await self._users.get_by_id(user_id)
@@ -253,7 +254,16 @@ class AuthService:
         if session.last_seen_at + self._session_idle < now:
             await self._sessions.delete(typed_token)
             return None
-        await self._sessions.bump_last_seen(typed_token)
+        # Debounce ``last_seen`` writes so every authenticated request
+        # doesn't serialize behind the auth DB write lock. The idle
+        # timeout guarantee is unchanged: threshold is ``idle / 10``,
+        # small enough that a bump happens many times per idle window
+        # but large enough that a burst of requests from one client
+        # coalesces into one write. At the 7-day default idle this
+        # means a bump roughly every 17 hours of continuous use.
+        bump_threshold = self._session_idle / 10
+        if now - session.last_seen_at >= bump_threshold:
+            await self._sessions.bump_last_seen(typed_token)
         user = await self._users.get_by_id(session.user_id)
         if user is None:
             # Session row orphaned — referential integrity should prevent

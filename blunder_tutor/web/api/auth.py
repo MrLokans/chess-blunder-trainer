@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi_throttle import RateLimiter
 from pydantic import BaseModel
 
 from blunder_tutor.auth.service import AuthService
@@ -22,7 +24,23 @@ from blunder_tutor.web.config import AppConfig
 from blunder_tutor.web.dependencies import ConfigDep, get_user_context
 from blunder_tutor.web.middleware import invalidate_setup_cache
 
+log = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/auth")
+
+
+async def _login_rate_limit(request: Request, response: Response) -> None:
+    limiter: RateLimiter = request.app.state.login_rate_limiter
+    await limiter(request, response)
+
+
+async def _signup_rate_limit(request: Request, response: Response) -> None:
+    limiter: RateLimiter = request.app.state.signup_rate_limiter
+    await limiter(request, response)
+
+
+def _client_ip(request: Request) -> str | None:
+    return request.client.host if request.client else None
 
 
 class SignupRequest(BaseModel):
@@ -64,19 +82,33 @@ def _cookie_secure(config: AppConfig, request: Request) -> bool:
     """Session cookie `secure` flag.
 
     Precedence:
-    1. Explicit ``AUTH_COOKIE_SECURE`` override (for prod behind a
-       TLS-terminating proxy that doesn't forward ``X-Forwarded-Proto``
-       or where ``request.url.scheme`` still reads ``http``).
+    1. Explicit ``AUTH_COOKIE_SECURE`` override (highest priority —
+       operators can force-on behind any topology).
     2. Request scheme ``https`` → ``True``.
-    3. Dev mode (``vite_dev``) → ``False``.
-    4. Fallback ``False`` so ``http`` responses don't drop the cookie at
-       the browser, though this is a misconfiguration worth flagging in
-       an ops guide.
+    3. ``X-Forwarded-Proto: https`` when ``AUTH_TRUST_PROXY`` is on.
+       A reverse proxy terminates TLS and forwards plaintext upstream;
+       without this branch the cookie would drop ``Secure`` and be
+       sniffable on the proxy↔app hop.
+    4. Dev mode (``vite_dev``) → ``False``.
+    5. Fallback ``False`` — a direct-to-uvicorn plain-HTTP deploy.
+       Documented as an operator misconfiguration for any public-facing
+       instance.
+
+    ``AUTH_TRUST_PROXY`` gates ``X-Forwarded-Proto`` for the same reason
+    it gates ``X-Forwarded-For`` in the rate limiter: a direct-to-uvicorn
+    deploy that trusted the header would let any client claim the
+    request was HTTPS by setting the header itself.
     """
     if config.auth.cookie_secure is not None:
         return config.auth.cookie_secure
     if request.url.scheme == "https":
         return True
+    if config.auth.trust_proxy:
+        forwarded = request.headers.get("x-forwarded-proto", "")
+        # Header may contain comma-separated chain; the leftmost value
+        # is the original client's scheme when the proxy appends.
+        if forwarded.split(",", 1)[0].strip().lower() == "https":
+            return True
     if config.vite_dev:
         return False
     return False
@@ -96,7 +128,11 @@ def _set_session_cookie(
     )
 
 
-@router.post("/signup", response_model=MeResponse)
+@router.post(
+    "/signup",
+    response_model=MeResponse,
+    dependencies=[Depends(_signup_rate_limit)],
+)
 async def signup(
     request: Request,
     body: SignupRequest,
@@ -154,7 +190,11 @@ async def signup(
     return MeResponse(id=user.id, username=user.username, email=user.email)
 
 
-@router.post("/login", response_model=MeResponse)
+@router.post(
+    "/login",
+    response_model=MeResponse,
+    dependencies=[Depends(_login_rate_limit)],
+)
 async def login(
     request: Request,
     body: LoginRequest,
@@ -172,6 +212,11 @@ async def login(
         {"username": body.username, "password": body.password},
     )
     if user is None:
+        log.warning(
+            "auth.login.failed ip=%s username=%r",
+            _client_ip(request),
+            body.username,
+        )
         raise HTTPException(status_code=401, detail="invalid_credentials")
 
     session = await service.create_session(

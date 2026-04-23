@@ -3,6 +3,10 @@ services:
     build:
       context: .
     container_name: blunder-tutor
+    # UID:GID pinned to the appuser baked into the image. Pin here as
+    # well so bind-mount ownership (./data) on the host stays readable
+    # by the host developer account without a chown dance.
+    user: "1000:1000"
     ports:
       - "8000:8000"
     volumes:
