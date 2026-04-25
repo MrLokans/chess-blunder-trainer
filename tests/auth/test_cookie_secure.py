@@ -6,9 +6,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from blunder_tutor.web.api.auth import _cookie_secure
 from blunder_tutor.web.app import create_app
 from blunder_tutor.web.config import AppConfig, AuthConfig, config_factory
+from blunder_tutor.web.cookies import compute_cookie_secure as _cookie_secure
 from tests.helpers.engine import mock_engine_context
 
 

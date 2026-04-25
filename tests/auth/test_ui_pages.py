@@ -2,18 +2,7 @@ from __future__ import annotations
 
 import httpx
 
-
-async def _signup(
-    client: httpx.AsyncClient, invite: str, username: str = "alice"
-) -> httpx.Response:
-    return await client.post(
-        "/api/auth/signup",
-        json={
-            "username": username,
-            "password": "password123",
-            "invite_code": invite,
-        },
-    )
+from tests.auth.conftest import signup_via_http as _signup
 
 
 class TestLoginPage:
@@ -91,6 +80,38 @@ class TestSetupPage:
         r = await client_credentials_mode.get("/setup", follow_redirects=False)
         assert r.status_code == 302
         assert r.headers["location"] == "/login"
+
+
+class TestAuthLayoutBodyClass:
+    """The `auth-layout` body class scopes the flex-center layout away from
+    non-auth pages — an unscoped `body { display: flex; ... }` rule used to
+    lay the demo banner and the auth card out side-by-side."""
+
+    async def test_login_page_body_has_auth_layout_class(
+        self, client_credentials_mode: httpx.AsyncClient
+    ):
+        r = await client_credentials_mode.get("/login")
+        assert r.status_code == 200
+        assert 'class="auth-layout"' in r.text
+
+    async def test_setup_page_body_has_auth_layout_class(
+        self, client_credentials_mode: httpx.AsyncClient
+    ):
+        r = await client_credentials_mode.get("/setup")
+        assert r.status_code == 200
+        assert 'class="auth-layout"' in r.text
+
+    async def test_signup_full_page_body_has_auth_layout_class(
+        self,
+        client_credentials_mode: httpx.AsyncClient,
+        invite_code: str,
+    ):
+        await _signup(client_credentials_mode, invite_code)
+        client_credentials_mode.cookies.clear()
+
+        r = await client_credentials_mode.get("/signup", follow_redirects=False)
+        assert r.status_code == 403
+        assert 'class="auth-layout"' in r.text
 
 
 class TestLogoutUi:

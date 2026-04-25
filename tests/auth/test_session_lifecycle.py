@@ -11,12 +11,11 @@ from blunder_tutor.auth.types import SessionToken, Username
 
 
 @pytest.fixture
-async def service(auth_db: AuthDb, tmp_path) -> AuthService:
-    users_dir = tmp_path / "users"
-    users_dir.mkdir()
-    return AuthService(
-        auth_db=auth_db,
-        users_dir=users_dir,
+def service(service_factory) -> AuthService:
+    """Tight timeouts so session-expiry / idle-bump assertions run in
+    real-time. The cross-file default (30d / 7d) would make this suite
+    take a month to surface an expiry regression."""
+    return service_factory(
         session_max_age=timedelta(seconds=60),
         session_idle=timedelta(seconds=30),
     )

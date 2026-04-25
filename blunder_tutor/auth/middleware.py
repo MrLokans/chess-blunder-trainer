@@ -8,6 +8,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import UserContext, UserId, Username
+from blunder_tutor.web.cookies import SESSION_COOKIE_NAME
 from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
 
 EXEMPT_PATHS = AUTH_UI_PATHS | frozenset({"/health", "/favicon.ico"})
@@ -65,7 +66,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         path = request.url.path
         service: AuthService = request.app.state.auth_service
-        token = request.cookies.get("session_token")
+        token = request.cookies.get(SESSION_COOKIE_NAME)
         client_ip = request.client.host if request.client else None
         ctx: UserContext | None = None
         if token:

@@ -191,8 +191,7 @@ async def run_backfill_traps_job(
     event_bus: Annotated[EventBus, Depends(get_event_bus)],
 ) -> dict[str, Any]:
     ctx = get_context()
-    trap_repo = TrapRepository(db_path=ctx.db_path)
-    try:
+    async with TrapRepository(db_path=ctx.db_path) as trap_repo:
         job = BackfillTrapsJob(
             job_service=job_service,
             game_repo=game_repo,
@@ -206,8 +205,6 @@ async def run_backfill_traps_job(
         await event_bus.publish(traps_event)
 
         return result
-    finally:
-        await trap_repo.close()
 
 
 @inject

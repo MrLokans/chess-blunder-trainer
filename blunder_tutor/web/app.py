@@ -101,8 +101,10 @@ async def lifespan(app: FastAPI):
     await coordinator.shutdown()
     if settings_repo is not None:
         await settings_repo.close()
-    if app.state.auth_service is not None:
-        await app.state.auth_service.close()
+    # AuthDb owns the shared aiosqlite connection; close it here. Provider
+    # lifecycles are currently no-ops (CredentialsProvider holds no external
+    # resources) so AuthService has no close method — if a future provider
+    # needs cleanup, re-add it and wire it back in the same spot.
     if app.state.auth_db is not None:
         await app.state.auth_db.close()
 

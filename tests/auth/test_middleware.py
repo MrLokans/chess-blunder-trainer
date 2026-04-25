@@ -8,7 +8,6 @@ import pytest
 from fastapi import FastAPI, Request
 from httpx import ASGITransport
 
-from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.middleware import AuthMiddleware
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import Username
@@ -69,12 +68,8 @@ def legacy_db(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-async def service(auth_db: AuthDb, tmp_path: Path) -> AuthService:
-    users_dir = tmp_path / "users"
-    users_dir.mkdir()
-    return AuthService(
-        auth_db=auth_db,
-        users_dir=users_dir,
+def service(service_factory) -> AuthService:
+    return service_factory(
         session_max_age=timedelta(days=1),
         session_idle=timedelta(days=1),
     )

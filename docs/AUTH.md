@@ -2,8 +2,6 @@
 
 Blunder Tutor ships single-user by default. Multi-user login is opt-in.
 
-For the full design contract see [`docs/superpowers/specs/2026-04-17-auth-saas-ready-design.md`](superpowers/specs/2026-04-17-auth-saas-ready-design.md).
-
 ## Modes
 
 | `AUTH_MODE` | Behavior | Database layout |
@@ -91,7 +89,7 @@ uv run python main.py auth prune-orphans           # delete per-user data dirs w
 - **`DEMO_MODE` and credentials mode are mutually exclusive.** Startup aborts rather than letting demo write-blocking silently layer on top of login.
 - **Background features are disabled in credentials mode.** Scheduled auto-sync, settings-change notifications, and the job executor run only under `AUTH_MODE=none` at present. Games are fetched and analyzed only via explicit per-user triggers in the UI. Tracked as deferred items in [`docs/superpowers/status/auth-saas-ready.md`](superpowers/status/auth-saas-ready.md).
 - **Invite codes are single-use.** Regenerating produces a new code and invalidates the old one. There is no invite inbox — one code exists at a time, used for bootstrapping or operator-driven account creation.
-- **`SECRET_KEY` rotation invalidates pending invites.** Any invite generated under the old key fails HMAC verification under the new one. Regenerate after rotation.
+- **`SECRET_KEY` rotation does not invalidate a pending invite.** The setup table's stored invite is authoritative on consume — the signup path uses constant-time equality against the stored row, not HMAC verification. Regeneration is still how you *revoke* an invite (it overwrites the stored row), but rotation alone leaves the existing invite usable for its remaining single use.
 - **Passwords reset via CLI only.** There is no email-based reset flow. Losing access to a user requires shell access to the host.
 - **Sessions are DB-backed, not JWT.** Revocation (`revoke-sessions`, `delete-user`) takes effect immediately. Horizontal scaling across processes requires a shared `data/` volume.
 - **Per-IP rate limits on `/api/auth/login` and `/api/auth/signup` only.** Defaults: 5 logins/min and 3 signups/hour per client IP. Tune via `AUTH_LOGIN_RATE_LIMIT` and `AUTH_SIGNUP_RATE_LIMIT`. No per-username backoff, 2FA, CSRF token, or audit log in MVP. For public instances put the instance behind a reverse proxy, set `AUTH_TRUST_PROXY=true`, and layer additional WAF rate-limiting if you expect distributed brute-force.

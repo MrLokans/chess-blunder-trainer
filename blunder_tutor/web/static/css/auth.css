@@ -1,11 +1,19 @@
-body {
+/* Page layout for /login, /signup, /setup, and the cap-reached page.
+ * Banner stays top-docked via flex-column ordering; auth-card centers
+ * in the remaining vertical space. Scoped so no other page is affected. */
+.auth-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-layout > #auth-root,
+.auth-layout > .container {
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.container {
-  max-width: 440px;
+  padding: var(--s-md, 16px);
 }
 
 .auth-card {
@@ -14,6 +22,8 @@ body {
   border-radius: var(--radius-lg, 8px);
   padding: var(--s-xl, 32px);
   box-shadow: var(--shadow-card, 0 2px 12px rgba(0, 0, 0, 0.06));
+  max-width: 440px;
+  width: 100%;
 }
 
 .auth-card h1 {

@@ -11,6 +11,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from blunder_tutor.features import DEFAULTS
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
+from blunder_tutor.web.tls import is_https_request
 
 # App-level per-user cache key for pre-auth / AUTH_MODE=none requests. The
 # sentinel matches the `_local` UserContext that AuthMiddleware synthesises
@@ -213,14 +214,12 @@ class SetupCheckMiddleware(BaseHTTPMiddleware):
 
         key = _cache_key(request)
         if key not in cache:
-            settings_repo = SettingsRepository(db_path=db_path)
             try:
-                cache[key] = await settings_repo.is_setup_completed()
+                async with SettingsRepository(db_path=db_path) as settings_repo:
+                    cache[key] = await settings_repo.is_setup_completed()
             except Exception:
                 # DB initializing or missing — let the request through.
                 return await call_next(request)
-            finally:
-                await settings_repo.close()
 
         if not cache[key]:
             return RedirectResponse(url="/setup", status_code=303)
@@ -258,7 +257,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers.setdefault(
             "Referrer-Policy", "strict-origin-when-cross-origin"
         )
-        if _request_is_https(request):
+        auth_config = getattr(request.app.state, "auth_config", None)
+        if auth_config is not None and is_https_request(request, auth_config):
             response.headers.setdefault(
                 "Strict-Transport-Security",
                 "max-age=31536000; includeSubDomains",
@@ -273,17 +273,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         if "text/html" in content_type or authenticated:
             response.headers["Cache-Control"] = "no-store"
         return response
-
-
-def _request_is_https(request: Request) -> bool:
-    if request.url.scheme == "https":
-        return True
-    auth_config = getattr(request.app.state, "auth_config", None)
-    if auth_config is not None and auth_config.trust_proxy:
-        forwarded = request.headers.get("x-forwarded-proto", "")
-        if forwarded.split(",", 1)[0].strip().lower() == "https":
-            return True
-    return False
 
 
 class LocaleMiddleware(BaseHTTPMiddleware):
@@ -318,11 +307,8 @@ class LocaleMiddleware(BaseHTTPMiddleware):
         if db_path is None:
             return {f.value: v for f, v in DEFAULTS.items()}
         try:
-            settings_repo = SettingsRepository(db_path=db_path)
-            try:
+            async with SettingsRepository(db_path=db_path) as settings_repo:
                 return await settings_repo.get_feature_flags()
-            finally:
-                await settings_repo.close()
         except Exception:
             return {f.value: v for f, v in DEFAULTS.items()}
 
@@ -343,11 +329,8 @@ class LocaleMiddleware(BaseHTTPMiddleware):
         db_path = _db_path_for(request)
         if db_path is not None:
             try:
-                settings_repo = SettingsRepository(db_path=db_path)
-                try:
+                async with SettingsRepository(db_path=db_path) as settings_repo:
                     db_locale = await settings_repo.get_setting("locale")
-                finally:
-                    await settings_repo.close()
                 if db_locale and i18n and db_locale in i18n.available_locales():
                     set_locale_cache(request, key, db_locale)
                     return db_locale

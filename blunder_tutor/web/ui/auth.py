@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import UserContext
 from blunder_tutor.repositories.settings import SettingsRepository
+from blunder_tutor.web.cookies import clear_session_cookie
 
 auth_ui_router = APIRouter()
 
@@ -77,12 +78,9 @@ async def setup_page(request: Request):
     else:
         db_path = request.app.state.legacy_db_path
 
-    settings_repo = SettingsRepository(db_path=db_path)
-    try:
+    async with SettingsRepository(db_path=db_path) as settings_repo:
         if await settings_repo.is_setup_completed():
             return RedirectResponse(url="/", status_code=303)
-    finally:
-        await settings_repo.close()
 
     return templates.TemplateResponse(request, "setup.html", {})
 
@@ -102,5 +100,5 @@ async def logout_ui(request: Request):
 
     target = "/login" if service is not None else "/"
     response = RedirectResponse(url=target, status_code=303)
-    response.delete_cookie("session_token", path="/")
+    clear_session_cookie(response)
     return response

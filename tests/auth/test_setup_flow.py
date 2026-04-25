@@ -4,18 +4,7 @@ import asyncio
 
 import httpx
 
-
-async def _signup(
-    client: httpx.AsyncClient, invite: str, username: str = "alice"
-) -> httpx.Response:
-    return await client.post(
-        "/api/auth/signup",
-        json={
-            "username": username,
-            "password": "password123",
-            "invite_code": invite,
-        },
-    )
+from tests.auth.conftest import signup_via_http as _signup
 
 
 class TestLogin:
@@ -240,3 +229,27 @@ class TestSignupAtomicity:
         )
         assert r.status_code == 403
         assert r.json()["detail"] == "user_cap_reached"
+
+    async def test_invite_survives_secret_key_rotation(
+        self, client_credentials_mode: httpx.AsyncClient, invite_code: str, credentials_app
+    ):
+        """Regression guard for TREK-25: rotating SECRET_KEY on a running
+        instance must not invalidate an already-issued invite. Previously
+        the signup path re-verified the HMAC against the current secret,
+        so a rotation bricked first-user setup with an opaque
+        ``invite_code_invalid`` until the operator also regenerated the
+        invite. The invite is now authoritative via stored-equality."""
+        # Rotate the in-memory secret to a different valid value. The
+        # stored invite in the setup table was signed under the original
+        # secret — prior behavior would reject it with reason='hmac'.
+        credentials_app.state.config.auth.secret_key = "y" * 64
+
+        r = await client_credentials_mode.post(
+            "/api/auth/signup",
+            json={
+                "username": "alice",
+                "password": "password123",
+                "invite_code": invite_code,
+            },
+        )
+        assert r.status_code == 200, r.text

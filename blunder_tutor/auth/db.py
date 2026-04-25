@@ -10,18 +10,19 @@ import aiosqlite
 
 
 class AuthDb:
-    """Owns a single aiosqlite connection to ``auth.sqlite3`` plus a write
-    lock that all repositories share.
+    """Owns a single aiosqlite connection to ``auth.sqlite3`` plus an
+    asyncio write lock that all repositories share.
+
+    The write lock groups *multi-statement transactions* atomically —
+    aiosqlite already serializes individual statements on one connection
+    through its worker thread, so ``write()`` (single-statement) is
+    grouped for symmetry rather than correctness: every mutation path
+    traverses the same seam, so ``write()`` cannot interleave with a
+    ``transaction()`` span. ``PRAGMA foreign_keys = ON`` is set exactly
+    once per connection lifetime; reconnect after ``close`` re-applies it.
 
     Repositories accept an :class:`AuthDb` and use ``conn`` for reads and
-    ``write()`` / ``transaction()`` for writes. This guarantees:
-
-    * One writer connection per ``auth.sqlite3`` — no SQLite "database is
-      locked" errors under concurrent registers/logins.
-    * Multi-statement service-layer operations (register = users + identities
-      insert) can run in a single ``BEGIN IMMEDIATE`` transaction.
-    * ``PRAGMA foreign_keys = ON`` is set exactly once per connection
-      lifetime; reconnect after ``close`` re-applies it.
+    ``write()`` / ``transaction()`` for writes.
     """
 
     def __init__(self, path: Path) -> None:

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import httpx
 
+from tests.auth.conftest import signup_via_http
+
 
 class TestSettingsSaveInCredentialsMode:
     """Regression guards: settings handlers previously crashed with
@@ -11,27 +13,11 @@ class TestSettingsSaveInCredentialsMode:
     ``scheduler is not None`` so saving settings succeeds either way.
     """
 
-    async def _signup(
-        self,
-        client: httpx.AsyncClient,
-        invite_code: str,
-        *,
-        username: str = "alice",
-    ) -> None:
-        r = await client.post(
-            "/api/auth/signup",
-            json={
-                "username": username,
-                "password": "password123",
-                "invite_code": invite_code,
-            },
-        )
-        assert r.status_code == 200, r.text
-
     async def test_post_settings_returns_200_when_scheduler_is_none(
         self, client_credentials_mode: httpx.AsyncClient, invite_code: str
     ):
-        await self._signup(client_credentials_mode, invite_code)
+        signup_response = await signup_via_http(client_credentials_mode, invite_code)
+        assert signup_response.status_code == 200, signup_response.text
         r = await client_credentials_mode.post(
             "/api/settings",
             json={
@@ -48,7 +34,8 @@ class TestSettingsSaveInCredentialsMode:
     async def test_post_features_returns_200_when_scheduler_is_none(
         self, client_credentials_mode: httpx.AsyncClient, invite_code: str
     ):
-        await self._signup(client_credentials_mode, invite_code)
+        signup_response = await signup_via_http(client_credentials_mode, invite_code)
+        assert signup_response.status_code == 200, signup_response.text
         r = await client_credentials_mode.post(
             "/api/settings/features",
             json={"features": {"trainer.tactics": True}},

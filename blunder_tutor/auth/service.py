@@ -5,16 +5,16 @@ import shutil
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import NoReturn
 
+from blunder_tutor.auth._time import now_iso
 from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.invite import verify_invite_code
 from blunder_tutor.auth.providers.base import AuthProvider
 from blunder_tutor.auth.providers.credentials import CredentialsProvider
 from blunder_tutor.auth.repository import (
     IdentityRepository,
     SessionRepository,
     UserRepository,
-    _now_iso,
 )
 from blunder_tutor.auth.types import (
     DuplicateEmailError,
@@ -22,6 +22,7 @@ from blunder_tutor.auth.types import (
     Email,
     Identity,
     InvalidInviteCodeError,
+    PasswordHash,
     ProviderName,
     Session,
     SessionToken,
@@ -79,47 +80,20 @@ class AuthService:
         # InvalidPasswordError before we touch the DB.
         credential = hash_password(password)
         user_id = make_user_id()
-        now = _now_iso()
-        identity_id = make_identity_id()
-
+        now = now_iso()
         try:
             async with self._db.transaction() as conn:
-                await conn.execute(
-                    "INSERT INTO users (id, username, email, created_at) "
-                    "VALUES (?, ?, ?, ?)",
-                    (user_id, username, email, now),
-                )
-                await conn.execute(
-                    "INSERT INTO identities "
-                    "(id, user_id, provider, provider_subject, credential, created_at) "
-                    "VALUES (?, ?, 'credentials', ?, ?, ?)",
-                    (identity_id, user_id, username, credential, now),
+                await self._insert_user_with_credential(
+                    conn,
+                    user_id=user_id,
+                    username=username,
+                    email=email,
+                    credential=credential,
+                    now=now,
                 )
         except sqlite3.IntegrityError as exc:
-            # UNIQUE constraint violation — reclassify as a domain error.
-            message = str(exc)
-            if "users.username" in message:
-                raise DuplicateUsernameError(username) from exc
-            if "users.email" in message:
-                raise DuplicateEmailError(email or "") from exc
-            raise
-
-        # Materialize the per-user data DB after the auth rows commit.
-        # run_migrations is sync + idempotent, safe to call on a missing
-        # file. Trade-off: if migrations fail mid-way, the user + identity
-        # rows already exist in auth.sqlite3 — the user can authenticate
-        # but has no data dir, and subsequent requests will 500. We accept
-        # this over (a) holding the auth write-lock for a multi-second sync
-        # operation, or (b) compensating rollback that duplicates logic
-        # already in CASCADE. Phase 4 may move migration to lazy-on-first
-        # -access inside `get_db_path` to close the gap entirely.
-        user_db_path = self.db_path_for(user_id)
-        secure_user_dir(user_db_path.parent)
-        run_migrations(user_db_path)
-
-        user = await self._users.get_by_id(user_id)
-        assert user is not None
-        return user
+            self._translate_integrity_error(exc, username, email)
+        return await self._materialize_user_data_dir(user_id)
 
     async def signup(
         self,
@@ -129,7 +103,6 @@ class AuthService:
         max_users: int,
         email: Email | None = None,
         invite_code: str | None = None,
-        secret_key: str | None = None,
     ) -> User:
         """Atomic signup path for the HTTP surface.
 
@@ -145,9 +118,7 @@ class AuthService:
         """
         credential = hash_password(password)
         user_id = make_user_id()
-        identity_id = make_identity_id()
-        now = _now_iso()
-
+        now = now_iso()
         try:
             async with self._db.transaction() as conn:
                 async with conn.execute(
@@ -155,56 +126,113 @@ class AuthService:
                 ) as cur:
                     row = await cur.fetchone()
                 count = int(row[0]) if row else 0
-
                 if count >= max_users:
                     raise UserCapReachedError()
-
-                first_user = count == 0
-                if first_user:
-                    if not invite_code:
-                        raise InvalidInviteCodeError("missing")
-                    async with conn.execute(
-                        "SELECT value FROM setup WHERE key = 'invite_code'"
-                    ) as cur:
-                        stored_row = await cur.fetchone()
-                    if stored_row is None:
-                        raise InvalidInviteCodeError("not_issued")
-                    stored = stored_row[0]
-                    # Two checks: the stored-equality enforces single-use
-                    # (already-consumed invites fail even if HMAC-valid),
-                    # the HMAC verifies authenticity against the server
-                    # secret (a hand-crafted "<payload>.<sig>" with the
-                    # right shape but wrong secret fails here).
-                    if not hmac.compare_digest(invite_code, stored):
-                        raise InvalidInviteCodeError("rotated")
-                    if not verify_invite_code(invite_code, secret_key or ""):
-                        raise InvalidInviteCodeError("hmac")
-
-                await conn.execute(
-                    "INSERT INTO users (id, username, email, created_at) "
-                    "VALUES (?, ?, ?, ?)",
-                    (user_id, username, email, now),
+                if count == 0:
+                    await self._consume_invite(conn, invite_code)
+                await self._insert_user_with_credential(
+                    conn,
+                    user_id=user_id,
+                    username=username,
+                    email=email,
+                    credential=credential,
+                    now=now,
                 )
-                await conn.execute(
-                    "INSERT INTO identities "
-                    "(id, user_id, provider, provider_subject, credential, created_at) "
-                    "VALUES (?, ?, 'credentials', ?, ?, ?)",
-                    (identity_id, user_id, username, credential, now),
-                )
-                if first_user:
-                    await conn.execute("DELETE FROM setup WHERE key = 'invite_code'")
         except sqlite3.IntegrityError as exc:
-            message = str(exc)
-            if "users.username" in message:
-                raise DuplicateUsernameError(username) from exc
-            if "users.email" in message:
-                raise DuplicateEmailError(email or "") from exc
-            raise
+            self._translate_integrity_error(exc, username, email)
+        return await self._materialize_user_data_dir(user_id)
 
+    @staticmethod
+    async def _insert_user_with_credential(
+        conn,
+        *,
+        user_id: UserId,
+        username: Username,
+        email: Email | None,
+        credential: PasswordHash,
+        now: str,
+    ) -> None:
+        """Single place where a new user + their credentials identity land
+        on disk. Both :meth:`register` and :meth:`signup` call this inside
+        their own ``BEGIN IMMEDIATE`` transaction — adding a column to
+        ``users`` or ``identities`` touches exactly one caller."""
+        await UserRepository.insert_in_transaction(
+            conn,
+            user_id=user_id,
+            username=username,
+            email=email,
+            created_at=now,
+        )
+        await IdentityRepository.insert_in_transaction(
+            conn,
+            identity_id=make_identity_id(),
+            user_id=user_id,
+            provider="credentials",
+            provider_subject=username,
+            credential=credential,
+            created_at=now,
+        )
+
+    @staticmethod
+    def _translate_integrity_error(
+        exc: sqlite3.IntegrityError,
+        username: Username,
+        email: Email | None,
+    ) -> NoReturn:
+        """UNIQUE constraint violation → domain error. Always raises."""
+        message = str(exc)
+        if "users.username" in message:
+            raise DuplicateUsernameError(username) from exc
+        if "users.email" in message:
+            raise DuplicateEmailError(email or "") from exc
+        raise exc
+
+    async def _consume_invite(
+        self,
+        conn,
+        invite_code: str | None,
+    ) -> None:
+        """Validate the first-user invite inside an active transaction and
+        mark it consumed. Single-use: the row is DELETEd on accept so a
+        re-run of the flow needs a fresh invite.
+
+        Constant-time equality against the stored value is authoritative
+        — we wrote the row ourselves via ``generate_invite_code`` at boot
+        or via the ``regenerate-invite`` CLI, and HMAC authenticity is
+        validated at that issue site. Re-verifying HMAC here added no
+        security (any code that byte-matches the stored value was signed
+        by us by construction) and introduced a silent failure path after
+        SECRET_KEY rotation — see TREK-19 / TREK-25 for the decision
+        record.
+        """
+        if not invite_code:
+            raise InvalidInviteCodeError("missing")
+        async with conn.execute(
+            "SELECT value FROM setup WHERE key = 'invite_code'"
+        ) as cur:
+            stored_row = await cur.fetchone()
+        if stored_row is None:
+            raise InvalidInviteCodeError("not_issued")
+        stored = stored_row[0]
+        if not hmac.compare_digest(invite_code, stored):
+            raise InvalidInviteCodeError("rotated")
+        await conn.execute("DELETE FROM setup WHERE key = 'invite_code'")
+
+    async def _materialize_user_data_dir(self, user_id: UserId) -> User:
+        """Commit-phase step: create the per-user data dir + DB after the
+        auth rows land. ``run_migrations`` is sync + idempotent.
+
+        Trade-off: if migrations fail mid-way, the user + identity rows
+        already exist in ``auth.sqlite3`` — the user can authenticate but
+        has no data dir, and subsequent requests will 500. We accept this
+        over (a) holding the auth write-lock for a multi-second sync op,
+        or (b) compensating rollback that duplicates logic already in
+        CASCADE. A future change may move migration to lazy-on-first-
+        access inside ``get_db_path`` to close the gap entirely.
+        """
         user_db_path = self.db_path_for(user_id)
         secure_user_dir(user_db_path.parent)
         run_migrations(user_db_path)
-
         user = await self._users.get_by_id(user_id)
         assert user is not None
         return user
@@ -309,11 +337,3 @@ class AuthService:
 
     def db_path_for(self, user_id: UserId) -> Path:
         return self._users_dir / user_id / "main.sqlite3"
-
-    async def close(self) -> None:
-        for prov in self._providers.values():
-            await prov.close()
-        # The shared connection is owned by the AuthDb — callers that
-        # created the AuthDb are responsible for closing it. This keeps
-        # lifecycle in one place and avoids use-after-close when the
-        # same AuthDb is reused (e.g. CLI commands in the same process).

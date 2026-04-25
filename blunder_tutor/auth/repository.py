@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 
+from blunder_tutor.auth._time import now_iso, parse_dt
 from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.types import (
     Email,
@@ -17,26 +18,27 @@ from blunder_tutor.auth.types import (
 )
 
 
-def _parse_dt(raw: str) -> datetime:
-    """Parse a stored timestamp into a tz-aware UTC datetime.
-
-    All writes go through Python and use ``datetime.now(UTC).isoformat()``,
-    yielding ISO-8601 with explicit '+00:00'. The fallback to ``UTC`` for
-    naive input exists only for legacy rows (none in production yet).
-    """
-    parsed = datetime.fromisoformat(raw)
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=UTC)
-    return parsed
-
-
-def _now_iso() -> str:
-    return datetime.now(UTC).isoformat()
-
-
 class UserRepository:
     def __init__(self, db: AuthDb) -> None:
         self._db = db
+
+    @staticmethod
+    async def insert_in_transaction(
+        conn,
+        *,
+        user_id: UserId,
+        username: Username,
+        email: Email | None,
+        created_at: str,
+    ) -> None:
+        """Single copy of the ``users`` INSERT. Callers own the transaction
+        (and the write lock) so service-layer multi-table writes can share
+        one ``BEGIN IMMEDIATE`` span with the ``identities`` INSERT."""
+        await conn.execute(
+            "INSERT INTO users (id, username, email, created_at) "
+            "VALUES (?, ?, ?, ?)",
+            (user_id, username, email, created_at),
+        )
 
     async def insert(
         self,
@@ -46,10 +48,12 @@ class UserRepository:
         email: Email | None,
     ) -> None:
         async with self._db.write() as conn:
-            await conn.execute(
-                "INSERT INTO users (id, username, email, created_at) "
-                "VALUES (?, ?, ?, ?)",
-                (user_id, username, email, _now_iso()),
+            await self.insert_in_transaction(
+                conn,
+                user_id=user_id,
+                username=username,
+                email=email,
+                created_at=now_iso(),
             )
 
     async def get_by_id(self, user_id: UserId) -> User | None:
@@ -101,13 +105,41 @@ class UserRepository:
             id=UserId(uid),
             username=Username(uname),
             email=Email(email) if email else None,
-            created_at=_parse_dt(created),
+            created_at=parse_dt(created),
         )
 
 
 class IdentityRepository:
     def __init__(self, db: AuthDb) -> None:
         self._db = db
+
+    @staticmethod
+    async def insert_in_transaction(
+        conn,
+        *,
+        identity_id: IdentityId,
+        user_id: UserId,
+        provider: ProviderName,
+        provider_subject: str,
+        credential: PasswordHash | None,
+        created_at: str,
+    ) -> None:
+        """Single copy of the ``identities`` INSERT. Paired with
+        :meth:`UserRepository.insert_in_transaction` under one service-layer
+        transaction."""
+        await conn.execute(
+            "INSERT INTO identities "
+            "(id, user_id, provider, provider_subject, credential, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                identity_id,
+                user_id,
+                provider,
+                provider_subject,
+                credential,
+                created_at,
+            ),
+        )
 
     async def insert(
         self,
@@ -119,18 +151,14 @@ class IdentityRepository:
         credential: PasswordHash | None,
     ) -> None:
         async with self._db.write() as conn:
-            await conn.execute(
-                "INSERT INTO identities "
-                "(id, user_id, provider, provider_subject, credential, created_at) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (
-                    identity_id,
-                    user_id,
-                    provider,
-                    provider_subject,
-                    credential,
-                    _now_iso(),
-                ),
+            await self.insert_in_transaction(
+                conn,
+                identity_id=identity_id,
+                user_id=user_id,
+                provider=provider,
+                provider_subject=provider_subject,
+                credential=credential,
+                created_at=now_iso(),
             )
 
     async def get_by_provider_subject(
@@ -173,7 +201,7 @@ class IdentityRepository:
             provider=prov,
             provider_subject=subj,
             credential=PasswordHash(cred) if cred is not None else None,
-            created_at=_parse_dt(created),
+            created_at=parse_dt(created),
         )
 
 
@@ -191,7 +219,7 @@ class SessionRepository:
         ip_address: str | None,
     ) -> None:
         async with self._db.write() as conn:
-            now = _now_iso()
+            now = now_iso()
             await conn.execute(
                 "INSERT INTO sessions "
                 "(token, user_id, created_at, expires_at, last_seen_at, "
@@ -221,7 +249,7 @@ class SessionRepository:
         async with self._db.write() as conn:
             await conn.execute(
                 "UPDATE sessions SET last_seen_at = ? WHERE token = ?",
-                (_now_iso(), token),
+                (now_iso(), token),
             )
 
     async def delete(self, token: SessionToken) -> None:
@@ -257,9 +285,9 @@ class SessionRepository:
         return Session(
             token=SessionToken(tok),
             user_id=UserId(uid),
-            created_at=_parse_dt(created),
-            expires_at=_parse_dt(expires),
-            last_seen_at=_parse_dt(last_seen),
+            created_at=parse_dt(created),
+            expires_at=parse_dt(expires),
+            last_seen_at=parse_dt(last_seen),
             user_agent=ua,
             ip_address=ip,
         )

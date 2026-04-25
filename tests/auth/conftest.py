@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import httpx
@@ -13,9 +14,17 @@ from httpx import ASGITransport
 from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.repository import SetupRepository
 from blunder_tutor.auth.schema import initialize_auth_schema
+from blunder_tutor.auth.service import AuthService
 from blunder_tutor.web.app import create_app
 from blunder_tutor.web.config import config_factory
 from tests.helpers.engine import mock_engine_context
+
+# Centralized test credentials. Any test that needs "a user" without
+# caring about the specific values goes through these; tests that
+# exercise specific validation paths (bad password, reserved username,
+# etc.) continue to pass their own strings.
+DEFAULT_USERNAME = "alice"
+DEFAULT_PASSWORD = "password123"
 
 
 @pytest.fixture
@@ -94,3 +103,67 @@ async def invite_code(credentials_app: FastAPI) -> str:
     code = await repo.get("invite_code")
     assert code, "startup hook should have persisted an invite code"
     return code
+
+
+@pytest.fixture
+async def service(auth_db: AuthDb, tmp_path: Path) -> AuthService:
+    """AuthService wired against the shared ``auth_db`` with production-
+    default timeouts (30d max age / 7d idle). Tests that exercise session
+    expiry or other time-sensitive paths use :func:`service_factory`
+    instead."""
+    users_dir = tmp_path / "users"
+    users_dir.mkdir(exist_ok=True)
+    return AuthService(
+        auth_db=auth_db,
+        users_dir=users_dir,
+        session_max_age=timedelta(days=30),
+        session_idle=timedelta(days=7),
+    )
+
+
+@pytest.fixture
+def service_factory(auth_db: AuthDb, tmp_path: Path):
+    """Callable yielding :class:`AuthService` instances with overridable
+    timeouts. Used by session-expiry / idle-timeout tests where the
+    production 30d/7d defaults would make the test take a month to run."""
+
+    def _make(
+        *,
+        session_max_age: timedelta = timedelta(days=30),
+        session_idle: timedelta = timedelta(days=7),
+    ) -> AuthService:
+        users_dir = tmp_path / "users"
+        users_dir.mkdir(exist_ok=True)
+        return AuthService(
+            auth_db=auth_db,
+            users_dir=users_dir,
+            session_max_age=session_max_age,
+            session_idle=session_idle,
+        )
+
+    return _make
+
+
+async def signup_via_http(
+    client: httpx.AsyncClient,
+    invite: str,
+    *,
+    username: str = DEFAULT_USERNAME,
+    password: str = DEFAULT_PASSWORD,
+) -> httpx.Response:
+    """Shared helper for HTTP-layer tests that need a registered user as
+    setup. Replaces the three byte-identical ``_signup`` copies that used
+    to live in ``test_setup_flow.py``, ``test_ui_pages.py``, and
+    ``test_settings_credentials_mode.py``.
+
+    Exposed as a plain function (not a fixture) so tests that previously
+    called ``_signup(client, invite)`` as a top-level helper can keep the
+    same call shape via ``from tests.auth.conftest import signup_via_http``."""
+    return await client.post(
+        "/api/auth/signup",
+        json={
+            "username": username,
+            "password": password,
+            "invite_code": invite,
+        },
+    )

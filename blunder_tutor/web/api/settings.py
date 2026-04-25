@@ -10,7 +10,12 @@ from pydantic import BaseModel, Field
 from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.fetchers.validation import validate_username
 from blunder_tutor.web.api.schemas import ErrorResponse, SuccessResponse
-from blunder_tutor.web.dependencies import EventBusDep, JobServiceDep, SettingsRepoDep
+from blunder_tutor.web.dependencies import (
+    EventBusDep,
+    JobServiceDep,
+    OptionalSchedulerDep,
+    SettingsRepoDep,
+)
 from blunder_tutor.web.middleware import (
     _cache_key,
     invalidate_setup_cache,
@@ -668,7 +673,9 @@ async def reset_theme(settings_repo: SettingsRepoDep) -> dict[str, bool]:
     description="Update application settings including sync configuration and analysis preferences.",
 )
 async def settings_submit(
-    request: Request, payload: SettingsRequest, settings_repo: SettingsRepoDep
+    payload: SettingsRequest,
+    settings_repo: SettingsRepoDep,
+    scheduler: OptionalSchedulerDep,
 ) -> dict[str, bool]:
     await settings_repo.set_setting(
         "auto_sync_enabled", "true" if payload.auto_sync else "false"
@@ -687,7 +694,6 @@ async def settings_submit(
         for key, value in theme_dict.items():
             await settings_repo.set_setting(f"theme_{key}", value)
 
-    scheduler = request.app.state.scheduler
     if scheduler is not None:
         settings = await settings_repo.get_all_settings()
         scheduler.update_jobs(settings)
@@ -721,11 +727,12 @@ async def get_features(settings_repo: SettingsRepoDep) -> dict[str, Any]:
     description="Toggle visibility of individual features.",
 )
 async def update_features(
-    request: Request, payload: FeatureFlagsRequest, settings_repo: SettingsRepoDep
+    payload: FeatureFlagsRequest,
+    settings_repo: SettingsRepoDep,
+    scheduler: OptionalSchedulerDep,
 ) -> dict[str, bool]:
     await settings_repo.set_feature_flags(payload.features)
 
-    scheduler = request.app.state.scheduler
     if scheduler is not None:
         settings = await settings_repo.get_all_settings()
         scheduler.update_jobs(settings)

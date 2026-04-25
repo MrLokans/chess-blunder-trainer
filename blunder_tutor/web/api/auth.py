@@ -20,7 +20,7 @@ from blunder_tutor.auth.types import (
     make_email,
     make_username,
 )
-from blunder_tutor.web.config import AppConfig
+from blunder_tutor.web.cookies import clear_session_cookie, set_session_cookie
 from blunder_tutor.web.dependencies import ConfigDep, get_user_context
 from blunder_tutor.web.middleware import invalidate_setup_cache
 
@@ -78,56 +78,6 @@ def _get_optional_user_context(request: Request) -> UserContext | None:
     return getattr(request.state, "user_ctx", None)
 
 
-def _cookie_secure(config: AppConfig, request: Request) -> bool:
-    """Session cookie `secure` flag.
-
-    Precedence:
-    1. Explicit ``AUTH_COOKIE_SECURE`` override (highest priority —
-       operators can force-on behind any topology).
-    2. Request scheme ``https`` → ``True``.
-    3. ``X-Forwarded-Proto: https`` when ``AUTH_TRUST_PROXY`` is on.
-       A reverse proxy terminates TLS and forwards plaintext upstream;
-       without this branch the cookie would drop ``Secure`` and be
-       sniffable on the proxy↔app hop.
-    4. Dev mode (``vite_dev``) → ``False``.
-    5. Fallback ``False`` — a direct-to-uvicorn plain-HTTP deploy.
-       Documented as an operator misconfiguration for any public-facing
-       instance.
-
-    ``AUTH_TRUST_PROXY`` gates ``X-Forwarded-Proto`` for the same reason
-    it gates ``X-Forwarded-For`` in the rate limiter: a direct-to-uvicorn
-    deploy that trusted the header would let any client claim the
-    request was HTTPS by setting the header itself.
-    """
-    if config.auth.cookie_secure is not None:
-        return config.auth.cookie_secure
-    if request.url.scheme == "https":
-        return True
-    if config.auth.trust_proxy:
-        forwarded = request.headers.get("x-forwarded-proto", "")
-        # Header may contain comma-separated chain; the leftmost value
-        # is the original client's scheme when the proxy appends.
-        if forwarded.split(",", 1)[0].strip().lower() == "https":
-            return True
-    if config.vite_dev:
-        return False
-    return False
-
-
-def _set_session_cookie(
-    response: Response, token: str, max_age_seconds: int, *, secure: bool
-) -> None:
-    response.set_cookie(
-        "session_token",
-        token,
-        max_age=max_age_seconds,
-        httponly=True,
-        samesite="lax",
-        secure=secure,
-        path="/",
-    )
-
-
 @router.post(
     "/signup",
     response_model=MeResponse,
@@ -155,12 +105,11 @@ async def signup(
             max_users=config.auth.max_users,
             email=email,
             invite_code=body.invite_code,
-            secret_key=config.auth.secret_key,
         )
     except UserCapReachedError as exc:
         raise HTTPException(status_code=403, detail="user_cap_reached") from exc
     except InvalidInviteCodeError as exc:
-        # Don't split "missing" / "rotated" / "hmac" into distinct
+        # Don't split "missing" / "rotated" / "not_issued" into distinct
         # statuses — a single response shape avoids an enumeration
         # oracle on the invite slot.
         detail = (
@@ -181,12 +130,7 @@ async def signup(
         user_agent=request.headers.get("user-agent"),
         ip=request.client.host if request.client else None,
     )
-    _set_session_cookie(
-        response,
-        session.token,
-        config.auth.session_max_age_seconds,
-        secure=_cookie_secure(config, request),
-    )
+    set_session_cookie(response, session.token, config, request)
     return MeResponse(id=user.id, username=user.username, email=user.email)
 
 
@@ -224,12 +168,7 @@ async def login(
         user_agent=request.headers.get("user-agent"),
         ip=request.client.host if request.client else None,
     )
-    _set_session_cookie(
-        response,
-        session.token,
-        config.auth.session_max_age_seconds,
-        secure=_cookie_secure(config, request),
-    )
+    set_session_cookie(response, session.token, config, request)
     return MeResponse(id=user.id, username=user.username, email=user.email)
 
 
@@ -242,7 +181,7 @@ async def logout(
     if ctx is not None and ctx.is_authenticated:
         assert ctx.session_token is not None
         await service.revoke_session(ctx.session_token)
-    response.delete_cookie("session_token", path="/")
+    clear_session_cookie(response)
 
 
 @router.post("/logout-all", status_code=204)
@@ -253,7 +192,7 @@ async def logout_all(
 ) -> None:
     if ctx is not None:
         await service.revoke_all_sessions(ctx.user_id)
-    response.delete_cookie("session_token", path="/")
+    clear_session_cookie(response)
 
 
 @router.get("/me", response_model=MeResponse)
@@ -285,4 +224,4 @@ async def delete_account(
         locale_cache.pop(ctx.user_id, None)
 
     await service.delete_account(ctx.user_id)
-    response.delete_cookie("session_token", path="/")
+    clear_session_cookie(response)

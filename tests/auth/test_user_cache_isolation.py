@@ -13,7 +13,6 @@ from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.middleware import AuthMiddleware
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import UserContext, UserId, Username
-from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web.middleware import (
     LocaleMiddleware,

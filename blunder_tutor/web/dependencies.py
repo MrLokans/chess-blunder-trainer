@@ -11,6 +11,7 @@ from blunder_tutor.auth.types import UserContext
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
+from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.job_repository import JobRepository
@@ -28,6 +29,25 @@ from blunder_tutor.services.job_service import JobService
 from blunder_tutor.services.puzzle_service import PuzzleService
 from blunder_tutor.trainer import Trainer
 from blunder_tutor.web.config import AppConfig
+
+
+def _repo_dep[T: BaseDbRepository](cls: type[T]):
+    """Generic factory for `Depends(get_db_path)`-scoped repositories.
+
+    Collapses the eight identical "construct → yield → close()" blocks into
+    one helper. Every repo extends ``BaseDbRepository`` which already
+    supports ``async with``; we just plumb the DI seam through it. Adding
+    a new repo is now a single call-site line, not a 6-line factory.
+    """
+
+    async def factory(
+        db_path: Annotated[Path, Depends(get_db_path)],
+    ) -> AsyncGenerator[T]:
+        async with cls(db_path=db_path) as repo:
+            yield repo
+
+    factory.__name__ = f"get_{cls.__name__}"
+    return factory
 
 
 def get_config(request: Request) -> AppConfig:
@@ -51,44 +71,15 @@ def get_db_path(
     return ctx.db_path
 
 
-async def get_settings_repository(
-    db_path: Annotated[Path, Depends(get_db_path)],
-) -> AsyncGenerator[SettingsRepository]:
-    repo = SettingsRepository(db_path=db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_puzzle_attempt_repository(
-    db_path: Annotated[Path, Depends(get_db_path)],
-) -> AsyncGenerator[PuzzleAttemptRepository]:
-    repo = PuzzleAttemptRepository(db_path=db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_stats_repository(
-    db_path: Annotated[Path, Depends(get_db_path)],
-) -> AsyncGenerator[StatsRepository]:
-    repo = StatsRepository(db_path=db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_job_repository(
-    db_path: Annotated[Path, Depends(get_db_path)],
-) -> AsyncGenerator[JobRepository]:
-    repo = JobRepository(db_path=db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
+get_settings_repository = _repo_dep(SettingsRepository)
+get_puzzle_attempt_repository = _repo_dep(PuzzleAttemptRepository)
+get_stats_repository = _repo_dep(StatsRepository)
+get_job_repository = _repo_dep(JobRepository)
+get_game_repository = _repo_dep(GameRepository)
+get_analysis_repository = _repo_dep(AnalysisRepository)
+get_trap_repository = _repo_dep(TrapRepository)
+get_starred_puzzle_repository = _repo_dep(StarredPuzzleRepository)
+get_data_management_repository = _repo_dep(DataManagementRepository)
 
 
 async def get_job_service(
@@ -100,59 +91,11 @@ async def get_job_service(
     return job_service
 
 
-async def get_game_repository(
-    db_path: Annotated[Path, Depends(get_db_path)],
-) -> AsyncGenerator[GameRepository]:
-    repo = GameRepository(db_path=db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_analysis_repository(
-    db_path: Annotated[Path, Depends(get_db_path)],
-) -> AsyncGenerator[AnalysisRepository]:
-    repo = AnalysisRepository(db_path=db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_trap_repository(
-    db_path: Annotated[Path, Depends(get_db_path)],
-) -> AsyncGenerator[TrapRepository]:
-    repo = TrapRepository(db_path=db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_starred_puzzle_repository(
-    db_path: Annotated[Path, Depends(get_db_path)],
-) -> AsyncGenerator[StarredPuzzleRepository]:
-    repo = StarredPuzzleRepository(db_path=db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_data_management_repository(
-    db_path: Annotated[Path, Depends(get_db_path)],
-) -> AsyncGenerator[DataManagementRepository]:
-    repo = DataManagementRepository(db_path=db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
 def get_scheduler(
     request: Request,
-) -> BackgroundScheduler:
+) -> BackgroundScheduler | None:
+    # None when per-user scheduling is deferred (auth credentials mode) —
+    # consumers must treat the absent scheduler as a no-op, not an error.
     return request.app.state.scheduler
 
 
@@ -220,7 +163,7 @@ JobRepoDep = Annotated[JobRepository, Depends(get_job_repository)]
 JobServiceDep = Annotated[JobService, Depends(get_job_service)]
 GameRepoDep = Annotated[GameRepository, Depends(get_game_repository)]
 AnalysisRepoDep = Annotated[AnalysisRepository, Depends(get_analysis_repository)]
-SchedulerDep = Annotated[BackgroundScheduler, Depends(get_scheduler)]
+OptionalSchedulerDep = Annotated[BackgroundScheduler | None, Depends(get_scheduler)]
 WorkCoordinatorDep = Annotated[WorkCoordinator, Depends(get_work_coordinator)]
 LimitDep = Annotated[chess.engine.Limit, Depends(get_engine_limit)]
 AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]

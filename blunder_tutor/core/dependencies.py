@@ -21,6 +21,7 @@ from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.analysis.pipeline import PipelineExecutor
 from blunder_tutor.events import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
+from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.job_repository import JobRepository
@@ -28,6 +29,22 @@ from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.services.eco_backfill_service import ECOBackfillService
 from blunder_tutor.services.job_service import JobService
 from blunder_tutor.services.phase_backfill_service import PhaseBackfillService
+
+
+def _repo_dep[T: BaseDbRepository](cls: type[T]):
+    """Same pattern as ``web.dependencies._repo_dep`` but ambient-context:
+    the DB path comes from the current ``DependencyContext`` instead of a
+    per-request ``Depends(get_db_path)``. Used by the background job
+    runner, which doesn't live under a FastAPI request scope.
+    """
+
+    async def factory() -> AsyncGenerator[T]:
+        ctx = get_context()
+        async with cls(db_path=ctx.db_path) as repo:
+            yield repo
+
+    factory.__name__ = f"get_{cls.__name__}"
+    return factory
 
 
 @dataclass
@@ -63,50 +80,11 @@ def clear_context() -> None:
 
 # --- Repository Dependencies ---
 
-
-async def get_job_repository() -> AsyncGenerator[JobRepository]:
-    ctx = get_context()
-    repo = JobRepository(db_path=ctx.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_settings_repository() -> AsyncGenerator[SettingsRepository]:
-    ctx = get_context()
-    repo = SettingsRepository(db_path=ctx.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_game_repository() -> AsyncGenerator[GameRepository]:
-    ctx = get_context()
-    repo = GameRepository(db_path=ctx.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_analysis_repository() -> AsyncGenerator[AnalysisRepository]:
-    ctx = get_context()
-    repo = AnalysisRepository(db_path=ctx.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_data_management_repository() -> AsyncGenerator[DataManagementRepository]:
-    ctx = get_context()
-    repo = DataManagementRepository(db_path=ctx.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
+get_job_repository = _repo_dep(JobRepository)
+get_settings_repository = _repo_dep(SettingsRepository)
+get_game_repository = _repo_dep(GameRepository)
+get_analysis_repository = _repo_dep(AnalysisRepository)
+get_data_management_repository = _repo_dep(DataManagementRepository)
 
 
 # --- Service Dependencies ---
