@@ -3,6 +3,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from blunder_tutor.auth.types import UserId
+
 
 class EventType(str, Enum):
     """All event types in the system."""
@@ -124,6 +126,7 @@ class JobExecutionRequestEvent(Event):
         cls,
         job_id: str,
         job_type: str,
+        user_id: UserId,
         **kwargs: Any,
     ) -> "JobExecutionRequestEvent":
         return cls(
@@ -131,6 +134,7 @@ class JobExecutionRequestEvent(Event):
             data={
                 "job_id": job_id,
                 "job_type": job_type,
+                "user_id": user_id,
                 "kwargs": kwargs,
             },
             timestamp=datetime.utcnow().isoformat(),

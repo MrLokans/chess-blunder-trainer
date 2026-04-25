@@ -6,14 +6,21 @@ from tests.auth.conftest import signup_via_http
 
 
 class TestSettingsSaveInCredentialsMode:
-    """Regression guards: settings handlers previously crashed with
-    ``AttributeError: 'NoneType' object has no attribute 'update_jobs'``
-    in credentials mode because ``app.state.scheduler`` is ``None`` when
-    per-user scheduling is deferred. The handlers must gate the call on
-    ``scheduler is not None`` so saving settings succeeds either way.
+    """End-to-end smoke for the settings POST path in credentials mode.
+
+    Original premise (pre-TREK-38): the handler crashed with
+    ``AttributeError: 'NoneType' has no attribute 'update_jobs'`` because
+    ``app.state.scheduler`` was ``None`` in credentials mode and the
+    handler called ``scheduler.update_jobs(settings)`` unconditionally.
+
+    Post-TREK-38 the scheduler is never ``None`` and the handler no
+    longer touches it at all — settings hot-reload is now a per-tick
+    re-read in the fanout scheduler. These tests stay as cheap smoke
+    coverage so the next attempt at scheduler-side hot-reload doesn't
+    silently regress the 200-status contract.
     """
 
-    async def test_post_settings_returns_200_when_scheduler_is_none(
+    async def test_post_settings_returns_200_in_credentials_mode(
         self, client_credentials_mode: httpx.AsyncClient, invite_code: str
     ):
         signup_response = await signup_via_http(client_credentials_mode, invite_code)
@@ -31,7 +38,7 @@ class TestSettingsSaveInCredentialsMode:
         assert r.status_code == 200, r.text
         assert r.json() == {"success": True}
 
-    async def test_post_features_returns_200_when_scheduler_is_none(
+    async def test_post_features_returns_200_in_credentials_mode(
         self, client_credentials_mode: httpx.AsyncClient, invite_code: str
     ):
         signup_response = await signup_via_http(client_credentials_mode, invite_code)

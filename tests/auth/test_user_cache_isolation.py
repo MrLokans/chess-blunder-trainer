@@ -117,7 +117,6 @@ async def two_user_app(auth_db: AuthDb, tmp_path: Path):
     app = FastAPI()
     app.state.auth_service = service
     app.state.auth_mode = "credentials"
-    app.state.legacy_db_path = tmp_path / "unused.sqlite3"
     app.state.demo_mode = False
     # SetupCheckMiddleware + LocaleMiddleware expect these:
     app.state.i18n = None

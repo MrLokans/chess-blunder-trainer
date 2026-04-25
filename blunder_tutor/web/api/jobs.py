@@ -16,6 +16,7 @@ from blunder_tutor.web.dependencies import (
     EventBusDep,
     GameRepoDep,
     JobServiceDep,
+    UserContextDep,
 )
 
 
@@ -58,6 +59,7 @@ async def start_import_job(
     payload: StartImportRequest,
     job_service: JobServiceDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, str]:
     job_id = await job_service.create_job(
         job_type="import",
@@ -69,6 +71,7 @@ async def start_import_job(
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
         job_type="import",
+        user_id=user_ctx.user_id,
         source=payload.source,
         username=payload.username,
         max_games=payload.max_games,
@@ -106,10 +109,13 @@ async def get_import_status(
 async def start_sync_job(
     job_service: JobServiceDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, str]:
     job_id = await job_service.create_job(job_type="sync")
 
-    event = JobExecutionRequestEvent.create(job_id=job_id, job_type="sync")
+    event = JobExecutionRequestEvent.create(
+        job_id=job_id, job_type="sync", user_id=user_ctx.user_id
+    )
     await event_bus.publish(event)
 
     return {"status": "sync started"}
@@ -191,6 +197,7 @@ async def start_analysis_job(
     job_service: JobServiceDep,
     game_repo: GameRepoDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, str]:
     unanalyzed_game_ids = await game_repo.list_unanalyzed_game_ids()
 
@@ -205,6 +212,7 @@ async def start_analysis_job(
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
         job_type="analyze",
+        user_id=user_ctx.user_id,
         game_ids=unanalyzed_game_ids,
     )
     await event_bus.publish(event)
@@ -315,6 +323,7 @@ async def start_backfill_phases_job(
     job_service: JobServiceDep,
     analysis_repo: AnalysisRepoDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, str]:
     games_needing_backfill = await analysis_repo.get_game_ids_missing_phase()
 
@@ -329,6 +338,7 @@ async def start_backfill_phases_job(
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
         job_type="backfill_phases",
+        user_id=user_ctx.user_id,
     )
     await event_bus.publish(event)
 
@@ -376,6 +386,7 @@ async def start_backfill_eco_job(
     job_service: JobServiceDep,
     analysis_repo: AnalysisRepoDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
     force: bool = False,
 ) -> dict[str, str]:
     if force:
@@ -394,6 +405,7 @@ async def start_backfill_eco_job(
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
         job_type="backfill_eco",
+        user_id=user_ctx.user_id,
         force=force,
     )
     await event_bus.publish(event)
@@ -442,6 +454,7 @@ async def start_backfill_tactics_job(
     job_service: JobServiceDep,
     analysis_repo: AnalysisRepoDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, str]:
     games_needing_backfill = await analysis_repo.get_game_ids_missing_tactics()
 
@@ -456,6 +469,7 @@ async def start_backfill_tactics_job(
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
         job_type="backfill_tactics",
+        user_id=user_ctx.user_id,
     )
     await event_bus.publish(event)
 
@@ -504,12 +518,14 @@ async def get_backfill_tactics_pending(
 async def start_backfill_traps_job(
     job_service: JobServiceDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, str]:
     job_id = await job_service.create_job(job_type="backfill_traps")
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
         job_type="backfill_traps",
+        user_id=user_ctx.user_id,
     )
     await event_bus.publish(event)
 

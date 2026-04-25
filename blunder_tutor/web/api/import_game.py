@@ -16,6 +16,7 @@ from blunder_tutor.web.dependencies import (
     GameRepoDep,
     JobServiceDep,
     SettingsRepoDep,
+    UserContextDep,
 )
 
 import_router = APIRouter()
@@ -96,6 +97,7 @@ async def import_pgn(
     game_repo: GameRepoDep,
     job_service: JobServiceDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, Any]:
     game, errors = _validate_and_parse_pgn(payload.pgn)
     if errors:
@@ -126,6 +128,7 @@ async def import_pgn(
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
         job_type="import_pgn",
+        user_id=user_ctx.user_id,
         game_id=game_id,
         username=username,
     )

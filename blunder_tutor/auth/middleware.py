@@ -7,15 +7,12 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import UserContext, UserId, Username
+from blunder_tutor.auth.types import LOCAL_USER_ID, LOCAL_USERNAME, UserContext
 from blunder_tutor.web.cookies import SESSION_COOKIE_NAME
 from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
 
 EXEMPT_PATHS = AUTH_UI_PATHS | frozenset({"/health", "/favicon.ico"})
 EXEMPT_PREFIXES = ("/static", AUTH_API_PREFIX)
-
-_LOCAL_USER_ID = UserId("_local")
-_LOCAL_USERNAME = Username("_local")
 
 
 def _wants_html(request: Request) -> bool:
@@ -41,8 +38,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
     cookie and attaches it to ``request.state.user_ctx``.
 
     In ``auth_mode == "none"`` every request runs as a single ``_local``
-    user whose DB path is ``app.state.legacy_db_path`` — preserving the
-    pre-auth single-user topology untouched.
+    user whose DB path is ``app.state.none_mode_db_path`` — preserving
+    the pre-auth single-user topology untouched. The attribute is set
+    only in none-mode (see :func:`blunder_tutor.web.app.create_app`),
+    so the read below is correctly scoped to the same branch.
 
     In ``auth_mode == "credentials"`` unauthenticated requests either
     redirect HTML navigations to ``/login?next=<path>`` or return a 401
@@ -53,13 +52,13 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         mode = getattr(request.app.state, "auth_mode", "none")
-        legacy_db_path: Path = request.app.state.legacy_db_path
 
         if mode == "none":
+            none_mode_db_path: Path = request.app.state.none_mode_db_path
             request.state.user_ctx = UserContext(
-                user_id=_LOCAL_USER_ID,
-                username=_LOCAL_USERNAME,
-                db_path=legacy_db_path,
+                user_id=LOCAL_USER_ID,
+                username=LOCAL_USERNAME,
+                db_path=none_mode_db_path,
                 session_token=None,
             )
             return await call_next(request)

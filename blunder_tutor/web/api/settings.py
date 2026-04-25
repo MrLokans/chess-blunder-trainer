@@ -13,8 +13,8 @@ from blunder_tutor.web.api.schemas import ErrorResponse, SuccessResponse
 from blunder_tutor.web.dependencies import (
     EventBusDep,
     JobServiceDep,
-    OptionalSchedulerDep,
     SettingsRepoDep,
+    UserContextDep,
 )
 from blunder_tutor.web.middleware import (
     _cache_key,
@@ -157,6 +157,7 @@ async def setup_submit(
     settings_repo: SettingsRepoDep,
     job_service: JobServiceDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, Any]:
     lichess = payload.lichess.strip()
     chesscom = payload.chesscom.strip()
@@ -198,6 +199,7 @@ async def setup_submit(
         event = JobExecutionRequestEvent.create(
             job_id=job_id,
             job_type="import",
+            user_id=user_ctx.user_id,
             source=source,
             username=username,
             max_games=max_games,
@@ -675,7 +677,6 @@ async def reset_theme(settings_repo: SettingsRepoDep) -> dict[str, bool]:
 async def settings_submit(
     payload: SettingsRequest,
     settings_repo: SettingsRepoDep,
-    scheduler: OptionalSchedulerDep,
 ) -> dict[str, bool]:
     await settings_repo.set_setting(
         "auto_sync_enabled", "true" if payload.auto_sync else "false"
@@ -694,10 +695,8 @@ async def settings_submit(
         for key, value in theme_dict.items():
             await settings_repo.set_setting(f"theme_{key}", value)
 
-    if scheduler is not None:
-        settings = await settings_repo.get_all_settings()
-        scheduler.update_jobs(settings)
-
+    # No scheduler hot-reload: BackgroundScheduler reads settings on each
+    # fanout tick, so changes take effect within ``DEFAULT_TICK_SECONDS``.
     return {"success": True}
 
 
@@ -729,14 +728,8 @@ async def get_features(settings_repo: SettingsRepoDep) -> dict[str, Any]:
 async def update_features(
     payload: FeatureFlagsRequest,
     settings_repo: SettingsRepoDep,
-    scheduler: OptionalSchedulerDep,
 ) -> dict[str, bool]:
     await settings_repo.set_feature_flags(payload.features)
-
-    if scheduler is not None:
-        settings = await settings_repo.get_all_settings()
-        scheduler.update_jobs(settings)
-
     return {"success": True}
 
 
@@ -783,12 +776,14 @@ class DeleteAllResponse(BaseModel):
 async def delete_all_data(
     job_service: JobServiceDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, Any]:
     job_id = await job_service.create_job(job_type="delete_all_data")
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
         job_type="delete_all_data",
+        user_id=user_ctx.user_id,
     )
     await event_bus.publish(event)
 

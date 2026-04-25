@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
-from collections.abc import Coroutine
 from dataclasses import dataclass
-from typing import Any
 
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import JobEvent, StatsEvent
@@ -29,21 +26,7 @@ class JobService:
     def __init__(self, job_repository: JobRepository, event_bus: EventBus):
         self.job_repository = job_repository
         self.event_bus = event_bus
-        self._main_loop: asyncio.AbstractEventLoop | None = None
         self._progress: dict[str, _ProgressState] = {}
-
-    def set_event_loop(self, loop: asyncio.AbstractEventLoop) -> None:
-        self._main_loop = loop
-
-    def _publish_event(self, coro: Coroutine[Any, Any, None]) -> None:
-        try:
-            loop = asyncio.get_running_loop()
-            loop.create_task(coro)
-        except RuntimeError:
-            if self._main_loop is not None and self._main_loop.is_running():
-                asyncio.run_coroutine_threadsafe(coro, self._main_loop)
-            else:
-                logger.debug("Cannot publish event: no event loop available")
 
     async def create_job(
         self,

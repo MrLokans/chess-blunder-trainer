@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from blunder_tutor.auth.types import UserId
 from blunder_tutor.core.dependencies import (
     DependencyContext,
     clear_context,
@@ -19,6 +20,7 @@ def _make_context(label: str) -> DependencyContext:
         db_path=Path(f"/fake/{label}.db"),
         event_bus=MagicMock(),
         engine_path=f"/fake/{label}",
+        user_id=UserId(f"user-{label}"),
     )
 
 

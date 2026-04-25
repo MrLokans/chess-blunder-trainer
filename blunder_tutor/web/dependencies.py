@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import AsyncGenerator
 from pathlib import Path
 from typing import Annotated
@@ -8,7 +7,6 @@ from fastapi import Depends, HTTPException, Request, Response
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.auth.types import UserContext
-from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.base import BaseDbRepository
@@ -86,17 +84,7 @@ async def get_job_service(
     job_repository: Annotated[JobRepository, Depends(get_job_repository)],
     event_bus: Annotated[EventBus, Depends(get_event_bus)],
 ) -> JobService:
-    job_service = JobService(job_repository=job_repository, event_bus=event_bus)
-    job_service.set_event_loop(asyncio.get_running_loop())
-    return job_service
-
-
-def get_scheduler(
-    request: Request,
-) -> BackgroundScheduler | None:
-    # None when per-user scheduling is deferred (auth credentials mode) —
-    # consumers must treat the absent scheduler as a no-op, not an error.
-    return request.app.state.scheduler
+    return JobService(job_repository=job_repository, event_bus=event_bus)
 
 
 def get_work_coordinator(request: Request) -> WorkCoordinator:
@@ -163,7 +151,6 @@ JobRepoDep = Annotated[JobRepository, Depends(get_job_repository)]
 JobServiceDep = Annotated[JobService, Depends(get_job_service)]
 GameRepoDep = Annotated[GameRepository, Depends(get_game_repository)]
 AnalysisRepoDep = Annotated[AnalysisRepository, Depends(get_analysis_repository)]
-OptionalSchedulerDep = Annotated[BackgroundScheduler | None, Depends(get_scheduler)]
 WorkCoordinatorDep = Annotated[WorkCoordinator, Depends(get_work_coordinator)]
 LimitDep = Annotated[chess.engine.Limit, Depends(get_engine_limit)]
 AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]

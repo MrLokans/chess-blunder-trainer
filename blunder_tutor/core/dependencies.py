@@ -6,7 +6,6 @@ This module provides dependency factories that work both in FastAPI routes
 
 from __future__ import annotations
 
-import asyncio
 import contextvars
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
@@ -19,6 +18,7 @@ from fast_depends import Depends
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.analysis.pipeline import PipelineExecutor
+from blunder_tutor.auth.types import UserId
 from blunder_tutor.events import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.base import BaseDbRepository
@@ -52,6 +52,7 @@ class DependencyContext:
     db_path: Path
     event_bus: EventBus
     engine_path: str
+    user_id: UserId
     work_coordinator: WorkCoordinator | None = None
 
 
@@ -94,9 +95,7 @@ async def get_job_service(
     job_repository: Annotated[JobRepository, Depends(get_job_repository)],
 ) -> JobService:
     ctx = get_context()
-    job_service = JobService(job_repository=job_repository, event_bus=ctx.event_bus)
-    job_service.set_event_loop(asyncio.get_running_loop())
-    return job_service
+    return JobService(job_repository=job_repository, event_bus=ctx.event_bus)
 
 
 def get_event_bus() -> EventBus:

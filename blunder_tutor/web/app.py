@@ -21,8 +21,8 @@ from blunder_tutor.auth.middleware import AuthMiddleware
 from blunder_tutor.auth.repository import SetupRepository, UserRepository
 from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import is_user_id_shape
-from blunder_tutor.background.executor import JobExecutor
+from blunder_tutor.auth.types import LOCAL_USER_ID, UserId, is_user_id_shape
+from blunder_tutor.background.executor import DbPathResolver, JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.cache import (
     CacheInvalidator,
@@ -59,45 +59,40 @@ async def lifespan(app: FastAPI):
     coordinator: WorkCoordinator = app.state.work_coordinator
     await coordinator.start()
 
-    # In none mode the global `settings_repo` seeds scheduler settings
-    # and the locale cache from the single legacy DB. Credentials mode
-    # resolves settings per-request via `get_db_path`, so `settings_repo`
-    # is `None` here and scheduler settings fall back to defaults.
+    # Auth bootstrap MUST run before the executor/scheduler start so the
+    # AuthDb is available to the multi-user UserLister callback. The
+    # locale-cache seed (none-mode only) and the WS broadcaster start
+    # are independent and can run after.
+    if app.state.auth_mode == "credentials":
+        await _bootstrap_auth(app)
+
     settings_repo = app.state.settings_repo
     if settings_repo is not None:
+        # None-mode only: single global SettingsRepository on the legacy
+        # DB. Credentials mode resolves settings per-request, so this
+        # warm-up is skipped and the locale cache starts empty.
         scheduler_settings = await settings_repo.get_all_settings()
         saved_locale = scheduler_settings.get("locale")
         if saved_locale:
-            # AUTH_MODE=none: single `_local` key matches what the
-            # middleware resolves for unauthenticated requests.
             app.state._locale_cache = {"_local": saved_locale}
-    else:
-        scheduler_settings = {}
 
-    # Background scheduler + job executor are single-user in Phase 3:
-    # the scheduler opens exactly one DB (the legacy one). In credentials
-    # mode we skip both and revisit per-user scheduling in Phase 4.
-    if app.state.scheduler is not None:
-        app.state.scheduler.start(scheduler_settings)
+    _wire_background(app)
+    app.state.scheduler.start()
 
-    # Start WebSocket broadcasting task
+    # Subscribe BEFORE yield so callers publishing an event during
+    # request handling never race the executor's queue subscription.
+    await app.state.job_executor.subscribe()
+
     asyncio.create_task(app.state.connection_manager.start_broadcasting())
-
-    if app.state.job_executor is not None:
-        asyncio.create_task(app.state.job_executor.start())
+    asyncio.create_task(app.state.job_executor.run())
     asyncio.create_task(app.state.cache_invalidator.start())
-
-    if app.state.auth_mode == "credentials":
-        await _bootstrap_auth(app)
 
     yield
 
     # Shutdown
     await app.state.cache_invalidator.stop()
-    if app.state.job_executor is not None:
-        await app.state.job_executor.shutdown()
-    if app.state.scheduler is not None:
-        app.state.scheduler.shutdown()
+    await app.state.job_executor.shutdown()
+    app.state.scheduler.shutdown()
     await coordinator.shutdown()
     if settings_repo is not None:
         await settings_repo.close()
@@ -165,6 +160,55 @@ async def _bootstrap_auth(app: FastAPI) -> None:
             log.exception("Failed to generate or persist first-user invite code")
 
     await scan_orphans(auth_db, users_dir)
+
+
+def _wire_background(app: FastAPI) -> None:
+    """Build the JobExecutor + BackgroundScheduler with auth-mode-aware
+    user enumeration and db_path routing.
+
+    None-mode: a single synthetic ``_local`` user maps to the legacy
+    DB path. Credentials mode: users are enumerated from
+    :class:`UserRepository` and each user's data lives at
+    ``users_dir/<user_id>/main.sqlite3``.
+    """
+    config: AppConfig = app.state.config
+    event_bus = app.state.event_bus
+    work_coordinator = app.state.work_coordinator
+
+    if config.auth.mode == "credentials":
+        users_dir: Path = app.state.users_dir
+        auth_db: AuthDb = app.state.auth_db
+        user_repo = UserRepository(db=auth_db)
+
+        async def list_users() -> list[UserId]:
+            return [u.id for u in await user_repo.list_all()]
+
+        def db_path_resolver(user_id: UserId) -> Path:
+            return users_dir / user_id / "main.sqlite3"
+
+    else:
+        legacy_db_path = config.data.db_path
+
+        async def list_users() -> list[UserId]:
+            return [LOCAL_USER_ID]
+
+        def db_path_resolver(_user_id: UserId) -> Path:
+            return legacy_db_path
+
+    resolver: DbPathResolver = db_path_resolver
+
+    app.state.job_executor = JobExecutor(
+        event_bus=event_bus,
+        db_path_resolver=resolver,
+        engine_path=config.engine_path,
+        work_coordinator=work_coordinator,
+    )
+    app.state.scheduler = BackgroundScheduler(
+        event_bus=event_bus,
+        engine_path=config.engine_path,
+        list_users=list_users,
+        db_path_resolver=resolver,
+    )
 
 
 async def scan_orphans(auth_db: AuthDb, users_dir: Path) -> None:
@@ -252,37 +296,30 @@ def create_app(
     connection_manager = ConnectionManager(event_bus)
     app.state.connection_manager = connection_manager
 
-    # JobExecutor + BackgroundScheduler are tied to a single DB path.
-    # In credentials mode each user owns their own DB, so per-user
-    # scheduling is a Phase 4 concern — skip both here and the lifespan
-    # guards on `is not None` keep startup clean.
-    if config.auth.mode == "none":
-        app.state.job_executor = JobExecutor(
-            event_bus=event_bus,
-            db_path=config.data.db_path,
-            engine_path=config.engine_path,
-            work_coordinator=work_coordinator,
-        )
-        app.state.scheduler = BackgroundScheduler(
-            db_path=config.data.db_path,
-            event_bus=event_bus,
-            engine_path=config.engine_path,
-        )
-    else:
-        app.state.job_executor = None
-        app.state.scheduler = None
+    # JobExecutor + BackgroundScheduler are constructed in the lifespan
+    # by `_wire_background` once auth bootstrap has populated the AuthDb
+    # (credentials mode needs the user list at tick time).
+    app.state.job_executor = None
+    app.state.scheduler = None
     app.state.settings_repo = settings
 
     # Auth state — `AuthDb` and `AuthService` are connected in the lifespan
     # (credentials mode only) so their aiosqlite connections live on the
     # app's own event loop.
-    app.state.legacy_db_path = config.data.db_path
+    # `none_mode_db_path` is the legacy single-user DB path. It is set
+    # ONLY when ``auth.mode == "none"`` so any code that reaches for
+    # ``app.state.none_mode_db_path`` in credentials mode raises
+    # AttributeError instead of silently writing to the wrong DB. The
+    # ``tests/test_none_mode_db_path_isolation.py`` structural guard
+    # enforces that only the documented call sites read this attribute.
     app.state.auth_mode = config.auth.mode
     app.state.auth_config = config.auth
     app.state.auth_db = None
     app.state.auth_service = None
 
-    if config.auth.mode == "credentials":
+    if config.auth.mode == "none":
+        app.state.none_mode_db_path = config.data.db_path
+    else:
         auth_db_path = config.data.db_path.parent / "auth.sqlite3"
         users_dir = config.data.db_path.parent / "users"
         users_dir.mkdir(parents=True, exist_ok=True)

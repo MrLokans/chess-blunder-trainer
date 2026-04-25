@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from typing import Any, ClassVar
 
+from blunder_tutor.auth.types import UserId
 from blunder_tutor.background.base import BaseJob
 from blunder_tutor.background.registry import register_job
 from blunder_tutor.events import EventBus, JobExecutionRequestEvent
@@ -24,11 +25,13 @@ class SyncGamesJob(BaseJob):
         job_service: JobService,
         settings_repo: SettingsRepository,
         game_repo: GameRepository,
+        user_id: UserId,
         event_bus: EventBus | None = None,
     ) -> None:
         self.job_service = job_service
         self.settings_repo = settings_repo
         self.game_repo = game_repo
+        self.user_id = user_id
         self.event_bus = event_bus
 
     async def execute(self, job_id: str, **kwargs: Any) -> dict[str, Any]:
@@ -124,6 +127,7 @@ class SyncGamesJob(BaseJob):
             event = JobExecutionRequestEvent.create(
                 job_id=analyze_job_id,
                 job_type="analyze",
+                user_id=self.user_id,
                 source=source,
                 username=username,
             )

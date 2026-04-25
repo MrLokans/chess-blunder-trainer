@@ -56,10 +56,12 @@ async def run_import_job(
     game_repo: Annotated[GameRepository, Depends(get_game_repository)],
     event_bus: Annotated[EventBus, Depends(get_event_bus)],
 ) -> dict[str, Any]:
+    ctx = get_context()
     job = ImportGamesJob(
         job_service=job_service,
         settings_repo=settings_repo,
         game_repo=game_repo,
+        user_id=ctx.user_id,
         event_bus=event_bus,
     )
     return await job.execute(
@@ -78,10 +80,12 @@ async def run_sync_job(
     game_repo: Annotated[GameRepository, Depends(get_game_repository)],
     event_bus: Annotated[EventBus, Depends(get_event_bus)],
 ) -> dict[str, Any]:
+    ctx = get_context()
     job = SyncGamesJob(
         job_service=job_service,
         settings_repo=settings_repo,
         game_repo=game_repo,
+        user_id=ctx.user_id,
         event_bus=event_bus,
     )
     return await job.execute(job_id=job_id)
