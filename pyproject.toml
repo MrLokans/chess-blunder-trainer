@@ -32,7 +32,7 @@ dev = [
 ]
 
 [project.scripts]
-blunder-tutor = "blunder_tutor.cli:main"
+blunder-tutor = "blunder_tutor.cli.main:main"
 blunder-tutor-db = "blunder_tutor.migrations:main"
 blunder-tutor-migrate = "blunder_tutor.scripts.migrate_index_to_sqlite:main"
 

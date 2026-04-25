@@ -42,7 +42,7 @@ docker run -p 8000:8000 -v $(pwd)/data:/app/data \
 ### Local
 
 ```bash
-AUTH_MODE=credentials SECRET_KEY="$(openssl rand -hex 32)" MAX_USERS=5 uv run python main.py
+AUTH_MODE=credentials SECRET_KEY="$(openssl rand -hex 32)" MAX_USERS=5 uv run python main.py train-ui
 ```
 
 Startup validation fails hard (process exits) on: missing `SECRET_KEY`, `MAX_USERS < 1`, or `DEMO_MODE=true` combined with credentials mode.

@@ -154,10 +154,10 @@ async def _bootstrap_auth(app: FastAPI) -> None:
             if invite is None:
                 invite = generate_invite_code(auth_config.secret_key)
                 await setup_repo.put("invite_code", invite)
-            log.info("=" * 60)
-            log.info("FIRST-USER SETUP: invite code required at /setup")
-            log.info("Invite code: %s", invite)
-            log.info("=" * 60)
+            log.warning("=" * 60)
+            log.warning("FIRST-USER SETUP: invite code required at /setup")
+            log.warning("Invite code: %s", invite)
+            log.warning("=" * 60)
         except Exception:
             # Non-fatal: a bad invite-code write shouldn't block the app
             # from booting. Operators can always re-bootstrap via the CLI
@@ -344,9 +344,7 @@ def create_app(
     # BEFORE other middleware sees the request. Default "*" preserves
     # behavior for single-host dev setups; operators MUST configure
     # this on any multi-tenant or shared-origin deploy.
-    app.add_middleware(
-        TrustedHostMiddleware, allowed_hosts=list(config.allowed_hosts)
-    )
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(config.allowed_hosts))
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(SetupCheckMiddleware)
     app.add_middleware(DemoModeMiddleware)
