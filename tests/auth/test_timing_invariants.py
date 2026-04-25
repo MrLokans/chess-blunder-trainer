@@ -31,9 +31,7 @@ class TestTimingInvariants:
     async def test_all_failing_paths_run_one_db_query_and_one_bcrypt(
         self, service: AuthService, auth_db: AuthDb, monkeypatch
     ):
-        await service.register(
-            username=Username("alice"), password="password123"
-        )
+        await service.register(username=Username("alice"), password="password123")
 
         provider = CredentialsProvider(IdentityRepository(db=auth_db))
 
@@ -44,9 +42,7 @@ class TestTimingInvariants:
             db_calls.append((provider_name, subject))
             return await orig_lookup(provider_name, subject)
 
-        monkeypatch.setattr(
-            provider._identities, "get_by_provider_subject", spy_lookup
-        )
+        monkeypatch.setattr(provider._identities, "get_by_provider_subject", spy_lookup)
 
         verify_calls: list[str] = []
         orig_verify = credentials_mod.verify_password
@@ -89,9 +85,7 @@ class TestTimingInvariants:
     async def test_success_path_also_runs_one_db_query_and_one_bcrypt(
         self, service: AuthService, auth_db: AuthDb, monkeypatch
     ):
-        await service.register(
-            username=Username("alice"), password="password123"
-        )
+        await service.register(username=Username("alice"), password="password123")
 
         provider = CredentialsProvider(IdentityRepository(db=auth_db))
 
@@ -102,9 +96,7 @@ class TestTimingInvariants:
             db_calls.append((provider_name, subject))
             return await orig_lookup(provider_name, subject)
 
-        monkeypatch.setattr(
-            provider._identities, "get_by_provider_subject", spy_lookup
-        )
+        monkeypatch.setattr(provider._identities, "get_by_provider_subject", spy_lookup)
 
         verify_calls: list[str] = []
         orig_verify = credentials_mod.verify_password

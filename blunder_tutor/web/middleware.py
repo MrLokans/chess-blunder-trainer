@@ -2,66 +2,23 @@ from __future__ import annotations
 
 import json
 import re
-from pathlib import Path
 
 from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.features import DEFAULTS
-from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
+from blunder_tutor.web.request_helpers import _cache_key, _db_path_for
+from blunder_tutor.web.settings_snapshot import get_settings_snapshot
 from blunder_tutor.web.tls import is_https_request
 
-# App-level per-user cache key for pre-auth / AUTH_MODE=none requests. The
-# sentinel matches the `_local` UserContext that AuthMiddleware synthesises
-# in none mode, so the two modes share a single keying strategy.
-_NONE_MODE_CACHE_KEY = "_local"
-
-
-def _cache_key(request: Request) -> str:
-    """Per-user cache key. Preserves none-mode semantics (one key for the
-    single legacy user) and isolates credentials-mode users from each
-    other so setup/locale/feature caches do not leak across accounts.
-    """
-    ctx = getattr(request.state, "user_ctx", None)
-    if ctx is not None:
-        return ctx.user_id
-    return _NONE_MODE_CACHE_KEY
-
-
-def _db_path_for(request: Request) -> Path | None:
-    """Return the per-request DB path: the signed-in user's DB when an
-    `AuthMiddleware`-populated context is present, otherwise the legacy
-    single-user path (AUTH_MODE=none).
-
-    In credentials mode with no context (exempt paths before any user is
-    signed in) there is no legitimate DB to hit — return ``None`` and let
-    the caller fall back to defaults instead of silently opening the
-    un-migrated legacy ``data/main.sqlite3``.
-    """
-    ctx = getattr(request.state, "user_ctx", None)
-    if ctx is not None:
-        return ctx.db_path
-    if getattr(request.app.state, "auth_mode", "none") == "credentials":
-        return None
-    return request.app.state.config.data.db_path
-
-
-def invalidate_setup_cache(request: Request, key: str) -> None:
-    cache: dict[str, bool] | None = getattr(
-        request.app.state, "_setup_completed_cache", None
-    )
-    if cache is not None:
-        cache.pop(key, None)
-
-
-def set_locale_cache(request: Request, key: str, locale: str) -> None:
-    cache: dict[str, str] | None = getattr(request.app.state, "_locale_cache", None)
-    if cache is None:
-        cache = {}
-        request.app.state._locale_cache = cache
-    cache[key] = locale
+# Re-exported so existing call sites (`web/api/settings.py`, tests)
+# don't need to update their imports. The canonical home is
+# `web/request_helpers.py` — that's where settings_snapshot.py imports
+# from to break what would otherwise be a circular import via this
+# module.
+__all__ = ["_cache_key", "_db_path_for"]
 
 
 MUTATION_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
@@ -150,6 +107,7 @@ def _extract_host(url: str) -> str | None:
     # Strip port.
     return after_scheme.split(":", 1)[0].lower()
 
+
 DEMO_ALLOWED_MUTATIONS: list[tuple[str, re.Pattern]] = [
     ("POST", re.compile(r"^/api/submit$")),
     ("POST", re.compile(r"^/api/analyze$")),
@@ -198,30 +156,22 @@ class SetupCheckMiddleware(BaseHTTPMiddleware):
         if any(request.url.path.startswith(path) for path in self.EXEMPT_PATHS):
             return await call_next(request)
 
-        db_path = _db_path_for(request)
-        if db_path is None:
-            # Credentials mode without a user context: the only requests
-            # reaching here are exempt-path misses, and we have no DB to
-            # consult. Fall through — the route will handle auth itself.
-            return await call_next(request)
-
-        cache: dict[str, bool] | None = getattr(
-            request.app.state, "_setup_completed_cache", None
-        )
-        if cache is None:
-            cache = {}
-            request.app.state._setup_completed_cache = cache
-
+        cache = request.app.state.setup_completed_cache
         key = _cache_key(request)
-        if key not in cache:
-            try:
-                async with SettingsRepository(db_path=db_path) as settings_repo:
-                    cache[key] = await settings_repo.is_setup_completed()
-            except Exception:
-                # DB initializing or missing — let the request through.
+        completed = cache.get(key)
+        if completed is None:
+            # `get_settings_snapshot` warms setup_completed_cache /
+            # locale_cache / features_cache as a side effect — keep the
+            # cache check above so a warm path skips the DB open entirely.
+            snapshot = await get_settings_snapshot(request)
+            completed = snapshot.setup_completed
+            if completed is None:
+                # DB unavailable (credentials mode pre-auth, or DB
+                # initializing) — let the request through; downstream
+                # auth/route logic decides what to do.
                 return await call_next(request)
 
-        if not cache[key]:
+        if not completed:
             return RedirectResponse(url="/setup", status_code=303)
 
         return await call_next(request)
@@ -303,14 +253,17 @@ class LocaleMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
     async def _load_features(self, request: Request) -> dict[str, bool]:
-        db_path = _db_path_for(request)
-        if db_path is None:
+        # Cache check first; snapshot warms features_cache as a side
+        # effect, so a warm path never opens the DB.
+        cache = request.app.state.features_cache
+        key = _cache_key(request)
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+        snapshot = await get_settings_snapshot(request)
+        if snapshot.features is None:
             return {f.value: v for f, v in DEFAULTS.items()}
-        try:
-            async with SettingsRepository(db_path=db_path) as settings_repo:
-                return await settings_repo.get_feature_flags()
-        except Exception:
-            return {f.value: v for f, v in DEFAULTS.items()}
+        return snapshot.features
 
     async def _detect_locale(self, request: Request) -> str:
         i18n = getattr(request.app.state, "i18n", None)
@@ -319,23 +272,15 @@ class LocaleMiddleware(BaseHTTPMiddleware):
         if cookie_locale and i18n and cookie_locale in i18n.available_locales():
             return cookie_locale
 
-        locale_cache: dict[str, str] | None = getattr(
-            request.app.state, "_locale_cache", None
-        )
         key = _cache_key(request)
-        if locale_cache is not None and key in locale_cache:
-            return locale_cache[key]
+        cached = request.app.state.locale_cache.get(key)
+        if cached is not None:
+            return cached
 
-        db_path = _db_path_for(request)
-        if db_path is not None:
-            try:
-                async with SettingsRepository(db_path=db_path) as settings_repo:
-                    db_locale = await settings_repo.get_setting("locale")
-                if db_locale and i18n and db_locale in i18n.available_locales():
-                    set_locale_cache(request, key, db_locale)
-                    return db_locale
-            except Exception:
-                pass
+        snapshot = await get_settings_snapshot(request)
+        db_locale = snapshot.locale
+        if db_locale and i18n and db_locale in i18n.available_locales():
+            return db_locale
 
         accept = request.headers.get("accept-language", "")
         for part in accept.split(","):

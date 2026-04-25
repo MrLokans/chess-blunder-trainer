@@ -30,6 +30,7 @@ def restrict_umask() -> Iterator[None]:
     finally:
         os.umask(previous)
 
+
 # SQLite side-files — WAL journal, shared memory index, and the rollback
 # journal — contain the same row data as the main file between writer
 # checkpoints, so they need the same permission treatment. Miss any one
@@ -65,6 +66,4 @@ def _chmod_if_present(path: Path, mode: int) -> None:
     try:
         os.chmod(path, mode)
     except OSError as exc:
-        log.warning(
-            "secure_fs: could not chmod %s to %o (%s)", path, mode, exc
-        )
+        log.warning("secure_fs: could not chmod %s to %o (%s)", path, mode, exc)

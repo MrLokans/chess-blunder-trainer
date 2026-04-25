@@ -35,8 +35,7 @@ class UserRepository:
         (and the write lock) so service-layer multi-table writes can share
         one ``BEGIN IMMEDIATE`` span with the ``identities`` INSERT."""
         await conn.execute(
-            "INSERT INTO users (id, username, email, created_at) "
-            "VALUES (?, ?, ?, ?)",
+            "INSERT INTO users (id, username, email, created_at) VALUES (?, ?, ?, ?)",
             (user_id, username, email, created_at),
         )
 

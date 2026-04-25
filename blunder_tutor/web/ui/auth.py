@@ -14,7 +14,8 @@ auth_ui_router = APIRouter()
 
 
 def _service(request: Request) -> AuthService | None:
-    return getattr(request.app.state, "auth_service", None)
+    auth = getattr(request.app.state, "auth", None)
+    return auth.service if auth is not None else None
 
 
 def _ctx(request: Request) -> UserContext | None:

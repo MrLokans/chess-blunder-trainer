@@ -44,6 +44,8 @@ from blunder_tutor.web.middleware import (
     SecurityHeadersMiddleware,
     SetupCheckMiddleware,
 )
+from blunder_tutor.web.per_user_cache import PerUserCache
+from blunder_tutor.web.resources import AuthResources
 from blunder_tutor.web.template_context import i18n_context
 from blunder_tutor.web.throttle import create_engine_throttle
 from blunder_tutor.web.vite import vite_asset
@@ -74,7 +76,7 @@ async def lifespan(app: FastAPI):
         scheduler_settings = await settings_repo.get_all_settings()
         saved_locale = scheduler_settings.get("locale")
         if saved_locale:
-            app.state._locale_cache = {"_local": saved_locale}
+            app.state.locale_cache.set("_local", saved_locale)
 
     _wire_background(app)
     app.state.scheduler.start()
@@ -100,26 +102,27 @@ async def lifespan(app: FastAPI):
     # lifecycles are currently no-ops (CredentialsProvider holds no external
     # resources) so AuthService has no close method — if a future provider
     # needs cleanup, re-add it and wire it back in the same spot.
-    if app.state.auth_db is not None:
-        await app.state.auth_db.close()
+    if app.state.auth is not None:
+        await app.state.auth.db.close()
 
 
 async def _bootstrap_auth(app: FastAPI) -> None:
-    """Initialize `auth.sqlite3`, wire an `AuthService`, surface an
-    invite code when no users exist, and run the orphan-directory
+    """Initialize `auth.sqlite3`, build the credentials-mode auth bundle,
+    surface an invite code when no users exist, and run the orphan-directory
     scan. All side effects run on the app's own event loop so
     `aiosqlite` connections are bound to the same loop as request
     handlers.
     """
-    auth_db_path: Path = app.state.auth_db_path
-    users_dir: Path = app.state.users_dir
-    auth_config = app.state.auth_config
+    config: AppConfig = app.state.config
+    auth_config = config.auth
+    auth_db_path = config.data.db_path.parent / "auth.sqlite3"
+    users_dir = config.data.db_path.parent / "users"
+    users_dir.mkdir(parents=True, exist_ok=True)
 
     await initialize_auth_schema(auth_db_path)
 
     auth_db = AuthDb(auth_db_path)
     await auth_db.connect()
-    app.state.auth_db = auth_db
 
     auth_service = AuthService(
         auth_db=auth_db,
@@ -127,7 +130,12 @@ async def _bootstrap_auth(app: FastAPI) -> None:
         session_max_age=timedelta(seconds=auth_config.session_max_age_seconds),
         session_idle=timedelta(seconds=auth_config.session_idle_seconds),
     )
-    app.state.auth_service = auth_service
+    app.state.auth = AuthResources(
+        db=auth_db,
+        service=auth_service,
+        db_path=auth_db_path,
+        users_dir=users_dir,
+    )
 
     # Surface the most common insecure-default posture: credentials auth
     # but the operator has not indicated either HTTPS-direct or a trusted
@@ -147,6 +155,7 @@ async def _bootstrap_auth(app: FastAPI) -> None:
             setup_repo = SetupRepository(db=auth_db)
             invite = await setup_repo.get("invite_code")
             if invite is None:
+                assert auth_config.secret_key is not None  # validated at boot
                 invite = generate_invite_code(auth_config.secret_key)
                 await setup_repo.put("invite_code", invite)
             log.warning("=" * 60)
@@ -176,9 +185,9 @@ def _wire_background(app: FastAPI) -> None:
     work_coordinator = app.state.work_coordinator
 
     if config.auth.mode == "credentials":
-        users_dir: Path = app.state.users_dir
-        auth_db: AuthDb = app.state.auth_db
-        user_repo = UserRepository(db=auth_db)
+        assert app.state.auth is not None  # set by _bootstrap_auth
+        users_dir = app.state.auth.users_dir
+        user_repo = UserRepository(db=app.state.auth.db)
 
         async def list_users() -> list[UserId]:
             return [u.id for u in await user_repo.list_all()]
@@ -303,9 +312,10 @@ def create_app(
     app.state.scheduler = None
     app.state.settings_repo = settings
 
-    # Auth state — `AuthDb` and `AuthService` are connected in the lifespan
-    # (credentials mode only) so their aiosqlite connections live on the
-    # app's own event loop.
+    # Auth state. `app.state.auth` is the credentials-mode bundle
+    # (AuthDb + AuthService + paths) materialized in `_bootstrap_auth`;
+    # readers narrow on `if app.state.auth is not None` so the type
+    # system carries the mode invariant.
     # `none_mode_db_path` is the legacy single-user DB path. It is set
     # ONLY when ``auth.mode == "none"`` so any code that reaches for
     # ``app.state.none_mode_db_path`` in credentials mode raises
@@ -314,17 +324,21 @@ def create_app(
     # enforces that only the documented call sites read this attribute.
     app.state.auth_mode = config.auth.mode
     app.state.auth_config = config.auth
-    app.state.auth_db = None
-    app.state.auth_service = None
+    # Set to AuthResources by `_bootstrap_auth` lifespan in credentials mode.
+    app.state.auth = None
 
     if config.auth.mode == "none":
         app.state.none_mode_db_path = config.data.db_path
-    else:
-        auth_db_path = config.data.db_path.parent / "auth.sqlite3"
-        users_dir = config.data.db_path.parent / "users"
-        users_dir.mkdir(parents=True, exist_ok=True)
-        app.state.auth_db_path = auth_db_path
-        app.state.users_dir = users_dir
+
+    # Per-user caches keyed on user_id (or `_local` in none-mode). Always
+    # present so middleware never has to lazy-init; `PerUserCache` is the
+    # only API for touching them — see `blunder_tutor/web/per_user_cache.py`.
+    # Populated as a side effect of `get_settings_snapshot` (the single
+    # per-request DB-open seam) and invalidated by the settings/auth
+    # mutations that change them.
+    app.state.setup_completed_cache = PerUserCache[bool]()
+    app.state.locale_cache = PerUserCache[str]()
+    app.state.features_cache = PerUserCache[dict[str, bool]]()
 
     # Mount static files directory
     static_dir = Path(__file__).parent / "static"

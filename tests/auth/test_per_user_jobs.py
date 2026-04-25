@@ -148,7 +148,7 @@ class TestTwoUserJobIsolation:
             assert cross_ba.status_code == 404, "user B must not see user A's job"
 
             # And the row really lives in only one DB.
-            users_dir = credentials_app_multi.state.users_dir
+            users_dir = credentials_app_multi.state.auth.users_dir
             user_dirs = sorted(p for p in users_dir.iterdir() if p.is_dir())
             assert len(user_dirs) == 2
             db_a, db_b = (p / "main.sqlite3" for p in user_dirs)
@@ -156,9 +156,7 @@ class TestTwoUserJobIsolation:
             self._assert_job_in_exactly_one_db(job_b, db_a, db_b)
 
     @staticmethod
-    def _assert_job_in_exactly_one_db(
-        job_id: str, db_a: Path, db_b: Path
-    ) -> None:
+    def _assert_job_in_exactly_one_db(job_id: str, db_a: Path, db_b: Path) -> None:
         present = []
         for db in (db_a, db_b):
             with sqlite3.connect(db) as conn:
@@ -214,7 +212,7 @@ class TestFanoutSchedulerDispatchesPerUser:
                 },
             )
 
-            users_dir = credentials_app_multi.state.users_dir
+            users_dir = credentials_app_multi.state.auth.users_dir
             user_dirs = sorted(p for p in users_dir.iterdir() if p.is_dir())
             event_bus: EventBus = credentials_app_multi.state.event_bus
 
@@ -292,7 +290,7 @@ class TestDeleteRaceGuard:
         assert signup.status_code == 200
         user_id_str = signup.json()["id"]
 
-        users_dir: Path = credentials_app.state.users_dir
+        users_dir: Path = credentials_app.state.auth.users_dir
         user_dir = users_dir / user_id_str
         assert user_dir.exists()
         shutil.rmtree(user_dir)
@@ -324,7 +322,7 @@ class TestDeleteRaceGuard:
             assert signup.status_code == 200
             user_id_str = signup.json()["id"]
 
-        users_dir: Path = credentials_app.state.users_dir
+        users_dir: Path = credentials_app.state.auth.users_dir
         user_dir = users_dir / user_id_str
         shutil.rmtree(user_dir)
 

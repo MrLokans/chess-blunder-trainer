@@ -196,9 +196,7 @@ def _build_auth_config(environ: typing.Mapping) -> AuthConfig:
         login_rate_window_seconds=_parse_positive_int(
             environ, "AUTH_LOGIN_RATE_WINDOW_SECONDS", 60
         ),
-        signup_rate_limit=_parse_positive_int(
-            environ, "AUTH_SIGNUP_RATE_LIMIT", 3
-        ),
+        signup_rate_limit=_parse_positive_int(environ, "AUTH_SIGNUP_RATE_LIMIT", 3),
         signup_rate_window_seconds=_parse_positive_int(
             environ, "AUTH_SIGNUP_RATE_WINDOW_SECONDS", 60 * 60
         ),

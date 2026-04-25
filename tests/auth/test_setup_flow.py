@@ -95,7 +95,7 @@ class TestLogout:
 
         # Manually mint a second session for the same user via the service
         # to simulate a login from another device.
-        service = credentials_app.state.auth_service
+        service = credentials_app.state.auth.service
         user = await service.authenticate(
             "credentials", {"username": "alice", "password": "password123"}
         )
@@ -136,7 +136,7 @@ class TestDeleteAccount:
         r = await client_credentials_mode.delete("/api/auth/account")
         assert r.status_code == 204
 
-        service = credentials_app.state.auth_service
+        service = credentials_app.state.auth.service
         assert await service.user_count() == 0
 
         # New request with the stale cookie in the jar must not resolve.
@@ -156,8 +156,8 @@ class TestDeleteAccount:
         # SetupCheckMiddleware + LocaleMiddleware.
         await client_credentials_mode.get("/api/auth/me")
 
-        setup_cache = getattr(credentials_app.state, "_setup_completed_cache", {})
-        locale_cache = getattr(credentials_app.state, "_locale_cache", {})
+        setup_cache = credentials_app.state.setup_completed_cache
+        locale_cache = credentials_app.state.locale_cache
         # No assertion on pre-state — the caches may or may not have the
         # entry depending on whether any middleware path populated them
         # for this endpoint. The guarantee we care about is post-delete.
@@ -165,8 +165,8 @@ class TestDeleteAccount:
         r = await client_credentials_mode.delete("/api/auth/account")
         assert r.status_code == 204
 
-        assert user_id not in setup_cache
-        assert user_id not in locale_cache
+        assert setup_cache.get(user_id) is None
+        assert locale_cache.get(user_id) is None
 
 
 class TestSignupAtomicity:
@@ -197,7 +197,7 @@ class TestSignupAtomicity:
         statuses = sorted([a.status_code, b.status_code])
         assert statuses == [200, 403]
 
-        service = credentials_app.state.auth_service
+        service = credentials_app.state.auth.service
         assert await service.user_count() == 1
 
     async def test_invite_cannot_be_replayed_across_transaction_boundary(
@@ -231,7 +231,10 @@ class TestSignupAtomicity:
         assert r.json()["detail"] == "user_cap_reached"
 
     async def test_invite_survives_secret_key_rotation(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str, credentials_app
+        self,
+        client_credentials_mode: httpx.AsyncClient,
+        invite_code: str,
+        credentials_app,
     ):
         """Regression guard for TREK-25: rotating SECRET_KEY on a running
         instance must not invalidate an already-issued invite. Previously

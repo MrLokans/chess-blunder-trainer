@@ -16,11 +16,7 @@ from blunder_tutor.web.dependencies import (
     SettingsRepoDep,
     UserContextDep,
 )
-from blunder_tutor.web.middleware import (
-    _cache_key,
-    invalidate_setup_cache,
-    set_locale_cache,
-)
+from blunder_tutor.web.middleware import _cache_key
 
 
 class ValidateUsernameRequest(BaseModel):
@@ -181,7 +177,7 @@ async def setup_submit(
     await settings_repo.set_setting("chesscom_username", chesscom if chesscom else None)
     await settings_repo.mark_setup_completed()
 
-    invalidate_setup_cache(request, _cache_key(request))
+    request.app.state.setup_completed_cache.invalidate(_cache_key(request))
 
     import_job_ids: list[str] = []
     max_games_str = await settings_repo.get_setting("sync_max_games")
@@ -726,10 +722,12 @@ async def get_features(settings_repo: SettingsRepoDep) -> dict[str, Any]:
     description="Toggle visibility of individual features.",
 )
 async def update_features(
+    request: Request,
     payload: FeatureFlagsRequest,
     settings_repo: SettingsRepoDep,
 ) -> dict[str, bool]:
     await settings_repo.set_feature_flags(payload.features)
+    request.app.state.features_cache.invalidate(_cache_key(request))
     return {"success": True}
 
 
@@ -750,7 +748,7 @@ async def set_locale(
     if i18n and payload.locale not in i18n.available_locales():
         raise HTTPException(status_code=400, detail="Unsupported locale")
     await settings_repo.set_setting("locale", payload.locale)
-    set_locale_cache(request, _cache_key(request), payload.locale)
+    request.app.state.locale_cache.set(_cache_key(request), payload.locale)
 
     response = JSONResponse(content={"success": True})
     response.set_cookie(

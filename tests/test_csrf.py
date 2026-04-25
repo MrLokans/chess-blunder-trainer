@@ -51,15 +51,11 @@ class TestOriginMatchesHost:
         assert _origin_matches_host(r) is False  # type: ignore[arg-type]
 
     def test_referer_fallback(self):
-        r = _R(
-            {"referer": "http://example.com/foo", "host": "example.com"}
-        )
+        r = _R({"referer": "http://example.com/foo", "host": "example.com"})
         assert _origin_matches_host(r) is True  # type: ignore[arg-type]
 
     def test_referer_mismatch_rejected(self):
-        r = _R(
-            {"referer": "https://evil.com/foo", "host": "example.com"}
-        )
+        r = _R({"referer": "https://evil.com/foo", "host": "example.com"})
         assert _origin_matches_host(r) is False  # type: ignore[arg-type]
 
     def test_neither_header_allowed(self):
@@ -114,12 +110,8 @@ class TestCsrfMiddleware:
         assert r.status_code == 403
         assert r.json()["error"] == "csrf"
 
-    async def test_get_requests_are_untouched(
-        self, app_client: httpx.AsyncClient
-    ):
-        r = await app_client.get(
-            "/health", headers={"Origin": "https://evil.com"}
-        )
+    async def test_get_requests_are_untouched(self, app_client: httpx.AsyncClient):
+        r = await app_client.get("/health", headers={"Origin": "https://evil.com"})
         assert r.status_code == 200
 
     async def test_absent_headers_allowed_by_default(
@@ -158,15 +150,11 @@ async def host_pinned_client(tmp_path: Path, monkeypatch):
 
 
 class TestTrustedHostMiddleware:
-    async def test_allowed_host_passes(
-        self, host_pinned_client: httpx.AsyncClient
-    ):
+    async def test_allowed_host_passes(self, host_pinned_client: httpx.AsyncClient):
         r = await host_pinned_client.get("/health")
         assert r.status_code == 200
 
-    async def test_spoofed_host_rejected(
-        self, host_pinned_client: httpx.AsyncClient
-    ):
+    async def test_spoofed_host_rejected(self, host_pinned_client: httpx.AsyncClient):
         # Cross-origin attacker tries to pass Origin==Host by spoofing
         # the Host header. TrustedHostMiddleware returns 400 before
         # CsrfOriginMiddleware even runs.

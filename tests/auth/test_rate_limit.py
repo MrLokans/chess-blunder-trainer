@@ -116,9 +116,7 @@ class TestTrustProxyDefault:
         # a fresh bucket per forged IP; the limiter must key on the
         # real client host (all from `testserver` in ASGITransport).
         monkeypatch.delenv("AUTH_TRUST_PROXY", raising=False)
-        async with _low_limit_app(
-            tmp_path, monkeypatch, login_limit="2"
-        ) as app:
+        async with _low_limit_app(tmp_path, monkeypatch, login_limit="2") as app:
             # `_low_limit_app` sets AUTH_TRUST_PROXY=true above; override
             # by reconstructing the limiter here to simulate the real
             # default posture.
@@ -185,6 +183,6 @@ class TestFailedLoginLogged:
             "/api/auth/login",
             json={"username": "ghost", "password": "password123"},
         )
-        assert any(
-            "auth.login.failed" in rec.message for rec in caplog.records
-        ), [r.message for r in caplog.records]
+        assert any("auth.login.failed" in rec.message for rec in caplog.records), [
+            r.message for r in caplog.records
+        ]

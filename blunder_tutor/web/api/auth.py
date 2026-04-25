@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -20,9 +21,12 @@ from blunder_tutor.auth.types import (
     make_email,
     make_username,
 )
-from blunder_tutor.web.cookies import clear_session_cookie, set_session_cookie
+from blunder_tutor.web.cookies import (
+    SESSION_COOKIE_NAME,
+    clear_session_cookie,
+    set_session_cookie,
+)
 from blunder_tutor.web.dependencies import ConfigDep, get_user_context
-from blunder_tutor.web.middleware import invalidate_setup_cache
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +45,23 @@ async def _signup_rate_limit(request: Request, response: Response) -> None:
 
 def _client_ip(request: Request) -> str | None:
     return request.client.host if request.client else None
+
+
+async def _revoke_caller_cookie(request: Request, service: AuthService) -> None:
+    # OWASP V7: a privilege change must terminate the previous session
+    # in addition to issuing a new ID. Best-effort by design — a transient
+    # DB failure here must not block the legitimate login / signup flow.
+    old_token = request.cookies.get(SESSION_COOKIE_NAME)
+    if not old_token:
+        return
+    try:
+        await service.revoke_session(old_token)
+    except sqlite3.Error:
+        log.warning(
+            "auth.session.revoke_pre_existing.failed ip=%s",
+            _client_ip(request),
+            exc_info=True,
+        )
 
 
 class SignupRequest(BaseModel):
@@ -62,11 +83,11 @@ class MeResponse(BaseModel):
 
 
 def _get_service(request: Request) -> AuthService:
-    svc: AuthService | None = request.app.state.auth_service
-    if svc is None:
+    auth = request.app.state.auth
+    if auth is None:
         # Credentials mode not active — auth endpoints are offline.
         raise HTTPException(status_code=404)
-    return svc
+    return auth.service
 
 
 def _get_optional_user_context(request: Request) -> UserContext | None:
@@ -125,6 +146,7 @@ async def signup(
     except InvalidPasswordError as exc:
         raise HTTPException(status_code=400, detail=exc.code) from exc
 
+    await _revoke_caller_cookie(request, service)
     session = await service.create_session(
         user_id=user.id,
         user_agent=request.headers.get("user-agent"),
@@ -163,6 +185,7 @@ async def login(
         )
         raise HTTPException(status_code=401, detail="invalid_credentials")
 
+    await _revoke_caller_cookie(request, service)
     session = await service.create_session(
         user_id=user.id,
         user_agent=request.headers.get("user-agent"),
@@ -216,12 +239,9 @@ async def delete_account(
     # Evict per-user entries in app-level caches BEFORE the account is
     # gone so nothing can race on a read after the user_id dies. Cache
     # keys are the raw uuid hex so new users cannot collide.
-    invalidate_setup_cache(request, ctx.user_id)
-    locale_cache: dict[str, str] | None = getattr(
-        request.app.state, "_locale_cache", None
-    )
-    if locale_cache is not None:
-        locale_cache.pop(ctx.user_id, None)
+    request.app.state.setup_completed_cache.invalidate(ctx.user_id)
+    request.app.state.locale_cache.invalidate(ctx.user_id)
+    request.app.state.features_cache.invalidate(ctx.user_id)
 
     await service.delete_account(ctx.user_id)
     clear_session_cookie(response)

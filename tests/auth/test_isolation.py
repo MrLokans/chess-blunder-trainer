@@ -24,7 +24,7 @@ class TestUserDataIsolation:
         here on the ``alice_locale == "ru"`` / ``bob_locale == "pl"``
         assertions below.
         """
-        setup_repo = SetupRepository(db=credentials_app_multi.state.auth_db)
+        setup_repo = SetupRepository(db=credentials_app_multi.state.auth.db)
         invite_code = await setup_repo.get("invite_code")
         assert invite_code, "bootstrap should have seeded an invite code"
 
@@ -94,7 +94,7 @@ class TestUserDataIsolation:
         noise but otherwise proceeds. Guards against a regression that
         would demand an invite on every signup and effectively lock
         multi-user instances out."""
-        setup_repo = SetupRepository(db=credentials_app_multi.state.auth_db)
+        setup_repo = SetupRepository(db=credentials_app_multi.state.auth.db)
         invite_code = await setup_repo.get("invite_code")
         assert invite_code
 

@@ -14,13 +14,10 @@ from blunder_tutor.auth.middleware import AuthMiddleware
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import UserContext, UserId, Username
 from blunder_tutor.repositories.settings import SettingsRepository
-from blunder_tutor.web.middleware import (
-    LocaleMiddleware,
-    SetupCheckMiddleware,
-    _cache_key,
-    _db_path_for,
-    set_locale_cache,
-)
+from blunder_tutor.web.middleware import LocaleMiddleware, SetupCheckMiddleware
+from blunder_tutor.web.per_user_cache import PerUserCache
+from blunder_tutor.web.request_helpers import _cache_key, _db_path_for
+from blunder_tutor.web.resources import AuthResources
 
 
 class TestCacheKey:
@@ -83,7 +80,7 @@ class TestDbPathFor:
 async def two_user_app(auth_db: AuthDb, tmp_path: Path):
     """Build a minimal app with AuthMiddleware + SetupCheckMiddleware +
     LocaleMiddleware + two registered users (A completes setup, B does
-    not). Returns (app, user_a_token, user_b_token, service).
+    not). Returns (app, user_a, token_a, user_b, token_b, service).
     """
     users_dir = tmp_path / "users"
     users_dir.mkdir()
@@ -115,12 +112,20 @@ async def two_user_app(auth_db: AuthDb, tmp_path: Path):
     )
 
     app = FastAPI()
-    app.state.auth_service = service
+    app.state.auth = AuthResources(
+        db=auth_db,
+        service=service,
+        db_path=auth_db.path,
+        users_dir=users_dir,
+    )
     app.state.auth_mode = "credentials"
     app.state.demo_mode = False
     # SetupCheckMiddleware + LocaleMiddleware expect these:
     app.state.i18n = None
     app.state.templates = SimpleNamespace(env=SimpleNamespace(globals={}))
+    app.state.setup_completed_cache = PerUserCache[bool]()
+    app.state.locale_cache = PerUserCache[str]()
+    app.state.features_cache = PerUserCache[dict[str, bool]]()
 
     @app.get("/some-page")
     async def some_page(request: Request):
@@ -131,7 +136,7 @@ async def two_user_app(auth_db: AuthDb, tmp_path: Path):
     app.add_middleware(LocaleMiddleware)
     app.add_middleware(AuthMiddleware)
 
-    return app, session_a.token, session_b.token, service
+    return app, user_a, session_a.token, user_b, session_b.token, service
 
 
 class TestSetupCacheIsolation:
@@ -143,7 +148,7 @@ class TestSetupCacheIsolation:
     async def test_user_b_still_redirected_to_setup_after_user_a_completes(
         self, two_user_app
     ):
-        app, token_a, token_b, _ = two_user_app
+        app, _user_a, token_a, _user_b, token_b, _ = two_user_app
 
         async with httpx.AsyncClient(
             transport=ASGITransport(app=app),
@@ -161,7 +166,7 @@ class TestSetupCacheIsolation:
         assert r_b.headers["location"] == "/setup"
 
     async def test_cache_stores_per_user_keys(self, two_user_app):
-        app, token_a, token_b, _ = two_user_app
+        app, user_a, token_a, user_b, token_b, _ = two_user_app
 
         async with httpx.AsyncClient(
             transport=ASGITransport(app=app),
@@ -171,20 +176,16 @@ class TestSetupCacheIsolation:
             await client.get("/some-page", cookies={"session_token": token_a})
             await client.get("/some-page", cookies={"session_token": token_b})
 
-        cache = app.state._setup_completed_cache
-        assert isinstance(cache, dict)
-        # Two distinct keys, one True (alice), one False (bob).
-        assert len(cache) == 2
-        assert True in cache.values()
-        assert False in cache.values()
+        cache = app.state.setup_completed_cache
+        assert cache.get(user_a.id) is True
+        assert cache.get(user_b.id) is False
 
 
 class TestLocaleCacheIsolation:
-    def test_set_locale_cache_keeps_users_separate(self):
-        app_state = SimpleNamespace()
-        request = SimpleNamespace(app=SimpleNamespace(state=app_state))
-
-        set_locale_cache(request, "user_a", "ru")
-        set_locale_cache(request, "user_b", "es")
-
-        assert app_state._locale_cache == {"user_a": "ru", "user_b": "es"}
+    def test_per_user_cache_keeps_users_separate(self):
+        cache: PerUserCache[str] = PerUserCache()
+        cache.set("user_a", "ru")
+        cache.set("user_b", "es")
+        assert cache.get("user_a") == "ru"
+        assert cache.get("user_b") == "es"
+        assert cache.get("user_c") is None

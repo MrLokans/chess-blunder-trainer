@@ -8,21 +8,39 @@ import pytest
 from fastapi import FastAPI, Request
 from httpx import ASGITransport
 
+from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.middleware import AuthMiddleware
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import Username
+from blunder_tutor.web.resources import AuthResources
 
 
 def _make_app(
     service: AuthService | None,
     *,
     mode: str,
+    auth_db: AuthDb | None = None,
+    users_dir: Path | None = None,
     none_mode_db_path: Path | None = None,
 ) -> FastAPI:
     app = FastAPI()
-    app.state.auth_service = service
     app.state.auth_mode = mode
-    if mode == "none":
+    if mode == "credentials":
+        # Credentials-mode tests must supply the AuthResources bundle.
+        # `service`/`auth_db`/`users_dir` are accepted as separate args
+        # because the test fixture builds them independently — production
+        # `_bootstrap_auth` constructs all three together.
+        assert service is not None
+        assert auth_db is not None
+        assert users_dir is not None
+        app.state.auth = AuthResources(
+            db=auth_db,
+            service=service,
+            db_path=auth_db.path,
+            users_dir=users_dir,
+        )
+    else:
+        app.state.auth = None
         # Real prod wiring sets this only in none-mode (TREK-22). Tests
         # in credentials mode must not touch the attribute or they'd
         # mask the very footgun the gating prevents.
@@ -82,6 +100,21 @@ def service(service_factory) -> AuthService:
     )
 
 
+@pytest.fixture
+def wired_credentials_app(
+    service: AuthService, auth_db: AuthDb, tmp_path: Path
+) -> FastAPI:
+    """Pre-wired credentials-mode app with `service` + the matching
+    `AuthDb` and `users_dir` from the conftest fixtures, so individual
+    tests don't repeat the AuthResources construction."""
+    return _make_app(
+        service,
+        mode="credentials",
+        auth_db=auth_db,
+        users_dir=tmp_path / "users",
+    )
+
+
 class TestModeNone:
     async def test_sets_local_sentinel(self, legacy_db: Path):
         app = _make_app(None, mode="none", none_mode_db_path=legacy_db)
@@ -102,66 +135,72 @@ class TestModeNone:
 
 
 class TestModeCredentials:
-    async def test_redirects_html_when_no_session(self, service: AuthService):
-        app = _make_app(service, mode="credentials")
+    async def test_redirects_html_when_no_session(self, wired_credentials_app: FastAPI):
+        app = wired_credentials_app
         async with _client(app, follow_redirects=False) as client:
             r = await client.get("/echo", headers={"accept": "text/html"})
         assert r.status_code == 302
         assert r.headers["location"].startswith("/login")
         assert "next=/echo" in r.headers["location"]
 
-    async def test_returns_401_for_api(self, service: AuthService):
-        app = _make_app(service, mode="credentials")
+    async def test_returns_401_for_api(self, wired_credentials_app: FastAPI):
+        app = wired_credentials_app
         async with _client(app) as client:
             r = await client.get("/api/echo")
         assert r.status_code == 401
         assert r.json()["error"] == "unauthorized"
 
-    async def test_valid_session_sets_context(self, service: AuthService):
+    async def test_valid_session_sets_context(
+        self, service: AuthService, wired_credentials_app: FastAPI
+    ):
         user = await service.register(
             username=Username("alice"), password="password123"
         )
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
-        app = _make_app(service, mode="credentials")
+        app = wired_credentials_app
         async with _client(app, cookies={"session_token": session.token}) as client:
             r = await client.get("/api/echo")
         assert r.status_code == 200
         assert r.json()["user_id"] == user.id
 
-    async def test_valid_session_sets_user_dir_as_db_path(self, service: AuthService):
+    async def test_valid_session_sets_user_dir_as_db_path(
+        self, service: AuthService, wired_credentials_app: FastAPI
+    ):
         user = await service.register(
             username=Username("alice"), password="password123"
         )
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
-        app = _make_app(service, mode="credentials")
+        app = wired_credentials_app
         async with _client(app, cookies={"session_token": session.token}) as client:
             r = await client.get("/echo")
         assert r.status_code == 200
         assert r.json()["db_path"] == str(service.db_path_for(user.id))
 
     async def test_invalid_session_cookie_returns_401_for_api(
-        self, service: AuthService
+        self, wired_credentials_app: FastAPI
     ):
-        app = _make_app(service, mode="credentials")
+        app = wired_credentials_app
         async with _client(
             app, cookies={"session_token": "not-a-real-token"}
         ) as client:
             r = await client.get("/api/echo")
         assert r.status_code == 401
 
-    async def test_exempt_paths_pass_without_session(self, service: AuthService):
-        app = _make_app(service, mode="credentials")
+    async def test_exempt_paths_pass_without_session(
+        self, wired_credentials_app: FastAPI
+    ):
+        app = wired_credentials_app
         async with _client(app) as client:
             r = await client.get("/login")
         assert r.status_code == 200
         assert r.json()["ok"] is True
 
-    async def test_api_auth_prefix_is_exempt(self, service: AuthService):
-        app = _make_app(service, mode="credentials")
+    async def test_api_auth_prefix_is_exempt(self, wired_credentials_app: FastAPI):
+        app = wired_credentials_app
 
         @app.get("/api/auth/status")
         async def auth_status(request: Request):
@@ -172,7 +211,7 @@ class TestModeCredentials:
         assert r.status_code == 200
 
     async def test_exempt_path_with_valid_session_still_sets_ctx(
-        self, service: AuthService
+        self, service: AuthService, wired_credentials_app: FastAPI
     ):
         user = await service.register(
             username=Username("alice"), password="password123"
@@ -180,7 +219,7 @@ class TestModeCredentials:
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
-        app = _make_app(service, mode="credentials")
+        app = wired_credentials_app
 
         @app.get("/login/echo")
         async def login_echo(request: Request):
@@ -192,7 +231,9 @@ class TestModeCredentials:
         assert r.status_code == 200
         assert r.json()["user_id"] == user.id
 
-    async def test_expired_session_returns_401_for_api(self, service: AuthService):
+    async def test_expired_session_returns_401_for_api(
+        self, service: AuthService, auth_db: AuthDb, tmp_path: Path
+    ):
         short_lived = AuthService(
             auth_db=service._db,
             users_dir=service._users_dir,
@@ -205,7 +246,12 @@ class TestModeCredentials:
         session = await short_lived.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
-        app = _make_app(short_lived, mode="credentials")
+        app = _make_app(
+            short_lived,
+            mode="credentials",
+            auth_db=auth_db,
+            users_dir=tmp_path / "users",
+        )
         async with _client(app, cookies={"session_token": session.token}) as client:
             r = await client.get("/api/echo")
         assert r.status_code == 401

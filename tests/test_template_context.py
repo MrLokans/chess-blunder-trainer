@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 from httpx import ASGITransport
 
 from blunder_tutor.web.middleware import LocaleMiddleware
+from blunder_tutor.web.per_user_cache import PerUserCache
 from blunder_tutor.web.template_context import (
     LOCALE_DISPLAY_NAMES,
     i18n_context,
@@ -81,6 +82,11 @@ def _build_concurrent_app(tmp_path, features_by_path):
     # `_db_path_for` return `None`, skipping the DB-backed locale lookup
     # so the test doesn't need a real settings DB.
     app.state.auth_mode = "credentials"
+    app.state.auth = None  # no AuthMiddleware in this stack; snapshot
+    # short-circuits via the credentials-mode + no-ctx branch.
+    app.state.setup_completed_cache = PerUserCache[bool]()
+    app.state.locale_cache = PerUserCache[str]()
+    app.state.features_cache = PerUserCache[dict[str, bool]]()
 
     class _PatchedLocaleMiddleware(LocaleMiddleware):
         async def _load_features(self, request):
@@ -117,9 +123,7 @@ async def test_concurrent_requests_see_own_features(tmp_path):
         # features leaks into the other's render at least once under the
         # forced sleep window.
         for _ in range(10):
-            resp_a, resp_b = await asyncio.gather(
-                client.get("/a"), client.get("/b")
-            )
+            resp_a, resp_b = await asyncio.gather(client.get("/a"), client.get("/b"))
             parsed_a = json.loads(resp_a.text)
             parsed_b = json.loads(resp_b.text)
             assert parsed_a["features"] == features_a, parsed_a

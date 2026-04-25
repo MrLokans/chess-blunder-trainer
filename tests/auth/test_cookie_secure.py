@@ -56,9 +56,7 @@ class TestCookieSecure:
 
     def test_forwarded_proto_honored_when_trust_proxy_true(self):
         config = _make_config(trust_proxy=True)
-        request = _make_request(
-            scheme="http", headers={"x-forwarded-proto": "https"}
-        )
+        request = _make_request(scheme="http", headers={"x-forwarded-proto": "https"})
         assert _cookie_secure(config, request) is True
 
     def test_forwarded_proto_ignored_when_trust_proxy_false(self):
@@ -67,9 +65,7 @@ class TestCookieSecure:
         to make the app think the connection was HTTPS and keep Secure
         on a cookie that's about to ride a plain-HTTP response."""
         config = _make_config(trust_proxy=False)
-        request = _make_request(
-            scheme="http", headers={"x-forwarded-proto": "https"}
-        )
+        request = _make_request(scheme="http", headers={"x-forwarded-proto": "https"})
         assert _cookie_secure(config, request) is False
 
     def test_forwarded_proto_chain_uses_leftmost(self):
@@ -85,9 +81,7 @@ class TestCookieSecure:
 
     def test_forwarded_proto_http_stays_false(self):
         config = _make_config(trust_proxy=True)
-        request = _make_request(
-            scheme="http", headers={"x-forwarded-proto": "http"}
-        )
+        request = _make_request(scheme="http", headers={"x-forwarded-proto": "http"})
         assert _cookie_secure(config, request) is False
 
     def test_plain_http_no_proxy_falls_back_false(self):
@@ -123,7 +117,6 @@ class TestStartupWarning:
                 pass
 
         assert any(
-            "AUTH_COOKIE_SECURE" in r.message
-            and "AUTH_TRUST_PROXY" in r.message
+            "AUTH_COOKIE_SECURE" in r.message and "AUTH_TRUST_PROXY" in r.message
             for r in caplog.records
         ), [r.message for r in caplog.records]

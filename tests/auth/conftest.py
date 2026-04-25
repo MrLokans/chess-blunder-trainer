@@ -69,8 +69,8 @@ async def credentials_app(tmp_path: Path, monkeypatch):
     ``mock_engine_context`` so no real Stockfish binary is required.
 
     The lifespan context is entered here so ``_bootstrap_auth`` runs
-    before any request is dispatched — ``app.state.auth_service`` and
-    ``app.state.auth_db`` are guaranteed live when the fixture yields.
+    before any request is dispatched — ``app.state.auth.service`` and
+    ``app.state.auth.db`` are guaranteed live when the fixture yields.
     """
     async with _booted_credentials_app(tmp_path, monkeypatch, max_users="1") as app:
         yield app
@@ -99,7 +99,7 @@ async def client_credentials_mode(credentials_app: FastAPI):
 
 @pytest.fixture
 async def invite_code(credentials_app: FastAPI) -> str:
-    repo = SetupRepository(db=credentials_app.state.auth_db)
+    repo = SetupRepository(db=credentials_app.state.auth.db)
     code = await repo.get("invite_code")
     assert code, "startup hook should have persisted an invite code"
     return code

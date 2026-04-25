@@ -84,8 +84,8 @@ class TestOrphanScan:
         )
         assert r.status_code == 200, r.text
 
-        users_dir: Path = credentials_app.state.users_dir
-        auth_db: AuthDb = credentials_app.state.auth_db
+        users_dir: Path = credentials_app.state.auth.users_dir
+        auth_db: AuthDb = credentials_app.state.auth.db
         caplog.clear()
         with caplog.at_level(logging.WARNING, logger="blunder_tutor.web.app"):
             await scan_orphans(auth_db, users_dir)

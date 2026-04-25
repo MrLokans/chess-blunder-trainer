@@ -64,7 +64,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         path = request.url.path
-        service: AuthService = request.app.state.auth_service
+        auth = request.app.state.auth
+        assert auth is not None  # credentials mode → set by _bootstrap_auth
+        service: AuthService = auth.service
         token = request.cookies.get(SESSION_COOKIE_NAME)
         client_ip = request.client.host if request.client else None
         ctx: UserContext | None = None

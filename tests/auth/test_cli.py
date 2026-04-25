@@ -116,17 +116,13 @@ class TestResolveNewPassword:
             parser.parse_args(["auth", "reset-password", "alice", "hunter2"])
 
         # Sanity: the new form with --password-stdin flag parses.
-        ns = parser.parse_args(
-            ["auth", "reset-password", "alice", "--password-stdin"]
-        )
+        ns = parser.parse_args(["auth", "reset-password", "alice", "--password-stdin"])
         assert ns.username == "alice"
         assert ns.password_stdin is True
         assert not hasattr(ns, "new_password")
 
     def test_password_stdin_reads_line(self, monkeypatch):
-        monkeypatch.setattr(
-            "sys.stdin", io.StringIO("s3cret-password\n")
-        )
+        monkeypatch.setattr("sys.stdin", io.StringIO("s3cret-password\n"))
         args = ap.Namespace(password_stdin=True)
         assert _resolve_new_password(args) == "s3cret-password"
 

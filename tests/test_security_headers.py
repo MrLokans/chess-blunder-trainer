@@ -41,14 +41,9 @@ class TestSecurityHeaders:
         r = await none_mode_client.get("/health")
         assert r.headers.get("X-Frame-Options") == "DENY"
         assert r.headers.get("X-Content-Type-Options") == "nosniff"
-        assert (
-            r.headers.get("Referrer-Policy")
-            == "strict-origin-when-cross-origin"
-        )
+        assert r.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
 
-    async def test_hsts_absent_on_plain_http(
-        self, none_mode_client: httpx.AsyncClient
-    ):
+    async def test_hsts_absent_on_plain_http(self, none_mode_client: httpx.AsyncClient):
         r = await none_mode_client.get("/health")
         # Never emit HSTS on a plain-HTTP response — poisons browser HSTS cache.
         assert "Strict-Transport-Security" not in r.headers
