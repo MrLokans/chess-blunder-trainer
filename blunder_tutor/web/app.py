@@ -5,6 +5,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import timedelta
+from functools import partial
 from pathlib import Path
 
 import chess.engine
@@ -36,6 +37,11 @@ from blunder_tutor.i18n import TranslationManager
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web import routes
+from blunder_tutor.web.auth_hooks import (
+    cleanup_user_dir,
+    materialize_user_dir,
+    resolve_user_db_path,
+)
 from blunder_tutor.web.config import AppConfig, config_factory
 from blunder_tutor.web.middleware import (
     CsrfOriginMiddleware,
@@ -126,7 +132,9 @@ async def _bootstrap_auth(app: FastAPI) -> None:
 
     auth_service = AuthService(
         auth_db=auth_db,
-        users_dir=users_dir,
+        db_path_resolver=partial(resolve_user_db_path, users_dir),
+        on_after_register=partial(materialize_user_dir, users_dir),
+        on_after_delete=partial(cleanup_user_dir, users_dir),
         session_max_age=timedelta(seconds=auth_config.session_max_age_seconds),
         session_idle=timedelta(seconds=auth_config.session_idle_seconds),
     )

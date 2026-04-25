@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from functools import partial
 from pathlib import Path
 
 import httpx
@@ -12,6 +13,11 @@ from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.middleware import AuthMiddleware
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import Username
+from blunder_tutor.web.auth_hooks import (
+    cleanup_user_dir,
+    materialize_user_dir,
+    resolve_user_db_path,
+)
 from blunder_tutor.web.resources import AuthResources
 
 
@@ -166,7 +172,7 @@ class TestModeCredentials:
         assert r.json()["user_id"] == user.id
 
     async def test_valid_session_sets_user_dir_as_db_path(
-        self, service: AuthService, wired_credentials_app: FastAPI
+        self, service: AuthService, wired_credentials_app: FastAPI, tmp_path: Path
     ):
         user = await service.register(
             username=Username("alice"), password="password123"
@@ -178,7 +184,9 @@ class TestModeCredentials:
         async with _client(app, cookies={"session_token": session.token}) as client:
             r = await client.get("/echo")
         assert r.status_code == 200
-        assert r.json()["db_path"] == str(service.db_path_for(user.id))
+        assert r.json()["db_path"] == str(
+            resolve_user_db_path(tmp_path / "users", user.id)
+        )
 
     async def test_invalid_session_cookie_returns_401_for_api(
         self, wired_credentials_app: FastAPI
@@ -234,9 +242,12 @@ class TestModeCredentials:
     async def test_expired_session_returns_401_for_api(
         self, service: AuthService, auth_db: AuthDb, tmp_path: Path
     ):
+        users_dir = tmp_path / "users"
         short_lived = AuthService(
-            auth_db=service._db,
-            users_dir=service._users_dir,
+            auth_db=auth_db,
+            db_path_resolver=partial(resolve_user_db_path, users_dir),
+            on_after_register=partial(materialize_user_dir, users_dir),
+            on_after_delete=partial(cleanup_user_dir, users_dir),
             session_max_age=timedelta(seconds=-1),
             session_idle=timedelta(days=1),
         )

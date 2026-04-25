@@ -4,6 +4,7 @@ import argparse
 import contextlib
 import os
 from datetime import timedelta
+from functools import partial
 from pathlib import Path
 
 import httpx
@@ -16,6 +17,11 @@ from blunder_tutor.auth.repository import SetupRepository
 from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.web.app import create_app
+from blunder_tutor.web.auth_hooks import (
+    cleanup_user_dir,
+    materialize_user_dir,
+    resolve_user_db_path,
+)
 from blunder_tutor.web.config import config_factory
 from tests.helpers.engine import mock_engine_context
 
@@ -115,7 +121,9 @@ async def service(auth_db: AuthDb, tmp_path: Path) -> AuthService:
     users_dir.mkdir(exist_ok=True)
     return AuthService(
         auth_db=auth_db,
-        users_dir=users_dir,
+        db_path_resolver=partial(resolve_user_db_path, users_dir),
+        on_after_register=partial(materialize_user_dir, users_dir),
+        on_after_delete=partial(cleanup_user_dir, users_dir),
         session_max_age=timedelta(days=30),
         session_idle=timedelta(days=7),
     )
@@ -136,7 +144,9 @@ def service_factory(auth_db: AuthDb, tmp_path: Path):
         users_dir.mkdir(exist_ok=True)
         return AuthService(
             auth_db=auth_db,
-            users_dir=users_dir,
+            db_path_resolver=partial(resolve_user_db_path, users_dir),
+            on_after_register=partial(materialize_user_dir, users_dir),
+            on_after_delete=partial(cleanup_user_dir, users_dir),
             session_max_age=session_max_age,
             session_idle=session_idle,
         )

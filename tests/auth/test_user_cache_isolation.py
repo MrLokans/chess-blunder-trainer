@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from functools import partial
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -14,6 +15,11 @@ from blunder_tutor.auth.middleware import AuthMiddleware
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import UserContext, UserId, Username
 from blunder_tutor.repositories.settings import SettingsRepository
+from blunder_tutor.web.auth_hooks import (
+    cleanup_user_dir,
+    materialize_user_dir,
+    resolve_user_db_path,
+)
 from blunder_tutor.web.middleware import LocaleMiddleware, SetupCheckMiddleware
 from blunder_tutor.web.per_user_cache import PerUserCache
 from blunder_tutor.web.request_helpers import _cache_key, _db_path_for
@@ -86,7 +92,9 @@ async def two_user_app(auth_db: AuthDb, tmp_path: Path):
     users_dir.mkdir()
     service = AuthService(
         auth_db=auth_db,
-        users_dir=users_dir,
+        db_path_resolver=partial(resolve_user_db_path, users_dir),
+        on_after_register=partial(materialize_user_dir, users_dir),
+        on_after_delete=partial(cleanup_user_dir, users_dir),
         session_max_age=timedelta(days=1),
         session_idle=timedelta(days=1),
     )
@@ -98,7 +106,7 @@ async def two_user_app(auth_db: AuthDb, tmp_path: Path):
     # (not-setup) state. run_migrations already ran during register() so
     # both per-user DBs exist; we only need to flip Alice's
     # setup_completed flag via SettingsRepository.
-    repo = SettingsRepository(db_path=service.db_path_for(user_a.id))
+    repo = SettingsRepository(db_path=resolve_user_db_path(users_dir, user_a.id))
     try:
         await repo.mark_setup_completed()
     finally:

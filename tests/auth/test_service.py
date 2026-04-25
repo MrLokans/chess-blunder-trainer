@@ -139,14 +139,3 @@ class TestDeleteAccount:
 
         await service.delete_account(user.id)
         assert not user_dir.exists()
-
-
-class TestDbPathFor:
-    async def test_returns_users_dir_slash_uuid_slash_main(
-        self, service: AuthService, tmp_path: Path
-    ):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
-        expected = tmp_path / "users" / user.id / "main.sqlite3"
-        assert service.db_path_for(user.id) == expected

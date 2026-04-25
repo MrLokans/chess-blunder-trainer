@@ -6,6 +6,7 @@ import getpass
 import shutil
 import sys
 from datetime import timedelta
+from functools import partial
 from pathlib import Path
 
 from blunder_tutor.auth.db import AuthDb
@@ -23,6 +24,11 @@ from blunder_tutor.auth.types import (
     make_username,
 )
 from blunder_tutor.cli.base import CLICommand
+from blunder_tutor.web.auth_hooks import (
+    cleanup_user_dir,
+    materialize_user_dir,
+    resolve_user_db_path,
+)
 from blunder_tutor.web.config import AppConfig
 
 
@@ -182,7 +188,9 @@ class AuthCommand(CLICommand):
         try:
             service = AuthService(
                 auth_db=auth_db,
-                users_dir=users_dir,
+                db_path_resolver=partial(resolve_user_db_path, users_dir),
+                on_after_register=partial(materialize_user_dir, users_dir),
+                on_after_delete=partial(cleanup_user_dir, users_dir),
                 session_max_age=timedelta(seconds=config.auth.session_max_age_seconds),
                 session_idle=timedelta(seconds=config.auth.session_idle_seconds),
             )

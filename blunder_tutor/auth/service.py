@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import hmac
-import shutil
 import sqlite3
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import NoReturn
@@ -36,8 +36,14 @@ from blunder_tutor.auth.types import (
     make_session_token,
     make_user_id,
 )
-from blunder_tutor.migrations import run_migrations
-from blunder_tutor.secure_fs import secure_user_dir
+
+
+async def _noop_after_register(_user: User) -> None:
+    pass
+
+
+async def _noop_after_delete(_user_id: UserId) -> None:
+    pass
 
 
 class AuthService:
@@ -53,12 +59,16 @@ class AuthService:
         self,
         *,
         auth_db: AuthDb,
-        users_dir: Path,
+        db_path_resolver: Callable[[UserId], Path],
         session_max_age: timedelta,
         session_idle: timedelta,
+        on_after_register: Callable[[User], Awaitable[None]] = _noop_after_register,
+        on_after_delete: Callable[[UserId], Awaitable[None]] = _noop_after_delete,
     ) -> None:
         self._db = auth_db
-        self._users_dir = users_dir
+        self._db_path_resolver = db_path_resolver
+        self._on_after_register = on_after_register
+        self._on_after_delete = on_after_delete
         self._session_max_age = session_max_age
         self._session_idle = session_idle
         self._users = UserRepository(db=auth_db)
@@ -93,7 +103,7 @@ class AuthService:
                 )
         except sqlite3.IntegrityError as exc:
             self._translate_integrity_error(exc, username, email)
-        return await self._materialize_user_data_dir(user_id)
+        return await self._finalize_registration(user_id)
 
     async def signup(
         self,
@@ -140,7 +150,7 @@ class AuthService:
                 )
         except sqlite3.IntegrityError as exc:
             self._translate_integrity_error(exc, username, email)
-        return await self._materialize_user_data_dir(user_id)
+        return await self._finalize_registration(user_id)
 
     @staticmethod
     async def _insert_user_with_credential(
@@ -218,23 +228,23 @@ class AuthService:
             raise InvalidInviteCodeError("rotated")
         await conn.execute("DELETE FROM setup WHERE key = 'invite_code'")
 
-    async def _materialize_user_data_dir(self, user_id: UserId) -> User:
-        """Commit-phase step: create the per-user data dir + DB after the
-        auth rows land. ``run_migrations`` is sync + idempotent.
+    async def _finalize_registration(self, user_id: UserId) -> User:
+        """Post-commit step: look up the freshly inserted user and run the
+        consumer's ``on_after_register`` hook (per-user DB init, cache
+        warm, audit log, etc.).
 
-        Trade-off: if migrations fail mid-way, the user + identity rows
-        already exist in ``auth.sqlite3`` — the user can authenticate but
-        has no data dir, and subsequent requests will 500. We accept this
-        over (a) holding the auth write-lock for a multi-second sync op,
-        or (b) compensating rollback that duplicates logic already in
-        CASCADE. A future change may move migration to lazy-on-first-
-        access inside ``get_db_path`` to close the gap entirely.
+        Trade-off: if the hook fails after the auth-table commit, the
+        user + identity rows already exist — the user can authenticate
+        but the external resources the hook would have created are
+        missing, and subsequent requests may 500. We accept this over
+        (a) holding the auth write-lock for slow hook work, or (b) a
+        compensating rollback that duplicates logic already handled by
+        CASCADE. A future change may move hook execution to lazy-on-
+        first-access to close the gap entirely.
         """
-        user_db_path = self.db_path_for(user_id)
-        secure_user_dir(user_db_path.parent)
-        run_migrations(user_db_path)
         user = await self._users.get_by_id(user_id)
         assert user is not None
+        await self._on_after_register(user)
         return user
 
     async def authenticate(
@@ -301,7 +311,7 @@ class AuthService:
         return UserContext(
             user_id=user.id,
             username=user.username,
-            db_path=self.db_path_for(user.id),
+            db_path=self._db_path_resolver(user.id),
             session_token=typed_token,
         )
 
@@ -313,15 +323,14 @@ class AuthService:
 
     async def delete_account(self, user_id: UserId) -> None:
         # ON DELETE CASCADE handles identities + sessions in a single
-        # statement. rmtree runs AFTER commit: if the FS op fails, the
-        # user is already logged out and cannot log back in — the orphan
-        # directory is a disk-space nuisance, not a data-integrity bug.
-        # Inverse ordering could leave a live user with no data dir.
+        # statement. The on_after_delete hook runs AFTER commit: if it
+        # fails, the user is already logged out and cannot log back in
+        # — any external resources the hook would have cleaned up are
+        # a nuisance, not a data-integrity bug. Inverse ordering could
+        # leave a live user with no external resources.
         async with self._db.transaction() as conn:
             await conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
-        user_dir = self._users_dir / user_id
-        if user_dir.exists():
-            shutil.rmtree(user_dir)
+        await self._on_after_delete(user_id)
 
     async def user_count(self) -> int:
         return await self._users.count()
@@ -334,6 +343,3 @@ class AuthService:
 
     async def list_sessions(self, user_id: UserId) -> list[Session]:
         return await self._sessions.list_for_user(user_id)
-
-    def db_path_for(self, user_id: UserId) -> Path:
-        return self._users_dir / user_id / "main.sqlite3"
