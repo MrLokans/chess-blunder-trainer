@@ -44,7 +44,14 @@ describe('StatsOverview', () => {
       />
     );
     const statusEl = screen.getByTestId('analysis-status');
-    expect(statusEl.textContent).toContain('30');
+    // Values must reach `t()` as params (catches the regression where
+    // placeholders in `dashboard.analysis.running` rendered literally
+    // alongside JSX-concatenated numbers).
+    expect(statusEl.textContent).not.toContain('{current}');
+    expect(statusEl.textContent).not.toContain('{percent}');
+    expect(statusEl.textContent).toContain('current=30');
+    expect(statusEl.textContent).toContain('total=100');
+    expect(statusEl.textContent).toContain('percent=30');
     expect(statusEl.className).toContain('text-primary');
   });
 
