@@ -3,16 +3,26 @@ from __future__ import annotations
 import time
 
 from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.hashers import BcryptHasher, hash_password
+from blunder_tutor.auth.hashers import BcryptHasher
 from blunder_tutor.auth.providers.credentials import CredentialsProvider
 from blunder_tutor.auth.repository import IdentityRepository, UserRepository
 from blunder_tutor.auth.types import (
     Email,
+    PasswordHash,
     Username,
     ValidationRules,
     make_identity_id,
     make_user_id,
 )
+from tests.helpers.auth import TEST_BCRYPT_COST
+
+
+def _cheap_hash(password: str) -> PasswordHash:
+    """Test-only cheap-cost hash for seeded users. Module-level
+    `hash_password` from production code uses the library default cost
+    (~160ms); this shim costs ~0.8ms.
+    """
+    return BcryptHasher(ValidationRules.default(), cost=TEST_BCRYPT_COST).hash(password)
 
 
 async def _seed_user(
@@ -34,15 +44,15 @@ async def _seed_user(
         user_id=uid,
         provider="credentials",
         provider_subject=username,
-        credential=hash_password(password),
+        credential=_cheap_hash(password),
     )
 
 
-def _provider(auth_db: AuthDb) -> CredentialsProvider:
+def _provider(auth_db: AuthDb, *, cost: int | None = TEST_BCRYPT_COST) -> CredentialsProvider:
     rules = ValidationRules.default()
     return CredentialsProvider(
         identities=IdentityRepository(db=auth_db),
-        hasher=BcryptHasher(rules),
+        hasher=BcryptHasher(rules, cost=cost),
         rules=rules,
     )
 
@@ -128,8 +138,25 @@ class TestTimingEqualization:
     """
 
     async def test_unknown_user_has_bcrypt_timing(self, auth_db: AuthDb):
-        await _seed_user(auth_db, "alice", "password123")
-        provider = _provider(auth_db)
+        # This test asserts a wall-clock invariant — both paths must run
+        # one bcrypt verify. At the test-suite-default cheap cost
+        # (~0.8ms) measurement noise can dominate the ratio assertion,
+        # so seed AND provider here use the library-default cost.
+        full_cost_hasher = BcryptHasher(ValidationRules.default(), cost=None)
+        users = UserRepository(db=auth_db)
+        identities = IdentityRepository(db=auth_db)
+        uid = make_user_id()
+        await users.insert(
+            user_id=uid, username=Username("alice"), email=None,
+        )
+        await identities.insert(
+            identity_id=make_identity_id(),
+            user_id=uid,
+            provider="credentials",
+            provider_subject="alice",
+            credential=full_cost_hasher.hash("password123"),
+        )
+        provider = _provider(auth_db, cost=None)
 
         # Warm any first-call jitter.
         await provider.authenticate({"username": "alice", "password": "wrong"})

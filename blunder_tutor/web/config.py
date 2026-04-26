@@ -65,11 +65,21 @@ class AuthConfig(BaseModel):
     # ``proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;``
     # and a trusted upstream).
     trust_proxy: bool = False
+    # Bcrypt salt cost factor (rounds). ``None`` defers to the library
+    # default — production-grade hardness (currently 12). Operators can
+    # tune for their hardware via ``AUTH_BCRYPT_COST``; the test suite
+    # forces the bcrypt minimum (4) to keep auth-test wall time bounded.
+    # Values outside [4, 31] are rejected by bcrypt itself.
+    bcrypt_cost: int | None = None
 
     @model_validator(mode="after")
     def _check_invariants(self) -> Self:
         if self.max_users < 1:
             raise ValueError(f"MAX_USERS must be >= 1, got {self.max_users}")
+        if self.bcrypt_cost is not None and not 4 <= self.bcrypt_cost <= 31:
+            raise ValueError(
+                f"AUTH_BCRYPT_COST must be between 4 and 31, got {self.bcrypt_cost}"
+            )
         if self.session_max_age_seconds < 1:
             raise ValueError(
                 f"SESSION_MAX_AGE_SECONDS must be >= 1, got {self.session_max_age_seconds}"
@@ -201,7 +211,17 @@ def _build_auth_config(environ: typing.Mapping) -> AuthConfig:
             environ, "AUTH_SIGNUP_RATE_WINDOW_SECONDS", 60 * 60
         ),
         trust_proxy=_parse_bool(environ.get("AUTH_TRUST_PROXY"), default=False),
+        bcrypt_cost=_parse_optional_positive_int(environ.get("AUTH_BCRYPT_COST")),
     )
+
+
+def _parse_optional_positive_int(raw: str | None) -> int | None:
+    if raw is None or raw == "":
+        return None
+    value = int(raw)
+    if value < 1:
+        raise ValueError(f"expected a positive integer, got {raw!r}")
+    return value
 
 
 def get_engine_path(environ: typing.Mapping) -> str:

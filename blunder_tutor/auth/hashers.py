@@ -25,10 +25,19 @@ class BcryptHasher:
     :class:`ValidationRules` so the consumer's password policy
     (min length, max bytes — bcrypt caps at 72) is the single source
     of truth.
+
+    ``cost`` is the bcrypt salt cost factor (``rounds`` in
+    ``bcrypt.gensalt``); ``None`` defers to the library default (12 in
+    bcrypt 5.x — production-grade). Tests override to a much cheaper
+    factor (~4) so a suite that hashes hundreds of passwords doesn't
+    burn 30+ seconds of bcrypt CPU. Verify is unaffected by this knob —
+    the cost factor is encoded in each stored hash, so checkpw runs at
+    whatever cost the hash was created at.
     """
 
-    def __init__(self, rules: ValidationRules) -> None:
+    def __init__(self, rules: ValidationRules, *, cost: int | None = None) -> None:
         self._rules = rules
+        self._cost = cost
         self._dummy: PasswordHash | None = None
 
     def hash(self, raw: str) -> PasswordHash:
@@ -55,9 +64,9 @@ class BcryptHasher:
             self._dummy = self._hash_unchecked(_DUMMY_RAW)
         return self._dummy
 
-    @staticmethod
-    def _hash_unchecked(encoded: bytes) -> PasswordHash:
-        hashed = bcrypt.hashpw(encoded, bcrypt.gensalt())
+    def _hash_unchecked(self, encoded: bytes) -> PasswordHash:
+        salt = bcrypt.gensalt() if self._cost is None else bcrypt.gensalt(self._cost)
+        hashed = bcrypt.hashpw(encoded, salt)
         return PasswordHash(hashed.decode("utf-8"))
 
 

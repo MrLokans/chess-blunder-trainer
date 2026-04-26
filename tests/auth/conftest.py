@@ -11,13 +11,30 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport
 
+from blunder_tutor.auth import hashers as _hashers_module
 from blunder_tutor.auth.db import AuthDb
+from blunder_tutor.auth.hashers import BcryptHasher
 from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
+from blunder_tutor.auth.types import ValidationRules
 from blunder_tutor.web.app import create_app
 from blunder_tutor.web.config import config_factory
-from tests.helpers.auth import build_test_auth_service
+from tests.helpers.auth import TEST_BCRYPT_COST, build_test_auth_service
 from tests.helpers.engine import mock_engine_context
+
+
+@pytest.fixture(autouse=True)
+def _cheap_default_hasher(monkeypatch):
+    """Force the module-level `hash_password` / `verify_password` shims
+    to use the test cost factor. They go through `_get_default_hasher`
+    which lazily constructs a `BcryptHasher` with the library default
+    cost (~160ms/hash); for tests that use those shims directly
+    (`test_types.TestPasswordHashing`) the saving is the whole bcrypt
+    bill for the file. Production code never sees this monkeypatch
+    because it imports the module fresh outside the test session.
+    """
+    cheap = BcryptHasher(ValidationRules.default(), cost=TEST_BCRYPT_COST)
+    monkeypatch.setattr(_hashers_module, "_default_hasher", cheap)
 
 # Centralized test credentials. Any test that needs "a user" without
 # caring about the specific values goes through these; tests that
@@ -50,6 +67,10 @@ async def _booted_credentials_app(tmp_path: Path, monkeypatch, *, max_users: str
     # that point at a local dev server and skip the manifest lookup, which
     # is what we need for UI-page integration tests that render templates.
     monkeypatch.setenv("VITE_DEV", "true")
+    # Force bcrypt to its minimum cost factor (~0.8ms/hash vs. ~160ms at
+    # the library default). The auth suite hashes ~240 passwords; without
+    # this the tests spend ~85% of wall time inside bcrypt.
+    monkeypatch.setenv("AUTH_BCRYPT_COST", str(TEST_BCRYPT_COST))
 
     ns = argparse.Namespace(engine_path="/fake/stockfish", depth=20)
     config = config_factory(ns, dict(os.environ))

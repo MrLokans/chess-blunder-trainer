@@ -145,7 +145,7 @@ async def _bootstrap_auth(app: FastAPI) -> None:
     await auth_db.connect()
 
     rules = ValidationRules.default()
-    hasher = BcryptHasher(rules)
+    hasher = BcryptHasher(rules, cost=auth_config.bcrypt_cost)
     storage = SqliteStorage(auth_db)
     auth_service = AuthService(
         storage=storage,

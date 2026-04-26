@@ -10,6 +10,7 @@ from blunder_tutor.auth.providers.credentials import CredentialsProvider
 from blunder_tutor.auth.repository import IdentityRepository
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import Username, ValidationRules
+from tests.helpers.auth import TEST_BCRYPT_COST
 
 
 @pytest.fixture
@@ -24,7 +25,7 @@ def _make_provider(auth_db: AuthDb) -> CredentialsProvider:
     rules = ValidationRules.default()
     return CredentialsProvider(
         identities=IdentityRepository(db=auth_db),
-        hasher=BcryptHasher(rules),
+        hasher=BcryptHasher(rules, cost=TEST_BCRYPT_COST),
         rules=rules,
     )
 

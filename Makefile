@@ -135,8 +135,8 @@ fix: ## Auto-fix linting issues
 
 test: test/be test/fe ## Run all tests
 
-test/be: ## Run Python tests with pytest
-	$(UV) run pytest tests/ -v
+test/be: ## Run Python tests with pytest (parallel + randomized order, see pyproject addopts)
+	$(UV) run pytest tests/
 
 test/fe: ## Run frontend tests with Vitest
 	npm run test

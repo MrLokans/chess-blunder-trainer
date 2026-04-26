@@ -186,7 +186,7 @@ class AuthCommand(CLICommand):
         await auth_db.connect()
         try:
             rules = ValidationRules.default()
-            hasher = BcryptHasher(rules)
+            hasher = BcryptHasher(rules, cost=config.auth.bcrypt_cost)
             storage = SqliteStorage(auth_db)
             service = AuthService(
                 storage=storage,
