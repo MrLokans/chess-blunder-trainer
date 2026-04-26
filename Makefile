@@ -113,7 +113,7 @@ migrate: ## Run database migrations
 	$(UV) run blunder-tutor-db
 
 # Code quality
-lint: lint/be lint/fe lint/e2e ## Lint all code
+lint: lint/be lint/fe lint/e2e lint/i18n ## Lint all code
 
 lint/be: ## Lint Python with ruff
 	$(UV) run ruff check blunder_tutor/ main.py
@@ -123,6 +123,9 @@ lint/fe: ## Lint TypeScript with ESLint
 
 lint/e2e: ## Lint E2E tests with ESLint
 	cd e2e && npm run lint
+
+lint/i18n: ## Lint i18n locale files + key references (errors only by default; LINT_I18N_STRICT=1 promotes warnings)
+	$(UV) run python scripts/lint_i18n.py $(if $(LINT_I18N_STRICT),--strict)
 
 typecheck/e2e: ## Run TypeScript type checking on E2E tests
 	cd e2e && npm run typecheck

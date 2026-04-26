@@ -32,6 +32,13 @@ jobs:
       - name: Run ruff format check
         run: uv run ruff format --check blunder_tutor/
 
+      - name: Run i18n lint
+        # Hard-fails on missing-in-locales + used-but-not-defined (active
+        # bug catchers). English-fallback + unused-key warnings stay
+        # advisory in CI; promote to errors locally with
+        # `LINT_I18N_STRICT=1 make lint/i18n` when cleaning up.
+        run: uv run python scripts/lint_i18n.py
+
   test:
     name: Test
     runs-on: ubuntu-latest
