@@ -13,7 +13,7 @@ just a thin pass-through.
 
 from __future__ import annotations
 
-from fastapi import HTTPException, Request, Response
+from fastapi import HTTPException, Request, Response, status
 from fastapi_throttle import RateLimiter
 
 from blunder_tutor.auth import AuthService
@@ -30,7 +30,7 @@ def _auth_service_provider(request: Request) -> AuthService:
     auth = request.app.state.auth
     if auth is None:
         # Credentials mode not active — auth endpoints are offline.
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return auth.service
 
 

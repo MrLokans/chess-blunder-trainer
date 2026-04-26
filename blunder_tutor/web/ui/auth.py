@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from blunder_tutor.auth import AuthService, UserContext
@@ -30,9 +30,9 @@ def _is_authenticated(request: Request) -> bool:
 async def login_page(request: Request):
     service = _service(request)
     if service is None:
-        return RedirectResponse(url="/", status_code=302)
+        return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     if _is_authenticated(request):
-        return RedirectResponse(url="/", status_code=302)
+        return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     templates = request.app.state.templates
     return templates.TemplateResponse(request, "login.html", {})
 
@@ -41,18 +41,18 @@ async def login_page(request: Request):
 async def signup_page(request: Request):
     service = _service(request)
     if service is None:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     if _is_authenticated(request):
-        return RedirectResponse(url="/", status_code=302)
+        return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     count = await service.user_count()
     if count == 0:
         # First user must come through the invite-gated /setup flow.
-        return RedirectResponse(url="/setup", status_code=302)
+        return RedirectResponse(url="/setup", status_code=status.HTTP_302_FOUND)
     templates = request.app.state.templates
     config = request.app.state.config
     if count >= config.auth.max_users:
         return templates.TemplateResponse(
-            request, "signup_full.html", {}, status_code=403
+            request, "signup_full.html", {}, status_code=status.HTTP_403_FORBIDDEN
         )
     return templates.TemplateResponse(request, "signup.html", {})
 
@@ -73,7 +73,7 @@ async def setup_page(request: Request):
         if count == 0:
             return templates.TemplateResponse(request, "first_setup.html", {})
         if ctx is None or not ctx.is_authenticated:
-            return RedirectResponse(url="/login", status_code=302)
+            return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
     # `UserDbPathMiddleware` populates `user_db_path` from the per-mode
     # resolver — credentials-mode ⇒ the signed-in user's DB, none-mode
@@ -82,7 +82,7 @@ async def setup_page(request: Request):
 
     async with SettingsRepository(db_path=db_path) as settings_repo:
         if await settings_repo.is_setup_completed():
-            return RedirectResponse(url="/", status_code=303)
+            return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
     return templates.TemplateResponse(request, "setup.html", {})
 
@@ -101,6 +101,6 @@ async def logout_ui(request: Request):
         await service.revoke_session(ctx.session_token)
 
     target = "/login" if service is not None else "/"
-    response = RedirectResponse(url=target, status_code=303)
+    response = RedirectResponse(url=target, status_code=status.HTTP_303_SEE_OTHER)
     clear_session_cookie(response)
     return response

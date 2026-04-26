@@ -8,10 +8,14 @@ from dataclasses import dataclass
 _WC_K = 0.00368208
 _CP_CEILING = 1000
 
+# Logistic curve saturates at ±1; the formula `2 / (1 + e^-kx) - 1`
+# scales from [0, 1] to [-1, 1].
+_WC_SCALE = 2.0
+
 
 def winning_chances(cp: int) -> float:
     clamped = max(-_CP_CEILING, min(_CP_CEILING, cp))
-    return 2.0 / (1.0 + math.exp(-_WC_K * clamped)) - 1.0
+    return _WC_SCALE / (1.0 + math.exp(-_WC_K * clamped)) - 1.0
 
 
 @dataclass(frozen=True)

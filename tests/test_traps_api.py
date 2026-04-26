@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from http import HTTPStatus
 from fastapi.testclient import TestClient
 
 EXPECTED_CATALOG_KEYS = {
@@ -25,7 +26,7 @@ EXPECTED_CATALOG_KEYS = {
 class TestGetTrapCatalog:
     def test_returns_list(self, app: TestClient):
         response = app.get("/api/traps/catalog")
-        assert response.status_code == 200
+        assert response.status_code == HTTPStatus.OK
         data = response.json()
         assert isinstance(data, list)
         assert len(data) > 0
@@ -61,7 +62,7 @@ class TestGetTrapCatalog:
 class TestGetTrapStats:
     def test_returns_stats_and_summary(self, app: TestClient):
         response = app.get("/api/traps/stats")
-        assert response.status_code == 200
+        assert response.status_code == HTTPStatus.OK
         data = response.json()
         assert "stats" in data
         assert "summary" in data
@@ -72,7 +73,7 @@ class TestGetTrapStats:
 class TestGetTrapDetail:
     def test_valid_trap_id(self, app: TestClient):
         response = app.get("/api/traps/scholars_mate")
-        assert response.status_code == 200
+        assert response.status_code == HTTPStatus.OK
         data = response.json()
         assert "trap" in data
         assert "history" in data
@@ -91,7 +92,7 @@ class TestGetTrapDetail:
 
     def test_invalid_trap_id(self, app: TestClient):
         response = app.get("/api/traps/nonexistent_trap_xyz")
-        assert response.status_code == 200
+        assert response.status_code == HTTPStatus.OK
         data = response.json()
         assert data["trap"] is None
         assert isinstance(data["history"], list)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 from pathlib import Path
 
 import httpx
@@ -40,14 +41,14 @@ class TestUserDataIsolation:
                     "invite_code": invite_code,
                 },
             )
-            assert r.status_code == 200, r.text
+            assert r.status_code == HTTPStatus.OK, r.text
             alice_id = r.json()["id"]
 
             r = await client.post("/api/settings/locale", json={"locale": "ru"})
-            assert r.status_code == 200, r.text
+            assert r.status_code == HTTPStatus.OK, r.text
 
             r = await client.post("/api/auth/logout")
-            assert r.status_code == 204
+            assert r.status_code == HTTPStatus.NO_CONTENT
             # Drop session_token + the locale cookie the POST set — a
             # stale cookie would make `_detect_locale` return "ru" for
             # bob even if his per-user DB is clean.
@@ -57,11 +58,11 @@ class TestUserDataIsolation:
                 "/api/auth/signup",
                 json={"username": "bob", "password": "password123"},
             )
-            assert r.status_code == 200, r.text
+            assert r.status_code == HTTPStatus.OK, r.text
             bob_id = r.json()["id"]
 
             r = await client.post("/api/settings/locale", json={"locale": "pl"})
-            assert r.status_code == 200, r.text
+            assert r.status_code == HTTPStatus.OK, r.text
 
         assert alice_id != bob_id
 
@@ -111,7 +112,7 @@ class TestUserDataIsolation:
                     "invite_code": invite_code,
                 },
             )
-            assert r.status_code == 200, r.text
+            assert r.status_code == HTTPStatus.OK, r.text
 
             await client.post("/api/auth/logout")
             client.cookies.clear()
@@ -120,4 +121,4 @@ class TestUserDataIsolation:
                 "/api/auth/signup",
                 json={"username": "bob", "password": "password123"},
             )
-            assert r.status_code == 200, r.text
+            assert r.status_code == HTTPStatus.OK, r.text

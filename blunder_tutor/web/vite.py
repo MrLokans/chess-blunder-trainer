@@ -62,6 +62,6 @@ def vite_asset(
 
     css_files = manifest[src_entry].get("css", [])
     for css_file in css_files:
-        tags = f'<link rel="stylesheet" href="/static/dist/{css_file}">\n' + tags
+        tags = f'<link rel="stylesheet" href="/static/dist/{css_file}">\n{tags}'
 
     return Markup(tags)

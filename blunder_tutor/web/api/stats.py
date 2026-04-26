@@ -18,6 +18,20 @@ from blunder_tutor.web.dependencies import (
     set_request_username,
 )
 
+# Cache TTL applied to dashboard stats endpoints. 5 minutes balances
+# freshness with the cost of recomputing aggregations over the full
+# game/analysis tables.
+STATS_CACHE_TTL_SECONDS = 300
+
+# Heatmap window bounds. 30-day floor keeps the view non-empty for new
+# users; 365-day ceiling caps the SQL window.
+HEATMAP_DAYS_MIN = 30
+HEATMAP_DAYS_MAX = 365
+
+# Top-openings table cap: 50 openings is enough breadth without crowding
+# the UI or hitting query-cost cliffs.
+OPENINGS_LIMIT_MAX = 50
+
 
 def _parse_string_list(
     values: list[str] | None, mapping: dict[str, int]
@@ -289,7 +303,7 @@ stats_router = APIRouter(dependencies=[Depends(set_request_username)])
     summary="Get dashboard statistics",
     description="Returns overall dashboard statistics including total games, analyzed games, blunders, and pending analysis.",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
 async def get_dashboard_stats(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -304,7 +318,7 @@ async def get_dashboard_stats(
     summary="Get game breakdown",
     description="Returns game statistics grouped by source and/or username with optional filtering.",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["source"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["source"])
 async def get_game_breakdown(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -323,7 +337,7 @@ async def get_game_breakdown(
     summary="Get blunder breakdown",
     description="Returns blunder statistics with optional filtering by date range.",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
 async def get_blunder_breakdown(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -348,7 +362,7 @@ async def get_analysis_progress(stats_repo: StatsRepoDep) -> dict[str, Any]:
     summary="Get training statistics",
     description="Returns puzzle training statistics including attempts and accuracy.",
 )
-@cached(tag="training", ttl=300, version=1, key_params=[])
+@cached(tag="training", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=[])
 async def get_training_stats(
     request: Request,
     attempt_repo: PuzzleAttemptRepoDep,
@@ -382,14 +396,18 @@ async def get_training_stats_html(
     summary="Get puzzle activity heatmap data",
     description="Returns daily puzzle attempt counts for rendering a GitHub-style activity heatmap.",
 )
-@cached(tag="training", ttl=300, version=1, key_params=["days"])
+@cached(tag="training", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["days"])
 async def get_activity_heatmap(
     request: Request,
     attempt_repo: PuzzleAttemptRepoDep,
     days: Annotated[
         int,
-        Query(ge=30, le=365, description="Number of days to include"),
-    ] = 365,
+        Query(
+            ge=HEATMAP_DAYS_MIN,
+            le=HEATMAP_DAYS_MAX,
+            description="Number of days to include",
+        ),
+    ] = HEATMAP_DAYS_MAX,
 ) -> dict[str, Any]:
     daily_counts = await attempt_repo.get_daily_attempt_counts(days)
 
@@ -410,7 +428,7 @@ async def get_activity_heatmap(
     summary="Get blunders by game phase",
     description="Returns blunder statistics grouped by game phase (opening, middlegame, endgame).",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
 async def get_blunders_by_phase(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -425,14 +443,20 @@ async def get_blunders_by_phase(
     summary="Get blunders by ECO opening code",
     description="Returns blunder statistics grouped by ECO opening code.",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters", "limit"])
+@cached(
+    tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters", "limit"]
+)
 async def get_blunders_by_eco(
     request: Request,
     stats_repo: StatsRepoDep,
     filters: StatsFilterDep,
     limit: Annotated[
         int,
-        Query(ge=1, le=50, description="Maximum number of openings to return"),
+        Query(
+            ge=1,
+            le=OPENINGS_LIMIT_MAX,
+            description="Maximum number of openings to return",
+        ),
     ] = 10,
 ) -> dict[str, Any]:
     return await stats_repo.get_blunders_by_eco(filters=filters, limit=limit)
@@ -444,7 +468,7 @@ async def get_blunders_by_eco(
     summary="Get blunders by player color",
     description="Returns blunder statistics grouped by the color the user was playing (white/black). Only counts the user's own blunders, not opponent blunders.",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
 async def get_blunders_by_color(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -479,7 +503,7 @@ class GamesByHour(BaseModel):
     summary="Get game accuracy by date",
     description="Returns daily game counts and average accuracy for the user's moves.",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
 async def get_games_by_date(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -495,7 +519,7 @@ async def get_games_by_date(
     summary="Get game accuracy by hour of day",
     description="Returns hourly game counts and average accuracy for the user's moves.",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
 async def get_games_by_hour(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -541,7 +565,7 @@ class BlundersByGameType(BaseModel):
     summary="Get blunders by tactical pattern",
     description="Returns blunder statistics grouped by tactical pattern (Fork, Pin, Skewer, etc.).",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
 async def get_blunders_by_tactical_pattern(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -556,7 +580,7 @@ async def get_blunders_by_tactical_pattern(
     summary="Get blunders by game type",
     description="Returns blunder statistics grouped by game type (bullet, blitz, rapid, classical).",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
 async def get_blunders_by_game_type(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -629,7 +653,7 @@ class BlundersByDifficulty(BaseModel):
     summary="Get blunders by difficulty",
     description="Returns blunder statistics grouped by difficulty bucket (easy, medium, hard).",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
 async def get_blunders_by_difficulty(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -644,7 +668,7 @@ async def get_blunders_by_difficulty(
     summary="Get collapse point statistics",
     description="Returns the typical move number where the user makes their first blunder in a game.",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
 async def get_collapse_point(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -659,7 +683,7 @@ async def get_collapse_point(
     summary="Get conversion and resilience rates",
     description="Returns how well the user converts winning positions and saves losing positions.",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
 async def get_conversion_resilience(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -674,7 +698,12 @@ async def get_conversion_resilience(
     summary="Get growth metrics",
     description="Returns rolling-window growth metrics showing how blunder frequency, severity, and move quality evolve over time.",
 )
-@cached(tag="stats", ttl=300, version=1, key_params=["filters", "window_size"])
+@cached(
+    tag="stats",
+    ttl=STATS_CACHE_TTL_SECONDS,
+    version=1,
+    key_params=["filters", "window_size"],
+)
 async def get_growth_metrics(
     request: Request,
     stats_repo: StatsRepoDep,

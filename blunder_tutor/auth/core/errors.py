@@ -49,15 +49,15 @@ class InvalidInviteCodeError(_InputError):
 
 
 class DuplicateUsernameError(AuthError):
-    pass
+    """Username already in use."""
 
 
 class DuplicateEmailError(AuthError):
-    pass
+    """Email already in use."""
 
 
 class UserCapReachedError(AuthError):
-    pass
+    """Tenant has hit its configured user limit."""
 
 
 class CorruptCredentialError(AuthError):

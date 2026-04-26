@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
 from blunder_tutor.constants import CLASSIFICATION_LABELS, COLOR_LABELS, PHASE_LABELS
@@ -58,7 +58,9 @@ async def get_game_review(
 ) -> dict:
     game = await game_repo.get_game(game_id)
     if not game:
-        raise HTTPException(status_code=404, detail="Game not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Game not found"
+        )
 
     analysis_moves, eco = await asyncio.gather(
         analysis_repo.fetch_moves(game_id),

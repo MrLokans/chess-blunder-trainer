@@ -21,9 +21,10 @@ class AnalyzeBulkCommand(CLICommand):
         db_path = config.data.db_path
         run_migrations(db_path)
 
-        analysis_repo = AnalysisRepository.from_config(config)
-        games_repo = GameRepository.from_config(config)
-        try:
+        async with (
+            AnalysisRepository.from_config(config) as analysis_repo,
+            GameRepository.from_config(config) as games_repo,
+        ):
             analyzer = GameAnalyzer(
                 analysis_repo=analysis_repo,
                 games_repo=games_repo,
@@ -44,9 +45,6 @@ class AnalyzeBulkCommand(CLICommand):
                 f"analyzed {result['analyzed']}, "
                 f"skipped {result['skipped']}."
             )
-        finally:
-            await analysis_repo.close()
-            await games_repo.close()
 
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
         analyze_bulk_parser = subparsers.add_parser(

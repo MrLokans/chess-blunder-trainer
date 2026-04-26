@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 
-from fastapi import Request
+from fastapi import Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -48,7 +48,7 @@ class UserDbPathMiddleware(BaseHTTPMiddleware):
         if ctx is not None:
             resolver = request.app.state.db_path_resolver
             request.state.user_db_path = resolver(ctx.user_id)
-        return await call_next(request)
+        return await call_next(request)  # noqa: WPS204 — Starlette dispatch idiom; every middleware ends with this call.
 
 
 MUTATION_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
@@ -87,7 +87,7 @@ class CsrfOriginMiddleware(BaseHTTPMiddleware):
         if not _origin_matches_host(request):
             return JSONResponse(
                 {"error": "csrf", "message": "Origin header mismatch"},
-                status_code=403,
+                status_code=status.HTTP_403_FORBIDDEN,
             )
         return await call_next(request)
 
@@ -160,7 +160,7 @@ class DemoModeMiddleware(BaseHTTPMiddleware):
                     return await call_next(request)
 
             return JSONResponse(
-                status_code=403,
+                status_code=status.HTTP_403_FORBIDDEN,
                 content={
                     "error": "demo_mode",
                     "message": "This action is disabled in demo mode",
@@ -202,7 +202,7 @@ class SetupCheckMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
 
         if not completed:
-            return RedirectResponse(url="/setup", status_code=303)
+            return RedirectResponse(url="/setup", status_code=status.HTTP_303_SEE_OTHER)
 
         return await call_next(request)
 

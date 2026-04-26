@@ -114,7 +114,7 @@ class GameAnalyzer:
 
         results = {"processed": 0, "analyzed": 0, "skipped": 0, "failed": 0}
 
-        try:
+        try:  # noqa: WPS501 — conditional cleanup (`if owns_coordinator: shutdown`); not a single-resource context manager.
             with tqdm(
                 total=len(game_ids), desc="Analyze games", unit="game"
             ) as progress:

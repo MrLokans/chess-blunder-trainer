@@ -95,26 +95,26 @@ async def starred_page(request: Request) -> HTMLResponse:
     )
 
 
+_GET = ["GET"]
+
 ui_router = APIRouter()
-ui_router.add_api_route("/", home, response_class=HTMLResponse, methods=["GET"])
+ui_router.add_api_route("/", home, response_class=HTMLResponse, methods=_GET)
 ui_router.add_api_route(
-    "/dashboard", dashboard, response_class=HTMLResponse, methods=["GET"]
+    "/dashboard", dashboard, response_class=HTMLResponse, methods=_GET
 )
 ui_router.add_api_route(
-    "/management", management, response_class=HTMLResponse, methods=["GET"]
+    "/management", management, response_class=HTMLResponse, methods=_GET
+)
+ui_router.add_api_route("/traps", traps_page, response_class=HTMLResponse, methods=_GET)
+ui_router.add_api_route(
+    "/import", import_page, response_class=HTMLResponse, methods=_GET
 )
 ui_router.add_api_route(
-    "/traps", traps_page, response_class=HTMLResponse, methods=["GET"]
+    "/starred", starred_page, response_class=HTMLResponse, methods=_GET
 )
 ui_router.add_api_route(
-    "/import", import_page, response_class=HTMLResponse, methods=["GET"]
+    "/game/{game_id}", game_review_page, response_class=HTMLResponse, methods=_GET
 )
 ui_router.add_api_route(
-    "/starred", starred_page, response_class=HTMLResponse, methods=["GET"]
-)
-ui_router.add_api_route(
-    "/game/{game_id}", game_review_page, response_class=HTMLResponse, methods=["GET"]
-)
-ui_router.add_api_route(
-    "/settings", settings, response_class=HTMLResponse, methods=["GET"]
+    "/settings", settings, response_class=HTMLResponse, methods=_GET
 )

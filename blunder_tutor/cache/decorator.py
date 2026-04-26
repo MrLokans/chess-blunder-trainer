@@ -21,6 +21,11 @@ class _CacheWrapper:
     value: Any
 
 
+# Cache key is sha256-hashed and truncated to 32 hex chars (128 bits) — long
+# enough to make collisions practically impossible across the cache lifetime
+# while keeping keys short for storage backends.
+_CACHE_KEY_HEX_LEN = 32
+
 _cache_backend: CacheBackend | None = None
 _default_ttl: int = 300
 
@@ -75,7 +80,7 @@ def _build_cache_key(
         parts.append(f"{name}={_serialize_param(value)}")
 
     raw = ":".join(parts)
-    return hashlib.sha256(raw.encode()).hexdigest()[:32]
+    return hashlib.sha256(raw.encode()).hexdigest()[:_CACHE_KEY_HEX_LEN]
 
 
 def cached(

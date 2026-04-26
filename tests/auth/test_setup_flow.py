@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 import asyncio
 
 import httpx
@@ -18,7 +19,7 @@ class TestLogin:
             "/api/auth/login",
             json={"username": "alice", "password": "password123"},
         )
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert "session_token" in r.cookies
         assert r.json()["username"] == "alice"
 
@@ -32,7 +33,7 @@ class TestLogin:
             "/api/auth/login",
             json={"username": "alice", "password": "wrong-password"},
         )
-        assert r.status_code == 401
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
         assert r.json()["detail"] == "invalid_credentials"
 
     async def test_login_with_unknown_user_401s(
@@ -42,7 +43,7 @@ class TestLogin:
             "/api/auth/login",
             json={"username": "nobody", "password": "password123"},
         )
-        assert r.status_code == 401
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
 
     async def test_login_with_malformed_username_401s(
         self, client_credentials_mode: httpx.AsyncClient
@@ -53,7 +54,7 @@ class TestLogin:
         )
         # Malformed username must be a generic 401, not 400 — we don't
         # want to reveal whether an input passed shape validation.
-        assert r.status_code == 401
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
 
 
 class TestMe:
@@ -62,14 +63,14 @@ class TestMe:
     ):
         await _signup(client_credentials_mode, invite_code)
         r = await client_credentials_mode.get("/api/auth/me")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert r.json()["username"] == "alice"
 
     async def test_me_without_session_401s(
         self, client_credentials_mode: httpx.AsyncClient
     ):
         r = await client_credentials_mode.get("/api/auth/me")
-        assert r.status_code == 401
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
 
 
 class TestLogout:
@@ -78,12 +79,12 @@ class TestLogout:
     ):
         await _signup(client_credentials_mode, invite_code)
         r = await client_credentials_mode.post("/api/auth/logout")
-        assert r.status_code == 204
+        assert r.status_code == HTTPStatus.NO_CONTENT
 
         # Subsequent /me must 401 even though the client still holds the
         # cookie in its jar — the server deleted the row.
         r = await client_credentials_mode.get("/api/auth/me")
-        assert r.status_code == 401
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
 
     async def test_logout_all_revokes_every_session_for_user(
         self,
@@ -105,7 +106,7 @@ class TestLogout:
         assert len(sessions_before) == 2
 
         r = await client_credentials_mode.post("/api/auth/logout-all")
-        assert r.status_code == 204
+        assert r.status_code == HTTPStatus.NO_CONTENT
 
         sessions_after = await service.list_sessions(user.id)
         assert sessions_after == []
@@ -116,13 +117,13 @@ class TestLogout:
         self, client_credentials_mode: httpx.AsyncClient
     ):
         r = await client_credentials_mode.post("/api/auth/logout")
-        assert r.status_code == 204
+        assert r.status_code == HTTPStatus.NO_CONTENT
 
     async def test_logout_all_is_idempotent_without_session(
         self, client_credentials_mode: httpx.AsyncClient
     ):
         r = await client_credentials_mode.post("/api/auth/logout-all")
-        assert r.status_code == 204
+        assert r.status_code == HTTPStatus.NO_CONTENT
 
 
 class TestDeleteAccount:
@@ -134,14 +135,14 @@ class TestDeleteAccount:
     ):
         await _signup(client_credentials_mode, invite_code)
         r = await client_credentials_mode.delete("/api/auth/account")
-        assert r.status_code == 204
+        assert r.status_code == HTTPStatus.NO_CONTENT
 
         service = credentials_app.state.auth.service
         assert await service.user_count() == 0
 
         # New request with the stale cookie in the jar must not resolve.
         r = await client_credentials_mode.get("/api/auth/me")
-        assert r.status_code == 401
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
 
     async def test_delete_account_evicts_per_user_cache_entries(
         self,
@@ -163,7 +164,7 @@ class TestDeleteAccount:
         # for this endpoint. The guarantee we care about is post-delete.
 
         r = await client_credentials_mode.delete("/api/auth/account")
-        assert r.status_code == 204
+        assert r.status_code == HTTPStatus.NO_CONTENT
 
         assert setup_cache.get(user_id) is None
         assert locale_cache.get(user_id) is None
@@ -212,7 +213,7 @@ class TestSignupAtomicity:
                 "invite_code": invite_code,
             },
         )
-        assert ok.status_code == 200
+        assert ok.status_code == HTTPStatus.OK
 
         # Even if MAX_USERS allowed it, the same invite must not let a
         # second account through — the DELETE happened atomically with
@@ -227,7 +228,7 @@ class TestSignupAtomicity:
                 "invite_code": invite_code,
             },
         )
-        assert r.status_code == 403
+        assert r.status_code == HTTPStatus.FORBIDDEN
         assert r.json()["detail"] == "user_cap_reached"
 
     async def test_invite_survives_secret_key_rotation(
@@ -255,4 +256,4 @@ class TestSignupAtomicity:
                 "invite_code": invite_code,
             },
         )
-        assert r.status_code == 200, r.text
+        assert r.status_code == HTTPStatus.OK, r.text

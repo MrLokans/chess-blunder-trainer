@@ -3,6 +3,12 @@ from __future__ import annotations
 import chess
 import chess.engine
 
+# Display threshold: web-side mate scores use ±10000 (see MATE_SCORE_WEB
+# in constants.py); evaluations beyond this are rendered as "M" rather
+# than as a centipawn value.
+DISPLAY_MATE_THRESHOLD = 10_000
+CENTIPAWNS_PER_PAWN = 100
+
 
 def board_from_fen(fen: str) -> chess.Board:
     return chess.Board(fen)
@@ -21,12 +27,12 @@ def format_eval(cp: int, player_color: str) -> str:
     # Convert to player perspective
     if player_color == "black":
         cp = -cp
-    if cp >= 10000:
+    if cp >= DISPLAY_MATE_THRESHOLD:
         return "+M"
-    if cp <= -10000:
+    if cp <= -DISPLAY_MATE_THRESHOLD:
         return "-M"
     sign = "+" if cp > 0 else ""
-    return f"{sign}{cp / 100:.1f}"
+    return f"{sign}{cp / CENTIPAWNS_PER_PAWN:.1f}"
 
 
 def score_to_cp(

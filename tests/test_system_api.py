@@ -1,9 +1,11 @@
+from http import HTTPStatus
+
 """Tests for system API endpoints."""
 
 
 def test_get_engine_status_returns_engine_info(app):
     response = app.get("/api/system/engine")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
 
     data = response.json()
     assert data["available"] is True

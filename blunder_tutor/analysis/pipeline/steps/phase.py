@@ -19,7 +19,7 @@ def _iter_moves_with_board(
     move_number = 1
     results = []
     for move in game.mainline_moves():
-        ply = (board.fullmove_number - 1) * 2 + (1 if board.turn == chess.WHITE else 2)
+        ply = (board.fullmove_number - 1) * 2 + (1 if board.turn == chess.WHITE else 2)  # noqa: WPS509 — single parenthesized ternary inside arithmetic, no nesting.
         results.append((ply, move_number, board.copy(stack=False)))
         board.push(move)
         if board.turn == chess.WHITE:

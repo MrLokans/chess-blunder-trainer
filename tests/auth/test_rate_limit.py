@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 import argparse
 import contextlib
 import os
@@ -73,12 +74,12 @@ class TestLoginRateLimit:
                 "/api/auth/login",
                 json={"username": "ghost", "password": "password123"},
             )
-            assert r.status_code == 401, r.text
+            assert r.status_code == HTTPStatus.UNAUTHORIZED, r.text
         r = await client.post(
             "/api/auth/login",
             json={"username": "ghost", "password": "password123"},
         )
-        assert r.status_code == 429, r.text
+        assert r.status_code == HTTPStatus.TOO_MANY_REQUESTS, r.text
 
     async def test_login_limiter_scoped_per_ip(
         self, low_rate_limit_client: tuple[httpx.AsyncClient, FastAPI]
@@ -95,7 +96,7 @@ class TestLoginRateLimit:
             json={"username": "ghost", "password": "password123"},
             headers={"x-forwarded-for": "10.0.0.1"},
         )
-        assert r.status_code == 429, r.text
+        assert r.status_code == HTTPStatus.TOO_MANY_REQUESTS, r.text
 
         # A different IP should still get a normal 401, not 429 — each IP
         # has its own bucket.
@@ -104,7 +105,7 @@ class TestLoginRateLimit:
             json={"username": "ghost", "password": "password123"},
             headers={"x-forwarded-for": "10.0.0.2"},
         )
-        assert r.status_code == 401, r.text
+        assert r.status_code == HTTPStatus.UNAUTHORIZED, r.text
 
 
 class TestTrustProxyDefault:
@@ -144,7 +145,7 @@ class TestTrustProxyDefault:
                     json={"username": "ghost", "password": "password123"},
                     headers={"x-forwarded-for": "10.0.0.99"},
                 )
-                assert r.status_code == 429, r.text
+                assert r.status_code == HTTPStatus.TOO_MANY_REQUESTS, r.text
 
 
 class TestSignupRateLimit:
@@ -162,13 +163,13 @@ class TestSignupRateLimit:
             # bucket slot; the status must be the specific "needs invite"
             # response so a regression that e.g. 400s on the payload does
             # not silently pass this test.
-            assert r.status_code == 403, r.text
+            assert r.status_code == HTTPStatus.FORBIDDEN, r.text
             assert r.json()["detail"] == "invite_code_required"
         r = await client.post(
             "/api/auth/signup",
             json={"username": "whoever", "password": "password123"},
         )
-        assert r.status_code == 429, r.text
+        assert r.status_code == HTTPStatus.TOO_MANY_REQUESTS, r.text
 
 
 class TestFailedLoginLogged:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 import argparse as _ap
 import os as _os
 from pathlib import Path
@@ -68,4 +69,4 @@ class TestSecurityHeaders:
         # /health returns JSON unauth; confirm no-store is NOT set for
         # cacheable diagnostic endpoints (it's allowed to be absent).
         # Then request a real HTML page below.
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK

@@ -55,16 +55,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
         if not row:
             return None
 
-        return {
-            "attempt_id": row[0],
-            "game_id": row[1],
-            "ply": row[2],
-            "username": row[3],
-            "was_correct": bool(row[4]),
-            "user_move_uci": row[5],
-            "best_move_uci": row[6],
-            "attempted_at": row[7],
-        }
+        return {**dict(row), "was_correct": bool(row["was_correct"])}
 
     async def get_recently_solved_puzzles(self, days: int = 30) -> set[tuple[str, int]]:
         cutoff_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
@@ -80,7 +71,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
         ) as cursor:
             rows = await cursor.fetchall()
 
-        return {(row[0], row[1]) for row in rows}
+        return {(row["game_id"], row["ply"]) for row in rows}
 
     async def get_puzzle_stats(
         self, game_id: str, ply: int, username: str
@@ -99,7 +90,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
         ) as cursor:
             row = await cursor.fetchone()
 
-        if not row or row[0] == 0:
+        if not row or row["total_attempts"] == 0:
             return {
                 "total_attempts": 0,
                 "correct_attempts": 0,
@@ -107,11 +98,13 @@ class PuzzleAttemptRepository(BaseDbRepository):
                 "last_correct_at": None,
             }
 
+        total = row["total_attempts"]
+        correct = row["correct_attempts"] or 0
         return {
-            "total_attempts": row[0],
-            "correct_attempts": row[1] or 0,
-            "incorrect_attempts": row[0] - (row[1] or 0),
-            "last_correct_at": row[2],
+            "total_attempts": total,
+            "correct_attempts": correct,
+            "incorrect_attempts": total - correct,
+            "last_correct_at": row["last_correct_at"],
         }
 
     async def get_user_stats(self) -> dict[str, object]:
@@ -127,7 +120,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
         ) as cursor:
             row = await cursor.fetchone()
 
-        if not row or row[0] == 0:
+        if not row or row["total_attempts"] == 0:
             return {
                 "total_attempts": 0,
                 "correct_attempts": 0,
@@ -136,14 +129,14 @@ class PuzzleAttemptRepository(BaseDbRepository):
                 "accuracy": 0.0,
             }
 
-        total = row[0]
-        correct = row[1] or 0
+        total = row["total_attempts"]
+        correct = row["correct_attempts"] or 0
 
         return {
             "total_attempts": total,
             "correct_attempts": correct,
             "incorrect_attempts": total - correct,
-            "unique_puzzles": row[2] or 0,
+            "unique_puzzles": row["unique_puzzles"] or 0,
             "accuracy": round((correct / total * 100), 1) if total > 0 else 0.0,
         }
 
@@ -161,7 +154,12 @@ class PuzzleAttemptRepository(BaseDbRepository):
         ) as cursor:
             rows = await cursor.fetchall()
 
-        return {row[0]: row[2] / row[1] if row[1] > 0 else 0.0 for row in rows}
+        return {
+            row["tactical_pattern"]: (
+                row["failures"] / row["attempts"] if row["attempts"] > 0 else 0.0
+            )
+            for row in rows
+        }
 
     async def get_daily_attempt_counts(
         self, days: int = 365
@@ -185,10 +183,10 @@ class PuzzleAttemptRepository(BaseDbRepository):
             rows = await cursor.fetchall()
 
         return {
-            row[0]: {
-                "total": row[1],
-                "correct": row[2] or 0,
-                "incorrect": row[1] - (row[2] or 0),
+            row["date"]: {
+                "total": row["total"],
+                "correct": row["correct"] or 0,
+                "incorrect": row["total"] - (row["correct"] or 0),
             }
             for row in rows
         }

@@ -24,7 +24,7 @@ import logging
 from collections.abc import Callable, Sequence
 from typing import Annotated, Any, NoReturn
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel
 
 from blunder_tutor.auth.core.errors import AuthError
@@ -191,7 +191,9 @@ def build_auth_router(
                 _client_ip(request),
                 body.username,
             )
-            raise HTTPException(status_code=401, detail="invalid_credentials")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid_credentials"
+            )
 
         await _revoke_caller_cookie(request, service)
         session = await service.create_session(
@@ -202,7 +204,7 @@ def build_auth_router(
         set_session_cookie(response, session.token, request)
         return me_factory(user)
 
-    @router.post("/logout", status_code=204)
+    @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
     async def logout(
         ctx: Annotated[UserContext | None, Depends(_get_optional_user_context)],
         response: Response,
@@ -213,7 +215,7 @@ def build_auth_router(
             await service.revoke_session(ctx.session_token)
         clear_session_cookie(response)
 
-    @router.post("/logout-all", status_code=204)
+    @router.post("/logout-all", status_code=status.HTTP_204_NO_CONTENT)
     async def logout_all(
         ctx: Annotated[UserContext | None, Depends(_get_optional_user_context)],
         response: Response,
@@ -230,10 +232,10 @@ def build_auth_router(
     ):
         user = await service.get_user(ctx.user_id)
         if user is None:
-            raise HTTPException(status_code=401)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         return me_factory(user)
 
-    @router.delete("/account", status_code=204)
+    @router.delete("/account", status_code=status.HTTP_204_NO_CONTENT)
     async def delete_account(
         ctx: Annotated[UserContext, Depends(get_user_context)],
         response: Response,

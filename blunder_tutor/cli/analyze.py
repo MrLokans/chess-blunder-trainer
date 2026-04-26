@@ -23,9 +23,10 @@ class AnalyzeCommand(CLICommand):
     async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
         run_migrations(config.data.db_path)
 
-        analysis_repo = AnalysisRepository.from_config(config)
-        games_repo = GameRepository.from_config(config)
-        try:
+        async with (
+            AnalysisRepository.from_config(config) as analysis_repo,
+            GameRepository.from_config(config) as games_repo,
+        ):
             analyzer = GameAnalyzer(
                 analysis_repo=analysis_repo,
                 games_repo=games_repo,
@@ -42,8 +43,6 @@ class AnalyzeCommand(CLICommand):
                 force_rerun=args.force,
             )
             print(f"Analysis complete for game {args.game_id}")
-        finally:
-            await analysis_repo.close()
             await games_repo.close()
 
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:

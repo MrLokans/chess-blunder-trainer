@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 from datetime import timedelta
 from functools import partial
 from pathlib import Path
@@ -114,7 +115,7 @@ class TestModeCredentials:
         app = wired_credentials_app
         async with _client(app, follow_redirects=False) as client:
             r = await client.get("/echo", headers={"accept": "text/html"})
-        assert r.status_code == 302
+        assert r.status_code == HTTPStatus.FOUND
         assert r.headers["location"].startswith("/login")
         assert "next=/echo" in r.headers["location"]
 
@@ -122,7 +123,7 @@ class TestModeCredentials:
         app = wired_credentials_app
         async with _client(app) as client:
             r = await client.get("/api/echo")
-        assert r.status_code == 401
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
         assert r.json()["error"] == "unauthorized"
 
     async def test_valid_session_sets_context(
@@ -137,7 +138,7 @@ class TestModeCredentials:
         app = wired_credentials_app
         async with _client(app, cookies={"session_token": session.token}) as client:
             r = await client.get("/api/echo")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert r.json()["user_id"] == user.id
 
     async def test_valid_session_sets_user_dir_as_db_path(
@@ -152,7 +153,7 @@ class TestModeCredentials:
         app = wired_credentials_app
         async with _client(app, cookies={"session_token": session.token}) as client:
             r = await client.get("/echo")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert r.json()["db_path"] == str(
             resolve_user_db_path(tmp_path / "users", user.id)
         )
@@ -165,7 +166,7 @@ class TestModeCredentials:
             app, cookies={"session_token": "not-a-real-token"}
         ) as client:
             r = await client.get("/api/echo")
-        assert r.status_code == 401
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
 
     async def test_exempt_paths_pass_without_session(
         self, wired_credentials_app: FastAPI
@@ -173,7 +174,7 @@ class TestModeCredentials:
         app = wired_credentials_app
         async with _client(app) as client:
             r = await client.get("/login")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert r.json()["ok"] is True
 
     async def test_api_auth_prefix_is_exempt(self, wired_credentials_app: FastAPI):
@@ -185,7 +186,7 @@ class TestModeCredentials:
 
         async with _client(app) as client:
             r = await client.get("/api/auth/status")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
 
     async def test_exempt_path_with_valid_session_still_sets_ctx(
         self, service: AuthService, wired_credentials_app: FastAPI
@@ -205,7 +206,7 @@ class TestModeCredentials:
 
         async with _client(app, cookies={"session_token": session.token}) as client:
             r = await client.get("/login/echo")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert r.json()["user_id"] == user.id
 
     async def test_expired_session_returns_401_for_api(
@@ -231,4 +232,4 @@ class TestModeCredentials:
         )
         async with _client(app, cookies={"session_token": session.token}) as client:
             r = await client.get("/api/echo")
-        assert r.status_code == 401
+        assert r.status_code == HTTPStatus.UNAUTHORIZED

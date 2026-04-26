@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Annotated
 
 import chess.engine
-from fastapi import Depends, HTTPException, Request, Response
+from fastapi import Depends, HTTPException, Request, Response, status
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.events.event_bus import EventBus
@@ -64,7 +64,9 @@ def get_db_path(request: Request) -> Path:
     """
     db_path = getattr(request.state, "user_db_path", None)
     if db_path is None:
-        raise HTTPException(status_code=401, detail="unauthorized")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized"
+        )
     return db_path
 
 

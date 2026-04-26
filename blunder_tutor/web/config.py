@@ -18,6 +18,18 @@ AuthMode = Literal["none", "credentials"]
 # CSRF tokens; 128+ bits of entropy is the operational floor.
 SECRET_KEY_MIN_LEN = 64
 
+# Session lifetime defaults: 30 days for absolute max, 7 days for idle
+# expiry. Values match OWASP "remember-me" guidance for self-hosted apps.
+_SECONDS_PER_DAY = 60 * 60 * 24
+_SESSION_MAX_AGE_DAYS = 30
+_SESSION_IDLE_DAYS = 7
+_SESSION_MAX_AGE_DEFAULT = _SECONDS_PER_DAY * _SESSION_MAX_AGE_DAYS
+_SESSION_IDLE_DEFAULT = _SECONDS_PER_DAY * _SESSION_IDLE_DAYS
+
+# bcrypt cost ceiling per spec (4 is the floor; 31 is the ceiling, though
+# in practice anything past ~14 is too slow for a login path).
+_BCRYPT_COST_MAX = 31
+
 _TRUTHY = frozenset({"true", "1", "yes"})
 _FALSY = frozenset({"false", "0", "no"})
 
@@ -42,8 +54,8 @@ class AuthConfig(BaseModel):
     mode: AuthMode = "none"
     secret_key: str | None = None
     max_users: int = 1
-    session_max_age_seconds: int = 60 * 60 * 24 * 30
-    session_idle_seconds: int = 60 * 60 * 24 * 7
+    session_max_age_seconds: int = _SESSION_MAX_AGE_DEFAULT
+    session_idle_seconds: int = _SESSION_IDLE_DEFAULT
     # Tri-state: `None` ⇒ "derive from request scheme + vite_dev" (dev
     # convenience); `True` / `False` ⇒ explicit override for prod
     # deployments behind a TLS-terminating reverse proxy where
@@ -76,7 +88,10 @@ class AuthConfig(BaseModel):
     def _check_invariants(self) -> Self:
         if self.max_users < 1:
             raise ValueError(f"MAX_USERS must be >= 1, got {self.max_users}")
-        if self.bcrypt_cost is not None and not 4 <= self.bcrypt_cost <= 31:
+        if (
+            self.bcrypt_cost is not None
+            and not 4 <= self.bcrypt_cost <= _BCRYPT_COST_MAX
+        ):
             raise ValueError(
                 f"AUTH_BCRYPT_COST must be between 4 and 31, got {self.bcrypt_cost}"
             )
@@ -196,10 +211,10 @@ def _build_auth_config(environ: typing.Mapping) -> AuthConfig:
         secret_key=environ.get("SECRET_KEY") or None,
         max_users=_parse_positive_int(environ, "MAX_USERS", 1),
         session_max_age_seconds=_parse_positive_int(
-            environ, "SESSION_MAX_AGE_SECONDS", 60 * 60 * 24 * 30
+            environ, "SESSION_MAX_AGE_SECONDS", _SESSION_MAX_AGE_DEFAULT
         ),
         session_idle_seconds=_parse_positive_int(
-            environ, "SESSION_IDLE_SECONDS", 60 * 60 * 24 * 7
+            environ, "SESSION_IDLE_SECONDS", _SESSION_IDLE_DEFAULT
         ),
         cookie_secure=_parse_optional_bool(environ.get("AUTH_COOKIE_SECURE")),
         login_rate_limit=_parse_positive_int(environ, "AUTH_LOGIN_RATE_LIMIT", 5),

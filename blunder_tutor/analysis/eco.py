@@ -27,16 +27,12 @@ class ECODatabase:
     def classify(self, board: chess.Board) -> ECOClassification | None:
         temp = board.copy()
         for _ in range(len(temp.move_stack)):
-            epd = temp.epd()
-            if epd in self._positions:
-                return self._positions[epd]
+            match = self._positions.get(temp.epd())
+            if match is not None:
+                return match
             temp.pop()
 
-        epd = temp.epd()
-        if epd in self._positions:
-            return self._positions[epd]
-
-        return None
+        return self._positions.get(temp.epd())
 
 
 def _load_eco_entries(path: Path) -> dict[str, ECOClassification]:

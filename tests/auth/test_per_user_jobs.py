@@ -10,6 +10,7 @@ Acceptance criteria:
 
 from __future__ import annotations
 
+from http import HTTPStatus
 import asyncio
 import shutil
 import sqlite3
@@ -67,7 +68,7 @@ async def _wait_for_job(
     last = {}
     while asyncio.get_running_loop().time() < deadline:
         resp = await client.get(f"/api/import/status/{job_id}")
-        if resp.status_code == 200:
+        if resp.status_code == HTTPStatus.OK:
             last = resp.json()
             if last.get("status") in ("completed", "failed"):
                 return last
@@ -91,12 +92,12 @@ class TestImportPgnRunsToCompletion:
         invite_code: str,
     ):
         signup = await signup_via_http(client_credentials_mode, invite_code)
-        assert signup.status_code == 200, signup.text
+        assert signup.status_code == HTTPStatus.OK, signup.text
 
         resp = await client_credentials_mode.post(
             "/api/import/pgn", json={"pgn": VALID_PGN}
         )
-        assert resp.status_code == 200, resp.text
+        assert resp.status_code == HTTPStatus.OK, resp.text
         body = resp.json()
         assert body["success"] is True
         job_id = body["job_id"]
@@ -123,15 +124,15 @@ class TestTwoUserJobIsolation:
             r1 = await signup_via_http(
                 client_a, invite_code, username="alice", password=DEFAULT_PASSWORD
             )
-            assert r1.status_code == 200, r1.text
+            assert r1.status_code == HTTPStatus.OK, r1.text
             r2 = await signup_via_http(
                 client_b, invite_code, username="bob", password=DEFAULT_PASSWORD
             )
-            assert r2.status_code == 200, r2.text
+            assert r2.status_code == HTTPStatus.OK, r2.text
 
             ra = await client_a.post("/api/import/pgn", json={"pgn": VALID_PGN})
             rb = await client_b.post("/api/import/pgn", json={"pgn": VALID_PGN_2})
-            assert ra.status_code == 200 and rb.status_code == 200
+            assert ra.status_code == HTTPStatus.OK and rb.status_code == HTTPStatus.OK
             job_a = ra.json()["job_id"]
             job_b = rb.json()["job_id"]
 
@@ -143,10 +144,14 @@ class TestTwoUserJobIsolation:
             self_b = await client_b.get(f"/api/import/status/{job_b}")
             cross_ab = await client_a.get(f"/api/import/status/{job_b}")
             cross_ba = await client_b.get(f"/api/import/status/{job_a}")
-            assert self_a.status_code == 200
-            assert self_b.status_code == 200
-            assert cross_ab.status_code == 404, "user A must not see user B's job"
-            assert cross_ba.status_code == 404, "user B must not see user A's job"
+            assert self_a.status_code == HTTPStatus.OK
+            assert self_b.status_code == HTTPStatus.OK
+            assert cross_ab.status_code == HTTPStatus.NOT_FOUND, (
+                "user A must not see user B's job"
+            )
+            assert cross_ba.status_code == HTTPStatus.NOT_FOUND, (
+                "user B must not see user A's job"
+            )
 
             # And the row really lives in only one DB.
             users_dir = credentials_app_multi.state.auth.users_dir
@@ -288,7 +293,7 @@ class TestDeleteRaceGuard:
         client_credentials_mode: httpx.AsyncClient,
     ):
         signup = await signup_via_http(client_credentials_mode, invite_code)
-        assert signup.status_code == 200
+        assert signup.status_code == HTTPStatus.OK
         user_id_str = signup.json()["id"]
 
         users_dir: Path = credentials_app.state.auth.users_dir
@@ -320,7 +325,7 @@ class TestDeleteRaceGuard:
             transport=transport, base_url="http://testserver"
         ) as client:
             signup = await signup_via_http(client, invite_code)
-            assert signup.status_code == 200
+            assert signup.status_code == HTTPStatus.OK
             user_id_str = signup.json()["id"]
 
         users_dir: Path = credentials_app.state.auth.users_dir

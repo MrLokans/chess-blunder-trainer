@@ -197,9 +197,7 @@ class AuthCommand(CLICommand):
         users_dir.mkdir(parents=True, exist_ok=True)
 
         await initialize_auth_schema(auth_db_path, BlunderTutorFilePermissionPolicy())
-        auth_db = AuthDb(auth_db_path)
-        await auth_db.connect()
-        try:
+        async with AuthDb(auth_db_path) as auth_db:
             rules = ValidationRules.default()
             hasher = BcryptHasher(rules, cost=config.auth.bcrypt_cost)
             storage = SqliteStorage(auth_db)
@@ -225,8 +223,6 @@ class AuthCommand(CLICommand):
                 "secret_key": config.auth.secret_key,
             }
             await self._dispatch(args, ctx)
-        finally:
-            await auth_db.close()
 
     async def _dispatch(self, args: argparse.Namespace, ctx: dict) -> None:
         # reset-password reads the new password from a non-argv source so

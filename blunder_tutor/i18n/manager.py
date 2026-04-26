@@ -5,52 +5,40 @@ import re
 from pathlib import Path
 from types import MappingProxyType
 
-# CLDR plural rules for supported locales
-# Each function takes a number and returns the plural category
+
+# CLDR plural rules for supported locales. The integer literals
+# (11, 12, 14, 100, etc.) are CLDR-spec values that encode language-specific
+# pluralization boundaries; they are not magic numbers in the WPS sense.
+# https://cldr.unicode.org/index/cldr-spec/plural-rules
+def _east_slavic_plural(n: int) -> str:
+    # CLDR rules for Russian, Ukrainian, Belarusian (identical structure).
+    if n % 10 == 1 and n % 100 != 11:  # noqa: WPS432
+        return "one"
+    if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14):  # noqa: WPS432
+        return "few"
+    if n % 10 == 0 or 5 <= n % 10 <= 9 or 11 <= n % 100 <= 14:  # noqa: WPS432
+        return "many"
+    return "other"
+
+
+def _polish_plural(n: int) -> str:
+    if n == 1:
+        return "one"
+    if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14):  # noqa: WPS432
+        return "few"
+    return "many"
+
+
 PLURAL_RULES: MappingProxyType = MappingProxyType(
     {
         "en": lambda n: "one" if n == 1 else "other",
-        "ru": lambda n: (
-            "one"
-            if n % 10 == 1 and n % 100 != 11
-            else (
-                "few"
-                if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14)
-                else "many"
-                if n % 10 == 0 or 5 <= n % 10 <= 9 or 11 <= n % 100 <= 14
-                else "other"
-            )
-        ),
-        "uk": lambda n: (
-            "one"
-            if n % 10 == 1 and n % 100 != 11
-            else (
-                "few"
-                if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14)
-                else "many"
-                if n % 10 == 0 or 5 <= n % 10 <= 9 or 11 <= n % 100 <= 14
-                else "other"
-            )
-        ),
+        "ru": _east_slavic_plural,
+        "uk": _east_slavic_plural,
         "de": lambda n: "one" if n == 1 else "other",
         "fr": lambda n: "one" if n in (0, 1) else "other",
         "es": lambda n: "one" if n == 1 else "other",
-        "pl": lambda n: (
-            "one"
-            if n == 1
-            else ("few" if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14) else "many")
-        ),
-        "be": lambda n: (
-            "one"
-            if n % 10 == 1 and n % 100 != 11
-            else (
-                "few"
-                if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14)
-                else "many"
-                if n % 10 == 0 or 5 <= n % 10 <= 9 or 11 <= n % 100 <= 14
-                else "other"
-            )
-        ),
+        "pl": _polish_plural,
+        "be": _east_slavic_plural,
         "zh": lambda n: "other",
     }
 )
@@ -81,9 +69,9 @@ def _resolve_plural(message: str, params: dict[str, object], locale: str) -> str
             branches[category] = text
 
         # Check for exact match first (=0, =1, etc.)
-        exact_key = f"={int(count)}"
-        if exact_key in branches:
-            result = branches[exact_key]
+        exact_match = branches.get(f"={int(count)}")
+        if exact_match is not None:
+            result = exact_match
         else:
             rule = PLURAL_RULES.get(locale, PLURAL_RULES["en"])
             category = rule(int(count))

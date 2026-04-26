@@ -24,21 +24,18 @@ class ConnectionManager:
         return connection_id
 
     async def disconnect(self, connection_id: str) -> None:
-        if connection_id in self.active_connections:
-            del self.active_connections[connection_id]
-        if connection_id in self.connection_subscriptions:
-            del self.connection_subscriptions[connection_id]
+        self.active_connections.pop(connection_id, None)
+        self.connection_subscriptions.pop(connection_id, None)
 
     async def subscribe(self, connection_id: str, event_types: list[str]) -> None:
-        if connection_id in self.connection_subscriptions:
-            # Convert strings to EventType enums
-            for event_type_str in event_types:
-                try:
-                    event_type = EventType(event_type_str)
-                    self.connection_subscriptions[connection_id].add(event_type)
-                except ValueError:
-                    # Invalid event type, skip
-                    pass
+        subscriptions = self.connection_subscriptions.get(connection_id)
+        if subscriptions is None:
+            return
+        for event_type_str in event_types:
+            try:
+                subscriptions.add(EventType(event_type_str))
+            except ValueError:
+                continue  # Invalid event type, skip
 
     async def broadcast_event(self, event: Event) -> None:
         message = event.to_dict()

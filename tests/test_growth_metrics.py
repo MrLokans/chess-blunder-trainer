@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 import pytest
 
 from blunder_tutor.repositories.stats_repository import StatsRepository
@@ -256,7 +257,7 @@ class TestGetGrowthMetricsRepository:
 class TestGrowthApiEndpoint:
     def test_empty_db(self, app):
         resp = app.get("/api/stats/growth")
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
         data = resp.json()
         assert data["windows"] == []
         assert data["trend"] is None

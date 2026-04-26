@@ -1,5 +1,6 @@
 """Tests for dashboard filter API endpoints (time control + game phase)."""
 
+from http import HTTPStatus
 from pathlib import Path
 
 import pytest
@@ -53,7 +54,7 @@ SMOKE_ENDPOINTS = [
 @pytest.mark.parametrize("url,expected_keys", SMOKE_ENDPOINTS)
 def test_filter_endpoint_returns_200_with_expected_keys(app, url, expected_keys):
     response = app.get(url)
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
     for key in expected_keys:
         assert key in data
@@ -79,7 +80,7 @@ async def seeded_db(stats_repo):
 
 async def test_blunders_by_phase_with_data(app, seeded_db):
     response = app.get("/api/stats/blunders/by-phase")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert data["total_blunders"] >= 1
 
@@ -87,8 +88,8 @@ async def test_blunders_by_phase_with_data(app, seeded_db):
 async def test_game_type_filter_narrows_results(app, seeded_db):
     all_resp = app.get("/api/stats")
     bullet_resp = app.get("/api/stats?game_types=bullet")
-    assert all_resp.status_code == 200
-    assert bullet_resp.status_code == 200
+    assert all_resp.status_code == HTTPStatus.OK
+    assert bullet_resp.status_code == HTTPStatus.OK
     all_data = all_resp.json()
     bullet_data = bullet_resp.json()
     assert all_data["total_blunders"] >= bullet_data["total_blunders"]

@@ -21,7 +21,7 @@ class GameRepository(BaseDbRepository):
 
         if row is None:
             raise FileNotFoundError(f"Game not found: {game_id}")
-        return row[0]
+        return row["pgn_content"]
 
     async def load_game(self, game_id: str) -> chess.pgn.Game:
         pgn_content = await self.get_pgn_content(game_id)
@@ -92,7 +92,7 @@ class GameRepository(BaseDbRepository):
         limit: int | None = None,
     ) -> AsyncIterator[dict[str, object]]:
         query = """
-            SELECT game_id, source, username, white, black, result,
+            SELECT game_id AS id, source, username, white, black, result,
                    date, end_time_utc, time_control, analyzed
             FROM game_index_cache
             WHERE 1=1
@@ -116,24 +116,13 @@ class GameRepository(BaseDbRepository):
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             async for row in cursor:
-                yield {
-                    "id": row[0],
-                    "source": row[1],
-                    "username": row[2],
-                    "white": row[3],
-                    "black": row[4],
-                    "result": row[5],
-                    "date": row[6],
-                    "end_time_utc": row[7],
-                    "time_control": row[8],
-                    "analyzed": row[9],
-                }
+                yield dict(row)
 
     async def get_game(self, game_id: str) -> dict[str, object] | None:
         conn = await self.get_connection()
         async with conn.execute(
             """
-            SELECT game_id, source, username, white, black, result,
+            SELECT game_id AS id, source, username, white, black, result,
                    date, end_time_utc, time_control, pgn_content, analyzed
             FROM game_index_cache
             WHERE game_id = ?
@@ -143,19 +132,7 @@ class GameRepository(BaseDbRepository):
             row = await cursor.fetchone()
 
         if row:
-            return {
-                "id": row[0],
-                "source": row[1],
-                "username": row[2],
-                "white": row[3],
-                "black": row[4],
-                "result": row[5],
-                "date": row[6],
-                "end_time_utc": row[7],
-                "time_control": row[8],
-                "pgn_content": row[9],
-                "analyzed": row[10],
-            }
+            return dict(row)
 
         return None
 
@@ -170,7 +147,7 @@ class GameRepository(BaseDbRepository):
         offset: int = 0,
     ) -> tuple[list[dict[str, object]], int]:
         query = """
-            SELECT game_id, source, username, white, black, result,
+            SELECT game_id AS id, source, username, white, black, result,
                    date, end_time_utc, time_control, analyzed
             FROM game_index_cache
             WHERE 1=1
@@ -208,7 +185,7 @@ class GameRepository(BaseDbRepository):
         count_params = list(params)
         async with conn.execute(count_query, count_params) as cursor:
             count_row = await cursor.fetchone()
-            total_count = count_row[0]
+            total_count = count_row[0] if count_row else 0
 
         if limit is not None:
             query += " LIMIT ? OFFSET ?"
@@ -217,21 +194,7 @@ class GameRepository(BaseDbRepository):
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        games = [
-            {
-                "id": row[0],
-                "source": row[1],
-                "username": row[2],
-                "white": row[3],
-                "black": row[4],
-                "result": row[5],
-                "date": row[6],
-                "end_time_utc": row[7],
-                "time_control": row[8],
-                "analyzed": row[9],
-            }
-            for row in rows
-        ]
+        games = [dict(row) for row in rows]
 
         return games, total_count
 
@@ -306,7 +269,7 @@ class GameRepository(BaseDbRepository):
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        return [row[0] for row in rows]
+        return [row["game_id"] for row in rows]
 
     async def get_latest_game_time(
         self,
@@ -324,6 +287,6 @@ class GameRepository(BaseDbRepository):
         async with conn.execute(query, (source, username)) as cursor:
             row = await cursor.fetchone()
 
-        if row and row[0]:
-            return datetime.fromisoformat(row[0])
+        if row and row["end_time_utc"]:
+            return datetime.fromisoformat(row["end_time_utc"])
         return None

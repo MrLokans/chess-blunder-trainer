@@ -17,6 +17,22 @@ from blunder_tutor.utils.pgn_utils import (
     move_uci_at_ply,
 )
 
+# Puzzle-weighting heuristics. These multipliers tune how the trainer
+# samples blunders: short mate misses are the most learnable, easy-but-
+# missed blunders are higher signal than tough engine-line tactics, and
+# unseen patterns get a small exploration bonus.
+_WEIGHT_MATE_VERY_SHORT = 2.0  # mate-in ≤ 2
+_WEIGHT_MATE_SHORT = 1.5  # mate-in ≤ 5
+_MATE_DEPTH_VERY_SHORT = 2
+_MATE_DEPTH_SHORT = 5
+
+_WEIGHT_UNSEEN_PATTERN = 1.5
+
+_WEIGHT_EASY_DIFFICULTY = 1.3  # difficulty ≤ 30
+_WEIGHT_HARD_DIFFICULTY = 0.7  # difficulty ≥ 70
+_DIFFICULTY_EASY = 30
+_DIFFICULTY_HARD = 70
+
 
 @dataclass(frozen=True)
 class BlunderPuzzle:
@@ -271,10 +287,10 @@ class Trainer:
             # Short mate misses are the most learnable positions
             missed_mate_depth = blunder.get("missed_mate_depth")
             if missed_mate_depth is not None and missed_mate_depth > 0:
-                if missed_mate_depth <= 2:
-                    w *= 2.0
-                elif missed_mate_depth <= 5:
-                    w *= 1.5
+                if missed_mate_depth <= _MATE_DEPTH_VERY_SHORT:
+                    w *= _WEIGHT_MATE_VERY_SHORT
+                elif missed_mate_depth <= _MATE_DEPTH_SHORT:
+                    w *= _WEIGHT_MATE_SHORT
 
             # Patterns the player fails at more get higher weight
             pattern = blunder.get("tactical_pattern")
@@ -282,17 +298,17 @@ class Trainer:
                 rate = failure_rates.get(pattern, 0.0)
                 # Unseen patterns get a bonus so they're explored
                 if pattern is not None and pattern not in failure_rates:
-                    w *= 1.5
+                    w *= _WEIGHT_UNSEEN_PATTERN
                 else:
                     w *= 1.0 + rate
 
             # Higher-difficulty positions are more valuable to practice
             difficulty = blunder.get("difficulty")
             if difficulty is not None:
-                if difficulty <= 30:
-                    w *= 1.3  # easy = should have seen it
-                elif difficulty >= 70:
-                    w *= 0.7  # very hard = less learnable
+                if difficulty <= _DIFFICULTY_EASY:
+                    w *= _WEIGHT_EASY_DIFFICULTY  # easy = should have seen it
+                elif difficulty >= _DIFFICULTY_HARD:
+                    w *= _WEIGHT_HARD_DIFFICULTY  # very hard = less learnable
 
             weights.append(w)
 

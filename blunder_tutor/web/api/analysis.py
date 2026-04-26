@@ -6,7 +6,7 @@ from functools import partial
 from types import MappingProxyType
 from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
 from blunder_tutor.analysis.tactics import PATTERN_LABELS, TacticalPattern
@@ -62,6 +62,11 @@ class DifficultyEnum(str, Enum):
     easy = "easy"
     medium = "medium"
     hard = "hard"
+
+
+# Default for spaced_repetition_days when not configured; mirrors the
+# default used by the settings model (SettingsRequest.spaced_repetition_days).
+SPACED_REPETITION_DAYS_DEFAULT = 30
 
 
 DIFFICULTY_RANGES = MappingProxyType(
@@ -246,7 +251,9 @@ async def puzzle(
         "spaced_repetition_days"
     )
     spaced_repetition_days = (
-        int(spaced_repetition_days_str) if spaced_repetition_days_str else 30
+        int(spaced_repetition_days_str)
+        if spaced_repetition_days_str
+        else SPACED_REPETITION_DAYS_DEFAULT
     )
 
     game_phases_int = (
@@ -282,7 +289,9 @@ async def puzzle(
             difficulty_ranges=difficulty_ranges_list,
         )
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
 
     puzzle_data = puzzle_with_analysis.puzzle
     analysis = puzzle_with_analysis.analysis
@@ -358,7 +367,9 @@ async def specific_puzzle(
     try:
         puzzle_with_analysis = await puzzle_service.get_specific_puzzle(game_id, ply)
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
 
     puzzle_data = puzzle_with_analysis.puzzle
     analysis = puzzle_with_analysis.analysis
@@ -438,7 +449,9 @@ async def submit(
     try:
         user_san = analysis_service.get_move_san(payload.fen, payload.move)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid move") from None
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid move"
+        ) from None
 
     is_best = payload.best_move_uci and payload.move == payload.best_move_uci
     is_blunder = payload.move == payload.blunder_uci
@@ -454,7 +467,9 @@ async def submit(
             )
             user_eval_cp = user_eval.eval_cp
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+            ) from exc
 
     user_eval_display = format_eval(user_eval_cp, payload.player_color)
 
@@ -500,7 +515,9 @@ async def analyze_move(
     try:
         analysis = await analysis_service.analyze_position(payload.fen)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid FEN") from None
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid FEN"
+        ) from None
 
     return {
         "eval": analysis.eval_cp,

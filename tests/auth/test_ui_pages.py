@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 import httpx
 
 from tests.auth.conftest import signup_via_http as _signup
@@ -10,7 +11,7 @@ class TestLoginPage:
         self, client_credentials_mode: httpx.AsyncClient
     ):
         r = await client_credentials_mode.get("/login")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert "auth-root" in r.text
         assert "src/auth/login.tsx" in r.text
 
@@ -21,7 +22,7 @@ class TestLoginPage:
     ):
         await _signup(client_credentials_mode, invite_code)
         r = await client_credentials_mode.get("/login", follow_redirects=False)
-        assert r.status_code == 302
+        assert r.status_code == HTTPStatus.FOUND
         assert r.headers["location"] == "/"
 
 
@@ -30,7 +31,7 @@ class TestSignupPage:
         self, client_credentials_mode: httpx.AsyncClient
     ):
         r = await client_credentials_mode.get("/signup", follow_redirects=False)
-        assert r.status_code == 302
+        assert r.status_code == HTTPStatus.FOUND
         assert r.headers["location"] == "/setup"
 
     async def test_renders_instance_full_page_when_cap_reached(
@@ -43,7 +44,7 @@ class TestSignupPage:
         client_credentials_mode.cookies.clear()
 
         r = await client_credentials_mode.get("/signup", follow_redirects=False)
-        assert r.status_code == 403
+        assert r.status_code == HTTPStatus.FORBIDDEN
         # Renders the signup_full template, not a JSON error page. The
         # user-cap message is the load-bearing copy.
         assert "text/html" in r.headers["content-type"]
@@ -56,7 +57,7 @@ class TestSignupPage:
     ):
         await _signup(client_credentials_mode, invite_code)
         r = await client_credentials_mode.get("/signup", follow_redirects=False)
-        assert r.status_code == 302
+        assert r.status_code == HTTPStatus.FOUND
         assert r.headers["location"] == "/"
 
 
@@ -65,7 +66,7 @@ class TestSetupPage:
         self, client_credentials_mode: httpx.AsyncClient
     ):
         r = await client_credentials_mode.get("/setup")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert "auth-root" in r.text
         assert "src/auth/first-setup.tsx" in r.text
 
@@ -78,7 +79,7 @@ class TestSetupPage:
         client_credentials_mode.cookies.clear()
 
         r = await client_credentials_mode.get("/setup", follow_redirects=False)
-        assert r.status_code == 302
+        assert r.status_code == HTTPStatus.FOUND
         assert r.headers["location"] == "/login"
 
 
@@ -91,14 +92,14 @@ class TestAuthLayoutBodyClass:
         self, client_credentials_mode: httpx.AsyncClient
     ):
         r = await client_credentials_mode.get("/login")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert 'class="auth-layout"' in r.text
 
     async def test_setup_page_body_has_auth_layout_class(
         self, client_credentials_mode: httpx.AsyncClient
     ):
         r = await client_credentials_mode.get("/setup")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert 'class="auth-layout"' in r.text
 
     async def test_signup_full_page_body_has_auth_layout_class(
@@ -110,7 +111,7 @@ class TestAuthLayoutBodyClass:
         client_credentials_mode.cookies.clear()
 
         r = await client_credentials_mode.get("/signup", follow_redirects=False)
-        assert r.status_code == 403
+        assert r.status_code == HTTPStatus.FORBIDDEN
         assert 'class="auth-layout"' in r.text
 
 
@@ -123,17 +124,17 @@ class TestLogoutUi:
         await _signup(client_credentials_mode, invite_code)
 
         r = await client_credentials_mode.post("/logout", follow_redirects=False)
-        assert r.status_code == 303
+        assert r.status_code == HTTPStatus.SEE_OTHER
         assert r.headers["location"] == "/login"
 
         # Subsequent /api/auth/me must 401 — the server row is gone even
         # though the cookie jar may hold a stale value.
         r = await client_credentials_mode.get("/api/auth/me")
-        assert r.status_code == 401
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
 
     async def test_post_logout_is_idempotent_without_session(
         self, client_credentials_mode: httpx.AsyncClient
     ):
         r = await client_credentials_mode.post("/logout", follow_redirects=False)
-        assert r.status_code == 303
+        assert r.status_code == HTTPStatus.SEE_OTHER
         assert r.headers["location"] == "/login"

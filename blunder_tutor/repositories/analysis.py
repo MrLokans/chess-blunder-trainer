@@ -13,7 +13,7 @@ class AnalysisRepository(BaseDbRepository):
         conn = await self.get_connection()
         async with conn.execute(
             "SELECT 1 FROM analysis_games WHERE game_id = ? LIMIT 1",
-            (game_id,),
+            (game_id,),  # noqa: WPS204 — sqlite parameter tuple, repeated per query.
         ) as cursor:
             row = await cursor.fetchone()
         return row is not None
@@ -117,24 +117,7 @@ class AnalysisRepository(BaseDbRepository):
             params = (CLASSIFICATION_BLUNDER,)
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
-        return [
-            {
-                "game_id": row[0],
-                "ply": row[1],
-                "player": row[2],
-                "uci": row[3],
-                "san": row[4],
-                "eval_before": row[5],
-                "eval_after": row[6],
-                "cp_loss": row[7],
-                "best_move_uci": row[8],
-                "best_move_san": row[9],
-                "best_line": row[10],
-                "best_move_eval": row[11],
-                "game_phase": row[12],
-            }
-            for row in rows
-        ]
+        return [dict(row) for row in rows]
 
     async def get_move_analysis(
         self, game_id: str, ply: int
@@ -156,25 +139,7 @@ class AnalysisRepository(BaseDbRepository):
         if not row:
             return None
 
-        return {
-            "game_id": row[0],
-            "ply": row[1],
-            "player": row[2],
-            "uci": row[3],
-            "san": row[4],
-            "eval_before": row[5],
-            "eval_after": row[6],
-            "cp_loss": row[7],
-            "best_move_uci": row[8],
-            "best_move_san": row[9],
-            "best_line": row[10],
-            "best_move_eval": row[11],
-            "game_phase": row[12],
-            "tactical_pattern": row[13],
-            "tactical_reason": row[14],
-            "difficulty": row[15],
-            "missed_mate_depth": row[16],
-        }
+        return dict(row)
 
     async def fetch_moves(self, game_id: str) -> list[dict[str, object]]:
         conn = await self.get_connection()
@@ -189,22 +154,7 @@ class AnalysisRepository(BaseDbRepository):
             (game_id,),
         ) as cursor:
             rows = await cursor.fetchall()
-        return [
-            {
-                "ply": row[0],
-                "move_number": row[1],
-                "player": row[2],
-                "uci": row[3],
-                "san": row[4],
-                "eval_before": row[5],
-                "eval_after": row[6],
-                "delta": row[7],
-                "cp_loss": row[8],
-                "classification": row[9],
-                "game_phase": row[10],
-            }
-            for row in rows
-        ]
+        return [dict(row) for row in rows]
 
     async def get_game_ids_missing_phase(self) -> list[str]:
         conn = await self.get_connection()
@@ -214,7 +164,7 @@ class AnalysisRepository(BaseDbRepository):
             """
         ) as cursor:
             rows = await cursor.fetchall()
-        return [row[0] for row in rows]
+        return [row["game_id"] for row in rows]
 
     async def fetch_moves_for_phase_backfill(
         self, game_id: str
@@ -230,7 +180,7 @@ class AnalysisRepository(BaseDbRepository):
             (game_id,),
         ) as cursor:
             rows = await cursor.fetchall()
-        return [{"ply": row[0], "move_number": row[1]} for row in rows]
+        return [dict(row) for row in rows]
 
     async def update_move_phase(self, game_id: str, ply: int, game_phase: int) -> None:
         async with self.write_transaction() as conn:
@@ -261,13 +211,13 @@ class AnalysisRepository(BaseDbRepository):
             """
         ) as cursor:
             rows = await cursor.fetchall()
-        return [row[0] for row in rows]
+        return [row["game_id"] for row in rows]
 
     async def get_all_analyzed_game_ids(self) -> list[str]:
         conn = await self.get_connection()
         async with conn.execute("SELECT game_id FROM analysis_games") as cursor:
             rows = await cursor.fetchall()
-        return [row[0] for row in rows]
+        return [row["game_id"] for row in rows]
 
     async def update_game_eco(
         self, game_id: str, eco_code: str | None, eco_name: str | None
@@ -286,7 +236,7 @@ class AnalysisRepository(BaseDbRepository):
         ) as cursor:
             row = await cursor.fetchone()
         if row:
-            return {"eco_code": row[0], "eco_name": row[1]}
+            return {"eco_code": row["eco_code"], "eco_name": row["eco_name"]}
         return {"eco_code": None, "eco_name": None}
 
     async def mark_step_completed(self, game_id: str, step_id: str) -> None:
@@ -310,7 +260,7 @@ class AnalysisRepository(BaseDbRepository):
             (game_id,),
         ) as cursor:
             rows = await cursor.fetchall()
-        return {row[0] for row in rows}
+        return {row["step_id"] for row in rows}
 
     async def is_step_completed(self, game_id: str, step_id: str) -> bool:
         conn = await self.get_connection()
@@ -338,7 +288,7 @@ class AnalysisRepository(BaseDbRepository):
             """
         ) as cursor:
             rows = await cursor.fetchall()
-        return [row[0] for row in rows]
+        return [row["game_id"] for row in rows]
 
     async def fetch_blunders_for_tactics_backfill(
         self, game_id: str
@@ -355,7 +305,7 @@ class AnalysisRepository(BaseDbRepository):
             (game_id,),
         ) as cursor:
             rows = await cursor.fetchall()
-        return [{"ply": row[0], "uci": row[1], "best_move_uci": row[2]} for row in rows]
+        return [dict(row) for row in rows]
 
     async def update_move_tactics(
         self,
@@ -441,34 +391,12 @@ class AnalysisRepository(BaseDbRepository):
         game_types_set = set(game_types) if game_types else None
 
         for row in rows:
-            time_control = row[15]
+            time_control = row["time_control"]
             game_type = int(classify_game_type(time_control))
 
             if game_types_set and game_type not in game_types_set:
                 continue
 
-            results.append(
-                {
-                    "game_id": row[0],
-                    "ply": row[1],
-                    "player": row[2],
-                    "uci": row[3],
-                    "san": row[4],
-                    "eval_before": row[5],
-                    "eval_after": row[6],
-                    "cp_loss": row[7],
-                    "best_move_uci": row[8],
-                    "best_move_san": row[9],
-                    "best_line": row[10],
-                    "best_move_eval": row[11],
-                    "game_phase": row[12],
-                    "tactical_pattern": row[13],
-                    "tactical_reason": row[14],
-                    "time_control": time_control,
-                    "game_type": game_type,
-                    "difficulty": row[16],
-                    "missed_mate_depth": row[17],
-                }
-            )
+            results.append({**dict(row), "game_type": game_type})
 
         return results

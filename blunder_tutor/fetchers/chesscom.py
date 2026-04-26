@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from collections.abc import Awaitable, Callable
 from datetime import datetime
+from http import HTTPStatus
 
 import httpx
 from tqdm import tqdm
@@ -124,6 +125,6 @@ async def validate_username(username: str) -> bool:
     ) as client:
         try:
             response = await client.get(url)
-            return response.status_code == 200
+            return response.status_code == HTTPStatus.OK
         except httpx.HTTPError:
             return False

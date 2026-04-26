@@ -3,7 +3,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Any
 
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
@@ -18,6 +18,20 @@ from blunder_tutor.web.dependencies import (
     SettingsRepoDep,
 )
 from blunder_tutor.web.middleware import _cache_key
+
+# Settings request validation bounds.
+SYNC_INTERVAL_MAX_HOURS = 168  # 1 week
+MAX_GAMES_CEILING = 10_000  # safety cap on sync size
+SPACED_REPETITION_DAYS_DEFAULT = 30
+SPACED_REPETITION_DAYS_MAX = 365
+
+# 1 year, as seconds. Computed from days × hours × seconds-per-hour to
+# document the intent inline; the literals here are the names of those
+# units (`SECONDS_PER_HOUR = 3600`) rather than free-floating magic.
+_SECONDS_PER_HOUR = 3600
+_HOURS_PER_DAY = 24
+_DAYS_PER_YEAR = 365
+LOCALE_COOKIE_MAX_AGE_SECONDS = _DAYS_PER_YEAR * _HOURS_PER_DAY * _SECONDS_PER_HOUR
 
 
 class ValidateUsernameRequest(BaseModel):
@@ -67,16 +81,22 @@ class ThemeColors(BaseModel):
 class SettingsRequest(BaseModel):
     auto_sync: bool = Field(default=False, description="Enable automatic game sync")
     sync_interval: int = Field(
-        default=24, ge=1, le=168, description="Sync interval in hours"
+        default=24,
+        ge=1,
+        le=SYNC_INTERVAL_MAX_HOURS,
+        description="Sync interval in hours",
     )
     max_games: int = Field(
-        default=100, ge=1, le=10000, description="Maximum games to sync"
+        default=100, ge=1, le=MAX_GAMES_CEILING, description="Maximum games to sync"
     )
     auto_analyze: bool = Field(
         default=True, description="Automatically analyze new games"
     )
     spaced_repetition_days: int = Field(
-        default=30, ge=1, le=365, description="Days before repeating solved puzzles"
+        default=SPACED_REPETITION_DAYS_DEFAULT,
+        ge=1,
+        le=SPACED_REPETITION_DAYS_MAX,
+        description="Days before repeating solved puzzles",
     )
     theme: ThemeColors | None = Field(default=None, description="Theme color settings")
 
@@ -98,7 +118,7 @@ class SettingsResponse(BaseModel):
     max_games: int = Field(default=100, description="Max games to sync")
     auto_analyze: bool = Field(default=True, description="Auto analyze new games")
     spaced_repetition_days: int = Field(
-        default=30, description="Spaced repetition days"
+        default=SPACED_REPETITION_DAYS_DEFAULT, description="Spaced repetition days"
     )
 
 
@@ -119,11 +139,14 @@ async def validate_username_endpoint(
 
     if platform not in ("lichess", "chesscom"):
         raise HTTPException(
-            status_code=400, detail="Platform must be 'lichess' or 'chesscom'"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Platform must be 'lichess' or 'chesscom'",
         )
 
     if not username:
-        raise HTTPException(status_code=400, detail="Username is required")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Username is required"
+        )
 
     valid = await validate_username(platform, username)
     return {"valid": valid, "platform": platform, "username": username}
@@ -161,7 +184,7 @@ async def setup_submit(
 
     if not lichess and not chesscom:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one username is required (Lichess or Chess.com)",
         )
 
@@ -172,7 +195,9 @@ async def setup_submit(
         invalid_usernames.append(f"Chess.com user '{chesscom}' not found")
 
     if invalid_usernames:
-        raise HTTPException(status_code=400, detail="; ".join(invalid_usernames))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="; ".join(invalid_usernames)
+        )
 
     await settings_repo.set_setting("lichess_username", lichess if lichess else None)
     await settings_repo.set_setting("chesscom_username", chesscom if chesscom else None)
@@ -608,7 +633,7 @@ async def update_board_settings(
         valid_sets = {ps["id"] for ps in PIECE_SETS}
         if payload.piece_set not in valid_sets:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid piece set. Valid options: {', '.join(valid_sets)}",
             )
         await settings_repo.set_setting("board_piece_set", payload.piece_set)
@@ -616,7 +641,7 @@ async def update_board_settings(
     if payload.board_light is not None:
         if not payload.board_light.startswith("#") or len(payload.board_light) != 7:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="board_light must be a valid hex color (#RRGGBB)",
             )
         await settings_repo.set_setting("board_light_color", payload.board_light)
@@ -624,7 +649,8 @@ async def update_board_settings(
     if payload.board_dark is not None:
         if not payload.board_dark.startswith("#") or len(payload.board_dark) != 7:
             raise HTTPException(
-                status_code=400, detail="board_dark must be a valid hex color (#RRGGBB)"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="board_dark must be a valid hex color (#RRGGBB)",
             )
         await settings_repo.set_setting("board_dark_color", payload.board_dark)
 
@@ -753,7 +779,9 @@ async def set_locale(
 ) -> JSONResponse:
     i18n = getattr(request.app.state, "i18n", None)
     if i18n and payload.locale not in i18n.available_locales():
-        raise HTTPException(status_code=400, detail="Unsupported locale")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported locale"
+        )
     await settings_repo.set_setting("locale", payload.locale)
     request.app.state.locale_cache.set(_cache_key(request), payload.locale)
 
@@ -762,7 +790,7 @@ async def set_locale(
         key="locale",
         value=payload.locale,
         path="/",
-        max_age=365 * 24 * 3600,
+        max_age=LOCALE_COOKIE_MAX_AGE_SECONDS,
         samesite="lax",
     )
     return response

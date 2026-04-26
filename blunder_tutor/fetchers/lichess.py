@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 from collections.abc import Awaitable, Callable, Iterable
 from datetime import datetime
+from http import HTTPStatus
 
 import chess.pgn
 import httpx
@@ -114,6 +115,6 @@ async def validate_username(username: str) -> bool:
     async with httpx.AsyncClient(timeout=10, headers=headers) as client:
         try:
             response = await client.get(url)
-            return response.status_code == 200
+            return response.status_code == HTTPStatus.OK
         except httpx.HTTPError:
             return False

@@ -60,7 +60,7 @@ class AnalyzeGamesJob(BaseJob):
         if self._event_bus is None:
             return
         queue = await self._event_bus.subscribe(EventType.JOB_STATUS_CHANGED)
-        try:
+        try:  # noqa: WPS501 — paired subscribe/unsubscribe lifecycle; event bus has no context-manager API.
             while not cancelled.is_set():
                 try:  # noqa: WPS505 — `wait_for` timeout converts to a poll-loop continue; flattening would lose the periodic cancellation check.
                     event = await asyncio.wait_for(queue.get(), timeout=1.0)

@@ -55,7 +55,7 @@ class StockfishAnalysisStep(AnalysisStep):
         info_flags = chess.engine.INFO_SCORE | chess.engine.INFO_PV
         game_id = ctx.game_id
 
-        try:
+        try:  # noqa: WPS501 — conditional cleanup (`if owns_engine: engine.quit()`); not a single-resource context manager.
             positions, move_metadata = _collect_positions(ctx.game)
 
             infos: list[chess.engine.InfoDict | None] = []
@@ -75,7 +75,7 @@ class StockfishAnalysisStep(AnalysisStep):
 
                 eval_before = score_to_cp(info_before["score"], player)
                 ply = (board.fullmove_number - 1) * 2 + (
-                    1 if player == chess.WHITE else 2
+                    1 if player == chess.WHITE else 2  # noqa: WPS509 — single parenthesized ternary inside arithmetic, no nesting.
                 )
 
                 pv = info_before.get("pv", [])

@@ -8,6 +8,10 @@ from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.web.config import AppConfig
 
+# Default Lichess pagination batch size — matches Lichess's documented
+# per-request soft cap.
+DEFAULT_LICHESS_BATCH_SIZE = 200
+
 
 class FetchCommand(CLICommand):
     def should_run(self, args: argparse.Namespace) -> bool:
@@ -18,9 +22,7 @@ class FetchCommand(CLICommand):
 
     async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
         run_migrations(config.data.db_path)
-        game_repo = GameRepository.from_config(config)
-
-        try:
+        async with GameRepository.from_config(config) as game_repo:
             since = await self._resolve_since(args, game_repo)
             if since:
                 print(f"Incremental fetch: only games after {since.isoformat()}")
@@ -47,8 +49,6 @@ class FetchCommand(CLICommand):
                 skipped = len(games) - inserted
                 print(f"Chess.com: stored {inserted}, skipped {skipped}.")
                 return
-        finally:
-            await game_repo.close()
 
     async def _resolve_since(
         self, args: argparse.Namespace, game_repo: GameRepository
@@ -76,7 +76,7 @@ class FetchCommand(CLICommand):
         lichess_parser.add_argument(
             "--batch-size",
             type=int,
-            default=200,
+            default=DEFAULT_LICHESS_BATCH_SIZE,
             help="Lichess pagination batch size",
         )
         lichess_parser.add_argument(

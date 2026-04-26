@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from fastapi import HTTPException, Path, Query
+from fastapi import HTTPException, Path, Query, status
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
@@ -18,6 +18,14 @@ from blunder_tutor.web.dependencies import (
     GameRepoDep,
     JobServiceDep,
 )
+
+# Pagination defaults for the jobs API. JSON list defaults to 50 with a
+# 500 cap (operator/admin views); HTMX partial defaults to 20 (table fits
+# on one screen).
+JOBS_JSON_LIMIT_DEFAULT = 50
+JOBS_JSON_LIMIT_MAX = 500
+JOBS_HTML_LIMIT_DEFAULT = 20
+JOBS_HTML_LIMIT_MAX = 100
 
 
 class StartImportRequest(BaseModel):
@@ -95,7 +103,9 @@ async def get_import_status(
     job = await job_service.get_job(job_id)
 
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
 
     return job
 
@@ -149,7 +159,10 @@ async def list_jobs(
         None, description="Filter by status (pending, running, completed, failed)"
     ),
     limit: int = Query(
-        50, ge=1, le=500, description="Maximum number of jobs to return"
+        JOBS_JSON_LIMIT_DEFAULT,
+        ge=1,
+        le=JOBS_JSON_LIMIT_MAX,
+        description="Maximum number of jobs to return",
     ),
 ) -> list[dict[str, Any]]:
     jobs = await job_service.list_jobs(job_type=type, status=status, limit=limit)
@@ -166,7 +179,10 @@ async def get_jobs_html(
     request: Request,
     job_service: JobServiceDep,
     limit: int = Query(
-        20, ge=1, le=100, description="Maximum number of jobs to return"
+        JOBS_HTML_LIMIT_DEFAULT,
+        ge=1,
+        le=JOBS_HTML_LIMIT_MAX,
+        description="Maximum number of jobs to return",
     ),
 ) -> HTMLResponse:
     jobs = await job_service.list_jobs(limit=limit)
@@ -202,7 +218,9 @@ async def start_analysis_job(
     unanalyzed_game_ids = await game_repo.list_unanalyzed_game_ids()
 
     if not unanalyzed_game_ids:
-        raise HTTPException(status_code=400, detail="No unanalyzed games found")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No unanalyzed games found"
+        )
 
     job_id = await job_service.create_job(
         job_type="analyze",
@@ -233,11 +251,14 @@ async def stop_analysis_job(
     job = await job_service.get_job(job_id)
 
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
 
     if job["status"] not in ("pending", "running"):
         raise HTTPException(
-            status_code=400, detail=f"Cannot stop job with status: {job['status']}"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot stop job with status: {job['status']}",
         )
 
     await job_service.update_job_status(job_id, "failed", "Cancelled by user")
@@ -283,19 +304,24 @@ async def delete_job(
     job = await job_service.get_job(job_id)
 
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
 
     if job["status"] == "running":
         raise HTTPException(
-            status_code=400, detail="Cannot delete running jobs. Stop the job first."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete running jobs. Stop the job first.",
         )
 
     deleted = await job_service.delete_job(job_id)
 
     if not deleted:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
 
-    jobs = await job_service.list_jobs(limit=20)
+    jobs = await job_service.list_jobs(limit=JOBS_HTML_LIMIT_DEFAULT)
 
     for j in jobs:
         if j.get("created_at"):
@@ -328,7 +354,10 @@ async def start_backfill_phases_job(
     games_needing_backfill = await analysis_repo.get_game_ids_missing_phase()
 
     if not games_needing_backfill:
-        raise HTTPException(status_code=400, detail="No games need phase backfill")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No games need phase backfill",
+        )
 
     job_id = await job_service.create_job(
         job_type="backfill_phases",
@@ -395,7 +424,9 @@ async def start_backfill_eco_job(
         games = await analysis_repo.get_game_ids_missing_eco()
 
     if not games:
-        raise HTTPException(status_code=400, detail="No games need ECO backfill")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No games need ECO backfill"
+        )
 
     job_id = await job_service.create_job(
         job_type="backfill_eco",
@@ -459,7 +490,10 @@ async def start_backfill_tactics_job(
     games_needing_backfill = await analysis_repo.get_game_ids_missing_tactics()
 
     if not games_needing_backfill:
-        raise HTTPException(status_code=400, detail="No games need tactics backfill")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No games need tactics backfill",
+        )
 
     job_id = await job_service.create_job(
         job_type="backfill_tactics",

@@ -42,7 +42,7 @@ class CacheInvalidator:
 
         tasks = [asyncio.create_task(_forward(q)) for _, q in self._queues]
 
-        try:
+        try:  # noqa: WPS501 — fire-and-forget forwarder tasks cancelled on shutdown; TaskGroup would re-raise inner exceptions, changing semantics.
             while self._running:
                 event = await merged.get()
 

@@ -32,6 +32,15 @@ class TacticalPattern(IntEnum):
     OVERLOADED_PIECE = 11
 
 
+# Tactical pattern detection thresholds. Material gain in centipawns:
+# 300 ≈ minor piece, 500 ≈ rook (used for "is this discovered attack
+# substantial?"); 10000 represents mate-threat-level severity for the
+# back-rank weight.
+DISCOVERED_ATTACK_MATERIAL_FLOOR = 300
+DOUBLE_CHECK_MATERIAL_GAIN = 500
+MATE_THREAT_MATERIAL_GAIN = 10_000
+
+
 PATTERN_LABELS = MappingProxyType(
     {
         TacticalPattern.NONE: "None",
@@ -399,7 +408,7 @@ def detect_discovered_attack(
                         pieces=[piece.piece_type],
                         material_gain=target_value,
                     )
-                elif target_value >= 300:
+                elif target_value >= DISCOVERED_ATTACK_MATERIAL_FLOOR:
                     return TacticalMotif(
                         pattern=TacticalPattern.DISCOVERED_ATTACK,
                         description=f"Discovered Attack on {chess.piece_name(target.piece_type)}",
@@ -434,7 +443,7 @@ def detect_double_check(
             description="Double Check",
             squares=checker_squares,
             pieces=[],
-            material_gain=500,  # Double check is very forcing
+            material_gain=DOUBLE_CHECK_MATERIAL_GAIN,  # Double check is very forcing
         )
 
     return None
@@ -527,7 +536,7 @@ def detect_back_rank_threat(
                 description="Back Rank Mate Threat",
                 squares=[move.to_square, enemy_king_sq],
                 pieces=[chess.KING],
-                material_gain=10000,  # Mate threat
+                material_gain=MATE_THREAT_MATERIAL_GAIN,  # Mate threat
             )
 
     return None

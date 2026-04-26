@@ -105,6 +105,15 @@ from types import MappingProxyType
 
 import chess
 
+CENTIPAWNS_PER_PAWN = 100
+
+# Threshold for "this best move avoids a significant loss" copy — 1.5
+# pawns is large enough that a beginner would clearly see the difference
+# in evaluation, small enough that it doesn't only fire on tactical
+# blowouts.
+SIGNIFICANT_PAWN_LOSS = 1.5
+
+
 PIECE_NAMES = MappingProxyType(
     {
         chess.PAWN: "pawn",
@@ -563,7 +572,7 @@ def _explain_best_from_pv(
     if pv.gives_mate:
         mate_depth = len(pv.moves_san) // 2 + 1
         if mate_depth <= 1:
-            return I18nMessage(key="explanation.best.checkmate", params={"san": san})
+            return I18nMessage(key="explanation.best.checkmate", params={"san": san})  # noqa: WPS204 — single-key params dict; building a helper for one literal would obscure intent.
         return I18nMessage(
             key="explanation.best.pv_mate",
             params={"san": san, "moves": str(mate_depth), "line": line_str},
@@ -731,7 +740,7 @@ def _explain_best_static(
     san = board.san(best_move)
 
     if _move_gives_mate(board, best_move):
-        return I18nMessage(key="explanation.best.checkmate", params={"san": san})
+        return I18nMessage(key="explanation.best.checkmate", params={"san": san})  # noqa: WPS204 — single-key params dict; building a helper for one literal would obscure intent.
 
     if _move_gives_check(board, best_move):
         if board.is_capture(best_move):
@@ -826,8 +835,8 @@ def _explain_best_static(
             params={"san": san, "piece": threat.piece_key},
         )
 
-    pawn_loss = cp_loss / 100
-    if pawn_loss >= 1.5:  # noqa: WPS459 — `>=`, not `==`; no precision-equality risk.
+    pawn_loss = cp_loss / CENTIPAWNS_PER_PAWN
+    if pawn_loss >= SIGNIFICANT_PAWN_LOSS:
         return I18nMessage(
             key="explanation.best.avoids_loss",
             params={"san": san, "loss": f"{pawn_loss:.1f}"},

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 import httpx
 
 from tests.auth.conftest import signup_via_http
@@ -24,7 +25,7 @@ class TestSettingsSaveInCredentialsMode:
         self, client_credentials_mode: httpx.AsyncClient, invite_code: str
     ):
         signup_response = await signup_via_http(client_credentials_mode, invite_code)
-        assert signup_response.status_code == 200, signup_response.text
+        assert signup_response.status_code == HTTPStatus.OK, signup_response.text
         r = await client_credentials_mode.post(
             "/api/settings",
             json={
@@ -35,17 +36,17 @@ class TestSettingsSaveInCredentialsMode:
                 "spaced_repetition_days": 30,
             },
         )
-        assert r.status_code == 200, r.text
+        assert r.status_code == HTTPStatus.OK, r.text
         assert r.json() == {"success": True}
 
     async def test_post_features_returns_200_in_credentials_mode(
         self, client_credentials_mode: httpx.AsyncClient, invite_code: str
     ):
         signup_response = await signup_via_http(client_credentials_mode, invite_code)
-        assert signup_response.status_code == 200, signup_response.text
+        assert signup_response.status_code == HTTPStatus.OK, signup_response.text
         r = await client_credentials_mode.post(
             "/api/settings/features",
             json={"features": {"trainer.tactics": True}},
         )
-        assert r.status_code == 200, r.text
+        assert r.status_code == HTTPStatus.OK, r.text
         assert r.json() == {"success": True}

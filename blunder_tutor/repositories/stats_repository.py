@@ -66,7 +66,7 @@ class StatsRepository(BaseDbRepository):
         self,
         filters: StatsFilter | None = None,
     ) -> dict[str, object]:
-        filters = filters or StatsFilter()
+        filters = filters or StatsFilter()  # noqa: WPS204 — coerce None to default; opt-arg pattern is repeated by design across stats methods.
         conn = await self.get_connection()
 
         game_where = "WHERE 1=1"
@@ -85,8 +85,12 @@ class StatsRepository(BaseDbRepository):
         ) as cursor:
             game_row = await cursor.fetchone()
 
-        total_games = game_row[0] if game_row else 0
-        analyzed_games = int(game_row[1]) if game_row and game_row[1] is not None else 0
+        total_games = game_row["total"] if game_row else 0
+        analyzed_games = (
+            int(game_row["analyzed"])
+            if game_row and game_row["analyzed"] is not None
+            else 0
+        )
         pending_analysis = total_games - analyzed_games
 
         blunder_where = f"""
@@ -106,7 +110,7 @@ class StatsRepository(BaseDbRepository):
             blunder_params,
         ) as cursor:
             blunder_row = await cursor.fetchone()
-        total_blunders = blunder_row[0] if blunder_row else 0
+        total_blunders = blunder_row[0] if blunder_row else 0  # COUNT(*) — no alias.
 
         return {
             "total_games": total_games,
@@ -140,18 +144,27 @@ class StatsRepository(BaseDbRepository):
         query += " GROUP BY source, username ORDER BY total_games DESC"
 
         conn = await self.get_connection()
-        async with conn.execute(query, params) as cursor:
+        async with conn.execute(query, params) as cursor:  # noqa: WPS204 — build-query/exec-query is the natural shape across stats methods.
             rows = await cursor.fetchall()
 
         return [
             {
-                "source": row[0],
-                "username": row[1],
-                "total_games": row[2],
-                "analyzed_games": int(row[3]) if row[3] is not None else 0,
-                "pending_games": row[2] - (int(row[3]) if row[3] is not None else 0),
-                "oldest_game_date": row[5],
-                "newest_game_date": row[6],
+                "source": row["source"],
+                "username": row["username"],
+                "total_games": row["total_games"],
+                "analyzed_games": (
+                    int(row["analyzed_games"])
+                    if row["analyzed_games"] is not None
+                    else 0
+                ),
+                "pending_games": row["total_games"]
+                - (
+                    int(row["analyzed_games"])
+                    if row["analyzed_games"] is not None
+                    else 0  # noqa: WPS509 — single parenthesized ternary inside arithmetic, no nesting.
+                ),
+                "oldest_game_date": row["oldest_game_date"],
+                "newest_game_date": row["newest_game_date"],
             }
             for row in rows
         ]
@@ -171,13 +184,13 @@ class StatsRepository(BaseDbRepository):
             {PLAYER_SIDE_FILTER}
         """
         params: list[object] = []
-        query = filters.append_to(query, params)
+        query = filters.append_to(query, params)  # noqa: WPS204 — same filter-clause-extension pattern used across stats methods.
 
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             row = await cursor.fetchone()
-        total_blunders = row[0] if row else 0
-        avg_cp_loss = row[1] if row else 0.0
+        total_blunders = row["total_blunders"] if row else 0
+        avg_cp_loss = row["avg_cp_loss"] if row else 0.0
 
         date_query = f"""
             SELECT
@@ -195,7 +208,10 @@ class StatsRepository(BaseDbRepository):
 
         async with conn.execute(date_query, date_params) as cursor:
             date_rows = await cursor.fetchall()
-        blunders_by_date = [{"date": row[0], "count": row[1]} for row in date_rows]
+        blunders_by_date = [
+            {"date": row["date"], "count": row["count"]}  # noqa: WPS204 — count column read pattern repeats across grouped-stats methods.
+            for row in date_rows
+        ]
 
         return {
             "total_blunders": total_blunders,
@@ -217,10 +233,14 @@ class StatsRepository(BaseDbRepository):
         ) as cursor:
             row = await cursor.fetchone()
 
-        total_jobs = row[0] if row else 0
-        completed_jobs = int(row[1]) if row and row[1] is not None else 0
-        failed_jobs = int(row[2]) if row and row[2] is not None else 0
-        in_progress_jobs = int(row[3]) if row and row[3] is not None else 0
+        total_jobs = row["total"] if row else 0
+        completed_jobs = (
+            int(row["completed"]) if row and row["completed"] is not None else 0
+        )
+        failed_jobs = int(row["failed"]) if row and row["failed"] is not None else 0
+        in_progress_jobs = (
+            int(row["in_progress"]) if row and row["in_progress"] is not None else 0
+        )
 
         return {
             "total_jobs": total_jobs,
@@ -249,18 +269,7 @@ class StatsRepository(BaseDbRepository):
         ) as cursor:
             rows = await cursor.fetchall()
 
-        return [
-            {
-                "job_id": row[0],
-                "job_type": row[1],
-                "status": row[2],
-                "username": row[3],
-                "source": row[4],
-                "created_at": row[5],
-                "completed_at": row[6],
-            }
-            for row in rows
-        ]
+        return [dict(row) for row in rows]
 
     async def get_blunders_by_phase(
         self,
@@ -285,12 +294,12 @@ class StatsRepository(BaseDbRepository):
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        total = sum(row[1] for row in rows)
+        total = sum(row["count"] for row in rows)
         phases = []
         for row in rows:
-            phase_int = row[0]
-            count = row[1]
-            avg_cp_loss = row[2] or 0.0
+            phase_int = row["game_phase"]
+            count = row["count"]
+            avg_cp_loss = row["avg_cp_loss"] or 0.0
             phase_label = (
                 PHASE_LABELS.get(phase_int, "unknown")
                 if phase_int is not None
@@ -340,10 +349,10 @@ class StatsRepository(BaseDbRepository):
         eco_stats: dict[tuple[str, str], dict[str, object]] = {}
 
         for row in rows:
-            eco_code = row[0]
-            eco_name = row[1]
-            cp_loss = row[2] or 0
-            game_id = row[3]
+            eco_code = row["eco_code"]
+            eco_name = row["eco_name"]
+            cp_loss = row["cp_loss"] or 0
+            game_id = row["game_id"]
 
             key = (eco_code, eco_name)
             if key not in eco_stats:
@@ -410,12 +419,12 @@ class StatsRepository(BaseDbRepository):
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        total = sum(row[1] for row in rows)
+        total = sum(row["count"] for row in rows)
         colors = []
         for row in rows:
-            color_int = row[0]
-            count = row[1]
-            avg_cp_loss = row[2] or 0.0
+            color_int = row["user_color"]
+            count = row["count"]
+            avg_cp_loss = row["avg_cp_loss"] or 0.0
             color_label = (
                 COLOR_LABELS.get(color_int, "unknown")
                 if color_int is not None
@@ -455,9 +464,9 @@ class StatsRepository(BaseDbRepository):
 
         blunders_by_date = [
             {
-                "date": date_row[0],
-                "color": COLOR_LABELS.get(date_row[1], "unknown"),
-                "count": date_row[2],
+                "date": date_row["date"],
+                "color": COLOR_LABELS.get(date_row["user_color"], "unknown"),
+                "count": date_row["count"],
             }
             for date_row in date_rows
         ]
@@ -570,12 +579,12 @@ class StatsRepository(BaseDbRepository):
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        total = sum(row[1] for row in rows)
+        total = sum(row["count"] for row in rows)
         patterns = []
         for row in rows:
-            pattern_int = row[0]
-            count = row[1]
-            avg_cp_loss = row[2] or 0.0
+            pattern_int = row["tactical_pattern"]
+            count = row["count"]
+            avg_cp_loss = row["avg_cp_loss"] or 0.0
             pattern_label = (
                 PATTERN_LABELS.get(pattern_int, "Unknown")
                 if pattern_int is not None
@@ -620,12 +629,12 @@ class StatsRepository(BaseDbRepository):
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        total = sum(row[1] for row in rows)
+        total = sum(row["count"] for row in rows)
         game_types = []
         for row in rows:
-            game_type_int = row[0]
-            count = row[1]
-            avg_cp_loss = row[2] or 0.0
+            game_type_int = row["game_type"]
+            count = row["count"]
+            avg_cp_loss = row["avg_cp_loss"] or 0.0
             game_type_label = GAME_TYPE_LABELS.get(game_type_int, "unknown")
             percentage = (count / total * 100) if total > 0 else 0.0
             game_types.append(
@@ -673,12 +682,12 @@ class StatsRepository(BaseDbRepository):
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        total = sum(row[1] for row in rows)
+        total = sum(row["count"] for row in rows)
         phases = []
         for row in rows:
-            phase_int = row[0]
-            count = row[1]
-            avg_cp_loss = row[2] or 0.0
+            phase_int = row["game_phase"]
+            count = row["count"]
+            avg_cp_loss = row["avg_cp_loss"] or 0.0
             phase_label = (
                 PHASE_LABELS.get(phase_int, "unknown")
                 if phase_int is not None
@@ -728,16 +737,16 @@ class StatsRepository(BaseDbRepository):
         async with conn.execute(query, params) as cursor:
             rows = await cursor.fetchall()
 
-        total = sum(row[1] for row in rows)
-        bucket_map = {row[0]: row for row in rows}
+        total = sum(row["count"] for row in rows)
+        bucket_map = {row["diff_bucket"]: row for row in rows}
 
         by_difficulty = []
         for bucket_key in ("easy", "medium", "hard", "unscored"):
             row = bucket_map.get(bucket_key)
             if not row:
                 continue
-            count = row[1]
-            avg_cp_loss = row[2] or 0.0
+            count = row["count"]
+            avg_cp_loss = row["avg_cp_loss"] or 0.0
             percentage = (count / total * 100) if total > 0 else 0.0
             by_difficulty.append(
                 {
@@ -953,15 +962,21 @@ class StatsRepository(BaseDbRepository):
 
         return [
             {
-                "game_id": row[0],
-                "end_time_utc": row[1],
-                "blunder_count": row[2],
-                "avg_cpl": round(float(row[3]), 1) if row[3] is not None else 0.0,
-                "avg_blunder_cpl": round(float(row[4]), 1)
-                if row[4] is not None
-                else 0.0,
-                "catastrophic_count": row[5],
-                "total_blunders": row[6],
+                "game_id": row["game_id"],
+                "end_time_utc": row["end_time_utc"],
+                "blunder_count": row["blunder_count"],
+                "avg_cpl": (
+                    round(float(row["avg_cpl"]), 1)
+                    if row["avg_cpl"] is not None
+                    else 0.0
+                ),
+                "avg_blunder_cpl": (
+                    round(float(row["avg_blunder_cpl"]), 1)
+                    if row["avg_blunder_cpl"] is not None
+                    else 0.0
+                ),
+                "catastrophic_count": row["catastrophic_count"],
+                "total_blunders": row["total_blunders_for_rate"],
             }
             for row in rows
         ]

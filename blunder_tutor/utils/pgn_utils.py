@@ -29,7 +29,8 @@ def load_game_from_string(pgn_content: str) -> chess.pgn.Game:
 
 
 def normalize_pgn(pgn_text: str) -> str:
-    return pgn_text.strip().replace("\r\n", "\n").replace("\r", "\n") + "\n"
+    cleaned = pgn_text.strip().replace("\r\n", "\n").replace("\r", "\n")
+    return f"{cleaned}\n"
 
 
 def compute_game_id(pgn_content: str) -> str:

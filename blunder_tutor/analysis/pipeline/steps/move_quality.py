@@ -9,7 +9,28 @@ import chess.engine
 from blunder_tutor.analysis.pipeline.context import StepResult
 from blunder_tutor.analysis.pipeline.steps.base import AnalysisStep
 from blunder_tutor.analysis.thresholds import winning_chances
-from blunder_tutor.constants import MAX_CP_LOSS
+from blunder_tutor.constants import (
+    MATE_SCORE_ANALYSIS,
+    MATE_THRESHOLD,
+    MAX_CP_LOSS,
+)
+
+# Difficulty heuristic constants. Each move's "difficulty" score (0-100)
+# rewards positions that are objectively harder to navigate: quiet best
+# moves, narrow legal-move counts, and deep tactics. Scoring weights are
+# tuned by manual review of analyzed games.
+DIFFICULTY_NO_BEST_MOVE_DEFAULT = 50
+DIFFICULTY_QUIET_BEST = 40
+DIFFICULTY_CAPTURE_NO_CHECK = 15
+DIFFICULTY_FORCED_BEST = 5
+DIFFICULTY_VERY_NARROW = 30  # legal_count ≤ 3
+DIFFICULTY_NARROW = 20  # legal_count ≤ 8
+DIFFICULTY_MODERATE = 10  # legal_count ≤ 15
+DIFFICULTY_DEEP_TACTIC_THRESHOLD_CP = 400
+DIFFICULTY_DEEP_TACTIC_BONUS = 15
+LEGAL_COUNT_VERY_NARROW = 3
+LEGAL_COUNT_NARROW = 8
+LEGAL_COUNT_MODERATE = 15
 
 if TYPE_CHECKING:
     from blunder_tutor.analysis.pipeline.context import StepContext
@@ -71,12 +92,12 @@ def compute_difficulty(
         return 0
 
     if not best_move_uci:
-        return 50
+        return DIFFICULTY_NO_BEST_MOVE_DEFAULT
 
     try:
         best_move = chess.Move.from_uci(best_move_uci)
     except ValueError:
-        return 50
+        return DIFFICULTY_NO_BEST_MOVE_DEFAULT
 
     score = 0
 
@@ -84,24 +105,28 @@ def compute_difficulty(
     is_capture = board.is_capture(best_move)
     gives_check = board.gives_check(best_move)
     if not is_capture and not gives_check:
-        score += 40
+        score += DIFFICULTY_QUIET_BEST
     elif is_capture and not gives_check:
-        score += 15
+        score += DIFFICULTY_CAPTURE_NO_CHECK
     else:
-        score += 5
+        score += DIFFICULTY_FORCED_BEST
 
     # Fewer safe alternatives → harder position (less choice = more forgivable)
     legal_count = board.legal_moves.count()
-    if legal_count <= 3:
-        score += 30
-    elif legal_count <= 8:
-        score += 20
-    elif legal_count <= 15:
-        score += 10
+    if legal_count <= LEGAL_COUNT_VERY_NARROW:
+        score += DIFFICULTY_VERY_NARROW
+    elif legal_count <= LEGAL_COUNT_NARROW:
+        score += DIFFICULTY_NARROW
+    elif legal_count <= LEGAL_COUNT_MODERATE:
+        score += DIFFICULTY_MODERATE
 
     # Very large cp_loss with a quiet best move suggests a deep tactic
-    if cp_loss >= 400 and not is_capture and not gives_check:
-        score += 15
+    if (
+        cp_loss >= DIFFICULTY_DEEP_TACTIC_THRESHOLD_CP
+        and not is_capture
+        and not gives_check
+    ):
+        score += DIFFICULTY_DEEP_TACTIC_BONUS
 
     return min(score, 100)
 
@@ -136,7 +161,7 @@ class MoveQualityStep(AnalysisStep):
 
             missed_mate_depth: int | None = None
 
-            if eval_after == 100000:  # Checkmate delivered
+            if eval_after == MATE_SCORE_ANALYSIS:  # Checkmate delivered
                 delta = 0
                 cp_loss = 0
                 class_label = "good"
@@ -148,8 +173,8 @@ class MoveQualityStep(AnalysisStep):
                 has_winning_mate_before = mate_before is not None and mate_before > 0
                 is_mate_before = mate_before is not None
 
-                # Detect mate-after from eval (score_to_cp uses mate_score=100000)
-                is_mate_after = abs(eval_after) >= 90000
+                # Detect mate-after from eval (score_to_cp uses mate_score=MATE_SCORE_ANALYSIS)
+                is_mate_after = abs(eval_after) >= MATE_THRESHOLD
                 has_winning_mate_after = is_mate_after and eval_after > 0
                 has_losing_mate_after = is_mate_after and eval_after < 0
 

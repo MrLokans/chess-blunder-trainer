@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import PlainTextResponse
 
 from blunder_tutor.constants import (
     CLASSIFICATION_BLUNDER,
     CLASSIFICATION_INACCURACY,
     CLASSIFICATION_LABELS,
+    MATE_SCORE_ANALYSIS,
+    MATE_THRESHOLD,
     PHASE_LABELS,
 )
 from blunder_tutor.utils.pgn_utils import extract_game_url_from_string
@@ -16,13 +18,15 @@ from blunder_tutor.web.dependencies import AnalysisRepoDep, GameRepoDep
 
 debug_router = APIRouter()
 
+CENTIPAWNS_PER_PAWN = 100
+
 
 def _format_eval(cp: int) -> str:
-    if abs(cp) >= 90000:
+    if abs(cp) >= MATE_THRESHOLD:
         sign = "+" if cp > 0 else "-"
-        mate_in = (100000 - abs(cp) + 1) // 2
+        mate_in = (MATE_SCORE_ANALYSIS - abs(cp) + 1) // 2
         return f"{sign}M{mate_in}"
-    return f"{cp / 100:+.2f}"
+    return f"{cp / CENTIPAWNS_PER_PAWN:+.2f}"
 
 
 def _build_debug_text(
@@ -34,7 +38,7 @@ def _build_debug_text(
     lines: list[str] = []
 
     lines.append("## Game Debug Info")
-    lines.append("")
+    lines.append("")  # noqa: WPS204 — markdown blank-line separators in a single linear builder; helper would obscure the layout.
     lines.append(f"- **Game ID**: `{game['id']}`")
     lines.append(f"- **Source**: {game.get('source', 'unknown')}")
     lines.append(f"- **White**: {game.get('white', '?')}")
@@ -60,7 +64,10 @@ def _build_debug_text(
 
     focus_move = None
     if focus_ply is not None and analysis_moves:
-        focus_move = next((m for m in analysis_moves if m["ply"] == focus_ply), None)
+        focus_move = next(
+            (m for m in analysis_moves if m["ply"] == focus_ply),  # noqa: WPS204 — iterating analysis_moves to find target ply.
+            None,
+        )
 
     if focus_move is not None:
         player = "white" if focus_move["player"] == 0 else "black"
@@ -102,7 +109,7 @@ def _build_debug_text(
                 else "?"
             )
             marker = (
-                " **" + cls_label.upper() + "**"
+                f" **{cls_label.upper()}**"
                 if m["classification"] >= CLASSIFICATION_INACCURACY
                 else ""
             )
@@ -160,7 +167,9 @@ async def game_debug_info(
 ) -> PlainTextResponse:
     game = await game_repo.get_game(game_id)
     if not game:
-        raise HTTPException(status_code=404, detail=f"Game not found: {game_id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Game not found: {game_id}"
+        )
 
     analysis_moves = await analysis_repo.fetch_moves(game_id)
     eco = await analysis_repo.get_game_eco(game_id)

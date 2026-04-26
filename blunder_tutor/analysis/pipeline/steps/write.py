@@ -53,9 +53,10 @@ class WriteAnalysisStep(AnalysisStep):
 
         for move in moves:
             move["game_phase"] = phases.get(move["ply"])
-            if move["ply"] in tactics_map:
-                move["tactical_pattern"] = tactics_map[move["ply"]]["tactical_pattern"]
-                move["tactical_reason"] = tactics_map[move["ply"]]["tactical_reason"]
+            tactic = tactics_map.get(move["ply"])
+            if tactic is not None:
+                move["tactical_pattern"] = tactic["tactical_pattern"]
+                move["tactical_reason"] = tactic["tactical_reason"]
 
         eco_code = None
         eco_name = None

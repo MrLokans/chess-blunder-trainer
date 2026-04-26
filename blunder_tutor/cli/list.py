@@ -5,6 +5,8 @@ from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.web.config import AppConfig
 
+DEFAULT_LIST_LIMIT = 20
+
 
 class ListCommand(CLICommand):
     def should_run(self, args: argparse.Namespace) -> bool:
@@ -39,6 +41,6 @@ class ListCommand(CLICommand):
         list_parser.add_argument(
             "--limit",
             type=int,
-            default=20,
+            default=DEFAULT_LIST_LIMIT,
             help="Max results to show",
         )

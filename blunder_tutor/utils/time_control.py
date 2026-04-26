@@ -42,6 +42,17 @@ GAME_TYPE_FROM_STRING: MappingProxyType[str, int] = MappingProxyType(
     {v: k for k, v in GAME_TYPE_LABELS.items()}
 )
 
+# Lichess game-type classifier — duration thresholds in seconds. Boundaries
+# match the published Lichess rules; see classify_game_type() docstring.
+ULTRABULLET_MAX_SECONDS = 29
+BULLET_MAX_SECONDS = 180  # 3 min
+BLITZ_MAX_SECONDS = 480  # 8 min
+RAPID_MAX_SECONDS = 1500  # 25 min
+
+# Game-duration estimator: base + AVG_MOVES_PER_PLAYER * increment, where
+# 40 is the standard estimate for moves per player in a typical game.
+AVG_MOVES_PER_PLAYER = 40
+
 
 def parse_time_control(time_control: str | None) -> tuple[int, int] | None:
     """Parse time control string into (base_seconds, increment_seconds).
@@ -74,7 +85,7 @@ def estimate_game_duration(base_seconds: int, increment_seconds: int) -> int:
     Uses the standard formula: base + 40 * increment
     (assuming ~40 moves per player in a typical game)
     """
-    return base_seconds + 40 * increment_seconds
+    return base_seconds + AVG_MOVES_PER_PLAYER * increment_seconds
 
 
 def classify_game_type(time_control: str | None) -> GameType:
@@ -107,13 +118,13 @@ def classify_game_type(time_control: str | None) -> GameType:
     base, increment = parsed
     duration = estimate_game_duration(base, increment)
 
-    if duration < 29:
+    if duration < ULTRABULLET_MAX_SECONDS:
         return GameType.ULTRABULLET
-    if duration < 180:
+    if duration < BULLET_MAX_SECONDS:
         return GameType.BULLET
-    if duration < 480:
+    if duration < BLITZ_MAX_SECONDS:
         return GameType.BLITZ
-    if duration < 1500:
+    if duration < RAPID_MAX_SECONDS:
         return GameType.RAPID
     return GameType.CLASSICAL
 

@@ -10,6 +10,7 @@ log = logging.getLogger(__name__)
 
 DB_FILE_MODE = 0o600
 USER_DIR_MODE = 0o700
+RESTRICTIVE_UMASK = 0o077
 
 
 @contextmanager
@@ -24,7 +25,7 @@ def restrict_umask() -> Iterator[None]:
     poll from a local attacker can read the file. Wrap the connect
     inside this context and the window disappears.
     """
-    previous = os.umask(0o077)
+    previous = os.umask(RESTRICTIVE_UMASK)
     try:
         yield
     finally:

@@ -22,10 +22,10 @@ class BackfillECOCommand(CLICommand):
         db_path = config.data.db_path
         run_migrations(db_path)
 
-        analysis_repo = AnalysisRepository.from_config(config)
-        games_repo = GameRepository.from_config(config)
-
-        try:
+        async with (
+            AnalysisRepository.from_config(config) as analysis_repo,
+            GameRepository.from_config(config) as games_repo,
+        ):
             backfill_service = ECOBackfillService(
                 analysis_repo=analysis_repo,
                 game_repo=games_repo,
@@ -53,10 +53,6 @@ class BackfillECOCommand(CLICommand):
                 f"Backfill complete: {len(game_ids)} games processed, "
                 f"{classified} games classified with ECO codes."
             )
-
-        finally:
-            await analysis_repo.close()
-            await games_repo.close()
 
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
         subparsers.add_parser(
