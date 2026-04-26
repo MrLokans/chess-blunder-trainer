@@ -39,7 +39,7 @@ class NoOpFilePermissionPolicy:
         return nullcontext()
 
     def secure_db_file(self, path: Path) -> None:
-        return None
+        """No-op: defer to caller's umask + filesystem ACLs."""
 
 
 _NOOP_POLICY: FilePermissionPolicy = NoOpFilePermissionPolicy()

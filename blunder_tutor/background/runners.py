@@ -8,6 +8,7 @@ after setting up the DependencyContext.
 from __future__ import annotations
 
 import logging
+from types import MappingProxyType
 from typing import Annotated, Any
 
 from fast_depends import Depends, inject
@@ -235,14 +236,16 @@ async def run_import_pgn_job(
 
 
 # Mapping of job types to runner functions
-JOB_RUNNERS = {
-    "import": run_import_job,
-    "sync": run_sync_job,
-    "analyze": run_analyze_job,
-    "backfill_phases": run_backfill_phases_job,
-    "backfill_eco": run_backfill_eco_job,
-    "backfill_tactics": run_backfill_tactics_job,
-    "backfill_traps": run_backfill_traps_job,
-    "delete_all_data": run_delete_all_data_job,
-    "import_pgn": run_import_pgn_job,
-}
+JOB_RUNNERS = MappingProxyType(
+    {
+        "import": run_import_job,
+        "sync": run_sync_job,
+        "analyze": run_analyze_job,
+        "backfill_phases": run_backfill_phases_job,
+        "backfill_eco": run_backfill_eco_job,
+        "backfill_tactics": run_backfill_tactics_job,
+        "backfill_traps": run_backfill_traps_job,
+        "delete_all_data": run_delete_all_data_job,
+        "import_pgn": run_import_pgn_job,
+    }
+)

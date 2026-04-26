@@ -32,6 +32,14 @@ jobs:
       - name: Run ruff format check
         run: uv run ruff format --check blunder_tutor/
 
+      - name: Run wemake-python-styleguide (warning-only)
+        # Phase 1 of EPIC-4: WPS runs alongside ruff to surface violations
+        # in PRs without blocking merges. Phases 2–4 land config tuning and
+        # fixes; Phase 5 flips this to a hard fail. See
+        # docs/quality/wps-poc.md.
+        continue-on-error: true
+        run: uv run flake8 --select=WPS blunder_tutor/ main.py tests/
+
       - name: Run i18n lint
         # Strict mode: all four checks fail the build. Baseline was
         # cleaned in TREK-67/-68 (66 dead keys removed, 3 deliberate

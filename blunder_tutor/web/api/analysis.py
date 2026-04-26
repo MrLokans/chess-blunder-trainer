@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 from enum import Enum
 from functools import partial
+from types import MappingProxyType
 from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -63,38 +64,46 @@ class DifficultyEnum(str, Enum):
     hard = "hard"
 
 
-DIFFICULTY_RANGES = {
-    "easy": (0, 30),
-    "medium": (31, 60),
-    "hard": (61, 100),
-}
+DIFFICULTY_RANGES = MappingProxyType(
+    {
+        "easy": (0, 30),
+        "medium": (31, 60),
+        "hard": (61, 100),
+    }
+)
 
 
-PATTERN_FROM_STRING = {
-    "fork": TacticalPattern.FORK,
-    "pin": TacticalPattern.PIN,
-    "skewer": TacticalPattern.SKEWER,
-    "discovered_attack": TacticalPattern.DISCOVERED_ATTACK,
-    "discovered_check": TacticalPattern.DISCOVERED_CHECK,
-    "double_check": TacticalPattern.DOUBLE_CHECK,
-    "back_rank": TacticalPattern.BACK_RANK_THREAT,
-    "hanging_piece": TacticalPattern.HANGING_PIECE,
-    "none": TacticalPattern.NONE,
-}
+PATTERN_FROM_STRING = MappingProxyType(
+    {
+        "fork": TacticalPattern.FORK,
+        "pin": TacticalPattern.PIN,
+        "skewer": TacticalPattern.SKEWER,
+        "discovered_attack": TacticalPattern.DISCOVERED_ATTACK,
+        "discovered_check": TacticalPattern.DISCOVERED_CHECK,
+        "double_check": TacticalPattern.DOUBLE_CHECK,
+        "back_rank": TacticalPattern.BACK_RANK_THREAT,
+        "hanging_piece": TacticalPattern.HANGING_PIECE,
+        "none": TacticalPattern.NONE,
+    }
+)
 
-GAME_TYPE_FROM_STRING = {
-    "ultrabullet": 0,
-    "bullet": 1,
-    "blitz": 2,
-    "rapid": 3,
-    "classical": 4,
-    "correspondence": 5,
-}
+GAME_TYPE_FROM_STRING = MappingProxyType(
+    {
+        "ultrabullet": 0,
+        "bullet": 1,
+        "blitz": 2,
+        "rapid": 3,
+        "classical": 4,
+        "correspondence": 5,
+    }
+)
 
-COLOR_FROM_STRING = {
-    "white": 0,
-    "black": 1,
-}
+COLOR_FROM_STRING = MappingProxyType(
+    {
+        "white": 0,
+        "black": 1,
+    }
+)
 
 
 class SubmitMoveRequest(BaseModel):

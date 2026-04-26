@@ -25,6 +25,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "flake8>=7.3.0",
   "pytest>=8.0.0",
   "pytest-asyncio>=0.24.0",
   "pytest-cov>=5.0.0",
@@ -32,6 +33,7 @@ dev = [
   "pytest-randomly>=3.15.0",
   "pytest-xdist>=3.6.0",
   "ruff>=0.8.6",
+  "wemake-python-styleguide>=1.6.1",
 ]
 
 [project.scripts]
@@ -73,6 +75,11 @@ select = [
 ignore = [
   "E501", # line too long (handled by formatter)
 ]
+# WPS codes are owned by wemake-python-styleguide (flake8 plugin) — ruff
+# doesn't know them, so without this it warns "Invalid rule code provided
+# to # noqa: WPS***" on every WPS-targeted suppression. Listing the prefix
+# here lets ruff pass those codes through unchanged.
+external = ["WPS"]
 
 [tool.ruff.format]
 quote-style = "double"

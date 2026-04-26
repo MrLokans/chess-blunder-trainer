@@ -62,7 +62,7 @@ class AnalyzeGamesJob(BaseJob):
         queue = await self._event_bus.subscribe(EventType.JOB_STATUS_CHANGED)
         try:
             while not cancelled.is_set():
-                try:
+                try:  # noqa: WPS505 — `wait_for` timeout converts to a poll-loop continue; flattening would lose the periodic cancellation check.
                     event = await asyncio.wait_for(queue.get(), timeout=1.0)
                 except TimeoutError:
                     continue
@@ -121,7 +121,7 @@ class AnalyzeGamesJob(BaseJob):
                         )
                         return
 
-                    try:
+                    try:  # noqa: WPS505 — per-game error isolation: a failure on one game must not abort the whole batch.
                         await self.analyzer.analyze_game(
                             _gid, steps=steps, engine=engine
                         )

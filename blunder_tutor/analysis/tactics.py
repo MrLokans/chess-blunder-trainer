@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import IntEnum
+from types import MappingProxyType
 
 import chess
 
@@ -31,30 +32,34 @@ class TacticalPattern(IntEnum):
     OVERLOADED_PIECE = 11
 
 
-PATTERN_LABELS = {
-    TacticalPattern.NONE: "None",
-    TacticalPattern.FORK: "Fork",
-    TacticalPattern.PIN: "Pin",
-    TacticalPattern.SKEWER: "Skewer",
-    TacticalPattern.DISCOVERED_ATTACK: "Discovered Attack",
-    TacticalPattern.DISCOVERED_CHECK: "Discovered Check",
-    TacticalPattern.DOUBLE_CHECK: "Double Check",
-    TacticalPattern.BACK_RANK_THREAT: "Back Rank Threat",
-    TacticalPattern.TRAPPED_PIECE: "Trapped Piece",
-    TacticalPattern.HANGING_PIECE: "Hanging Piece",
-    TacticalPattern.REMOVAL_OF_DEFENDER: "Removal of Defender",
-    TacticalPattern.OVERLOADED_PIECE: "Overloaded Piece",
-}
+PATTERN_LABELS = MappingProxyType(
+    {
+        TacticalPattern.NONE: "None",
+        TacticalPattern.FORK: "Fork",
+        TacticalPattern.PIN: "Pin",
+        TacticalPattern.SKEWER: "Skewer",
+        TacticalPattern.DISCOVERED_ATTACK: "Discovered Attack",
+        TacticalPattern.DISCOVERED_CHECK: "Discovered Check",
+        TacticalPattern.DOUBLE_CHECK: "Double Check",
+        TacticalPattern.BACK_RANK_THREAT: "Back Rank Threat",
+        TacticalPattern.TRAPPED_PIECE: "Trapped Piece",
+        TacticalPattern.HANGING_PIECE: "Hanging Piece",
+        TacticalPattern.REMOVAL_OF_DEFENDER: "Removal of Defender",
+        TacticalPattern.OVERLOADED_PIECE: "Overloaded Piece",
+    }
+)
 
 # Standard piece values in centipawns
-PIECE_VALUES = {
-    chess.PAWN: 100,
-    chess.KNIGHT: 320,
-    chess.BISHOP: 330,
-    chess.ROOK: 500,
-    chess.QUEEN: 900,
-    chess.KING: 20000,
-}
+PIECE_VALUES = MappingProxyType(
+    {
+        chess.PAWN: 100,
+        chess.KNIGHT: 320,
+        chess.BISHOP: 330,
+        chess.ROOK: 500,
+        chess.QUEEN: 900,
+        chess.KING: 20000,
+    }
+)
 
 
 @dataclass

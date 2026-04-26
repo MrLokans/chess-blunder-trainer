@@ -10,7 +10,7 @@ from blunder_tutor.repositories import GameRepository
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.web.config import AppConfig
 
-AVAILABLE_STEPS = ["eco", "stockfish", "move_quality", "phase", "write"]
+AVAILABLE_STEPS = ("eco", "stockfish", "move_quality", "phase", "write")
 
 
 class AnalyzeCommand(CLICommand):
@@ -74,4 +74,3 @@ class AnalyzeCommand(CLICommand):
             action="store_true",
             help="Force re-run steps even if already completed",
         )
-        return

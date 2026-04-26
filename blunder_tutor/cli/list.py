@@ -42,4 +42,3 @@ class ListCommand(CLICommand):
             default=20,
             help="Max results to show",
         )
-        return

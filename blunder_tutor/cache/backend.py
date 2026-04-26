@@ -77,8 +77,10 @@ class InMemoryCacheBackend:
 
 
 class NullCacheBackend:
+    """No-op backend: every `get` misses, every write is dropped."""
+
     async def get(self, key: str) -> Any | None:
-        return None
+        pass
 
     async def set(
         self, key: str, value: Any, ttl: int | None = None, tags: set[str] | None = None

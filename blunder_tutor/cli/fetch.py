@@ -112,5 +112,3 @@ class FetchCommand(CLICommand):
             default=None,
             help="Only fetch games after this ISO datetime (e.g., 2024-01-15T00:00:00)",
         )
-
-        return

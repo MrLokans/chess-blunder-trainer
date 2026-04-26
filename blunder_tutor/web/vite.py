@@ -2,23 +2,26 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import MappingProxyType
 
 from markupsafe import Markup
 
-ENTRY_MAP = {
-    "trainer": "src/trainer/index.tsx",
-    "dashboard": "src/dashboard/index.tsx",
-    "settings": "src/settings/index.tsx",
-    "management": "src/management/index.tsx",
-    "import": "src/import/index.tsx",
-    "setup": "src/setup/index.tsx",
-    "starred": "src/starred/index.tsx",
-    "game-review": "src/game-review/index.tsx",
-    "traps": "src/traps/index.tsx",
-    "auth-login": "src/auth/login.tsx",
-    "auth-signup": "src/auth/signup.tsx",
-    "auth-first-setup": "src/auth/first-setup.tsx",
-}
+ENTRY_MAP = MappingProxyType(
+    {
+        "trainer": "src/trainer/index.tsx",
+        "dashboard": "src/dashboard/index.tsx",
+        "settings": "src/settings/index.tsx",
+        "management": "src/management/index.tsx",
+        "import": "src/import/index.tsx",
+        "setup": "src/setup/index.tsx",
+        "starred": "src/starred/index.tsx",
+        "game-review": "src/game-review/index.tsx",
+        "traps": "src/traps/index.tsx",
+        "auth-login": "src/auth/login.tsx",
+        "auth-signup": "src/auth/signup.tsx",
+        "auth-first-setup": "src/auth/first-setup.tsx",
+    }
+)
 
 DEFAULT_DIST_DIR = Path(__file__).resolve().parent / "static" / "dist"
 

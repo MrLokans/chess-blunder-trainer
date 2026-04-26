@@ -101,26 +101,31 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from types import MappingProxyType
 
 import chess
 
-PIECE_NAMES = {
-    chess.PAWN: "pawn",
-    chess.KNIGHT: "knight",
-    chess.BISHOP: "bishop",
-    chess.ROOK: "rook",
-    chess.QUEEN: "queen",
-    chess.KING: "king",
-}
+PIECE_NAMES = MappingProxyType(
+    {
+        chess.PAWN: "pawn",
+        chess.KNIGHT: "knight",
+        chess.BISHOP: "bishop",
+        chess.ROOK: "rook",
+        chess.QUEEN: "queen",
+        chess.KING: "king",
+    }
+)
 
-PIECE_VALUES = {
-    chess.PAWN: 1,
-    chess.KNIGHT: 3,
-    chess.BISHOP: 3,
-    chess.ROOK: 5,
-    chess.QUEEN: 9,
-    chess.KING: 0,
-}
+PIECE_VALUES = MappingProxyType(
+    {
+        chess.PAWN: 1,
+        chess.KNIGHT: 3,
+        chess.BISHOP: 3,
+        chess.ROOK: 5,
+        chess.QUEEN: 9,
+        chess.KING: 0,
+    }
+)
 
 # i18n key → piece type mapping
 PIECE_I18N_KEYS = {
@@ -666,12 +671,12 @@ def _explain_blunder(
     # both before and after the blunder, and the blunder doesn't address it
     ignored = _find_ignored_threat(board, blunder_move, player_color)
     if ignored:
-        piece_type, sq = ignored
+        piece_type, ignored_sq = ignored
         return I18nMessage(
             key="explanation.blunder.ignored_threat",
             params={
                 "piece": _type_key(piece_type, "acc"),
-                "square": chess.square_name(sq),
+                "square": chess.square_name(ignored_sq),
             },
         )
 
@@ -705,13 +710,15 @@ def _explain_blunder(
 # Best-move explanation (static fallbacks)
 # ---------------------------------------------------------------------------
 
-_PATTERN_KEYS = {
-    "fork": "explanation.best.pattern_fork",
-    "pin": "explanation.best.pattern_pin",
-    "skewer": "explanation.best.pattern_skewer",
-    "back rank threat": "explanation.best.pattern_back_rank",
-    "hanging piece": "explanation.best.pattern_hanging",
-}
+_PATTERN_KEYS = MappingProxyType(
+    {
+        "fork": "explanation.best.pattern_fork",
+        "pin": "explanation.best.pattern_pin",
+        "skewer": "explanation.best.pattern_skewer",
+        "back rank threat": "explanation.best.pattern_back_rank",
+        "hanging piece": "explanation.best.pattern_hanging",
+    }
+)
 
 
 def _explain_best_static(
@@ -820,7 +827,7 @@ def _explain_best_static(
         )
 
     pawn_loss = cp_loss / 100
-    if pawn_loss >= 1.5:
+    if pawn_loss >= 1.5:  # noqa: WPS459 — `>=`, not `==`; no precision-equality risk.
         return I18nMessage(
             key="explanation.best.avoids_loss",
             params={"san": san, "loss": f"{pawn_loss:.1f}"},

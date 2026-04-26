@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from enum import IntEnum
+from types import MappingProxyType
 
 # Time control patterns
 # Format: "base+increment" where base is seconds and increment is seconds
@@ -25,17 +26,21 @@ class GameType(IntEnum):
     UNKNOWN = 6
 
 
-GAME_TYPE_LABELS: dict[int, str] = {
-    GameType.ULTRABULLET: "ultrabullet",
-    GameType.BULLET: "bullet",
-    GameType.BLITZ: "blitz",
-    GameType.RAPID: "rapid",
-    GameType.CLASSICAL: "classical",
-    GameType.CORRESPONDENCE: "correspondence",
-    GameType.UNKNOWN: "unknown",
-}
+GAME_TYPE_LABELS: MappingProxyType[int, str] = MappingProxyType(
+    {
+        GameType.ULTRABULLET: "ultrabullet",
+        GameType.BULLET: "bullet",
+        GameType.BLITZ: "blitz",
+        GameType.RAPID: "rapid",
+        GameType.CLASSICAL: "classical",
+        GameType.CORRESPONDENCE: "correspondence",
+        GameType.UNKNOWN: "unknown",
+    }
+)
 
-GAME_TYPE_FROM_STRING: dict[str, int] = {v: k for k, v in GAME_TYPE_LABELS.items()}
+GAME_TYPE_FROM_STRING: MappingProxyType[str, int] = MappingProxyType(
+    {v: k for k, v in GAME_TYPE_LABELS.items()}
+)
 
 
 def parse_time_control(time_control: str | None) -> tuple[int, int] | None:

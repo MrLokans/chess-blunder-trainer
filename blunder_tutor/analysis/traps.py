@@ -112,11 +112,11 @@ class TrapDatabase:
 
         results: list[TrapMatch] = []
         for trap_id in entered.keys() | triggered.keys():
-            trap = self._by_id[trap_id]
-            victim_is_white = trap.victim_side == "white"
-            user_is_victim = (user_color == chess.WHITE and victim_is_white) or (
-                user_color == chess.BLACK and not victim_is_white
-            )
+            trap_def = self._by_id[trap_id]
+            victim_is_white = trap_def.victim_side == "white"
+            user_is_victim = (  # noqa: WPS408 — complementary, not duplicate: white-on-white-victim OR black-on-black-victim.
+                user_color == chess.WHITE and victim_is_white
+            ) or (user_color == chess.BLACK and not victim_is_white)
 
             if trap_id in triggered:
                 match_type = "sprung" if user_is_victim else "executed"

@@ -81,7 +81,9 @@ _default_hasher: BcryptHasher | None = None
 def _get_default_hasher() -> BcryptHasher:
     global _default_hasher
     if _default_hasher is None:
-        _default_hasher = BcryptHasher(ValidationRules.default())
+        _default_hasher = BcryptHasher(  # noqa: WPS122 — module-level lazy-init, not a throwaway.
+            ValidationRules.default(),
+        )
     return _default_hasher
 
 

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from blunder_tutor.background.base import BaseJob
 
-_JOB_REGISTRY: dict[str, type[BaseJob]] = {}
+_JOB_REGISTRY: dict[str, type[BaseJob]] = {}  # noqa: WPS407 — populated by `@register_job` at import time; intentionally mutable.
 
 
 def register_job(job_class: type[BaseJob]) -> type[BaseJob]:

@@ -138,12 +138,12 @@ def _extract_host(url: str) -> str | None:
     return after_scheme.split(":", 1)[0].lower()
 
 
-DEMO_ALLOWED_MUTATIONS: list[tuple[str, re.Pattern]] = [
+DEMO_ALLOWED_MUTATIONS: tuple[tuple[str, re.Pattern], ...] = (
     ("POST", re.compile(r"^/api/submit$")),
     ("POST", re.compile(r"^/api/analyze$")),
     ("POST", re.compile(r"^/api/settings/locale$")),
     ("POST", re.compile(r"^/api/validate-username$")),
-]
+)
 
 
 class DemoModeMiddleware(BaseHTTPMiddleware):

@@ -92,8 +92,8 @@ class Trainer:
 
         if (start_date or end_date) and candidates:
             filtered_candidates = []
-            for blunder in candidates:
-                game_id = blunder["game_id"]
+            for candidate in candidates:
+                game_id = candidate["game_id"]
                 game = await self.games.get_game(game_id)
                 if not game:
                     continue
@@ -107,7 +107,7 @@ class Trainer:
                 if end_date and game_date > end_date:
                     continue
 
-                filtered_candidates.append(blunder)
+                filtered_candidates.append(candidate)
 
             candidates = filtered_candidates
 

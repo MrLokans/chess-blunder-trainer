@@ -27,4 +27,3 @@ class ShowCommand(CLICommand):
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
         show_parser = subparsers.add_parser("show", help="Show stored game metadata")
         show_parser.add_argument("game_id", help="Game id (sha256)")
-        return

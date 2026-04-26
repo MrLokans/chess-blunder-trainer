@@ -27,8 +27,8 @@ _default_ttl: int = 300
 
 def set_cache_backend(backend: CacheBackend | None, *, default_ttl: int = 300) -> None:
     global _cache_backend, _default_ttl
-    _cache_backend = backend
-    _default_ttl = default_ttl
+    _cache_backend = backend  # noqa: WPS122 — module-level state, not a throwaway.
+    _default_ttl = default_ttl  # noqa: WPS122 — module-level state, not a throwaway.
 
 
 def get_cache_backend() -> CacheBackend | None:

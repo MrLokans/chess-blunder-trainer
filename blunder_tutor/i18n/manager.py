@@ -3,54 +3,57 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from types import MappingProxyType
 
 # CLDR plural rules for supported locales
 # Each function takes a number and returns the plural category
-PLURAL_RULES: dict[str, callable] = {
-    "en": lambda n: "one" if n == 1 else "other",
-    "ru": lambda n: (
-        "one"
-        if n % 10 == 1 and n % 100 != 11
-        else (
-            "few"
-            if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14)
-            else "many"
-            if n % 10 == 0 or 5 <= n % 10 <= 9 or 11 <= n % 100 <= 14
-            else "other"
-        )
-    ),
-    "uk": lambda n: (
-        "one"
-        if n % 10 == 1 and n % 100 != 11
-        else (
-            "few"
-            if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14)
-            else "many"
-            if n % 10 == 0 or 5 <= n % 10 <= 9 or 11 <= n % 100 <= 14
-            else "other"
-        )
-    ),
-    "de": lambda n: "one" if n == 1 else "other",
-    "fr": lambda n: "one" if n in (0, 1) else "other",
-    "es": lambda n: "one" if n == 1 else "other",
-    "pl": lambda n: (
-        "one"
-        if n == 1
-        else ("few" if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14) else "many")
-    ),
-    "be": lambda n: (
-        "one"
-        if n % 10 == 1 and n % 100 != 11
-        else (
-            "few"
-            if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14)
-            else "many"
-            if n % 10 == 0 or 5 <= n % 10 <= 9 or 11 <= n % 100 <= 14
-            else "other"
-        )
-    ),
-    "zh": lambda n: "other",
-}
+PLURAL_RULES: MappingProxyType = MappingProxyType(
+    {
+        "en": lambda n: "one" if n == 1 else "other",
+        "ru": lambda n: (
+            "one"
+            if n % 10 == 1 and n % 100 != 11
+            else (
+                "few"
+                if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14)
+                else "many"
+                if n % 10 == 0 or 5 <= n % 10 <= 9 or 11 <= n % 100 <= 14
+                else "other"
+            )
+        ),
+        "uk": lambda n: (
+            "one"
+            if n % 10 == 1 and n % 100 != 11
+            else (
+                "few"
+                if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14)
+                else "many"
+                if n % 10 == 0 or 5 <= n % 10 <= 9 or 11 <= n % 100 <= 14
+                else "other"
+            )
+        ),
+        "de": lambda n: "one" if n == 1 else "other",
+        "fr": lambda n: "one" if n in (0, 1) else "other",
+        "es": lambda n: "one" if n == 1 else "other",
+        "pl": lambda n: (
+            "one"
+            if n == 1
+            else ("few" if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14) else "many")
+        ),
+        "be": lambda n: (
+            "one"
+            if n % 10 == 1 and n % 100 != 11
+            else (
+                "few"
+                if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14)
+                else "many"
+                if n % 10 == 0 or 5 <= n % 10 <= 9 or 11 <= n % 100 <= 14
+                else "other"
+            )
+        ),
+        "zh": lambda n: "other",
+    }
+)
 
 # Matches {varName, plural, one {text} other {text}} patterns
 _PLURAL_RE = re.compile(r"\{(\w+),\s*plural,\s*(.*)\}", re.DOTALL)

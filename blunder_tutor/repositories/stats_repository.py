@@ -455,11 +455,11 @@ class StatsRepository(BaseDbRepository):
 
         blunders_by_date = [
             {
-                "date": row[0],
-                "color": COLOR_LABELS.get(row[1], "unknown"),
-                "count": row[2],
+                "date": date_row[0],
+                "color": COLOR_LABELS.get(date_row[1], "unknown"),
+                "count": date_row[2],
             }
-            for row in date_rows
+            for date_row in date_rows
         ]
 
         return {
@@ -779,11 +779,11 @@ class StatsRepository(BaseDbRepository):
             rows = await cursor.fetchall()
 
         games: dict[str, dict] = {}
-        for game_id, result, white, game_username, eval_before, _player in rows:
+        for game_id, game_result, white, game_username, eval_before, _player in rows:
             if game_id not in games:
                 is_white = white and white.lower() == (game_username or "").lower()
                 games[game_id] = {
-                    "result": result,
+                    "result": game_result,
                     "is_white": is_white,
                     "evals": [],
                 }
@@ -804,9 +804,9 @@ class StatsRepository(BaseDbRepository):
             result = game_data["result"]
             is_white = game_data["is_white"]
 
-            user_won = (result == "1-0" and is_white) or (
-                result == "0-1" and not is_white
-            )
+            user_won = (  # noqa: WPS408 — complementary, not duplicate: white-wins-as-white OR black-wins-as-black.
+                result == "1-0" and is_white
+            ) or (result == "0-1" and not is_white)
             user_drew = result == "1/2-1/2"
 
             peak_advantage = max(evals)
@@ -908,14 +908,12 @@ class StatsRepository(BaseDbRepository):
                 label = f"{start}-{end}"
             bucket_counts[label] = bucket_counts.get(label, 0) + 1
 
-        def bucket_sort_key(label: str) -> int:
-            return int(label.split("-")[0].rstrip("+"))
+        def bucket_sort_key(item: tuple[str, int]) -> int:
+            return int(item[0].split("-")[0].rstrip("+"))
 
         distribution = [
             {"move_range": label, "count": count}
-            for label, count in sorted(
-                bucket_counts.items(), key=lambda x: bucket_sort_key(x[0])
-            )
+            for label, count in sorted(bucket_counts.items(), key=bucket_sort_key)
         ]
 
         return {

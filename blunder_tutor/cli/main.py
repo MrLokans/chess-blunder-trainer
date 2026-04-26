@@ -11,7 +11,7 @@ from blunder_tutor.cli.list import ListCommand
 from blunder_tutor.cli.train_ui import TrainUICommand
 from blunder_tutor.web.config import config_factory
 
-COMMANDS = [
+COMMANDS = (
     FetchCommand(),
     ListCommand(),
     AnalyzeCommand(),
@@ -20,7 +20,7 @@ COMMANDS = [
     BackfillPhasesCommand(),
     TrainUICommand(),
     AuthCommand(),
-]
+)
 
 
 def _build_parser() -> argparse.ArgumentParser:

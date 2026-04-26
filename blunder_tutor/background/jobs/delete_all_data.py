@@ -12,14 +12,14 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-TABLE_ORDER = [
+TABLE_ORDER = (
     "puzzle_attempts",
     "analysis_step_status",
     "analysis_moves",
     "analysis_games",
     "background_jobs",
     "game_index_cache",
-]
+)
 
 
 @register_job

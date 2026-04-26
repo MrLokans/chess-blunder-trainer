@@ -49,4 +49,3 @@ class TrainUICommand(CLICommand):
             default=8000,
             help="Port to bind the server to",
         )
-        return

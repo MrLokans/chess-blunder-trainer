@@ -134,7 +134,7 @@ class GameAnalyzer:
                             progress.update(1)
                             return
 
-                        try:
+                        try:  # noqa: WPS505 — per-game error isolation: a failure on one game must not abort the whole batch.
                             await self.analyze_game(
                                 game_id=_gid,
                                 depth=depth,

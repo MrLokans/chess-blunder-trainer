@@ -81,4 +81,4 @@ class OpenSignup:
         code: str | None,
         user_count: int,
     ) -> None:
-        return
+        """No-op: invites are not required."""

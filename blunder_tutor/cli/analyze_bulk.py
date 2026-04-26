@@ -88,4 +88,3 @@ class AnalyzeBulkCommand(CLICommand):
             default=DEFAULT_CONCURRENCY,
             help=f"Number of parallel engine processes (default: {DEFAULT_CONCURRENCY})",
         )
-        return

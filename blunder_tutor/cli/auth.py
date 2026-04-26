@@ -18,6 +18,7 @@ import sys
 from datetime import timedelta
 from functools import partial
 from pathlib import Path
+from types import MappingProxyType
 
 from blunder_tutor.auth import (
     CREDENTIALS_PROVIDER_NAME,
@@ -132,16 +133,18 @@ async def cmd_prune_orphans(ctx: dict) -> None:
     print(f"Removed {removed} orphan director{'y' if removed == 1 else 'ies'}")
 
 
-_DISPATCH = {
-    "list-users": (cmd_list_users, ()),
-    # ``new_password`` is populated from stdin or getpass in the
-    # dispatcher, not from argparse — passwords must not appear on argv.
-    "reset-password": (cmd_reset_password, ("username", "new_password")),
-    "revoke-sessions": (cmd_revoke_sessions, ("username",)),
-    "delete-user": (cmd_delete_user, ("username",)),
-    "regenerate-invite": (cmd_regenerate_invite, ()),
-    "prune-orphans": (cmd_prune_orphans, ()),
-}
+_DISPATCH = MappingProxyType(
+    {
+        "list-users": (cmd_list_users, ()),
+        # ``new_password`` is populated from stdin or getpass in the
+        # dispatcher, not from argparse — passwords must not appear on argv.
+        "reset-password": (cmd_reset_password, ("username", "new_password")),
+        "revoke-sessions": (cmd_revoke_sessions, ("username",)),
+        "delete-user": (cmd_delete_user, ("username",)),
+        "regenerate-invite": (cmd_regenerate_invite, ()),
+        "prune-orphans": (cmd_prune_orphans, ()),
+    }
+)
 
 
 def _resolve_new_password(args: argparse.Namespace) -> str:

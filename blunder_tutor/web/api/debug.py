@@ -116,7 +116,9 @@ def _build_debug_text(
             )
 
         blunders = [
-            m for m in analysis_moves if m["classification"] == CLASSIFICATION_BLUNDER
+            move
+            for move in analysis_moves
+            if move["classification"] == CLASSIFICATION_BLUNDER
         ]
         if blunders:
             lines.append("")
