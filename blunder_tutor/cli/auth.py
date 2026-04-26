@@ -32,11 +32,11 @@ from blunder_tutor.auth import (
     SqliteStorage,
     UserNotFoundError,
     ValidationRules,
+    admin,
     initialize_auth_schema,
     is_user_id_shape,
     make_username,
 )
-from blunder_tutor.auth.cli import admin
 from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.web.auth_hooks import (
     BlunderTutorFilePermissionPolicy,

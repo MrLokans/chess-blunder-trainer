@@ -19,10 +19,10 @@ from blunder_tutor.auth import (
     SqliteStorage,
     Username,
     UserNotFoundError,
+    admin,
     initialize_auth_schema,
     verify_invite_code,
 )
-from blunder_tutor.auth.cli import admin
 from tests.helpers.auth import build_test_auth_service
 
 

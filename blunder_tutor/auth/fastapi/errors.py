@@ -16,7 +16,10 @@ from blunder_tutor.auth.core.errors import (
     DuplicateEmailError,
     DuplicateUsernameError,
     InvalidInviteCodeError,
+    InviteCannotBeRegeneratedError,
+    NoCredentialsIdentityError,
     UserCapReachedError,
+    UserNotFoundError,
     _InputError,
 )
 
@@ -50,6 +53,12 @@ class DefaultErrorCodec:
             return 409, "username_taken"
         if isinstance(exc, DuplicateEmailError):
             return 409, "email_taken"
+        if isinstance(exc, UserNotFoundError):
+            return 404, "user_not_found"
+        if isinstance(exc, NoCredentialsIdentityError):
+            return 409, "no_credentials_identity"
+        if isinstance(exc, InviteCannotBeRegeneratedError):
+            return 409, "users_already_exist"
         if isinstance(exc, _InputError):
             # ``code`` is the stable slug on every input-error subclass
             # (``invalid_username``, ``invalid_email``, ``invalid_password``,

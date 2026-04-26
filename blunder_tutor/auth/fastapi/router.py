@@ -21,8 +21,8 @@ Consumers wrap the factory with their own glue:
 """
 
 import logging
-from collections.abc import Sequence
-from typing import Annotated, Any
+from collections.abc import Callable, Sequence
+from typing import Annotated, Any, NoReturn
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel
@@ -30,7 +30,13 @@ from pydantic import BaseModel
 from blunder_tutor.auth.core.errors import AuthError
 from blunder_tutor.auth.core.protocols import ErrorCodec
 from blunder_tutor.auth.core.service import AuthService
-from blunder_tutor.auth.core.types import User, UserContext, make_email, make_username
+from blunder_tutor.auth.core.types import (
+    CREDENTIALS_PROVIDER_NAME,
+    User,
+    UserContext,
+    make_email,
+    make_username,
+)
 from blunder_tutor.auth.fastapi.cookies import SESSION_COOKIE_NAME
 from blunder_tutor.auth.fastapi.dependencies import get_user_context
 from blunder_tutor.auth.fastapi.errors import DefaultErrorCodec
@@ -38,13 +44,12 @@ from blunder_tutor.auth.fastapi.errors import DefaultErrorCodec
 log = logging.getLogger(__name__)
 
 
-# Type aliases for the consumer-supplied callables. Kept as plain
-# Callable hints rather than Protocols because they're only invoked
-# from inside the route bodies — the structural shape is enough.
-type AuthServiceProvider = Any  # Callable[[Request], AuthService]
-type SetSessionCookie = Any  # Callable[[Response, str, Request], None]
-type ClearSessionCookie = Any  # Callable[[Response], None]
-type MeResponseFactory = Any  # Callable[[User], BaseModel]
+# Real callable types so a wrong-shape consumer-supplied callable
+# fails type-checking at the wiring site instead of at request time.
+type AuthServiceProvider = Callable[[Request], AuthService]
+type SetSessionCookie = Callable[[Response, str, Request], None]
+type ClearSessionCookie = Callable[[Response], None]
+type MeResponseFactory = Callable[[User], BaseModel]
 
 
 class SignupRequest(BaseModel):
@@ -133,7 +138,7 @@ def build_auth_router(
     def _client_ip(request: Request) -> str | None:
         return request.client.host if request.client else None
 
-    def _raise_from_auth_error(exc: AuthError) -> None:
+    def _raise_from_auth_error(exc: AuthError) -> NoReturn:
         status, detail = codec.to_http(exc)
         raise HTTPException(status_code=status, detail=detail) from exc
 
@@ -157,7 +162,6 @@ def build_auth_router(
             )
         except AuthError as exc:
             _raise_from_auth_error(exc)
-            raise  # unreachable; appeases the type-checker
 
         await _revoke_caller_cookie(request, service)
         session = await service.create_session(
@@ -180,7 +184,7 @@ def build_auth_router(
         # time on shape failure, keeping "malformed input" indistinguishable
         # from "unknown user" on the wall clock.
         user = await service.authenticate(
-            "credentials",
+            CREDENTIALS_PROVIDER_NAME,
             {"username": body.username, "password": body.password},
         )
         if user is None:

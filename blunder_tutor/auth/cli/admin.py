@@ -19,6 +19,7 @@ from blunder_tutor.auth.core.errors import (
     UserNotFoundError,
 )
 from blunder_tutor.auth.core.invite import generate_invite_code
+from blunder_tutor.auth.core.policies import INVITE_CODE_SETUP_KEY
 from blunder_tutor.auth.core.protocols import SetupRepo
 from blunder_tutor.auth.core.service import AuthService
 from blunder_tutor.auth.core.types import (
@@ -61,8 +62,11 @@ async def reset_password(
     if cred_identity is None:
         raise NoCredentialsIdentityError(username)
 
-    await service.set_credential_hash(cred_identity.id, new_password)
-    await service.revoke_all_sessions(user.id)
+    await service.change_password(
+        user_id=user.id,
+        identity_id=cred_identity.id,
+        new_password=new_password,
+    )
     return user
 
 
@@ -103,5 +107,5 @@ async def regenerate_invite(
     if await service.user_count() > 0:
         raise InviteCannotBeRegeneratedError()
     code = generate_invite_code(secret_key)
-    await setup_repo.put("invite_code", code)
+    await setup_repo.put(INVITE_CODE_SETUP_KEY, code)
     return code

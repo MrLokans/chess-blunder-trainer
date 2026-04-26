@@ -353,13 +353,22 @@ class AuthService:
     async def list_sessions(self, user_id: UserId) -> list[Session]:
         return await self._sessions.list_for_user(user_id)
 
-    async def set_credential_hash(
-        self, identity_id: IdentityId, new_password: str
+    async def change_password(
+        self,
+        *,
+        user_id: UserId,
+        identity_id: IdentityId,
+        new_password: str,
     ) -> None:
-        """Hash ``new_password`` with the service's configured hasher
-        and overwrite the identity's stored credential. Caller is
-        responsible for revoking active sessions (admin reset flow does
-        this; a user-driven password-change flow would do it too).
+        """Rotate a user's password — hash the new value with the
+        service's configured hasher, overwrite the credential row, and
+        revoke every active session. Bundling the two writes is an
+        OWASP V7 invariant: a credential rotation that leaves live
+        tokens behind is the bug the standard exists to prevent. A
+        future caller wanting to opt out of session revoke (a hash-
+        upgrade-on-login path, say) should reach for the lower-level
+        :meth:`IdentityRepo.update_credential` directly.
         """
         hashed = self._hasher.hash(new_password)
         await self._identities.update_credential(identity_id, hashed)
+        await self._sessions.delete_all_for_user(user_id)

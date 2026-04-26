@@ -13,6 +13,7 @@ fixtures that need to monkeypatch the lazy default hasher don't have
 to reach into ``core``.
 """
 
+from blunder_tutor.auth.cli import admin
 from blunder_tutor.auth.core import hashers
 from blunder_tutor.auth.core.errors import (
     AuthError,
@@ -35,6 +36,7 @@ from blunder_tutor.auth.core.hashers import (
 )
 from blunder_tutor.auth.core.invite import generate_invite_code, verify_invite_code
 from blunder_tutor.auth.core.policies import (
+    INVITE_CODE_SETUP_KEY,
     HmacInvitePolicy,
     MaxUsersQuota,
     NoQuota,
@@ -47,7 +49,6 @@ from blunder_tutor.auth.core.protocols import (
     InvitePolicy,
     PasswordHasher,
     QuotaPolicy,
-    RateLimiter,
     SessionRepo,
     SetupRepo,
     Storage,
@@ -123,6 +124,7 @@ __all__ = [
     "MiddlewareConfig",
     # Hashers
     "BcryptHasher",
+    "admin",
     "hash_password",
     "hashers",
     "verify_password",
@@ -131,6 +133,7 @@ __all__ = [
     "verify_invite_code",
     # Policies
     "HmacInvitePolicy",
+    "INVITE_CODE_SETUP_KEY",
     "MaxUsersQuota",
     "NoQuota",
     "OpenSignup",
@@ -143,7 +146,6 @@ __all__ = [
     "NoOpFilePermissionPolicy",
     "PasswordHasher",
     "QuotaPolicy",
-    "RateLimiter",
     "SessionRepo",
     "SetupRepo",
     "Storage",

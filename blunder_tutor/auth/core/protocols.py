@@ -4,10 +4,8 @@ from contextlib import AbstractAsyncContextManager
 from datetime import datetime
 from typing import Any, Protocol
 
-from fastapi import Request, Response
-
+from blunder_tutor.auth.core.errors import AuthError
 from blunder_tutor.auth.core.types import (
-    AuthError,
     Email,
     Identity,
     IdentityId,
@@ -210,18 +208,6 @@ class InvitePolicy(Protocol):
     ) -> None: ...
 
 
-class RateLimiter(Protocol):
-    """Per-IP rate-limit gate, callable as a FastAPI dependency.
-
-    Matches the ``fastapi-throttle`` shape so the production limiter
-    drops in directly; alternative implementations (slowapi, no-op)
-    that conform to this signature are usable without service-layer
-    changes.
-    """
-
-    async def __call__(self, request: Request, response: Response) -> None: ...
-
-
 class ErrorCodec(Protocol):
     """Maps an :class:`AuthError` to an HTTP ``(status, detail)`` pair.
     The default codec ships blunder_tutor's stable detail slugs
@@ -287,7 +273,6 @@ __all__ = [
     "InvitePolicy",
     "PasswordHasher",
     "QuotaPolicy",
-    "RateLimiter",
     "SessionRepo",
     "SetupRepo",
     "Storage",

@@ -5,6 +5,14 @@ import hmac
 from blunder_tutor.auth.core.errors import InvalidInviteCodeError
 from blunder_tutor.auth.core.protocols import SetupRepo, Transaction
 
+# SetupRepo key under which the first-user invite code is stored.
+# Read by :class:`HmacInvitePolicy.consume`, written by
+# :func:`blunder_tutor.auth.cli.admin.regenerate_invite` and the
+# bootstrap path in ``blunder_tutor/web/app.py:_bootstrap_auth``.
+# A typo in any of those would silently break the invite flow across
+# the deploy boundary, so the literal lives in exactly one place.
+INVITE_CODE_SETUP_KEY = "invite_code"
+
 
 class MaxUsersQuota:
     """Cap signups at a fixed user count. Set ``max_users=1`` for
@@ -55,12 +63,12 @@ class HmacInvitePolicy:
             return
         if not code:
             raise InvalidInviteCodeError("missing")
-        stored = await self._setup_repo.get_in_transaction(txn, "invite_code")
+        stored = await self._setup_repo.get_in_transaction(txn, INVITE_CODE_SETUP_KEY)
         if stored is None:
             raise InvalidInviteCodeError("not_issued")
         if not hmac.compare_digest(code, stored):
             raise InvalidInviteCodeError("rotated")
-        await self._setup_repo.delete_in_transaction(txn, "invite_code")
+        await self._setup_repo.delete_in_transaction(txn, INVITE_CODE_SETUP_KEY)
 
 
 class OpenSignup:

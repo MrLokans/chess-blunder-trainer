@@ -18,6 +18,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.auth import (
     CREDENTIALS_PROVIDER_NAME,
+    INVITE_CODE_SETUP_KEY,
     AuthDb,
     AuthMiddleware,
     AuthService,
@@ -197,11 +198,11 @@ async def _bootstrap_auth(app: FastAPI) -> None:
 
     if await auth_service.user_count() == 0:
         try:
-            invite = await storage.setup.get("invite_code")
+            invite = await storage.setup.get(INVITE_CODE_SETUP_KEY)
             if invite is None:
                 assert auth_config.secret_key is not None  # validated at boot
                 invite = generate_invite_code(auth_config.secret_key)
-                await storage.setup.put("invite_code", invite)
+                await storage.setup.put(INVITE_CODE_SETUP_KEY, invite)
             log.warning("=" * 60)
             log.warning("FIRST-USER SETUP: invite code required at /setup")
             log.warning("Invite code: %s", invite)
