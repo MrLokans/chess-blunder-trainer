@@ -35,7 +35,7 @@ class CacheInvalidator:
 
         merged: asyncio.Queue = asyncio.Queue()
 
-        async def _forward(source: asyncio.Queue) -> None:
+        async def _forward(source: asyncio.Queue) -> None:  # noqa: WPS430 — fan-in forwarder spawned per source queue; captures `self._running` and `merged`.
             while self._running:
                 event = await source.get()
                 await merged.put(event)

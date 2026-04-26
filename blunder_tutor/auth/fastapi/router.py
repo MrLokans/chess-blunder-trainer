@@ -108,16 +108,22 @@ def build_auth_router(
     codec = error_codec or DefaultErrorCodec()
     me_factory = me_response_factory or _default_me_factory
 
-    def _get_service(request: Request) -> AuthService:
+    # All endpoints + helpers below close over `auth_service_provider`,
+    # `codec`, `cookie_name`, `set_session_cookie`, `clear_session_cookie`,
+    # `me_factory`. The closure-style factory is what lets a consumer swap
+    # any piece (TLS posture, rate limits, error shape) without forking
+    # the route bodies — flagging each nested def doesn't represent real
+    # signal in this file.
+    def _get_service(request: Request) -> AuthService:  # noqa: WPS430 — parameterized router factory.
         return auth_service_provider(request)
 
-    def _get_optional_user_context(request: Request) -> UserContext | None:
+    def _get_optional_user_context(request: Request) -> UserContext | None:  # noqa: WPS430 — parameterized router factory.
         # Logout-style routes are idempotent: a client calling
         # ``/logout`` without a live session gets a clean 204, not a
         # confusing 401.
         return getattr(request.state, "user_ctx", None)
 
-    async def _revoke_caller_cookie(request: Request, service: AuthService) -> None:
+    async def _revoke_caller_cookie(request: Request, service: AuthService) -> None:  # noqa: WPS430 — parameterized router factory.
         # OWASP V7: a privilege change must terminate the previous
         # session in addition to issuing a new ID. Best-effort —
         # transient storage failures here must not block the legitimate
@@ -133,17 +139,17 @@ def build_auth_router(
                 exc_info=True,
             )
 
-    def _client_ip(request: Request) -> str | None:
+    def _client_ip(request: Request) -> str | None:  # noqa: WPS430 — parameterized router factory.
         return request.client.host if request.client else None
 
-    def _raise_from_auth_error(exc: AuthError) -> NoReturn:
+    def _raise_from_auth_error(exc: AuthError) -> NoReturn:  # noqa: WPS430 — parameterized router factory.
         status, detail = codec.to_http(exc)
         raise HTTPException(status_code=status, detail=detail) from exc
 
     router = APIRouter(prefix=prefix)
 
     @router.post("/signup", dependencies=[Depends(d) for d in signup_dependencies])
-    async def signup(
+    async def signup(  # noqa: WPS430 — parameterized router factory.
         request: Request,
         body: SignupRequest,
         response: Response,
@@ -171,7 +177,7 @@ def build_auth_router(
         return me_factory(user)
 
     @router.post("/login", dependencies=[Depends(d) for d in login_dependencies])
-    async def login(
+    async def login(  # noqa: WPS430 — parameterized router factory.
         request: Request,
         body: LoginRequest,
         response: Response,
@@ -205,7 +211,7 @@ def build_auth_router(
         return me_factory(user)
 
     @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-    async def logout(
+    async def logout(  # noqa: WPS430 — parameterized router factory.
         ctx: Annotated[UserContext | None, Depends(_get_optional_user_context)],
         response: Response,
         service: Annotated[AuthService, Depends(_get_service)],
@@ -216,7 +222,7 @@ def build_auth_router(
         clear_session_cookie(response)
 
     @router.post("/logout-all", status_code=status.HTTP_204_NO_CONTENT)
-    async def logout_all(
+    async def logout_all(  # noqa: WPS430 — parameterized router factory.
         ctx: Annotated[UserContext | None, Depends(_get_optional_user_context)],
         response: Response,
         service: Annotated[AuthService, Depends(_get_service)],
@@ -226,7 +232,7 @@ def build_auth_router(
         clear_session_cookie(response)
 
     @router.get("/me")
-    async def me(
+    async def me(  # noqa: WPS430 — parameterized router factory.
         ctx: Annotated[UserContext, Depends(get_user_context)],
         service: Annotated[AuthService, Depends(_get_service)],
     ):
@@ -236,7 +242,7 @@ def build_auth_router(
         return me_factory(user)
 
     @router.delete("/account", status_code=status.HTTP_204_NO_CONTENT)
-    async def delete_account(
+    async def delete_account(  # noqa: WPS430 — parameterized router factory.
         ctx: Annotated[UserContext, Depends(get_user_context)],
         response: Response,
         service: Annotated[AuthService, Depends(_get_service)],

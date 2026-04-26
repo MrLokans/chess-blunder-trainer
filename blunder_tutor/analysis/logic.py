@@ -120,7 +120,7 @@ class GameAnalyzer:
             ) as progress:
                 for game_id in game_ids:
 
-                    async def process_game(
+                    async def process_game(  # noqa: WPS430 — per-game closure for `coordinator.submit`; captures `results`/`progress`/`force` and the late-bound `_gid` default.
                         engine: chess.engine.UciProtocol,
                         *,
                         _gid: str = game_id,

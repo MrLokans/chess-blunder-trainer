@@ -108,7 +108,7 @@ class AnalyzeGamesJob(BaseJob):
 
             for game_id in game_ids:
 
-                async def process_game(
+                async def process_game(  # noqa: WPS430 — per-game `coordinator.submit` closure; captures `cancelled`/`processed`/`results`/job state.
                     engine: chess.engine.UciProtocol,
                     *,
                     _gid: str = game_id,

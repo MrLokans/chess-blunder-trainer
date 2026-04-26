@@ -87,7 +87,7 @@ class SyncGamesJob(BaseJob):
 
         await self.job_service.update_job_progress(job_id, 0, max_games)
 
-        async def update_progress(current: int, total: int) -> None:
+        async def update_progress(current: int, total: int) -> None:  # noqa: WPS430 — `progress_callback` closure; captures `self.job_service` and `job_id`.
             await self.job_service.update_job_progress(job_id, current, total)
 
         if source == "lichess":

@@ -82,7 +82,7 @@ def make_after_delete_hook(
     — neither failure surfaces as a 500 on the delete-account request.
     """
 
-    async def hook(user_id: UserId) -> None:
+    async def hook(user_id: UserId) -> None:  # noqa: WPS430 — factory returns this closure; captures `caches` and `users_dir`.
         for cache in caches:
             cache.invalidate(user_id)
         await cleanup_user_dir(users_dir, user_id)

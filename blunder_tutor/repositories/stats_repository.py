@@ -917,12 +917,12 @@ class StatsRepository(BaseDbRepository):
                 label = f"{start}-{end}"
             bucket_counts[label] = bucket_counts.get(label, 0) + 1
 
-        def bucket_sort_key(item: tuple[str, int]) -> int:
-            return int(item[0].split("-")[0].rstrip("+"))
-
         distribution = [
             {"move_range": label, "count": count}
-            for label, count in sorted(bucket_counts.items(), key=bucket_sort_key)
+            for label, count in sorted(
+                bucket_counts.items(),
+                key=lambda item: int(item[0].split("-")[0].rstrip("+")),
+            )
         ]
 
         return {

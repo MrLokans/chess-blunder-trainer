@@ -76,6 +76,20 @@ async def _wait_for_job(
     raise AssertionError(f"job {job_id} did not finish in {timeout_s}s — last={last}")
 
 
+def _assert_job_in_exactly_one_db(job_id: str, db_a: Path, db_b: Path) -> None:
+    present = []
+    for db in (db_a, db_b):
+        with sqlite3.connect(db) as conn:
+            row = conn.execute(
+                "SELECT 1 FROM background_jobs WHERE job_id = ?", (job_id,)
+            ).fetchone()
+            if row is not None:
+                present.append(db)
+    assert len(present) == 1, (
+        f"job {job_id} should live in exactly one user DB, found in {present}"
+    )
+
+
 class TestBackgroundWiring:
     async def test_executor_and_scheduler_constructed_in_credentials_mode(
         self, credentials_app: FastAPI
@@ -158,22 +172,8 @@ class TestTwoUserJobIsolation:
             user_dirs = sorted(p for p in users_dir.iterdir() if p.is_dir())
             assert len(user_dirs) == 2
             db_a, db_b = (p / "main.sqlite3" for p in user_dirs)
-            self._assert_job_in_exactly_one_db(job_a, db_a, db_b)
-            self._assert_job_in_exactly_one_db(job_b, db_a, db_b)
-
-    @staticmethod
-    def _assert_job_in_exactly_one_db(job_id: str, db_a: Path, db_b: Path) -> None:
-        present = []
-        for db in (db_a, db_b):
-            with sqlite3.connect(db) as conn:
-                row = conn.execute(
-                    "SELECT 1 FROM background_jobs WHERE job_id = ?", (job_id,)
-                ).fetchone()
-                if row is not None:
-                    present.append(db)
-        assert len(present) == 1, (
-            f"job {job_id} should live in exactly one user DB, found in {present}"
-        )
+            _assert_job_in_exactly_one_db(job_a, db_a, db_b)
+            _assert_job_in_exactly_one_db(job_b, db_a, db_b)
 
 
 class TestFanoutSchedulerDispatchesPerUser:

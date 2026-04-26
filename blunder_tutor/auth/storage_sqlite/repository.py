@@ -20,12 +20,47 @@ from blunder_tutor.auth.core.types import (
 from blunder_tutor.auth.storage_sqlite.db import AuthDb
 
 
+def _row_to_user(row) -> User:  # type: ignore[no-untyped-def]
+    uid, uname, email, created = row
+    return User(
+        id=UserId(uid),
+        username=Username(uname),
+        email=Email(email) if email else None,
+        created_at=parse_dt(created),
+    )
+
+
+def _row_to_identity(row) -> Identity:  # type: ignore[no-untyped-def]
+    iid, uid, prov, subj, cred, created = row
+    return Identity(
+        id=IdentityId(iid),
+        user_id=UserId(uid),
+        provider=prov,
+        provider_subject=subj,
+        credential=PasswordHash(cred) if cred is not None else None,
+        created_at=parse_dt(created),
+    )
+
+
+def _row_to_session(row) -> Session:  # type: ignore[no-untyped-def]
+    tok, uid, created, expires, last_seen, ua, ip = row
+    return Session(
+        token=SessionToken(tok),
+        user_id=UserId(uid),
+        created_at=parse_dt(created),
+        expires_at=parse_dt(expires),
+        last_seen_at=parse_dt(last_seen),
+        user_agent=ua,
+        ip_address=ip,
+    )
+
+
 class UserRepository:
     def __init__(self, db: AuthDb) -> None:
         self._db = db
 
-    @staticmethod
     async def insert_in_transaction(
+        self,
         conn,
         *,
         user_id: UserId,
@@ -81,7 +116,7 @@ class UserRepository:
             "WHERE deleted_at IS NULL ORDER BY created_at, id"
         ) as cur:
             rows = await cur.fetchall()
-        return [self._row_to_user(r) for r in rows]
+        return [_row_to_user(r) for r in rows]
 
     async def delete(self, user_id: UserId) -> None:
         """Single-row hard delete. ON DELETE CASCADE on identities/sessions
@@ -97,25 +132,15 @@ class UserRepository:
             params,
         ) as cur:
             row = await cur.fetchone()
-        return self._row_to_user(row) if row else None
-
-    @staticmethod
-    def _row_to_user(row) -> User:
-        uid, uname, email, created = row
-        return User(
-            id=UserId(uid),
-            username=Username(uname),
-            email=Email(email) if email else None,
-            created_at=parse_dt(created),
-        )
+        return _row_to_user(row) if row else None
 
 
 class IdentityRepository:
     def __init__(self, db: AuthDb) -> None:
         self._db = db
 
-    @staticmethod
     async def insert_in_transaction(
+        self,
         conn,
         *,
         identity_id: IdentityId,
@@ -172,7 +197,7 @@ class IdentityRepository:
             (provider, provider_subject),
         ) as cur:
             row = await cur.fetchone()
-        return self._row_to_identity(row) if row else None
+        return _row_to_identity(row) if row else None
 
     async def list_for_user(self, user_id: UserId) -> list[Identity]:
         conn = await self._db.conn()
@@ -182,7 +207,7 @@ class IdentityRepository:
             (user_id,),
         ) as cur:
             rows = await cur.fetchall()
-        return [self._row_to_identity(r) for r in rows]
+        return [_row_to_identity(r) for r in rows]
 
     async def update_credential(
         self, identity_id: IdentityId, credential: PasswordHash
@@ -192,18 +217,6 @@ class IdentityRepository:
                 "UPDATE identities SET credential = ? WHERE id = ?",
                 (credential, identity_id),
             )
-
-    @staticmethod
-    def _row_to_identity(row) -> Identity:
-        iid, uid, prov, subj, cred, created = row
-        return Identity(
-            id=IdentityId(iid),
-            user_id=UserId(uid),
-            provider=prov,
-            provider_subject=subj,
-            credential=PasswordHash(cred) if cred is not None else None,
-            created_at=parse_dt(created),
-        )
 
 
 class SessionRepository:
@@ -244,7 +257,7 @@ class SessionRepository:
             (token,),
         ) as cur:
             row = await cur.fetchone()
-        return self._row_to_session(row) if row else None
+        return _row_to_session(row) if row else None
 
     async def bump_last_seen(self, token: SessionToken) -> None:
         async with self._db.write() as conn:
@@ -278,20 +291,7 @@ class SessionRepository:
             (user_id,),
         ) as cur:
             rows = await cur.fetchall()
-        return [self._row_to_session(r) for r in rows]
-
-    @staticmethod
-    def _row_to_session(row) -> Session:
-        tok, uid, created, expires, last_seen, ua, ip = row
-        return Session(
-            token=SessionToken(tok),
-            user_id=UserId(uid),
-            created_at=parse_dt(created),
-            expires_at=parse_dt(expires),
-            last_seen_at=parse_dt(last_seen),
-            user_agent=ua,
-            ip_address=ip,
-        )
+        return [_row_to_session(r) for r in rows]
 
 
 class SetupRepository:

@@ -43,6 +43,20 @@ async def _noop_after_delete(_user_id: UserId) -> None:
     pass
 
 
+def _translate_integrity_error(
+    exc: sqlite3.IntegrityError,
+    username: Username,
+    email: Email | None,
+) -> NoReturn:
+    """UNIQUE constraint violation → domain error. Always raises."""
+    message = str(exc)
+    if "users.username" in message:
+        raise DuplicateUsernameError(username) from exc
+    if "users.email" in message:
+        raise DuplicateEmailError(email or "") from exc
+    raise exc
+
+
 class AuthService:
     """Service layer for all auth operations.
 
@@ -108,7 +122,7 @@ class AuthService:
                     now=now,
                 )
         except sqlite3.IntegrityError as exc:
-            self._translate_integrity_error(exc, username, email)
+            _translate_integrity_error(exc, username, email)
         return await self._finalize_registration(user_id)
 
     async def signup(
@@ -156,7 +170,7 @@ class AuthService:
                     now=now,
                 )
         except sqlite3.IntegrityError as exc:
-            self._translate_integrity_error(exc, username, email)
+            _translate_integrity_error(exc, username, email)
         return await self._finalize_registration(user_id)
 
     async def _insert_user_with_credential(
@@ -192,19 +206,6 @@ class AuthService:
             created_at=now,
         )
 
-    @staticmethod
-    def _translate_integrity_error(
-        exc: sqlite3.IntegrityError,
-        username: Username,
-        email: Email | None,
-    ) -> NoReturn:
-        """UNIQUE constraint violation → domain error. Always raises."""
-        message = str(exc)
-        if "users.username" in message:
-            raise DuplicateUsernameError(username) from exc
-        if "users.email" in message:
-            raise DuplicateEmailError(email or "") from exc
-        raise exc
 
     async def _finalize_registration(self, user_id: UserId) -> User:
         """Post-commit step: look up the freshly inserted user and run the

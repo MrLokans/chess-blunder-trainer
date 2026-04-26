@@ -52,7 +52,7 @@ _PLACEHOLDER_RE = re.compile(r"\{(\w+)\}")
 
 
 def _resolve_plural(message: str, params: dict[str, object], locale: str) -> str:
-    def replace_plural(match: re.Match) -> str:
+    def replace_plural(match: re.Match) -> str:  # noqa: WPS430 — `re.sub` callback; captures `params`/`locale`.
         var_name = match.group(1)
         branches_str = match.group(2)
         count = params.get(var_name, 0)
@@ -83,7 +83,7 @@ def _resolve_plural(message: str, params: dict[str, object], locale: str) -> str
 
 
 def _resolve_placeholders(message: str, params: dict[str, object]) -> str:
-    def replace_placeholder(match: re.Match) -> str:
+    def replace_placeholder(match: re.Match) -> str:  # noqa: WPS430 — `re.sub` callback; captures `params`.
         key = match.group(1)
         return str(params.get(key, match.group(0)))
 

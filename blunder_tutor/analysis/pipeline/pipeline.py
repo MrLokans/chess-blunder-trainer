@@ -71,7 +71,7 @@ class AnalysisPipeline:
         visited: set[str] = set()
         result: list[AnalysisStep] = []
 
-        def visit(step_id: str) -> None:
+        def visit(step_id: str) -> None:  # noqa: WPS430 — recursive topological-sort visitor; captures `visited`/`step_ids`/`result`/`self._steps_by_id`.
             if step_id in visited:
                 return
             if step_id not in step_ids:

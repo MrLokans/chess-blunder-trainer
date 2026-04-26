@@ -51,7 +51,7 @@ class ImportPgnJob(BaseJob):
 
         try:
 
-            async def run_analysis(engine: chess.engine.UciProtocol) -> None:
+            async def run_analysis(engine: chess.engine.UciProtocol) -> None:  # noqa: WPS430 — `coordinator.submit` closure; captures `self`/`game_id`.
                 await self.analyzer.analyze_game(game_id=game_id, engine=engine)
                 await self.game_repo.mark_game_analyzed(game_id)
 

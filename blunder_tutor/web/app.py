@@ -217,6 +217,14 @@ async def _bootstrap_auth(app: FastAPI) -> None:
     await scan_orphans(storage.users, users_dir)
 
 
+async def _list_users_none_mode() -> list[UserId]:
+    return [LOCAL_USER_ID]
+
+
+async def _list_users_credentials_mode(users_repo) -> list[UserId]:  # type: ignore[no-untyped-def]
+    return [u.id for u in await users_repo.list_all()]
+
+
 def _wire_background(app: FastAPI) -> None:
     """Build the JobExecutor + BackgroundScheduler with auth-mode-aware
     user enumeration. The per-user DB-path resolver is shared with the
@@ -230,15 +238,11 @@ def _wire_background(app: FastAPI) -> None:
 
     if config.auth.mode == AUTH_MODE_CREDENTIALS:
         assert app.state.auth is not None  # set by _bootstrap_auth
-        users_repo = app.state.auth.storage.users
-
-        async def list_users() -> list[UserId]:
-            return [u.id for u in await users_repo.list_all()]
-
+        list_users = partial(
+            _list_users_credentials_mode, app.state.auth.storage.users
+        )
     else:
-
-        async def list_users() -> list[UserId]:
-            return [LOCAL_USER_ID]
+        list_users = _list_users_none_mode
 
     app.state.job_executor = JobExecutor(
         event_bus=event_bus,
