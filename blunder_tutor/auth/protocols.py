@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from contextlib import AbstractAsyncContextManager
 from datetime import datetime
-from typing import Protocol
+from typing import Any, Protocol
 
-import aiosqlite
 from fastapi import Request, Response
 
 from blunder_tutor.auth.types import (
@@ -20,6 +20,12 @@ from blunder_tutor.auth.types import (
     Username,
 )
 
+# Opaque transaction handle. SQLite passes ``aiosqlite.Connection``;
+# in-memory and future non-SQL backends pass whatever sentinel they
+# need. ``Any`` is deliberate — typing it more strictly would couple
+# every Protocol to a specific storage implementation.
+Transaction = Any
+
 
 class UserRepo(Protocol):
     """Persistent store for user rows. Implementations carry their own
@@ -30,7 +36,7 @@ class UserRepo(Protocol):
 
     async def insert_in_transaction(
         self,
-        conn: aiosqlite.Connection,
+        txn: Transaction,
         *,
         user_id: UserId,
         username: Username,
@@ -77,7 +83,7 @@ class IdentityRepo(Protocol):
 
     async def insert_in_transaction(
         self,
-        conn: aiosqlite.Connection,
+        txn: Transaction,
         *,
         identity_id: IdentityId,
         user_id: UserId,
@@ -188,7 +194,7 @@ class InvitePolicy(Protocol):
 
     async def consume(
         self,
-        conn: aiosqlite.Connection,
+        txn: Transaction,
         code: str | None,
         user_count: int,
     ) -> None: ...
@@ -243,6 +249,27 @@ class AuthProvider(Protocol):
         ...
 
 
+class Storage(Protocol):
+    """Aggregate that bundles the four auth repos plus a transaction
+    primitive. Production wraps :class:`AuthDb` via
+    :class:`SqliteStorage`; tests wire :class:`InMemoryStorage` for
+    speed; future Postgres / multi-region backends ship their own.
+
+    ``transaction()`` is the one place where the storage backend
+    declares atomicity semantics — SQLite issues ``BEGIN IMMEDIATE``,
+    InMemory grabs a lock, others may bracket a remote-API session.
+    Repos use the yielded :data:`Transaction` handle when their
+    ``*_in_transaction`` methods are invoked from inside the span.
+    """
+
+    users: UserRepo
+    identities: IdentityRepo
+    sessions: SessionRepo
+    setup: SetupRepo
+
+    def transaction(self) -> AbstractAsyncContextManager[Transaction]: ...
+
+
 __all__ = [
     "AuthProvider",
     "ErrorCodec",
@@ -253,5 +280,7 @@ __all__ = [
     "RateLimiter",
     "SessionRepo",
     "SetupRepo",
+    "Storage",
+    "Transaction",
     "UserRepo",
 ]

@@ -21,6 +21,36 @@ from blunder_tutor.web.tls import is_https_request
 __all__ = ["_cache_key", "_db_path_for"]
 
 
+class UserDbPathMiddleware(BaseHTTPMiddleware):
+    """Map the per-request :class:`UserContext` to a per-user DB path
+    via the resolver stored on ``app.state.db_path_resolver``.
+
+    Sits above :class:`AuthMiddleware` in the request chain (added
+    *before* it so it runs *after* on the way in) and below the rest of
+    the web-layer middleware that needs to open a per-user DB
+    (`SetupCheckMiddleware`, `LocaleMiddleware`, route handlers via
+    `get_db_path`).
+
+    The auth core (``blunder_tutor/auth/``) deliberately knows nothing
+    about filesystem topology: a future shared-DB SaaS port swaps the
+    resolver for one that returns the same path for every user, and a
+    multi-tenant port swaps it for a tenant-id resolver — neither
+    requires touching :class:`UserContext`.
+
+    When ``request.state.user_ctx`` is ``None`` (credentials mode pre-
+    auth on an exempt path, e.g. ``/login``), no path is set and
+    :func:`_db_path_for` returns ``None`` — callers fall back to
+    defaults instead of opening an un-migrated DB.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        ctx = getattr(request.state, "user_ctx", None)
+        if ctx is not None:
+            resolver = request.app.state.db_path_resolver
+            request.state.user_db_path = resolver(ctx.user_id)
+        return await call_next(request)
+
+
 MUTATION_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
 

@@ -27,9 +27,10 @@ SOURCE_ROOT = REPO_ROOT / "blunder_tutor"
 # Paths are repo-relative POSIX strings.
 ALLOWED_READERS = frozenset(
     {
-        "blunder_tutor/web/app.py",  # writer
-        "blunder_tutor/auth/middleware.py",  # reader, gated on mode == "none"
-        "blunder_tutor/web/ui/auth.py",  # reader, gated on service is None
+        "blunder_tutor/web/app.py",  # sole writer; per-user DB path now
+        # routes through `app.state.db_path_resolver` +
+        # `UserDbPathMiddleware` instead of being read directly from
+        # `none_mode_db_path` by other modules.
     }
 )
 
@@ -55,8 +56,8 @@ class TestNoneModeDbPathIsolation:
             f"Unexpected access to app.state.none_mode_db_path in {sorted(unexpected)}. "
             "If this read is genuinely none-mode-only, add the file to "
             "tests/test_none_mode_db_path_isolation.py::ALLOWED_READERS with "
-            "a comment naming the gate. Otherwise route through ctx.db_path / "
-            "the get_db_path dependency."
+            "a comment naming the gate. Otherwise route through "
+            "request.state.user_db_path / the get_db_path dependency."
         )
 
     def test_legacy_db_path_name_is_extinct(self):

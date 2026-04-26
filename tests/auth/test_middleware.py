@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from functools import partial
 from pathlib import Path
 
 import httpx
@@ -11,8 +12,10 @@ from httpx import ASGITransport
 from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.middleware import AuthMiddleware, MiddlewareConfig
 from blunder_tutor.auth.service import AuthService
+from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.auth.types import Username
 from blunder_tutor.web.auth_hooks import resolve_user_db_path
+from blunder_tutor.web.middleware import UserDbPathMiddleware
 from blunder_tutor.web.resources import AuthResources
 from tests.helpers.auth import build_test_auth_service
 
@@ -48,11 +51,12 @@ def _make_app(
         assert auth_db is not None
         assert users_dir is not None
         app.state.auth = AuthResources(
-            db=auth_db,
+            storage=SqliteStorage(auth_db),
             service=service,
             db_path=auth_db.path,
             users_dir=users_dir,
         )
+        app.state.db_path_resolver = partial(resolve_user_db_path, users_dir)
     else:
         app.state.auth = None
         # Real prod wiring sets this only in none-mode (TREK-22). Tests
@@ -62,6 +66,8 @@ def _make_app(
             "none-mode test must pass a none_mode_db_path"
         )
         app.state.none_mode_db_path = none_mode_db_path
+        app.state.db_path_resolver = lambda _user_id: none_mode_db_path
+    app.add_middleware(UserDbPathMiddleware)
     app.add_middleware(AuthMiddleware, config=_TEST_MIDDLEWARE_CONFIG)
 
     @app.get("/echo")
@@ -70,7 +76,7 @@ def _make_app(
         return {
             "user_id": ctx.user_id if ctx else None,
             "username": ctx.username if ctx else None,
-            "db_path": str(ctx.db_path) if ctx else None,
+            "db_path": str(getattr(request.state, "user_db_path", None)),
         }
 
     @app.get("/api/echo")

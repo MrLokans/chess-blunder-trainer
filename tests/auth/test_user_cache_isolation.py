@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from functools import partial
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -11,10 +12,15 @@ from httpx import ASGITransport
 
 from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.middleware import AuthMiddleware, MiddlewareConfig
+from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.auth.types import UserContext, UserId, Username
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web.auth_hooks import resolve_user_db_path
-from blunder_tutor.web.middleware import LocaleMiddleware, SetupCheckMiddleware
+from blunder_tutor.web.middleware import (
+    LocaleMiddleware,
+    SetupCheckMiddleware,
+    UserDbPathMiddleware,
+)
 from blunder_tutor.web.per_user_cache import PerUserCache
 from blunder_tutor.web.request_helpers import _cache_key, _db_path_for
 from blunder_tutor.web.resources import AuthResources
@@ -28,7 +34,6 @@ class TestCacheKey:
                 user_ctx=UserContext(
                     user_id=UserId("abc123"),
                     username=Username("alice"),
-                    db_path=Path("/tmp/a.sqlite3"),
                     session_token=None,
                 )
             )
@@ -41,40 +46,14 @@ class TestCacheKey:
 
 
 class TestDbPathFor:
-    def test_returns_ctx_db_path_when_context_set(self, tmp_path: Path):
+    def test_returns_user_db_path_when_set(self, tmp_path: Path):
         db = tmp_path / "user.sqlite3"
-        request = SimpleNamespace(
-            state=SimpleNamespace(
-                user_ctx=UserContext(
-                    user_id=UserId("abc"),
-                    username=Username("alice"),
-                    db_path=db,
-                    session_token=None,
-                )
-            ),
-            app=SimpleNamespace(state=SimpleNamespace(auth_mode="credentials")),
-        )
+        request = SimpleNamespace(state=SimpleNamespace(user_db_path=db))
         assert _db_path_for(request) == db
 
-    def test_returns_none_in_credentials_mode_without_ctx(self):
-        request = SimpleNamespace(
-            state=SimpleNamespace(),
-            app=SimpleNamespace(state=SimpleNamespace(auth_mode="credentials")),
-        )
+    def test_returns_none_when_user_db_path_unset(self):
+        request = SimpleNamespace(state=SimpleNamespace())
         assert _db_path_for(request) is None
-
-    def test_returns_legacy_path_in_none_mode_without_ctx(self, tmp_path: Path):
-        legacy = tmp_path / "main.sqlite3"
-        request = SimpleNamespace(
-            state=SimpleNamespace(),
-            app=SimpleNamespace(
-                state=SimpleNamespace(
-                    auth_mode="none",
-                    config=SimpleNamespace(data=SimpleNamespace(db_path=legacy)),
-                )
-            ),
-        )
-        assert _db_path_for(request) == legacy
 
 
 @pytest.fixture
@@ -114,13 +93,14 @@ async def two_user_app(auth_db: AuthDb, tmp_path: Path):
 
     app = FastAPI()
     app.state.auth = AuthResources(
-        db=auth_db,
+        storage=SqliteStorage(auth_db),
         service=service,
         db_path=auth_db.path,
         users_dir=users_dir,
     )
     app.state.auth_mode = "credentials"
     app.state.demo_mode = False
+    app.state.db_path_resolver = partial(resolve_user_db_path, users_dir)
     # SetupCheckMiddleware + LocaleMiddleware expect these:
     app.state.i18n = None
     app.state.templates = SimpleNamespace(env=SimpleNamespace(globals={}))
@@ -132,9 +112,11 @@ async def two_user_app(auth_db: AuthDb, tmp_path: Path):
     async def some_page(request: Request):
         return {"user_id": request.state.user_ctx.user_id}
 
-    # Order: last added = first executed. AuthMiddleware must run first.
+    # Order: last added = first executed. AuthMiddleware must run first
+    # so the next-added UserDbPathMiddleware can read its `user_ctx`.
     app.add_middleware(SetupCheckMiddleware)
     app.add_middleware(LocaleMiddleware)
+    app.add_middleware(UserDbPathMiddleware)
     app.add_middleware(
         AuthMiddleware,
         config=MiddlewareConfig(cookie_name="session_token"),

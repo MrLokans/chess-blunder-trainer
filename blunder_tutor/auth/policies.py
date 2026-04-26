@@ -37,6 +37,14 @@ class HmacInvitePolicy:
     code that byte-matches the stored value was signed by us by
     construction, and re-verification creates a silent failure path
     after SECRET_KEY rotation.
+
+    **Storage coupling**: the consume path issues raw SQL on the
+    transaction handle, so this policy currently requires an
+    aiosqlite-shaped ``txn`` (the SQLite backend's transaction conn).
+    Test-doubles / non-SQL backends should wire :class:`OpenSignup`
+    until TREK-59 routes the invite read/delete through ``SetupRepo``.
+    The ``hasattr`` guard below makes the failure mode loud instead of
+    a duck-typed ``AttributeError`` deeper in the call stack.
     """
 
     async def consume(
@@ -47,6 +55,12 @@ class HmacInvitePolicy:
     ) -> None:
         if user_count > 0:
             return
+        if not hasattr(conn, "execute"):
+            raise NotImplementedError(
+                "HmacInvitePolicy requires an aiosqlite-shaped transaction "
+                "handle (issues raw SQL on `conn.execute`). Wire OpenSignup "
+                "for in-memory / non-SQL backends until TREK-59 lands."
+            )
         if not code:
             raise InvalidInviteCodeError("missing")
         async with conn.execute(

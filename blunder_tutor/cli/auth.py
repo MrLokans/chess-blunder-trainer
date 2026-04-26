@@ -14,13 +14,9 @@ from blunder_tutor.auth.hashers import BcryptHasher, hash_password
 from blunder_tutor.auth.invite import generate_invite_code
 from blunder_tutor.auth.policies import HmacInvitePolicy, MaxUsersQuota
 from blunder_tutor.auth.providers.credentials import CredentialsProvider
-from blunder_tutor.auth.repository import (
-    IdentityRepository,
-    SetupRepository,
-    UserRepository,
-)
 from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
+from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.auth.types import (
     ValidationRules,
     is_user_id_shape,
@@ -31,13 +27,12 @@ from blunder_tutor.web.auth_hooks import (
     BlunderTutorFilePermissionPolicy,
     cleanup_user_dir,
     materialize_user_dir,
-    resolve_user_db_path,
 )
 from blunder_tutor.web.config import AppConfig
 
 
 async def cmd_list_users(ctx: dict) -> None:
-    users = await UserRepository(db=ctx["auth_db"]).list_all()
+    users = await ctx["storage"].users.list_all()
     if not users:
         print("No users")
         return
@@ -47,8 +42,8 @@ async def cmd_list_users(ctx: dict) -> None:
 
 async def cmd_reset_password(ctx: dict, username: str, new_password: str) -> None:
     service: AuthService = ctx["service"]
-    users = UserRepository(db=ctx["auth_db"])
-    identities = IdentityRepository(db=ctx["auth_db"])
+    users = ctx["storage"].users
+    identities = ctx["storage"].identities
 
     user = await users.get_by_username(make_username(username))
     if user is None:
@@ -66,7 +61,7 @@ async def cmd_reset_password(ctx: dict, username: str, new_password: str) -> Non
 
 async def cmd_revoke_sessions(ctx: dict, username: str) -> None:
     service: AuthService = ctx["service"]
-    users = UserRepository(db=ctx["auth_db"])
+    users = ctx["storage"].users
     user = await users.get_by_username(make_username(username))
     if user is None:
         raise SystemExit(f"No such user: {username}")
@@ -76,7 +71,7 @@ async def cmd_revoke_sessions(ctx: dict, username: str) -> None:
 
 async def cmd_delete_user(ctx: dict, username: str) -> None:
     service: AuthService = ctx["service"]
-    users = UserRepository(db=ctx["auth_db"])
+    users = ctx["storage"].users
     user = await users.get_by_username(make_username(username))
     if user is None:
         raise SystemExit(f"No such user: {username}")
@@ -85,8 +80,8 @@ async def cmd_delete_user(ctx: dict, username: str) -> None:
 
 
 async def cmd_regenerate_invite(ctx: dict) -> None:
-    users = UserRepository(db=ctx["auth_db"])
-    setup = SetupRepository(db=ctx["auth_db"])
+    users = ctx["storage"].users
+    setup = ctx["storage"].setup
     if await users.count() > 0:
         raise SystemExit("Cannot regenerate invite: users already exist")
     code = generate_invite_code(ctx["secret_key"])
@@ -95,7 +90,7 @@ async def cmd_regenerate_invite(ctx: dict) -> None:
 
 
 async def cmd_prune_orphans(ctx: dict) -> None:
-    users = UserRepository(db=ctx["auth_db"])
+    users = ctx["storage"].users
     known = {u.id for u in await users.list_all()}
     users_dir: Path = ctx["users_dir"]
     removed = 0
@@ -192,13 +187,12 @@ class AuthCommand(CLICommand):
         try:
             rules = ValidationRules.default()
             hasher = BcryptHasher(rules)
-            identities = IdentityRepository(db=auth_db)
+            storage = SqliteStorage(auth_db)
             service = AuthService(
-                auth_db=auth_db,
-                db_path_resolver=partial(resolve_user_db_path, users_dir),
+                storage=storage,
                 providers={
                     "credentials": CredentialsProvider(
-                        identities=identities, hasher=hasher, rules=rules
+                        identities=storage.identities, hasher=hasher, rules=rules
                     ),
                 },
                 hasher=hasher,
@@ -210,7 +204,7 @@ class AuthCommand(CLICommand):
                 session_idle=timedelta(seconds=config.auth.session_idle_seconds),
             )
             ctx = {
-                "auth_db": auth_db,
+                "storage": storage,
                 "users_dir": users_dir,
                 "service": service,
                 "secret_key": config.auth.secret_key,

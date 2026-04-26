@@ -12,6 +12,7 @@ from blunder_tutor.auth.types import (
     InvalidPasswordError,
     Username,
 )
+from tests.helpers.auth import build_inmemory_auth_service
 
 
 class TestRegister:
@@ -139,3 +140,82 @@ class TestDeleteAccount:
 
         await service.delete_account(user.id)
         assert not user_dir.exists()
+
+
+class TestServiceOnInMemoryStorage:
+    """Smoke tests proving the service layer runs end-to-end against
+    :class:`InMemoryStorage` — same API as the SQLite-backed tests
+    above, just no aiosqlite, no fixtures, no transactions to disk.
+    InMemory is the fast path for service-layer unit tests that don't
+    care about SQL semantics; failures here mean a Protocol seam
+    leaked storage assumptions.
+
+    ``signup()`` with :class:`HmacInvitePolicy` is intentionally NOT
+    covered — the policy still issues raw SQL on the transaction
+    handle (see the ``HmacInvitePolicy`` docstring for the
+    SetupRepo-rewrite follow-up). The InMemory helper wires
+    :class:`OpenSignup` instead.
+    """
+
+    async def test_register_happy_path(self, tmp_path: Path) -> None:
+        service, _ = build_inmemory_auth_service(users_dir=tmp_path / "users")
+        user = await service.register(
+            username=Username("alice"),
+            password="password123",
+            email=Email("alice@example.com"),
+        )
+        assert user.username == "alice"
+        assert user.email == "alice@example.com"
+        assert await service.user_count() == 1
+
+    async def test_register_duplicate_username_raises(self, tmp_path: Path) -> None:
+        service, _ = build_inmemory_auth_service(users_dir=tmp_path / "users")
+        await service.register(username=Username("alice"), password="password123")
+        with pytest.raises(DuplicateUsernameError):
+            await service.register(username=Username("alice"), password="another123")
+
+    async def test_signup_with_open_policy(self, tmp_path: Path) -> None:
+        service, _ = build_inmemory_auth_service(users_dir=tmp_path / "users")
+        user = await service.signup(
+            username=Username("alice"),
+            password="password123",
+        )
+        assert user.username == "alice"
+        assert await service.user_count() == 1
+
+    async def test_authenticate_happy_path(self, tmp_path: Path) -> None:
+        service, _ = build_inmemory_auth_service(users_dir=tmp_path / "users")
+        await service.register(username=Username("alice"), password="password123")
+        user = await service.authenticate(
+            "credentials", {"username": "alice", "password": "password123"}
+        )
+        assert user is not None
+        assert user.username == "alice"
+
+    async def test_session_lifecycle(self, tmp_path: Path) -> None:
+        service, _ = build_inmemory_auth_service(users_dir=tmp_path / "users")
+        user = await service.register(
+            username=Username("alice"), password="password123"
+        )
+        session = await service.create_session(
+            user_id=user.id, user_agent="ua", ip="1.2.3.4"
+        )
+        ctx = await service.resolve_session(session.token, ip=None)
+        assert ctx is not None
+        assert ctx.user_id == user.id
+
+        await service.revoke_session(session.token)
+        assert await service.resolve_session(session.token, ip=None) is None
+
+    async def test_delete_account_cascades(self, tmp_path: Path) -> None:
+        service, storage = build_inmemory_auth_service(users_dir=tmp_path / "users")
+        user = await service.register(
+            username=Username("alice"), password="password123"
+        )
+        await service.create_session(user_id=user.id, user_agent=None, ip=None)
+        assert await service.user_count() == 1
+
+        await service.delete_account(user.id)
+        assert await service.user_count() == 0
+        assert await storage.identities.list_for_user(user.id) == []
+        assert await storage.sessions.list_for_user(user.id) == []

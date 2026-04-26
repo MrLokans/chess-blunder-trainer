@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from blunder_tutor.auth.hashers import BcryptHasher
-from blunder_tutor.auth.repository import IdentityRepository
+from blunder_tutor.auth.protocols import IdentityRepo, PasswordHasher
 from blunder_tutor.auth.types import (
     AuthError,
     CorruptCredentialError,
@@ -40,8 +39,8 @@ class CredentialsProvider:
     def __init__(
         self,
         *,
-        identities: IdentityRepository,
-        hasher: BcryptHasher,
+        identities: IdentityRepo,
+        hasher: PasswordHasher,
         rules: ValidationRules,
     ) -> None:
         self._identities = identities

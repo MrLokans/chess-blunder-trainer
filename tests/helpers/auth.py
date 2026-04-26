@@ -6,15 +6,20 @@ from pathlib import Path
 
 from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.hashers import BcryptHasher
-from blunder_tutor.auth.policies import HmacInvitePolicy, MaxUsersQuota
+from blunder_tutor.auth.policies import (
+    HmacInvitePolicy,
+    MaxUsersQuota,
+    OpenSignup,
+)
+from blunder_tutor.auth.protocols import InvitePolicy, QuotaPolicy, Storage
 from blunder_tutor.auth.providers.credentials import CredentialsProvider
-from blunder_tutor.auth.repository import IdentityRepository
 from blunder_tutor.auth.service import AuthService
+from blunder_tutor.auth.storage_memory import InMemoryStorage
+from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.auth.types import ValidationRules
 from blunder_tutor.web.auth_hooks import (
     cleanup_user_dir,
     materialize_user_dir,
-    resolve_user_db_path,
 )
 
 
@@ -27,25 +32,70 @@ def build_test_auth_service(
     max_users: int = 1024,
 ) -> AuthService:
     """Construct an :class:`AuthService` with production-equivalent
-    strategy wiring for tests. ``max_users`` defaults high so the cap
-    is effectively off; tests that exercise the cap explicitly pass a
-    smaller value (or use the credentials_app fixture which boots via
-    ``MAX_USERS=1`` at the env level).
+    SQLite-backed wiring. ``max_users`` defaults high so the cap is
+    effectively off; tests that exercise the cap explicitly pass a
+    smaller value (or use the ``credentials_app`` fixture which boots
+    via ``MAX_USERS=1`` at the env level).
     """
+    return _build_auth_service(
+        storage=SqliteStorage(auth_db),
+        users_dir=users_dir,
+        session_max_age=session_max_age,
+        session_idle=session_idle,
+        quota=MaxUsersQuota(max_users),
+        invite_policy=HmacInvitePolicy(),
+    )
+
+
+def build_inmemory_auth_service(
+    *,
+    users_dir: Path,
+    session_max_age: timedelta = timedelta(days=30),
+    session_idle: timedelta = timedelta(days=7),
+    max_users: int = 1024,
+) -> tuple[AuthService, InMemoryStorage]:
+    """Construct an :class:`AuthService` against the test-only
+    :class:`InMemoryStorage`. Returns the service alongside the storage
+    so a test can inspect or seed the backing dicts directly.
+
+    Uses :class:`OpenSignup` (not :class:`HmacInvitePolicy`) because
+    the latter still issues raw SQL on the transaction connection — see
+    the storage_memory.py module docstring and the follow-up TREK
+    ticket for the SetupRepo-backed rewrite.
+    """
+    storage = InMemoryStorage()
+    service = _build_auth_service(
+        storage=storage,
+        users_dir=users_dir,
+        session_max_age=session_max_age,
+        session_idle=session_idle,
+        quota=MaxUsersQuota(max_users),
+        invite_policy=OpenSignup(),
+    )
+    return service, storage
+
+
+def _build_auth_service(
+    *,
+    storage: Storage,
+    users_dir: Path,
+    session_max_age: timedelta,
+    session_idle: timedelta,
+    quota: QuotaPolicy,
+    invite_policy: InvitePolicy,
+) -> AuthService:
     rules = ValidationRules.default()
     hasher = BcryptHasher(rules)
-    identities = IdentityRepository(db=auth_db)
     return AuthService(
-        auth_db=auth_db,
-        db_path_resolver=partial(resolve_user_db_path, users_dir),
+        storage=storage,
         providers={
             "credentials": CredentialsProvider(
-                identities=identities, hasher=hasher, rules=rules
+                identities=storage.identities, hasher=hasher, rules=rules
             ),
         },
         hasher=hasher,
-        quota=MaxUsersQuota(max_users),
-        invite_policy=HmacInvitePolicy(),
+        quota=quota,
+        invite_policy=invite_policy,
         on_after_register=partial(materialize_user_dir, users_dir),
         on_after_delete=partial(cleanup_user_dir, users_dir),
         session_max_age=session_max_age,

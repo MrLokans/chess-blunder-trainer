@@ -5,7 +5,6 @@ import secrets
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
 from typing import Literal, NewType
 
 UserId = NewType("UserId", str)
@@ -219,10 +218,6 @@ class Session:
 class UserContext:
     user_id: UserId
     username: Username
-    # Filesystem path is the SaaS seam: a future shared-DB port replaces
-    # this with a tenant-id and the `get_db_path` dependency becomes the
-    # single swap point.
-    db_path: Path
     session_token: SessionToken | None
 
     @property

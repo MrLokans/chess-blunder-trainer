@@ -3,21 +3,15 @@ from __future__ import annotations
 import sqlite3
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from typing import NoReturn
 
 from blunder_tutor.auth._time import now_iso
-from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.protocols import (
     AuthProvider,
     InvitePolicy,
     PasswordHasher,
     QuotaPolicy,
-)
-from blunder_tutor.auth.repository import (
-    IdentityRepository,
-    SessionRepository,
-    UserRepository,
+    Storage,
 )
 from blunder_tutor.auth.types import (
     DuplicateEmailError,
@@ -50,17 +44,17 @@ async def _noop_after_delete(_user_id: UserId) -> None:
 class AuthService:
     """Service layer for all auth operations.
 
-    Owns a single :class:`AuthDb` (one connection, one write lock) and
-    shares it with every repository and provider — so concurrent
-    register/login calls serialize correctly and multi-statement
-    operations (register, delete_account) run in one transaction.
+    Owns a single :class:`Storage` aggregate (the four repos plus the
+    transaction primitive). Concurrent register/login calls serialize
+    correctly because the storage's transaction span is the only
+    multi-statement write path; reads use the storage's read seam
+    without locking.
     """
 
     def __init__(
         self,
         *,
-        auth_db: AuthDb,
-        db_path_resolver: Callable[[UserId], Path],
+        storage: Storage,
         providers: Mapping[ProviderName, AuthProvider],
         hasher: PasswordHasher,
         quota: QuotaPolicy,
@@ -70,15 +64,14 @@ class AuthService:
         on_after_register: Callable[[User], Awaitable[None]] = _noop_after_register,
         on_after_delete: Callable[[UserId], Awaitable[None]] = _noop_after_delete,
     ) -> None:
-        self._db = auth_db
-        self._db_path_resolver = db_path_resolver
+        self._storage = storage
         self._on_after_register = on_after_register
         self._on_after_delete = on_after_delete
         self._session_max_age = session_max_age
         self._session_idle = session_idle
-        self._users = UserRepository(db=auth_db)
-        self._identities = IdentityRepository(db=auth_db)
-        self._sessions = SessionRepository(db=auth_db)
+        self._users = storage.users
+        self._identities = storage.identities
+        self._sessions = storage.sessions
         self._providers: dict[ProviderName, AuthProvider] = dict(providers)
         self._hasher = hasher
         self._quota = quota
@@ -103,7 +96,7 @@ class AuthService:
         user_id = make_user_id()
         now = now_iso()
         try:
-            async with self._db.transaction() as conn:
+            async with self._storage.transaction() as conn:
                 await self._insert_user_with_credential(
                     conn,
                     user_id=user_id,
@@ -141,12 +134,22 @@ class AuthService:
         user_id = make_user_id()
         now = now_iso()
         try:
-            async with self._db.transaction() as conn:
-                async with conn.execute(
-                    "SELECT COUNT(*) FROM users WHERE deleted_at IS NULL"
-                ) as cur:
-                    row = await cur.fetchone()
-                count = int(row[0]) if row else 0
+            async with self._storage.transaction() as conn:
+                # ``self._users.count()`` is consistent with the
+                # ``insert`` below for both backends:
+                #   * SQLite: ``UserRepository.count()`` reads through
+                #     the same shared aiosqlite connection that holds
+                #     the open ``BEGIN IMMEDIATE``, so the COUNT runs
+                #     inside the transaction's read view; concurrent
+                #     signups serialize on the write lock.
+                #   * InMemory: ``count()`` reads the dict without
+                #     locking, but the caller (this method) holds the
+                #     storage lock for the full transaction span, so
+                #     no coroutine can mutate ``users`` mid-check.
+                # The cap stays a DB invariant under concurrent
+                # signups, just expressed via the repo surface
+                # instead of inline SQL.
+                count = await self._users.count()
                 if not self._quota.allow_signup(count):
                     raise UserCapReachedError()
                 await self._invite_policy.consume(conn, invite_code, count)
@@ -292,7 +295,6 @@ class AuthService:
         return UserContext(
             user_id=user.id,
             username=user.username,
-            db_path=self._db_path_resolver(user.id),
             session_token=typed_token,
         )
 
@@ -303,14 +305,19 @@ class AuthService:
         await self._sessions.delete_all_for_user(user_id)
 
     async def delete_account(self, user_id: UserId) -> None:
-        # ON DELETE CASCADE handles identities + sessions in a single
-        # statement. The on_after_delete hook runs AFTER commit: if it
-        # fails, the user is already logged out and cannot log back in
-        # — any external resources the hook would have cleaned up are
-        # a nuisance, not a data-integrity bug. Inverse ordering could
-        # leave a live user with no external resources.
-        async with self._db.transaction() as conn:
-            await conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        # ``users.delete`` is a single statement — the underlying
+        # storage's ``ON DELETE CASCADE`` (SQLite) or in-memory cascade
+        # (InMemory) removes identities + sessions atomically without
+        # an explicit transaction span. SQLite atomicity here depends
+        # on ``PRAGMA foreign_keys = ON`` being set on the connection
+        # (see ``AuthDb.connect``); any code that opens the auth DB
+        # outside ``AuthDb`` would silently break the cascade. The
+        # on_after_delete hook runs AFTER the delete commits: if the
+        # hook fails, the user is already logged out and cannot log
+        # back in — any external resources the hook would have cleaned
+        # up are a nuisance, not a data-integrity bug. Inverse ordering
+        # could leave a live user with no external resources.
+        await self._users.delete(user_id)
         await self._on_after_delete(user_id)
 
     async def user_count(self) -> int:

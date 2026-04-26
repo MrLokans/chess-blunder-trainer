@@ -6,7 +6,6 @@ import httpx
 from fastapi import FastAPI
 from httpx import ASGITransport
 
-from blunder_tutor.auth.repository import SetupRepository
 from blunder_tutor.repositories.settings import SettingsRepository
 
 
@@ -24,8 +23,9 @@ class TestUserDataIsolation:
         here on the ``alice_locale == "ru"`` / ``bob_locale == "pl"``
         assertions below.
         """
-        setup_repo = SetupRepository(db=credentials_app_multi.state.auth.db)
-        invite_code = await setup_repo.get("invite_code")
+        invite_code = await credentials_app_multi.state.auth.storage.setup.get(
+            "invite_code"
+        )
         assert invite_code, "bootstrap should have seeded an invite code"
 
         transport = ASGITransport(app=credentials_app_multi)
@@ -94,8 +94,9 @@ class TestUserDataIsolation:
         noise but otherwise proceeds. Guards against a regression that
         would demand an invite on every signup and effectively lock
         multi-user instances out."""
-        setup_repo = SetupRepository(db=credentials_app_multi.state.auth.db)
-        invite_code = await setup_repo.get("invite_code")
+        invite_code = await credentials_app_multi.state.auth.storage.setup.get(
+            "invite_code"
+        )
         assert invite_code
 
         transport = ASGITransport(app=credentials_app_multi)

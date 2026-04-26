@@ -63,10 +63,17 @@ def get_user_context(request: Request) -> UserContext:
     return ctx
 
 
-def get_db_path(
-    ctx: Annotated[UserContext, Depends(get_user_context)],
-) -> Path:
-    return ctx.db_path
+def get_db_path(request: Request) -> Path:
+    """Per-request DB path populated by ``UserDbPathMiddleware``. Treats
+    a missing/None value as 401 — by the time a route depends on this,
+    `AuthMiddleware` has already enforced auth, so the absence of a
+    resolved path is a misconfiguration (route not exempt, but middleware
+    skipped) rather than a real unauth case.
+    """
+    db_path = getattr(request.state, "user_db_path", None)
+    if db_path is None:
+        raise HTTPException(status_code=401, detail="unauthorized")
+    return db_path
 
 
 get_settings_repository = _repo_dep(SettingsRepository)

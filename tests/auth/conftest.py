@@ -12,7 +12,6 @@ from fastapi import FastAPI
 from httpx import ASGITransport
 
 from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.repository import SetupRepository
 from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.web.app import create_app
@@ -100,8 +99,7 @@ async def client_credentials_mode(credentials_app: FastAPI):
 
 @pytest.fixture
 async def invite_code(credentials_app: FastAPI) -> str:
-    repo = SetupRepository(db=credentials_app.state.auth.db)
-    code = await repo.get("invite_code")
+    code = await credentials_app.state.auth.storage.setup.get("invite_code")
     assert code, "startup hook should have persisted an invite code"
     return code
 

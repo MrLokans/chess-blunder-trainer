@@ -8,6 +8,7 @@ from fastapi import FastAPI
 
 from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.schema import initialize_auth_schema
+from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.web.app import scan_orphans
 
 
@@ -55,7 +56,7 @@ class TestOrphanScan:
         await initialize_auth_schema(db_path)
         async with AuthDb(db_path) as auth_db:
             with caplog.at_level(logging.WARNING, logger="blunder_tutor.web.app"):
-                await scan_orphans(auth_db, users_dir)
+                await scan_orphans(SqliteStorage(auth_db).users, users_dir)
 
         assert orphan.exists(), (
             "scan_orphans is diagnostic only — a silent delete would destroy "
@@ -85,10 +86,10 @@ class TestOrphanScan:
         assert r.status_code == 200, r.text
 
         users_dir: Path = credentials_app.state.auth.users_dir
-        auth_db: AuthDb = credentials_app.state.auth.db
+        users = credentials_app.state.auth.storage.users
         caplog.clear()
         with caplog.at_level(logging.WARNING, logger="blunder_tutor.web.app"):
-            await scan_orphans(auth_db, users_dir)
+            await scan_orphans(users, users_dir)
 
         orphan_records = [r for r in caplog.records if "orphan" in r.message.lower()]
         assert orphan_records == []
@@ -108,7 +109,7 @@ class TestOrphanScan:
         await initialize_auth_schema(db_path)
         async with AuthDb(db_path) as auth_db:
             with caplog.at_level(logging.WARNING, logger="blunder_tutor.web.app"):
-                await scan_orphans(auth_db, users_dir)
+                await scan_orphans(SqliteStorage(auth_db).users, users_dir)
 
         orphan_records = [r for r in caplog.records if "orphan" in r.message.lower()]
         assert orphan_records == []
@@ -120,7 +121,9 @@ class TestOrphanScan:
         await initialize_auth_schema(db_path)
         async with AuthDb(db_path) as auth_db:
             with caplog.at_level(logging.WARNING, logger="blunder_tutor.web.app"):
-                await scan_orphans(auth_db, tmp_path / "does-not-exist")
+                await scan_orphans(
+                    SqliteStorage(auth_db).users, tmp_path / "does-not-exist"
+                )
 
         assert not (tmp_path / "does-not-exist").exists()
         orphan_records = [r for r in caplog.records if "orphan" in r.message.lower()]

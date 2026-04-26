@@ -21,14 +21,11 @@ from blunder_tutor.auth.hashers import BcryptHasher
 from blunder_tutor.auth.invite import generate_invite_code
 from blunder_tutor.auth.middleware import AuthMiddleware, MiddlewareConfig
 from blunder_tutor.auth.policies import HmacInvitePolicy, MaxUsersQuota
+from blunder_tutor.auth.protocols import UserRepo
 from blunder_tutor.auth.providers.credentials import CredentialsProvider
-from blunder_tutor.auth.repository import (
-    IdentityRepository,
-    SetupRepository,
-    UserRepository,
-)
 from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
+from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.auth.types import (
     LOCAL_USER_ID,
     UserId,
@@ -63,6 +60,7 @@ from blunder_tutor.web.middleware import (
     LocaleMiddleware,
     SecurityHeadersMiddleware,
     SetupCheckMiddleware,
+    UserDbPathMiddleware,
 )
 from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
 from blunder_tutor.web.per_user_cache import PerUserCache
@@ -122,9 +120,10 @@ async def lifespan(app: FastAPI):
     # AuthDb owns the shared aiosqlite connection; close it here. Provider
     # lifecycles are currently no-ops (CredentialsProvider holds no external
     # resources) so AuthService has no close method — if a future provider
-    # needs cleanup, re-add it and wire it back in the same spot.
+    # needs cleanup, re-add it and wire it back in the same spot. The
+    # ``storage.auth_db`` escape hatch keeps the SQLite coupling visible.
     if app.state.auth is not None:
-        await app.state.auth.db.close()
+        await app.state.auth.storage.auth_db.close()
 
 
 async def _bootstrap_auth(app: FastAPI) -> None:
@@ -147,13 +146,12 @@ async def _bootstrap_auth(app: FastAPI) -> None:
 
     rules = ValidationRules.default()
     hasher = BcryptHasher(rules)
-    identities = IdentityRepository(db=auth_db)
+    storage = SqliteStorage(auth_db)
     auth_service = AuthService(
-        auth_db=auth_db,
-        db_path_resolver=partial(resolve_user_db_path, users_dir),
+        storage=storage,
         providers={
             "credentials": CredentialsProvider(
-                identities=identities, hasher=hasher, rules=rules
+                identities=storage.identities, hasher=hasher, rules=rules
             ),
         },
         hasher=hasher,
@@ -165,11 +163,16 @@ async def _bootstrap_auth(app: FastAPI) -> None:
         session_idle=timedelta(seconds=auth_config.session_idle_seconds),
     )
     app.state.auth = AuthResources(
-        db=auth_db,
+        storage=storage,
         service=auth_service,
         db_path=auth_db_path,
         users_dir=users_dir,
     )
+    # Per-user DB path topology lives here, not in the auth core. The
+    # `UserDbPathMiddleware` reads this resolver per-request to populate
+    # `request.state.user_db_path`; `_wire_background` reuses it so the
+    # foreground request path and background fan-out share one mapping.
+    app.state.db_path_resolver = partial(resolve_user_db_path, users_dir)
 
     # Surface the most common insecure-default posture: credentials auth
     # but the operator has not indicated either HTTPS-direct or a trusted
@@ -186,12 +189,11 @@ async def _bootstrap_auth(app: FastAPI) -> None:
 
     if await auth_service.user_count() == 0:
         try:
-            setup_repo = SetupRepository(db=auth_db)
-            invite = await setup_repo.get("invite_code")
+            invite = await storage.setup.get("invite_code")
             if invite is None:
                 assert auth_config.secret_key is not None  # validated at boot
                 invite = generate_invite_code(auth_config.secret_key)
-                await setup_repo.put("invite_code", invite)
+                await storage.setup.put("invite_code", invite)
             log.warning("=" * 60)
             log.warning("FIRST-USER SETUP: invite code required at /setup")
             log.warning("Invite code: %s", invite)
@@ -202,43 +204,31 @@ async def _bootstrap_auth(app: FastAPI) -> None:
             # (Task 17).
             log.exception("Failed to generate or persist first-user invite code")
 
-    await scan_orphans(auth_db, users_dir)
+    await scan_orphans(storage.users, users_dir)
 
 
 def _wire_background(app: FastAPI) -> None:
     """Build the JobExecutor + BackgroundScheduler with auth-mode-aware
-    user enumeration and db_path routing.
-
-    None-mode: a single synthetic ``_local`` user maps to the legacy
-    DB path. Credentials mode: users are enumerated from
-    :class:`UserRepository` and each user's data lives at
-    ``users_dir/<user_id>/main.sqlite3``.
+    user enumeration. The per-user DB-path resolver is shared with the
+    foreground request path via ``app.state.db_path_resolver``, set in
+    ``create_app`` (none mode) or ``_bootstrap_auth`` (credentials mode).
     """
     config: AppConfig = app.state.config
     event_bus = app.state.event_bus
     work_coordinator = app.state.work_coordinator
+    resolver: DbPathResolver = app.state.db_path_resolver
 
     if config.auth.mode == "credentials":
         assert app.state.auth is not None  # set by _bootstrap_auth
-        users_dir = app.state.auth.users_dir
-        user_repo = UserRepository(db=app.state.auth.db)
+        users_repo = app.state.auth.storage.users
 
         async def list_users() -> list[UserId]:
-            return [u.id for u in await user_repo.list_all()]
-
-        def db_path_resolver(user_id: UserId) -> Path:
-            return users_dir / user_id / "main.sqlite3"
+            return [u.id for u in await users_repo.list_all()]
 
     else:
-        legacy_db_path = config.data.db_path
 
         async def list_users() -> list[UserId]:
             return [LOCAL_USER_ID]
-
-        def db_path_resolver(_user_id: UserId) -> Path:
-            return legacy_db_path
-
-    resolver: DbPathResolver = db_path_resolver
 
     app.state.job_executor = JobExecutor(
         event_bus=event_bus,
@@ -254,7 +244,7 @@ def _wire_background(app: FastAPI) -> None:
     )
 
 
-async def scan_orphans(auth_db: AuthDb, users_dir: Path) -> None:
+async def scan_orphans(users: UserRepo, users_dir: Path) -> None:
     """Log any per-user directories on disk that don't match a row in
     ``users``. Startup diagnostic only — deletion is the operator's
     call via the CLI (Task 17). A silent auto-delete would be a
@@ -266,8 +256,7 @@ async def scan_orphans(auth_db: AuthDb, users_dir: Path) -> None:
     """
     if not users_dir.exists():
         return
-    repo = UserRepository(db=auth_db)
-    known = {u.id for u in await repo.list_all()}
+    known = {u.id for u in await users.list_all()}
     for child in users_dir.iterdir():
         if child.is_dir() and is_user_id_shape(child.name) and child.name not in known:
             log.warning("Orphan user directory found (not deleted): %s", child)
@@ -363,6 +352,11 @@ def create_app(
 
     if config.auth.mode == "none":
         app.state.none_mode_db_path = config.data.db_path
+        # Single-user topology: every request resolves to the same legacy
+        # DB. Credentials mode populates this in `_bootstrap_auth` once
+        # `users_dir` is known.
+        none_db_path = config.data.db_path
+        app.state.db_path_resolver = lambda _user_id: none_db_path
 
     # Per-user caches keyed on user_id (or `_local` in none-mode). Always
     # present so middleware never has to lazy-init; `PerUserCache` is the
@@ -434,6 +428,12 @@ def create_app(
     app.add_middleware(SetupCheckMiddleware)
     app.add_middleware(DemoModeMiddleware)
     app.add_middleware(LocaleMiddleware)
+    # `UserDbPathMiddleware` must run AFTER `AuthMiddleware` (which sets
+    # `request.state.user_ctx`) and BEFORE the middleware that opens
+    # per-user DBs (`SetupCheckMiddleware`, `LocaleMiddleware`). Add
+    # order is reverse of execution: added BEFORE Auth here so it runs
+    # AFTER it on the request.
+    app.add_middleware(UserDbPathMiddleware)
     app.add_middleware(
         AuthMiddleware,
         config=MiddlewareConfig(

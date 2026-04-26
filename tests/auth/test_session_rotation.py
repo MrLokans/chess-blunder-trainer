@@ -4,7 +4,6 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from blunder_tutor.auth.repository import SessionRepository, SetupRepository
 from blunder_tutor.auth.types import SessionToken
 from tests.auth.conftest import (
     DEFAULT_PASSWORD,
@@ -14,8 +13,7 @@ from tests.auth.conftest import (
 
 
 async def _session_row_exists(app: FastAPI, token: str) -> bool:
-    repo = SessionRepository(db=app.state.auth.db)
-    return await repo.get(SessionToken(token)) is not None
+    return await app.state.auth.storage.sessions.get(SessionToken(token)) is not None
 
 
 class TestLoginRotation:
@@ -105,8 +103,7 @@ class TestSignupRotation:
 
     @pytest.fixture
     async def invite_multi(self, credentials_app_multi: FastAPI) -> str:
-        repo = SetupRepository(db=credentials_app_multi.state.auth.db)
-        code = await repo.get("invite_code")
+        code = await credentials_app_multi.state.auth.storage.setup.get("invite_code")
         assert code
         return code
 

@@ -10,9 +10,9 @@ import pytest
 
 from blunder_tutor.auth.db import AuthDb
 from blunder_tutor.auth.invite import verify_invite_code
-from blunder_tutor.auth.repository import SetupRepository
 from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
+from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.auth.types import Username
 from blunder_tutor.cli.auth import (
     AuthCommand,
@@ -43,7 +43,7 @@ async def ctx(tmp_path: Path):
     )
     try:
         yield {
-            "auth_db": auth_db,
+            "storage": SqliteStorage(auth_db),
             "users_dir": users_dir,
             "service": service,
             "secret_key": "x" * 32,
@@ -216,8 +216,7 @@ class TestRegenerateInvite:
         code = out.split(": ", 1)[1]
         assert verify_invite_code(code, ctx["secret_key"])
 
-        setup = SetupRepository(db=ctx["auth_db"])
-        assert await setup.get("invite_code") == code
+        assert await ctx["storage"].setup.get("invite_code") == code
 
     async def test_refuses_when_users_exist(self, ctx) -> None:
         await ctx["service"].register(

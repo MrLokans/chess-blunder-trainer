@@ -25,18 +25,13 @@ def _cache_key(request: Request) -> str:
 
 
 def _db_path_for(request: Request) -> Path | None:
-    """Return the per-request DB path: the signed-in user's DB when an
-    `AuthMiddleware`-populated context is present, otherwise the legacy
-    single-user path (AUTH_MODE=none).
+    """Return the per-request DB path. The value is set by
+    :class:`UserDbPathMiddleware` (web layer), which runs after
+    :class:`AuthMiddleware` and routes per-user-id through the resolver
+    stored on ``app.state.db_path_resolver``.
 
-    In credentials mode with no context (exempt paths before any user is
-    signed in) there is no legitimate DB to hit — return ``None`` and let
-    the caller fall back to defaults instead of silently opening the
-    un-migrated legacy ``data/main.sqlite3``.
+    Returns ``None`` when no path was set — the credentials-mode pre-auth
+    case (exempt paths before any user is signed in). Callers fall back
+    to defaults instead of silently opening the un-migrated legacy DB.
     """
-    ctx = getattr(request.state, "user_ctx", None)
-    if ctx is not None:
-        return ctx.db_path
-    if getattr(request.app.state, "auth_mode", "none") == "credentials":
-        return None
-    return request.app.state.config.data.db_path
+    return getattr(request.state, "user_db_path", None)

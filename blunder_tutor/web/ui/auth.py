@@ -75,10 +75,11 @@ async def setup_page(request: Request):
             return templates.TemplateResponse(request, "first_setup.html", {})
         if ctx is None or not ctx.is_authenticated:
             return RedirectResponse(url="/login", status_code=302)
-        db_path: Path = ctx.db_path
-    else:
-        # `service is None` ⇒ none-mode, so `none_mode_db_path` is set.
-        db_path = request.app.state.none_mode_db_path
+
+    # `UserDbPathMiddleware` populates `user_db_path` from the per-mode
+    # resolver — credentials-mode ⇒ the signed-in user's DB, none-mode
+    # ⇒ the legacy single-user DB.
+    db_path: Path = request.state.user_db_path
 
     async with SettingsRepository(db_path=db_path) as settings_repo:
         if await settings_repo.is_setup_completed():

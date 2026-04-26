@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -46,10 +45,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
     cookie and attaches it to ``request.state.user_ctx``.
 
     In ``auth_mode == "none"`` every request runs as a single ``_local``
-    user whose DB path is ``app.state.none_mode_db_path`` — preserving
-    the pre-auth single-user topology untouched. The attribute is set
-    only in none-mode (see :func:`blunder_tutor.web.app.create_app`),
-    so the read below is correctly scoped to the same branch.
+    user — preserving the pre-auth single-user topology untouched. The
+    per-user DB path is set by :class:`UserDbPathMiddleware` (web layer),
+    not here: the auth core has no opinion on whether each user maps to
+    a separate DB, a tenant column in a shared DB, or no DB at all.
 
     In ``auth_mode == "credentials"`` unauthenticated requests either
     redirect HTML navigations to ``/login?next=<path>`` or return a 401
@@ -66,11 +65,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         mode = getattr(request.app.state, "auth_mode", "none")
 
         if mode == "none":
-            none_mode_db_path: Path = request.app.state.none_mode_db_path
             request.state.user_ctx = UserContext(
                 user_id=LOCAL_USER_ID,
                 username=LOCAL_USERNAME,
-                db_path=none_mode_db_path,
                 session_token=None,
             )
             return await call_next(request)
