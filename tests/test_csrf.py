@@ -35,7 +35,7 @@ class TestExtractHost:
         assert _extract_host(url) == expected
 
 
-class _R:
+class _FakeRequest:
     """Minimal request stand-in for the pure-logic host test."""
 
     def __init__(self, headers):
@@ -44,29 +44,29 @@ class _R:
 
 class TestOriginMatchesHost:
     def test_origin_matches(self):
-        r = _R({"origin": "http://example.com:8000", "host": "example.com"})
+        r = _FakeRequest({"origin": "http://example.com:8000", "host": "example.com"})
         assert _origin_matches_host(r) is True  # type: ignore[arg-type]
 
     def test_origin_mismatch_rejected(self):
-        r = _R({"origin": "https://evil.com", "host": "example.com"})
+        r = _FakeRequest({"origin": "https://evil.com", "host": "example.com"})
         assert _origin_matches_host(r) is False  # type: ignore[arg-type]
 
     def test_referer_fallback(self):
-        r = _R({"referer": "http://example.com/foo", "host": "example.com"})
+        r = _FakeRequest({"referer": "http://example.com/foo", "host": "example.com"})
         assert _origin_matches_host(r) is True  # type: ignore[arg-type]
 
     def test_referer_mismatch_rejected(self):
-        r = _R({"referer": "https://evil.com/foo", "host": "example.com"})
+        r = _FakeRequest({"referer": "https://evil.com/foo", "host": "example.com"})
         assert _origin_matches_host(r) is False  # type: ignore[arg-type]
 
     def test_neither_header_allowed(self):
-        r = _R({"host": "example.com"})
+        r = _FakeRequest({"host": "example.com"})
         # Absent-both is the non-browser client path; SameSite=Lax on
         # the session cookie is the primary defense in that case.
         assert _origin_matches_host(r) is True  # type: ignore[arg-type]
 
     def test_case_insensitive_host(self):
-        r = _R({"origin": "http://EXAMPLE.com", "host": "Example.COM"})
+        r = _FakeRequest({"origin": "http://EXAMPLE.com", "host": "Example.COM"})
         assert _origin_matches_host(r) is True  # type: ignore[arg-type]
 
 

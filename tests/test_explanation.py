@@ -19,9 +19,9 @@ _EN_PIECES = {
     "chess.piece.king": "king",
 }
 # English case forms are identical to nominative
-for _p in ["pawn", "knight", "bishop", "rook", "queen", "king"]:
-    for _c in ["gen", "acc", "inst"]:
-        _EN_PIECES[f"chess.piece.{_p}.{_c}"] = _p
+for _piece in ["pawn", "knight", "bishop", "rook", "queen", "king"]:
+    for _case in ["gen", "acc", "inst"]:
+        _EN_PIECES[f"chess.piece.{_piece}.{_case}"] = _piece
 
 _EN_TEMPLATES = {
     "explanation.blunder.missed_mate": "You missed a checkmate in one move.",
@@ -387,7 +387,7 @@ class TestI18nKeys:
         assert raw.blunder.key.startswith("explanation.")
         assert "piece" in raw.blunder.params
 
-    def test_resolve_translates_piece_keys(self):
+    def test_resolve_ts_piece_keys(self):
         raw = generate_explanation(
             fen="4k3/8/5q2/8/8/8/8/3QK3 b - - 0 1",
             blunder_uci="f6d4",
@@ -406,13 +406,14 @@ class TestI18nKeys:
         assert resolved.best_move_text == ""
 
 
-class TestIgnoredThreat:
-    # White Bc4 attacked by black pb5; blunder a2a3 ignores the threat; best Bf1 retreats
-    FEN = "r1bqkb1r/p1pp1ppp/2n1pn2/1p6/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 5"
+# White Bc4 attacked by black pb5; blunder a2a3 ignores the threat; best Bf1 retreats
+_IGNORED_THREAT_FEN = "r1bqkb1r/p1pp1ppp/2n1pn2/1p6/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 5"
 
+
+class TestIgnoredThreat:
     def test_ignored_threat_fires_for_unaddressed_attack(self):
         result = _resolve(
-            self.FEN, blunder_uci="a2a3", best_move_uci="c4f1", cp_loss=300
+            _IGNORED_THREAT_FEN, blunder_uci="a2a3", best_move_uci="c4f1", cp_loss=300
         )
         assert "bishop" in result.blunder_text.lower()
         assert "c4" in result.blunder_text
@@ -420,7 +421,7 @@ class TestIgnoredThreat:
 
     def test_best_move_saves_piece_from_capture(self):
         result = _resolve(
-            self.FEN, blunder_uci="a2a3", best_move_uci="c4f1", cp_loss=300
+            _IGNORED_THREAT_FEN, blunder_uci="a2a3", best_move_uci="c4f1", cp_loss=300
         )
         assert "saves" in result.best_move_text.lower()
         assert "bishop" in result.best_move_text.lower()
@@ -428,13 +429,13 @@ class TestIgnoredThreat:
 
     def test_no_ignored_threat_when_blunder_moves_threatened_piece(self):
         result = _resolve(
-            self.FEN, blunder_uci="c4a2", best_move_uci="c4f1", cp_loss=200
+            _IGNORED_THREAT_FEN, blunder_uci="c4a2", best_move_uci="c4f1", cp_loss=200
         )
         assert "leaves" not in result.blunder_text.lower()
 
     def test_no_ignored_threat_when_blunder_captures_attacker(self):
         result = _resolve(
-            self.FEN, blunder_uci="c4b5", best_move_uci="c4f1", cp_loss=100
+            _IGNORED_THREAT_FEN, blunder_uci="c4b5", best_move_uci="c4f1", cp_loss=100
         )
         assert "leaves" not in result.blunder_text.lower()
 

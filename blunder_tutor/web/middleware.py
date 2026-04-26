@@ -171,20 +171,21 @@ class DemoModeMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-class SetupCheckMiddleware(BaseHTTPMiddleware):
-    # `SetupCheckMiddleware` matches via ``startswith``, so `/api/` here
-    # covers every API surface (not just `/api/auth/`). We still list
-    # `AUTH_API_PREFIX` explicitly so a future refactor that tightens the
-    # `/api/` guard doesn't accidentally trap the auth API behind setup.
-    EXEMPT_PATHS = AUTH_UI_PATHS | frozenset(
-        {"/api/", "/health", "/static", "/favicon.ico", AUTH_API_PREFIX}
-    )
+# `SetupCheckMiddleware` matches via ``startswith``, so `/api/` here
+# covers every API surface (not just `/api/auth/`). We still list
+# `AUTH_API_PREFIX` explicitly so a future refactor that tightens the
+# `/api/` guard doesn't accidentally trap the auth API behind setup.
+_SETUP_EXEMPT_PATHS = AUTH_UI_PATHS | frozenset(
+    {"/api/", "/health", "/static", "/favicon.ico", AUTH_API_PREFIX}
+)
 
+
+class SetupCheckMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if getattr(request.app.state, "demo_mode", False):
             return await call_next(request)
 
-        if any(request.url.path.startswith(path) for path in self.EXEMPT_PATHS):
+        if any(request.url.path.startswith(path) for path in _SETUP_EXEMPT_PATHS):
             return await call_next(request)
 
         cache = request.app.state.setup_completed_cache
