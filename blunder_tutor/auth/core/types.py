@@ -20,7 +20,10 @@ from blunder_tutor.auth.core.errors import (  # noqa: F401
     InvalidInviteCodeError,
     InvalidPasswordError,
     InvalidUsernameError,
+    InviteCannotBeRegeneratedError,
+    NoCredentialsIdentityError,
     UserCapReachedError,
+    UserNotFoundError,
     _InputError,
 )
 

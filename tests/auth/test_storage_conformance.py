@@ -271,3 +271,30 @@ class TestSetupRepoConformance:
         await storage.setup.put("k", "v")
         await storage.setup.delete("k")
         assert await storage.setup.get("k") is None
+
+    async def test_get_in_transaction_returns_value(self, storage: Storage) -> None:
+        await storage.setup.put("invite_code", "abc.def")
+        async with storage.transaction() as txn:
+            assert await storage.setup.get_in_transaction(txn, "invite_code") == "abc.def"
+
+    async def test_get_in_transaction_returns_none_for_missing(
+        self, storage: Storage
+    ) -> None:
+        async with storage.transaction() as txn:
+            assert await storage.setup.get_in_transaction(txn, "nope") is None
+
+    async def test_delete_in_transaction_removes_row(self, storage: Storage) -> None:
+        await storage.setup.put("invite_code", "abc.def")
+        async with storage.transaction() as txn:
+            await storage.setup.delete_in_transaction(txn, "invite_code")
+        assert await storage.setup.get("invite_code") is None
+
+    async def test_delete_in_transaction_is_idempotent(self, storage: Storage) -> None:
+        # Calling delete twice in the same transaction (or against a
+        # missing key) must succeed quietly — the invite-consume path
+        # calls delete after a get-and-compare, but a future caller
+        # might delete-without-checking and the contract should not
+        # punish that.
+        async with storage.transaction() as txn:
+            await storage.setup.delete_in_transaction(txn, "missing")
+            await storage.setup.delete_in_transaction(txn, "missing")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,7 @@ from blunder_tutor.auth import (
     DuplicateUsernameError,
     Email,
     InvalidPasswordError,
+    MaxUsersQuota,
     Username,
 )
 from tests.helpers.auth import build_inmemory_auth_service
@@ -150,11 +152,9 @@ class TestServiceOnInMemoryStorage:
     care about SQL semantics; failures here mean a Protocol seam
     leaked storage assumptions.
 
-    ``signup()`` with :class:`HmacInvitePolicy` is intentionally NOT
-    covered — the policy still issues raw SQL on the transaction
-    handle (see the ``HmacInvitePolicy`` docstring for the
-    SetupRepo-rewrite follow-up). The InMemory helper wires
-    :class:`OpenSignup` instead.
+    These cases use :class:`OpenSignup` (the InMemory helper's default)
+    so the invite gate is out of scope; the gated path is exercised
+    in :class:`TestSignupWithHmacInviteOnInMemory` below.
     """
 
     async def test_register_happy_path(self, tmp_path: Path) -> None:
@@ -219,3 +219,75 @@ class TestServiceOnInMemoryStorage:
         assert await service.user_count() == 0
         assert await storage.identities.list_for_user(user.id) == []
         assert await storage.sessions.list_for_user(user.id) == []
+
+
+class TestSignupWithHmacInviteOnInMemory:
+    """The conformance promise — every backend that satisfies ``Storage``
+    runs the full ``signup()`` surface, including :class:`HmacInvitePolicy`.
+    Pre-TREK-59 the policy issued raw SQL on the txn handle and forced
+    InMemory tests to fall back to :class:`OpenSignup`.
+    """
+
+    @pytest.fixture
+    def hmac_service(self, tmp_path: Path):
+        from blunder_tutor.auth import HmacInvitePolicy, InMemoryStorage
+        from tests.helpers.auth import _build_auth_service
+
+        storage = InMemoryStorage()
+        service = _build_auth_service(
+            storage=storage,
+            users_dir=tmp_path / "users",
+            session_max_age=timedelta(days=30),
+            session_idle=timedelta(days=7),
+            quota=MaxUsersQuota(1024),
+            invite_policy=HmacInvitePolicy(setup_repo=storage.setup),
+        )
+        return service, storage
+
+    async def test_signup_with_valid_invite_consumes_it(self, hmac_service) -> None:
+        service, storage = hmac_service
+        await storage.setup.put("invite_code", "stored.invite")
+        user = await service.signup(
+            username=Username("alice"),
+            password="password123",
+            invite_code="stored.invite",
+        )
+        assert user.username == "alice"
+        # Single-use: the invite row is gone after consume.
+        assert await storage.setup.get("invite_code") is None
+
+    async def test_signup_rejects_wrong_invite(self, hmac_service) -> None:
+        from blunder_tutor.auth import InvalidInviteCodeError
+
+        service, storage = hmac_service
+        await storage.setup.put("invite_code", "stored.invite")
+        with pytest.raises(InvalidInviteCodeError):
+            await service.signup(
+                username=Username("alice"),
+                password="password123",
+                invite_code="bogus",
+            )
+        # Failed consume must not have deleted the stored invite.
+        assert await storage.setup.get("invite_code") == "stored.invite"
+
+    async def test_first_user_signup_without_invite_rejected(
+        self, hmac_service
+    ) -> None:
+        from blunder_tutor.auth import InvalidInviteCodeError
+
+        service, _storage = hmac_service
+        with pytest.raises(InvalidInviteCodeError):
+            await service.signup(username=Username("alice"), password="password123")
+
+    async def test_subsequent_signup_does_not_need_invite(self, hmac_service) -> None:
+        service, _storage = hmac_service
+        # First user via register() bypasses the invite gate (models a
+        # SaaS install where bootstrapping is done out-of-band).
+        await service.register(username=Username("alice"), password="password123")
+        # Second user signs up without an invite — first-user gate has
+        # already passed so HmacInvitePolicy lets it through.
+        bob = await service.signup(
+            username=Username("bob"),
+            password="password123",
+        )
+        assert bob.username == "bob"

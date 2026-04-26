@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
+import aiosqlite
+
 from blunder_tutor.auth.core._time import now_iso, parse_dt
 from blunder_tutor.auth.core.types import (
     Email,
@@ -313,3 +315,15 @@ class SetupRepository:
     async def delete(self, key: str) -> None:
         async with self._db.write() as conn:
             await conn.execute("DELETE FROM setup WHERE key = ?", (key,))
+
+    async def get_in_transaction(
+        self, txn: aiosqlite.Connection, key: str
+    ) -> str | None:
+        async with txn.execute(
+            "SELECT value FROM setup WHERE key = ?", (key,)
+        ) as cur:
+            row = await cur.fetchone()
+        return row[0] if row else None
+
+    async def delete_in_transaction(self, txn: aiosqlite.Connection, key: str) -> None:
+        await txn.execute("DELETE FROM setup WHERE key = ?", (key,))

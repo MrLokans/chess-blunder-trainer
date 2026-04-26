@@ -40,13 +40,14 @@ def build_test_auth_service(
     smaller value (or use the ``credentials_app`` fixture which boots
     via ``MAX_USERS=1`` at the env level).
     """
+    storage = SqliteStorage(auth_db)
     return _build_auth_service(
-        storage=SqliteStorage(auth_db),
+        storage=storage,
         users_dir=users_dir,
         session_max_age=session_max_age,
         session_idle=session_idle,
         quota=MaxUsersQuota(max_users),
-        invite_policy=HmacInvitePolicy(),
+        invite_policy=HmacInvitePolicy(setup_repo=storage.setup),
     )
 
 
@@ -56,15 +57,17 @@ def build_inmemory_auth_service(
     session_max_age: timedelta = timedelta(days=30),
     session_idle: timedelta = timedelta(days=7),
     max_users: int = 1024,
+    invite_policy: InvitePolicy | None = None,
 ) -> tuple[AuthService, InMemoryStorage]:
     """Construct an :class:`AuthService` against the test-only
     :class:`InMemoryStorage`. Returns the service alongside the storage
     so a test can inspect or seed the backing dicts directly.
 
-    Uses :class:`OpenSignup` (not :class:`HmacInvitePolicy`) because
-    the latter still issues raw SQL on the transaction connection — see
-    the storage_memory.py module docstring and the follow-up TREK
-    ticket for the SetupRepo-backed rewrite.
+    Defaults to :class:`OpenSignup` so callers that don't care about
+    the invite gate can ignore it; pass ``invite_policy=HmacInvitePolicy(...)``
+    to exercise the gated path. After TREK-59 the policy is
+    storage-agnostic so InMemory now drives the same consume path as
+    SQLite.
     """
     storage = InMemoryStorage()
     service = _build_auth_service(
@@ -73,7 +76,7 @@ def build_inmemory_auth_service(
         session_max_age=session_max_age,
         session_idle=session_idle,
         quota=MaxUsersQuota(max_users),
-        invite_policy=OpenSignup(),
+        invite_policy=invite_policy or OpenSignup(),
     )
     return service, storage
 

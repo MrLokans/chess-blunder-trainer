@@ -1,3 +1,13 @@
+"""``blunder-tutor auth <sub>`` — argparse glue around the library's
+admin functions in :mod:`blunder_tutor.auth.cli.admin`.
+
+The actual operations live in the library; this module is the
+operator-facing wrapper: argparse subparsers, password resolution
+that keeps the new password off argv, and translation of typed
+:class:`AuthError` subclasses into operator-friendly
+``SystemExit`` messages.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -16,15 +26,17 @@ from blunder_tutor.auth import (
     BcryptHasher,
     CredentialsProvider,
     HmacInvitePolicy,
+    InviteCannotBeRegeneratedError,
     MaxUsersQuota,
+    NoCredentialsIdentityError,
     SqliteStorage,
+    UserNotFoundError,
     ValidationRules,
-    generate_invite_code,
-    hash_password,
     initialize_auth_schema,
     is_user_id_shape,
     make_username,
 )
+from blunder_tutor.auth.cli import admin
 from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.web.auth_hooks import (
     BlunderTutorFilePermissionPolicy,
@@ -35,7 +47,7 @@ from blunder_tutor.web.config import AppConfig
 
 
 async def cmd_list_users(ctx: dict) -> None:
-    users = await ctx["storage"].users.list_all()
+    users = await admin.list_users(ctx["service"])
     if not users:
         print("No users")
         return
@@ -44,55 +56,54 @@ async def cmd_list_users(ctx: dict) -> None:
 
 
 async def cmd_reset_password(ctx: dict, username: str, new_password: str) -> None:
-    service: AuthService = ctx["service"]
-    users = ctx["storage"].users
-    identities = ctx["storage"].identities
-
-    user = await users.get_by_username(make_username(username))
-    if user is None:
-        raise SystemExit(f"No such user: {username}")
-
-    ids = await identities.list_for_user(user.id)
-    cred_id = next((i.id for i in ids if i.provider == "credentials"), None)
-    if cred_id is None:
-        raise SystemExit(f"User {username} has no credentials identity")
-
-    await identities.update_credential(cred_id, hash_password(new_password))
-    await service.revoke_all_sessions(user.id)
+    try:
+        await admin.reset_password(
+            ctx["service"], make_username(username), new_password
+        )
+    except UserNotFoundError as exc:
+        raise SystemExit(f"No such user: {exc.username}") from exc
+    except NoCredentialsIdentityError as exc:
+        raise SystemExit(
+            f"User {exc.username} has no credentials identity"
+        ) from exc
     print(f"Password reset for {username}; all sessions revoked.")
 
 
 async def cmd_revoke_sessions(ctx: dict, username: str) -> None:
-    service: AuthService = ctx["service"]
-    users = ctx["storage"].users
-    user = await users.get_by_username(make_username(username))
-    if user is None:
-        raise SystemExit(f"No such user: {username}")
-    await service.revoke_all_sessions(user.id)
+    try:
+        await admin.revoke_sessions(ctx["service"], make_username(username))
+    except UserNotFoundError as exc:
+        raise SystemExit(f"No such user: {exc.username}") from exc
     print(f"Sessions revoked for {username}")
 
 
 async def cmd_delete_user(ctx: dict, username: str) -> None:
-    service: AuthService = ctx["service"]
-    users = ctx["storage"].users
-    user = await users.get_by_username(make_username(username))
-    if user is None:
-        raise SystemExit(f"No such user: {username}")
-    await service.delete_account(user.id)
+    try:
+        await admin.delete_user(ctx["service"], make_username(username))
+    except UserNotFoundError as exc:
+        raise SystemExit(f"No such user: {exc.username}") from exc
     print(f"Deleted {username}")
 
 
 async def cmd_regenerate_invite(ctx: dict) -> None:
-    users = ctx["storage"].users
-    setup = ctx["storage"].setup
-    if await users.count() > 0:
-        raise SystemExit("Cannot regenerate invite: users already exist")
-    code = generate_invite_code(ctx["secret_key"])
-    await setup.put("invite_code", code)
+    try:
+        code = await admin.regenerate_invite(
+            ctx["service"],
+            setup_repo=ctx["storage"].setup,
+            secret_key=ctx["secret_key"],
+        )
+    except InviteCannotBeRegeneratedError as exc:
+        raise SystemExit("Cannot regenerate invite: users already exist") from exc
     print(f"New invite code: {code}")
 
 
 async def cmd_prune_orphans(ctx: dict) -> None:
+    """Per-user data dirs are a blunder_tutor concept — auth core
+    knows nothing about filesystem layout (validates the EPIC-3 P3.1
+    seam). The library admin module deliberately does not expose
+    ``prune_orphans``; it stays here next to the other dir-aware
+    helpers in ``web/auth_hooks.py``.
+    """
     users = ctx["storage"].users
     known = {u.id for u in await users.list_all()}
     users_dir: Path = ctx["users_dir"]
@@ -200,7 +211,7 @@ class AuthCommand(CLICommand):
                 },
                 hasher=hasher,
                 quota=MaxUsersQuota(config.auth.max_users),
-                invite_policy=HmacInvitePolicy(),
+                invite_policy=HmacInvitePolicy(setup_repo=storage.setup),
                 on_after_register=partial(materialize_user_dir, users_dir),
                 on_after_delete=partial(cleanup_user_dir, users_dir),
                 session_max_age=timedelta(seconds=config.auth.session_max_age_seconds),

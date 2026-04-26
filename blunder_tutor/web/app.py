@@ -50,7 +50,7 @@ from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web import routes
 from blunder_tutor.web.auth_hooks import (
     BlunderTutorFilePermissionPolicy,
-    cleanup_user_dir,
+    make_after_delete_hook,
     materialize_user_dir,
     resolve_user_db_path,
 )
@@ -159,9 +159,14 @@ async def _bootstrap_auth(app: FastAPI) -> None:
         },
         hasher=hasher,
         quota=MaxUsersQuota(auth_config.max_users),
-        invite_policy=HmacInvitePolicy(),
+        invite_policy=HmacInvitePolicy(setup_repo=storage.setup),
         on_after_register=partial(materialize_user_dir, users_dir),
-        on_after_delete=partial(cleanup_user_dir, users_dir),
+        on_after_delete=make_after_delete_hook(
+            users_dir,
+            app.state.setup_completed_cache,
+            app.state.locale_cache,
+            app.state.features_cache,
+        ),
         session_max_age=timedelta(seconds=auth_config.session_max_age_seconds),
         session_idle=timedelta(seconds=auth_config.session_idle_seconds),
     )

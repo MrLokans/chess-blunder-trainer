@@ -23,7 +23,10 @@ from blunder_tutor.auth.core.errors import (
     InvalidInviteCodeError,
     InvalidPasswordError,
     InvalidUsernameError,
+    InviteCannotBeRegeneratedError,
+    NoCredentialsIdentityError,
     UserCapReachedError,
+    UserNotFoundError,
 )
 from blunder_tutor.auth.core.hashers import (
     BcryptHasher,
@@ -110,7 +113,10 @@ __all__ = [
     "InvalidInviteCodeError",
     "InvalidPasswordError",
     "InvalidUsernameError",
+    "InviteCannotBeRegeneratedError",
+    "NoCredentialsIdentityError",
     "UserCapReachedError",
+    "UserNotFoundError",
     # Service + middleware
     "AuthService",
     "AuthMiddleware",

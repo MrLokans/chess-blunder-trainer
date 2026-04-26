@@ -63,3 +63,34 @@ class UserCapReachedError(AuthError):
 class CorruptCredentialError(AuthError):
     """Stored credential hash is malformed — indicates DB corruption,
     not a wrong password attempt."""
+
+
+class UserNotFoundError(AuthError):
+    """No user matches the given username. Raised by admin operations
+    that look up a user by name (``reset_password``, ``revoke_sessions``,
+    ``delete_user``); the service-layer flows that look up by id use
+    ``get_user`` returning ``None`` instead.
+    """
+
+    def __init__(self, username: str) -> None:
+        super().__init__(f"User not found: {username}")
+        self.username = username
+
+
+class NoCredentialsIdentityError(AuthError):
+    """The user exists but has no ``credentials`` identity row, so a
+    password reset has nothing to update. Surfaces during admin reset
+    on accounts that only signed up via OAuth.
+    """
+
+    def __init__(self, username: str) -> None:
+        super().__init__(f"User has no credentials identity: {username}")
+        self.username = username
+
+
+class InviteCannotBeRegeneratedError(AuthError):
+    """Invite codes are first-user-only — a regenerate attempt with
+    existing users would imply a misconfiguration, so the admin
+    operation refuses rather than minting a code that the
+    first-user-gate would never honour.
+    """

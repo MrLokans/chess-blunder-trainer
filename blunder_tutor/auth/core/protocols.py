@@ -150,11 +150,21 @@ class SetupRepo(Protocol):
     """Tiny key/value store for one-shot bootstrap state (today: the
     first-user invite code). Operationally a SQLite table, but the
     Protocol is small enough that any backend can satisfy it.
+
+    The ``*_in_transaction`` variants exist so policies that run
+    inside the signup write-span (notably :class:`HmacInvitePolicy`)
+    can read and delete in the same atomic context as the user insert
+    without re-acquiring the storage lock — calling :meth:`get` or
+    :meth:`delete` from inside a ``transaction()`` block would
+    deadlock on the InMemory backend and produce a separate, racy
+    transaction on SQLite.
     """
 
     async def get(self, key: str) -> str | None: ...
     async def put(self, key: str, value: str) -> None: ...
     async def delete(self, key: str) -> None: ...
+    async def get_in_transaction(self, txn: Transaction, key: str) -> str | None: ...
+    async def delete_in_transaction(self, txn: Transaction, key: str) -> None: ...
 
 
 class PasswordHasher(Protocol):

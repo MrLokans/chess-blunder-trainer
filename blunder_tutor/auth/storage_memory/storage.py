@@ -358,6 +358,14 @@ class _InMemorySetupRepo:
         async with self._s._lock:
             self._s._setup.pop(key, None)
 
+    async def get_in_transaction(self, txn: object, key: str) -> str | None:
+        # Lock is already held by the caller of ``transaction()``; the
+        # txn handle is just a sentinel here, so we read directly.
+        return self._s._setup.get(key)
+
+    async def delete_in_transaction(self, txn: object, key: str) -> None:
+        self._s._setup.pop(key, None)
+
 
 def _parse_iso(raw: str) -> datetime:
     """Mirror :func:`blunder_tutor.auth.core._time.parse_dt` so the InMemory

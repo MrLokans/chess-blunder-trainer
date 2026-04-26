@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import shutil
+from collections.abc import Awaitable, Callable
 from contextlib import AbstractContextManager
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from blunder_tutor import secure_fs
 from blunder_tutor.auth import User, UserId
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.secure_fs import secure_user_dir
+from blunder_tutor.web.per_user_cache import PerUserCache
 
 log = logging.getLogger(__name__)
 
@@ -65,3 +67,24 @@ async def cleanup_user_dir(users_dir: Path, user_id: UserId) -> None:
         shutil.rmtree(user_dir)
     except OSError:
         log.exception("cleanup_user_dir: rmtree failed for %s", user_dir)
+
+
+def make_after_delete_hook(
+    users_dir: Path,
+    *caches: PerUserCache,
+) -> Callable[[UserId], Awaitable[None]]:
+    """Compose :func:`cleanup_user_dir` with per-user cache invalidation
+    into a single :class:`AuthService` ``on_after_delete`` hook. Caches
+    are invalidated *before* the directory is removed: the auth row is
+    already gone by the time this hook runs, so ordering across the
+    two cleanup steps matters only insofar as nothing should observe
+    a stale-cache hit for a deleted user. Both pieces are best-effort
+    — neither failure surfaces as a 500 on the delete-account request.
+    """
+
+    async def hook(user_id: UserId) -> None:
+        for cache in caches:
+            cache.invalidate(user_id)
+        await cleanup_user_dir(users_dir, user_id)
+
+    return hook

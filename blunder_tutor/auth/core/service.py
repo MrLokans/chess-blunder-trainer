@@ -19,6 +19,7 @@ from blunder_tutor.auth.core.types import (
     DuplicateUsernameError,
     Email,
     Identity,
+    IdentityId,
     PasswordHash,
     ProviderName,
     Session,
@@ -340,8 +341,25 @@ class AuthService:
     async def get_user(self, user_id: UserId) -> User | None:
         return await self._users.get_by_id(user_id)
 
+    async def get_user_by_username(self, username: Username) -> User | None:
+        return await self._users.get_by_username(username)
+
+    async def list_users(self) -> list[User]:
+        return await self._users.list_all()
+
     async def identities_for(self, user_id: UserId) -> list[Identity]:
         return await self._identities.list_for_user(user_id)
 
     async def list_sessions(self, user_id: UserId) -> list[Session]:
         return await self._sessions.list_for_user(user_id)
+
+    async def set_credential_hash(
+        self, identity_id: IdentityId, new_password: str
+    ) -> None:
+        """Hash ``new_password`` with the service's configured hasher
+        and overwrite the identity's stored credential. Caller is
+        responsible for revoking active sessions (admin reset flow does
+        this; a user-driven password-change flow would do it too).
+        """
+        hashed = self._hasher.hash(new_password)
+        await self._identities.update_credential(identity_id, hashed)

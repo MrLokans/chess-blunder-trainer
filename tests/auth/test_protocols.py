@@ -57,7 +57,10 @@ class TestProtocolConformance:
         assert unlimited is not None
 
     def test_invite_policies_satisfy_invite_protocol(self) -> None:
-        hmac_first_user: InvitePolicy = HmacInvitePolicy()
+        from blunder_tutor.auth import InMemoryStorage
+
+        storage = InMemoryStorage()
+        hmac_first_user: InvitePolicy = HmacInvitePolicy(setup_repo=storage.setup)
         open_: InvitePolicy = OpenSignup()
         assert hmac_first_user is not None
         assert open_ is not None
