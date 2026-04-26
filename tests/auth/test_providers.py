@@ -48,7 +48,9 @@ async def _seed_user(
     )
 
 
-def _provider(auth_db: AuthDb, *, cost: int | None = TEST_BCRYPT_COST) -> CredentialsProvider:
+def _provider(
+    auth_db: AuthDb, *, cost: int | None = TEST_BCRYPT_COST
+) -> CredentialsProvider:
     rules = ValidationRules.default()
     return CredentialsProvider(
         identities=IdentityRepository(db=auth_db),
@@ -147,7 +149,9 @@ class TestTimingEqualization:
         identities = IdentityRepository(db=auth_db)
         uid = make_user_id()
         await users.insert(
-            user_id=uid, username=Username("alice"), email=None,
+            user_id=uid,
+            username=Username("alice"),
+            email=None,
         )
         await identities.insert(
             identity_id=make_identity_id(),

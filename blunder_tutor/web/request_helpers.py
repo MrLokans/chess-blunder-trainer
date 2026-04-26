@@ -4,13 +4,15 @@ from pathlib import Path
 
 from fastapi import Request
 
+from blunder_tutor.web.bypass_auth import LOCAL_USER_ID
+
 # App-level per-user cache key for pre-auth / AUTH_MODE=none requests.
-# The sentinel matches the `_local` UserContext that AuthMiddleware
-# synthesises in none mode, so the two modes share a single keying
-# strategy. Single source — every consumer (middleware, snapshot,
-# delete-account invalidation) must call `_cache_key`, never reproduce
-# the sentinel literal.
-_NONE_MODE_CACHE_KEY = "_local"
+# Reuses the bypass middleware's synthetic ``_local`` user_id so the
+# two modes share a single keying strategy and the literal lives in
+# exactly one place. Every consumer (middleware, snapshot, delete-
+# account invalidation) must call ``_cache_key``, never reproduce the
+# sentinel.
+_NONE_MODE_CACHE_KEY = LOCAL_USER_ID
 
 
 def _cache_key(request: Request) -> str:

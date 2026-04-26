@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from blunder_tutor.auth.protocols import IdentityRepo, PasswordHasher
 from blunder_tutor.auth.types import (
+    CREDENTIALS_PROVIDER_NAME,
     AuthError,
     CorruptCredentialError,
     Identity,
@@ -34,7 +35,7 @@ class CredentialsProvider:
     * existing credentials user with a wrong password.
     """
 
-    name: ProviderName = "credentials"
+    name: ProviderName = CREDENTIALS_PROVIDER_NAME
 
     def __init__(
         self,
@@ -64,7 +65,7 @@ class CredentialsProvider:
             username_lookup = Username("")
 
         identity = await self._identities.get_by_provider_subject(
-            "credentials", username_lookup
+            self.name, username_lookup
         )
 
         # Pick the hash to verify: real if found, dummy otherwise.

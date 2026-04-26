@@ -36,6 +36,7 @@ def _cheap_default_hasher(monkeypatch):
     cheap = BcryptHasher(ValidationRules.default(), cost=TEST_BCRYPT_COST)
     monkeypatch.setattr(_hashers_module, "_default_hasher", cheap)
 
+
 # Centralized test credentials. Any test that needs "a user" without
 # caring about the specific values goes through these; tests that
 # exercise specific validation paths (bad password, reserved username,

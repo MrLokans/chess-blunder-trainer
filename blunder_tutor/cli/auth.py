@@ -18,6 +18,7 @@ from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.auth.types import (
+    CREDENTIALS_PROVIDER_NAME,
     ValidationRules,
     is_user_id_shape,
     make_username,
@@ -191,7 +192,7 @@ class AuthCommand(CLICommand):
             service = AuthService(
                 storage=storage,
                 providers={
-                    "credentials": CredentialsProvider(
+                    CREDENTIALS_PROVIDER_NAME: CredentialsProvider(
                         identities=storage.identities, hasher=hasher, rules=rules
                     ),
                 },

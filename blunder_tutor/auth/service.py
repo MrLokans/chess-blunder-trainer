@@ -14,6 +14,7 @@ from blunder_tutor.auth.protocols import (
     Storage,
 )
 from blunder_tutor.auth.types import (
+    CREDENTIALS_PROVIDER_NAME,
     DuplicateEmailError,
     DuplicateUsernameError,
     Email,
@@ -192,7 +193,7 @@ class AuthService:
             conn,
             identity_id=make_identity_id(),
             user_id=user_id,
-            provider="credentials",
+            provider=CREDENTIALS_PROVIDER_NAME,
             provider_subject=username,
             credential=credential,
             created_at=now,
@@ -230,6 +231,19 @@ class AuthService:
         assert user is not None
         await self._on_after_register(user)
         return user
+
+    def register_provider(self, provider: AuthProvider) -> None:
+        """Register an :class:`AuthProvider` after construction.
+
+        The dispatch table is a plain dict keyed on ``provider.name`` —
+        a consumer wiring OAuth post-boot (e.g. once a tenant configures
+        SSO, or a test that swaps in a fake) calls this and the new
+        provider becomes addressable through :meth:`authenticate`. Late
+        registration of an already-registered name is allowed: the
+        latest registration wins, matching the constructor's behaviour
+        for duplicate keys in the input ``Mapping``.
+        """
+        self._providers[provider.name] = provider
 
     async def authenticate(
         self, provider: ProviderName, credentials: dict[str, str]

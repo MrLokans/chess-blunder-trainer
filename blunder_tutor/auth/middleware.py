@@ -63,7 +63,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
         auth = request.app.state.auth
-        assert auth is not None  # AuthMiddleware mounted ⇒ credentials bootstrap ran
+        assert auth is not None  # AuthMiddleware mounted → credentials bootstrap ran
         service: AuthService = auth.service
         token = request.cookies.get(self._config.cookie_name)
         client_ip = request.client.host if request.client else None

@@ -39,10 +39,6 @@ def _make_app(
     users_dir: Path,
 ) -> FastAPI:
     app = FastAPI()
-    # `auth_mode` is consumed by other code paths (settings, app.py
-    # gating). AuthMiddleware itself no longer reads it after TREK-54 —
-    # registration here is what selects the credentials path.
-    app.state.auth_mode = "credentials"
     app.state.auth = AuthResources(
         storage=SqliteStorage(auth_db),
         service=service,

@@ -27,6 +27,7 @@ from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.auth.types import (
+    CREDENTIALS_PROVIDER_NAME,
     UserId,
     ValidationRules,
     is_user_id_shape,
@@ -95,7 +96,7 @@ async def lifespan(app: FastAPI):
         scheduler_settings = await settings_repo.get_all_settings()
         saved_locale = scheduler_settings.get("locale")
         if saved_locale:
-            app.state.locale_cache.set("_local", saved_locale)
+            app.state.locale_cache.set(LOCAL_USER_ID, saved_locale)
 
     _wire_background(app)
     app.state.scheduler.start()
@@ -150,7 +151,7 @@ async def _bootstrap_auth(app: FastAPI) -> None:
     auth_service = AuthService(
         storage=storage,
         providers={
-            "credentials": CredentialsProvider(
+            CREDENTIALS_PROVIDER_NAME: CredentialsProvider(
                 identities=storage.identities, hasher=hasher, rules=rules
             ),
         },
@@ -439,6 +440,8 @@ def create_app(
     # request-state slot, so registering both would have the inner one
     # silently overwrite the outer's value. The auth core knows nothing
     # about none mode after TREK-54 — that branch lives entirely here.
+    # Any future mode that synthesises a `user_ctx` (e.g. a header-token
+    # bypass for an internal service) belongs to this same if/elif.
     if config.auth.mode == "credentials":
         app.add_middleware(
             AuthMiddleware,

@@ -16,7 +16,7 @@ from blunder_tutor.auth.providers.credentials import CredentialsProvider
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.storage_memory import InMemoryStorage
 from blunder_tutor.auth.storage_sqlite import SqliteStorage
-from blunder_tutor.auth.types import ValidationRules
+from blunder_tutor.auth.types import CREDENTIALS_PROVIDER_NAME, ValidationRules
 from blunder_tutor.web.auth_hooks import (
     cleanup_user_dir,
     materialize_user_dir,
@@ -96,7 +96,7 @@ def _build_auth_service(
     return AuthService(
         storage=storage,
         providers={
-            "credentials": CredentialsProvider(
+            CREDENTIALS_PROVIDER_NAME: CredentialsProvider(
                 identities=storage.identities, hasher=hasher, rules=rules
             ),
         },

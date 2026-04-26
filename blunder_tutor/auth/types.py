@@ -5,7 +5,7 @@ import secrets
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal, NewType
+from typing import NewType
 
 UserId = NewType("UserId", str)
 Username = NewType("Username", str)
@@ -15,7 +15,22 @@ IdentityId = NewType("IdentityId", str)
 PasswordHash = NewType("PasswordHash", str)
 InviteCode = NewType("InviteCode", str)
 
-ProviderName = Literal["credentials", "lichess", "google"]
+# Plain typed-string: the auth core can't enumerate every consumer's
+# provider catalogue. A library user adding ``"github"`` or
+# ``"saml-corp"`` constructs the value via ``ProviderName(name)`` and
+# registers an :class:`AuthProvider` keyed on it; the dispatch table
+# in :class:`AuthService` is a plain ``dict[ProviderName, AuthProvider]``
+# and grows without service-layer changes.
+ProviderName = NewType("ProviderName", str)
+
+# Canonical name for the built-in :class:`CredentialsProvider`. Auth
+# core wiring (``AuthService.register``/``signup``) hard-codes this
+# because credentials is the only provider whose registration flow
+# the service layer owns; OAuth/SAML providers live in consumer code
+# and mint their own ``ProviderName`` values via the same constructor.
+# Importing the constant rather than passing the bare literal keeps
+# call sites type-checker-clean against the ``ProviderName`` NewType.
+CREDENTIALS_PROVIDER_NAME = ProviderName("credentials")
 
 USERNAME_RE = re.compile(r"^[a-z0-9_\-]{3,32}$")
 
