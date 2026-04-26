@@ -8,9 +8,12 @@ from typing import NoReturn
 
 from blunder_tutor.auth._time import now_iso
 from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.hashers import BcryptHasher
-from blunder_tutor.auth.policies import HmacInvitePolicy, MaxUsersQuota
-from blunder_tutor.auth.providers.base import AuthProvider
+from blunder_tutor.auth.protocols import (
+    AuthProvider,
+    InvitePolicy,
+    PasswordHasher,
+    QuotaPolicy,
+)
 from blunder_tutor.auth.repository import (
     IdentityRepository,
     SessionRepository,
@@ -59,9 +62,9 @@ class AuthService:
         auth_db: AuthDb,
         db_path_resolver: Callable[[UserId], Path],
         providers: Mapping[ProviderName, AuthProvider],
-        hasher: BcryptHasher,
-        quota: MaxUsersQuota,
-        invite_policy: HmacInvitePolicy,
+        hasher: PasswordHasher,
+        quota: QuotaPolicy,
+        invite_policy: InvitePolicy,
         session_max_age: timedelta,
         session_idle: timedelta,
         on_after_register: Callable[[User], Awaitable[None]] = _noop_after_register,
@@ -159,8 +162,8 @@ class AuthService:
             self._translate_integrity_error(exc, username, email)
         return await self._finalize_registration(user_id)
 
-    @staticmethod
     async def _insert_user_with_credential(
+        self,
         conn,
         *,
         user_id: UserId,
@@ -172,15 +175,17 @@ class AuthService:
         """Single place where a new user + their credentials identity land
         on disk. Both :meth:`register` and :meth:`signup` call this inside
         their own ``BEGIN IMMEDIATE`` transaction — adding a column to
-        ``users`` or ``identities`` touches exactly one caller."""
-        await UserRepository.insert_in_transaction(
+        ``users`` or ``identities`` touches exactly one caller. Uses the
+        injected repositories so the Protocol contract (instance-method
+        ``insert_in_transaction``) is the single source of truth."""
+        await self._users.insert_in_transaction(
             conn,
             user_id=user_id,
             username=username,
             email=email,
             created_at=now,
         )
-        await IdentityRepository.insert_in_transaction(
+        await self._identities.insert_in_transaction(
             conn,
             identity_id=make_identity_id(),
             user_id=user_id,
