@@ -8,12 +8,14 @@ from pathlib import Path
 
 import pytest
 
-from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.invite import verify_invite_code
-from blunder_tutor.auth.schema import initialize_auth_schema
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.storage_sqlite import SqliteStorage
-from blunder_tutor.auth.types import Username
+from blunder_tutor.auth import (
+    AuthDb,
+    AuthService,
+    SqliteStorage,
+    Username,
+    initialize_auth_schema,
+    verify_invite_code,
+)
 from blunder_tutor.cli.auth import (
     AuthCommand,
     _resolve_new_password,

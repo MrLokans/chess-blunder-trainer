@@ -9,17 +9,19 @@ from datetime import timedelta
 from functools import partial
 from pathlib import Path
 
-from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.hashers import BcryptHasher, hash_password
-from blunder_tutor.auth.invite import generate_invite_code
-from blunder_tutor.auth.policies import HmacInvitePolicy, MaxUsersQuota
-from blunder_tutor.auth.providers.credentials import CredentialsProvider
-from blunder_tutor.auth.schema import initialize_auth_schema
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.storage_sqlite import SqliteStorage
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth import (
     CREDENTIALS_PROVIDER_NAME,
+    AuthDb,
+    AuthService,
+    BcryptHasher,
+    CredentialsProvider,
+    HmacInvitePolicy,
+    MaxUsersQuota,
+    SqliteStorage,
     ValidationRules,
+    generate_invite_code,
+    hash_password,
+    initialize_auth_schema,
     is_user_id_shape,
     make_username,
 )

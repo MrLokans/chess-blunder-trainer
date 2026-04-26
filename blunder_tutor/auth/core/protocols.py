@@ -6,7 +6,7 @@ from typing import Any, Protocol
 
 from fastapi import Request, Response
 
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth.core.types import (
     AuthError,
     Email,
     Identity,

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from blunder_tutor.auth.types import UserId
+from blunder_tutor.auth import UserId
 from blunder_tutor.background.base import BaseJob
 from blunder_tutor.background.registry import register_job
 from blunder_tutor.events import EventBus, JobExecutionRequestEvent

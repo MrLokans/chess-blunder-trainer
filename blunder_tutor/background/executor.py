@@ -6,7 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from blunder_tutor.auth.types import UserId
+from blunder_tutor.auth import UserId
 from blunder_tutor.background.runners import JOB_RUNNERS
 from blunder_tutor.core.dependencies import (
     DependencyContext,

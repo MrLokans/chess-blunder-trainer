@@ -4,7 +4,7 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from blunder_tutor.auth.types import SessionToken
+from blunder_tutor.auth import SessionToken
 from tests.auth.conftest import (
     DEFAULT_PASSWORD,
     DEFAULT_USERNAME,

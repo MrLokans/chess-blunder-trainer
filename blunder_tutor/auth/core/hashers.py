@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import bcrypt
 
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth.core.types import (
     CorruptCredentialError,
     InvalidPasswordError,
     PasswordHash,

@@ -6,8 +6,8 @@ from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import UserContext
+from blunder_tutor.auth.core.service import AuthService
+from blunder_tutor.auth.core.types import UserContext
 
 
 @dataclass(frozen=True)

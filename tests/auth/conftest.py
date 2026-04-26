@@ -11,12 +11,14 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport
 
+from blunder_tutor.auth import (
+    AuthDb,
+    AuthService,
+    BcryptHasher,
+    ValidationRules,
+    initialize_auth_schema,
+)
 from blunder_tutor.auth import hashers as _hashers_module
-from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.hashers import BcryptHasher
-from blunder_tutor.auth.schema import initialize_auth_schema
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import ValidationRules
 from blunder_tutor.web.app import create_app
 from blunder_tutor.web.config import config_factory
 from tests.helpers.auth import TEST_BCRYPT_COST, build_test_auth_service

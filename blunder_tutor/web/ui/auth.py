@@ -5,8 +5,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import UserContext
+from blunder_tutor.auth import AuthService, UserContext
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web.cookies import clear_session_cookie
 

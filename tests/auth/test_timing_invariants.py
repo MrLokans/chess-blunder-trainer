@@ -4,12 +4,15 @@ from datetime import timedelta
 
 import pytest
 
-from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.hashers import BcryptHasher
-from blunder_tutor.auth.providers.credentials import CredentialsProvider
-from blunder_tutor.auth.repository import IdentityRepository
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import Username, ValidationRules
+from blunder_tutor.auth import (
+    AuthDb,
+    AuthService,
+    BcryptHasher,
+    CredentialsProvider,
+    IdentityRepository,
+    Username,
+    ValidationRules,
+)
 from tests.helpers.auth import TEST_BCRYPT_COST
 
 

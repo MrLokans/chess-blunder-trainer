@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from contextlib import AbstractAsyncContextManager
 
-from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.protocols import Transaction
-from blunder_tutor.auth.repository import (
+from blunder_tutor.auth.core.protocols import Transaction
+from blunder_tutor.auth.storage_sqlite.db import AuthDb
+from blunder_tutor.auth.storage_sqlite.repository import (
     IdentityRepository,
     SessionRepository,
     SetupRepository,

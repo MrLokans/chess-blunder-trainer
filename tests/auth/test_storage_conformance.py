@@ -7,18 +7,18 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.protocols import Storage
-from blunder_tutor.auth.schema import initialize_auth_schema
-from blunder_tutor.auth.storage_memory import InMemoryStorage
-from blunder_tutor.auth.storage_sqlite import SqliteStorage
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth import (
+    AuthDb,
     Email,
     IdentityId,
+    InMemoryStorage,
     PasswordHash,
     SessionToken,
+    SqliteStorage,
+    Storage,
     UserId,
     Username,
+    initialize_auth_schema,
     make_identity_id,
     make_session_token,
     make_user_id,

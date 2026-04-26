@@ -6,7 +6,7 @@ from contextlib import AbstractContextManager
 from pathlib import Path
 
 from blunder_tutor import secure_fs
-from blunder_tutor.auth.types import User, UserId
+from blunder_tutor.auth import User, UserId
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.secure_fs import secure_user_dir
 

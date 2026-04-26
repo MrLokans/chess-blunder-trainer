@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth.core.types import (
     Email,
     Identity,
     IdentityId,
@@ -360,7 +360,7 @@ class _InMemorySetupRepo:
 
 
 def _parse_iso(raw: str) -> datetime:
-    """Mirror :func:`blunder_tutor.auth._time.parse_dt` so the InMemory
+    """Mirror :func:`blunder_tutor.auth.core._time.parse_dt` so the InMemory
     backend produces the same tz-aware-UTC datetimes the SQLite backend
     hydrates from stored strings — keeps entity equality identical
     across backends in conformance tests.

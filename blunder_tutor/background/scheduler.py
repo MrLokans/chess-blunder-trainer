@@ -12,7 +12,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from fast_depends import Depends, inject
 
-from blunder_tutor.auth.types import UserId
+from blunder_tutor.auth import UserId
 from blunder_tutor.background.executor import DbPathResolver
 from blunder_tutor.core.dependencies import (
     DependencyContext,

@@ -4,7 +4,7 @@ import hmac
 
 import aiosqlite
 
-from blunder_tutor.auth.types import InvalidInviteCodeError
+from blunder_tutor.auth.core.types import InvalidInviteCodeError
 
 
 class MaxUsersQuota:

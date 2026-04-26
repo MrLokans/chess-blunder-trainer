@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi_throttle import RateLimiter
 from pydantic import BaseModel
 
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth import (
+    AuthService,
     DuplicateEmailError,
     DuplicateUsernameError,
     InvalidEmailError,
@@ -21,12 +21,13 @@ from blunder_tutor.auth.types import (
     make_email,
     make_username,
 )
+from blunder_tutor.auth.fastapi import get_user_context
 from blunder_tutor.web.cookies import (
     SESSION_COOKIE_NAME,
     clear_session_cookie,
     set_session_cookie,
 )
-from blunder_tutor.web.dependencies import ConfigDep, get_user_context
+from blunder_tutor.web.dependencies import ConfigDep
 
 log = logging.getLogger(__name__)
 

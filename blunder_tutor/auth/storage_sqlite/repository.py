@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from blunder_tutor.auth._time import now_iso, parse_dt
-from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth.core._time import now_iso, parse_dt
+from blunder_tutor.auth.core.types import (
     Email,
     Identity,
     IdentityId,
@@ -16,6 +15,7 @@ from blunder_tutor.auth.types import (
     UserId,
     Username,
 )
+from blunder_tutor.auth.storage_sqlite.db import AuthDb
 
 
 class UserRepository:

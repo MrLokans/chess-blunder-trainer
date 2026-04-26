@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from typing import Any, ClassVar
 
-from blunder_tutor.auth.types import UserId
+from blunder_tutor.auth import UserId
 from blunder_tutor.background.base import BaseJob
 from blunder_tutor.background.registry import register_job
 from blunder_tutor.events import EventBus, JobExecutionRequestEvent

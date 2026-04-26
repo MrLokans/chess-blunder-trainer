@@ -7,6 +7,23 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import NewType
 
+# Errors live in their own module (``core.errors``) so consumers can
+# import every recoverable failure mode without dragging in entity
+# plumbing; re-exported here so internal callers that need entities
+# and errors in one shot keep working with a single import.
+from blunder_tutor.auth.core.errors import (  # noqa: F401
+    AuthError,
+    CorruptCredentialError,
+    DuplicateEmailError,
+    DuplicateUsernameError,
+    InvalidEmailError,
+    InvalidInviteCodeError,
+    InvalidPasswordError,
+    InvalidUsernameError,
+    UserCapReachedError,
+    _InputError,
+)
+
 UserId = NewType("UserId", str)
 Username = NewType("Username", str)
 Email = NewType("Email", str)
@@ -46,63 +63,6 @@ EMAIL_RE = re.compile(
 
 PASSWORD_MIN_LEN = 8
 PASSWORD_MAX_BYTES = 72  # bcrypt hard limit — enforced in bytes, not chars
-
-
-class AuthError(Exception):
-    """Base for all auth-domain errors."""
-
-
-class _InputError(AuthError):
-    """Invalid input from the caller. Error message is safe to surface;
-    the offending value is kept on `.offender` for logs only. `.code` is
-    the stable slug the HTTP layer emits — intentionally divorced from
-    the human-readable message so translations and renamed error strings
-    can't desync.
-    """
-
-    _message: str = "invalid input"
-    code: str = "invalid_input"
-
-    def __init__(self, offender: str = "") -> None:
-        super().__init__(self._message)
-        self.offender = offender
-
-
-class InvalidUsernameError(_InputError):
-    _message = "invalid username"
-    code = "invalid_username"
-
-
-class InvalidEmailError(_InputError):
-    _message = "invalid email"
-    code = "invalid_email"
-
-
-class InvalidPasswordError(_InputError):
-    _message = "invalid password"
-    code = "invalid_password"
-
-
-class InvalidInviteCodeError(_InputError):
-    _message = "invalid invite code"
-    code = "invalid_invite_code"
-
-
-class DuplicateUsernameError(AuthError):
-    pass
-
-
-class DuplicateEmailError(AuthError):
-    pass
-
-
-class UserCapReachedError(AuthError):
-    pass
-
-
-class CorruptCredentialError(AuthError):
-    """Stored credential hash is malformed — indicates DB corruption,
-    not a wrong password attempt."""
 
 
 @dataclass(frozen=True)

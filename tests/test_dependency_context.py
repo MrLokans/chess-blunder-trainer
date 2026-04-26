@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from blunder_tutor.auth.types import UserId
+from blunder_tutor.auth import UserId
 from blunder_tutor.core.dependencies import (
     DependencyContext,
     clear_context,

@@ -2,34 +2,30 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from blunder_tutor.auth.hashers import BcryptHasher
-from blunder_tutor.auth.policies import (
+from blunder_tutor.auth import (
+    AuthProvider,
+    BcryptHasher,
+    CredentialsProvider,
     HmacInvitePolicy,
+    IdentityRepo,
+    IdentityRepository,
+    InvitePolicy,
     MaxUsersQuota,
     NoQuota,
     OpenSignup,
-)
-from blunder_tutor.auth.protocols import (
-    AuthProvider,
-    IdentityRepo,
-    InvitePolicy,
     PasswordHasher,
     QuotaPolicy,
     SessionRepo,
-    SetupRepo,
-    UserRepo,
-)
-from blunder_tutor.auth.providers.credentials import CredentialsProvider
-from blunder_tutor.auth.repository import (
-    IdentityRepository,
     SessionRepository,
+    SetupRepo,
     SetupRepository,
+    UserRepo,
     UserRepository,
+    ValidationRules,
 )
-from blunder_tutor.auth.types import ValidationRules
 
 if TYPE_CHECKING:
-    from blunder_tutor.auth.db import AuthDb
+    from blunder_tutor.auth import AuthDb
 
 
 class TestProtocolConformance:

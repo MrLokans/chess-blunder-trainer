@@ -15,7 +15,7 @@ from __future__ import annotations
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from blunder_tutor.auth.types import UserContext, UserId, Username
+from blunder_tutor.auth import UserContext, UserId, Username
 
 # Synthetic identifiers for the AUTH_MODE=none single user. The literal
 # values are also referenced as a cache-key fallback in

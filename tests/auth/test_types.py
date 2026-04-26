@@ -2,19 +2,20 @@ from __future__ import annotations
 
 import pytest
 
-from blunder_tutor.auth.hashers import hash_password, verify_password
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth import (
     CorruptCredentialError,
     InvalidEmailError,
     InvalidPasswordError,
     InvalidUsernameError,
     PasswordHash,
+    hash_password,
     is_user_id_shape,
     make_email,
     make_identity_id,
     make_session_token,
     make_user_id,
     make_username,
+    verify_password,
 )
 
 

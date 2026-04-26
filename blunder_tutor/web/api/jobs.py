@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
+from blunder_tutor.auth.fastapi import UserContextDep
 from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
@@ -16,7 +17,6 @@ from blunder_tutor.web.dependencies import (
     EventBusDep,
     GameRepoDep,
     JobServiceDep,
-    UserContextDep,
 )
 
 

@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth import (
+    AuthService,
     DuplicateEmailError,
     DuplicateUsernameError,
     Email,

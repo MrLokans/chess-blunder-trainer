@@ -3,8 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.storage_sqlite import SqliteStorage
+from blunder_tutor.auth import AuthService, SqliteStorage
 
 
 @dataclass(frozen=True, slots=True)

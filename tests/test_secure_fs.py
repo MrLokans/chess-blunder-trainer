@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from blunder_tutor.auth.schema import initialize_auth_schema
+from blunder_tutor.auth import initialize_auth_schema
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.secure_fs import (
     DB_FILE_MODE,

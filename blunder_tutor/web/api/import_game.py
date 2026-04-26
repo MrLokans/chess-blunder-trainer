@@ -9,6 +9,7 @@ import chess.pgn
 from fastapi.routing import APIRouter
 from pydantic import BaseModel
 
+from blunder_tutor.auth.fastapi import UserContextDep
 from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.web.dependencies import (
     ConfigDep,
@@ -16,7 +17,6 @@ from blunder_tutor.web.dependencies import (
     GameRepoDep,
     JobServiceDep,
     SettingsRepoDep,
-    UserContextDep,
 )
 
 import_router = APIRouter()

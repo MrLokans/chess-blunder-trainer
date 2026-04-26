@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from blunder_tutor.auth.protocols import IdentityRepo, PasswordHasher
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth.core.protocols import IdentityRepo, PasswordHasher
+from blunder_tutor.auth.core.types import (
     CREDENTIALS_PROVIDER_NAME,
     AuthError,
     CorruptCredentialError,

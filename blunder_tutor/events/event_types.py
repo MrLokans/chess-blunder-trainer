@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from blunder_tutor.auth.types import UserId
+from blunder_tutor.auth import UserId
 
 
 class EventType(str, Enum):

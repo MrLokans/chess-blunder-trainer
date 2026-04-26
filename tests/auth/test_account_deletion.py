@@ -6,9 +6,7 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI
 
-from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.schema import initialize_auth_schema
-from blunder_tutor.auth.storage_sqlite import SqliteStorage
+from blunder_tutor.auth import AuthDb, SqliteStorage, initialize_auth_schema
 from blunder_tutor.web.app import scan_orphans
 
 

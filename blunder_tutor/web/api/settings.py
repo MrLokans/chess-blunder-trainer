@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
+from blunder_tutor.auth.fastapi import UserContextDep
 from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.fetchers.validation import validate_username
 from blunder_tutor.web.api.schemas import ErrorResponse, SuccessResponse
@@ -14,7 +15,6 @@ from blunder_tutor.web.dependencies import (
     EventBusDep,
     JobServiceDep,
     SettingsRepoDep,
-    UserContextDep,
 )
 from blunder_tutor.web.middleware import _cache_key
 

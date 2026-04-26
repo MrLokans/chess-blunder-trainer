@@ -6,8 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import Username
+from blunder_tutor.auth import AuthService, Username
 from blunder_tutor.web.auth_hooks import resolve_user_db_path
 
 

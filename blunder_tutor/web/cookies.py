@@ -1,13 +1,32 @@
+"""blunder_tutor-flavoured wrapper around the generic session-cookie
+helpers in :mod:`blunder_tutor.auth.fastapi.cookies`.
+
+The auth-library half (cookie name, set/clear primitives) lives in
+the auth package; this module hosts the AppConfig-aware ``Secure``
+flag computation so the auth core doesn't have to know about
+:class:`AppConfig` or trusted-proxy semantics.
+"""
+
 from __future__ import annotations
 
 from fastapi import Request, Response
 
+from blunder_tutor.auth.fastapi import (
+    SESSION_COOKIE_NAME,
+    clear_session_cookie,
+)
+from blunder_tutor.auth.fastapi import (
+    set_session_cookie as _set_session_cookie,
+)
 from blunder_tutor.web.config import AppConfig
 from blunder_tutor.web.tls import is_https_request
 
-SESSION_COOKIE_NAME = "session_token"
-_SESSION_COOKIE_PATH = "/"
-_SESSION_COOKIE_SAMESITE = "lax"
+__all__ = [
+    "SESSION_COOKIE_NAME",
+    "clear_session_cookie",
+    "compute_cookie_secure",
+    "set_session_cookie",
+]
 
 
 def compute_cookie_secure(config: AppConfig, request: Request) -> bool:
@@ -33,16 +52,9 @@ def set_session_cookie(
     config: AppConfig,
     request: Request,
 ) -> None:
-    response.set_cookie(
-        SESSION_COOKIE_NAME,
+    _set_session_cookie(
+        response,
         token,
         max_age=config.auth.session_max_age_seconds,
-        httponly=True,
-        samesite=_SESSION_COOKIE_SAMESITE,
         secure=compute_cookie_secure(config, request),
-        path=_SESSION_COOKIE_PATH,
     )
-
-
-def clear_session_cookie(response: Response) -> None:
-    response.delete_cookie(SESSION_COOKIE_NAME, path=_SESSION_COOKIE_PATH)

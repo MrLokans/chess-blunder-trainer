@@ -6,7 +6,6 @@ import chess.engine
 from fastapi import Depends, HTTPException, Request, Response
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
-from blunder_tutor.auth.types import UserContext
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.base import BaseDbRepository
@@ -54,13 +53,6 @@ def get_config(request: Request) -> AppConfig:
 
 def get_event_bus(request: Request) -> EventBus:
     return request.app.state.event_bus
-
-
-def get_user_context(request: Request) -> UserContext:
-    ctx = getattr(request.state, "user_ctx", None)
-    if ctx is None:
-        raise HTTPException(status_code=401, detail="unauthorized")
-    return ctx
 
 
 def get_db_path(request: Request) -> Path:
@@ -178,5 +170,4 @@ async def check_engine_throttle(request: Request, response: Response) -> None:
 
 
 EngineThrottleDep = Annotated[None, Depends(check_engine_throttle)]
-UserContextDep = Annotated[UserContext, Depends(get_user_context)]
 DbPathDep = Annotated[Path, Depends(get_db_path)]

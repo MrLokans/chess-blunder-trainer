@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import time
 
-from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.hashers import BcryptHasher
-from blunder_tutor.auth.providers.credentials import CredentialsProvider
-from blunder_tutor.auth.repository import IdentityRepository, UserRepository
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth import (
+    AuthDb,
+    BcryptHasher,
+    CredentialsProvider,
     Email,
+    IdentityRepository,
     PasswordHash,
     Username,
+    UserRepository,
     ValidationRules,
     make_identity_id,
     make_user_id,

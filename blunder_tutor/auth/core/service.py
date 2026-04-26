@@ -5,15 +5,15 @@ from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime, timedelta
 from typing import NoReturn
 
-from blunder_tutor.auth._time import now_iso
-from blunder_tutor.auth.protocols import (
+from blunder_tutor.auth.core._time import now_iso
+from blunder_tutor.auth.core.protocols import (
     AuthProvider,
     InvitePolicy,
     PasswordHasher,
     QuotaPolicy,
     Storage,
 )
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth.core.types import (
     CREDENTIALS_PROVIDER_NAME,
     DuplicateEmailError,
     DuplicateUsernameError,

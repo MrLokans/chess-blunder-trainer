@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from blunder_tutor.auth.invite import generate_invite_code, verify_invite_code
+from blunder_tutor.auth import generate_invite_code, verify_invite_code
 
 _SECRET = "x" * 64
 

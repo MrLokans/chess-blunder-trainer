@@ -16,20 +16,22 @@ from fastapi_throttle import RateLimiter
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
-from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.hashers import BcryptHasher
-from blunder_tutor.auth.invite import generate_invite_code
-from blunder_tutor.auth.middleware import AuthMiddleware, MiddlewareConfig
-from blunder_tutor.auth.policies import HmacInvitePolicy, MaxUsersQuota
-from blunder_tutor.auth.protocols import UserRepo
-from blunder_tutor.auth.providers.credentials import CredentialsProvider
-from blunder_tutor.auth.schema import initialize_auth_schema
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.storage_sqlite import SqliteStorage
-from blunder_tutor.auth.types import (
+from blunder_tutor.auth import (
     CREDENTIALS_PROVIDER_NAME,
+    AuthDb,
+    AuthMiddleware,
+    AuthService,
+    BcryptHasher,
+    CredentialsProvider,
+    HmacInvitePolicy,
+    MaxUsersQuota,
+    MiddlewareConfig,
+    SqliteStorage,
     UserId,
+    UserRepo,
     ValidationRules,
+    generate_invite_code,
+    initialize_auth_schema,
     is_user_id_shape,
 )
 from blunder_tutor.background.executor import DbPathResolver, JobExecutor

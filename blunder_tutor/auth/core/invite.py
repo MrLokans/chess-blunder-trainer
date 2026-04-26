@@ -4,7 +4,7 @@ import hmac
 import secrets
 from hashlib import sha256
 
-from blunder_tutor.auth.types import InviteCode
+from blunder_tutor.auth.core.types import InviteCode
 
 # HMAC tag length. 8 bytes (16 hex chars) truncation is standard for
 # short-form HMAC tags — matches SipHash / AWS sig-v4 patterns. Enough

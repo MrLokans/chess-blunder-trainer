@@ -13,12 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from blunder_tutor.auth.types import (
-    Identity,
-    ProviderName,
-    Username,
-    make_identity_id,
-)
+from blunder_tutor.auth import Identity, ProviderName, Username, make_identity_id
 from tests.helpers.auth import build_inmemory_auth_service
 
 

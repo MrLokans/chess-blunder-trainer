@@ -9,11 +9,14 @@ import pytest
 from fastapi import FastAPI, Request
 from httpx import ASGITransport
 
-from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.middleware import AuthMiddleware, MiddlewareConfig
-from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.storage_sqlite import SqliteStorage
-from blunder_tutor.auth.types import Username
+from blunder_tutor.auth import (
+    AuthDb,
+    AuthMiddleware,
+    AuthService,
+    MiddlewareConfig,
+    SqliteStorage,
+    Username,
+)
 from blunder_tutor.web.auth_hooks import resolve_user_db_path
 from blunder_tutor.web.middleware import UserDbPathMiddleware
 from blunder_tutor.web.resources import AuthResources
