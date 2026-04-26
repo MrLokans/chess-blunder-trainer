@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 
 from blunder_tutor.features import FEATURE_GROUPS, FEATURE_LABELS
-from blunder_tutor.web.dependencies import SettingsRepoDep
+from blunder_tutor.web.template_context import LOCALE_DISPLAY_NAMES
 
 
 async def home(request: Request) -> HTMLResponse:
@@ -32,7 +32,7 @@ async def settings(request: Request) -> HTMLResponse:
         for group_label, group_features in FEATURE_GROUPS
     ]
 
-    features = request.app.state.templates.env.globals.get("features", {})
+    features: dict[str, bool] = getattr(request.state, "features", {})
     feature_groups_data = [
         {
             "label": group_label,
@@ -48,18 +48,13 @@ async def settings(request: Request) -> HTMLResponse:
         for group_label, group_features in feature_groups_tuples
     ]
 
-    locale_display_names = request.app.state.templates.env.globals.get(
-        "locale_display_names", {}
-    )
-    available_locales_fn = request.app.state.templates.env.globals.get(
-        "available_locales", lambda: []
-    )
+    i18n = request.app.state.i18n
     available_locales_data = [
-        {"code": code, "name": locale_display_names.get(code, code)}
-        for code in available_locales_fn()
+        {"code": code, "name": LOCALE_DISPLAY_NAMES.get(code, code)}
+        for code in i18n.available_locales()
     ]
 
-    current_locale = request.app.state.templates.env.globals.get("locale", "en")
+    current_locale = getattr(request.state, "locale", "en")
 
     return request.app.state.templates.TemplateResponse(
         "settings.html",
@@ -100,16 +95,6 @@ async def starred_page(request: Request) -> HTMLResponse:
     )
 
 
-async def setup(request: Request, settings_repo: SettingsRepoDep) -> HTMLResponse:
-    if await settings_repo.is_setup_completed():
-        return RedirectResponse(url="/", status_code=303)
-
-    return request.app.state.templates.TemplateResponse(
-        "setup.html",
-        {"request": request},
-    )
-
-
 ui_router = APIRouter()
 ui_router.add_api_route("/", home, response_class=HTMLResponse, methods=["GET"])
 ui_router.add_api_route(
@@ -130,7 +115,6 @@ ui_router.add_api_route(
 ui_router.add_api_route(
     "/game/{game_id}", game_review_page, response_class=HTMLResponse, methods=["GET"]
 )
-ui_router.add_api_route("/setup", setup, response_class=HTMLResponse, methods=["GET"])
 ui_router.add_api_route(
     "/settings", settings, response_class=HTMLResponse, methods=["GET"]
 )

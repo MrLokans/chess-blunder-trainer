@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('auth.login.title') }} - Blunder Tutor{% endblock %}
+
+{% block body_class %}auth-layout{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/auth.css">
+{% endblock %}
+
+{% block body %}
+{% include '_demo_banner.html' %}
+<div id="auth-root"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ vite_asset('auth-login') }}
+{% endblock %}

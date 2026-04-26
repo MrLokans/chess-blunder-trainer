@@ -1,4 +1,4 @@
-from blunder_tutor.cli import main
+from blunder_tutor.cli.main import main
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,5 @@
-.tmp/
+.tmp*/
 test-results/
-playwright-report/
+playwright-report*/
 blob-report/
 node_modules/

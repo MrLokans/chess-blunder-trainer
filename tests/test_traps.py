@@ -6,7 +6,6 @@ import chess.polyglot
 from blunder_tutor.analysis.traps import (
     TrapDatabase,
     TrapDefinition,
-    TrapPosition,
     _build_position_from_pgn_and_san,
     _parse_pgn_to_san,
     _replay_pgn,

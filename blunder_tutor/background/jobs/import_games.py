@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from blunder_tutor.auth import UserId
 from blunder_tutor.background.base import BaseJob
 from blunder_tutor.background.registry import register_job
 from blunder_tutor.events import EventBus, JobExecutionRequestEvent
@@ -25,11 +26,13 @@ class ImportGamesJob(BaseJob):
         job_service: JobService,
         settings_repo: SettingsRepository,
         game_repo: GameRepository,
+        user_id: UserId,
         event_bus: EventBus | None = None,
     ) -> None:
         self.job_service = job_service
         self.settings_repo = settings_repo
         self.game_repo = game_repo
+        self.user_id = user_id
         self.event_bus = event_bus
 
     async def execute(self, job_id: str, **kwargs: Any) -> dict[str, Any]:
@@ -112,6 +115,7 @@ class ImportGamesJob(BaseJob):
         event = JobExecutionRequestEvent.create(
             job_id=analyze_job_id,
             job_type="analyze",
+            user_id=self.user_id,
             source=source,
             username=username,
         )

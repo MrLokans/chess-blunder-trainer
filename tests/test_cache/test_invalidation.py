@@ -8,7 +8,6 @@ from blunder_tutor.cache.backend import InMemoryCacheBackend
 from blunder_tutor.cache.invalidation import CacheInvalidator
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import (
-    CacheEvent,
     EventType,
     JobEvent,
     StatsEvent,

@@ -11,7 +11,12 @@ from alembic import context
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # `disable_existing_loggers=False` keeps every already-configured
+    # application logger (e.g. `blunder_tutor.web.app`) attached to
+    # its handlers. The default is True, which disables every logger
+    # not named in alembic.ini — a silent footgun for tests that run
+    # migrations and then assert on application log output.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 
 def get_database_url() -> str:

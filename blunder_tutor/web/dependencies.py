@@ -1,14 +1,14 @@
-import asyncio
 from collections.abc import AsyncGenerator
+from pathlib import Path
 from typing import Annotated
 
 import chess.engine
-from fastapi import Depends, Request, Response
+from fastapi import Depends, HTTPException, Request, Response
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
-from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
+from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.job_repository import JobRepository
@@ -28,6 +28,25 @@ from blunder_tutor.trainer import Trainer
 from blunder_tutor.web.config import AppConfig
 
 
+def _repo_dep[T: BaseDbRepository](cls: type[T]):
+    """Generic factory for `Depends(get_db_path)`-scoped repositories.
+
+    Collapses the eight identical "construct → yield → close()" blocks into
+    one helper. Every repo extends ``BaseDbRepository`` which already
+    supports ``async with``; we just plumb the DI seam through it. Adding
+    a new repo is now a single call-site line, not a 6-line factory.
+    """
+
+    async def factory(
+        db_path: Annotated[Path, Depends(get_db_path)],
+    ) -> AsyncGenerator[T]:
+        async with cls(db_path=db_path) as repo:
+            yield repo
+
+    factory.__name__ = f"get_{cls.__name__}"
+    return factory
+
+
 def get_config(request: Request) -> AppConfig:
     return request.app.state.config
 
@@ -36,109 +55,35 @@ def get_event_bus(request: Request) -> EventBus:
     return request.app.state.event_bus
 
 
-async def get_settings_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
-) -> AsyncGenerator[SettingsRepository]:
-    repo = SettingsRepository(db_path=config.data.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
+def get_db_path(request: Request) -> Path:
+    """Per-request DB path populated by ``UserDbPathMiddleware``. Treats
+    a missing/None value as 401 — by the time a route depends on this,
+    `AuthMiddleware` has already enforced auth, so the absence of a
+    resolved path is a misconfiguration (route not exempt, but middleware
+    skipped) rather than a real unauth case.
+    """
+    db_path = getattr(request.state, "user_db_path", None)
+    if db_path is None:
+        raise HTTPException(status_code=401, detail="unauthorized")
+    return db_path
 
 
-async def get_puzzle_attempt_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
-) -> AsyncGenerator[PuzzleAttemptRepository]:
-    repo = PuzzleAttemptRepository(db_path=config.data.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_stats_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
-) -> AsyncGenerator[StatsRepository]:
-    repo = StatsRepository(db_path=config.data.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_job_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
-) -> AsyncGenerator[JobRepository]:
-    repo = JobRepository(db_path=config.data.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
+get_settings_repository = _repo_dep(SettingsRepository)
+get_puzzle_attempt_repository = _repo_dep(PuzzleAttemptRepository)
+get_stats_repository = _repo_dep(StatsRepository)
+get_job_repository = _repo_dep(JobRepository)
+get_game_repository = _repo_dep(GameRepository)
+get_analysis_repository = _repo_dep(AnalysisRepository)
+get_trap_repository = _repo_dep(TrapRepository)
+get_starred_puzzle_repository = _repo_dep(StarredPuzzleRepository)
+get_data_management_repository = _repo_dep(DataManagementRepository)
 
 
 async def get_job_service(
     job_repository: Annotated[JobRepository, Depends(get_job_repository)],
     event_bus: Annotated[EventBus, Depends(get_event_bus)],
 ) -> JobService:
-    job_service = JobService(job_repository=job_repository, event_bus=event_bus)
-    job_service.set_event_loop(asyncio.get_running_loop())
-    return job_service
-
-
-async def get_game_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
-) -> AsyncGenerator[GameRepository]:
-    repo = GameRepository(db_path=config.data.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_analysis_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
-) -> AsyncGenerator[AnalysisRepository]:
-    repo = AnalysisRepository(db_path=config.data.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_trap_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
-) -> AsyncGenerator[TrapRepository]:
-    repo = TrapRepository(db_path=config.data.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_starred_puzzle_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
-) -> AsyncGenerator[StarredPuzzleRepository]:
-    repo = StarredPuzzleRepository(db_path=config.data.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-async def get_data_management_repository(
-    config: Annotated[AppConfig, Depends(get_config)],
-) -> AsyncGenerator[DataManagementRepository]:
-    repo = DataManagementRepository(db_path=config.data.db_path)
-    try:
-        yield repo
-    finally:
-        await repo.close()
-
-
-def get_scheduler(
-    request: Request,
-) -> BackgroundScheduler:
-    return request.app.state.scheduler
+    return JobService(job_repository=job_repository, event_bus=event_bus)
 
 
 def get_work_coordinator(request: Request) -> WorkCoordinator:
@@ -181,6 +126,15 @@ async def set_request_username(
     request: Request,
     config: Annotated[AppConfig, Depends(get_config)],
 ) -> None:
+    """Set `request.state.username` as the per-user cache key for
+    `@cached` decorators. In credentials mode the key is the signed-in
+    user's id so cached results never cross accounts; in none mode the
+    legacy `config.username` (or `"default"`) is preserved.
+    """
+    ctx = getattr(request.state, "user_ctx", None)
+    if ctx is not None:
+        request.state.username = ctx.user_id
+        return
     request.state.username = config.username or "default"
 
 
@@ -196,7 +150,6 @@ JobRepoDep = Annotated[JobRepository, Depends(get_job_repository)]
 JobServiceDep = Annotated[JobService, Depends(get_job_service)]
 GameRepoDep = Annotated[GameRepository, Depends(get_game_repository)]
 AnalysisRepoDep = Annotated[AnalysisRepository, Depends(get_analysis_repository)]
-SchedulerDep = Annotated[BackgroundScheduler, Depends(get_scheduler)]
 WorkCoordinatorDep = Annotated[WorkCoordinator, Depends(get_work_coordinator)]
 LimitDep = Annotated[chess.engine.Limit, Depends(get_engine_limit)]
 AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]
@@ -217,3 +170,4 @@ async def check_engine_throttle(request: Request, response: Response) -> None:
 
 
 EngineThrottleDep = Annotated[None, Depends(check_engine_throttle)]
+DbPathDep = Annotated[Path, Depends(get_db_path)]

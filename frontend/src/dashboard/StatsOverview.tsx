@@ -20,7 +20,7 @@ function AnalysisStatusDisplay({ status, onRetry }: AnalysisStatusDisplayProps) 
     const percent = total > 0 ? Math.round((current / total) * 100) : 0;
     return (
       <div data-testid="analysis-status" class="text-sm text-muted mt-2 text-primary">
-        {t('dashboard.analysis.running')} {String(current)}/{String(total)} ({String(percent)}%)
+        {t('dashboard.analysis.running', { current, total, percent })}
       </div>
     );
   }

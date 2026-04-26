@@ -9,6 +9,7 @@ import chess.pgn
 from fastapi.routing import APIRouter
 from pydantic import BaseModel
 
+from blunder_tutor.auth.fastapi import UserContextDep
 from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.web.dependencies import (
     ConfigDep,
@@ -96,6 +97,7 @@ async def import_pgn(
     game_repo: GameRepoDep,
     job_service: JobServiceDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, Any]:
     game, errors = _validate_and_parse_pgn(payload.pgn)
     if errors:
@@ -126,6 +128,7 @@ async def import_pgn(
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
         job_type="import_pgn",
+        user_id=user_ctx.user_id,
         game_id=game_id,
         username=username,
     )

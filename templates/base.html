@@ -50,7 +50,7 @@
   <!-- Page-specific head content -->
   {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   {% block body %}
   {% include '_demo_banner.html' %}
   {% block header %}

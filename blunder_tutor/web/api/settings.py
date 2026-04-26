@@ -7,10 +7,16 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
+from blunder_tutor.auth.fastapi import UserContextDep
 from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.fetchers.validation import validate_username
 from blunder_tutor.web.api.schemas import ErrorResponse, SuccessResponse
-from blunder_tutor.web.dependencies import EventBusDep, JobServiceDep, SettingsRepoDep
+from blunder_tutor.web.dependencies import (
+    EventBusDep,
+    JobServiceDep,
+    SettingsRepoDep,
+)
+from blunder_tutor.web.middleware import _cache_key
 
 
 class ValidateUsernameRequest(BaseModel):
@@ -147,6 +153,7 @@ async def setup_submit(
     settings_repo: SettingsRepoDep,
     job_service: JobServiceDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, Any]:
     lichess = payload.lichess.strip()
     chesscom = payload.chesscom.strip()
@@ -170,8 +177,7 @@ async def setup_submit(
     await settings_repo.set_setting("chesscom_username", chesscom if chesscom else None)
     await settings_repo.mark_setup_completed()
 
-    if hasattr(request.app.state, "_setup_completed_cache"):
-        delattr(request.app.state, "_setup_completed_cache")
+    request.app.state.setup_completed_cache.invalidate(_cache_key(request))
 
     import_job_ids: list[str] = []
     max_games_str = await settings_repo.get_setting("sync_max_games")
@@ -189,6 +195,7 @@ async def setup_submit(
         event = JobExecutionRequestEvent.create(
             job_id=job_id,
             job_type="import",
+            user_id=user_ctx.user_id,
             source=source,
             username=username,
             max_games=max_games,
@@ -664,7 +671,8 @@ async def reset_theme(settings_repo: SettingsRepoDep) -> dict[str, bool]:
     description="Update application settings including sync configuration and analysis preferences.",
 )
 async def settings_submit(
-    request: Request, payload: SettingsRequest, settings_repo: SettingsRepoDep
+    payload: SettingsRequest,
+    settings_repo: SettingsRepoDep,
 ) -> dict[str, bool]:
     await settings_repo.set_setting(
         "auto_sync_enabled", "true" if payload.auto_sync else "false"
@@ -683,10 +691,8 @@ async def settings_submit(
         for key, value in theme_dict.items():
             await settings_repo.set_setting(f"theme_{key}", value)
 
-    scheduler = request.app.state.scheduler
-    settings = await settings_repo.get_all_settings()
-    scheduler.update_jobs(settings)
-
+    # No scheduler hot-reload: BackgroundScheduler reads settings on each
+    # fanout tick, so changes take effect within ``DEFAULT_TICK_SECONDS``.
     return {"success": True}
 
 
@@ -716,14 +722,12 @@ async def get_features(settings_repo: SettingsRepoDep) -> dict[str, Any]:
     description="Toggle visibility of individual features.",
 )
 async def update_features(
-    request: Request, payload: FeatureFlagsRequest, settings_repo: SettingsRepoDep
+    request: Request,
+    payload: FeatureFlagsRequest,
+    settings_repo: SettingsRepoDep,
 ) -> dict[str, bool]:
     await settings_repo.set_feature_flags(payload.features)
-
-    scheduler = request.app.state.scheduler
-    settings = await settings_repo.get_all_settings()
-    scheduler.update_jobs(settings)
-
+    request.app.state.features_cache.invalidate(_cache_key(request))
     return {"success": True}
 
 
@@ -744,7 +748,7 @@ async def set_locale(
     if i18n and payload.locale not in i18n.available_locales():
         raise HTTPException(status_code=400, detail="Unsupported locale")
     await settings_repo.set_setting("locale", payload.locale)
-    request.app.state._locale_cache = payload.locale
+    request.app.state.locale_cache.set(_cache_key(request), payload.locale)
 
     response = JSONResponse(content={"success": True})
     response.set_cookie(
@@ -770,12 +774,14 @@ class DeleteAllResponse(BaseModel):
 async def delete_all_data(
     job_service: JobServiceDep,
     event_bus: EventBusDep,
+    user_ctx: UserContextDep,
 ) -> dict[str, Any]:
     job_id = await job_service.create_job(job_type="delete_all_data")
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
         job_type="delete_all_data",
+        user_id=user_ctx.user_id,
     )
     await event_bus.publish(event)
 

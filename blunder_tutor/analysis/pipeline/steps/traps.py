@@ -54,8 +54,7 @@ class TrapDetectionStep(AnalysisStep):
         matches = trap_db.match_game(board, user_color)
 
         if matches:
-            trap_repo = TrapRepository(db_path=ctx.analysis_repo.db_path)
-            try:
+            async with TrapRepository(db_path=ctx.analysis_repo.db_path) as trap_repo:
                 for m in matches:
                     victim_side = (
                         trap_db.get_trap(m.trap_id).victim_side
@@ -70,8 +69,6 @@ class TrapDetectionStep(AnalysisStep):
                         user_was_victim=m.user_was_victim,
                         mistake_ply=m.mistake_ply,
                     )
-            finally:
-                await trap_repo.close()
 
             logger.info(
                 "Found %d trap matches for game %s: %s",

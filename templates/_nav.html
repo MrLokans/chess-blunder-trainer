@@ -22,6 +22,12 @@
   <a href="/import" class="trainer-nav-link{% if active_page == 'import' %} active{% endif %}">{{ t('nav.import') }}</a>
   {% endif %}
   <a href="/settings" class="trainer-nav-link{% if active_page == 'settings' %} active{% endif %}">{{ t('nav.settings') }}</a>
+  {% if request.state.user_ctx and request.state.user_ctx.is_authenticated %}
+  <span class="nav-user" title="{{ request.state.user_ctx.username }}">{{ request.state.user_ctx.username }}</span>
+  <form method="POST" action="/logout" class="nav-logout">
+    <button type="submit" class="trainer-nav-link">{{ t('auth.nav.logout') }}</button>
+  </form>
+  {% endif %}
   </div>
 </nav>
 {% endmacro %}

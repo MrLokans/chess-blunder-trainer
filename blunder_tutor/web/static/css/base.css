@@ -1625,6 +1625,30 @@ body:has(.demo-banner) {
   color: var(--white);
 }
 
+.nav-user {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--mid-gray);
+  padding: var(--s-sm) var(--s-md);
+  max-width: 12em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-logout {
+  display: inline-block;
+  margin: 0;
+}
+
+.nav-logout button.trainer-nav-link {
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
 /* ==========================================================================
    Modal Overlay — shared pattern
    ========================================================================== */

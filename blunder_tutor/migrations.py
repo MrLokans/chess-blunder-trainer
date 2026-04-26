@@ -7,6 +7,7 @@ from pathlib import Path
 from alembic.config import Config
 
 from alembic import command
+from blunder_tutor.secure_fs import restrict_umask, secure_db_file
 
 INITIAL_REVISION = "001"
 
@@ -42,19 +43,30 @@ def run_migrations(db_path: Path) -> None:
 
     config = get_alembic_config(db_path)
 
-    if db_path.exists():
-        conn = sqlite3.connect(str(db_path))
-        try:
-            has_alembic = _has_alembic_version(conn)
-            has_schema = _has_existing_schema(conn)
+    # Migrations on first boot of a fresh deploy CREATE the DB file
+    # via alembic's sqlalchemy engine. Wrapping both the stamp/upgrade
+    # calls in a tight umask closes the window where the freshly-
+    # created file sits at 0644 before secure_db_file chmods it.
+    with restrict_umask():
+        if db_path.exists():
+            conn = sqlite3.connect(str(db_path))
+            try:
+                has_alembic = _has_alembic_version(conn)
+                has_schema = _has_existing_schema(conn)
 
-            if not has_alembic and has_schema:
-                print(f"Stamping existing database with revision {INITIAL_REVISION}")
-                command.stamp(config, INITIAL_REVISION)
-        finally:
-            conn.close()
+                if not has_alembic and has_schema:
+                    print(
+                        f"Stamping existing database with revision {INITIAL_REVISION}"
+                    )
+                    command.stamp(config, INITIAL_REVISION)
+            finally:
+                conn.close()
 
-    command.upgrade(config, "head")
+        command.upgrade(config, "head")
+
+    # Belt: ensures 0600 even if the umask story changes, and covers
+    # existing DBs that predate this lock-down.
+    secure_db_file(db_path)
 
 
 def main() -> None:

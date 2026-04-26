@@ -113,7 +113,7 @@ migrate: ## Run database migrations
 	$(UV) run blunder-tutor-db
 
 # Code quality
-lint: lint/be lint/fe lint/e2e ## Lint all code
+lint: lint/be lint/fe lint/e2e lint/i18n ## Lint all code
 
 lint/be: ## Lint Python with ruff
 	$(UV) run ruff check blunder_tutor/ main.py
@@ -123,6 +123,9 @@ lint/fe: ## Lint TypeScript with ESLint
 
 lint/e2e: ## Lint E2E tests with ESLint
 	cd e2e && npm run lint
+
+lint/i18n: ## Lint i18n locale files + key references (errors only by default; LINT_I18N_STRICT=1 promotes warnings)
+	$(UV) run python scripts/lint_i18n.py $(if $(LINT_I18N_STRICT),--strict)
 
 typecheck/e2e: ## Run TypeScript type checking on E2E tests
 	cd e2e && npm run typecheck
@@ -135,19 +138,30 @@ fix: ## Auto-fix linting issues
 
 test: test/be test/fe ## Run all tests
 
-test/be: ## Run Python tests with pytest
-	$(UV) run pytest tests/ -v
+test/be: ## Run Python tests with pytest (parallel + randomized order, see pyproject addopts)
+	$(UV) run pytest tests/
 
 test/fe: ## Run frontend tests with Vitest
 	npm run test
 
-test/e2e: ## Run E2E tests locally
+test/e2e: ## Run demo E2E tests locally (auth suite excluded via testIgnore)
 	mkdir -p e2e/.tmp
 	cd e2e && npx playwright test
 
-test/e2e/headed: ## Run E2E tests with browser visible
+test/e2e/headed: ## Run demo E2E tests with browser visible
 	mkdir -p e2e/.tmp
 	cd e2e && npx playwright test --headed
+
+test/e2e/auth: ## Run credentials-mode auth E2E tests locally
+	mkdir -p e2e/.tmp-auth
+	cd e2e && npx playwright test --config playwright.auth.config.ts
+
+test/e2e/all: test/e2e test/e2e/auth ## Run every E2E suite (demo + credentials-mode auth)
+
+# Both suites run `npm run build` via their respective Playwright
+# webServer commands, so `make -j2 test/e2e/all` would race on
+# `blunder_tutor/web/static/dist/`. Keep children serial.
+.NOTPARALLEL: test/e2e/all
 
 test/e2e/docker: ## Run E2E tests against Docker image
 	cp demo/demo.sqlite3 /tmp/e2e-test.sqlite3
