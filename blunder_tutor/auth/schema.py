@@ -1,10 +1,49 @@
 from __future__ import annotations
 
+from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
+from typing import Protocol
 
 import aiosqlite
 
-from blunder_tutor.secure_fs import restrict_umask, secure_db_file
+
+class FilePermissionPolicy(Protocol):
+    """Strategy for hardening auth DB file permissions during schema init.
+
+    The auth core must not assume POSIX semantics (chmod, umask) since
+    operators on Windows, networked filesystems, or ephemeral test dirs
+    don't need or can't apply owner-only perms. Callers inject a policy
+    that knows how their platform handles file permissions; the default
+    :class:`NoOpFilePermissionPolicy` is safe everywhere.
+    """
+
+    def restrict_umask(self) -> AbstractContextManager[None]:
+        """Sync context manager that tightens file-creation perms for
+        the lifetime of the body. The schema connect runs inside this
+        so the new file lands with restrictive perms before any chmod
+        follow-up — closing the race between file create and chmod.
+        """
+        ...
+
+    def secure_db_file(self, path: Path) -> None:
+        """Belt-and-suspenders chmod after the file is created. Idempotent."""
+        ...
+
+
+class NoOpFilePermissionPolicy:
+    """Default :class:`FilePermissionPolicy`: do nothing. Library-safe
+    on any platform; consumers that need POSIX file hardening swap in
+    their own implementation."""
+
+    def restrict_umask(self) -> AbstractContextManager[None]:
+        return nullcontext()
+
+    def secure_db_file(self, path: Path) -> None:
+        return None
+
+
+_NOOP_POLICY: FilePermissionPolicy = NoOpFilePermissionPolicy()
+
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS users (
@@ -47,16 +86,14 @@ CREATE TABLE IF NOT EXISTS setup (
 """
 
 
-async def initialize_auth_schema(db_path: Path) -> None:
+async def initialize_auth_schema(
+    db_path: Path,
+    policy: FilePermissionPolicy = _NOOP_POLICY,
+) -> None:
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    # Tighten umask for the lifetime of the connect so the file lands
-    # with 0600 on creation, closing the race between file create and
-    # the explicit chmod that follows.
-    with restrict_umask():
+    with policy.restrict_umask():
         async with aiosqlite.connect(db_path) as conn:
             await conn.execute("PRAGMA foreign_keys = ON")
             await conn.executescript(SCHEMA_SQL)
             await conn.commit()
-    # Belt to the umask suspenders — ensures the file is 0600 even if
-    # some code path in the future changes the umask story.
-    secure_db_file(db_path)
+    policy.secure_db_file(db_path)

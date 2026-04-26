@@ -14,6 +14,7 @@ from blunder_tutor.secure_fs import (
     secure_db_file,
     secure_user_dir,
 )
+from blunder_tutor.web.auth_hooks import BlunderTutorFilePermissionPolicy
 
 
 def _mode(p: Path) -> int:
@@ -70,9 +71,19 @@ class TestMigrationsLockDown:
 class TestAuthSchemaLockDown:
     async def test_initialize_auth_schema_chmods_to_0600(self, tmp_path: Path):
         db = tmp_path / "auth.sqlite3"
-        await initialize_auth_schema(db)
+        await initialize_auth_schema(db, BlunderTutorFilePermissionPolicy())
         assert db.exists()
         assert _mode(db) == DB_FILE_MODE, f"mode={_mode(db):o}"
+
+    async def test_default_policy_is_noop(self, tmp_path: Path):
+        # Library default must work on any platform without granting
+        # any perms — consumers that need POSIX hardening pass their
+        # own policy.
+        db = tmp_path / "auth.sqlite3"
+        await initialize_auth_schema(db)
+        assert db.exists()
+        # Whatever the umask gave us — we just verified the no-op path
+        # didn't raise on a platform that supports stat().
 
 
 # Linux + macOS honor chmod. Windows does not carry POSIX perms → skip.

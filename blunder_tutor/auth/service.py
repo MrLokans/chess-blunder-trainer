@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import hmac
 import sqlite3
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import NoReturn
 
 from blunder_tutor.auth._time import now_iso
 from blunder_tutor.auth.db import AuthDb
+from blunder_tutor.auth.hashers import BcryptHasher
+from blunder_tutor.auth.policies import HmacInvitePolicy, MaxUsersQuota
 from blunder_tutor.auth.providers.base import AuthProvider
-from blunder_tutor.auth.providers.credentials import CredentialsProvider
 from blunder_tutor.auth.repository import (
     IdentityRepository,
     SessionRepository,
@@ -21,7 +21,6 @@ from blunder_tutor.auth.types import (
     DuplicateUsernameError,
     Email,
     Identity,
-    InvalidInviteCodeError,
     PasswordHash,
     ProviderName,
     Session,
@@ -31,7 +30,6 @@ from blunder_tutor.auth.types import (
     UserContext,
     UserId,
     Username,
-    hash_password,
     make_identity_id,
     make_session_token,
     make_user_id,
@@ -60,6 +58,10 @@ class AuthService:
         *,
         auth_db: AuthDb,
         db_path_resolver: Callable[[UserId], Path],
+        providers: Mapping[ProviderName, AuthProvider],
+        hasher: BcryptHasher,
+        quota: MaxUsersQuota,
+        invite_policy: HmacInvitePolicy,
         session_max_age: timedelta,
         session_idle: timedelta,
         on_after_register: Callable[[User], Awaitable[None]] = _noop_after_register,
@@ -74,9 +76,15 @@ class AuthService:
         self._users = UserRepository(db=auth_db)
         self._identities = IdentityRepository(db=auth_db)
         self._sessions = SessionRepository(db=auth_db)
-        self._providers: dict[ProviderName, AuthProvider] = {
-            "credentials": CredentialsProvider(identities=self._identities),
-        }
+        self._providers: dict[ProviderName, AuthProvider] = dict(providers)
+        self._hasher = hasher
+        self._quota = quota
+        self._invite_policy = invite_policy
+        # Warm the dummy hash so the first authenticate request runs in
+        # the same wall-clock window as subsequent ones — the
+        # constant-time invariant in :class:`CredentialsProvider`
+        # depends on the dummy being precomputed.
+        hasher.dummy_hash()
 
     async def register(
         self,
@@ -88,7 +96,7 @@ class AuthService:
         # Hash outside the transaction — bcrypt is slow (~100ms) and we don't
         # want to hold the write lock for that long. This also surfaces
         # InvalidPasswordError before we touch the DB.
-        credential = hash_password(password)
+        credential = self._hasher.hash(password)
         user_id = make_user_id()
         now = now_iso()
         try:
@@ -110,23 +118,23 @@ class AuthService:
         *,
         username: Username,
         password: str,
-        max_users: int,
         email: Email | None = None,
         invite_code: str | None = None,
     ) -> User:
         """Atomic signup path for the HTTP surface.
 
-        Cap enforcement and first-user invite-consume happen inside the
-        same ``BEGIN IMMEDIATE`` transaction as the ``users`` /
-        ``identities`` INSERTs. Without this, two concurrent POSTs to
+        Quota enforcement and invite-consume happen inside the same
+        ``BEGIN IMMEDIATE`` transaction as the ``users`` / ``identities``
+        INSERTs. Without this, two concurrent POSTs to
         ``/api/auth/signup`` could both pass an API-level cap check and
-        both commit, exceeding ``max_users``. Single-transaction gating
-        makes the cap a DB invariant instead of a best-effort check.
+        both commit, exceeding the configured quota. Single-transaction
+        gating makes the cap a DB invariant instead of a best-effort
+        check.
 
         ``register`` is the lower-level API and stays usable from tests
-        that don't care about cap/invite.
+        that don't care about quota/invite policy.
         """
-        credential = hash_password(password)
+        credential = self._hasher.hash(password)
         user_id = make_user_id()
         now = now_iso()
         try:
@@ -136,10 +144,9 @@ class AuthService:
                 ) as cur:
                     row = await cur.fetchone()
                 count = int(row[0]) if row else 0
-                if count >= max_users:
+                if not self._quota.allow_signup(count):
                     raise UserCapReachedError()
-                if count == 0:
-                    await self._consume_invite(conn, invite_code)
+                await self._invite_policy.consume(conn, invite_code, count)
                 await self._insert_user_with_credential(
                     conn,
                     user_id=user_id,
@@ -196,37 +203,6 @@ class AuthService:
         if "users.email" in message:
             raise DuplicateEmailError(email or "") from exc
         raise exc
-
-    async def _consume_invite(
-        self,
-        conn,
-        invite_code: str | None,
-    ) -> None:
-        """Validate the first-user invite inside an active transaction and
-        mark it consumed. Single-use: the row is DELETEd on accept so a
-        re-run of the flow needs a fresh invite.
-
-        Constant-time equality against the stored value is authoritative
-        — we wrote the row ourselves via ``generate_invite_code`` at boot
-        or via the ``regenerate-invite`` CLI, and HMAC authenticity is
-        validated at that issue site. Re-verifying HMAC here added no
-        security (any code that byte-matches the stored value was signed
-        by us by construction) and introduced a silent failure path after
-        SECRET_KEY rotation — see TREK-19 / TREK-25 for the decision
-        record.
-        """
-        if not invite_code:
-            raise InvalidInviteCodeError("missing")
-        async with conn.execute(
-            "SELECT value FROM setup WHERE key = 'invite_code'"
-        ) as cur:
-            stored_row = await cur.fetchone()
-        if stored_row is None:
-            raise InvalidInviteCodeError("not_issued")
-        stored = stored_row[0]
-        if not hmac.compare_digest(invite_code, stored):
-            raise InvalidInviteCodeError("rotated")
-        await conn.execute("DELETE FROM setup WHERE key = 'invite_code'")
 
     async def _finalize_registration(self, user_id: UserId) -> User:
         """Post-commit step: look up the freshly inserted user and run the

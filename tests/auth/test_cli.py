@@ -4,7 +4,6 @@ import argparse as ap
 import io
 import shutil
 from datetime import timedelta
-from functools import partial
 from pathlib import Path
 
 import pytest
@@ -25,11 +24,7 @@ from blunder_tutor.cli.auth import (
     cmd_reset_password,
     cmd_revoke_sessions,
 )
-from blunder_tutor.web.auth_hooks import (
-    cleanup_user_dir,
-    materialize_user_dir,
-    resolve_user_db_path,
-)
+from tests.helpers.auth import build_test_auth_service
 
 
 @pytest.fixture
@@ -40,11 +35,9 @@ async def ctx(tmp_path: Path):
     await auth_db.connect()
     users_dir = tmp_path / "users"
     users_dir.mkdir()
-    service = AuthService(
+    service = build_test_auth_service(
         auth_db=auth_db,
-        db_path_resolver=partial(resolve_user_db_path, users_dir),
-        on_after_register=partial(materialize_user_dir, users_dir),
-        on_after_delete=partial(cleanup_user_dir, users_dir),
+        users_dir=users_dir,
         session_max_age=timedelta(days=1),
         session_idle=timedelta(days=1),
     )

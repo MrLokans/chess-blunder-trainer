@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from fastapi import Request
@@ -8,11 +9,24 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import LOCAL_USER_ID, LOCAL_USERNAME, UserContext
-from blunder_tutor.web.cookies import SESSION_COOKIE_NAME
-from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
 
-EXEMPT_PATHS = AUTH_UI_PATHS | frozenset({"/health", "/favicon.ico"})
-EXEMPT_PREFIXES = ("/static", AUTH_API_PREFIX)
+
+@dataclass(frozen=True)
+class MiddlewareConfig:
+    """Per-application config for :class:`AuthMiddleware`.
+
+    ``cookie_name`` is the cookie key the middleware reads to extract
+    the session token. ``exempt_paths`` are exact-match URLs that bypass
+    the auth check (login/signup/setup pages, health probes);
+    ``exempt_prefixes`` are prefix-match (static asset routes, auth API
+    prefix). Consumers pass only what their URL space requires — the
+    auth core has no opinions about which non-API paths should be
+    public.
+    """
+
+    cookie_name: str
+    exempt_paths: frozenset[str] = field(default_factory=frozenset)
+    exempt_prefixes: tuple[str, ...] = ()
 
 
 def _wants_html(request: Request) -> bool:
@@ -25,12 +39,6 @@ def _wants_html(request: Request) -> bool:
     # path as HTML by default so the client gets a proper /login redirect
     # instead of a JSON 401.
     return not request.url.path.startswith("/api/")
-
-
-def _is_exempt(path: str) -> bool:
-    if path in EXEMPT_PATHS:
-        return True
-    return any(path.startswith(prefix) for prefix in EXEMPT_PREFIXES)
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -50,6 +58,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
     the context must depend on :func:`get_user_context`.
     """
 
+    def __init__(self, app, config: MiddlewareConfig) -> None:
+        super().__init__(app)
+        self._config = config
+
     async def dispatch(self, request: Request, call_next):
         mode = getattr(request.app.state, "auth_mode", "none")
 
@@ -67,13 +79,13 @@ class AuthMiddleware(BaseHTTPMiddleware):
         auth = request.app.state.auth
         assert auth is not None  # credentials mode → set by _bootstrap_auth
         service: AuthService = auth.service
-        token = request.cookies.get(SESSION_COOKIE_NAME)
+        token = request.cookies.get(self._config.cookie_name)
         client_ip = request.client.host if request.client else None
         ctx: UserContext | None = None
         if token:
             ctx = await service.resolve_session(token, client_ip)
 
-        if _is_exempt(path):
+        if self._is_exempt(path):
             request.state.user_ctx = ctx
             return await call_next(request)
 
@@ -84,3 +96,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         request.state.user_ctx = ctx
         return await call_next(request)
+
+    def _is_exempt(self, path: str) -> bool:
+        if path in self._config.exempt_paths:
+            return True
+        return any(path.startswith(prefix) for prefix in self._config.exempt_prefixes)

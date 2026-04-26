@@ -123,7 +123,6 @@ async def signup(
         user = await service.signup(
             username=username,
             password=body.password,
-            max_users=config.auth.max_users,
             email=email,
             invite_code=body.invite_code,
         )

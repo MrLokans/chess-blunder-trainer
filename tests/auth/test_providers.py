@@ -3,12 +3,13 @@ from __future__ import annotations
 import time
 
 from blunder_tutor.auth.db import AuthDb
+from blunder_tutor.auth.hashers import BcryptHasher, hash_password
 from blunder_tutor.auth.providers.credentials import CredentialsProvider
 from blunder_tutor.auth.repository import IdentityRepository, UserRepository
 from blunder_tutor.auth.types import (
     Email,
     Username,
-    hash_password,
+    ValidationRules,
     make_identity_id,
     make_user_id,
 )
@@ -38,7 +39,12 @@ async def _seed_user(
 
 
 def _provider(auth_db: AuthDb) -> CredentialsProvider:
-    return CredentialsProvider(identities=IdentityRepository(db=auth_db))
+    rules = ValidationRules.default()
+    return CredentialsProvider(
+        identities=IdentityRepository(db=auth_db),
+        hasher=BcryptHasher(rules),
+        rules=rules,
+    )
 
 
 class TestCredentialsProvider:

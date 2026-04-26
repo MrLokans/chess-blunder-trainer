@@ -5,11 +5,11 @@ from datetime import timedelta
 import pytest
 
 from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.providers import credentials as credentials_mod
+from blunder_tutor.auth.hashers import BcryptHasher
 from blunder_tutor.auth.providers.credentials import CredentialsProvider
 from blunder_tutor.auth.repository import IdentityRepository
 from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import Username
+from blunder_tutor.auth.types import Username, ValidationRules
 
 
 @pytest.fixture
@@ -20,12 +20,21 @@ def service(service_factory) -> AuthService:
     )
 
 
+def _make_provider(auth_db: AuthDb) -> CredentialsProvider:
+    rules = ValidationRules.default()
+    return CredentialsProvider(
+        identities=IdentityRepository(db=auth_db),
+        hasher=BcryptHasher(rules),
+        rules=rules,
+    )
+
+
 class TestTimingInvariants:
     """Structural guarantees that the wall-clock timing of an auth
     attempt cannot distinguish the following cases. Wall-clock timing
     tests are flaky; these assert the stronger property that every
     non-empty attempt does exactly one DB lookup and exactly one
-    verify_password call — no branch short-circuits around either.
+    hasher verify call — no branch short-circuits around either.
     """
 
     async def test_all_failing_paths_run_one_db_query_and_one_bcrypt(
@@ -33,7 +42,7 @@ class TestTimingInvariants:
     ):
         await service.register(username=Username("alice"), password="password123")
 
-        provider = CredentialsProvider(IdentityRepository(db=auth_db))
+        provider = _make_provider(auth_db)
 
         db_calls: list[tuple[str, str]] = []
         orig_lookup = provider._identities.get_by_provider_subject
@@ -45,13 +54,13 @@ class TestTimingInvariants:
         monkeypatch.setattr(provider._identities, "get_by_provider_subject", spy_lookup)
 
         verify_calls: list[str] = []
-        orig_verify = credentials_mod.verify_password
+        orig_verify = provider._hasher.verify
 
         def spy_verify(raw, hashed):
             verify_calls.append(hashed[:10])
             return orig_verify(raw, hashed)
 
-        monkeypatch.setattr(credentials_mod, "verify_password", spy_verify)
+        monkeypatch.setattr(provider._hasher, "verify", spy_verify)
 
         # Case 1: malformed username (shape rejected)
         r = await provider.authenticate(
@@ -87,7 +96,7 @@ class TestTimingInvariants:
     ):
         await service.register(username=Username("alice"), password="password123")
 
-        provider = CredentialsProvider(IdentityRepository(db=auth_db))
+        provider = _make_provider(auth_db)
 
         db_calls: list[tuple[str, str]] = []
         orig_lookup = provider._identities.get_by_provider_subject
@@ -99,13 +108,13 @@ class TestTimingInvariants:
         monkeypatch.setattr(provider._identities, "get_by_provider_subject", spy_lookup)
 
         verify_calls: list[str] = []
-        orig_verify = credentials_mod.verify_password
+        orig_verify = provider._hasher.verify
 
         def spy_verify(raw, hashed):
             verify_calls.append(hashed[:10])
             return orig_verify(raw, hashed)
 
-        monkeypatch.setattr(credentials_mod, "verify_password", spy_verify)
+        monkeypatch.setattr(provider._hasher, "verify", spy_verify)
 
         r = await provider.authenticate(
             {"username": "alice", "password": "password123"}

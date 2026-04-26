@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from functools import partial
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -11,19 +10,15 @@ from fastapi import FastAPI, Request
 from httpx import ASGITransport
 
 from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.middleware import AuthMiddleware
-from blunder_tutor.auth.service import AuthService
+from blunder_tutor.auth.middleware import AuthMiddleware, MiddlewareConfig
 from blunder_tutor.auth.types import UserContext, UserId, Username
 from blunder_tutor.repositories.settings import SettingsRepository
-from blunder_tutor.web.auth_hooks import (
-    cleanup_user_dir,
-    materialize_user_dir,
-    resolve_user_db_path,
-)
+from blunder_tutor.web.auth_hooks import resolve_user_db_path
 from blunder_tutor.web.middleware import LocaleMiddleware, SetupCheckMiddleware
 from blunder_tutor.web.per_user_cache import PerUserCache
 from blunder_tutor.web.request_helpers import _cache_key, _db_path_for
 from blunder_tutor.web.resources import AuthResources
+from tests.helpers.auth import build_test_auth_service
 
 
 class TestCacheKey:
@@ -90,11 +85,9 @@ async def two_user_app(auth_db: AuthDb, tmp_path: Path):
     """
     users_dir = tmp_path / "users"
     users_dir.mkdir()
-    service = AuthService(
+    service = build_test_auth_service(
         auth_db=auth_db,
-        db_path_resolver=partial(resolve_user_db_path, users_dir),
-        on_after_register=partial(materialize_user_dir, users_dir),
-        on_after_delete=partial(cleanup_user_dir, users_dir),
+        users_dir=users_dir,
         session_max_age=timedelta(days=1),
         session_idle=timedelta(days=1),
     )
@@ -142,7 +135,10 @@ async def two_user_app(auth_db: AuthDb, tmp_path: Path):
     # Order: last added = first executed. AuthMiddleware must run first.
     app.add_middleware(SetupCheckMiddleware)
     app.add_middleware(LocaleMiddleware)
-    app.add_middleware(AuthMiddleware)
+    app.add_middleware(
+        AuthMiddleware,
+        config=MiddlewareConfig(cookie_name="session_token"),
+    )
 
     return app, user_a, session_a.token, user_b, session_b.token, service
 

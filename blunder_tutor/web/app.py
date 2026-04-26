@@ -17,12 +17,24 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.auth.db import AuthDb
+from blunder_tutor.auth.hashers import BcryptHasher
 from blunder_tutor.auth.invite import generate_invite_code
-from blunder_tutor.auth.middleware import AuthMiddleware
-from blunder_tutor.auth.repository import SetupRepository, UserRepository
+from blunder_tutor.auth.middleware import AuthMiddleware, MiddlewareConfig
+from blunder_tutor.auth.policies import HmacInvitePolicy, MaxUsersQuota
+from blunder_tutor.auth.providers.credentials import CredentialsProvider
+from blunder_tutor.auth.repository import (
+    IdentityRepository,
+    SetupRepository,
+    UserRepository,
+)
 from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import LOCAL_USER_ID, UserId, is_user_id_shape
+from blunder_tutor.auth.types import (
+    LOCAL_USER_ID,
+    UserId,
+    ValidationRules,
+    is_user_id_shape,
+)
 from blunder_tutor.background.executor import DbPathResolver, JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.cache import (
@@ -38,11 +50,13 @@ from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web import routes
 from blunder_tutor.web.auth_hooks import (
+    BlunderTutorFilePermissionPolicy,
     cleanup_user_dir,
     materialize_user_dir,
     resolve_user_db_path,
 )
 from blunder_tutor.web.config import AppConfig, config_factory
+from blunder_tutor.web.cookies import SESSION_COOKIE_NAME
 from blunder_tutor.web.middleware import (
     CsrfOriginMiddleware,
     DemoModeMiddleware,
@@ -50,6 +64,7 @@ from blunder_tutor.web.middleware import (
     SecurityHeadersMiddleware,
     SetupCheckMiddleware,
 )
+from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
 from blunder_tutor.web.per_user_cache import PerUserCache
 from blunder_tutor.web.resources import AuthResources
 from blunder_tutor.web.template_context import i18n_context
@@ -125,14 +140,25 @@ async def _bootstrap_auth(app: FastAPI) -> None:
     users_dir = config.data.db_path.parent / "users"
     users_dir.mkdir(parents=True, exist_ok=True)
 
-    await initialize_auth_schema(auth_db_path)
+    await initialize_auth_schema(auth_db_path, BlunderTutorFilePermissionPolicy())
 
     auth_db = AuthDb(auth_db_path)
     await auth_db.connect()
 
+    rules = ValidationRules.default()
+    hasher = BcryptHasher(rules)
+    identities = IdentityRepository(db=auth_db)
     auth_service = AuthService(
         auth_db=auth_db,
         db_path_resolver=partial(resolve_user_db_path, users_dir),
+        providers={
+            "credentials": CredentialsProvider(
+                identities=identities, hasher=hasher, rules=rules
+            ),
+        },
+        hasher=hasher,
+        quota=MaxUsersQuota(auth_config.max_users),
+        invite_policy=HmacInvitePolicy(),
         on_after_register=partial(materialize_user_dir, users_dir),
         on_after_delete=partial(cleanup_user_dir, users_dir),
         session_max_age=timedelta(seconds=auth_config.session_max_age_seconds),
@@ -408,7 +434,14 @@ def create_app(
     app.add_middleware(SetupCheckMiddleware)
     app.add_middleware(DemoModeMiddleware)
     app.add_middleware(LocaleMiddleware)
-    app.add_middleware(AuthMiddleware)
+    app.add_middleware(
+        AuthMiddleware,
+        config=MiddlewareConfig(
+            cookie_name=SESSION_COOKIE_NAME,
+            exempt_paths=AUTH_UI_PATHS | {"/health", "/favicon.ico"},
+            exempt_prefixes=("/static", AUTH_API_PREFIX),
+        ),
+    )
     # CsrfOriginMiddleware added LAST → runs FIRST on the request path.
     # A cross-origin mutation must be rejected before Auth/Locale/Setup
     # run any side effects (DB lookups, cache writes). AuthMiddleware's

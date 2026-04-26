@@ -8,8 +8,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal, NewType
 
-import bcrypt
-
 UserId = NewType("UserId", str)
 Username = NewType("Username", str)
 Email = NewType("Email", str)
@@ -93,18 +91,63 @@ class CorruptCredentialError(AuthError):
     not a wrong password attempt."""
 
 
+@dataclass(frozen=True)
+class ValidationRules:
+    """Per-application username/email/password validation policy.
+
+    Default values (:meth:`ValidationRules.default`) match blunder_tutor's
+    self-hosted policy — 3-32 char usernames, 8-72 byte passwords
+    (bcrypt's hard limit), 254-char email cap. A consumer with different
+    requirements (longer usernames for enterprise SSO, argon2 with
+    256-byte passwords) constructs a custom :class:`ValidationRules`
+    and threads it through the hasher and any direct callers of the
+    validation methods.
+    """
+
+    username_re: re.Pattern[str]
+    email_re: re.Pattern[str]
+    password_min: int
+    password_max_bytes: int
+    email_max_len: int
+
+    @classmethod
+    def default(cls) -> ValidationRules:
+        return cls(
+            username_re=USERNAME_RE,
+            email_re=EMAIL_RE,
+            password_min=PASSWORD_MIN_LEN,
+            password_max_bytes=PASSWORD_MAX_BYTES,
+            email_max_len=254,
+        )
+
+    def make_username(self, raw: str) -> Username:
+        low = raw.strip().lower()
+        if not self.username_re.match(low):
+            raise InvalidUsernameError(raw)
+        return Username(low)
+
+    def make_email(self, raw: str) -> Email:
+        low = raw.strip().lower()
+        if len(low) > self.email_max_len or not self.email_re.match(low):
+            raise InvalidEmailError(raw)
+        return Email(low)
+
+    def password_bytes(self, raw: str) -> bytes | None:
+        encoded = raw.encode("utf-8")
+        if len(encoded) < self.password_min or len(encoded) > self.password_max_bytes:
+            return None
+        return encoded
+
+
+_DEFAULT_RULES = ValidationRules.default()
+
+
 def make_username(raw: str) -> Username:
-    low = raw.strip().lower()
-    if not USERNAME_RE.match(low):
-        raise InvalidUsernameError(raw)
-    return Username(low)
+    return _DEFAULT_RULES.make_username(raw)
 
 
 def make_email(raw: str) -> Email:
-    low = raw.strip().lower()
-    if len(low) > 254 or not EMAIL_RE.match(low):
-        raise InvalidEmailError(raw)
-    return Email(low)
+    return _DEFAULT_RULES.make_email(raw)
 
 
 # Synthetic user identifier for ``AUTH_MODE=none``. Every request in
@@ -137,34 +180,6 @@ def make_identity_id() -> IdentityId:
 
 def make_session_token() -> SessionToken:
     return SessionToken(secrets.token_hex(32))
-
-
-def _password_bytes(raw: str) -> bytes | None:
-    encoded = raw.encode("utf-8")
-    if len(encoded) < PASSWORD_MIN_LEN or len(encoded) > PASSWORD_MAX_BYTES:
-        return None
-    return encoded
-
-
-def hash_password(raw: str) -> PasswordHash:
-    encoded = _password_bytes(raw)
-    if encoded is None:
-        raise InvalidPasswordError()
-    hashed = bcrypt.hashpw(encoded, bcrypt.gensalt())
-    return PasswordHash(hashed.decode("utf-8"))
-
-
-def verify_password(raw: str, hashed: PasswordHash) -> bool:
-    encoded = _password_bytes(raw)
-    if encoded is None:
-        return False
-    try:
-        return bcrypt.checkpw(encoded, hashed.encode("utf-8"))
-    except ValueError as exc:
-        # Structural bcrypt failure (malformed stored hash, wrong prefix, etc.)
-        # is a different failure mode than "wrong password" — surface it so
-        # corrupted credential rows don't masquerade as auth misses.
-        raise CorruptCredentialError(str(exc)) from exc
 
 
 # Datetime fields on every entity are tz-aware UTC. Repositories are

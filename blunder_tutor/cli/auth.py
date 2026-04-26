@@ -10,7 +10,10 @@ from functools import partial
 from pathlib import Path
 
 from blunder_tutor.auth.db import AuthDb
+from blunder_tutor.auth.hashers import BcryptHasher, hash_password
 from blunder_tutor.auth.invite import generate_invite_code
+from blunder_tutor.auth.policies import HmacInvitePolicy, MaxUsersQuota
+from blunder_tutor.auth.providers.credentials import CredentialsProvider
 from blunder_tutor.auth.repository import (
     IdentityRepository,
     SetupRepository,
@@ -19,12 +22,13 @@ from blunder_tutor.auth.repository import (
 from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import (
-    hash_password,
+    ValidationRules,
     is_user_id_shape,
     make_username,
 )
 from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.web.auth_hooks import (
+    BlunderTutorFilePermissionPolicy,
     cleanup_user_dir,
     materialize_user_dir,
     resolve_user_db_path,
@@ -182,13 +186,24 @@ class AuthCommand(CLICommand):
         users_dir = config.data.db_path.parent / "users"
         users_dir.mkdir(parents=True, exist_ok=True)
 
-        await initialize_auth_schema(auth_db_path)
+        await initialize_auth_schema(auth_db_path, BlunderTutorFilePermissionPolicy())
         auth_db = AuthDb(auth_db_path)
         await auth_db.connect()
         try:
+            rules = ValidationRules.default()
+            hasher = BcryptHasher(rules)
+            identities = IdentityRepository(db=auth_db)
             service = AuthService(
                 auth_db=auth_db,
                 db_path_resolver=partial(resolve_user_db_path, users_dir),
+                providers={
+                    "credentials": CredentialsProvider(
+                        identities=identities, hasher=hasher, rules=rules
+                    ),
+                },
+                hasher=hasher,
+                quota=MaxUsersQuota(config.auth.max_users),
+                invite_policy=HmacInvitePolicy(),
                 on_after_register=partial(materialize_user_dir, users_dir),
                 on_after_delete=partial(cleanup_user_dir, users_dir),
                 session_max_age=timedelta(seconds=config.auth.session_max_age_seconds),

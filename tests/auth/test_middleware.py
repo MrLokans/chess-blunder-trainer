@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from functools import partial
 from pathlib import Path
 
 import httpx
@@ -10,15 +9,24 @@ from fastapi import FastAPI, Request
 from httpx import ASGITransport
 
 from blunder_tutor.auth.db import AuthDb
-from blunder_tutor.auth.middleware import AuthMiddleware
+from blunder_tutor.auth.middleware import AuthMiddleware, MiddlewareConfig
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.types import Username
-from blunder_tutor.web.auth_hooks import (
-    cleanup_user_dir,
-    materialize_user_dir,
-    resolve_user_db_path,
-)
+from blunder_tutor.web.auth_hooks import resolve_user_db_path
 from blunder_tutor.web.resources import AuthResources
+from tests.helpers.auth import build_test_auth_service
+
+# Test config mirrors prod's exempt set so the middleware behaviour
+# matches what production users see end-to-end. Hardcoded here (not
+# imported from blunder_tutor.web.paths) so a refactor of those URL
+# constants doesn't silently shift test behaviour.
+_TEST_MIDDLEWARE_CONFIG = MiddlewareConfig(
+    cookie_name="session_token",
+    exempt_paths=frozenset(
+        {"/login", "/signup", "/setup", "/logout", "/health", "/favicon.ico"}
+    ),
+    exempt_prefixes=("/static", "/api/auth/"),
+)
 
 
 def _make_app(
@@ -54,7 +62,7 @@ def _make_app(
             "none-mode test must pass a none_mode_db_path"
         )
         app.state.none_mode_db_path = none_mode_db_path
-    app.add_middleware(AuthMiddleware)
+    app.add_middleware(AuthMiddleware, config=_TEST_MIDDLEWARE_CONFIG)
 
     @app.get("/echo")
     async def echo(request: Request):
@@ -243,11 +251,9 @@ class TestModeCredentials:
         self, service: AuthService, auth_db: AuthDb, tmp_path: Path
     ):
         users_dir = tmp_path / "users"
-        short_lived = AuthService(
+        short_lived = build_test_auth_service(
             auth_db=auth_db,
-            db_path_resolver=partial(resolve_user_db_path, users_dir),
-            on_after_register=partial(materialize_user_dir, users_dir),
-            on_after_delete=partial(cleanup_user_dir, users_dir),
+            users_dir=users_dir,
             session_max_age=timedelta(seconds=-1),
             session_idle=timedelta(days=1),
         )

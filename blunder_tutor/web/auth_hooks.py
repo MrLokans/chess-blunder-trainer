@@ -1,11 +1,29 @@
 from __future__ import annotations
 
+import logging
 import shutil
+from contextlib import AbstractContextManager
 from pathlib import Path
 
+from blunder_tutor import secure_fs
 from blunder_tutor.auth.types import User, UserId
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.secure_fs import secure_user_dir
+
+log = logging.getLogger(__name__)
+
+
+class BlunderTutorFilePermissionPolicy:
+    """Production :class:`FilePermissionPolicy` for blunder_tutor: bridges
+    the auth-core protocol to the project's POSIX hardening helpers
+    (umask 077 + chmod 0600 on the auth DB and its WAL/SHM siblings).
+    """
+
+    def restrict_umask(self) -> AbstractContextManager[None]:
+        return secure_fs.restrict_umask()
+
+    def secure_db_file(self, path: Path) -> None:
+        secure_fs.secure_db_file(path)
 
 
 def resolve_user_db_path(users_dir: Path, user_id: UserId) -> Path:
@@ -36,8 +54,14 @@ async def cleanup_user_dir(users_dir: Path, user_id: UserId) -> None:
     auth tables have committed the user-row removal. Missing dir is a
     silent no-op — the user could have been an OAuth-only identity
     that never had data materialized, or a previous delete already
-    cleaned the filesystem.
+    cleaned the filesystem. Failures are logged but non-fatal: the
+    auth row is already gone, so the dir is at worst an orphan that
+    ``blunder-tutor auth prune-orphans`` will surface to the operator.
     """
     user_dir = users_dir / user_id
-    if user_dir.exists():
+    if not user_dir.exists():
+        return
+    try:
         shutil.rmtree(user_dir)
+    except OSError:
+        log.exception("cleanup_user_dir: rmtree failed for %s", user_dir)
