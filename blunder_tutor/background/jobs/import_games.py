@@ -46,7 +46,7 @@ class ImportGamesJob(BaseJob):
 
         max_games = kwargs.get("max_games")
         if max_games is None:
-            max_games_str = await self.settings_repo.get_setting("sync_max_games")
+            max_games_str = await self.settings_repo.read_setting("sync_max_games")
             max_games = int(max_games_str) if max_games_str else 1000
 
         await self.job_service.update_job_status(job_id, "running")
@@ -98,7 +98,7 @@ class ImportGamesJob(BaseJob):
         if inserted <= 0 or self.event_bus is None:
             return
 
-        auto_analyze = await self.settings_repo.get_setting(
+        auto_analyze = await self.settings_repo.read_setting(
             "analyze_new_games_automatically"
         )
         if auto_analyze != "true":

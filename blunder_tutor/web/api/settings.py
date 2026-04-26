@@ -205,14 +205,16 @@ async def setup_submit(
             status_code=status.HTTP_400_BAD_REQUEST, detail="; ".join(invalid_usernames)
         )
 
-    await settings_repo.set_setting("lichess_username", lichess if lichess else None)
-    await settings_repo.set_setting("chesscom_username", chesscom if chesscom else None)
+    await settings_repo.write_setting("lichess_username", lichess if lichess else None)
+    await settings_repo.write_setting(
+        "chesscom_username", chesscom if chesscom else None
+    )
     await settings_repo.mark_setup_completed()
 
     request.app.state.setup_completed_cache.invalidate(_cache_key(request))
 
     import_job_ids: list[str] = []
-    max_games_str = await settings_repo.get_setting("sync_max_games")
+    max_games_str = await settings_repo.read_setting("sync_max_games")
     max_games = int(max_games_str) if max_games_str else 100
 
     for source, username in [("lichess", lichess), ("chesscom", chesscom)]:
@@ -615,9 +617,9 @@ async def get_board_color_presets() -> dict[str, list[dict[str, str]]]:
     description="Retrieve current board styling settings.",
 )
 async def get_board_settings(settings_repo: SettingsRepoDep) -> dict[str, str]:
-    piece_set = await settings_repo.get_setting("board_piece_set")
-    board_light = await settings_repo.get_setting("board_light_color")
-    board_dark = await settings_repo.get_setting("board_dark_color")
+    piece_set = await settings_repo.read_setting("board_piece_set")
+    board_light = await settings_repo.read_setting("board_light_color")
+    board_dark = await settings_repo.read_setting("board_dark_color")
 
     return {
         "piece_set": piece_set or DEFAULT_PIECE_SET,
@@ -642,7 +644,7 @@ async def update_board_settings(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid piece set. Valid options: {', '.join(valid_sets)}",
             )
-        await settings_repo.set_setting("board_piece_set", payload.piece_set)
+        await settings_repo.write_setting("board_piece_set", payload.piece_set)
 
     if payload.board_light is not None:
         if not payload.board_light.startswith("#") or len(payload.board_light) != 7:
@@ -650,7 +652,7 @@ async def update_board_settings(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="board_light must be a valid hex color (#RRGGBB)",
             )
-        await settings_repo.set_setting("board_light_color", payload.board_light)
+        await settings_repo.write_setting("board_light_color", payload.board_light)
 
     if payload.board_dark is not None:
         if not payload.board_dark.startswith("#") or len(payload.board_dark) != 7:
@@ -658,7 +660,7 @@ async def update_board_settings(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="board_dark must be a valid hex color (#RRGGBB)",
             )
-        await settings_repo.set_setting("board_dark_color", payload.board_dark)
+        await settings_repo.write_setting("board_dark_color", payload.board_dark)
 
     return {"success": True}
 
@@ -670,9 +672,9 @@ async def update_board_settings(
     description="Reset board styling to defaults.",
 )
 async def reset_board_settings(settings_repo: SettingsRepoDep) -> dict[str, bool]:
-    await settings_repo.set_setting("board_piece_set", None)
-    await settings_repo.set_setting("board_light_color", None)
-    await settings_repo.set_setting("board_dark_color", None)
+    await settings_repo.write_setting("board_piece_set", None)
+    await settings_repo.write_setting("board_light_color", None)
+    await settings_repo.write_setting("board_dark_color", None)
     return {"success": True}
 
 
@@ -686,7 +688,7 @@ async def get_theme(settings_repo: SettingsRepoDep) -> dict[str, str]:
     result = {}
     for key in THEME_KEYS:
         db_key = f"theme_{key}"
-        value = await settings_repo.get_setting(db_key)
+        value = await settings_repo.read_setting(db_key)
         result[key] = value or DEFAULT_THEME[key]
     return result
 
@@ -699,7 +701,7 @@ async def get_theme(settings_repo: SettingsRepoDep) -> dict[str, str]:
 )
 async def reset_theme(settings_repo: SettingsRepoDep) -> dict[str, bool]:
     for key in THEME_KEYS:
-        await settings_repo.set_setting(f"theme_{key}", None)
+        await settings_repo.write_setting(f"theme_{key}", None)
     return {"success": True}
 
 
@@ -713,22 +715,22 @@ async def settings_submit(
     payload: SettingsRequest,
     settings_repo: SettingsRepoDep,
 ) -> dict[str, bool]:
-    await settings_repo.set_setting(
+    await settings_repo.write_setting(
         "auto_sync_enabled", "true" if payload.auto_sync else "false"
     )
-    await settings_repo.set_setting("sync_interval_hours", str(payload.sync_interval))
-    await settings_repo.set_setting("sync_max_games", str(payload.max_games))
-    await settings_repo.set_setting(
+    await settings_repo.write_setting("sync_interval_hours", str(payload.sync_interval))
+    await settings_repo.write_setting("sync_max_games", str(payload.max_games))
+    await settings_repo.write_setting(
         "analyze_new_games_automatically", "true" if payload.auto_analyze else "false"
     )
-    await settings_repo.set_setting(
+    await settings_repo.write_setting(
         "spaced_repetition_days", str(payload.spaced_repetition_days)
     )
 
     if payload.theme:
         theme_dict = payload.theme.model_dump()
         for key, value in theme_dict.items():
-            await settings_repo.set_setting(f"theme_{key}", value)
+            await settings_repo.write_setting(f"theme_{key}", value)
 
     # No scheduler hot-reload: BackgroundScheduler reads settings on each
     # fanout tick, so changes take effect within ``DEFAULT_TICK_SECONDS``.
@@ -750,7 +752,7 @@ class FeatureFlagsRequest(BaseModel):
     description="Retrieve current feature visibility settings.",
 )
 async def get_features(settings_repo: SettingsRepoDep) -> dict[str, Any]:
-    features = await settings_repo.get_feature_flags()
+    features = await settings_repo.read_feature_flags()
     return {"features": features}
 
 
@@ -765,7 +767,7 @@ async def update_features(
     payload: FeatureFlagsRequest,
     settings_repo: SettingsRepoDep,
 ) -> dict[str, bool]:
-    await settings_repo.set_feature_flags(payload.features)
+    await settings_repo.write_feature_flags(payload.features)
     request.app.state.features_cache.invalidate(_cache_key(request))
     return {"success": True}
 
@@ -788,7 +790,7 @@ async def set_locale(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported locale"
         )
-    await settings_repo.set_setting("locale", payload.locale)
+    await settings_repo.write_setting("locale", payload.locale)
     request.app.state.locale_cache.set(_cache_key(request), payload.locale)
 
     response = JSONResponse(content={"success": True})
@@ -842,7 +844,9 @@ async def get_delete_all_status(job_service: JobServiceDep) -> dict[str, Any]:
     if running_jobs:
         return running_jobs[0]
 
-    recent_jobs = await job_service.list_jobs(job_type=JOB_TYPE_DELETE_ALL_DATA, limit=1)
+    recent_jobs = await job_service.list_jobs(
+        job_type=JOB_TYPE_DELETE_ALL_DATA, limit=1
+    )
 
     if not recent_jobs:
         return {"status": JOB_STATUS_NO_JOBS}

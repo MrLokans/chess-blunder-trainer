@@ -13,8 +13,8 @@ from blunder_tutor.utils.date_utils import parse_pgn_datetime_iso
 
 
 def load_game(pgn_path: Path) -> chess.pgn.Game:
-    with pgn_path.open("r", encoding="utf-8") as handle:
-        game = chess.pgn.read_game(handle)
+    with pgn_path.open("r", encoding="utf-8") as pgn_file:
+        game = chess.pgn.read_game(pgn_file)
     if game is None:
         raise ValueError(f"Invalid PGN: {pgn_path}")
     return game

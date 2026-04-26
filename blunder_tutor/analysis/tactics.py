@@ -168,14 +168,14 @@ def detect_fork(
 
     # Filter to pieces worth at least as much as the attacker (or king)
     valuable_targets = [
-        (sq, pt, val)
-        for sq, pt, val in attacked
-        if val >= attacker_value or pt == chess.KING
+        (sq, pt, value)
+        for sq, pt, value in attacked
+        if value >= attacker_value or pt == chess.KING
     ]
 
     if len(valuable_targets) >= 2:
         # Calculate material gain (second most valuable piece, since one escapes)
-        values = sorted([val for _, _, val in valuable_targets], reverse=True)
+        values = sorted([value for _, _, value in valuable_targets], reverse=True)
         material_gain = values[1] if len(values) > 1 else values[0]
 
         squares = [move.to_square] + [sq for sq, _, _ in valuable_targets]

@@ -248,8 +248,8 @@ def _find_new_attacks(
             was_attacked = board_before.is_attacked_by(attacker_color, sq)
             now_attacked = board_after.is_attacked_by(attacker_color, sq)
             if now_attacked and not was_attacked:
-                val = PIECE_VALUES.get(piece.piece_type, 0)
-                results.append((sq, piece.piece_type, val))
+                value = PIECE_VALUES.get(piece.piece_type, 0)
+                results.append((sq, piece.piece_type, value))
     return results
 
 
@@ -334,9 +334,9 @@ def _find_hanging_piece(
             and piece.piece_type != chess.KING
             and _is_hanging(board_after, sq, enemy)
         ):
-            val = PIECE_VALUES.get(piece.piece_type, 0)
-            if best is None or val > best[0]:
-                best = (val, piece.piece_type, sq)
+            value = PIECE_VALUES.get(piece.piece_type, 0)
+            if best is None or value > best[0]:
+                best = (value, piece.piece_type, sq)
     if best is None:
         return None
     return (best[1], best[2])

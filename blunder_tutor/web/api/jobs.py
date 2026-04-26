@@ -398,7 +398,9 @@ async def get_backfill_phases_status(job_service: JobServiceDep) -> dict[str, An
     if running_jobs:
         return running_jobs[0]
 
-    recent_jobs = await job_service.list_jobs(job_type=JOB_TYPE_BACKFILL_PHASES, limit=1)
+    recent_jobs = await job_service.list_jobs(
+        job_type=JOB_TYPE_BACKFILL_PHASES, limit=1
+    )
 
     if not recent_jobs:
         return {"status": JOB_STATUS_NO_JOBS}
@@ -534,7 +536,9 @@ async def get_backfill_tactics_status(job_service: JobServiceDep) -> dict[str, A
     if running_jobs:
         return running_jobs[0]
 
-    recent_jobs = await job_service.list_jobs(job_type=JOB_TYPE_BACKFILL_TACTICS, limit=1)
+    recent_jobs = await job_service.list_jobs(
+        job_type=JOB_TYPE_BACKFILL_TACTICS, limit=1
+    )
 
     if not recent_jobs:
         return {"status": JOB_STATUS_NO_JOBS}

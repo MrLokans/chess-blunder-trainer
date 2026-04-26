@@ -247,7 +247,7 @@ async def puzzle(
     start_date_str = start_date.isoformat() if start_date else None
     end_date_str = end_date.isoformat() if end_date else None
 
-    spaced_repetition_days_str = await settings_repo.get_setting(
+    spaced_repetition_days_str = await settings_repo.read_setting(
         "spaced_repetition_days"
     )
     spaced_repetition_days = (

@@ -22,35 +22,37 @@ async def settings_repo():
 
 
 async def test_defaults_all_enabled(settings_repo: SettingsRepository):
-    flags = await settings_repo.get_feature_flags()
+    flags = await settings_repo.read_feature_flags()
     for feature in Feature:
         assert flags[feature.value] is DEFAULTS[feature]
 
 
-async def test_set_and_get_flags(settings_repo: SettingsRepository):
-    await settings_repo.set_feature_flags(
+async def test_write_and_read_flags(settings_repo: SettingsRepository):
+    await settings_repo.write_feature_flags(
         {"page.dashboard": False, "trainer.tactics": False}
     )
-    flags = await settings_repo.get_feature_flags()
+    flags = await settings_repo.read_feature_flags()
     assert flags["page.dashboard"] is False
     assert flags["trainer.tactics"] is False
     assert flags["page.management"] is True
 
 
-async def test_set_ignores_invalid_keys(settings_repo: SettingsRepository):
-    await settings_repo.set_feature_flags({"bogus.key": False, "page.dashboard": False})
-    flags = await settings_repo.get_feature_flags()
+async def test_write_ignores_invalid_keys(settings_repo: SettingsRepository):
+    await settings_repo.write_feature_flags(
+        {"bogus.key": False, "page.dashboard": False}
+    )
+    flags = await settings_repo.read_feature_flags()
     assert flags["page.dashboard"] is False
     assert "bogus.key" not in flags
 
 
 async def test_toggle_back_on(settings_repo: SettingsRepository):
-    await settings_repo.set_feature_flags({"dashboard.heatmap": False})
-    flags = await settings_repo.get_feature_flags()
+    await settings_repo.write_feature_flags({"dashboard.heatmap": False})
+    flags = await settings_repo.read_feature_flags()
     assert flags["dashboard.heatmap"] is False
 
-    await settings_repo.set_feature_flags({"dashboard.heatmap": True})
-    flags = await settings_repo.get_feature_flags()
+    await settings_repo.write_feature_flags({"dashboard.heatmap": True})
+    flags = await settings_repo.read_feature_flags()
     assert flags["dashboard.heatmap"] is True
 
 

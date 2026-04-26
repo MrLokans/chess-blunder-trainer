@@ -238,9 +238,7 @@ def _wire_background(app: FastAPI) -> None:
 
     if config.auth.mode == AUTH_MODE_CREDENTIALS:
         assert app.state.auth is not None  # set by _bootstrap_auth
-        list_users = partial(
-            _list_users_credentials_mode, app.state.auth.storage.users
-        )
+        list_users = partial(_list_users_credentials_mode, app.state.auth.storage.users)
     else:
         list_users = _list_users_none_mode
 

@@ -74,13 +74,13 @@ class TestUserDataIsolation:
 
         alice_repo = SettingsRepository(db_path=alice_db)
         try:
-            alice_locale = await alice_repo.get_setting("locale")
+            alice_locale = await alice_repo.read_setting("locale")
         finally:
             await alice_repo.close()
 
         bob_repo = SettingsRepository(db_path=bob_db)
         try:
-            bob_locale = await bob_repo.get_setting("locale")
+            bob_locale = await bob_repo.read_setting("locale")
         finally:
             await bob_repo.close()
 

@@ -206,7 +206,6 @@ class AuthService:
             created_at=now,
         )
 
-
     async def _finalize_registration(self, user_id: UserId) -> User:
         """Post-commit step: look up the freshly inserted user and run the
         consumer's ``on_after_register`` hook (per-user DB init, cache

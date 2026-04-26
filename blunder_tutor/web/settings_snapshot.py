@@ -46,8 +46,8 @@ async def get_settings_snapshot(request: Request) -> SettingsSnapshot:
     try:
         async with SettingsRepository(db_path=db_path) as repo:
             setup_completed = await repo.is_setup_completed()
-            locale = await repo.get_setting("locale")
-            features = await repo.get_feature_flags()
+            locale = await repo.read_setting("locale")
+            features = await repo.read_feature_flags()
     except Exception:
         request.state.settings_snapshot = _EMPTY
         return _EMPTY

@@ -84,16 +84,16 @@ class TrapDatabase:
     def match_game(
         self, board: chess.Board, user_color: chess.Color
     ) -> list[TrapMatch]:
-        temp = board.root()
+        cursor = board.root()
         entered: dict[str, int] = {}
         triggered: dict[str, int] = {}
 
         for ply, move in enumerate(board.move_stack):
-            h = chess.polyglot.zobrist_hash(temp)
+            h = chess.polyglot.zobrist_hash(cursor)
 
             triggers = self._trigger_lookup.get(h)
             if triggers:
-                san = temp.san(move)
+                san = cursor.san(move)
                 for trap, pos in triggers:
                     if san == pos.mistake_san and trap.id not in triggered:
                         triggered[trap.id] = ply + 1
@@ -104,9 +104,9 @@ class TrapDatabase:
                     if trap.id not in entered:
                         entered[trap.id] = ply
 
-            temp.push(move)
+            cursor.push(move)
 
-        final_entries = self._entry_lookup.get(chess.polyglot.zobrist_hash(temp))
+        final_entries = self._entry_lookup.get(chess.polyglot.zobrist_hash(cursor))
         if final_entries:
             for trap in final_entries:
                 if trap.id not in entered:

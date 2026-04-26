@@ -66,7 +66,7 @@ class SyncGamesJob(BaseJob):
                     source_job_id, JOB_STATUS_FAILED, str(e)
                 )
 
-        await self.settings_repo.set_setting(
+        await self.settings_repo.write_setting(
             "last_sync_timestamp", datetime.utcnow().isoformat()
         )
 
@@ -77,7 +77,7 @@ class SyncGamesJob(BaseJob):
     ) -> dict[str, Any]:
         await self.job_service.update_job_status(job_id, "running")
 
-        max_games_str = await self.settings_repo.get_setting("sync_max_games")
+        max_games_str = await self.settings_repo.read_setting("sync_max_games")
         max_games = int(max_games_str) if max_games_str else 1000
 
         # Get the timestamp of the latest game we already have
@@ -118,7 +118,7 @@ class SyncGamesJob(BaseJob):
         sync_result = _sync_result(stored=inserted, skipped=skipped)
         await self.job_service.complete_job(job_id, sync_result)
 
-        auto_analyze = await self.settings_repo.get_setting(
+        auto_analyze = await self.settings_repo.read_setting(
             "analyze_new_games_automatically"
         )
         if auto_analyze == "true" and inserted > 0 and self.event_bus is not None:
