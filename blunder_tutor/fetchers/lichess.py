@@ -28,7 +28,7 @@ def _split_pgn_stream(pgn_text: str) -> Iterable[tuple[str, int | None]]:
         if game is None:
             break
         buffer = io.StringIO()
-        print(game, file=buffer, end="\n\n")
+        buffer.write(f"{game}\n\n")
         date = game.headers.get("UTCDate") or game.headers.get("Date")
         time = game.headers.get("UTCTime") or game.headers.get("Time")
         yield buffer.getvalue(), parse_pgn_datetime_ms(date, time)
