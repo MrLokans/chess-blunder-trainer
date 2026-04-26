@@ -319,9 +319,7 @@ class SetupRepository:
     async def get_in_transaction(
         self, txn: aiosqlite.Connection, key: str
     ) -> str | None:
-        async with txn.execute(
-            "SELECT value FROM setup WHERE key = ?", (key,)
-        ) as cur:
+        async with txn.execute("SELECT value FROM setup WHERE key = ?", (key,)) as cur:
             row = await cur.fetchone()
         return row[0] if row else None
 

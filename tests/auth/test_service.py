@@ -1,20 +1,23 @@
 from __future__ import annotations
 
-from datetime import timedelta
 from pathlib import Path
 
 import pytest
 
 from blunder_tutor.auth import (
+    AuthDb,
     AuthService,
     DuplicateEmailError,
     DuplicateUsernameError,
     Email,
+    HmacInvitePolicy,
+    InvalidInviteCodeError,
     InvalidPasswordError,
-    MaxUsersQuota,
+    OpenSignup,
+    SqliteStorage,
     Username,
 )
-from tests.helpers.auth import build_inmemory_auth_service
+from tests.helpers.auth import build_test_auth_service
 
 
 class TestRegister:
@@ -144,102 +147,44 @@ class TestDeleteAccount:
         assert not user_dir.exists()
 
 
-class TestServiceOnInMemoryStorage:
-    """Smoke tests proving the service layer runs end-to-end against
-    :class:`InMemoryStorage` — same API as the SQLite-backed tests
-    above, just no aiosqlite, no fixtures, no transactions to disk.
-    InMemory is the fast path for service-layer unit tests that don't
-    care about SQL semantics; failures here mean a Protocol seam
-    leaked storage assumptions.
-
-    These cases use :class:`OpenSignup` (the InMemory helper's default)
-    so the invite gate is out of scope; the gated path is exercised
-    in :class:`TestSignupWithHmacInviteOnInMemory` below.
-    """
-
-    async def test_register_happy_path(self, tmp_path: Path) -> None:
-        service, _ = build_inmemory_auth_service(users_dir=tmp_path / "users")
-        user = await service.register(
-            username=Username("alice"),
-            password="password123",
-            email=Email("alice@example.com"),
-        )
-        assert user.username == "alice"
-        assert user.email == "alice@example.com"
-        assert await service.user_count() == 1
-
-    async def test_register_duplicate_username_raises(self, tmp_path: Path) -> None:
-        service, _ = build_inmemory_auth_service(users_dir=tmp_path / "users")
-        await service.register(username=Username("alice"), password="password123")
-        with pytest.raises(DuplicateUsernameError):
-            await service.register(username=Username("alice"), password="another123")
-
-    async def test_signup_with_open_policy(self, tmp_path: Path) -> None:
-        service, _ = build_inmemory_auth_service(users_dir=tmp_path / "users")
-        user = await service.signup(
-            username=Username("alice"),
-            password="password123",
-        )
-        assert user.username == "alice"
-        assert await service.user_count() == 1
-
-    async def test_authenticate_happy_path(self, tmp_path: Path) -> None:
-        service, _ = build_inmemory_auth_service(users_dir=tmp_path / "users")
-        await service.register(username=Username("alice"), password="password123")
-        user = await service.authenticate(
-            "credentials", {"username": "alice", "password": "password123"}
-        )
-        assert user is not None
-        assert user.username == "alice"
-
-    async def test_session_lifecycle(self, tmp_path: Path) -> None:
-        service, _ = build_inmemory_auth_service(users_dir=tmp_path / "users")
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
-        session = await service.create_session(
-            user_id=user.id, user_agent="ua", ip="1.2.3.4"
-        )
-        ctx = await service.resolve_session(session.token, ip=None)
-        assert ctx is not None
-        assert ctx.user_id == user.id
-
-        await service.revoke_session(session.token)
-        assert await service.resolve_session(session.token, ip=None) is None
-
-    async def test_delete_account_cascades(self, tmp_path: Path) -> None:
-        service, storage = build_inmemory_auth_service(users_dir=tmp_path / "users")
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
-        await service.create_session(user_id=user.id, user_agent=None, ip=None)
-        assert await service.user_count() == 1
-
-        await service.delete_account(user.id)
-        assert await service.user_count() == 0
-        assert await storage.identities.list_for_user(user.id) == []
-        assert await storage.sessions.list_for_user(user.id) == []
-
-
-class TestSignupWithHmacInviteOnInMemory:
-    """The conformance promise — every backend that satisfies ``Storage``
-    runs the full ``signup()`` surface, including :class:`HmacInvitePolicy`.
-    Pre-TREK-59 the policy issued raw SQL on the txn handle and forced
-    InMemory tests to fall back to :class:`OpenSignup`.
+class TestSignupWithOpenPolicy:
+    """The :class:`OpenSignup` invite policy — anyone may sign up,
+    no invite required. Production wires :class:`HmacInvitePolicy`;
+    OpenSignup is the SaaS / managed-deploy alternative kept in the
+    public API for consumers that gate registration elsewhere.
     """
 
     @pytest.fixture
-    def hmac_service(self, tmp_path: Path):
-        from blunder_tutor.auth import HmacInvitePolicy, InMemoryStorage
-        from tests.helpers.auth import _build_auth_service
-
-        storage = InMemoryStorage()
-        service = _build_auth_service(
-            storage=storage,
+    def open_signup_service(self, auth_db: AuthDb, tmp_path: Path) -> AuthService:
+        return build_test_auth_service(
+            auth_db=auth_db,
             users_dir=tmp_path / "users",
-            session_max_age=timedelta(days=30),
-            session_idle=timedelta(days=7),
-            quota=MaxUsersQuota(1024),
+            invite_policy=OpenSignup(),
+        )
+
+    async def test_signup_creates_user(self, open_signup_service: AuthService) -> None:
+        user = await open_signup_service.signup(
+            username=Username("alice"),
+            password="password123",
+        )
+        assert user.username == "alice"
+        assert await open_signup_service.user_count() == 1
+
+
+class TestSignupWithHmacInvite:
+    """The conformance promise — the full ``signup()`` surface with the
+    production :class:`HmacInvitePolicy` runs end-to-end against the
+    ``Storage`` protocol. Pre-TREK-59 the policy issued raw SQL on the
+    txn handle, which broke any backend that didn't proxy SQL; the
+    storage-agnostic consume path is what makes that contract real.
+    """
+
+    @pytest.fixture
+    def hmac_service(self, auth_db: AuthDb, tmp_path: Path):
+        storage = SqliteStorage(auth_db)
+        service = build_test_auth_service(
+            auth_db=auth_db,
+            users_dir=tmp_path / "users",
             invite_policy=HmacInvitePolicy(setup_repo=storage.setup),
         )
         return service, storage
@@ -257,8 +202,6 @@ class TestSignupWithHmacInviteOnInMemory:
         assert await storage.setup.get("invite_code") is None
 
     async def test_signup_rejects_wrong_invite(self, hmac_service) -> None:
-        from blunder_tutor.auth import InvalidInviteCodeError
-
         service, storage = hmac_service
         await storage.setup.put("invite_code", "stored.invite")
         with pytest.raises(InvalidInviteCodeError):
@@ -273,8 +216,6 @@ class TestSignupWithHmacInviteOnInMemory:
     async def test_first_user_signup_without_invite_rejected(
         self, hmac_service
     ) -> None:
-        from blunder_tutor.auth import InvalidInviteCodeError
-
         service, _storage = hmac_service
         with pytest.raises(InvalidInviteCodeError):
             await service.signup(username=Username("alice"), password="password123")

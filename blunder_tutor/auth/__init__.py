@@ -3,10 +3,10 @@
 The auth package is structured to be a publishable plug-and-play
 library (TREK-56 / EPIC-3 P4.1): consumers reach in through this
 top-level namespace or :mod:`blunder_tutor.auth.fastapi` and never
-through ``core``, ``storage_sqlite``, ``storage_memory``, ``providers``,
-or ``cli``. ``__all__`` is the single source of truth for the public
-contract — everything else under ``blunder_tutor.auth.*`` is an
-implementation detail and may move between subpackages without notice.
+through ``core``, ``storage_sqlite``, ``providers``, or ``cli``.
+``__all__`` is the single source of truth for the public contract —
+everything else under ``blunder_tutor.auth.*`` is an implementation
+detail and may move between subpackages without notice.
 
 The ``hashers`` submodule is re-bound on the package object so test
 fixtures that need to monkeypatch the lazy default hasher don't have
@@ -84,7 +84,6 @@ from blunder_tutor.auth.core.types import (
 )
 from blunder_tutor.auth.fastapi.middleware import AuthMiddleware, MiddlewareConfig
 from blunder_tutor.auth.providers.credentials import CredentialsProvider
-from blunder_tutor.auth.storage_memory import InMemoryStorage
 from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.auth.storage_sqlite.db import AuthDb
 from blunder_tutor.auth.storage_sqlite.repository import (
@@ -156,7 +155,6 @@ __all__ = [
     # Storage
     "AuthDb",
     "IdentityRepository",
-    "InMemoryStorage",
     "SessionRepository",
     "SetupRepository",
     "SqliteStorage",

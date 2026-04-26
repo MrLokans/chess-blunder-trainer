@@ -13,8 +13,15 @@ from pathlib import Path
 
 import pytest
 
-from blunder_tutor.auth import Identity, ProviderName, Username, make_identity_id
-from tests.helpers.auth import build_inmemory_auth_service
+from blunder_tutor.auth import (
+    AuthDb,
+    Identity,
+    OpenSignup,
+    ProviderName,
+    Username,
+    make_identity_id,
+)
+from tests.helpers.auth import build_test_auth_service
 
 
 class _RecordingProvider:
@@ -58,8 +65,12 @@ class TestProviderNameType:
 
 class TestAuthServiceAcceptsArbitraryProviderNames:
     @pytest.fixture
-    async def wired(self, tmp_path: Path):
-        service, storage = build_inmemory_auth_service(users_dir=tmp_path / "users")
+    async def wired(self, auth_db: AuthDb, tmp_path: Path):
+        service = build_test_auth_service(
+            auth_db=auth_db,
+            users_dir=tmp_path / "users",
+            invite_policy=OpenSignup(),
+        )
         # Seed a user the custom provider will resolve to.
         user = await service.register(
             username=Username("alice"), password="password123"
@@ -72,10 +83,10 @@ class TestAuthServiceAcceptsArbitraryProviderNames:
             credential=None,
             created_at=datetime.now(UTC),
         )
-        return service, storage, identity, user
+        return service, identity, user
 
     async def test_dispatches_to_custom_named_provider(self, wired):
-        service, _storage, identity, user = wired
+        service, identity, user = wired
         provider = _RecordingProvider(name="github", identity=identity)
         service.register_provider(provider)
 
@@ -89,7 +100,7 @@ class TestAuthServiceAcceptsArbitraryProviderNames:
         # be reachable through their own key — proves the registry is
         # genuinely keyed on the consumer-supplied name and that the
         # NewType form imposes no closed enumeration on it.
-        service, _storage, identity, _user = wired
+        service, identity, _user = wired
         github = _RecordingProvider(name="github", identity=identity)
         azure = _RecordingProvider(name="azure-ad", identity=identity)
         service.register_provider(github)

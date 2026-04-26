@@ -117,9 +117,7 @@ def build_auth_router(
         # confusing 401.
         return getattr(request.state, "user_ctx", None)
 
-    async def _revoke_caller_cookie(
-        request: Request, service: AuthService
-    ) -> None:
+    async def _revoke_caller_cookie(request: Request, service: AuthService) -> None:
         # OWASP V7: a privilege change must terminate the previous
         # session in addition to issuing a new ID. Best-effort —
         # transient storage failures here must not block the legitimate

@@ -19,6 +19,7 @@ from blunder_tutor.auth import (
     SessionRepository,
     SetupRepo,
     SetupRepository,
+    SqliteStorage,
     UserRepo,
     UserRepository,
     ValidationRules,
@@ -30,10 +31,11 @@ if TYPE_CHECKING:
 
 class TestProtocolConformance:
     """Static structural checks: every concrete class must satisfy the
-    matching Protocol so a backend swap (P2.2 InMemory, future Postgres)
-    is an isolated change at the consumer wiring site, not a service-
-    layer rewrite. Failures here surface at *type-check* / *import*
-    time, not at runtime — that's the whole point of formal Protocols.
+    matching Protocol so a future backend swap (Postgres, multi-region,
+    …) is an isolated change at the consumer wiring site, not a
+    service-layer rewrite. Failures here surface at *type-check* /
+    *import* time, not at runtime — that's the whole point of formal
+    Protocols.
     """
 
     def test_repositories_satisfy_repo_protocols(self, auth_db: AuthDb) -> None:
@@ -56,10 +58,8 @@ class TestProtocolConformance:
         assert capped is not None
         assert unlimited is not None
 
-    def test_invite_policies_satisfy_invite_protocol(self) -> None:
-        from blunder_tutor.auth import InMemoryStorage
-
-        storage = InMemoryStorage()
+    def test_invite_policies_satisfy_invite_protocol(self, auth_db: AuthDb) -> None:
+        storage = SqliteStorage(auth_db)
         hmac_first_user: InvitePolicy = HmacInvitePolicy(setup_repo=storage.setup)
         open_: InvitePolicy = OpenSignup()
         assert hmac_first_user is not None

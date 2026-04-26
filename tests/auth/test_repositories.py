@@ -323,6 +323,33 @@ class TestSetupRepository:
         await repo.put("k", "v2")
         assert await repo.get("k") == "v2"
 
+    async def test_get_in_transaction_returns_value(self, auth_db: AuthDb):
+        repo = SetupRepository(db=auth_db)
+        await repo.put("invite_code", "abc.def")
+        async with auth_db.transaction() as txn:
+            assert await repo.get_in_transaction(txn, "invite_code") == "abc.def"
+
+    async def test_get_in_transaction_returns_none_for_missing(self, auth_db: AuthDb):
+        repo = SetupRepository(db=auth_db)
+        async with auth_db.transaction() as txn:
+            assert await repo.get_in_transaction(txn, "nope") is None
+
+    async def test_delete_in_transaction_removes_row(self, auth_db: AuthDb):
+        repo = SetupRepository(db=auth_db)
+        await repo.put("invite_code", "abc.def")
+        async with auth_db.transaction() as txn:
+            await repo.delete_in_transaction(txn, "invite_code")
+        assert await repo.get("invite_code") is None
+
+    async def test_delete_in_transaction_is_idempotent(self, auth_db: AuthDb):
+        # The invite-consume path calls delete after a get-and-compare,
+        # but a future caller might delete-without-checking; the
+        # contract should not punish that.
+        repo = SetupRepository(db=auth_db)
+        async with auth_db.transaction() as txn:
+            await repo.delete_in_transaction(txn, "missing")
+            await repo.delete_in_transaction(txn, "missing")
+
 
 class TestBrandedTypeRewrap:
     async def test_user_returns_branded_types(self, auth_db: AuthDb):

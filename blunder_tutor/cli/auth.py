@@ -63,9 +63,7 @@ async def cmd_reset_password(ctx: dict, username: str, new_password: str) -> Non
     except UserNotFoundError as exc:
         raise SystemExit(f"No such user: {exc.username}") from exc
     except NoCredentialsIdentityError as exc:
-        raise SystemExit(
-            f"User {exc.username} has no credentials identity"
-        ) from exc
+        raise SystemExit(f"User {exc.username} has no credentials identity") from exc
     print(f"Password reset for {username}; all sessions revoked.")
 
 

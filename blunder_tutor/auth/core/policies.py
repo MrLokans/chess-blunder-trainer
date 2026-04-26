@@ -46,8 +46,8 @@ class HmacInvitePolicy:
     silent failure path after SECRET_KEY rotation.
 
     The policy reads/writes through a :class:`SetupRepo`, so it is
-    storage-agnostic — InMemory, SQLite, and any future backend that
-    satisfies the protocol all run the same consume path.
+    storage-agnostic — SQLite and any future backend that satisfies
+    the protocol all run the same consume path.
     """
 
     def __init__(self, setup_repo: SetupRepo) -> None:

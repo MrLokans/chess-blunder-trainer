@@ -19,17 +19,19 @@ from blunder_tutor.auth.core.types import (
 )
 
 # Opaque transaction handle. SQLite passes ``aiosqlite.Connection``;
-# in-memory and future non-SQL backends pass whatever sentinel they
-# need. ``Any`` is deliberate — typing it more strictly would couple
-# every Protocol to a specific storage implementation.
+# a future non-SQL backend (Postgres pool, remote API session, …)
+# passes whatever sentinel it needs. ``Any`` is deliberate — typing
+# it more strictly would couple every Protocol to a specific storage
+# implementation.
 Transaction = Any
 
 
 class UserRepo(Protocol):
     """Persistent store for user rows. Implementations carry their own
-    storage handle (SQLite connection, in-memory dict, remote API
-    client) and are constructed by the consumer; ``AuthService`` holds
-    a reference and never reaches past this surface.
+    storage handle (SQLite connection, future Postgres pool, remote
+    API client, …) and are constructed by the consumer;
+    ``AuthService`` holds a reference and never reaches past this
+    surface.
     """
 
     async def insert_in_transaction(
@@ -67,7 +69,7 @@ class UserRepo(Protocol):
 
     async def delete(self, user_id: UserId) -> None:
         """Hard-delete the user row. ``ON DELETE CASCADE`` (or the
-        in-memory equivalent) is expected to remove any dependent
+        backend's equivalent) is expected to remove any dependent
         identities and sessions; the implementation makes the cascade
         guarantee, not the caller.
         """
@@ -153,9 +155,9 @@ class SetupRepo(Protocol):
     inside the signup write-span (notably :class:`HmacInvitePolicy`)
     can read and delete in the same atomic context as the user insert
     without re-acquiring the storage lock — calling :meth:`get` or
-    :meth:`delete` from inside a ``transaction()`` block would
-    deadlock on the InMemory backend and produce a separate, racy
-    transaction on SQLite.
+    :meth:`delete` from inside a ``transaction()`` block would produce
+    a separate, racy transaction on SQLite, and any future single-
+    connection backend would deadlock outright.
     """
 
     async def get(self, key: str) -> str | None: ...
@@ -247,14 +249,17 @@ class AuthProvider(Protocol):
 
 class Storage(Protocol):
     """Aggregate that bundles the four auth repos plus a transaction
-    primitive. Production wraps :class:`AuthDb` via
-    :class:`SqliteStorage`; tests wire :class:`InMemoryStorage` for
-    speed; future Postgres / multi-region backends ship their own.
+    primitive. Today's only production-grade backend is
+    :class:`SqliteStorage` wrapping :class:`AuthDb`; future Postgres
+    or multi-region backends ship their own implementation against
+    this protocol. The protocol stays explicit even with one backend
+    so the seam is enforced at type-check time, not discovered when
+    the second backend lands.
 
     ``transaction()`` is the one place where the storage backend
     declares atomicity semantics — SQLite issues ``BEGIN IMMEDIATE``,
-    InMemory grabs a lock, others may bracket a remote-API session.
-    Repos use the yielded :data:`Transaction` handle when their
+    a future remote backend may bracket a remote-API session. Repos
+    use the yielded :data:`Transaction` handle when their
     ``*_in_transaction`` methods are invoked from inside the span.
     """
 

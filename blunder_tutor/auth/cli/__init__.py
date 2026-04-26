@@ -15,4 +15,3 @@ The ``admin`` submodule is bound on the top-level package object via
 (``from blunder_tutor.auth.cli import admin``) are not required and
 not part of the public contract.
 """
-

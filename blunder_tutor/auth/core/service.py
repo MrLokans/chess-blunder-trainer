@@ -137,20 +137,12 @@ class AuthService:
         now = now_iso()
         try:
             async with self._storage.transaction() as conn:
-                # ``self._users.count()`` is consistent with the
-                # ``insert`` below for both backends:
-                #   * SQLite: ``UserRepository.count()`` reads through
-                #     the same shared aiosqlite connection that holds
-                #     the open ``BEGIN IMMEDIATE``, so the COUNT runs
-                #     inside the transaction's read view; concurrent
-                #     signups serialize on the write lock.
-                #   * InMemory: ``count()`` reads the dict without
-                #     locking, but the caller (this method) holds the
-                #     storage lock for the full transaction span, so
-                #     no coroutine can mutate ``users`` mid-check.
-                # The cap stays a DB invariant under concurrent
-                # signups, just expressed via the repo surface
-                # instead of inline SQL.
+                # ``self._users.count()`` runs inside the open
+                # ``BEGIN IMMEDIATE`` because ``UserRepository.count()``
+                # uses the same shared aiosqlite connection that holds
+                # the transaction; concurrent signups serialize on the
+                # write lock and the cap stays a DB invariant rather
+                # than a best-effort check.
                 count = await self._users.count()
                 if not self._quota.allow_signup(count):
                     raise UserCapReachedError()
@@ -320,18 +312,18 @@ class AuthService:
         await self._sessions.delete_all_for_user(user_id)
 
     async def delete_account(self, user_id: UserId) -> None:
-        # ``users.delete`` is a single statement — the underlying
-        # storage's ``ON DELETE CASCADE`` (SQLite) or in-memory cascade
-        # (InMemory) removes identities + sessions atomically without
-        # an explicit transaction span. SQLite atomicity here depends
-        # on ``PRAGMA foreign_keys = ON`` being set on the connection
-        # (see ``AuthDb.connect``); any code that opens the auth DB
-        # outside ``AuthDb`` would silently break the cascade. The
-        # on_after_delete hook runs AFTER the delete commits: if the
-        # hook fails, the user is already logged out and cannot log
-        # back in — any external resources the hook would have cleaned
-        # up are a nuisance, not a data-integrity bug. Inverse ordering
-        # could leave a live user with no external resources.
+        # ``users.delete`` is a single statement — the storage backend's
+        # ``ON DELETE CASCADE`` (SQLite: ``identities.user_id`` +
+        # ``sessions.user_id``) removes the dependent rows atomically
+        # without an explicit transaction span. SQLite atomicity here
+        # depends on ``PRAGMA foreign_keys = ON`` being set on the
+        # connection (see ``AuthDb.connect``); any code that opens the
+        # auth DB outside ``AuthDb`` would silently break the cascade.
+        # The on_after_delete hook runs AFTER the delete commits: if
+        # the hook fails, the user is already logged out and cannot
+        # log back in — any external resources the hook would have
+        # cleaned up are a nuisance, not a data-integrity bug. Inverse
+        # ordering could leave a live user with no external resources.
         await self._users.delete(user_id)
         await self._on_after_delete(user_id)
 
