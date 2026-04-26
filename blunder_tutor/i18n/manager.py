@@ -13,12 +13,12 @@ from types import MappingProxyType
 def _east_slavic_plural(n: int) -> str:
     # CLDR rules for Russian, Ukrainian, Belarusian (identical structure).
     if n % 10 == 1 and n % 100 != 11:  # noqa: WPS432
-        return "one"
+        return "one"  # noqa: WPS226 — CLDR plural-category names (spec-defined contract with locale JSON).
     if 2 <= n % 10 <= 4 and not (12 <= n % 100 <= 14):  # noqa: WPS432
         return "few"
     if n % 10 == 0 or 5 <= n % 10 <= 9 or 11 <= n % 100 <= 14:  # noqa: WPS432
         return "many"
-    return "other"
+    return "other"  # noqa: WPS226 — CLDR plural-category names (spec-defined contract with locale JSON).
 
 
 def _polish_plural(n: int) -> str:
@@ -31,7 +31,7 @@ def _polish_plural(n: int) -> str:
 
 PLURAL_RULES: MappingProxyType = MappingProxyType(
     {
-        "en": lambda n: "one" if n == 1 else "other",
+        "en": lambda n: "one" if n == 1 else "other",  # noqa: WPS226 — locale codes and CLDR plural names repeat across rule defs by design.
         "ru": _east_slavic_plural,
         "uk": _east_slavic_plural,
         "de": lambda n: "one" if n == 1 else "other",

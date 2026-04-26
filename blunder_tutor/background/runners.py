@@ -23,6 +23,17 @@ from blunder_tutor.background.jobs.delete_all_data import DeleteAllDataJob
 from blunder_tutor.background.jobs.import_games import ImportGamesJob
 from blunder_tutor.background.jobs.import_pgn import ImportPgnJob
 from blunder_tutor.background.jobs.sync_games import SyncGamesJob
+from blunder_tutor.constants import (
+    JOB_TYPE_ANALYZE,
+    JOB_TYPE_BACKFILL_ECO,
+    JOB_TYPE_BACKFILL_PHASES,
+    JOB_TYPE_BACKFILL_TACTICS,
+    JOB_TYPE_BACKFILL_TRAPS,
+    JOB_TYPE_DELETE_ALL_DATA,
+    JOB_TYPE_IMPORT,
+    JOB_TYPE_IMPORT_PGN,
+    JOB_TYPE_SYNC,
+)
 from blunder_tutor.core.dependencies import (
     get_analysis_repository,
     get_context,
@@ -249,14 +260,14 @@ async def run_import_pgn_job(
 # Mapping of job types to runner functions
 JOB_RUNNERS = MappingProxyType(
     {
-        "import": run_import_job,
-        "sync": run_sync_job,
-        "analyze": run_analyze_job,
-        "backfill_phases": run_backfill_phases_job,
-        "backfill_eco": run_backfill_eco_job,
-        "backfill_tactics": run_backfill_tactics_job,
-        "backfill_traps": run_backfill_traps_job,
-        "delete_all_data": run_delete_all_data_job,
-        "import_pgn": run_import_pgn_job,
+        JOB_TYPE_IMPORT: run_import_job,
+        JOB_TYPE_SYNC: run_sync_job,
+        JOB_TYPE_ANALYZE: run_analyze_job,
+        JOB_TYPE_BACKFILL_PHASES: run_backfill_phases_job,
+        JOB_TYPE_BACKFILL_ECO: run_backfill_eco_job,
+        JOB_TYPE_BACKFILL_TACTICS: run_backfill_tactics_job,
+        JOB_TYPE_BACKFILL_TRAPS: run_backfill_traps_job,
+        JOB_TYPE_DELETE_ALL_DATA: run_delete_all_data_job,
+        JOB_TYPE_IMPORT_PGN: run_import_pgn_job,
     }
 )

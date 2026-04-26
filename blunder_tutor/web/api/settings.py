@@ -9,6 +9,12 @@ from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
 from blunder_tutor.auth.fastapi import UserContextDep
+from blunder_tutor.constants import (
+    JOB_STATUS_NO_JOBS,
+    JOB_STATUS_RUNNING,
+    JOB_TYPE_DELETE_ALL_DATA,
+    JOB_TYPE_IMPORT,
+)
 from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.fetchers.validation import validate_username
 from blunder_tutor.web.api.schemas import ErrorResponse, SuccessResponse
@@ -213,14 +219,14 @@ async def setup_submit(
         if not username:
             continue
         job_id = await job_service.create_job(
-            job_type="import",
+            job_type=JOB_TYPE_IMPORT,
             username=username,
             source=source,
             max_games=max_games,
         )
         event = JobExecutionRequestEvent.create(
             job_id=job_id,
-            job_type="import",
+            job_type=JOB_TYPE_IMPORT,
             user_id=user_ctx.user_id,
             source=source,
             username=username,
@@ -811,11 +817,11 @@ async def delete_all_data(
     event_bus: EventBusDep,
     user_ctx: UserContextDep,
 ) -> dict[str, Any]:
-    job_id = await job_service.create_job(job_type="delete_all_data")
+    job_id = await job_service.create_job(job_type=JOB_TYPE_DELETE_ALL_DATA)
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
-        job_type="delete_all_data",
+        job_type=JOB_TYPE_DELETE_ALL_DATA,
         user_id=user_ctx.user_id,
     )
     await event_bus.publish(event)
@@ -830,15 +836,15 @@ async def delete_all_data(
 )
 async def get_delete_all_status(job_service: JobServiceDep) -> dict[str, Any]:
     running_jobs = await job_service.list_jobs(
-        job_type="delete_all_data", status="running", limit=1
+        job_type=JOB_TYPE_DELETE_ALL_DATA, status=JOB_STATUS_RUNNING, limit=1
     )
 
     if running_jobs:
         return running_jobs[0]
 
-    recent_jobs = await job_service.list_jobs(job_type="delete_all_data", limit=1)
+    recent_jobs = await job_service.list_jobs(job_type=JOB_TYPE_DELETE_ALL_DATA, limit=1)
 
     if not recent_jobs:
-        return {"status": "no_jobs"}
+        return {"status": JOB_STATUS_NO_JOBS}
 
     return recent_jobs[0]

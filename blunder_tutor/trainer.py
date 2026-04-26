@@ -102,7 +102,7 @@ class Trainer:
             candidates = [
                 b
                 for b in candidates
-                if b.get("difficulty") is not None
+                if b.get("difficulty") is not None  # noqa: WPS226 — `difficulty` is the blunder dict field used for filter and selection across this module.
                 and any(lo <= b["difficulty"] <= hi for lo, hi in difficulty_ranges)
             ]
 
@@ -175,7 +175,7 @@ class Trainer:
             pre_move_fen = board_before_ply(game, ply - 1).fen()
 
         game_metadata = await self.games.get_game(game_id)
-        actual_source = game_metadata.get("source", "any") if game_metadata else "any"
+        actual_source = game_metadata.get("source", "any") if game_metadata else "any"  # noqa: WPS226 — sentinel `any` for "no source filter" returned by both branches.
         actual_username = game_metadata.get("username", "") if game_metadata else ""
 
         # Compute tactical squares on-the-fly for highlighting
@@ -239,7 +239,7 @@ class Trainer:
             pre_move_fen = board_before_ply(game, ply - 1).fen()
 
         game_metadata = await self.games.get_game(game_id)
-        actual_source = game_metadata.get("source", "any") if game_metadata else "any"
+        actual_source = game_metadata.get("source", "any") if game_metadata else "any"  # noqa: WPS226 — sentinel `any` for "no source filter" returned by both branches.
         actual_username = game_metadata.get("username", "") if game_metadata else ""
 
         tactical_squares = self._compute_tactical_squares(

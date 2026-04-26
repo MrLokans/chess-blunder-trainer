@@ -43,6 +43,7 @@ from blunder_tutor.cache import (
     NullCacheBackend,
 )
 from blunder_tutor.cache.decorator import set_cache_backend
+from blunder_tutor.constants import AUTH_MODE_CREDENTIALS, AUTH_MODE_NONE
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.websocket_manager import ConnectionManager
 from blunder_tutor.i18n import TranslationManager
@@ -88,7 +89,7 @@ async def lifespan(app: FastAPI):
     # AuthDb is available to the multi-user UserLister callback. The
     # locale-cache seed (none-mode only) and the WS broadcaster start
     # are independent and can run after.
-    if app.state.auth_mode == "credentials":
+    if app.state.auth_mode == AUTH_MODE_CREDENTIALS:
         await _bootstrap_auth(app)
 
     settings_repo = app.state.settings_repo
@@ -227,7 +228,7 @@ def _wire_background(app: FastAPI) -> None:
     work_coordinator = app.state.work_coordinator
     resolver: DbPathResolver = app.state.db_path_resolver
 
-    if config.auth.mode == "credentials":
+    if config.auth.mode == AUTH_MODE_CREDENTIALS:
         assert app.state.auth is not None  # set by _bootstrap_auth
         users_repo = app.state.auth.storage.users
 
@@ -279,7 +280,7 @@ def create_app(
     # Legacy single-user schema only applies to AUTH_MODE=none. In
     # credentials mode the legacy path is never opened and per-user DBs
     # are materialized on signup (Task 11).
-    if config.auth.mode == "none":
+    if config.auth.mode == AUTH_MODE_NONE:
         run_migrations(config.data.db_path)
         settings: SettingsRepository | None = SettingsRepository.from_config(
             config=config
@@ -359,7 +360,7 @@ def create_app(
     # Set to AuthResources by `_bootstrap_auth` lifespan in credentials mode.
     app.state.auth = None
 
-    if config.auth.mode == "none":
+    if config.auth.mode == AUTH_MODE_NONE:
         app.state.none_mode_db_path = config.data.db_path
         # Single-user topology: every request resolves to the same legacy
         # DB. Credentials mode populates this in `_bootstrap_auth` once
@@ -450,7 +451,7 @@ def create_app(
     # about none mode after TREK-54 — that branch lives entirely here.
     # Any future mode that synthesises a `user_ctx` (e.g. a header-token
     # bypass for an internal service) belongs to this same if/elif.
-    if config.auth.mode == "credentials":
+    if config.auth.mode == AUTH_MODE_CREDENTIALS:
         app.add_middleware(
             AuthMiddleware,
             config=MiddlewareConfig(

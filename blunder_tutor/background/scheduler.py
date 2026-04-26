@@ -14,6 +14,7 @@ from fast_depends import Depends, inject
 
 from blunder_tutor.auth import UserId
 from blunder_tutor.background.executor import DbPathResolver
+from blunder_tutor.constants import JOB_TYPE_SYNC
 from blunder_tutor.core.dependencies import (
     DependencyContext,
     clear_context,
@@ -55,9 +56,9 @@ async def _maybe_dispatch_sync_for_user(
     if not _is_sync_due(settings.get("last_sync_timestamp"), interval_hours):
         return
 
-    job_id = await job_service.create_job(job_type="sync", username=user_id)
+    job_id = await job_service.create_job(job_type=JOB_TYPE_SYNC, username=user_id)
     event = JobExecutionRequestEvent.create(
-        job_id=job_id, job_type="sync", user_id=user_id
+        job_id=job_id, job_type=JOB_TYPE_SYNC, user_id=user_id
     )
     await event_bus.publish(event)
     logger.info(f"Auto-sync dispatched for user {user_id} (job {job_id})")

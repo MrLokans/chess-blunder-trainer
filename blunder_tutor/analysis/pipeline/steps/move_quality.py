@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 import chess
@@ -14,6 +15,15 @@ from blunder_tutor.constants import (
     MATE_THRESHOLD,
     MAX_CP_LOSS,
 )
+
+# Move-quality classification labels. Match `CLASSIFICATION_LABELS` in
+# constants.py but referenced here by a private alias because this module
+# also uses "good" — a label that exists at the wire level but not in the
+# DB-backed `CLASSIFICATION_*` integer constants (good = 0).
+_LABEL_GOOD = "good"
+_LABEL_INACCURACY = "inaccuracy"
+_LABEL_MISTAKE = "mistake"
+_LABEL_BLUNDER = "blunder"
 
 # Difficulty heuristic constants. Each move's "difficulty" score (0-100)
 # rewards positions that are objectively harder to navigate: quiet best
@@ -49,12 +59,12 @@ def _get_mate_depth(score: chess.engine.PovScore, side: chess.Color) -> int | No
 
 def _classify_wc(wc_loss: float, thresholds: Thresholds) -> str:
     if wc_loss >= thresholds.wc_blunder:
-        return "blunder"
+        return _LABEL_BLUNDER
     if wc_loss >= thresholds.wc_mistake:
-        return "mistake"
+        return _LABEL_MISTAKE
     if wc_loss >= thresholds.wc_inaccuracy:
-        return "inaccuracy"
-    return "good"
+        return _LABEL_INACCURACY
+    return _LABEL_GOOD
 
 
 # Mate-transition thresholds (from Lichess Advice.scala).
@@ -64,22 +74,27 @@ _MATE_CP_MISTAKE = -700
 
 def _classify_mate_created(prev_pov_cp: int) -> str:
     if prev_pov_cp < _MATE_CP_INACCURACY:
-        return "inaccuracy"
+        return _LABEL_INACCURACY
     if prev_pov_cp < _MATE_CP_MISTAKE:
-        return "mistake"
-    return "blunder"
+        return _LABEL_MISTAKE
+    return _LABEL_BLUNDER
 
 
 def _classify_mate_lost(current_pov_cp: int) -> str:
     if current_pov_cp > -_MATE_CP_INACCURACY:
-        return "inaccuracy"
+        return _LABEL_INACCURACY
     if current_pov_cp > -_MATE_CP_MISTAKE:
-        return "mistake"
-    return "blunder"
+        return _LABEL_MISTAKE
+    return _LABEL_BLUNDER
+
+
+_LABEL_TO_INT = MappingProxyType(
+    {_LABEL_GOOD: 0, _LABEL_INACCURACY: 1, _LABEL_MISTAKE: 2, _LABEL_BLUNDER: 3}
+)
 
 
 def _class_to_int(label: str) -> int:
-    return {"good": 0, "inaccuracy": 1, "mistake": 2, "blunder": 3}[label]
+    return _LABEL_TO_INT[label]
 
 
 def compute_difficulty(
@@ -88,7 +103,7 @@ def compute_difficulty(
     cp_loss: int,
     classification: int,
 ) -> int:
-    if classification < _class_to_int("inaccuracy"):
+    if classification < _class_to_int(_LABEL_INACCURACY):
         return 0
 
     if not best_move_uci:
@@ -164,7 +179,7 @@ class MoveQualityStep(AnalysisStep):
             if eval_after == MATE_SCORE_ANALYSIS:  # Checkmate delivered
                 delta = 0
                 cp_loss = 0
-                class_label = "good"
+                class_label = _LABEL_GOOD
             else:
                 delta = eval_before - eval_after
                 cp_loss = min(max(0, delta), MAX_CP_LOSS)
@@ -195,7 +210,7 @@ class MoveQualityStep(AnalysisStep):
                 elif mate_lost:
                     class_label = _classify_mate_lost(eval_after)
                 elif mate_delayed:
-                    class_label = "blunder"
+                    class_label = _LABEL_BLUNDER
                 else:
                     wc_before = winning_chances(eval_before)
                     wc_after = winning_chances(eval_after)

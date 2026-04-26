@@ -4,6 +4,7 @@ import logging
 import time
 from dataclasses import dataclass
 
+from blunder_tutor.constants import JOB_STATUS_COMPLETED, JOB_STATUS_PENDING
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import JobEvent, StatsEvent
 from blunder_tutor.repositories.job_repository import JobRepository
@@ -11,6 +12,10 @@ from blunder_tutor.repositories.job_repository import JobRepository
 logger = logging.getLogger(__name__)
 
 PROGRESS_FLUSH_INTERVAL = 2.0
+
+# Fallback user_key when a job has no associated username — keeps the
+# stats-updated event addressable in single-user mode.
+_DEFAULT_USER_KEY = "default"
 
 
 @dataclass
@@ -46,7 +51,7 @@ class JobService:
             max_games=max_games,
         )
 
-        event = JobEvent.create_status_changed(job_id, job_type, "pending")
+        event = JobEvent.create_status_changed(job_id, job_type, JOB_STATUS_PENDING)
         await self.event_bus.publish(event)
 
         return job_id
@@ -69,9 +74,9 @@ class JobService:
             )
             await self.event_bus.publish(event)
 
-            if status == "completed":
+            if status == JOB_STATUS_COMPLETED:
                 stats_event = StatsEvent.create_stats_updated(
-                    user_key=job.get("username", "default") or "default"
+                    user_key=job.get("username", _DEFAULT_USER_KEY) or _DEFAULT_USER_KEY
                 )
                 await self.event_bus.publish(stats_event)
 
@@ -128,12 +133,12 @@ class JobService:
         job = await self.job_repository.get_job(job_id)
         if job:
             event = JobEvent.create_status_changed(
-                job_id=job_id, job_type=job["job_type"], status="completed"
+                job_id=job_id, job_type=job["job_type"], status=JOB_STATUS_COMPLETED
             )
             await self.event_bus.publish(event)
 
             stats_event = StatsEvent.create_stats_updated(
-                user_key=job.get("username", "default") or "default"
+                user_key=job.get("username", _DEFAULT_USER_KEY) or _DEFAULT_USER_KEY
             )
             await self.event_bus.publish(stats_event)
 

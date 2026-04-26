@@ -9,6 +9,7 @@ from pydantic import BaseModel, model_validator
 
 from blunder_tutor import constants
 from blunder_tutor.cache.config import CacheConfig
+from blunder_tutor.constants import AUTH_MODE_CREDENTIALS, AUTH_MODE_NONE
 
 AuthMode = Literal["none", "credentials"]
 
@@ -108,7 +109,7 @@ class AuthConfig(BaseModel):
                 "SESSION_IDLE_SECONDS must be <= SESSION_MAX_AGE_SECONDS "
                 f"({self.session_idle_seconds} > {self.session_max_age_seconds})"
             )
-        if self.mode == "credentials":
+        if self.mode == AUTH_MODE_CREDENTIALS:
             if not self.secret_key:
                 raise ValueError(
                     "SECRET_KEY env var is required when AUTH_MODE=credentials"
@@ -162,7 +163,7 @@ class AppConfig(BaseModel):
 
     @model_validator(mode="after")
     def _check_mode_compatibility(self) -> Self:
-        if self.demo_mode and self.auth.mode == "credentials":
+        if self.demo_mode and self.auth.mode == AUTH_MODE_CREDENTIALS:
             raise ValueError("DEMO_MODE cannot be combined with AUTH_MODE=credentials")
         return self
 
@@ -186,10 +187,10 @@ def _parse_positive_int(environ: typing.Mapping, key: str, default: int) -> int:
 
 def _parse_auth_mode(raw: str | None) -> AuthMode:
     mode_raw = (raw or "").strip().lower()
-    if mode_raw in ("", "none"):
-        return "none"
-    if mode_raw == "credentials":
-        return "credentials"
+    if mode_raw in ("", AUTH_MODE_NONE):
+        return AUTH_MODE_NONE
+    if mode_raw == AUTH_MODE_CREDENTIALS:
+        return AUTH_MODE_CREDENTIALS
     raise ValueError(f"AUTH_MODE must be 'none' or 'credentials', got {mode_raw!r}")
 
 

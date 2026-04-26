@@ -66,3 +66,32 @@ DEFAULT_DATA_PATH = ROOT_DIR / "data"
 DEFAULT_FIXTURES_PATH = ROOT_DIR / "fixtures"
 TEMPLATES_PATH = ROOT_DIR / "templates"
 DEFAULT_DB_PATH = DEFAULT_DATA_PATH / "main.sqlite3"
+
+# Background job type identifiers. The wire-format strings stored in
+# `background_jobs.job_type` and dispatched via `JOB_RUNNERS`. Centralized
+# here so handler/runner/test code never repeats the string literal.
+JOB_TYPE_IMPORT = "import"
+JOB_TYPE_SYNC = "sync"
+JOB_TYPE_ANALYZE = "analyze"
+JOB_TYPE_BACKFILL_PHASES = "backfill_phases"
+JOB_TYPE_BACKFILL_ECO = "backfill_eco"
+JOB_TYPE_BACKFILL_TACTICS = "backfill_tactics"
+JOB_TYPE_BACKFILL_TRAPS = "backfill_traps"
+JOB_TYPE_DELETE_ALL_DATA = "delete_all_data"
+JOB_TYPE_IMPORT_PGN = "import_pgn"
+
+# Background job lifecycle states (stored in `background_jobs.status`).
+JOB_STATUS_PENDING = "pending"
+JOB_STATUS_RUNNING = "running"
+JOB_STATUS_COMPLETED = "completed"
+JOB_STATUS_FAILED = "failed"
+JOB_STATUS_NO_JOBS = "no_jobs"
+
+# Auth mode identifiers (matches `AuthMode = Literal[...]` in web/config.py).
+AUTH_MODE_NONE = "none"
+AUTH_MODE_CREDENTIALS = "credentials"
+
+# Chess-platform source identifiers — match `game_index_cache.source` and
+# settings keys (`lichess_username`, `chesscom_username`).
+PLATFORM_LICHESS = "lichess"
+PLATFORM_CHESSCOM = "chesscom"

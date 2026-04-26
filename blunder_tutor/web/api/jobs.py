@@ -10,6 +10,19 @@ from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
 
 from blunder_tutor.auth.fastapi import UserContextDep
+from blunder_tutor.constants import (
+    JOB_STATUS_FAILED,
+    JOB_STATUS_NO_JOBS,
+    JOB_STATUS_PENDING,
+    JOB_STATUS_RUNNING,
+    JOB_TYPE_ANALYZE,
+    JOB_TYPE_BACKFILL_ECO,
+    JOB_TYPE_BACKFILL_PHASES,
+    JOB_TYPE_BACKFILL_TACTICS,
+    JOB_TYPE_BACKFILL_TRAPS,
+    JOB_TYPE_IMPORT,
+    JOB_TYPE_SYNC,
+)
 from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
@@ -26,6 +39,19 @@ JOBS_JSON_LIMIT_DEFAULT = 50
 JOBS_JSON_LIMIT_MAX = 500
 JOBS_HTML_LIMIT_DEFAULT = 20
 JOBS_HTML_LIMIT_MAX = 100
+
+
+def _attach_formatted_created_at(jobs: list[dict[str, Any]]) -> None:
+    for job in jobs:
+        created_at = job.get("created_at")
+        if not created_at:
+            job["created_at_formatted"] = "-"
+            continue
+        try:
+            dt = datetime.fromisoformat(created_at)
+            job["created_at_formatted"] = dt.strftime("%Y-%m-%d %H:%M")
+        except (ValueError, TypeError):
+            job["created_at_formatted"] = created_at
 
 
 class StartImportRequest(BaseModel):
@@ -70,7 +96,7 @@ async def start_import_job(
     user_ctx: UserContextDep,
 ) -> dict[str, str]:
     job_id = await job_service.create_job(
-        job_type="import",
+        job_type=JOB_TYPE_IMPORT,
         username=payload.username,
         source=payload.source,
         max_games=payload.max_games,
@@ -78,7 +104,7 @@ async def start_import_job(
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
-        job_type="import",
+        job_type=JOB_TYPE_IMPORT,
         user_id=user_ctx.user_id,
         source=payload.source,
         username=payload.username,
@@ -86,13 +112,13 @@ async def start_import_job(
     )
     await event_bus.publish(event)
 
-    return {"job_id": job_id}
+    return {"job_id": job_id}  # noqa: WPS226 — response field name; the API contract for every start-job endpoint.
 
 
 @jobs_router.get(
     "/api/import/status/{job_id}",
     response_model=JobStatusResponse,
-    responses={404: {"model": ErrorResponse, "description": "Job not found"}},
+    responses={404: {"model": ErrorResponse, "description": "Job not found"}},  # noqa: WPS226 — FastAPI OpenAPI metadata; every endpoint declares its 404 response identically.
     summary="Get import status",
     description="Check the status of a specific import job.",
 )
@@ -104,7 +130,8 @@ async def get_import_status(
 
     if not job:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",  # noqa: WPS226 — common 404 detail for every job lookup endpoint.
         )
 
     return job
@@ -121,14 +148,14 @@ async def start_sync_job(
     event_bus: EventBusDep,
     user_ctx: UserContextDep,
 ) -> dict[str, str]:
-    job_id = await job_service.create_job(job_type="sync")
+    job_id = await job_service.create_job(job_type=JOB_TYPE_SYNC)
 
     event = JobExecutionRequestEvent.create(
-        job_id=job_id, job_type="sync", user_id=user_ctx.user_id
+        job_id=job_id, job_type=JOB_TYPE_SYNC, user_id=user_ctx.user_id
     )
     await event_bus.publish(event)
 
-    return {"status": "sync started"}
+    return {"status": "sync started"}  # noqa: WPS226 — response field name; the API contract for status responses.
 
 
 @jobs_router.get(
@@ -137,7 +164,7 @@ async def start_sync_job(
     description="Get the status of the most recent sync job.",
 )
 async def get_sync_status(job_service: JobServiceDep) -> dict[str, Any]:
-    jobs = await job_service.list_jobs(job_type="sync", limit=1)
+    jobs = await job_service.list_jobs(job_type=JOB_TYPE_SYNC, limit=1)
 
     if not jobs:
         return {"status": "no sync jobs"}
@@ -187,15 +214,7 @@ async def get_jobs_html(
 ) -> HTMLResponse:
     jobs = await job_service.list_jobs(limit=limit)
 
-    for job in jobs:
-        if job.get("created_at"):
-            try:
-                dt = datetime.fromisoformat(job["created_at"])
-                job["created_at_formatted"] = dt.strftime("%Y-%m-%d %H:%M")
-            except (ValueError, TypeError):
-                job["created_at_formatted"] = job["created_at"]
-        else:
-            job["created_at_formatted"] = "-"
+    _attach_formatted_created_at(jobs)
 
     return request.app.state.templates.TemplateResponse(
         "_jobs_partial.html",
@@ -223,13 +242,13 @@ async def start_analysis_job(
         )
 
     job_id = await job_service.create_job(
-        job_type="analyze",
+        job_type=JOB_TYPE_ANALYZE,
         max_games=len(unanalyzed_game_ids),
     )
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
-        job_type="analyze",
+        job_type=JOB_TYPE_ANALYZE,
         user_id=user_ctx.user_id,
         game_ids=unanalyzed_game_ids,
     )
@@ -255,13 +274,13 @@ async def stop_analysis_job(
             status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
         )
 
-    if job["status"] not in ("pending", "running"):
+    if job["status"] not in (JOB_STATUS_PENDING, JOB_STATUS_RUNNING):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Cannot stop job with status: {job['status']}",
         )
 
-    await job_service.update_job_status(job_id, "failed", "Cancelled by user")
+    await job_service.update_job_status(job_id, JOB_STATUS_FAILED, "Cancelled by user")
 
     return {"status": "stopped", "job_id": job_id}
 
@@ -273,16 +292,16 @@ async def stop_analysis_job(
 )
 async def get_analysis_status(job_service: JobServiceDep) -> dict[str, Any]:
     running_jobs = await job_service.list_jobs(
-        job_type="analyze", status="running", limit=1
+        job_type=JOB_TYPE_ANALYZE, status=JOB_STATUS_RUNNING, limit=1
     )
 
     if running_jobs:
         return running_jobs[0]
 
-    recent_jobs = await job_service.list_jobs(job_type="analyze", limit=1)
+    recent_jobs = await job_service.list_jobs(job_type=JOB_TYPE_ANALYZE, limit=1)
 
     if not recent_jobs:
-        return {"status": "no_jobs"}
+        return {"status": JOB_STATUS_NO_JOBS}
 
     return recent_jobs[0]
 
@@ -323,15 +342,7 @@ async def delete_job(
 
     jobs = await job_service.list_jobs(limit=JOBS_HTML_LIMIT_DEFAULT)
 
-    for j in jobs:
-        if j.get("created_at"):
-            try:
-                dt = datetime.fromisoformat(j["created_at"])
-                j["created_at_formatted"] = dt.strftime("%Y-%m-%d %H:%M")
-            except (ValueError, TypeError):
-                j["created_at_formatted"] = j["created_at"]
-        else:
-            j["created_at_formatted"] = "-"
+    _attach_formatted_created_at(jobs)
 
     return request.app.state.templates.TemplateResponse(
         "_jobs_partial.html",
@@ -360,13 +371,13 @@ async def start_backfill_phases_job(
         )
 
     job_id = await job_service.create_job(
-        job_type="backfill_phases",
+        job_type=JOB_TYPE_BACKFILL_PHASES,
         max_games=len(games_needing_backfill),
     )
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
-        job_type="backfill_phases",
+        job_type=JOB_TYPE_BACKFILL_PHASES,
         user_id=user_ctx.user_id,
     )
     await event_bus.publish(event)
@@ -381,16 +392,16 @@ async def start_backfill_phases_job(
 )
 async def get_backfill_phases_status(job_service: JobServiceDep) -> dict[str, Any]:
     running_jobs = await job_service.list_jobs(
-        job_type="backfill_phases", status="running", limit=1
+        job_type=JOB_TYPE_BACKFILL_PHASES, status=JOB_STATUS_RUNNING, limit=1
     )
 
     if running_jobs:
         return running_jobs[0]
 
-    recent_jobs = await job_service.list_jobs(job_type="backfill_phases", limit=1)
+    recent_jobs = await job_service.list_jobs(job_type=JOB_TYPE_BACKFILL_PHASES, limit=1)
 
     if not recent_jobs:
-        return {"status": "no_jobs"}
+        return {"status": JOB_STATUS_NO_JOBS}
 
     return recent_jobs[0]
 
@@ -429,13 +440,13 @@ async def start_backfill_eco_job(
         )
 
     job_id = await job_service.create_job(
-        job_type="backfill_eco",
+        job_type=JOB_TYPE_BACKFILL_ECO,
         max_games=len(games),
     )
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
-        job_type="backfill_eco",
+        job_type=JOB_TYPE_BACKFILL_ECO,
         user_id=user_ctx.user_id,
         force=force,
     )
@@ -451,16 +462,16 @@ async def start_backfill_eco_job(
 )
 async def get_backfill_eco_status(job_service: JobServiceDep) -> dict[str, Any]:
     running_jobs = await job_service.list_jobs(
-        job_type="backfill_eco", status="running", limit=1
+        job_type=JOB_TYPE_BACKFILL_ECO, status=JOB_STATUS_RUNNING, limit=1
     )
 
     if running_jobs:
         return running_jobs[0]
 
-    recent_jobs = await job_service.list_jobs(job_type="backfill_eco", limit=1)
+    recent_jobs = await job_service.list_jobs(job_type=JOB_TYPE_BACKFILL_ECO, limit=1)
 
     if not recent_jobs:
-        return {"status": "no_jobs"}
+        return {"status": JOB_STATUS_NO_JOBS}
 
     return recent_jobs[0]
 
@@ -496,13 +507,13 @@ async def start_backfill_tactics_job(
         )
 
     job_id = await job_service.create_job(
-        job_type="backfill_tactics",
+        job_type=JOB_TYPE_BACKFILL_TACTICS,
         max_games=len(games_needing_backfill),
     )
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
-        job_type="backfill_tactics",
+        job_type=JOB_TYPE_BACKFILL_TACTICS,
         user_id=user_ctx.user_id,
     )
     await event_bus.publish(event)
@@ -517,16 +528,16 @@ async def start_backfill_tactics_job(
 )
 async def get_backfill_tactics_status(job_service: JobServiceDep) -> dict[str, Any]:
     running_jobs = await job_service.list_jobs(
-        job_type="backfill_tactics", status="running", limit=1
+        job_type=JOB_TYPE_BACKFILL_TACTICS, status=JOB_STATUS_RUNNING, limit=1
     )
 
     if running_jobs:
         return running_jobs[0]
 
-    recent_jobs = await job_service.list_jobs(job_type="backfill_tactics", limit=1)
+    recent_jobs = await job_service.list_jobs(job_type=JOB_TYPE_BACKFILL_TACTICS, limit=1)
 
     if not recent_jobs:
-        return {"status": "no_jobs"}
+        return {"status": JOB_STATUS_NO_JOBS}
 
     return recent_jobs[0]
 
@@ -554,11 +565,11 @@ async def start_backfill_traps_job(
     event_bus: EventBusDep,
     user_ctx: UserContextDep,
 ) -> dict[str, str]:
-    job_id = await job_service.create_job(job_type="backfill_traps")
+    job_id = await job_service.create_job(job_type=JOB_TYPE_BACKFILL_TRAPS)
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
-        job_type="backfill_traps",
+        job_type=JOB_TYPE_BACKFILL_TRAPS,
         user_id=user_ctx.user_id,
     )
     await event_bus.publish(event)
@@ -573,15 +584,15 @@ async def start_backfill_traps_job(
 )
 async def get_backfill_traps_status(job_service: JobServiceDep) -> dict[str, Any]:
     running_jobs = await job_service.list_jobs(
-        job_type="backfill_traps", status="running", limit=1
+        job_type=JOB_TYPE_BACKFILL_TRAPS, status=JOB_STATUS_RUNNING, limit=1
     )
 
     if running_jobs:
         return running_jobs[0]
 
-    recent_jobs = await job_service.list_jobs(job_type="backfill_traps", limit=1)
+    recent_jobs = await job_service.list_jobs(job_type=JOB_TYPE_BACKFILL_TRAPS, limit=1)
 
     if not recent_jobs:
-        return {"status": "no_jobs"}
+        return {"status": JOB_STATUS_NO_JOBS}
 
     return recent_jobs[0]

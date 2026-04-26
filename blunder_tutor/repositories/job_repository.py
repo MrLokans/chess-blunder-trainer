@@ -4,6 +4,12 @@ import json
 import uuid
 from datetime import datetime
 
+from blunder_tutor.constants import (
+    JOB_STATUS_COMPLETED,
+    JOB_STATUS_FAILED,
+    JOB_STATUS_PENDING,
+    JOB_STATUS_RUNNING,
+)
 from blunder_tutor.repositories.base import BaseDbRepository
 
 
@@ -31,7 +37,7 @@ class JobRepository(BaseDbRepository):
                 (
                     job_id,
                     job_type,
-                    "pending",
+                    JOB_STATUS_PENDING,
                     username,
                     source,
                     start_date,
@@ -52,9 +58,9 @@ class JobRepository(BaseDbRepository):
         timestamp_field = None
         timestamp_value = datetime.utcnow().isoformat()
 
-        if status == "running":
+        if status == JOB_STATUS_RUNNING:
             timestamp_field = "started_at"
-        elif status in ("completed", "failed"):
+        elif status in (JOB_STATUS_COMPLETED, JOB_STATUS_FAILED):
             timestamp_field = "completed_at"
 
         async with self.write_transaction() as conn:

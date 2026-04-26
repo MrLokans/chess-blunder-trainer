@@ -51,7 +51,8 @@ class UserDbPathMiddleware(BaseHTTPMiddleware):
         return await call_next(request)  # noqa: WPS204 — Starlette dispatch idiom; every middleware ends with this call.
 
 
-MUTATION_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+_HTTP_POST = "POST"
+MUTATION_METHODS = frozenset({_HTTP_POST, "PUT", "PATCH", "DELETE"})
 
 
 # Paths that accept mutations from cross-origin contexts by design.
@@ -139,10 +140,10 @@ def _extract_host(url: str) -> str | None:
 
 
 DEMO_ALLOWED_MUTATIONS: tuple[tuple[str, re.Pattern], ...] = (
-    ("POST", re.compile(r"^/api/submit$")),
-    ("POST", re.compile(r"^/api/analyze$")),
-    ("POST", re.compile(r"^/api/settings/locale$")),
-    ("POST", re.compile(r"^/api/validate-username$")),
+    (_HTTP_POST, re.compile(r"^/api/submit$")),
+    (_HTTP_POST, re.compile(r"^/api/analyze$")),
+    (_HTTP_POST, re.compile(r"^/api/settings/locale$")),
+    (_HTTP_POST, re.compile(r"^/api/validate-username$")),
 )
 
 

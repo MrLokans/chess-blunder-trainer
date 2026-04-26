@@ -99,7 +99,7 @@ class GameAnalyzer:
             game_ids = game_ids[:limit]
 
         if not game_ids:
-            return {"processed": 0, "analyzed": 0, "skipped": 0}
+            return {"processed": 0, "analyzed": 0, "skipped": 0}  # noqa: WPS226 — counter dict keys repeated as we increment them per-game in the analyze loop.
 
         self._log.info(
             "Processing %d games with concurrency=%d", len(game_ids), concurrency

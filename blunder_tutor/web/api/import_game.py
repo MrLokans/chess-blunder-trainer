@@ -10,6 +10,7 @@ from fastapi.routing import APIRouter
 from pydantic import BaseModel
 
 from blunder_tutor.auth.fastapi import UserContextDep
+from blunder_tutor.constants import JOB_TYPE_IMPORT_PGN
 from blunder_tutor.events import JobExecutionRequestEvent
 from blunder_tutor.web.dependencies import (
     ConfigDep,
@@ -120,14 +121,14 @@ async def import_pgn(
     await game_repo.insert_games([game_dict])
 
     job_id = await job_service.create_job(
-        job_type="import_pgn",
+        job_type=JOB_TYPE_IMPORT_PGN,
         username=username,
         max_games=1,
     )
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
-        job_type="import_pgn",
+        job_type=JOB_TYPE_IMPORT_PGN,
         user_id=user_ctx.user_id,
         game_id=game_id,
         username=username,

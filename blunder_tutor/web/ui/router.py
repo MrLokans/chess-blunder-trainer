@@ -5,25 +5,25 @@ from blunder_tutor.features import FEATURE_GROUPS, FEATURE_LABELS
 from blunder_tutor.web.template_context import LOCALE_DISPLAY_NAMES
 
 
+def _page(
+    request: Request, template: str, title: str | None = None, **extra
+) -> HTMLResponse:
+    context: dict[str, object] = {"request": request, **extra}
+    if title is not None:
+        context["title"] = title
+    return request.app.state.templates.TemplateResponse(template, context)
+
+
 async def home(request: Request) -> HTMLResponse:
-    return request.app.state.templates.TemplateResponse(
-        "trainer.html",
-        {"request": request, "title": "Blunder Trainer"},
-    )
+    return _page(request, "trainer.html", "Blunder Trainer")
 
 
 async def dashboard(request: Request) -> HTMLResponse:
-    return request.app.state.templates.TemplateResponse(
-        "dashboard.html",
-        {"request": request, "title": "Dashboard"},
-    )
+    return _page(request, "dashboard.html", "Dashboard")
 
 
 async def management(request: Request) -> HTMLResponse:
-    return request.app.state.templates.TemplateResponse(
-        "management.html",
-        {"request": request, "title": "Management"},
-    )
+    return _page(request, "management.html", "Management")
 
 
 async def settings(request: Request) -> HTMLResponse:
@@ -56,43 +56,29 @@ async def settings(request: Request) -> HTMLResponse:
 
     current_locale = getattr(request.state, "locale", "en")
 
-    return request.app.state.templates.TemplateResponse(
+    return _page(
+        request,
         "settings.html",
-        {
-            "request": request,
-            "feature_groups_data": feature_groups_data,
-            "available_locales_data": available_locales_data,
-            "current_locale": current_locale,
-        },
+        feature_groups_data=feature_groups_data,
+        available_locales_data=available_locales_data,
+        current_locale=current_locale,
     )
 
 
 async def traps_page(request: Request) -> HTMLResponse:
-    return request.app.state.templates.TemplateResponse(
-        "traps.html",
-        {"request": request, "title": "Traps & Attacks"},
-    )
+    return _page(request, "traps.html", "Traps & Attacks")
 
 
 async def import_page(request: Request) -> HTMLResponse:
-    return request.app.state.templates.TemplateResponse(
-        "import.html",
-        {"request": request, "title": "Import PGN"},
-    )
+    return _page(request, "import.html", "Import PGN")
 
 
 async def game_review_page(request: Request, game_id: str) -> HTMLResponse:
-    return request.app.state.templates.TemplateResponse(
-        "game_review.html",
-        {"request": request, "title": "Game Review", "game_id": game_id},
-    )
+    return _page(request, "game_review.html", "Game Review", game_id=game_id)
 
 
 async def starred_page(request: Request) -> HTMLResponse:
-    return request.app.state.templates.TemplateResponse(
-        "starred.html",
-        {"request": request, "title": "Starred Puzzles"},
-    )
+    return _page(request, "starred.html", "Starred Puzzles")
 
 
 _GET = ["GET"]

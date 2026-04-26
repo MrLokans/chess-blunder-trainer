@@ -39,6 +39,7 @@ from blunder_tutor.auth import (
     make_username,
 )
 from blunder_tutor.cli.base import CLICommand
+from blunder_tutor.constants import AUTH_MODE_CREDENTIALS
 from blunder_tutor.web.auth_hooks import (
     BlunderTutorFilePermissionPolicy,
     cleanup_user_dir,
@@ -48,7 +49,7 @@ from blunder_tutor.web.config import AppConfig
 
 
 async def cmd_list_users(ctx: dict) -> None:
-    users = await admin.list_users(ctx["service"])
+    users = await admin.list_users(ctx["service"])  # noqa: WPS226 — `service` is the conventional context dict key, used by every cmd_* function.
     if not users:
         print("No users")
         return
@@ -138,7 +139,7 @@ _DISPATCH = MappingProxyType(
         "list-users": (cmd_list_users, ()),
         # ``new_password`` is populated from stdin or getpass in the
         # dispatcher, not from argparse — passwords must not appear on argv.
-        "reset-password": (cmd_reset_password, ("username", "new_password")),
+        "reset-password": (cmd_reset_password, ("username", "new_password")),  # noqa: WPS226 — argparse positional name `username`; identical signature across user-management subcommands.
         "revoke-sessions": (cmd_revoke_sessions, ("username",)),
         "delete-user": (cmd_delete_user, ("username",)),
         "regenerate-invite": (cmd_regenerate_invite, ()),
@@ -190,7 +191,7 @@ class AuthCommand(CLICommand):
         asyncio.run(self._run_async(args, config))
 
     async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
-        if config.auth.mode != "credentials":
+        if config.auth.mode != AUTH_MODE_CREDENTIALS:
             raise SystemExit("`auth` subcommands require AUTH_MODE=credentials")
         auth_db_path = config.data.db_path.parent / "auth.sqlite3"
         users_dir = config.data.db_path.parent / "users"

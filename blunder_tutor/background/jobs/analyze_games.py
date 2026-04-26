@@ -11,6 +11,7 @@ from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.analysis.logic import DEFAULT_CONCURRENCY, GameAnalyzer
 from blunder_tutor.background.base import BaseJob
 from blunder_tutor.background.registry import register_job
+from blunder_tutor.constants import JOB_STATUS_FAILED
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import EventType
 from blunder_tutor.repositories.analysis import AnalysisRepository
@@ -51,8 +52,9 @@ class AnalyzeGamesJob(BaseJob):
             game_ids = await self.game_repo.list_unanalyzed_game_ids(source, username)
 
         if not game_ids:
-            await self.job_service.complete_job(job_id, {"analyzed": 0, "skipped": 0})
-            return {"analyzed": 0, "skipped": 0}
+            empty_result = {"analyzed": 0, "skipped": 0}
+            await self.job_service.complete_job(job_id, empty_result)
+            return empty_result
 
         return await self._analyze_games(job_id, game_ids, steps, concurrency)
 
@@ -67,7 +69,10 @@ class AnalyzeGamesJob(BaseJob):
                 except TimeoutError:
                     continue
                 data = event.data
-                if data.get("job_id") == job_id and data.get("status") == "failed":
+                if (
+                    data.get("job_id") == job_id
+                    and data.get("status") == JOB_STATUS_FAILED
+                ):
                     cancelled.set()
                     return
         finally:
@@ -152,7 +157,7 @@ class AnalyzeGamesJob(BaseJob):
 
         except Exception as e:
             logger.error(f"Error in analysis job {job_id}: {e}")
-            await self.job_service.update_job_status(job_id, "failed", str(e))
+            await self.job_service.update_job_status(job_id, JOB_STATUS_FAILED, str(e))
             raise
 
         finally:
