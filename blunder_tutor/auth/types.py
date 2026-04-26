@@ -149,14 +149,6 @@ def make_email(raw: str) -> Email:
     return _DEFAULT_RULES.make_email(raw)
 
 
-# Synthetic user identifier for ``AUTH_MODE=none``. Every request in
-# none-mode resolves to the same legacy single-user data, so a constant
-# user_id is sufficient and lets background machinery (executor,
-# scheduler) treat both auth modes uniformly via a single user list.
-LOCAL_USER_ID = UserId("_local")
-LOCAL_USERNAME = Username("_local")
-
-
 _USER_ID_RE = re.compile(r"^[0-9a-f]{32}$")
 
 
@@ -222,7 +214,8 @@ class UserContext:
 
     @property
     def is_authenticated(self) -> bool:
-        # The AUTH_MODE=none middleware synthesizes a `_local` context
-        # with no session token; every other code path must check this
-        # instead of re-implementing `session_token is not None`.
+        # Synthetic single-user contexts (the web-layer bypass for
+        # back-compat installs) carry no session token; every reader
+        # must check this property instead of re-implementing
+        # ``session_token is not None``.
         return self.session_token is not None

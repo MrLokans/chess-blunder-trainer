@@ -27,7 +27,6 @@ from blunder_tutor.auth.schema import initialize_auth_schema
 from blunder_tutor.auth.service import AuthService
 from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.auth.types import (
-    LOCAL_USER_ID,
     UserId,
     ValidationRules,
     is_user_id_shape,
@@ -52,6 +51,7 @@ from blunder_tutor.web.auth_hooks import (
     materialize_user_dir,
     resolve_user_db_path,
 )
+from blunder_tutor.web.bypass_auth import LOCAL_USER_ID, BypassAuthMiddleware
 from blunder_tutor.web.config import AppConfig, config_factory
 from blunder_tutor.web.cookies import SESSION_COOKIE_NAME
 from blunder_tutor.web.middleware import (
@@ -434,14 +434,22 @@ def create_app(
     # order is reverse of execution: added BEFORE Auth here so it runs
     # AFTER it on the request.
     app.add_middleware(UserDbPathMiddleware)
-    app.add_middleware(
-        AuthMiddleware,
-        config=MiddlewareConfig(
-            cookie_name=SESSION_COOKIE_NAME,
-            exempt_paths=AUTH_UI_PATHS | {"/health", "/favicon.ico"},
-            exempt_prefixes=("/static", AUTH_API_PREFIX),
-        ),
-    )
+    # AuthMiddleware (credentials mode) and BypassAuthMiddleware (none
+    # mode) are mutually exclusive: each writes the same `user_ctx`
+    # request-state slot, so registering both would have the inner one
+    # silently overwrite the outer's value. The auth core knows nothing
+    # about none mode after TREK-54 — that branch lives entirely here.
+    if config.auth.mode == "credentials":
+        app.add_middleware(
+            AuthMiddleware,
+            config=MiddlewareConfig(
+                cookie_name=SESSION_COOKIE_NAME,
+                exempt_paths=AUTH_UI_PATHS | {"/health", "/favicon.ico"},
+                exempt_prefixes=("/static", AUTH_API_PREFIX),
+            ),
+        )
+    else:
+        app.add_middleware(BypassAuthMiddleware)
     # CsrfOriginMiddleware added LAST → runs FIRST on the request path.
     # A cross-origin mutation must be rejected before Auth/Locale/Setup
     # run any side effects (DB lookups, cache writes). AuthMiddleware's

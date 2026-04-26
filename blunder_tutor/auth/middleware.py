@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.auth.service import AuthService
-from blunder_tutor.auth.types import LOCAL_USER_ID, LOCAL_USERNAME, UserContext
+from blunder_tutor.auth.types import UserContext
 
 
 @dataclass(frozen=True)
@@ -44,17 +44,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
     """Resolves the per-request :class:`UserContext` from the session
     cookie and attaches it to ``request.state.user_ctx``.
 
-    In ``auth_mode == "none"`` every request runs as a single ``_local``
-    user — preserving the pre-auth single-user topology untouched. The
-    per-user DB path is set by :class:`UserDbPathMiddleware` (web layer),
-    not here: the auth core has no opinion on whether each user maps to
-    a separate DB, a tenant column in a shared DB, or no DB at all.
+    Unauthenticated requests either redirect HTML navigations to
+    ``/login?next=<path>`` or return a 401 JSON body for API callers.
+    Exempt paths (login/signup/setup, static, ``/api/auth/*``) run
+    without a context so route handlers that need the context must
+    depend on :func:`get_user_context`.
 
-    In ``auth_mode == "credentials"`` unauthenticated requests either
-    redirect HTML navigations to ``/login?next=<path>`` or return a 401
-    JSON body for API callers. Exempt paths (login/signup/setup, static,
-    ``/api/auth/*``) run without a context so route handlers that need
-    the context must depend on :func:`get_user_context`.
+    Single-user back-compat (``AUTH_MODE=none``) is a consumer-side
+    concern and lives in a separate web-layer middleware
+    (:class:`blunder_tutor.web.bypass_auth.BypassAuthMiddleware`); the
+    two are mutually exclusive at registration time.
     """
 
     def __init__(self, app, config: MiddlewareConfig) -> None:
@@ -62,19 +61,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         self._config = config
 
     async def dispatch(self, request: Request, call_next):
-        mode = getattr(request.app.state, "auth_mode", "none")
-
-        if mode == "none":
-            request.state.user_ctx = UserContext(
-                user_id=LOCAL_USER_ID,
-                username=LOCAL_USERNAME,
-                session_token=None,
-            )
-            return await call_next(request)
-
         path = request.url.path
         auth = request.app.state.auth
-        assert auth is not None  # credentials mode → set by _bootstrap_auth
+        assert auth is not None  # AuthMiddleware mounted ⇒ credentials bootstrap ran
         service: AuthService = auth.service
         token = request.cookies.get(self._config.cookie_name)
         client_ip = request.client.host if request.client else None

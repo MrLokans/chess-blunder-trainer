@@ -33,40 +33,23 @@ _TEST_MIDDLEWARE_CONFIG = MiddlewareConfig(
 
 
 def _make_app(
-    service: AuthService | None,
+    service: AuthService,
     *,
-    mode: str,
-    auth_db: AuthDb | None = None,
-    users_dir: Path | None = None,
-    none_mode_db_path: Path | None = None,
+    auth_db: AuthDb,
+    users_dir: Path,
 ) -> FastAPI:
     app = FastAPI()
-    app.state.auth_mode = mode
-    if mode == "credentials":
-        # Credentials-mode tests must supply the AuthResources bundle.
-        # `service`/`auth_db`/`users_dir` are accepted as separate args
-        # because the test fixture builds them independently — production
-        # `_bootstrap_auth` constructs all three together.
-        assert service is not None
-        assert auth_db is not None
-        assert users_dir is not None
-        app.state.auth = AuthResources(
-            storage=SqliteStorage(auth_db),
-            service=service,
-            db_path=auth_db.path,
-            users_dir=users_dir,
-        )
-        app.state.db_path_resolver = partial(resolve_user_db_path, users_dir)
-    else:
-        app.state.auth = None
-        # Real prod wiring sets this only in none-mode (TREK-22). Tests
-        # in credentials mode must not touch the attribute or they'd
-        # mask the very footgun the gating prevents.
-        assert none_mode_db_path is not None, (
-            "none-mode test must pass a none_mode_db_path"
-        )
-        app.state.none_mode_db_path = none_mode_db_path
-        app.state.db_path_resolver = lambda _user_id: none_mode_db_path
+    # `auth_mode` is consumed by other code paths (settings, app.py
+    # gating). AuthMiddleware itself no longer reads it after TREK-54 —
+    # registration here is what selects the credentials path.
+    app.state.auth_mode = "credentials"
+    app.state.auth = AuthResources(
+        storage=SqliteStorage(auth_db),
+        service=service,
+        db_path=auth_db.path,
+        users_dir=users_dir,
+    )
+    app.state.db_path_resolver = partial(resolve_user_db_path, users_dir)
     app.add_middleware(UserDbPathMiddleware)
     app.add_middleware(AuthMiddleware, config=_TEST_MIDDLEWARE_CONFIG)
 
@@ -106,13 +89,6 @@ def _client(
 
 
 @pytest.fixture
-def legacy_db(tmp_path: Path) -> Path:
-    p = tmp_path / "main.sqlite3"
-    p.touch()
-    return p
-
-
-@pytest.fixture
 def service(service_factory) -> AuthService:
     return service_factory(
         session_max_age=timedelta(days=1),
@@ -129,29 +105,9 @@ def wired_credentials_app(
     tests don't repeat the AuthResources construction."""
     return _make_app(
         service,
-        mode="credentials",
         auth_db=auth_db,
         users_dir=tmp_path / "users",
     )
-
-
-class TestModeNone:
-    async def test_sets_local_sentinel(self, legacy_db: Path):
-        app = _make_app(None, mode="none", none_mode_db_path=legacy_db)
-        async with _client(app) as client:
-            r = await client.get("/echo")
-        assert r.status_code == 200
-        data = r.json()
-        assert data["user_id"] == "_local"
-        assert data["username"] == "_local"
-        assert data["db_path"] == str(legacy_db)
-
-    async def test_mode_none_bypasses_exempt_check(self, legacy_db: Path):
-        app = _make_app(None, mode="none", none_mode_db_path=legacy_db)
-        async with _client(app) as client:
-            r = await client.get("/api/echo")
-        assert r.status_code == 200
-        assert r.json()["user_id"] == "_local"
 
 
 class TestModeCredentials:
@@ -271,19 +227,9 @@ class TestModeCredentials:
         )
         app = _make_app(
             short_lived,
-            mode="credentials",
             auth_db=auth_db,
             users_dir=tmp_path / "users",
         )
         async with _client(app, cookies={"session_token": session.token}) as client:
             r = await client.get("/api/echo")
         assert r.status_code == 401
-
-
-class TestModeNoneIgnoresSessionCookie:
-    async def test_cookie_does_not_override_local_sentinel(self, legacy_db: Path):
-        app = _make_app(None, mode="none", none_mode_db_path=legacy_db)
-        async with _client(app, cookies={"session_token": "anything"}) as client:
-            r = await client.get("/echo")
-        assert r.status_code == 200
-        assert r.json()["user_id"] == "_local"

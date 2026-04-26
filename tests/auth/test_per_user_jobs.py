@@ -20,7 +20,7 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport
 
-from blunder_tutor.auth.types import LOCAL_USER_ID, UserId
+from blunder_tutor.auth.types import UserId
 from blunder_tutor.background.scheduler import (
     _fanout_tick,
     _is_sync_due,
@@ -32,6 +32,7 @@ from blunder_tutor.core.dependencies import (
     set_context,
 )
 from blunder_tutor.events import EventBus, EventType, JobExecutionRequestEvent
+from blunder_tutor.web.bypass_auth import LOCAL_USER_ID
 from tests.auth.conftest import (
     DEFAULT_PASSWORD,
     signup_via_http,
