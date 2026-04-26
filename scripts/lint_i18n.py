@@ -106,6 +106,25 @@ DYNAMIC_PREFIXES: tuple[str, ...] = (
     "explanation.blunder.",
 )
 
+#: Allowlist for the English-fallback warning. Keyed on ``(locale,
+#: key)``; the value is a one-line justification kept inline so the
+#: rationale travels with the entry. Add an entry here only when the
+#: identical-to-English value is a *deliberate* borrowing (file
+#: formats, brand names, project-standardized loanwords) — never as a
+#: shortcut around an unfinished translation.
+INTENTIONAL_BORROWINGS: dict[tuple[str, str], str] = {
+    # Spanish locale uses ``puzzle`` / ``puzzles`` as the established
+    # chess-training vocabulary (cf. ``dashboard.chart.puzzle_activity
+    # = "Actividad de puzzles"``, ``settings.features.starred_puzzles
+    # = "Puzzles favoritos"``). Translating these heatmap strings to
+    # ``rompecabezas`` would diverge from the rest of the locale.
+    ("es", "heatmap.tooltip"): "es puzzle borrowing (matches rest of es locale)",
+    ("es", "heatmap.total"): "es puzzle borrowing (matches rest of es locale)",
+    # ``PGN`` is the chess game file format — universally untranslated.
+    # ``Import`` is also a valid Polish noun (cognate with English).
+    ("pl", "import.title"): "PGN file format + Polish/English cognate noun",
+}
+
 # ---------------------------------------------------------------------------
 # Regexes
 # ---------------------------------------------------------------------------
@@ -276,8 +295,13 @@ def check_english_fallback(
             # Single-word values (brand names, chess terms) often
             # legitimately stay in English. Multi-word identical
             # values are almost certainly an unfinished translation.
-            if len(value.split()) >= 2:
-                findings.english_fallback.append((locale, key, value))
+            if len(value.split()) < 2:
+                continue
+            # Explicitly-acknowledged borrowings (PGN, project's
+            # established Spanish "puzzle" vocabulary, etc.).
+            if (locale, key) in INTENTIONAL_BORROWINGS:
+                continue
+            findings.english_fallback.append((locale, key, value))
 
 
 def check_used_not_defined(

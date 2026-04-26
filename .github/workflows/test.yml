@@ -33,11 +33,12 @@ jobs:
         run: uv run ruff format --check blunder_tutor/
 
       - name: Run i18n lint
-        # Hard-fails on missing-in-locales + used-but-not-defined (active
-        # bug catchers). English-fallback + unused-key warnings stay
-        # advisory in CI; promote to errors locally with
-        # `LINT_I18N_STRICT=1 make lint/i18n` when cleaning up.
-        run: uv run python scripts/lint_i18n.py
+        # Strict mode: all four checks fail the build. Baseline was
+        # cleaned in TREK-67/-68 (66 dead keys removed, 3 deliberate
+        # borrowings allowlisted in the linter). Any future drift —
+        # forgotten translation, abandoned key, accidental fallback —
+        # fails CI on the introducing PR.
+        run: uv run python scripts/lint_i18n.py --strict
 
   test:
     name: Test

@@ -157,7 +157,7 @@ class TestEnJsonIntegrity:
         with open(en_path, encoding="utf-8") as f:
             data = json.load(f)
 
-        assert "trainer.title" in data
+        assert "trainer.feedback.found_best" in data
         assert "trainer.feedback.excellent" in data
         assert "common.loading" in data
         assert "nav.trainer" in data
