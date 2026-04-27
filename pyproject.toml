@@ -176,10 +176,23 @@ extend-ignore = [
 #   `import chess` and a submodule.
 # auth/** — structured as a publishable plug-and-play package; __all__
 #   is the public-API contract for external consumers.
+# blunder_tutor/repositories/* WPS214 — repos expose one method per query
+#   operation; analysis (23) and stats (17) cross the 12-method threshold by
+#   API surface count, not by doing too many things.
+# blunder_tutor/repositories/stats_repository.py WPS202/WPS204/WPS210 —
+#   module-private query helpers (16 of them) live here because they are
+#   tightly coupled to the per-report SQL; splitting into _stats_helpers.py
+#   is over-engineering for private utilities. WPS204 covers the canonical
+#   `criteria = filters or StatsFilter()` opt-arg coercion repeated across
+#   every public method. WPS210: query construction + execute + result
+#   mapping inherently uses 8-10 locals (filters, query, params, rows, total,
+#   entries, intermediate); reducing further fragments each method into too
+#   many tiny helpers without simplifying the shape.
 per-file-ignores = [
   "tests/*: WPS204, WPS210, WPS211, WPS214, WPS217, WPS218, WPS226, WPS301, WPS336, WPS407, WPS430, WPS432, WPS458, WPS459",
   "blunder_tutor/cli/*: WPS421",
-  "blunder_tutor/repositories/*: WPS226, WPS301, WPS336",
+  "blunder_tutor/repositories/*: WPS214, WPS226, WPS301, WPS336",
+  "blunder_tutor/repositories/stats_repository.py: WPS202, WPS204, WPS210, WPS214, WPS226, WPS301, WPS336",
   "blunder_tutor/web/api/*: WPS226",
   "blunder_tutor/utils/explanation.py: WPS226",
   "blunder_tutor/analysis/*: WPS301, WPS458",
