@@ -26,6 +26,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "flake8>=7.3.0",
+  "flake8-pyproject>=1.2.3",
   "pytest>=8.0.0",
   "pytest-asyncio>=0.24.0",
   "pytest-cov>=5.0.0",
@@ -71,7 +72,7 @@ select = [
   "B",   # flake8-bugbear
   "C4",  # flake8-comprehensions
   "SIM", # flake8-simplify
-  "PLW0603", # pylint: discourage `global` (TREK-80 rule 18: WPS420 is silenced for `pass`/`nonlocal` noise; PLW0603 keeps a finer rule live for `global` introductions).
+  "PLW0603", # discourage `global` — WPS420 is silenced for pass/nonlocal noise; PLW0603 keeps a finer rule live for `global` introductions.
 ]
 ignore = [
   "E501", # line too long (handled by formatter)
@@ -85,6 +86,127 @@ external = ["WPS"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.flake8]
+# wemake-python-styleguide config. Ruff is the primary linter + formatter
+# (see [tool.ruff]); flake8 is here only to host WPS rules ruff doesn't
+# implement (cognitive complexity, await-in-for, mutable module
+# constants, inconsistent returns, etc.). Read by flake8 via the
+# Flake8-pyproject plugin.
+select = ["WPS"]
+
+# Threshold tuning. WPS defaults are calibrated for small pure-function
+# libraries; this codebase is async FastAPI with services and handlers
+# that legitimately exceed the upstream ceilings. Still strict — these
+# target real outliers, not every handler.
+max-local-variables = 8
+max-arguments = 7
+max-expressions = 12
+max-methods = 12
+max-await-expressions = 8
+max-cognitive-score = 15
+max-cognitive-average = 10
+max-import-from-members = 12
+max-try-body-length = 3
+max-line-complexity = 18
+max-module-members = 10
+max-imports = 15
+
+# WPS110 allowlist: names that are Pythonic / library-driven here
+# (SQL params, dict iteration, python-chess InfoDict, event payloads,
+# return values) plus single-letter loop / TypeVar / gettext idioms.
+# Names not listed (temp, val, _data, cur, ...) still trip.
+allowed-domain-names = [
+  "params", "value", "values", "item", "items",
+  "info", "data", "result", "results", "handler",
+  "e", "i", "n", "m", "k", "t", "w", "v", "p", "g",
+  "f", "d", "u", "r", "h", "b", "a", "c", "s", "x",
+  "y", "o", "q", "T", "V",
+  "_t",  # i18n / gettext convention
+  "_",   # throwaway / Pydantic sentinel
+]
+
+# Globally silenced — wrong-shape for this codebase:
+#   WPS114  underscored numbers in pytest names describe the assertion
+#           target (e.g. test_..._409_username_taken).
+#   WPS118  long pytest names communicate intent; renaming would need
+#           a comment to recover the meaning.
+#   WPS237  short f-string method calls / joins; hoisting to a local
+#           costs more readability than it saves.
+#   WPS358  `0.0` is load-bearing in stats/accuracy code (float type,
+#           SQL COALESCE fallbacks); `0` would change semantics.
+#   WPS363  `raise SystemExit(...) from exc` in CLI argparse subparsers
+#           preserves the cause chain; `sys.exit` cannot.
+#   WPS404  fires on FastAPI Path/Query/Body markers and immutable
+#           timedelta defaults — neither is the mutable-default trap
+#           the rule targets.
+#   WPS412  fires on every __init__.py with __all__, docstring, or
+#           __future__ import — re-export aggregators are wrong-shape.
+#   WPS420  collapses pass/nonlocal/global/del. `pass` (stub bodies)
+#           and `nonlocal` (closure progress counters) are idiomatic;
+#           `global` is caught more granularly by ruff PLW0603.
+#   WPS476  await-in-for: every site here is sequential by design
+#           (serialized SQLite writes, rate-limited HTTP with cursor
+#           pagination, queue consumers, first-match middleware).
+#   WPS504  `X if Y is not None else D` reads naturally; flipping
+#           hurts readability.
+extend-ignore = [
+  "WPS114", "WPS118", "WPS237", "WPS358", "WPS363",
+  "WPS404", "WPS412", "WPS420", "WPS476", "WPS504",
+]
+
+# Per-tree relaxations.
+#
+# tests/* — production thresholds don't fit test code: many asserts,
+#   float compares, repeated factory calls, schema-mirror factories
+#   whose arg count = SQL row width, multi-step integration scenarios.
+#   WPS301/WPS458 cover python-chess submodules + httpx ASGITransport.
+# blunder_tutor/cli/* — `print()` is the right output channel for
+#   operator-facing CLI UX (confirmations, list rows, errors).
+# blunder_tutor/repositories/* — raw aiosqlite SQL clause concat with
+#   `?` parameter binding (safe). Repeated SQL keys / column names are
+#   the wire format.
+# blunder_tutor/web/api/* — repeated FastAPI/OpenAPI metadata keys
+#   (description, model, summary) per endpoint are the framework shape;
+#   extracting hides instead of removing the repetition.
+# explanation.py — I18nMessage params share names by design; renaming
+#   one breaks the corresponding locale key.
+# python-chess submodule trees — `import chess.engine|pgn|polyglot` is
+#   library convention; WPS458 fires whenever a file needs both
+#   `import chess` and a submodule.
+# auth/** — structured as a publishable plug-and-play package; __all__
+#   is the public-API contract for external consumers.
+per-file-ignores = [
+  "tests/*: WPS204, WPS210, WPS211, WPS214, WPS217, WPS218, WPS226, WPS301, WPS336, WPS407, WPS430, WPS432, WPS458, WPS459",
+  "blunder_tutor/cli/*: WPS421",
+  "blunder_tutor/repositories/*: WPS226, WPS301, WPS336",
+  "blunder_tutor/web/api/*: WPS226",
+  "blunder_tutor/utils/explanation.py: WPS226",
+  "blunder_tutor/analysis/*: WPS301, WPS458",
+  "blunder_tutor/analysis/pipeline/*: WPS301, WPS458",
+  "blunder_tutor/analysis/pipeline/steps/*: WPS301, WPS458",
+  "blunder_tutor/background/jobs/*: WPS301",
+  "blunder_tutor/fetchers/lichess.py: WPS301",
+  "blunder_tutor/services/*: WPS301, WPS458",
+  "blunder_tutor/utils/chess_utils.py: WPS301, WPS458",
+  "blunder_tutor/utils/pgn_utils.py: WPS301, WPS458",
+  "blunder_tutor/web/app.py: WPS301",
+  "blunder_tutor/web/api/import_game.py: WPS301",
+  "blunder_tutor/web/dependencies.py: WPS301",
+  "blunder_tutor/auth/__init__.py: WPS410",
+  "blunder_tutor/auth/core/protocols.py: WPS410",
+  "blunder_tutor/auth/fastapi/__init__.py: WPS410",
+  "blunder_tutor/auth/fastapi/protocols.py: WPS410",
+  "blunder_tutor/auth/providers/__init__.py: WPS410",
+  "blunder_tutor/auth/providers/base.py: WPS410",
+]
+
+extend-exclude = [
+  ".venv", "node_modules", "alembic/versions", "frontend",
+  "e2e", "landing", "profiling", "prof", "test-results",
+  ".playwright-mcp", "data", "fixtures", "images", "demo",
+  "docs", "scripts",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
