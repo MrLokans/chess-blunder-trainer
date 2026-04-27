@@ -10,7 +10,7 @@ from blunder_tutor.services.trap_backfill_service import TrapBackfillService
 if TYPE_CHECKING:
     from blunder_tutor.repositories.game_repository import GameRepository
     from blunder_tutor.repositories.trap_repository import TrapRepository
-    from blunder_tutor.services.job_service import JobService
+    from blunder_tutor.services.job_service import JobService, ProgressCallback
 
 logger = logging.getLogger(__name__)
 
@@ -35,37 +35,37 @@ class BackfillTrapsJob(BaseJob):
         game_ids = await self._service.get_games_needing_backfill()
 
         if not game_ids:
-            result = {"games_processed": 0, "games_with_traps": 0}
-            await self.job_service.complete_job(job_id, result)
-            return result
+            empty = {"games_processed": 0, "games_with_traps": 0}
+            await self.job_service.complete_job(job_id, empty)
+            return empty
 
-        await self.job_service.update_job_status(job_id, "running")
-        await self.job_service.update_job_progress(job_id, 0, len(game_ids))
+        return await self.job_service.run_with_lifecycle(
+            job_id,
+            len(game_ids),
+            lambda progress: self._backfill(job_id, game_ids, progress),
+        )
 
+    async def _backfill(
+        self,
+        job_id: str,
+        game_ids: list[str],
+        progress: ProgressCallback,
+    ) -> dict[str, Any]:
         games_processed = 0
         games_with_traps = 0
+        for i, game_id in enumerate(game_ids):
+            if await self._is_cancelled(job_id):
+                break
+            count = await self._service.backfill_game(game_id)
+            games_processed += 1
+            if count > 0:
+                games_with_traps += 1
+            await progress(i + 1)
+        return {
+            "games_processed": games_processed,
+            "games_with_traps": games_with_traps,
+        }
 
-        try:
-            for i, game_id in enumerate(game_ids):
-                job = await self.job_service.get_job(job_id)
-                if job and job.get("status") == "failed":
-                    break
-
-                count = await self._service.backfill_game(game_id)
-                games_processed += 1
-                if count > 0:
-                    games_with_traps += 1
-
-                await self.job_service.update_job_progress(job_id, i + 1, len(game_ids))
-
-            result = {
-                "games_processed": games_processed,
-                "games_with_traps": games_with_traps,
-            }
-            await self.job_service.complete_job(job_id, result)
-            return result
-
-        except Exception as e:
-            logger.error("Error in backfill traps job %s: %s", job_id, e)
-            await self.job_service.update_job_status(job_id, "failed", str(e))
-            raise
+    async def _is_cancelled(self, job_id: str) -> bool:
+        job = await self.job_service.get_job(job_id)
+        return bool(job and job.get("status") == "failed")

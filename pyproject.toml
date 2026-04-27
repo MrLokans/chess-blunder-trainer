@@ -198,7 +198,7 @@ per-file-ignores = [
   "blunder_tutor/analysis/*: WPS301, WPS458",
   "blunder_tutor/analysis/pipeline/*: WPS301, WPS458",
   "blunder_tutor/analysis/pipeline/steps/*: WPS301, WPS458",
-  "blunder_tutor/background/jobs/*: WPS301",
+  "blunder_tutor/background/jobs/*: WPS201, WPS301, WPS458",
   "blunder_tutor/fetchers/lichess.py: WPS301",
   "blunder_tutor/services/*: WPS301, WPS458",
   "blunder_tutor/utils/chess_utils.py: WPS301, WPS458",

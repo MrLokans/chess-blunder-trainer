@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from blunder_tutor.auth import UserId
@@ -13,9 +14,13 @@ from blunder_tutor.fetchers import chesscom, lichess
 if TYPE_CHECKING:
     from blunder_tutor.repositories.game_repository import GameRepository
     from blunder_tutor.repositories.settings import SettingsRepository
-    from blunder_tutor.services.job_service import JobService
+    from blunder_tutor.services.job_service import JobService, ProgressCallback
 
 logger = logging.getLogger(__name__)
+
+_DEFAULT_MAX_GAMES = 1000
+
+_FETCHERS = MappingProxyType({"lichess": lichess.fetch, "chesscom": chesscom.fetch})
 
 
 @register_job
@@ -37,64 +42,47 @@ class ImportGamesJob(BaseJob):
         self.event_bus = event_bus
 
     async def execute(self, job_id: str, **kwargs: Any) -> dict[str, Any]:
-        source = kwargs.get("source")
-        username = kwargs.get("username")
+        source, username = _required_source_and_username(kwargs)
+        max_games = await self._resolve_max_games(kwargs.get("max_games"))
 
-        if not source:
-            raise ValueError("source is required")
-        if not username:
-            raise ValueError("username is required")
+        result = await self.job_service.run_with_lifecycle(
+            job_id,
+            max_games,
+            lambda progress: self._import(source, username, max_games, progress),
+        )
+        await self._trigger_auto_analysis(source, username, int(result["stored"]))
+        return result
 
-        max_games = kwargs.get("max_games")
-        if max_games is None:
-            max_games_str = await self.settings_repo.read_setting("sync_max_games")
-            max_games = int(max_games_str) if max_games_str else 1000
+    async def _resolve_max_games(self, override: object) -> int:
+        if override is not None:
+            return int(override)  # type: ignore[arg-type]
+        max_games_str = await self.settings_repo.read_setting("sync_max_games")
+        return int(max_games_str) if max_games_str else _DEFAULT_MAX_GAMES
 
-        await self.job_service.update_job_status(job_id, "running")
-        await self.job_service.update_job_progress(job_id, 0, max_games)
+    async def _import(
+        self,
+        source: str,
+        username: str,
+        max_games: int,
+        progress: ProgressCallback,
+    ) -> dict[str, Any]:
+        async def fetcher_progress(current: int, _total: int) -> None:  # noqa: WPS430 — fetcher API expects (current, total); we forward current to our progress(int) shape.
+            await progress(current)
 
-        async def update_progress(current: int, total: int) -> None:  # noqa: WPS430 — `progress_callback` closure for the fetcher; captures `self.job_service` and `job_id`.
-            await self.job_service.update_job_progress(job_id, current, total)
+        fetcher = _FETCHERS[source]
+        games, _ = await fetcher(
+            username, max_games, progress_callback=fetcher_progress
+        )
 
-        try:
-            if source == "lichess":
-                games, _seen_ids = await lichess.fetch(
-                    username,
-                    max_games,
-                    progress_callback=update_progress,
-                )
-            elif source == "chesscom":
-                games, _seen_ids = await chesscom.fetch(
-                    username,
-                    max_games,
-                    progress_callback=update_progress,
-                )
-            else:
-                raise ValueError(f"Unknown source: {source}")
-
-            inserted = await self.game_repo.insert_games(games)
-            skipped = len(games) - inserted
-
-            total_processed = len(games)
-            await self.job_service.update_job_progress(
-                job_id, total_processed, total_processed
-            )
-
-            result = {"stored": inserted, "skipped": skipped}
-            await self.job_service.complete_job(job_id, result)
-
-            # Trigger auto-analysis if enabled and games were imported
-            await self._trigger_auto_analysis(source, username, inserted)
-
-            return result
-
-        except Exception as e:
-            logger.error(f"Error in import job {job_id}: {e}")
-            await self.job_service.update_job_status(job_id, "failed", str(e))
-            raise
+        inserted = await self.game_repo.insert_games(games)
+        await progress(len(games))
+        return {"stored": inserted, "skipped": len(games) - inserted}
 
     async def _trigger_auto_analysis(
-        self, source: str, username: str, inserted: int
+        self,
+        source: str,
+        username: str,
+        inserted: int,
     ) -> None:
         if inserted <= 0 or self.event_bus is None:
             return
@@ -121,3 +109,15 @@ class ImportGamesJob(BaseJob):
             username=username,
         )
         await self.event_bus.publish(event)
+
+
+def _required_source_and_username(kwargs: dict[str, Any]) -> tuple[str, str]:
+    source = kwargs.get("source")
+    if not source:
+        raise ValueError("source is required")
+    username = kwargs.get("username")
+    if not username:
+        raise ValueError("username is required")
+    if source not in _FETCHERS:
+        raise ValueError(f"Unknown source: {source}")
+    return source, username

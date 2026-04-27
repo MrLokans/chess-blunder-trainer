@@ -247,8 +247,11 @@ class StatsRepository(BaseDbRepository):
             filters or StatsFilter(),
         )
         total, phases = _bucket_aggregation(
-            rows, "game_phase", PHASE_LABELS,
-            label_field="phase", id_field="phase_id",
+            rows,
+            "game_phase",
+            PHASE_LABELS,
+            label_field="phase",
+            id_field="phase_id",
         )
         return {"total_blunders": total, "by_phase": phases}
 
@@ -303,8 +306,11 @@ class StatsRepository(BaseDbRepository):
             criteria,
         )
         total, colors = _bucket_aggregation(
-            rows, "user_color", COLOR_LABELS,
-            label_field="color", id_field="color_id",
+            rows,
+            "user_color",
+            COLOR_LABELS,
+            label_field="color",
+            id_field="color_id",
         )
 
         date_params: list[object] = []
@@ -427,8 +433,11 @@ class StatsRepository(BaseDbRepository):
             filters or StatsFilter(),
         )
         total, game_types = _bucket_aggregation(
-            rows, "game_type", GAME_TYPE_LABELS,
-            label_field="game_type", id_field="game_type_id",
+            rows,
+            "game_type",
+            GAME_TYPE_LABELS,
+            label_field="game_type",
+            id_field="game_type_id",
         )
         # game_type historically uses -1 as the sentinel id for the
         # "no game_type recorded" bucket (other report endpoints pass None).
@@ -465,8 +474,11 @@ class StatsRepository(BaseDbRepository):
 
         rows = await self._fetch_rows(query, params)
         total, phases = _bucket_aggregation(
-            rows, "game_phase", PHASE_LABELS,
-            label_field="phase", id_field="phase_id",
+            rows,
+            "game_phase",
+            PHASE_LABELS,
+            label_field="phase",
+            id_field="phase_id",
         )
         return {"total_blunders": total, "by_phase": phases}
 
@@ -537,10 +549,12 @@ class StatsRepository(BaseDbRepository):
         return {
             **outcomes,
             "conversion_rate": _safe_rate(
-                outcomes["games_converted"], outcomes["games_with_advantage"],
+                outcomes["games_converted"],
+                outcomes["games_with_advantage"],
             ),
             "resilience_rate": _safe_rate(
-                outcomes["games_saved"], outcomes["games_with_disadvantage"],
+                outcomes["games_saved"],
+                outcomes["games_with_disadvantage"],
             ),
         }
 
@@ -623,14 +637,18 @@ class StatsRepository(BaseDbRepository):
         return [_growth_entry(row) for row in rows]
 
     async def _fetch_rows(
-        self, query: str, params: list[object],
+        self,
+        query: str,
+        params: list[object],
     ) -> list[dict[str, object]]:
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
             return await cursor.fetchall()
 
     async def _fetch_one(
-        self, query: str, params: list[object],
+        self,
+        query: str,
+        params: list[object],
     ) -> dict[str, object] | None:
         conn = await self.get_connection()
         async with conn.execute(query, params) as cursor:
@@ -677,7 +695,9 @@ def _bucket_aggregation(
 ) -> _AggregationResult:
     total = sum(row["count"] for row in rows)
     entries = [
-        _bucket_entry(row, id_key, label_map, label_field, id_field, default_label, total)
+        _bucket_entry(
+            row, id_key, label_map, label_field, id_field, default_label, total
+        )
         for row in rows
     ]
     return total, entries
@@ -712,7 +732,8 @@ def _aggregate_eco_rows(rows: list[dict[str, object]], limit: int) -> _EcoStats:
     for row in rows:
         key = (row["eco_code"], row["eco_name"])
         bucket = eco_stats.setdefault(
-            key, {"count": 0, "total_cp_loss": 0.0, "game_ids": set()},
+            key,
+            {"count": 0, "total_cp_loss": 0.0, "game_ids": set()},
         )
         bucket["count"] += 1
         bucket["total_cp_loss"] += row["cp_loss"] or 0
@@ -726,7 +747,10 @@ def _eco_count_key(item: tuple[tuple[str, str], dict[str, object]]) -> int:
 
 
 def _eco_entry(
-    eco_code: str, eco_name: str, stats: dict[str, object], total: int,
+    eco_code: str,
+    eco_name: str,
+    stats: dict[str, object],
+    total: int,
 ) -> dict[str, object]:
     count = stats["count"]
     avg_cp_loss = stats["total_cp_loss"] / count if count > 0 else 0.0
@@ -759,7 +783,9 @@ def _pattern_entry(row: dict[str, object], total: int) -> dict[str, object]:
 
 
 def _difficulty_entry(
-    bucket_key: str, row: dict[str, object], total: int,
+    bucket_key: str,
+    row: dict[str, object],
+    total: int,
 ) -> dict[str, object]:
     count = row["count"]
     avg_cp_loss = row["avg_cp_loss"] or 0.0

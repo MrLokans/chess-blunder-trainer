@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import chess
+import chess.pgn
 
 from blunder_tutor.analysis.tactics import classify_blunder_tactics
 from blunder_tutor.background.base import BaseJob
@@ -65,55 +66,54 @@ class BackfillTacticsJob(BaseJob):
 
     async def _process_game(self, game_id: str) -> int:
         """Process a single game and return number of blunders classified."""
-        # Get blunders that need classification
         blunders = await self.analysis_repo.fetch_blunders_for_tactics_backfill(game_id)
         if not blunders:
             return 0
 
-        # Load the game PGN
         game = await self.game_repo.load_game(game_id)
         if not game:
             return 0
 
-        # Build position for each blunder
-        board = game.board()
-        move_iter = iter(game.mainline_moves())
-        ply_to_board = {}
-
-        for current_ply, move in enumerate(move_iter, start=1):
-            ply_to_board[current_ply] = (board.copy(), move)
-            board.push(move)
-
-        # Classify each blunder
-        updates = []
-        for blunder_data in blunders:
-            ply = blunder_data["ply"]
-            best_move_uci = blunder_data.get("best_move_uci")
-
-            if ply not in ply_to_board:
-                continue
-
-            board_before, actual_move = ply_to_board[ply]
-
-            # Parse best move
-            best_move = None
-            if best_move_uci:
-                with contextlib.suppress(ValueError):
-                    best_move = chess.Move.from_uci(best_move_uci)
-
-            # Classify the blunder
-            result = classify_blunder_tactics(board_before, actual_move, best_move)
-
-            updates.append(
-                (
-                    result.primary_pattern.value,
-                    result.blunder_reason,
-                    game_id,
-                    ply,
-                )
-            )
+        ply_to_board = _build_ply_to_board(game)
+        updates = [
+            update
+            for blunder_data in blunders
+            if (update := _classify_blunder(blunder_data, ply_to_board, game_id))
+        ]
 
         if updates:
             await self.analysis_repo.update_moves_tactics_batch(updates)
-
         return len(updates)
+
+
+def _build_ply_to_board(
+    game: chess.pgn.Game,
+) -> dict[int, tuple[chess.Board, chess.Move]]:
+    board = game.board()
+    ply_to_board: dict[int, tuple[chess.Board, chess.Move]] = {}
+    for current_ply, move in enumerate(game.mainline_moves(), start=1):
+        ply_to_board[current_ply] = (board.copy(), move)
+        board.push(move)
+    return ply_to_board
+
+
+def _classify_blunder(
+    blunder_data: dict[str, Any],
+    ply_to_board: dict[int, tuple[chess.Board, chess.Move]],
+    game_id: str,
+) -> tuple[int, str, str, int] | None:
+    ply = blunder_data["ply"]
+    if ply not in ply_to_board:
+        return None
+    board_before, actual_move = ply_to_board[ply]
+    best_move = _parse_uci(blunder_data.get("best_move_uci"))
+    result = classify_blunder_tactics(board_before, actual_move, best_move)
+    return (result.primary_pattern.value, result.blunder_reason, game_id, ply)
+
+
+def _parse_uci(uci: str | None) -> chess.Move | None:
+    if not uci:
+        return None
+    with contextlib.suppress(ValueError):
+        return chess.Move.from_uci(uci)
+    return None

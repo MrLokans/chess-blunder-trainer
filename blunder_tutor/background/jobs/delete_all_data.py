@@ -8,7 +8,7 @@ from blunder_tutor.background.registry import register_job
 
 if TYPE_CHECKING:
     from blunder_tutor.repositories.data_management import DataManagementRepository
-    from blunder_tutor.services.job_service import JobService
+    from blunder_tutor.services.job_service import JobService, ProgressCallback
 
 logger = logging.getLogger(__name__)
 
@@ -35,43 +35,42 @@ class DeleteAllDataJob(BaseJob):
         self.data_management_repo = data_management_repo
 
     async def execute(self, job_id: str, **kwargs: Any) -> dict[str, Any]:
-        await self.job_service.update_job_status(job_id, "running")
-        await self.job_service.update_job_progress(job_id, 0, len(TABLE_ORDER))
+        return await self.job_service.run_with_lifecycle(
+            job_id,
+            len(TABLE_ORDER),
+            lambda progress: self._delete_all(job_id, progress),
+        )
 
+    async def _delete_all(
+        self,
+        job_id: str,
+        progress: ProgressCallback,
+    ) -> dict[str, Any]:
         deleted_counts: dict[str, int] = {}
+        conn = await self.data_management_repo.get_connection()
 
-        try:
-            conn = await self.data_management_repo.get_connection()
+        for i, table in enumerate(TABLE_ORDER):
+            deleted_counts[table] = await _truncate_table(conn, table, job_id)
+            await progress(i + 1)
 
-            for i, table in enumerate(TABLE_ORDER):
-                cursor = await conn.execute(f"SELECT COUNT(*) FROM {table}")
-                count = (await cursor.fetchone())[0]
-                deleted_counts[table] = count
+        return {
+            "total_deleted": sum(deleted_counts.values()),
+            "deleted_by_table": deleted_counts,
+        }
 
-                # Don't delete the current job from background_jobs
-                if table == "background_jobs":
-                    await conn.execute(
-                        "DELETE FROM background_jobs WHERE job_id != ?", (job_id,)
-                    )
-                    deleted_counts[table] = count - 1 if count > 0 else 0
-                else:
-                    await conn.execute(f"DELETE FROM {table}")
 
-                await conn.commit()
-                await self.job_service.update_job_progress(
-                    job_id, i + 1, len(TABLE_ORDER)
-                )
-
-            total_deleted = sum(deleted_counts.values())
-            result = {
-                "total_deleted": total_deleted,
-                "deleted_by_table": deleted_counts,
-            }
-
-            await self.job_service.complete_job(job_id, result)
-            return result
-
-        except Exception as e:
-            logger.error(f"Error in delete all data job {job_id}: {e}")
-            await self.job_service.update_job_status(job_id, "failed", str(e))
-            raise
+async def _truncate_table(conn: Any, table: str, job_id: str) -> int:
+    cursor = await conn.execute(f"SELECT COUNT(*) FROM {table}")
+    count = (await cursor.fetchone())[0]
+    if table == "background_jobs":
+        # Don't delete the current job from background_jobs
+        await conn.execute(
+            "DELETE FROM background_jobs WHERE job_id != ?",
+            (job_id,),
+        )
+        deleted = count - 1 if count > 0 else 0
+    else:
+        await conn.execute(f"DELETE FROM {table}")
+        deleted = count
+    await conn.commit()
+    return deleted
