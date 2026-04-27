@@ -28,7 +28,7 @@ from blunder_tutor.constants import CLASSIFICATION_BLUNDER
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
-from blunder_tutor.trainer import Trainer
+from blunder_tutor.trainer import BlunderFilter, Trainer
 
 STOCKFISH_PATHS = [
     os.environ.get("STOCKFISH_BINARY"),
@@ -477,7 +477,7 @@ class TestTrainingPipelineIntegration:
         )
 
         puzzle = await trainer.pick_random_blunder(
-            exclude_recently_solved=False,
+            BlunderFilter(exclude_recently_solved=False),
         )
 
         # Verify puzzle has valid data
@@ -516,7 +516,7 @@ class TestTrainingPipelineIntegration:
 
         # Pick puzzle — testuser played as Black (Player2)
         puzzle = await trainer.pick_random_blunder(
-            exclude_recently_solved=False,
+            BlunderFilter(exclude_recently_solved=False),
         )
 
         # The blunder should be by Black (player_color = black)

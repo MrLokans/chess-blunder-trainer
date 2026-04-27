@@ -33,6 +33,21 @@ _WEIGHT_HARD_DIFFICULTY = 0.7  # difficulty ≥ 70
 _DIFFICULTY_EASY = 30
 _DIFFICULTY_HARD = 70
 
+_DEFAULT_SPACED_REPETITION_DAYS = 30
+
+
+@dataclass(frozen=True)
+class BlunderFilter:
+    start_date: str | None = None
+    end_date: str | None = None
+    exclude_recently_solved: bool = True
+    spaced_repetition_days: int = _DEFAULT_SPACED_REPETITION_DAYS
+    game_phases: list[int] | None = None
+    tactical_patterns: list[int] | None = None
+    game_types: list[int] | None = None
+    player_colors: list[int] | None = None
+    difficulty_ranges: list[tuple[int, int]] | None = None
+
 
 @dataclass(frozen=True)
 class BlunderPuzzle:
@@ -75,203 +90,90 @@ class Trainer:
 
     async def pick_random_blunder(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        exclude_recently_solved: bool = True,
-        spaced_repetition_days: int = 30,
-        game_phases: list[int] | None = None,
-        tactical_patterns: list[int] | None = None,
-        game_types: list[int] | None = None,
-        player_colors: list[int] | None = None,
-        difficulty_ranges: list[tuple[int, int]] | None = None,
+        filters: BlunderFilter | None = None,
     ) -> BlunderPuzzle:
-        merged_game_side_map = await self.games.get_all_game_side_map()
-
-        if not merged_game_side_map:
-            raise ValueError("No games found.")
-
-        blunders = await self.analysis.fetch_blunders_with_tactics(
-            game_phases=game_phases,
-            tactical_patterns=tactical_patterns,
-            player_colors=player_colors,
-            game_types=game_types,
-        )
-        candidates = filter_blunders(blunders, merged_game_side_map)
-
-        if difficulty_ranges and candidates:
-            candidates = [
-                b
-                for b in candidates
-                if b.get("difficulty") is not None  # noqa: WPS226 — `difficulty` is the blunder dict field used for filter and selection across this module.
-                and any(lo <= b["difficulty"] <= hi for lo, hi in difficulty_ranges)
-            ]
-
-        if (start_date or end_date) and candidates:
-            filtered_candidates = []
-            for candidate in candidates:
-                game_id = candidate["game_id"]
-                game = await self.games.get_game(game_id)
-                if not game:
-                    continue
-
-                game_date = game.get("end_time_utc")
-                if not game_date:
-                    continue
-
-                if start_date and game_date < start_date:
-                    continue
-                if end_date and game_date > end_date:
-                    continue
-
-                filtered_candidates.append(candidate)
-
-            candidates = filtered_candidates
-
-        if exclude_recently_solved and candidates:
-            recently_solved = await self.attempts.get_recently_solved_puzzles(
-                days=spaced_repetition_days
-            )
-
-            if recently_solved:
-                candidates = [
-                    b
-                    for b in candidates
-                    if (b["game_id"], int(b["ply"])) not in recently_solved
-                ]
-
+        criteria = filters or BlunderFilter()
+        candidates = await self._gather_candidates(criteria)
         if not candidates:
             raise ValueError("No blunders found.")
 
         weights = await self._compute_weights(candidates)
         blunder = random.choices(candidates, weights=weights, k=1)[0]
-        game_id = str(blunder["game_id"])
-        ply = int(blunder["ply"])
-        blunder_uci = str(blunder["uci"])
-        blunder_san = str(blunder["san"] or blunder_uci)
-        eval_before = int(blunder.get("eval_before", 0))
-        eval_after = int(blunder.get("eval_after", 0))
-        cp_loss = int(blunder.get("cp_loss", 0))
-        player = int(blunder["player"])
-        player_color = "white" if player == 0 else "black"
-
-        best_move_uci = blunder.get("best_move_uci")
-        best_move_san = blunder.get("best_move_san")
-        best_line = blunder.get("best_line")
-        best_move_eval = blunder.get("best_move_eval")
-        blunder_game_phase = blunder.get("game_phase")
-        blunder_tactical_pattern = blunder.get("tactical_pattern")
-        blunder_tactical_reason = blunder.get("tactical_reason")
-        blunder_difficulty = blunder.get("difficulty")
-        blunder_missed_mate_depth = blunder.get("missed_mate_depth")
-
-        game = await self.games.load_game(game_id)
-        board = board_before_ply(game, ply)
-        game_url = extract_game_url(game)
-
-        pre_move_uci = None
-        pre_move_fen = None
-        if ply > 1:
-            pre_move_uci = move_uci_at_ply(game, ply - 1)
-            pre_move_fen = board_before_ply(game, ply - 1).fen()
-
-        game_metadata = await self.games.get_game(game_id)
-        actual_source = game_metadata.get("source", "any") if game_metadata else "any"  # noqa: WPS226 — sentinel `any` for "no source filter" returned by both branches.
-        actual_username = game_metadata.get("username", "") if game_metadata else ""
-
-        # Compute tactical squares on-the-fly for highlighting
-        tactical_squares = self._compute_tactical_squares(
-            board, blunder_uci, best_move_uci
-        )
-
-        return BlunderPuzzle(
-            game_id=game_id,
-            ply=ply,
-            blunder_uci=blunder_uci,
-            blunder_san=blunder_san,
-            fen=board.fen(),
-            source=actual_source,
-            username=actual_username,
-            eval_before=eval_before,
-            eval_after=eval_after,
-            cp_loss=cp_loss,
-            player_color=player_color,
-            best_move_uci=best_move_uci,
-            best_move_san=best_move_san,
-            best_line=best_line,
-            best_move_eval=best_move_eval,
-            game_phase=blunder_game_phase,
-            tactical_pattern=blunder_tactical_pattern,
-            tactical_reason=blunder_tactical_reason,
-            difficulty=blunder_difficulty,
-            missed_mate_depth=blunder_missed_mate_depth,
-            tactical_squares=tactical_squares,
-            game_url=game_url,
-            pre_move_uci=pre_move_uci,
-            pre_move_fen=pre_move_fen,
+        return await self._build_puzzle(
+            blunder,
+            str(blunder["game_id"]),
+            int(blunder["ply"]),
         )
 
     async def get_specific_blunder(self, game_id: str, ply: int) -> BlunderPuzzle:
         blunder = await self.analysis.get_move_analysis(game_id, ply)
         if not blunder:
             raise ValueError(f"No analysis found for game {game_id} ply {ply}")
+        return await self._build_puzzle(blunder, game_id, ply)
 
-        blunder_uci = str(blunder["uci"])
-        blunder_san = str(blunder.get("san") or blunder_uci)
-        eval_before = int(blunder.get("eval_before", 0))
-        eval_after = int(blunder.get("eval_after", 0))
-        cp_loss = int(blunder.get("cp_loss", 0))
-        player = int(blunder["player"])
-        player_color = "white" if player == 0 else "black"
+    async def _gather_candidates(
+        self,
+        criteria: BlunderFilter,
+    ) -> list[dict[str, object]]:
+        merged_game_side_map = await self.games.get_all_game_side_map()
+        if not merged_game_side_map:
+            raise ValueError("No games found.")
 
-        best_move_uci = blunder.get("best_move_uci")
-        best_move_san = blunder.get("best_move_san")
-        best_line = blunder.get("best_line")
-        best_move_eval = blunder.get("best_move_eval")
-
-        game = await self.games.load_game(game_id)
-        board = board_before_ply(game, ply)
-        game_url = extract_game_url(game)
-
-        pre_move_uci = None
-        pre_move_fen = None
-        if ply > 1:
-            pre_move_uci = move_uci_at_ply(game, ply - 1)
-            pre_move_fen = board_before_ply(game, ply - 1).fen()
-
-        game_metadata = await self.games.get_game(game_id)
-        actual_source = game_metadata.get("source", "any") if game_metadata else "any"  # noqa: WPS226 — sentinel `any` for "no source filter" returned by both branches.
-        actual_username = game_metadata.get("username", "") if game_metadata else ""
-
-        tactical_squares = self._compute_tactical_squares(
-            board, blunder_uci, best_move_uci
+        blunders = await self.analysis.fetch_blunders_with_tactics(
+            game_phases=criteria.game_phases,
+            tactical_patterns=criteria.tactical_patterns,
+            player_colors=criteria.player_colors,
+            game_types=criteria.game_types,
+        )
+        candidates = filter_blunders(blunders, merged_game_side_map)
+        candidates = _filter_by_difficulty(candidates, criteria.difficulty_ranges)
+        candidates = await self._filter_by_date(
+            candidates,
+            criteria.start_date,
+            criteria.end_date,
+        )
+        return await self._filter_recently_solved(
+            candidates,
+            criteria.exclude_recently_solved,
+            criteria.spaced_repetition_days,
         )
 
-        return BlunderPuzzle(
-            game_id=game_id,
-            ply=ply,
-            blunder_uci=blunder_uci,
-            blunder_san=blunder_san,
-            fen=board.fen(),
-            source=actual_source,
-            username=actual_username,
-            eval_before=eval_before,
-            eval_after=eval_after,
-            cp_loss=cp_loss,
-            player_color=player_color,
-            best_move_uci=best_move_uci,
-            best_move_san=best_move_san,
-            best_line=best_line,
-            best_move_eval=best_move_eval,
-            game_phase=blunder.get("game_phase"),
-            tactical_pattern=blunder.get("tactical_pattern"),
-            tactical_reason=blunder.get("tactical_reason"),
-            difficulty=blunder.get("difficulty"),
-            missed_mate_depth=blunder.get("missed_mate_depth"),
-            tactical_squares=tactical_squares,
-            game_url=game_url,
-            pre_move_uci=pre_move_uci,
-            pre_move_fen=pre_move_fen,
+    async def _filter_by_date(
+        self,
+        candidates: list[dict[str, object]],
+        start_date: str | None,
+        end_date: str | None,
+    ) -> list[dict[str, object]]:
+        if not (start_date or end_date) or not candidates:
+            return candidates
+
+        kept = []
+        for candidate in candidates:
+            game = await self.games.get_game(str(candidate["game_id"]))
+            if game and _date_in_range(game.get("end_time_utc"), start_date, end_date):
+                kept.append(candidate)
+        return kept
+
+    async def _filter_recently_solved(
+        self,
+        candidates: list[dict[str, object]],
+        exclude_recently_solved: bool,
+        spaced_repetition_days: int,
+    ) -> list[dict[str, object]]:
+        if not exclude_recently_solved or not candidates:
+            return candidates
+
+        recently_solved = await self.attempts.get_recently_solved_puzzles(
+            days=spaced_repetition_days,
         )
+        if not recently_solved:
+            return candidates
+
+        return [
+            b
+            for b in candidates
+            if (b["game_id"], int(b["ply"])) not in recently_solved
+        ]
 
     async def _compute_weights(
         self,
@@ -279,85 +181,160 @@ class Trainer:
     ) -> list[float]:
         failure_rates = await self.attempts.get_failure_rates_by_pattern()
         has_history = bool(failure_rates)
+        return [_weight_for_blunder(b, failure_rates, has_history) for b in candidates]
 
-        weights = []
-        for blunder in candidates:
-            w = 1.0
-
-            # Short mate misses are the most learnable positions
-            missed_mate_depth = blunder.get("missed_mate_depth")
-            if missed_mate_depth is not None and missed_mate_depth > 0:
-                if missed_mate_depth <= _MATE_DEPTH_VERY_SHORT:
-                    w *= _WEIGHT_MATE_VERY_SHORT
-                elif missed_mate_depth <= _MATE_DEPTH_SHORT:
-                    w *= _WEIGHT_MATE_SHORT
-
-            # Patterns the player fails at more get higher weight
-            pattern = blunder.get("tactical_pattern")
-            if has_history:
-                rate = failure_rates.get(pattern, 0.0)
-                # Unseen patterns get a bonus so they're explored
-                if pattern is not None and pattern not in failure_rates:
-                    w *= _WEIGHT_UNSEEN_PATTERN
-                else:
-                    w *= 1.0 + rate
-
-            # Higher-difficulty positions are more valuable to practice
-            difficulty = blunder.get("difficulty")
-            if difficulty is not None:
-                if difficulty <= _DIFFICULTY_EASY:
-                    w *= _WEIGHT_EASY_DIFFICULTY  # easy = should have seen it
-                elif difficulty >= _DIFFICULTY_HARD:
-                    w *= _WEIGHT_HARD_DIFFICULTY  # very hard = less learnable
-
-            weights.append(w)
-
-        return weights
-
-    def _compute_tactical_squares(
+    async def _build_puzzle(
         self,
-        board: chess.Board,
-        blunder_uci: str,
-        best_move_uci: str | None,
-    ) -> list[str] | None:
-        """Compute squares involved in the tactical pattern for highlighting."""
-        if not best_move_uci:
-            return None
+        blunder: dict[str, object],
+        game_id: str,
+        ply: int,
+    ) -> BlunderPuzzle:
+        blunder_uci = str(blunder["uci"])
+        best_move_uci = blunder.get("best_move_uci")
 
-        blunder_move = None
-        best_move = None
+        game = await self.games.load_game(game_id)
+        board = board_before_ply(game, ply)
+        pre_move_uci, pre_move_fen = (
+            (move_uci_at_ply(game, ply - 1), board_before_ply(game, ply - 1).fen())
+            if ply > 1
+            else (None, None)
+        )
+        source, username = _source_and_username(
+            await self.games.get_game(game_id),
+        )
 
-        with contextlib.suppress(ValueError):
-            blunder_move = chess.Move.from_uci(blunder_uci)
+        return BlunderPuzzle(
+            game_id=game_id,
+            ply=ply,
+            blunder_uci=blunder_uci,
+            blunder_san=str(blunder.get("san") or blunder_uci),
+            fen=board.fen(),
+            source=source,
+            username=username,
+            eval_before=int(blunder.get("eval_before", 0)),
+            eval_after=int(blunder.get("eval_after", 0)),
+            cp_loss=int(blunder.get("cp_loss", 0)),
+            player_color="white" if int(blunder["player"]) == 0 else "black",
+            best_move_uci=best_move_uci,
+            best_move_san=blunder.get("best_move_san"),
+            best_line=blunder.get("best_line"),
+            best_move_eval=blunder.get("best_move_eval"),
+            game_phase=blunder.get("game_phase"),
+            tactical_pattern=blunder.get("tactical_pattern"),
+            tactical_reason=blunder.get("tactical_reason"),
+            difficulty=blunder.get("difficulty"),
+            missed_mate_depth=blunder.get("missed_mate_depth"),
+            tactical_squares=_compute_tactical_squares(
+                board,
+                blunder_uci,
+                best_move_uci,
+            ),
+            game_url=extract_game_url(game),
+            pre_move_uci=pre_move_uci,
+            pre_move_fen=pre_move_fen,
+        )
 
-        with contextlib.suppress(ValueError):
-            best_move = chess.Move.from_uci(best_move_uci)
 
-        if not blunder_move:
-            return None
+def _filter_by_difficulty(
+    candidates: list[dict[str, object]],
+    difficulty_ranges: list[tuple[int, int]] | None,
+) -> list[dict[str, object]]:
+    if not difficulty_ranges or not candidates:
+        return candidates
+    return [
+        b
+        for b in candidates
+        if (d := b.get("difficulty")) is not None
+        and any(lo <= d <= hi for lo, hi in difficulty_ranges)
+    ]
 
-        # Verify the moves are legal on this board
-        if blunder_move not in board.legal_moves:
-            return None
 
-        try:
-            result = classify_blunder_tactics(board, blunder_move, best_move)
-        except (AssertionError, ValueError):
-            # If tactical analysis fails, return None
-            return None
+def _date_in_range(
+    game_date: object,
+    start_date: str | None,
+    end_date: str | None,
+) -> bool:
+    if not isinstance(game_date, str):
+        return False
+    if start_date and game_date < start_date:
+        return False
+    return not (end_date and game_date > end_date)
 
-        squares = []
 
-        # Get squares from missed tactic (best move)
-        if result.missed_tactic and result.missed_tactic.squares:
-            for sq in result.missed_tactic.squares:
-                squares.append(chess.square_name(sq))
+def _weight_for_blunder(
+    blunder: dict[str, object],
+    failure_rates: dict[object, float],
+    has_history: bool,
+) -> float:
+    weight = _mate_depth_multiplier(blunder.get("missed_mate_depth"))
 
-        # Get squares from allowed tactic
-        if result.allowed_tactic and result.allowed_tactic.squares:
-            for sq in result.allowed_tactic.squares:
-                sq_name = chess.square_name(sq)
-                if sq_name not in squares:
-                    squares.append(sq_name)
+    if has_history:
+        pattern = blunder.get("tactical_pattern")
+        if pattern is not None and pattern not in failure_rates:
+            weight *= _WEIGHT_UNSEEN_PATTERN
+        else:
+            weight *= 1.0 + failure_rates.get(pattern, 0.0)
 
-        return squares if squares else None
+    difficulty = blunder.get("difficulty")
+    if isinstance(difficulty, int):
+        if difficulty <= _DIFFICULTY_EASY:
+            weight *= _WEIGHT_EASY_DIFFICULTY
+        elif difficulty >= _DIFFICULTY_HARD:
+            weight *= _WEIGHT_HARD_DIFFICULTY
+
+    return weight
+
+
+def _mate_depth_multiplier(missed_mate_depth: object) -> float:
+    if not isinstance(missed_mate_depth, int) or missed_mate_depth <= 0:
+        return 1.0
+    if missed_mate_depth <= _MATE_DEPTH_VERY_SHORT:
+        return _WEIGHT_MATE_VERY_SHORT
+    if missed_mate_depth <= _MATE_DEPTH_SHORT:
+        return _WEIGHT_MATE_SHORT
+    return 1.0
+
+
+def _source_and_username(game_metadata: dict[str, object] | None) -> tuple[str, str]:
+    if not game_metadata:
+        return "any", ""  # noqa: WPS226 — sentinel `any` for "no source filter".
+    return (
+        str(game_metadata.get("source", "any")),  # noqa: WPS226 — same sentinel.
+        str(game_metadata.get("username", "")),
+    )
+
+
+def _compute_tactical_squares(
+    board: chess.Board,
+    blunder_uci: str,
+    best_move_uci: str | None,
+) -> list[str] | None:
+    if not best_move_uci:
+        return None
+
+    blunder_move = _safe_parse_uci(blunder_uci)
+    if not blunder_move or blunder_move not in board.legal_moves:
+        return None
+
+    try:
+        result = classify_blunder_tactics(
+            board,
+            blunder_move,
+            _safe_parse_uci(best_move_uci),
+        )
+    except (AssertionError, ValueError):
+        return None
+
+    seen: list[str] = []
+    for tactic in (result.missed_tactic, result.allowed_tactic):
+        for sq in getattr(tactic, "squares", None) or ():
+            name = chess.square_name(sq)
+            if name not in seen:
+                seen.append(name)
+    return seen or None
+
+
+def _safe_parse_uci(uci: str) -> chess.Move | None:
+    with contextlib.suppress(ValueError):
+        return chess.Move.from_uci(uci)
+    return None

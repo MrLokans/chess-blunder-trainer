@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from blunder_tutor.services.analysis_service import AnalysisService, PositionAnalysis
-from blunder_tutor.trainer import BlunderPuzzle, Trainer
+from blunder_tutor.trainer import BlunderFilter, BlunderPuzzle, Trainer
 from blunder_tutor.utils.chess_utils import format_eval
 
 
@@ -31,15 +31,17 @@ class PuzzleService:
         difficulty_ranges: list[tuple[int, int]] | None = None,
     ) -> PuzzleWithAnalysis:
         puzzle = await self.trainer.pick_random_blunder(
-            start_date=start_date,
-            end_date=end_date,
-            exclude_recently_solved=exclude_recently_solved,
-            spaced_repetition_days=spaced_repetition_days,
-            game_phases=game_phases,
-            tactical_patterns=tactical_patterns,
-            game_types=game_types,
-            player_colors=player_colors,
-            difficulty_ranges=difficulty_ranges,
+            BlunderFilter(
+                start_date=start_date,
+                end_date=end_date,
+                exclude_recently_solved=exclude_recently_solved,
+                spaced_repetition_days=spaced_repetition_days,
+                game_phases=game_phases,
+                tactical_patterns=tactical_patterns,
+                game_types=game_types,
+                player_colors=player_colors,
+                difficulty_ranges=difficulty_ranges,
+            ),
         )
 
         if puzzle.best_move_uci and puzzle.best_move_san and puzzle.best_line:
