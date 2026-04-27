@@ -9,16 +9,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.features import DEFAULTS
 from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
-from blunder_tutor.web.request_helpers import _cache_key, _db_path_for
+from blunder_tutor.web.request_helpers import _cache_key
 from blunder_tutor.web.settings_snapshot import get_settings_snapshot
 from blunder_tutor.web.tls import is_https_request
-
-# Re-exported so existing call sites (`web/api/settings.py`, tests)
-# don't need to update their imports. The canonical home is
-# `web/request_helpers.py` — that's where settings_snapshot.py imports
-# from to break what would otherwise be a circular import via this
-# module.
-__all__ = ["_cache_key", "_db_path_for"]
 
 
 class UserDbPathMiddleware(BaseHTTPMiddleware):

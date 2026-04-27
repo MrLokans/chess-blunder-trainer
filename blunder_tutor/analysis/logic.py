@@ -8,12 +8,11 @@ import chess.engine
 from tqdm import tqdm
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
-from blunder_tutor.analysis.pipeline import (
+from blunder_tutor.analysis.pipeline.executor import PipelineExecutor, PipelineReport
+from blunder_tutor.analysis.pipeline.pipeline import (
     AnalysisPipeline,
     PipelineConfig,
-    PipelineExecutor,
     PipelinePreset,
-    PipelineReport,
 )
 from blunder_tutor.analysis.pipeline.steps import get_all_steps
 from blunder_tutor.analysis.thresholds import Thresholds
@@ -25,8 +24,6 @@ if TYPE_CHECKING:
 
 
 DEFAULT_CONCURRENCY = min(DEFAULT_ENGINE_CONCURRENCY, os.cpu_count() or 1)
-
-__all__ = ["GameAnalyzer", "Thresholds"]
 
 
 class GameAnalyzer:

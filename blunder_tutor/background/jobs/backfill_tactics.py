@@ -10,10 +10,10 @@ import chess
 
 from blunder_tutor.analysis.tactics import classify_blunder_tactics
 from blunder_tutor.background.base import BaseJob
-from blunder_tutor.events import JobEvent
+from blunder_tutor.events.event_types import JobEvent
 
 if TYPE_CHECKING:
-    from blunder_tutor.events import EventBus
+    from blunder_tutor.events.event_bus import EventBus
     from blunder_tutor.repositories.analysis import AnalysisRepository
     from blunder_tutor.repositories.game_repository import GameRepository
 

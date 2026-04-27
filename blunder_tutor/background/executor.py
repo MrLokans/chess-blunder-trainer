@@ -13,7 +13,8 @@ from blunder_tutor.core.dependencies import (
     clear_context,
     set_context,
 )
-from blunder_tutor.events import EventBus, EventType, JobExecutionRequestEvent
+from blunder_tutor.events.event_bus import EventBus
+from blunder_tutor.events.event_types import EventType, JobExecutionRequestEvent
 
 if TYPE_CHECKING:
     from blunder_tutor.analysis.engine_pool import WorkCoordinator

@@ -22,7 +22,8 @@ from blunder_tutor.core.dependencies import (
     get_settings_repository,
     set_context,
 )
-from blunder_tutor.events import EventBus, JobExecutionRequestEvent
+from blunder_tutor.events.event_bus import EventBus
+from blunder_tutor.events.event_types import JobExecutionRequestEvent
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.services.job_service import JobService
 

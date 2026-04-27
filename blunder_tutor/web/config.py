@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 import argparse
-import typing
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Literal, Self
 
 from pydantic import BaseModel, model_validator
 
-from blunder_tutor import constants
 from blunder_tutor.cache.config import CacheConfig
-from blunder_tutor.constants import AUTH_MODE_CREDENTIALS, AUTH_MODE_NONE
+from blunder_tutor.constants import (
+    AUTH_MODE_CREDENTIALS,
+    AUTH_MODE_NONE,
+    DEFAULT_DB_PATH,
+    DEFAULT_ENGINE_DEPTH,
+    DEFAULT_ENGINE_TIME_LIMIT,
+    TEMPLATES_PATH,
+)
 
 AuthMode = Literal["none", "credentials"]
 
@@ -47,8 +53,8 @@ def _parse_bool(raw: str | None, *, default: bool) -> bool:
 
 
 class DataConfig(BaseModel):
-    db_path: Path = constants.DEFAULT_DB_PATH
-    template_dir: Path = constants.TEMPLATES_PATH
+    db_path: Path = DEFAULT_DB_PATH
+    template_dir: Path = TEMPLATES_PATH
 
 
 class AuthConfig(BaseModel):
@@ -124,8 +130,8 @@ class AuthConfig(BaseModel):
 
 class EngineConfig(BaseModel):
     path: str
-    depth: int = constants.DEFAULT_ENGINE_DEPTH
-    time_limit: float = constants.DEFAULT_ENGINE_TIME_LIMIT
+    depth: int = DEFAULT_ENGINE_DEPTH
+    time_limit: float = DEFAULT_ENGINE_TIME_LIMIT
 
 
 class ThrottleConfig(BaseModel):
@@ -168,7 +174,7 @@ class AppConfig(BaseModel):
         return self
 
 
-def _parse_positive_int(environ: typing.Mapping, key: str, default: int) -> int:
+def _parse_positive_int(environ: Mapping, key: str, default: int) -> int:
     raw = environ.get(key)
     if raw is None:
         return default
@@ -205,7 +211,7 @@ def _parse_optional_bool(raw: str | None) -> bool | None:
     raise ValueError(f"expected boolean-like value, got {raw!r}")
 
 
-def _build_auth_config(environ: typing.Mapping) -> AuthConfig:
+def _build_auth_config(environ: Mapping) -> AuthConfig:
     """Extract auth-related env vars and let AuthConfig validate them."""
     return AuthConfig(
         mode=_parse_auth_mode(environ.get("AUTH_MODE")),
@@ -240,7 +246,7 @@ def _parse_optional_positive_int(raw: str | None) -> int | None:
     return value
 
 
-def get_engine_path(environ: typing.Mapping) -> str:
+def get_engine_path(environ: Mapping) -> str:
     engine_path = environ.get("STOCKFISH_BINARY")
     if engine_path is not None:
         return engine_path
@@ -256,9 +262,7 @@ def get_engine_path(environ: typing.Mapping) -> str:
     )
 
 
-def config_factory(
-    parsed_args: argparse.Namespace, environ: typing.Mapping
-) -> AppConfig:
+def config_factory(parsed_args: argparse.Namespace, environ: Mapping) -> AppConfig:
     final_engine_path = (
         parsed_args and parsed_args.engine_path or get_engine_path(environ)
     )

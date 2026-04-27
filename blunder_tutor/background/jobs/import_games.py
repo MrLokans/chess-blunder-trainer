@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from blunder_tutor.auth import UserId
 from blunder_tutor.background.base import BaseJob
 from blunder_tutor.background.registry import register_job
-from blunder_tutor.events import EventBus, JobExecutionRequestEvent
+from blunder_tutor.events.event_bus import EventBus
+from blunder_tutor.events.event_types import JobExecutionRequestEvent
 from blunder_tutor.fetchers import chesscom, lichess
 
 if TYPE_CHECKING:

@@ -45,7 +45,7 @@ from blunder_tutor.core.dependencies import (
     get_settings_repository,
     get_work_coordinator,
 )
-from blunder_tutor.events import EventBus
+from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import TrapsEvent
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository

@@ -9,7 +9,6 @@ from pathlib import Path
 from blunder_tutor import secure_fs
 from blunder_tutor.auth import User, UserId
 from blunder_tutor.migrations import run_migrations
-from blunder_tutor.secure_fs import secure_user_dir
 from blunder_tutor.web.per_user_cache import PerUserCache
 
 log = logging.getLogger(__name__)
@@ -47,7 +46,7 @@ async def materialize_user_dir(users_dir: Path, user: User) -> None:
     write lock.
     """
     user_db_path = resolve_user_db_path(users_dir, user.id)
-    secure_user_dir(user_db_path.parent)
+    secure_fs.secure_user_dir(user_db_path.parent)
     run_migrations(user_db_path)
 
 

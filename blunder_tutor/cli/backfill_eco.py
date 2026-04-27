@@ -5,8 +5,8 @@ from tqdm import tqdm
 
 from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.migrations import run_migrations
-from blunder_tutor.repositories import GameRepository
 from blunder_tutor.repositories.analysis import AnalysisRepository
+from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.services.eco_backfill_service import ECOBackfillService
 from blunder_tutor.web.config import AppConfig
 

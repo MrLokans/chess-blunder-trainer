@@ -15,7 +15,7 @@ from blunder_tutor.constants import (
     JOB_TYPE_DELETE_ALL_DATA,
     JOB_TYPE_IMPORT,
 )
-from blunder_tutor.events import JobExecutionRequestEvent
+from blunder_tutor.events.event_types import JobExecutionRequestEvent
 from blunder_tutor.fetchers.validation import validate_username
 from blunder_tutor.web.api.schemas import ErrorResponse, SuccessResponse
 from blunder_tutor.web.dependencies import (
@@ -23,7 +23,7 @@ from blunder_tutor.web.dependencies import (
     JobServiceDep,
     SettingsRepoDep,
 )
-from blunder_tutor.web.middleware import _cache_key
+from blunder_tutor.web.request_helpers import _cache_key
 
 # Settings request validation bounds.
 SYNC_INTERVAL_MAX_HOURS = 168  # 1 week

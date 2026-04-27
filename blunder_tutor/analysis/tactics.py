@@ -702,24 +702,3 @@ def analyze_blunder_tactics(
         "blunder_creates": blunder_report,
         "best_move_uses": best_move_report,
     }
-
-
-# Also export new API
-__all__ = [
-    "TacticalPattern",
-    "TacticalMotif",
-    "BlunderTactics",
-    "PATTERN_LABELS",
-    "classify_blunder_tactics",
-    "analyze_move_tactics",
-    "analyze_position_weaknesses",
-    "detect_fork",
-    "detect_pin",
-    "detect_skewer",
-    "detect_discovered_attack",
-    "detect_double_check",
-    "detect_hanging_piece",
-    "detect_back_rank_threat",
-    # Legacy
-    "analyze_blunder_tactics",
-]

@@ -407,7 +407,9 @@ class TestI18nKeys:
 
 
 # White Bc4 attacked by black pb5; blunder a2a3 ignores the threat; best Bf1 retreats
-_IGNORED_THREAT_FEN = "r1bqkb1r/p1pp1ppp/2n1pn2/1p6/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 5"
+_IGNORED_THREAT_FEN = (
+    "r1bqkb1r/p1pp1ppp/2n1pn2/1p6/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 5"
+)
 
 
 class TestIgnoredThreat:

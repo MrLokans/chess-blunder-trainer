@@ -5,8 +5,8 @@ from blunder_tutor.analysis.logic import DEFAULT_CONCURRENCY, GameAnalyzer
 from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.constants import DEFAULT_ENGINE_DEPTH
 from blunder_tutor.migrations import run_migrations
-from blunder_tutor.repositories import GameRepository
 from blunder_tutor.repositories.analysis import AnalysisRepository
+from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.web.config import AppConfig
 
 

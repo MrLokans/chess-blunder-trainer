@@ -16,10 +16,10 @@ import chess.pgn
 import pytest
 
 from blunder_tutor.analysis.logic import GameAnalyzer
-from blunder_tutor.analysis.pipeline import (
+from blunder_tutor.analysis.pipeline.executor import PipelineExecutor
+from blunder_tutor.analysis.pipeline.pipeline import (
     AnalysisPipeline,
     PipelineConfig,
-    PipelineExecutor,
     PipelinePreset,
 )
 from blunder_tutor.analysis.pipeline.steps import get_all_steps

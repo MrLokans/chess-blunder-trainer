@@ -23,7 +23,7 @@ from blunder_tutor.constants import (
     JOB_TYPE_IMPORT,
     JOB_TYPE_SYNC,
 )
-from blunder_tutor.events import JobExecutionRequestEvent
+from blunder_tutor.events.event_types import JobExecutionRequestEvent
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     AnalysisRepoDep,

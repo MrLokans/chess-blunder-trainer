@@ -32,7 +32,8 @@ from blunder_tutor.core.dependencies import (
     clear_context,
     set_context,
 )
-from blunder_tutor.events import EventBus, EventType, JobExecutionRequestEvent
+from blunder_tutor.events.event_bus import EventBus
+from blunder_tutor.events.event_types import EventType, JobExecutionRequestEvent
 from blunder_tutor.web.bypass_auth import LOCAL_USER_ID
 from tests.auth.conftest import (
     DEFAULT_PASSWORD,

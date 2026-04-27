@@ -35,18 +35,16 @@ from blunder_tutor.auth import (
     initialize_auth_schema,
     is_user_id_shape,
 )
+from blunder_tutor.auth.fastapi import SESSION_COOKIE_NAME
 from blunder_tutor.background.executor import DbPathResolver, JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
-from blunder_tutor.cache import (
-    CacheInvalidator,
-    InMemoryCacheBackend,
-    NullCacheBackend,
-)
+from blunder_tutor.cache.backend import InMemoryCacheBackend, NullCacheBackend
 from blunder_tutor.cache.decorator import set_cache_backend
+from blunder_tutor.cache.invalidation import CacheInvalidator
 from blunder_tutor.constants import AUTH_MODE_CREDENTIALS, AUTH_MODE_NONE
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.websocket_manager import ConnectionManager
-from blunder_tutor.i18n import TranslationManager
+from blunder_tutor.i18n.manager import TranslationManager
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web import routes
@@ -58,7 +56,6 @@ from blunder_tutor.web.auth_hooks import (
 )
 from blunder_tutor.web.bypass_auth import LOCAL_USER_ID, BypassAuthMiddleware
 from blunder_tutor.web.config import AppConfig, config_factory
-from blunder_tutor.web.cookies import SESSION_COOKIE_NAME
 from blunder_tutor.web.middleware import (
     CsrfOriginMiddleware,
     DemoModeMiddleware,

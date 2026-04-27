@@ -17,13 +17,8 @@ from fastapi import HTTPException, Request, Response, status
 from fastapi_throttle import RateLimiter
 
 from blunder_tutor.auth import AuthService
-from blunder_tutor.auth.fastapi import build_auth_router
-from blunder_tutor.web.cookies import (
-    clear_session_cookie,
-)
-from blunder_tutor.web.cookies import (
-    set_session_cookie as _set_session_cookie,
-)
+from blunder_tutor.auth.fastapi import build_auth_router, clear_session_cookie
+from blunder_tutor.web.cookies import set_session_cookie as _set_session_cookie
 
 
 def _auth_service_provider(request: Request) -> AuthService:

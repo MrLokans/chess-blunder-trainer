@@ -6,8 +6,8 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from blunder_tutor.auth import AuthService, UserContext
+from blunder_tutor.auth.fastapi import clear_session_cookie
 from blunder_tutor.repositories.settings import SettingsRepository
-from blunder_tutor.web.cookies import clear_session_cookie
 
 auth_ui_router = APIRouter()
 

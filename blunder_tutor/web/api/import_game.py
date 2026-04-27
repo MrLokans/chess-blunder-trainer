@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from blunder_tutor.auth.fastapi import UserContextDep
 from blunder_tutor.constants import JOB_TYPE_IMPORT_PGN
-from blunder_tutor.events import JobExecutionRequestEvent
+from blunder_tutor.events.event_types import JobExecutionRequestEvent
 from blunder_tutor.web.dependencies import (
     ConfigDep,
     EventBusDep,
