@@ -18,7 +18,7 @@ class AnalysisStep(ABC):
 
     @property
     def produces(self) -> frozenset[str]:
-        return frozenset({self.step_id})
+        return frozenset((self.step_id,))
 
     @abstractmethod
     async def execute(self, ctx: StepContext) -> StepResult: ...

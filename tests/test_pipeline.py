@@ -73,8 +73,8 @@ class TestAnalysisPipeline:
 
     def test_get_ordered_steps_with_dependencies(self):
         step_a = DummyStep("a")
-        step_b = DummyStep("b", frozenset({"a"}))
-        step_c = DummyStep("c", frozenset({"b"}))
+        step_b = DummyStep("b", frozenset(("a",)))
+        step_c = DummyStep("c", frozenset(("b",)))
         steps = [step_a, step_b, step_c]
 
         config = PipelineConfig(steps=["c", "b", "a"])

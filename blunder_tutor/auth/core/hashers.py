@@ -79,7 +79,7 @@ _default_hasher: BcryptHasher | None = None
 
 
 def _get_default_hasher() -> BcryptHasher:
-    global _default_hasher
+    global _default_hasher  # noqa: PLW0603 — intentional module-level singleton: lazy-init the dummy hasher used by timing-equalization in `verify_password` before the per-process default exists.
     if _default_hasher is None:
         _default_hasher = BcryptHasher(  # noqa: WPS122 — module-level lazy-init, not a throwaway.
             ValidationRules.default(),

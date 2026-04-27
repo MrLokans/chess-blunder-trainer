@@ -153,7 +153,7 @@ class MoveQualityStep(AnalysisStep):
 
     @property
     def depends_on(self) -> frozenset[str]:
-        return frozenset({"stockfish"})
+        return frozenset(("stockfish",))
 
     async def execute(self, ctx: StepContext) -> StepResult:
         stockfish_result = ctx.get_step_result("stockfish")

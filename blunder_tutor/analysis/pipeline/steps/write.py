@@ -17,7 +17,7 @@ class WriteAnalysisStep(AnalysisStep):
 
     @property
     def depends_on(self) -> frozenset[str]:
-        return frozenset({"move_quality", "phase", "eco", "tactics"})
+        return frozenset(("move_quality", "phase", "eco", "tactics"))
 
     async def execute(self, ctx: StepContext) -> StepResult:
         move_quality_result = ctx.get_step_result("move_quality")

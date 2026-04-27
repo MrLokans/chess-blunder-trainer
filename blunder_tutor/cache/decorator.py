@@ -31,7 +31,7 @@ _default_ttl: int = 300
 
 
 def set_cache_backend(backend: CacheBackend | None, *, default_ttl: int = 300) -> None:
-    global _cache_backend, _default_ttl
+    global _cache_backend, _default_ttl  # noqa: PLW0603 — intentional module-level singleton: cache backend + default TTL are configured once at app boot from `cache/__init__.py`.
     _cache_backend = backend  # noqa: WPS122 — module-level state, not a throwaway.
     _default_ttl = default_ttl  # noqa: WPS122 — module-level state, not a throwaway.
 

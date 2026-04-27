@@ -26,12 +26,12 @@ SOURCE_ROOT = REPO_ROOT / "blunder_tutor"
 # Modules permitted to read or write ``app.state.none_mode_db_path``.
 # Paths are repo-relative POSIX strings.
 ALLOWED_READERS = frozenset(
-    {
-        "blunder_tutor/web/app.py",  # sole writer; per-user DB path now
-        # routes through `app.state.db_path_resolver` +
-        # `UserDbPathMiddleware` instead of being read directly from
-        # `none_mode_db_path` by other modules.
-    }
+    (
+        # sole writer; per-user DB path now routes through
+        # `app.state.db_path_resolver` + `UserDbPathMiddleware` instead
+        # of being read directly from `none_mode_db_path` by other modules.
+        "blunder_tutor/web/app.py",
+    )
 )
 
 

@@ -45,7 +45,7 @@ class UserDbPathMiddleware(BaseHTTPMiddleware):
 
 
 _HTTP_POST = "POST"
-MUTATION_METHODS = frozenset({_HTTP_POST, "PUT", "PATCH", "DELETE"})
+MUTATION_METHODS = frozenset((_HTTP_POST, "PUT", "PATCH", "DELETE"))
 
 
 # Paths that accept mutations from cross-origin contexts by design.
@@ -169,7 +169,7 @@ class DemoModeMiddleware(BaseHTTPMiddleware):
 # `AUTH_API_PREFIX` explicitly so a future refactor that tightens the
 # `/api/` guard doesn't accidentally trap the auth API behind setup.
 _SETUP_EXEMPT_PATHS = AUTH_UI_PATHS | frozenset(
-    {"/api/", "/health", "/static", "/favicon.ico", AUTH_API_PREFIX}
+    ("/api/", "/health", "/static", "/favicon.ico", AUTH_API_PREFIX)
 )
 
 

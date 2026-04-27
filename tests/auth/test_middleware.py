@@ -30,7 +30,7 @@ from tests.helpers.auth import build_test_auth_service
 _TEST_MIDDLEWARE_CONFIG = MiddlewareConfig(
     cookie_name="session_token",
     exempt_paths=frozenset(
-        {"/login", "/signup", "/setup", "/logout", "/health", "/favicon.ico"}
+        ("/login", "/signup", "/setup", "/logout", "/health", "/favicon.ico")
     ),
     exempt_prefixes=("/static", "/api/auth/"),
 )

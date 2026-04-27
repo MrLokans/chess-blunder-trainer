@@ -37,8 +37,8 @@ _SESSION_IDLE_DEFAULT = _SECONDS_PER_DAY * _SESSION_IDLE_DAYS
 # in practice anything past ~14 is too slow for a login path).
 _BCRYPT_COST_MAX = 31
 
-_TRUTHY = frozenset({"true", "1", "yes"})
-_FALSY = frozenset({"false", "0", "no"})
+_TRUTHY = frozenset(("true", "1", "yes"))
+_FALSY = frozenset(("false", "0", "no"))
 
 
 def _parse_bool(raw: str | None, *, default: bool) -> bool:
