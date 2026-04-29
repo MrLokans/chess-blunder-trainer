@@ -26,13 +26,35 @@ class ECODatabase:
 
     def classify(self, board: chess.Board) -> ECOClassification | None:
         cursor = board.copy()
-        for _ in range(len(cursor.move_stack)):
+        while True:
             match = self._positions.get(cursor.epd())
             if match is not None:
                 return match
+            if not cursor.move_stack:
+                return None
             cursor.pop()
 
-        return self._positions.get(cursor.epd())
+
+def _strip_move_number(token: str) -> str | None:
+    """Return the SAN portion of a PGN token, or None if the token has no move."""
+    if token.endswith(".") or (token[0].isdigit() and "." not in token):
+        return None
+    if "." in token:
+        stripped = token.split(".")[-1]
+        return stripped or None
+    return token
+
+
+def _parse_pgn_moves(pgn: str) -> chess.Board | None:
+    board = chess.Board()
+    try:
+        for token in pgn.split():
+            san = _strip_move_number(token)
+            if san is not None:
+                board.push_san(san)
+    except (ValueError, chess.InvalidMoveError, chess.AmbiguousMoveError):
+        return None
+    return board
 
 
 def _load_eco_entries(path: Path) -> dict[str, ECOClassification]:
@@ -40,31 +62,20 @@ def _load_eco_entries(path: Path) -> dict[str, ECOClassification]:
     move_counts: dict[str, int] = {}
 
     with open(path, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f, delimiter="\t")
-        for row in reader:
-            eco_code = row["eco"]
-            name = row["name"]
-            pgn = row["pgn"]
-
-            try:
-                board = chess.Board()
-                for token in pgn.split():
-                    if token.endswith(".") or (token[0].isdigit() and "." not in token):
-                        continue
-                    if "." in token:
-                        token = token.split(".")[-1]
-                        if not token:
-                            continue
-                    board.push_san(token)
-            except (ValueError, chess.InvalidMoveError, chess.AmbiguousMoveError):
-                logger.warning("Skipping invalid ECO entry: %s %s", eco_code, name)
+        for row in csv.DictReader(f, delimiter="\t"):
+            board = _parse_pgn_moves(row["pgn"])
+            if board is None:
+                logger.warning(
+                    "Skipping invalid ECO entry: %s %s", row["eco"], row["name"]
+                )
                 continue
 
             epd = board.epd()
             num_moves = len(board.move_stack)
-
             if epd not in positions or num_moves >= move_counts[epd]:
-                positions[epd] = ECOClassification(code=eco_code, name=name, moves=pgn)
+                positions[epd] = ECOClassification(
+                    code=row["eco"], name=row["name"], moves=row["pgn"]
+                )
                 move_counts[epd] = num_moves
 
     return positions

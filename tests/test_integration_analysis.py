@@ -15,7 +15,7 @@ import chess.engine
 import chess.pgn
 import pytest
 
-from blunder_tutor.analysis.logic import GameAnalyzer
+from blunder_tutor.analysis.logic import BulkAnalysisOptions, GameAnalyzer
 from blunder_tutor.analysis.pipeline.executor import PipelineExecutor
 from blunder_tutor.analysis.pipeline.pipeline import (
     AnalysisPipeline,
@@ -286,10 +286,12 @@ class TestGameAnalyzerIntegration:
         )
 
         result = await analyzer.analyze_bulk(
-            depth=8,
-            source="test",
-            username="testuser",
-            concurrency=1,
+            BulkAnalysisOptions(
+                depth=8,
+                source="test",
+                username="testuser",
+                concurrency=1,
+            )
         )
 
         assert result["analyzed"] == 2
@@ -318,10 +320,12 @@ class TestGameAnalyzerIntegration:
         )
 
         result = await analyzer.analyze_bulk(
-            depth=8,
-            source="test",
-            username="testuser",
-            concurrency=2,
+            BulkAnalysisOptions(
+                depth=8,
+                source="test",
+                username="testuser",
+                concurrency=2,
+            )
         )
 
         assert result["analyzed"] == 3
@@ -350,10 +354,12 @@ class TestGameAnalyzerIntegration:
 
         # Analyze first time
         result1 = await analyzer.analyze_bulk(
-            depth=8,
-            source="test",
-            username="testuser",
-            concurrency=1,
+            BulkAnalysisOptions(
+                depth=8,
+                source="test",
+                username="testuser",
+                concurrency=1,
+            )
         )
         assert result1["analyzed"] == 1
 
@@ -362,10 +368,12 @@ class TestGameAnalyzerIntegration:
 
         # Analyze again - should skip the first, analyze the second
         result2 = await analyzer.analyze_bulk(
-            depth=8,
-            source="test",
-            username="testuser",
-            concurrency=1,
+            BulkAnalysisOptions(
+                depth=8,
+                source="test",
+                username="testuser",
+                concurrency=1,
+            )
         )
         assert result2["analyzed"] == 1
         assert result2["skipped"] == 1

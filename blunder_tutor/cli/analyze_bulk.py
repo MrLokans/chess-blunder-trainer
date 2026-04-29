@@ -1,9 +1,9 @@
 import argparse
 import asyncio
 
-from blunder_tutor.analysis.logic import DEFAULT_CONCURRENCY, GameAnalyzer
+from blunder_tutor.analysis.logic import BulkAnalysisOptions, GameAnalyzer
 from blunder_tutor.cli.base import CLICommand
-from blunder_tutor.constants import DEFAULT_ENGINE_DEPTH
+from blunder_tutor.constants import DEFAULT_CONCURRENCY, DEFAULT_ENGINE_DEPTH
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
@@ -31,13 +31,15 @@ class AnalyzeBulkCommand(CLICommand):
                 engine_path=config.engine_path,
             )
             result = await analyzer.analyze_bulk(
-                depth=args.depth,
-                time_limit=args.time,
-                source=args.source,
-                username=args.username,
-                limit=args.limit,
-                force=args.force,
-                concurrency=args.concurrency,
+                BulkAnalysisOptions(
+                    depth=args.depth,
+                    time_limit=args.time,
+                    source=args.source,
+                    username=args.username,
+                    limit=args.limit,
+                    force=args.force,
+                    concurrency=args.concurrency,
+                )
             )
             print(
                 "Bulk analysis complete: "

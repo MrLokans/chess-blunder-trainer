@@ -304,8 +304,6 @@ async def puzzle(
         if puzzle_data.tactical_pattern is not None
         else None,
         cp_loss=puzzle_data.cp_loss,
-        eval_before=puzzle_data.eval_before,
-        eval_after=puzzle_data.eval_after,
         best_line=analysis.best_line,
     )
 
@@ -382,8 +380,6 @@ async def specific_puzzle(
         if puzzle_data.tactical_pattern is not None
         else None,
         cp_loss=puzzle_data.cp_loss,
-        eval_before=puzzle_data.eval_before,
-        eval_after=puzzle_data.eval_after,
         best_line=analysis.best_line,
     )
 

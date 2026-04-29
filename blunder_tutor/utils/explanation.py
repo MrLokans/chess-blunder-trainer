@@ -146,6 +146,8 @@ PIECE_I18N_KEYS = {
     chess.KING: "chess.piece.king",
 }
 
+_PIECE_KEY_PREFIX = "chess.piece."
+
 
 @dataclass(frozen=True)
 class I18nMessage:
@@ -165,28 +167,24 @@ class ResolvedExplanation:
     best_move_text: str
 
 
+def _resolve_message(message: I18nMessage | None, t: Callable[..., str]) -> str:
+    if message is None:
+        return ""
+    params = dict(message.params)
+    for key, value in list(params.items()):
+        if isinstance(value, str) and value.startswith(_PIECE_KEY_PREFIX):
+            params[key] = t(value)
+    return t(message.key, **params)
+
+
 def resolve_explanation(
     explanation: BlunderExplanation,
     t: Callable[..., str],
 ) -> ResolvedExplanation:
-    blunder_text = ""
-    if explanation.blunder:
-        params = dict(explanation.blunder.params)
-        # Resolve any piece key references (values starting with "chess.piece.")
-        for k, v in list(params.items()):
-            if isinstance(v, str) and v.startswith("chess.piece."):
-                params[k] = t(v)
-        blunder_text = t(explanation.blunder.key, **params)
-
-    best_text = ""
-    if explanation.best_move:
-        params = dict(explanation.best_move.params)
-        for k, v in list(params.items()):
-            if isinstance(v, str) and v.startswith("chess.piece."):
-                params[k] = t(v)
-        best_text = t(explanation.best_move.key, **params)
-
-    return ResolvedExplanation(blunder_text=blunder_text, best_move_text=best_text)
+    return ResolvedExplanation(
+        blunder_text=_resolve_message(explanation.blunder, t),
+        best_move_text=_resolve_message(explanation.best_move, t),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -235,6 +233,10 @@ def _has_pattern(tactical_pattern: str | None) -> bool:
     return bool(tactical_pattern) and tactical_pattern.lower() != "none"
 
 
+def _piece_value(piece_type: chess.PieceType) -> int:
+    return PIECE_VALUES.get(piece_type, 0)
+
+
 def _find_new_attacks(
     board_before: chess.Board,
     board_after: chess.Board,
@@ -248,8 +250,7 @@ def _find_new_attacks(
             was_attacked = board_before.is_attacked_by(attacker_color, sq)
             now_attacked = board_after.is_attacked_by(attacker_color, sq)
             if now_attacked and not was_attacked:
-                value = PIECE_VALUES.get(piece.piece_type, 0)
-                results.append((sq, piece.piece_type, value))
+                results.append((sq, piece.piece_type, _piece_value(piece.piece_type)))
     return results
 
 
@@ -269,22 +270,49 @@ class _Threat:
     piece_key: str = ""
 
 
-def _detect_next_move_threat(board: chess.Board, move: chess.Move) -> _Threat | None:
-    board_after = board.copy()
-    board_after.push(move)
-    player = board.turn
-
+def _threat_from_new_attacks(
+    board: chess.Board, board_after: chess.Board, player: chess.Color
+) -> _Threat | None:
     new_attacks = _find_new_attacks(board, board_after, player)
-    if new_attacks:
-        new_attacks.sort(key=lambda x: x[2], reverse=True)
-        best_target = new_attacks[0]
-        if best_target[2] >= 5:
-            # attacks_piece → accusative
-            return _Threat(
-                kind=_THREAT_ATTACKS,
-                piece_key=_type_key(best_target[1], "acc"),
-            )
+    if not new_attacks:
+        return None
+    new_attacks.sort(key=lambda x: x[2], reverse=True)
+    best_target = new_attacks[0]
+    if best_target[2] < 5:
+        return None
+    return _Threat(kind=_THREAT_ATTACKS, piece_key=_type_key(best_target[1], "acc"))
 
+
+def _classify_null_move_threat(
+    null_board: chess.Board,
+    candidate_move: chess.Move,
+    piece: chess.Piece,
+    player: chess.Color,
+) -> _Threat | None:
+    board_check = null_board.copy()
+    board_check.push(candidate_move)
+    if board_check.is_checkmate():
+        return _Threat(kind=_THREAT_MATE)
+    if not board_check.is_check():
+        return None
+    if null_board.is_capture(candidate_move):
+        captured = null_board.piece_at(candidate_move.to_square)
+        if captured and _piece_value(captured.piece_type) >= 3:
+            return _Threat(
+                kind=_THREAT_CAPTURE_CHECK,
+                piece_key=_type_key(captured.piece_type, "gen"),
+            )
+    if piece.piece_type != chess.PAWN:
+        return _Threat(
+            kind=_THREAT_PIECE,
+            piece_key=_type_key(piece.piece_type, "gen"),
+        )
+    return None
+
+
+def _threat_from_null_move(
+    board_after: chess.Board, player: chess.Color
+) -> _Threat | None:
     if board_after.is_check():
         return None
     null_board = board_after.copy()
@@ -294,27 +322,33 @@ def _detect_next_move_threat(board: chess.Board, move: chess.Move) -> _Threat | 
         piece = null_board.piece_at(candidate_move.from_square)
         if not piece or piece.color != player:
             continue
-        board_check = null_board.copy()
-        board_check.push(candidate_move)
-        if board_check.is_checkmate():
-            return _Threat(kind=_THREAT_MATE)
-        if board_check.is_check():
-            if null_board.is_capture(candidate_move):
-                captured = null_board.piece_at(candidate_move.to_square)
-                if captured and PIECE_VALUES.get(captured.piece_type, 0) >= 3:
-                    # threatens_capture_check → genitive
-                    return _Threat(
-                        kind=_THREAT_CAPTURE_CHECK,
-                        piece_key=_type_key(captured.piece_type, "gen"),
-                    )
-            if piece.piece_type != chess.PAWN:
-                # creates_threat → genitive
-                return _Threat(
-                    kind=_THREAT_PIECE,
-                    piece_key=_type_key(piece.piece_type, "gen"),
-                )
-
+        threat = _classify_null_move_threat(null_board, candidate_move, piece, player)
+        if threat is not None:
+            return threat
     return None
+
+
+def _detect_next_move_threat(board: chess.Board, move: chess.Move) -> _Threat | None:
+    board_after = board.copy()
+    board_after.push(move)
+    player = board.turn
+
+    new_attack_threat = _threat_from_new_attacks(board, board_after, player)
+    if new_attack_threat is not None:
+        return new_attack_threat
+    return _threat_from_null_move(board_after, player)
+
+
+def _iter_hanging_enemies(board: chess.Board, enemy: chess.Color):
+    for sq in chess.SQUARES:
+        piece = board.piece_at(sq)
+        if (
+            piece
+            and piece.color == enemy
+            and piece.piece_type != chess.KING
+            and _is_hanging(board, sq, enemy)
+        ):
+            yield sq, piece
 
 
 def _find_hanging_piece(
@@ -325,21 +359,63 @@ def _find_hanging_piece(
     board_after = board.copy()
     board_after.push(move)
     enemy = not player_color
-    best: tuple[int, chess.PieceType, chess.Square] | None = None
-    for sq in chess.SQUARES:
-        piece = board_after.piece_at(sq)
-        if (
-            piece
-            and piece.color == enemy
-            and piece.piece_type != chess.KING
-            and _is_hanging(board_after, sq, enemy)
-        ):
-            value = PIECE_VALUES.get(piece.piece_type, 0)
-            if best is None or value > best[0]:
-                best = (value, piece.piece_type, sq)
-    if best is None:
+    candidates = [
+        (_piece_value(piece.piece_type), piece.piece_type, sq)
+        for sq, piece in _iter_hanging_enemies(board_after, enemy)
+    ]
+    if not candidates:
         return None
-    return (best[1], best[2])
+    _, piece_type, sq = max(candidates, key=lambda c: c[0])
+    return (piece_type, sq)
+
+
+def _min_attacker_value(
+    board: chess.Board,
+    sq: chess.Square,
+    attacker_color: chess.Color,
+) -> int | None:
+    attackers = board.attackers(attacker_color, sq)
+    if not attackers:
+        return None
+    return min(
+        _piece_value(board.piece_at(a).piece_type)
+        for a in attackers
+        if board.piece_at(a)
+    )
+
+
+def _is_under_profitable_attack(
+    board: chess.Board,
+    sq: chess.Square,
+    piece_val: int,
+    enemy: chess.Color,
+) -> bool:
+    min_attacker = _min_attacker_value(board, sq, enemy)
+    return min_attacker is not None and min_attacker < piece_val
+
+
+def _is_ignored_threat(
+    board: chess.Board,
+    board_after: chess.Board,
+    sq: chess.Square,
+    piece: chess.Piece,
+    blunder_move: chess.Move,
+    player_color: chess.Color,
+    enemy: chess.Color,
+) -> bool:
+    piece_val = _piece_value(piece.piece_type)
+    if piece_val < 3 or blunder_move.from_square == sq:
+        return False
+    if not _is_under_profitable_attack(board, sq, piece_val, enemy):
+        return False
+    if board.is_capture(blunder_move) and blunder_move.to_square in board.attackers(
+        enemy, sq
+    ):
+        return False
+    piece_after = board_after.piece_at(sq)
+    if piece_after is None or piece_after.color != player_color:
+        return False
+    return board_after.is_attacked_by(enemy, sq)
 
 
 def _find_ignored_threat(
@@ -350,103 +426,73 @@ def _find_ignored_threat(
     board_after = board.copy()
     board_after.push(blunder_move)
     enemy = not player_color
-
-    best: tuple[int, chess.PieceType, chess.Square] | None = None
+    candidates: list[tuple[int, chess.PieceType, chess.Square]] = []
     for sq in chess.SQUARES:
         piece = board.piece_at(sq)
-        if (
-            piece is None
-            or piece.color != player_color
-            or piece.piece_type == chess.KING
+        if piece is None or piece.color != player_color:
+            continue
+        if _is_ignored_threat(
+            board, board_after, sq, piece, blunder_move, player_color, enemy
         ):
-            continue
-        piece_val = PIECE_VALUES.get(piece.piece_type, 0)
-        if piece_val < 3:
-            continue
-
-        if blunder_move.from_square == sq:
-            continue
-
-        attackers_before = board.attackers(enemy, sq)
-        if not attackers_before:
-            continue
-        min_attacker_val = min(
-            PIECE_VALUES.get(board.piece_at(a).piece_type, 0)
-            for a in attackers_before
-            if board.piece_at(a)
-        )
-        if min_attacker_val >= piece_val:
-            continue
-
-        if (
-            board.is_capture(blunder_move)
-            and blunder_move.to_square in attackers_before
-        ):
-            continue
-
-        piece_after = board_after.piece_at(sq)
-        if piece_after is None or piece_after.color != player_color:
-            continue
-        if not board_after.is_attacked_by(enemy, sq):
-            continue
-
-        if best is None or piece_val > best[0]:
-            best = (piece_val, piece.piece_type, sq)
-
-    if best is None:
+            candidates.append((_piece_value(piece.piece_type), piece.piece_type, sq))
+    if not candidates:
         return None
-    return (best[1], best[2])
+    _, piece_type, found_sq = max(candidates, key=lambda c: c[0])
+    return (piece_type, found_sq)
+
+
+def _is_safe_destination(
+    board_after: chess.Board,
+    dest: chess.Square,
+    enemy: chess.Color,
+    piece_val: int,
+) -> bool:
+    for attacker_sq in board_after.attackers(enemy, dest):
+        attacker = board_after.piece_at(attacker_sq)
+        if attacker and _piece_value(attacker.piece_type) < piece_val:
+            return False
+    return True
+
+
+def _retreat_candidate(
+    board: chess.Board, best_move: chess.Move
+) -> tuple[chess.Piece, int, chess.Color] | None:
+    if board.is_capture(best_move):
+        return None
+    player = board.turn
+    piece = board.piece_at(best_move.from_square)
+    if piece is None or piece.color != player or piece.piece_type == chess.KING:
+        return None
+    piece_val = _piece_value(piece.piece_type)
+    if piece_val < 3:
+        return None
+    enemy = not player
+    if not _is_under_profitable_attack(board, best_move.from_square, piece_val, enemy):
+        return None
+    return (piece, piece_val, enemy)
 
 
 def _is_retreat_to_safety(
     board: chess.Board,
     best_move: chess.Move,
 ) -> tuple[chess.PieceType, chess.Square] | None:
-    if board.is_capture(best_move):
+    candidate = _retreat_candidate(board, best_move)
+    if candidate is None:
         return None
-
-    player = board.turn
-    enemy = not player
-    piece = board.piece_at(best_move.from_square)
-    if piece is None or piece.color != player or piece.piece_type == chess.KING:
-        return None
-
-    piece_val = PIECE_VALUES.get(piece.piece_type, 0)
-    if piece_val < 3:
-        return None
-
-    attackers = board.attackers(enemy, best_move.from_square)
-    if not attackers:
-        return None
-    min_attacker_val = min(
-        PIECE_VALUES.get(board.piece_at(a).piece_type, 0)
-        for a in attackers
-        if board.piece_at(a)
-    )
-    if min_attacker_val >= piece_val:
-        return None
-
+    piece, piece_val, enemy = candidate
     board_after = board.copy()
     board_after.push(best_move)
-    dest_attackers = board_after.attackers(enemy, best_move.to_square)
-    for a in dest_attackers:
-        attacker_piece = board_after.piece_at(a)
-        if (
-            attacker_piece
-            and PIECE_VALUES.get(attacker_piece.piece_type, 0) < piece_val
-        ):
-            return None
-
+    if not _is_safe_destination(board_after, best_move.to_square, enemy, piece_val):
+        return None
     return (piece.piece_type, best_move.from_square)
 
 
 def _count_material(board: chess.Board, color: chess.Color) -> int:
-    total = 0
-    for sq in chess.SQUARES:
-        piece = board.piece_at(sq)
-        if piece and piece.color == color:
-            total += PIECE_VALUES.get(piece.piece_type, 0)
-    return total
+    return sum(
+        _piece_value(piece.piece_type)
+        for sq in chess.SQUARES
+        if (piece := board.piece_at(sq)) and piece.color == color
+    )
 
 
 def _material_balance(board: chess.Board, color: chess.Color) -> int:
@@ -462,6 +508,14 @@ def _material_balance(board: chess.Board, color: chess.Color) -> int:
 class _PVCapture:
     piece_type: chess.PieceType
     by_color: chess.Color
+
+
+@dataclass
+class _PVWalkState:
+    line_board: chess.Board
+    player_caps: list[_PVCapture] = field(default_factory=list)
+    opp_caps: list[_PVCapture] = field(default_factory=list)
+    gives_mate: bool = False
 
 
 @dataclass(frozen=True)
@@ -487,76 +541,161 @@ class PVAnalysis:
         return self.best_opponent_loss
 
 
+def _record_capture_if_any(
+    state: _PVWalkState,
+    prev_board: chess.Board,
+    move: chess.Move,
+    side: chess.Color,
+    player: chess.Color,
+) -> None:
+    if not prev_board.is_capture(move):
+        return
+    captured = prev_board.piece_at(move.to_square)
+    if captured is None:
+        return
+    cap = _PVCapture(captured.piece_type, side)
+    if side == player:
+        state.player_caps.append(cap)
+    else:
+        state.opp_caps.append(cap)
+
+
+def _walk_pv_continuation(
+    state: _PVWalkState,
+    best_line: list[str],
+    player: chess.Color,
+) -> bool:
+    """Returns True if the line walked cleanly, False on SAN parse failure."""
+    for move_san in best_line[1:]:
+        prev_board = state.line_board.copy()
+        try:
+            move = state.line_board.parse_san(move_san)
+        except (ValueError, chess.IllegalMoveError):
+            return False
+        side = state.line_board.turn
+        state.line_board.push(move)
+        _record_capture_if_any(state, prev_board, move, side, player)
+        if state.line_board.is_checkmate():
+            state.gives_mate = True
+            return True
+    return True
+
+
+def _best_opponent_loss(
+    player_caps: list[_PVCapture],
+) -> chess.PieceType | None:
+    if not player_caps:
+        return None
+    return max((c.piece_type for c in player_caps), key=_piece_value)
+
+
 def _analyze_pv(
     board: chess.Board,
     best_move: chess.Move,
     best_line: list[str],
 ) -> PVAnalysis | None:
     player = board.turn
-    line_board = board.copy()
+    state = _PVWalkState(line_board=board.copy())
     balance_before = _material_balance(board, player)
 
-    player_caps: list[_PVCapture] = []
-    opp_caps: list[_PVCapture] = []
-    gives_check = False
-    gives_mate = False
-
     try:
-        line_board.push(best_move)
-        if line_board.is_checkmate():
-            gives_mate = True
-        gives_check = line_board.is_check()
-
-        if board.is_capture(best_move):
-            captured = board.piece_at(best_move.to_square)
-            if captured:
-                player_caps.append(_PVCapture(captured.piece_type, player))
-
-        for move_san in best_line[1:]:
-            prev_board = line_board.copy()
-            move = line_board.parse_san(move_san)
-            is_cap = line_board.is_capture(move)
-            side = line_board.turn
-            line_board.push(move)
-
-            if is_cap:
-                captured = prev_board.piece_at(move.to_square)
-                if captured:
-                    cap = _PVCapture(captured.piece_type, side)
-                    if side == player:
-                        player_caps.append(cap)
-                    else:
-                        opp_caps.append(cap)
-
-            if line_board.is_checkmate():
-                gives_mate = True
-                break
+        state.line_board.push(best_move)
     except (ValueError, chess.IllegalMoveError):
-        if not player_caps and not gives_check:
-            return None
+        return None
 
-    balance_after = _material_balance(line_board, player)
+    gives_check = state.line_board.is_check()
+    if state.line_board.is_checkmate():
+        state.gives_mate = True
+    if board.is_capture(best_move):
+        captured = board.piece_at(best_move.to_square)
+        if captured:
+            state.player_caps.append(_PVCapture(captured.piece_type, player))
 
-    best_opp_loss: chess.PieceType | None = None
-    if player_caps:
-        best_opp_loss = max(
-            (c.piece_type for c in player_caps),
-            key=lambda pt: PIECE_VALUES.get(pt, 0),
-        )
+    walked_cleanly = state.gives_mate or _walk_pv_continuation(state, best_line, player)
+    # Original parity: if SAN parse fails mid-line AND nothing useful was
+    # captured AND the move doesn't even give check, the analysis is too
+    # unreliable to act on — fall back to the static layer.
+    if not walked_cleanly and not state.player_caps and not gives_check:
+        return None
 
     return PVAnalysis(
         moves_san=best_line,
         gives_check=gives_check,
-        gives_mate=gives_mate,
-        balance_gain=balance_after - balance_before,
-        player_captures=player_caps,
-        opponent_captures=opp_caps,
-        best_opponent_loss=best_opp_loss,
+        gives_mate=state.gives_mate,
+        balance_gain=_material_balance(state.line_board, player) - balance_before,
+        player_captures=state.player_caps,
+        opponent_captures=state.opp_caps,
+        best_opponent_loss=_best_opponent_loss(state.player_caps),
     )
 
 
 def _format_line(moves: list[str], max_moves: int = 5) -> str:
     return " ".join(moves[:max_moves])
+
+
+def _explain_pv_mate(san: str, pv: PVAnalysis) -> I18nMessage:
+    mate_depth = len(pv.moves_san) // 2 + 1
+    if mate_depth <= 1:
+        return I18nMessage(key="explanation.best.checkmate", params={"san": san})
+    return I18nMessage(
+        key="explanation.best.pv_mate",
+        params={
+            "san": san,
+            "moves": str(mate_depth),
+            "line": _format_line(pv.moves_san),
+        },
+    )
+
+
+def _explain_pv_sacrifice(
+    san: str, pv: PVAnalysis, tactical_pattern: str | None
+) -> I18nMessage:
+    assert pv.net_piece_won is not None
+    piece_key = _type_key(pv.net_piece_won, "acc")
+    line_str = _format_line(pv.moves_san)
+    if _has_pattern(tactical_pattern):
+        return I18nMessage(
+            key="explanation.best.pv_wins_piece_via_pattern",
+            params={
+                "san": san,
+                "piece": piece_key,
+                "pattern": tactical_pattern.lower(),
+                "line": line_str,
+            },
+        )
+    return I18nMessage(
+        key="explanation.best.pv_wins_piece_via_combination",
+        params={"san": san, "piece": piece_key, "line": line_str},
+    )
+
+
+def _is_simple_first_capture(
+    board: chess.Board, best_move: chess.Move, pv: PVAnalysis
+) -> bool:
+    if not board.is_capture(best_move):
+        return False
+    if len(pv.player_captures) != 1 or pv.net_piece_won is None:
+        return False
+    return pv.balance_gain >= _piece_value(pv.net_piece_won)
+
+
+def _explain_pv_material_win(
+    board: chess.Board,
+    best_move: chess.Move,
+    san: str,
+    pv: PVAnalysis,
+) -> I18nMessage | None:
+    if _is_simple_first_capture(board, best_move, pv):
+        return None
+    assert pv.net_piece_won is not None
+    return I18nMessage(
+        key="explanation.best.pv_wins_piece",
+        params={
+            "san": san,
+            "piece": _type_key(pv.net_piece_won, "acc"),
+            "line": _format_line(pv.moves_san),
+        },
+    )
 
 
 def _explain_best_from_pv(
@@ -566,67 +705,166 @@ def _explain_best_from_pv(
     tactical_pattern: str | None,
 ) -> I18nMessage | None:
     san = board.san(best_move)
-    line_str = _format_line(pv.moves_san)
-
-    # Mate in the PV
     if pv.gives_mate:
-        mate_depth = len(pv.moves_san) // 2 + 1
-        if mate_depth <= 1:
-            return I18nMessage(key="explanation.best.checkmate", params={"san": san})  # noqa: WPS204 — single-key params dict; building a helper for one literal would obscure intent.
-        return I18nMessage(
-            key="explanation.best.pv_mate",
-            params={"san": san, "moves": str(mate_depth), "line": line_str},
-        )
-
-    # Sacrifice that wins material through a combination
+        return _explain_pv_mate(san, pv)
     if pv.is_sacrifice_combination and pv.net_piece_won:
-        piece_key = _type_key(pv.net_piece_won, "acc")
-        pattern_suffix = ""
-        if _has_pattern(tactical_pattern):
-            pattern_suffix = tactical_pattern.lower()
-        if pattern_suffix:
-            return I18nMessage(
-                key="explanation.best.pv_wins_piece_via_pattern",
-                params={
-                    "san": san,
-                    "piece": piece_key,
-                    "pattern": pattern_suffix,
-                    "line": line_str,
-                },
-            )
-        return I18nMessage(
-            key="explanation.best.pv_wins_piece_via_combination",
-            params={"san": san, "piece": piece_key, "line": line_str},
-        )
-
-    # Non-sacrifice that wins material (net gain ≥ 1 pawn)
+        return _explain_pv_sacrifice(san, pv, tactical_pattern)
     if pv.balance_gain >= 1 and pv.net_piece_won:
-        piece_key = _type_key(pv.net_piece_won, "acc")
-        # Simple first-move capture that wins the piece directly
-        if (
-            board.is_capture(best_move)
-            and len(pv.player_captures) == 1
-            and pv.balance_gain >= PIECE_VALUES.get(pv.net_piece_won, 0)
-        ):
-            return None  # Let static analysis handle simple captures
-        return I18nMessage(
-            key="explanation.best.pv_wins_piece",
-            params={"san": san, "piece": piece_key, "line": line_str},
-        )
-
-    # Material gain without a clear piece (e.g. wins 2 pawns through trades)
+        return _explain_pv_material_win(board, best_move, san, pv)
     if pv.balance_gain >= 3:
-        return I18nMessage(
-            key="explanation.best.combination",
-            params={"san": san},
-        )
-
+        return I18nMessage(key="explanation.best.combination", params={"san": san})
     return None
 
 
 # ---------------------------------------------------------------------------
 # Blunder-side explanation
 # ---------------------------------------------------------------------------
+
+
+def _blunder_missed_mate(
+    board: chess.Board, best_move: chess.Move | None, **_: object
+) -> I18nMessage | None:
+    if best_move and _move_gives_mate(board, best_move):
+        return I18nMessage(key="explanation.blunder.missed_mate")
+    return None
+
+
+def _blunder_hanging(
+    board: chess.Board,
+    blunder_move: chess.Move,
+    board_after: chess.Board,
+    player_color: chess.Color,
+    moved_key_nom: str,
+    **_: object,
+) -> I18nMessage | None:
+    if not _is_hanging(board_after, blunder_move.to_square, player_color):
+        return None
+    return I18nMessage(
+        key="explanation.blunder.hanging_piece",
+        params={
+            "piece": moved_key_nom,
+            "square": chess.square_name(blunder_move.to_square),
+        },
+    )
+
+
+def _is_newly_exposed(
+    board: chess.Board,
+    board_after: chess.Board,
+    sq: chess.Square,
+    blunder_move_to: chess.Square,
+    player_color: chess.Color,
+) -> bool:
+    piece = board_after.piece_at(sq)
+    if piece is None or piece.color != player_color or sq == blunder_move_to:
+        return False
+    return _is_hanging(board_after, sq, player_color) and not _is_hanging(
+        board, sq, player_color
+    )
+
+
+def _find_exposed_piece(
+    board: chess.Board,
+    board_after: chess.Board,
+    blunder_move: chess.Move,
+    player_color: chess.Color,
+) -> tuple[chess.PieceType, chess.Square] | None:
+    for sq in chess.SQUARES:
+        if not _is_newly_exposed(
+            board, board_after, sq, blunder_move.to_square, player_color
+        ):
+            continue
+        piece = board_after.piece_at(sq)
+        assert piece is not None
+        return (piece.piece_type, sq)
+    return None
+
+
+def _blunder_exposed(
+    board: chess.Board,
+    board_after: chess.Board,
+    blunder_move: chess.Move,
+    player_color: chess.Color,
+    moved_key_inst: str | None,
+    **_: object,
+) -> I18nMessage | None:
+    if moved_key_inst is None:
+        return None
+    exposed = _find_exposed_piece(board, board_after, blunder_move, player_color)
+    if exposed is None:
+        return None
+    piece_type, sq = exposed
+    return I18nMessage(
+        key="explanation.blunder.exposed_piece",
+        params={
+            "piece": moved_key_inst,
+            "exposed": _type_key(piece_type, "acc"),
+            "square": chess.square_name(sq),
+        },
+    )
+
+
+def _blunder_ignored_threat(
+    board: chess.Board,
+    blunder_move: chess.Move,
+    player_color: chess.Color,
+    **_: object,
+) -> I18nMessage | None:
+    ignored = _find_ignored_threat(board, blunder_move, player_color)
+    if ignored is None:
+        return None
+    piece_type, ignored_sq = ignored
+    return I18nMessage(
+        key="explanation.blunder.ignored_threat",
+        params={
+            "piece": _type_key(piece_type, "acc"),
+            "square": chess.square_name(ignored_sq),
+        },
+    )
+
+
+def _blunder_bad_capture(
+    board: chess.Board,
+    blunder_move: chess.Move,
+    board_after: chess.Board,
+    player_color: chess.Color,
+    moved_key_inst: str | None,
+    **_: object,
+) -> I18nMessage | None:
+    if moved_key_inst is None or not board.is_capture(blunder_move):
+        return None
+    captured = board.piece_at(blunder_move.to_square)
+    mover = board.piece_at(blunder_move.from_square)
+    if not (captured and mover):
+        return None
+    if _piece_value(mover.piece_type) <= _piece_value(captured.piece_type):
+        return None
+    if not board_after.is_attacked_by(not player_color, blunder_move.to_square):
+        return None
+    return I18nMessage(
+        key="explanation.blunder.bad_capture",
+        params={"piece": moved_key_inst},
+    )
+
+
+def _blunder_cp_loss(cp_loss: int, **_: object) -> I18nMessage | None:
+    pawn_loss = cp_loss / CENTIPAWNS_PER_PAWN
+    if pawn_loss < 1:
+        return None
+    return I18nMessage(
+        key="explanation.blunder.cp_loss",
+        params={"loss": f"{pawn_loss:.1f}"},
+    )
+
+
+_BLUNDER_STRATEGIES: tuple[Callable[..., I18nMessage | None], ...] = (
+    _blunder_missed_mate,
+    _blunder_hanging,
+    _blunder_exposed,
+    _blunder_ignored_threat,
+    _blunder_bad_capture,
+    _blunder_cp_loss,
+)
 
 
 def _explain_blunder(
@@ -636,82 +874,25 @@ def _explain_blunder(
     cp_loss: int,
     best_move: chess.Move | None = None,
 ) -> I18nMessage | None:
-    board_after = board.copy()
-    board_after.push(blunder_move)
-
-    if best_move and _move_gives_mate(board, best_move):
-        return I18nMessage(key="explanation.blunder.missed_mate")
-
     moved_key_nom = _piece_key(board, blunder_move.from_square)
     if not moved_key_nom:
         return None
-    moved_key_inst = _piece_key(board, blunder_move.from_square, "inst")
-
-    # Piece moved to undefended square — nominative ("Your {piece} on ...")
-    if _is_hanging(board_after, blunder_move.to_square, player_color):
-        return I18nMessage(
-            key="explanation.blunder.hanging_piece",
-            params={
-                "piece": moved_key_nom,
-                "square": chess.square_name(blunder_move.to_square),
-            },
-        )
-
-    # Moving away exposed another piece — instrumental + accusative
-    for sq in chess.SQUARES:
-        piece = board_after.piece_at(sq)
-        if (
-            piece
-            and piece.color == player_color
-            and sq != blunder_move.to_square
-            and _is_hanging(board_after, sq, player_color)
-            and not _is_hanging(board, sq, player_color)
-        ):
-            return I18nMessage(
-                key="explanation.blunder.exposed_piece",
-                params={
-                    "piece": moved_key_inst,
-                    "exposed": _type_key(piece.piece_type, "acc"),
-                    "square": chess.square_name(sq),
-                },
-            )
-
-    # Ignored threat — a friendly piece (value ≥ 3) is under profitable attack
-    # both before and after the blunder, and the blunder doesn't address it
-    ignored = _find_ignored_threat(board, blunder_move, player_color)
-    if ignored:
-        piece_type, ignored_sq = ignored
-        return I18nMessage(
-            key="explanation.blunder.ignored_threat",
-            params={
-                "piece": _type_key(piece_type, "acc"),
-                "square": chess.square_name(ignored_sq),
-            },
-        )
-
-    # Bad capture — instrumental ("Capturing with your {piece} ...")
-    if board.is_capture(blunder_move):
-        captured_piece = board.piece_at(blunder_move.to_square)
-        mover = board.piece_at(blunder_move.from_square)
-        if captured_piece and mover:
-            captured_val = PIECE_VALUES.get(captured_piece.piece_type, 0)
-            moved_val = PIECE_VALUES.get(mover.piece_type, 0)
-            if moved_val > captured_val and board_after.is_attacked_by(
-                not player_color, blunder_move.to_square
-            ):
-                return I18nMessage(
-                    key="explanation.blunder.bad_capture",
-                    params={"piece": moved_key_inst},
-                )
-
-    # Fallback: cp loss
-    pawn_loss = cp_loss / 100
-    if pawn_loss >= 1:
-        return I18nMessage(
-            key="explanation.blunder.cp_loss",
-            params={"loss": f"{pawn_loss:.1f}"},
-        )
-
+    board_after = board.copy()
+    board_after.push(blunder_move)
+    ctx = {
+        "board": board,
+        "blunder_move": blunder_move,
+        "board_after": board_after,
+        "player_color": player_color,
+        "cp_loss": cp_loss,
+        "best_move": best_move,
+        "moved_key_nom": moved_key_nom,
+        "moved_key_inst": _piece_key(board, blunder_move.from_square, "inst"),
+    }
+    for strategy in _BLUNDER_STRATEGIES:
+        message = strategy(**ctx)
+        if message is not None:
+            return message
     return None
 
 
@@ -729,6 +910,158 @@ _PATTERN_KEYS = MappingProxyType(
     }
 )
 
+_THREAT_KEYS = MappingProxyType(
+    {
+        _THREAT_MATE: "explanation.best.threatens_mate",
+        _THREAT_CAPTURE_CHECK: "explanation.best.threatens_capture_check",
+        _THREAT_PIECE: "explanation.best.creates_threat",
+        _THREAT_ATTACKS: "explanation.best.attacks_piece",
+    }
+)
+
+
+def _explain_best_check(
+    board: chess.Board,
+    best_move: chess.Move,
+    san: str,
+    tactical_pattern: str | None,
+) -> I18nMessage | None:
+    if board.is_capture(best_move):
+        captured = board.piece_at(best_move.to_square)
+        if captured:
+            return I18nMessage(
+                key="explanation.best.capture_with_check",
+                params={"san": san, "piece": _type_key(captured.piece_type, "acc")},
+            )
+    if not _has_pattern(tactical_pattern):
+        return I18nMessage(key="explanation.best.check_winning", params={"san": san})
+
+    if tactical_pattern.lower() == "hanging piece":
+        hanging = _find_hanging_piece(board, best_move, board.turn)
+        if hanging is not None:
+            piece_type, sq = hanging
+            return I18nMessage(
+                key="explanation.best.check_wins_hanging",
+                params={
+                    "san": san,
+                    "piece": _type_key(piece_type, "acc"),
+                    "square": chess.square_name(sq),
+                },
+            )
+    return I18nMessage(
+        key="explanation.best.check_with_pattern",
+        params={"san": san, "pattern": tactical_pattern.lower()},
+    )
+
+
+def _is_capturable_hanging(
+    board: chess.Board, best_move: chess.Move, captured: chess.Piece | None
+) -> bool:
+    if captured is None or not board.is_capture(best_move):
+        return False
+    return _is_hanging(board, best_move.to_square, not board.turn)
+
+
+def _explain_best_pattern(
+    board: chess.Board,
+    best_move: chess.Move,
+    san: str,
+    tactical_pattern: str,
+) -> I18nMessage | None:
+    pattern_lower = tactical_pattern.lower()
+    if "discovered" in pattern_lower:
+        return I18nMessage(
+            key="explanation.best.pattern_discovered", params={"san": san}
+        )
+    if pattern_lower == "hanging piece":
+        captured = board.piece_at(best_move.to_square)
+        if _is_capturable_hanging(board, best_move, captured):
+            assert captured is not None
+            return I18nMessage(
+                key="explanation.best.pattern_hanging_piece",
+                params={
+                    "san": san,
+                    "piece": _type_key(captured.piece_type, "acc"),
+                    "square": chess.square_name(best_move.to_square),
+                },
+            )
+        return None
+    pattern_key = _PATTERN_KEYS.get(pattern_lower)
+    if pattern_key:
+        return I18nMessage(key=pattern_key, params={"san": san})
+    return I18nMessage(
+        key="explanation.best.pattern_generic",
+        params={"san": san, "pattern": pattern_lower},
+    )
+
+
+def _explain_best_capture(
+    board: chess.Board, best_move: chess.Move, san: str
+) -> I18nMessage | None:
+    if not board.is_capture(best_move):
+        return None
+    captured = board.piece_at(best_move.to_square)
+    if captured is None:
+        return None
+    return I18nMessage(
+        key="explanation.best.wins_piece",
+        params={"san": san, "piece": _type_key(captured.piece_type, "acc")},
+    )
+
+
+def _explain_best_threat(
+    board: chess.Board, best_move: chess.Move, san: str
+) -> I18nMessage | None:
+    threat = _detect_next_move_threat(board, best_move)
+    if threat is None:
+        return None
+    return I18nMessage(
+        key=_THREAT_KEYS[threat.kind],
+        params={"san": san, "piece": threat.piece_key},
+    )
+
+
+def _explain_best_retreat(
+    board: chess.Board, best_move: chess.Move, san: str
+) -> I18nMessage | None:
+    retreat = _is_retreat_to_safety(board, best_move)
+    if retreat is None:
+        return None
+    piece_type, _from_sq = retreat
+    return I18nMessage(
+        key="explanation.best.saves_piece",
+        params={"san": san, "piece": _type_key(piece_type, "acc")},
+    )
+
+
+def _explain_best_loss_avoidance(san: str, cp_loss: int) -> I18nMessage:
+    pawn_loss = cp_loss / CENTIPAWNS_PER_PAWN
+    if pawn_loss >= SIGNIFICANT_PAWN_LOSS:
+        return I18nMessage(
+            key="explanation.best.avoids_loss",
+            params={"san": san, "loss": f"{pawn_loss:.1f}"},
+        )
+    return I18nMessage(key="explanation.best.fallback", params={"san": san})
+
+
+def _try_static_strategies(
+    board: chess.Board,
+    best_move: chess.Move,
+    san: str,
+    tactical_pattern: str | None,
+) -> I18nMessage | None:
+    if _has_pattern(tactical_pattern):
+        pattern_msg = _explain_best_pattern(board, best_move, san, tactical_pattern)
+        if pattern_msg is not None:
+            return pattern_msg
+    retreat = _explain_best_retreat(board, best_move, san)
+    if retreat is not None:
+        return retreat
+    capture = _explain_best_capture(board, best_move, san)
+    if capture is not None:
+        return capture
+    return _explain_best_threat(board, best_move, san)
+
 
 def _explain_best_static(
     board: chess.Board,
@@ -738,111 +1071,14 @@ def _explain_best_static(
 ) -> I18nMessage | None:
     """Fallback explanation using only static position analysis (no PV)."""
     san = board.san(best_move)
-
     if _move_gives_mate(board, best_move):
-        return I18nMessage(key="explanation.best.checkmate", params={"san": san})  # noqa: WPS204 — single-key params dict; building a helper for one literal would obscure intent.
-
+        return I18nMessage(key="explanation.best.checkmate", params={"san": san})
     if _move_gives_check(board, best_move):
-        if board.is_capture(best_move):
-            captured = board.piece_at(best_move.to_square)
-            if captured:
-                return I18nMessage(
-                    key="explanation.best.capture_with_check",
-                    params={
-                        "san": san,
-                        "piece": _type_key(captured.piece_type, "acc"),
-                    },
-                )
-        if _has_pattern(tactical_pattern):
-            if tactical_pattern.lower() == "hanging piece":
-                hanging = _find_hanging_piece(board, best_move, board.turn)
-                if hanging:
-                    piece_type, sq = hanging
-                    return I18nMessage(
-                        key="explanation.best.check_wins_hanging",
-                        params={
-                            "san": san,
-                            "piece": _type_key(piece_type, "acc"),
-                            "square": chess.square_name(sq),
-                        },
-                    )
-            return I18nMessage(
-                key="explanation.best.check_with_pattern",
-                params={"san": san, "pattern": tactical_pattern.lower()},
-            )
-        return I18nMessage(key="explanation.best.check_winning", params={"san": san})
-
-    if _has_pattern(tactical_pattern):
-        pattern_lower = tactical_pattern.lower()
-        if "discovered" in pattern_lower:
-            return I18nMessage(
-                key="explanation.best.pattern_discovered", params={"san": san}
-            )
-        if pattern_lower == "hanging piece":
-            if board.is_capture(best_move):
-                captured = board.piece_at(best_move.to_square)
-                if captured and _is_hanging(board, best_move.to_square, not board.turn):
-                    return I18nMessage(
-                        key="explanation.best.pattern_hanging_piece",
-                        params={
-                            "san": san,
-                            "piece": _type_key(captured.piece_type, "acc"),
-                            "square": chess.square_name(best_move.to_square),
-                        },
-                    )
-        else:
-            pattern_key = _PATTERN_KEYS.get(pattern_lower)
-            if pattern_key:
-                return I18nMessage(key=pattern_key, params={"san": san})
-            return I18nMessage(
-                key="explanation.best.pattern_generic",
-                params={"san": san, "pattern": pattern_lower},
-            )
-
-    # Retreat to safety — best move saves a piece from profitable attack
-    retreat = _is_retreat_to_safety(board, best_move)
-    if retreat:
-        piece_type, _from_sq = retreat
-        return I18nMessage(
-            key="explanation.best.saves_piece",
-            params={
-                "san": san,
-                "piece": _type_key(piece_type, "acc"),
-            },
-        )
-
-    if board.is_capture(best_move):
-        captured = board.piece_at(best_move.to_square)
-        if captured:
-            return I18nMessage(
-                key="explanation.best.wins_piece",
-                params={
-                    "san": san,
-                    "piece": _type_key(captured.piece_type, "acc"),
-                },
-            )
-
-    threat = _detect_next_move_threat(board, best_move)
-    if threat:
-        threat_keys = {
-            _THREAT_MATE: "explanation.best.threatens_mate",
-            _THREAT_CAPTURE_CHECK: "explanation.best.threatens_capture_check",
-            _THREAT_PIECE: "explanation.best.creates_threat",
-            _THREAT_ATTACKS: "explanation.best.attacks_piece",
-        }
-        return I18nMessage(
-            key=threat_keys[threat.kind],
-            params={"san": san, "piece": threat.piece_key},
-        )
-
-    pawn_loss = cp_loss / CENTIPAWNS_PER_PAWN
-    if pawn_loss >= SIGNIFICANT_PAWN_LOSS:
-        return I18nMessage(
-            key="explanation.best.avoids_loss",
-            params={"san": san, "loss": f"{pawn_loss:.1f}"},
-        )
-
-    return I18nMessage(key="explanation.best.fallback", params={"san": san})
+        return _explain_best_check(board, best_move, san, tactical_pattern)
+    static_msg = _try_static_strategies(board, best_move, san, tactical_pattern)
+    if static_msg is not None:
+        return static_msg
+    return _explain_best_loss_avoidance(san, cp_loss)
 
 
 # ---------------------------------------------------------------------------
@@ -857,12 +1093,11 @@ def _explain_best(
     cp_loss: int,
     best_line: list[str] | None = None,
 ) -> I18nMessage | None:
-    # Phase 1: immediate mate (no PV needed)
     if _move_gives_mate(board, best_move):
-        san = board.san(best_move)
-        return I18nMessage(key="explanation.best.checkmate", params={"san": san})
+        return I18nMessage(
+            key="explanation.best.checkmate", params={"san": board.san(best_move)}
+        )
 
-    # Phase 2: PV-first — walk the engine line to explain what happens
     if best_line and len(best_line) >= 2:
         pv = _analyze_pv(board, best_move, best_line)
         if pv:
@@ -870,7 +1105,6 @@ def _explain_best(
             if pv_msg:
                 return pv_msg
 
-    # Phase 3: static fallback (pattern detection, simple captures, threats)
     return _explain_best_static(board, best_move, tactical_pattern, cp_loss)
 
 
@@ -879,42 +1113,36 @@ def _explain_best(
 # ---------------------------------------------------------------------------
 
 
+def _parse_legal_move(board: chess.Board, uci: str | None) -> chess.Move | None:
+    if not uci:
+        return None
+    try:
+        move = chess.Move.from_uci(uci)
+    except ValueError:
+        return None
+    if move not in board.legal_moves:
+        return None
+    return move
+
+
 def generate_explanation(
     fen: str,
     blunder_uci: str,
     best_move_uci: str | None,
     tactical_pattern: str | None = None,
     cp_loss: int = 0,
-    eval_before: int = 0,
-    eval_after: int = 0,
     best_line: list[str] | None = None,
 ) -> BlunderExplanation:
     board = chess.Board(fen)
-    player_color = board.turn
-
-    try:
-        blunder_move = chess.Move.from_uci(blunder_uci)
-    except ValueError:
+    blunder_move = _parse_legal_move(board, blunder_uci)
+    if blunder_move is None:
         return BlunderExplanation(blunder=None, best_move=None)
 
-    if blunder_move not in board.legal_moves:
-        return BlunderExplanation(blunder=None, best_move=None)
-
-    best_move: chess.Move | None = None
-    best_msg = None
-    if best_move_uci:
-        try:
-            best_move = chess.Move.from_uci(best_move_uci)
-            if best_move not in board.legal_moves:
-                best_move = None
-        except ValueError:
-            pass
-
-    blunder_msg = _explain_blunder(
-        board, blunder_move, player_color, cp_loss, best_move
+    best_move = _parse_legal_move(board, best_move_uci)
+    blunder_msg = _explain_blunder(board, blunder_move, board.turn, cp_loss, best_move)
+    best_msg = (
+        _explain_best(board, best_move, tactical_pattern, cp_loss, best_line)
+        if best_move
+        else None
     )
-
-    if best_move:
-        best_msg = _explain_best(board, best_move, tactical_pattern, cp_loss, best_line)
-
     return BlunderExplanation(blunder=blunder_msg, best_move=best_msg)

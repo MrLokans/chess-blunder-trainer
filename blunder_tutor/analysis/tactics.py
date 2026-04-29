@@ -77,18 +77,12 @@ class TacticalMotif:
     description: str
     squares: list[chess.Square] = field(default_factory=list)
     pieces: list[chess.PieceType] = field(default_factory=list)
-    material_gain: int = 0  # Expected material gain from the tactic
+    material_gain: int = 0
 
 
 @dataclass
 class BlunderTactics:
-    """Tactical analysis of a blunder position.
-
-    Attributes:
-        missed_tactic: Tactic that the best move would have exploited
-        allowed_tactic: Tactic that opponent can now execute after our blunder
-        blunder_reason: Human-readable explanation of why this was a blunder
-    """
+    """Tactical analysis of a blunder position."""
 
     missed_tactic: TacticalMotif | None = None
     allowed_tactic: TacticalMotif | None = None
@@ -96,7 +90,6 @@ class BlunderTactics:
 
     @property
     def primary_pattern(self) -> TacticalPattern:
-        """Return the most significant tactical pattern."""
         if self.missed_tactic and self.missed_tactic.material_gain > 0:
             return self.missed_tactic.pattern
         if self.allowed_tactic and self.allowed_tactic.material_gain > 0:
@@ -119,7 +112,6 @@ def _get_piece_value(piece_type: chess.PieceType | None) -> int:
 
 
 def _square_distance(sq1: chess.Square, sq2: chess.Square) -> int:
-    """Chebyshev distance between two squares."""
     file1, rank1 = chess.square_file(sq1), chess.square_rank(sq1)
     file2, rank2 = chess.square_file(sq2), chess.square_rank(sq2)
     return max(abs(file1 - file2), abs(rank1 - rank2))
@@ -131,475 +123,552 @@ def _count_attacked_valuable_pieces(
     attacker_color: chess.Color,
     min_value: int = 0,
 ) -> list[tuple[chess.Square, chess.PieceType, int]]:
-    """Find valuable enemy pieces attacked by a piece on the given square."""
     attacks = board.attacks(attacker_square)
     enemy_color = not attacker_color
     attacked = []
-
     for sq in chess.SQUARES:
-        if attacks & chess.BB_SQUARES[sq]:
-            piece = board.piece_at(sq)
-            if piece and piece.color == enemy_color:
-                value = _get_piece_value(piece.piece_type)
-                if value >= min_value:
-                    attacked.append((sq, piece.piece_type, value))
-
+        if not (attacks & chess.BB_SQUARES[sq]):
+            continue
+        piece = board.piece_at(sq)
+        if piece and piece.color == enemy_color:
+            value = _get_piece_value(piece.piece_type)
+            if value >= min_value:
+                attacked.append((sq, piece.piece_type, value))
     return attacked
 
 
-def detect_fork(
-    board: chess.Board,
-    move: chess.Move,
-) -> TacticalMotif | None:
-    """Detect if a move creates a fork (attacks 2+ valuable pieces)."""
-    board_after = board.copy()
-    board_after.push(move)
+def _fork_description(
+    targets: list[tuple[chess.Square, chess.PieceType, int]],
+) -> str:
+    piece_types = {pt for _, pt, _ in targets}
+    if chess.KING in piece_types and chess.QUEEN in piece_types:
+        return "Royal Fork (King + Queen)"
+    if chess.KING in piece_types:
+        return f"Fork with Check ({len(targets)} pieces)"
+    piece_names = [chess.piece_name(pt) for _, pt, _ in targets[:2]]
+    return f"Fork ({' + '.join(piece_names)})"
 
+
+def _filter_fork_targets(
+    attacked: list[tuple[chess.Square, chess.PieceType, int]],
+    attacker_value: int,
+) -> list[tuple[chess.Square, chess.PieceType, int]]:
+    return [
+        target
+        for target in attacked
+        if target[2] >= attacker_value or target[1] == chess.KING
+    ]
+
+
+def _build_fork_motif(
+    targets: list[tuple[chess.Square, chess.PieceType, int]],
+    attack_sq: chess.Square,
+) -> TacticalMotif:
+    values = sorted((value for _, _, value in targets), reverse=True)
+    return TacticalMotif(
+        pattern=TacticalPattern.FORK,
+        description=_fork_description(targets),
+        squares=[attack_sq] + [sq for sq, _, _ in targets],
+        pieces=[pt for _, pt, _ in targets],
+        material_gain=values[1] if len(values) > 1 else values[0],
+    )
+
+
+def detect_fork(board: chess.Board, move: chess.Move) -> TacticalMotif | None:
+    """Detect if a move creates a fork (attacks 2+ valuable pieces)."""
     moving_piece = board.piece_at(move.from_square)
     if not moving_piece:
         return None
-
-    attacker_color = moving_piece.color
-    attacker_value = _get_piece_value(moving_piece.piece_type)
-
+    board_after = board.copy()
+    board_after.push(move)
     attacked = _count_attacked_valuable_pieces(
-        board_after, move.to_square, attacker_color
+        board_after, move.to_square, moving_piece.color
     )
+    valuable_targets = _filter_fork_targets(
+        attacked, _get_piece_value(moving_piece.piece_type)
+    )
+    if len(valuable_targets) < 2:
+        return None
+    return _build_fork_motif(valuable_targets, move.to_square)
 
-    # Filter to pieces worth at least as much as the attacker (or king)
-    valuable_targets = [
-        (sq, pt, value)
-        for sq, pt, value in attacked
-        if value >= attacker_value or pt == chess.KING
-    ]
 
-    if len(valuable_targets) >= 2:
-        # Calculate material gain (second most valuable piece, since one escapes)
-        values = sorted([value for _, _, value in valuable_targets], reverse=True)
-        material_gain = values[1] if len(values) > 1 else values[0]
-
-        squares = [move.to_square] + [sq for sq, _, _ in valuable_targets]
-        pieces = [pt for _, pt, _ in valuable_targets]
-
-        # Special naming for royal forks
-        piece_types = {pt for _, pt, _ in valuable_targets}
-        if chess.KING in piece_types and chess.QUEEN in piece_types:
-            desc = "Royal Fork (King + Queen)"
-        elif chess.KING in piece_types:
-            desc = f"Fork with Check ({len(valuable_targets)} pieces)"
-        else:
-            piece_names = [chess.piece_name(pt) for _, pt, _ in valuable_targets[:2]]
-            desc = f"Fork ({' + '.join(piece_names)})"
-
-        return TacticalMotif(
-            pattern=TacticalPattern.FORK,
-            description=desc,
-            squares=squares,
-            pieces=pieces,
-            material_gain=material_gain,
-        )
-
+def _find_pinner(
+    board: chess.Board, pin_mask: chess.Bitboard, enemy_color: chess.Color
+) -> chess.Square | None:
+    for pinner_sq in chess.SQUARES:
+        if not (pin_mask & chess.BB_SQUARES[pinner_sq]):
+            continue
+        pinner = board.piece_at(pinner_sq)
+        if pinner and pinner.color == enemy_color:
+            return pinner_sq
     return None
 
 
-def detect_pin(
-    board: chess.Board,
-    color: chess.Color,
+def _detect_absolute_pins(
+    board: chess.Board, color: chess.Color
 ) -> list[TacticalMotif]:
-    """Detect all pins against a given color (both absolute and relative)."""
-    pins = []
     enemy_color = not color
-
-    # First detect absolute pins (pinned to king) using chess library
+    pins: list[TacticalMotif] = []
     for sq in chess.SQUARES:
         piece = board.piece_at(sq)
-        if piece and piece.color == color and board.is_pinned(color, sq):
-            pin_mask = board.pin(color, sq)
-            pinned_value = _get_piece_value(piece.piece_type)
-
-            # Find the pinning piece
-            for pinner_sq in chess.SQUARES:
-                if pin_mask & chess.BB_SQUARES[pinner_sq]:
-                    pinner = board.piece_at(pinner_sq)
-                    if pinner and pinner.color == enemy_color:
-                        pins.append(
-                            TacticalMotif(
-                                pattern=TacticalPattern.PIN,
-                                description=f"Absolute Pin ({chess.piece_name(piece.piece_type)} to King)",
-                                squares=[sq, pinner_sq],
-                                pieces=[piece.piece_type],
-                                material_gain=pinned_value,
-                            )
-                        )
-                        break
-
-    # Now detect relative pins (pinned to queen or other valuable pieces)
-    for attacker_sq in chess.SQUARES:
-        attacker = board.piece_at(attacker_sq)
-        if not attacker or attacker.color != enemy_color:
+        if not (piece and piece.color == color and board.is_pinned(color, sq)):
             continue
-        if attacker.piece_type not in (chess.BISHOP, chess.ROOK, chess.QUEEN):
+        pinner_sq = _find_pinner(board, board.pin(color, sq), enemy_color)
+        if pinner_sq is None:
             continue
-
-        attacks = board.attacks(attacker_sq)
-        for target_sq in chess.SQUARES:
-            if not (attacks & chess.BB_SQUARES[target_sq]):
-                continue
-
-            target = board.piece_at(target_sq)
-            if not target or target.color != color:
-                continue
-
-            ray = chess.ray(attacker_sq, target_sq)
-            if not ray:
-                continue
-
-            for behind_sq in chess.SQUARES:
-                if behind_sq in (attacker_sq, target_sq):
-                    continue
-                if not (ray & chess.BB_SQUARES[behind_sq]):
-                    continue
-
-                if _square_distance(attacker_sq, behind_sq) <= _square_distance(
-                    attacker_sq, target_sq
-                ):
-                    continue
-
-                behind = board.piece_at(behind_sq)
-                if not behind or behind.color != color:
-                    continue
-
-                if behind.piece_type == chess.KING:
-                    continue  # Already handled as absolute pin
-
-                target_value = _get_piece_value(target.piece_type)
-                behind_value = _get_piece_value(behind.piece_type)
-
-                if behind_value > target_value:
-                    is_duplicate = any(
-                        target_sq in p.squares and attacker_sq in p.squares
-                        for p in pins
-                    )
-                    if not is_duplicate:
-                        pins.append(
-                            TacticalMotif(
-                                pattern=TacticalPattern.PIN,
-                                description=f"Relative Pin ({chess.piece_name(target.piece_type)} to {chess.piece_name(behind.piece_type)})",
-                                squares=[target_sq, attacker_sq, behind_sq],
-                                pieces=[target.piece_type, behind.piece_type],
-                                material_gain=target_value,
-                            )
-                        )
-                    break
-
+        pins.append(
+            TacticalMotif(
+                pattern=TacticalPattern.PIN,
+                description=f"Absolute Pin ({chess.piece_name(piece.piece_type)} to King)",
+                squares=[sq, pinner_sq],
+                pieces=[piece.piece_type],
+                material_gain=_get_piece_value(piece.piece_type),
+            )
+        )
     return pins
 
 
-def detect_skewer(
+def _is_pinning_attacker(piece: chess.Piece | None, enemy_color: chess.Color) -> bool:
+    if piece is None or piece.color != enemy_color:
+        return False
+    return piece.piece_type in (chess.BISHOP, chess.ROOK, chess.QUEEN)
+
+
+def _is_pin_behind(
     board: chess.Board,
-    move: chess.Move,
-) -> TacticalMotif | None:
-    """Detect if a move creates a skewer."""
-    board_after = board.copy()
-    board_after.push(move)
+    behind_sq: chess.Square,
+    attacker_sq: chess.Square,
+    target_sq: chess.Square,
+    ray: chess.Bitboard,
+    target_dist: int,
+    color: chess.Color,
+) -> bool:
+    if behind_sq in (attacker_sq, target_sq):
+        return False
+    if not (ray & chess.BB_SQUARES[behind_sq]):
+        return False
+    if _square_distance(attacker_sq, behind_sq) <= target_dist:
+        return False
+    behind = board.piece_at(behind_sq)
+    return bool(behind and behind.color == color and behind.piece_type != chess.KING)
 
-    moving_piece = board.piece_at(move.from_square)
-    if not moving_piece:
+
+def _find_relative_pin_behind(
+    board: chess.Board,
+    attacker_sq: chess.Square,
+    target_sq: chess.Square,
+    color: chess.Color,
+) -> chess.Square | None:
+    """Find a friendly piece behind `target_sq` that's pinned through it."""
+    ray = chess.ray(attacker_sq, target_sq)
+    if not ray:
         return None
+    target_dist = _square_distance(attacker_sq, target_sq)
+    for behind_sq in chess.SQUARES:
+        if _is_pin_behind(
+            board, behind_sq, attacker_sq, target_sq, ray, target_dist, color
+        ):
+            return behind_sq
+    return None
 
+
+def _is_duplicate_pin(
+    pins: list[TacticalMotif], target_sq: chess.Square, attacker_sq: chess.Square
+) -> bool:
+    return any(target_sq in p.squares and attacker_sq in p.squares for p in pins)
+
+
+def _scan_pinner_targets(
+    board: chess.Board,
+    attacker_sq: chess.Square,
+    color: chess.Color,
+    pins: list[TacticalMotif],
+) -> None:
+    attacks = board.attacks(attacker_sq)
+    for target_sq in chess.SQUARES:
+        if not (attacks & chess.BB_SQUARES[target_sq]):
+            continue
+        target = board.piece_at(target_sq)
+        if not target or target.color != color:
+            continue
+        motif = _try_relative_pin(board, attacker_sq, target_sq, target, color, pins)
+        if motif is not None:
+            pins.append(motif)
+
+
+def _detect_relative_pins(
+    board: chess.Board, color: chess.Color
+) -> list[TacticalMotif]:
+    enemy_color = not color
+    pins: list[TacticalMotif] = []
+    for attacker_sq in chess.SQUARES:
+        if _is_pinning_attacker(board.piece_at(attacker_sq), enemy_color):
+            _scan_pinner_targets(board, attacker_sq, color, pins)
+    return pins
+
+
+def _try_relative_pin(
+    board: chess.Board,
+    attacker_sq: chess.Square,
+    target_sq: chess.Square,
+    target: chess.Piece,
+    color: chess.Color,
+    existing_pins: list[TacticalMotif],
+) -> TacticalMotif | None:
+    behind_sq = _find_relative_pin_behind(board, attacker_sq, target_sq, color)
+    if behind_sq is None:
+        return None
+    behind = board.piece_at(behind_sq)
+    if behind is None:
+        return None
+    target_value = _get_piece_value(target.piece_type)
+    if _get_piece_value(behind.piece_type) <= target_value:
+        return None
+    if _is_duplicate_pin(existing_pins, target_sq, attacker_sq):
+        return None
+    return TacticalMotif(
+        pattern=TacticalPattern.PIN,
+        description=f"Relative Pin ({chess.piece_name(target.piece_type)} to {chess.piece_name(behind.piece_type)})",
+        squares=[target_sq, attacker_sq, behind_sq],
+        pieces=[target.piece_type, behind.piece_type],
+        material_gain=target_value,
+    )
+
+
+def detect_pin(board: chess.Board, color: chess.Color) -> list[TacticalMotif]:
+    """Detect all pins against a given color (both absolute and relative)."""
+    return _detect_absolute_pins(board, color) + _detect_relative_pins(board, color)
+
+
+def _is_skewer_behind(
+    board_after: chess.Board,
+    behind_sq: chess.Square,
+    attack_origin: chess.Square,
+    front_sq: chess.Square,
+    ray: chess.Bitboard,
+    front_dist: int,
+    enemy_color: chess.Color,
+) -> bool:
+    if behind_sq in (front_sq, attack_origin):
+        return False
+    if not (ray & chess.BB_SQUARES[behind_sq]):
+        return False
+    if _square_distance(attack_origin, behind_sq) <= front_dist:
+        return False
+    behind = board_after.piece_at(behind_sq)
+    return bool(behind and behind.color == enemy_color)
+
+
+def _find_skewer_behind(
+    board_after: chess.Board,
+    attack_origin: chess.Square,
+    front_sq: chess.Square,
+    enemy_color: chess.Color,
+) -> chess.Square | None:
+    ray = chess.ray(attack_origin, front_sq)
+    front_dist = _square_distance(attack_origin, front_sq)
+    for behind_sq in chess.SQUARES:
+        if _is_skewer_behind(
+            board_after,
+            behind_sq,
+            attack_origin,
+            front_sq,
+            ray,
+            front_dist,
+            enemy_color,
+        ):
+            return behind_sq
+    return None
+
+
+def _try_skewer(
+    board_after: chess.Board,
+    attack_origin: chess.Square,
+    front_sq: chess.Square,
+    front_piece: chess.Piece,
+    enemy_color: chess.Color,
+) -> TacticalMotif | None:
+    if front_piece.piece_type not in (chess.KING, chess.QUEEN, chess.ROOK):
+        return None
+    behind_sq = _find_skewer_behind(board_after, attack_origin, front_sq, enemy_color)
+    if behind_sq is None:
+        return None
+    behind = board_after.piece_at(behind_sq)
+    if behind is None:
+        return None
+    front_value = _get_piece_value(front_piece.piece_type)
+    behind_value = _get_piece_value(behind.piece_type)
+    if front_value <= behind_value:
+        return None
+    return TacticalMotif(
+        pattern=TacticalPattern.SKEWER,
+        description=f"Skewer ({chess.piece_name(front_piece.piece_type)} to {chess.piece_name(behind.piece_type)})",
+        squares=[attack_origin, front_sq, behind_sq],
+        pieces=[front_piece.piece_type, behind.piece_type],
+        material_gain=behind_value,
+    )
+
+
+def detect_skewer(board: chess.Board, move: chess.Move) -> TacticalMotif | None:
+    """Detect if a move creates a skewer."""
+    moving_piece = board.piece_at(move.from_square)
+    if moving_piece is None:
+        return None
     if moving_piece.piece_type not in (chess.BISHOP, chess.ROOK, chess.QUEEN):
         return None
 
-    attacker_color = moving_piece.color
-    enemy_color = not attacker_color
-
+    board_after = board.copy()
+    board_after.push(move)
+    enemy_color = not moving_piece.color
     attacks = board_after.attacks(move.to_square)
 
     for sq in chess.SQUARES:
         if not (attacks & chess.BB_SQUARES[sq]):
             continue
-
         front_piece = board_after.piece_at(sq)
         if not front_piece or front_piece.color != enemy_color:
             continue
+        skewer = _try_skewer(board_after, move.to_square, sq, front_piece, enemy_color)
+        if skewer is not None:
+            return skewer
+    return None
 
-        front_value = _get_piece_value(front_piece.piece_type)
 
-        ray = chess.ray(move.to_square, sq)
-        for behind_sq in chess.SQUARES:
-            if behind_sq == sq or behind_sq == move.to_square:
-                continue
-            if not (ray & chess.BB_SQUARES[behind_sq]):
-                continue
+def _is_potential_discoverer(
+    piece: chess.Piece | None,
+    attacker_color: chess.Color,
+    sq: chess.Square,
+    move_to: chess.Square,
+) -> bool:
+    if not piece or piece.color != attacker_color:
+        return False
+    if sq == move_to:
+        return False
+    return piece.piece_type in (chess.BISHOP, chess.ROOK, chess.QUEEN)
 
-            if _square_distance(move.to_square, behind_sq) <= _square_distance(
-                move.to_square, sq
-            ):
-                continue
 
-            behind_piece = board_after.piece_at(behind_sq)
-            if not behind_piece or behind_piece.color != enemy_color:
-                continue
+def _build_discovered_motif(
+    attacker_sq: chess.Square,
+    attacker_piece: chess.Piece,
+    move_from: chess.Square,
+    target_sq: chess.Square,
+    target_piece: chess.Piece,
+) -> TacticalMotif | None:
+    target_value = _get_piece_value(target_piece.piece_type)
+    if target_piece.piece_type == chess.KING:
+        return TacticalMotif(
+            pattern=TacticalPattern.DISCOVERED_CHECK,
+            description=f"Discovered Check (by {chess.piece_name(attacker_piece.piece_type)})",
+            squares=[attacker_sq, move_from, target_sq],
+            pieces=[attacker_piece.piece_type],
+            material_gain=target_value,
+        )
+    if target_value >= DISCOVERED_ATTACK_MATERIAL_FLOOR:
+        return TacticalMotif(
+            pattern=TacticalPattern.DISCOVERED_ATTACK,
+            description=f"Discovered Attack on {chess.piece_name(target_piece.piece_type)}",
+            squares=[attacker_sq, move_from, target_sq],
+            pieces=[attacker_piece.piece_type, target_piece.piece_type],
+            material_gain=target_value,
+        )
+    return None
 
-            behind_value = _get_piece_value(behind_piece.piece_type)
 
-            # Skewer: front piece is MORE valuable (must move, exposing piece behind)
-            if front_value > behind_value and front_piece.piece_type in (
-                chess.KING,
-                chess.QUEEN,
-                chess.ROOK,
-            ):
-                return TacticalMotif(
-                    pattern=TacticalPattern.SKEWER,
-                    description=f"Skewer ({chess.piece_name(front_piece.piece_type)} to {chess.piece_name(behind_piece.piece_type)})",
-                    squares=[move.to_square, sq, behind_sq],
-                    pieces=[front_piece.piece_type, behind_piece.piece_type],
-                    material_gain=behind_value,
-                )
-
+def _try_discovered_attack(
+    board: chess.Board,
+    board_after: chess.Board,
+    attacker_sq: chess.Square,
+    attacker_piece: chess.Piece,
+    move: chess.Move,
+    enemy_color: chess.Color,
+) -> TacticalMotif | None:
+    if not chess.ray(attacker_sq, move.from_square):
+        return None
+    new_attacks = board_after.attacks(attacker_sq) & ~board.attacks(attacker_sq)
+    for target_sq in chess.SQUARES:
+        if not (new_attacks & chess.BB_SQUARES[target_sq]):
+            continue
+        target = board_after.piece_at(target_sq)
+        if target and target.color == enemy_color:
+            motif = _build_discovered_motif(
+                attacker_sq, attacker_piece, move.from_square, target_sq, target
+            )
+            if motif is not None:
+                return motif
     return None
 
 
 def detect_discovered_attack(
-    board: chess.Board,
-    move: chess.Move,
+    board: chess.Board, move: chess.Move
 ) -> TacticalMotif | None:
     """Detect if moving a piece reveals an attack from a piece behind it."""
     moving_piece = board.piece_at(move.from_square)
     if not moving_piece:
         return None
 
-    attacker_color = moving_piece.color
-    enemy_color = not attacker_color
-
     board_after = board.copy()
     board_after.push(move)
+    enemy_color = not moving_piece.color
 
-    for sq in chess.SQUARES:
-        piece = board.piece_at(sq)
-        if not piece or piece.color != attacker_color:
+    for attacker_sq in chess.SQUARES:
+        attacker = board.piece_at(attacker_sq)
+        if not _is_potential_discoverer(
+            attacker, moving_piece.color, attacker_sq, move.to_square
+        ):
             continue
-        if sq == move.to_square:
-            continue
-        if piece.piece_type not in (chess.BISHOP, chess.ROOK, chess.QUEEN):
-            continue
-
-        ray = chess.ray(sq, move.from_square)
-        if not ray:
-            continue
-
-        attacks_before = board.attacks(sq)
-        attacks_after = board_after.attacks(sq)
-        new_attacks = attacks_after & ~attacks_before
-
-        for target_sq in chess.SQUARES:
-            if not (new_attacks & chess.BB_SQUARES[target_sq]):
-                continue
-
-            target = board_after.piece_at(target_sq)
-            if target and target.color == enemy_color:
-                target_value = _get_piece_value(target.piece_type)
-
-                if target.piece_type == chess.KING:
-                    return TacticalMotif(
-                        pattern=TacticalPattern.DISCOVERED_CHECK,
-                        description=f"Discovered Check (by {chess.piece_name(piece.piece_type)})",
-                        squares=[sq, move.from_square, target_sq],
-                        pieces=[piece.piece_type],
-                        material_gain=target_value,
-                    )
-                elif target_value >= DISCOVERED_ATTACK_MATERIAL_FLOOR:
-                    return TacticalMotif(
-                        pattern=TacticalPattern.DISCOVERED_ATTACK,
-                        description=f"Discovered Attack on {chess.piece_name(target.piece_type)}",
-                        squares=[sq, move.from_square, target_sq],
-                        pieces=[piece.piece_type, target.piece_type],
-                        material_gain=target_value,
-                    )
-
+        assert attacker is not None
+        motif = _try_discovered_attack(
+            board, board_after, attacker_sq, attacker, move, enemy_color
+        )
+        if motif is not None:
+            return motif
     return None
 
 
-def detect_double_check(
-    board: chess.Board,
-    move: chess.Move,
-) -> TacticalMotif | None:
+def detect_double_check(board: chess.Board, move: chess.Move) -> TacticalMotif | None:
     """Detect if a move delivers double check."""
     board_after = board.copy()
     board_after.push(move)
-
     if not board_after.is_check():
         return None
 
     checkers = board_after.checkers()
-    checker_count = bin(checkers).count("1")
+    if bin(checkers).count("1") < 2:
+        return None
 
-    if checker_count >= 2:
-        checker_squares = [
-            sq for sq in chess.SQUARES if checkers & chess.BB_SQUARES[sq]
-        ]
-        return TacticalMotif(
-            pattern=TacticalPattern.DOUBLE_CHECK,
-            description="Double Check",
-            squares=checker_squares,
-            pieces=[],
-            material_gain=DOUBLE_CHECK_MATERIAL_GAIN,  # Double check is very forcing
-        )
-
-    return None
+    checker_squares = [sq for sq in chess.SQUARES if checkers & chess.BB_SQUARES[sq]]
+    return TacticalMotif(
+        pattern=TacticalPattern.DOUBLE_CHECK,
+        description="Double Check",
+        squares=checker_squares,
+        pieces=[],
+        material_gain=DOUBLE_CHECK_MATERIAL_GAIN,
+    )
 
 
-def detect_hanging_piece(
-    board: chess.Board,
-    color: chess.Color,
-) -> list[TacticalMotif]:
+def detect_hanging_piece(board: chess.Board, color: chess.Color) -> list[TacticalMotif]:
     """Detect undefended pieces that are under attack."""
-    hanging = []
     enemy_color = not color
+    return [
+        TacticalMotif(
+            pattern=TacticalPattern.HANGING_PIECE,
+            description=f"Hanging {chess.piece_name(piece.piece_type)}",
+            squares=[sq],
+            pieces=[piece.piece_type],
+            material_gain=_get_piece_value(piece.piece_type),
+        )
+        for sq, piece in _iter_friendly_pieces(board, color)
+        if piece.piece_type != chess.KING
+        and board.is_attacked_by(enemy_color, sq)
+        and not board.attackers(color, sq)
+    ]
 
+
+def _iter_friendly_pieces(board: chess.Board, color: chess.Color):
     for sq in chess.SQUARES:
         piece = board.piece_at(sq)
-        if not piece or piece.color != color:
+        if piece and piece.color == color:
+            yield sq, piece
+
+
+def _has_king_escape(
+    board_after: chess.Board,
+    enemy_king_sq: chess.Square,
+    enemy_color: chess.Color,
+    attacker_color: chess.Color,
+) -> bool:
+    king_moves = board_after.attacks(enemy_king_sq)
+    for sq in chess.SQUARES:
+        if not (king_moves & chess.BB_SQUARES[sq]):
             continue
-        if piece.piece_type == chess.KING:
+        blocker = board_after.piece_at(sq)
+        if blocker and blocker.color == enemy_color:
             continue
+        if not board_after.is_attacked_by(attacker_color, sq):
+            return True
+    return False
 
-        if not board.is_attacked_by(enemy_color, sq):
-            continue
 
-        defenders = board.attackers(color, sq)
-
-        if not defenders:
-            value = _get_piece_value(piece.piece_type)
-            hanging.append(
-                TacticalMotif(
-                    pattern=TacticalPattern.HANGING_PIECE,
-                    description=f"Hanging {chess.piece_name(piece.piece_type)}",
-                    squares=[sq],
-                    pieces=[piece.piece_type],
-                    material_gain=value,
-                )
-            )
-
-    return hanging
+def _is_back_rank_mate(
+    board_after: chess.Board,
+    move: chess.Move,
+    enemy_king_sq: chess.Square | None,
+    enemy_color: chess.Color,
+    attacker_color: chess.Color,
+    back_rank: int,
+) -> bool:
+    if enemy_king_sq is None or not board_after.is_check():
+        return False
+    if chess.square_rank(enemy_king_sq) != back_rank:
+        return False
+    if chess.square_rank(move.to_square) != back_rank:
+        return False
+    return not _has_king_escape(board_after, enemy_king_sq, enemy_color, attacker_color)
 
 
 def detect_back_rank_threat(
-    board: chess.Board,
-    move: chess.Move,
+    board: chess.Board, move: chess.Move
 ) -> TacticalMotif | None:
     """Detect if a move creates a back rank threat."""
+    moving_piece = board.piece_at(move.from_square)
+    if not moving_piece or moving_piece.piece_type not in (chess.ROOK, chess.QUEEN):
+        return None
+
     board_after = board.copy()
     board_after.push(move)
-
-    moving_piece = board.piece_at(move.from_square)
-    if not moving_piece:
-        return None
-
     enemy_color = not moving_piece.color
     enemy_king_sq = board_after.king(enemy_color)
-    if enemy_king_sq is None:
-        return None
-
-    # Check if king is on back rank
     back_rank = 7 if enemy_color == chess.BLACK else 0
-    if chess.square_rank(enemy_king_sq) != back_rank:
+
+    if not _is_back_rank_mate(
+        board_after, move, enemy_king_sq, enemy_color, moving_piece.color, back_rank
+    ):
         return None
 
-    # Check if our move attacks the back rank
-    if moving_piece.piece_type not in (chess.ROOK, chess.QUEEN):
-        return None
-
-    # Check if we're attacking the king's rank
-    move_rank = chess.square_rank(move.to_square)
-    if move_rank != back_rank:
-        return None
-
-    # Check if there's a mating threat
-    if board_after.is_check():
-        # Check if king has escape squares
-        king_moves = board_after.attacks(enemy_king_sq)
-        has_escape = False
-        for sq in chess.SQUARES:
-            if not (king_moves & chess.BB_SQUARES[sq]):
-                continue
-            blocker = board_after.piece_at(sq)
-            if blocker and blocker.color == enemy_color:
-                continue  # Blocked by own piece
-            if not board_after.is_attacked_by(moving_piece.color, sq):
-                has_escape = True
-                break
-
-        if not has_escape:
-            return TacticalMotif(
-                pattern=TacticalPattern.BACK_RANK_THREAT,
-                description="Back Rank Mate Threat",
-                squares=[move.to_square, enemy_king_sq],
-                pieces=[chess.KING],
-                material_gain=MATE_THREAT_MATERIAL_GAIN,  # Mate threat
-            )
-
-    return None
+    return TacticalMotif(
+        pattern=TacticalPattern.BACK_RANK_THREAT,
+        description="Back Rank Mate Threat",
+        squares=[move.to_square, enemy_king_sq],
+        pieces=[chess.KING],
+        material_gain=MATE_THREAT_MATERIAL_GAIN,
+    )
 
 
-def analyze_move_tactics(
-    board: chess.Board,
-    move: chess.Move,
-) -> TacticalMotif | None:
-    """Analyze what tactical pattern a move exploits.
+_MOVE_DETECTORS = (
+    detect_fork,
+    detect_skewer,
+    detect_discovered_attack,
+    detect_double_check,
+    detect_back_rank_threat,
+)
 
-    Returns the most significant tactic created by this move.
-    """
-    tactics = []
 
-    # Check for fork
-    fork = detect_fork(board, move)
-    if fork:
-        tactics.append(fork)
-
-    # Check for skewer
-    skewer = detect_skewer(board, move)
-    if skewer:
-        tactics.append(skewer)
-
-    # Check for discovered attack/check
-    discovered = detect_discovered_attack(board, move)
-    if discovered:
-        tactics.append(discovered)
-
-    # Check for double check
-    double_check = detect_double_check(board, move)
-    if double_check:
-        tactics.append(double_check)
-
-    # Check for back rank threat
-    back_rank = detect_back_rank_threat(board, move)
-    if back_rank:
-        tactics.append(back_rank)
-
+def analyze_move_tactics(board: chess.Board, move: chess.Move) -> TacticalMotif | None:
+    """Analyze what tactical pattern a move exploits."""
+    tactics: list[TacticalMotif] = []
+    for detector in _MOVE_DETECTORS:
+        motif = detector(board, move)
+        if motif is not None:
+            tactics.append(motif)
     if not tactics:
         return None
-
-    # Return the tactic with highest material gain
     return max(tactics, key=lambda t: t.material_gain)
 
 
 def analyze_position_weaknesses(
-    board: chess.Board,
-    color: chess.Color,
+    board: chess.Board, color: chess.Color
 ) -> list[TacticalMotif]:
     """Analyze weaknesses in a position for the given color."""
-    weaknesses = []
+    return detect_hanging_piece(board, color) + detect_pin(board, color)
 
-    # Check for hanging pieces
-    hanging = detect_hanging_piece(board, color)
-    weaknesses.extend(hanging)
 
-    # Check for pins
-    pins = detect_pin(board, color)
-    weaknesses.extend(pins)
-
-    return weaknesses
+def _new_weaknesses(
+    before: list[TacticalMotif], after: list[TacticalMotif]
+) -> list[TacticalMotif]:
+    pre_existing = {(w.pattern, tuple(sorted(w.squares))) for w in before}
+    return [
+        w for w in after if (w.pattern, tuple(sorted(w.squares))) not in pre_existing
+    ]
 
 
 def classify_blunder_tactics(
@@ -608,97 +677,50 @@ def classify_blunder_tactics(
     best_move: chess.Move | None,
     opponent_reply: chess.Move | None = None,
 ) -> BlunderTactics:
-    """Classify what tactical patterns explain a blunder.
-
-    Args:
-        board_before: Position before the blunder
-        blunder_move: The move that was played (the blunder)
-        best_move: The best move according to engine
-        opponent_reply: Opponent's best reply after the blunder (if known)
-
-    Returns:
-        BlunderTactics with missed and/or allowed tactics identified
-    """
+    """Classify what tactical patterns explain a blunder."""
     result = BlunderTactics()
-    reasons = []
+    reasons: list[str] = []
 
-    # 1. Check if best move had a tactic we missed
     if best_move:
         missed = analyze_move_tactics(board_before, best_move)
         if missed:
             result.missed_tactic = missed
             reasons.append(f"Missed {missed.description.lower()}")
 
-    # 2. Check what weaknesses our blunder creates
     board_after_blunder = board_before.copy()
     board_after_blunder.push(blunder_move)
-
     player_color = board_before.turn
 
-    # Check what NEW weaknesses exist after our blunder (exclude pre-existing ones)
-    weaknesses_before = analyze_position_weaknesses(board_before, player_color)
-    weaknesses_after = analyze_position_weaknesses(board_after_blunder, player_color)
-    pre_existing = {(w.pattern, tuple(sorted(w.squares))) for w in weaknesses_before}
-    new_weaknesses = [
-        w
-        for w in weaknesses_after
-        if (w.pattern, tuple(sorted(w.squares))) not in pre_existing
-    ]
+    _attach_allowed_tactic(
+        result, reasons, board_before, board_after_blunder, opponent_reply, player_color
+    )
 
-    # 3. If we know opponent's reply, check if it's a tactic
+    result.blunder_reason = (
+        "; ".join(reasons) if reasons else "Positional error or deep tactical oversight"
+    )
+    return result
+
+
+def _attach_allowed_tactic(
+    result: BlunderTactics,
+    reasons: list[str],
+    board_before: chess.Board,
+    board_after_blunder: chess.Board,
+    opponent_reply: chess.Move | None,
+    player_color: chess.Color,
+) -> None:
     if opponent_reply:
         allowed = analyze_move_tactics(board_after_blunder, opponent_reply)
         if allowed:
             result.allowed_tactic = allowed
             reasons.append(f"Allowed {allowed.description.lower()}")
-    elif new_weaknesses:
-        worst_weakness = max(new_weaknesses, key=lambda w: w.material_gain)
-        result.allowed_tactic = worst_weakness
-        reasons.append(f"Created {worst_weakness.description.lower()}")
+        return
 
-    # Build explanation
-    if reasons:
-        result.blunder_reason = "; ".join(reasons)
-    else:
-        result.blunder_reason = "Positional error or deep tactical oversight"
-
-    return result
-
-
-# Legacy compatibility exports
-def analyze_blunder_tactics(
-    board_before: chess.Board,
-    blunder_move: chess.Move,
-    best_move: chess.Move | None,
-) -> dict:
-    """Legacy function for backward compatibility."""
-    result = classify_blunder_tactics(board_before, blunder_move, best_move)
-
-    @dataclass
-    class TacticsReport:
-        patterns: list[TacticalMotif] = field(default_factory=list)
-        primary_pattern: TacticalPattern = TacticalPattern.NONE
-
-        @property
-        def pattern_ids(self) -> list[int]:
-            return [m.pattern.value for m in self.patterns]
-
-        @property
-        def pattern_names(self) -> list[str]:
-            return [PATTERN_LABELS[m.pattern] for m in self.patterns]
-
-    best_move_report = TacticsReport()
-    if result.missed_tactic:
-        best_move_report.patterns = [result.missed_tactic]
-        best_move_report.primary_pattern = result.missed_tactic.pattern
-
-    blunder_report = TacticsReport()
-    if result.allowed_tactic:
-        blunder_report.patterns = [result.allowed_tactic]
-        blunder_report.primary_pattern = result.allowed_tactic.pattern
-
-    return {
-        "position_before": TacticsReport(),
-        "blunder_creates": blunder_report,
-        "best_move_uses": best_move_report,
-    }
+    new_weaknesses = _new_weaknesses(
+        analyze_position_weaknesses(board_before, player_color),
+        analyze_position_weaknesses(board_after_blunder, player_color),
+    )
+    if new_weaknesses:
+        worst = max(new_weaknesses, key=lambda w: w.material_gain)
+        result.allowed_tactic = worst
+        reasons.append(f"Created {worst.description.lower()}")

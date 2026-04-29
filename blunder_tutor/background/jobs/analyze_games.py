@@ -9,10 +9,10 @@ from typing import Any, ClassVar
 import chess.engine
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
-from blunder_tutor.analysis.logic import DEFAULT_CONCURRENCY, GameAnalyzer
+from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.background.base import BaseJob
 from blunder_tutor.background.registry import register_job
-from blunder_tutor.constants import JOB_STATUS_FAILED
+from blunder_tutor.constants import DEFAULT_CONCURRENCY, JOB_STATUS_FAILED
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import EventType
 from blunder_tutor.repositories.analysis import AnalysisRepository

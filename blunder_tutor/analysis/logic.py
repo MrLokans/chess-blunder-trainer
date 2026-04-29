@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import functools
 import logging
-import os
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import chess.engine
@@ -16,14 +17,23 @@ from blunder_tutor.analysis.pipeline.pipeline import (
 )
 from blunder_tutor.analysis.pipeline.steps import get_all_steps
 from blunder_tutor.analysis.thresholds import Thresholds
-from blunder_tutor.constants import DEFAULT_ENGINE_CONCURRENCY
+from blunder_tutor.constants import DEFAULT_CONCURRENCY
 
 if TYPE_CHECKING:
     from blunder_tutor.repositories.analysis import AnalysisRepository
     from blunder_tutor.repositories.game_repository import GameRepository
 
 
-DEFAULT_CONCURRENCY = min(DEFAULT_ENGINE_CONCURRENCY, os.cpu_count() or 1)
+@dataclass(frozen=True)
+class BulkAnalysisOptions:
+    depth: int | None = None
+    time_limit: float | None = None
+    source: str | None = None
+    username: str | None = None
+    limit: int | None = None
+    force: bool = False
+    steps: list[str] | None = None
+    concurrency: int = DEFAULT_CONCURRENCY
 
 
 class GameAnalyzer:
@@ -80,31 +90,25 @@ class GameAnalyzer:
 
         return report
 
-    async def analyze_bulk(
-        self,
-        depth: int | None = None,
-        time_limit: float | None = None,
-        source: str | None = None,
-        username: str | None = None,
-        limit: int | None = None,
-        force: bool = False,
-        steps: list[str] | None = None,
-        concurrency: int = DEFAULT_CONCURRENCY,
-    ) -> dict[str, int]:
-        game_ids = await self.games_repo.list_unanalyzed_game_ids(source, username)
-        if limit is not None:
-            game_ids = game_ids[:limit]
+    async def analyze_bulk(self, options: BulkAnalysisOptions) -> dict[str, int]:
+        game_ids = await self.games_repo.list_unanalyzed_game_ids(
+            options.source, options.username
+        )
+        if options.limit is not None:
+            game_ids = game_ids[: options.limit]
 
         if not game_ids:
             return {"processed": 0, "analyzed": 0, "skipped": 0}  # noqa: WPS226 — counter dict keys repeated as we increment them per-game in the analyze loop.
 
         self._log.info(
-            "Processing %d games with concurrency=%d", len(game_ids), concurrency
+            "Processing %d games with concurrency=%d",
+            len(game_ids),
+            options.concurrency,
         )
 
         owns_coordinator = self._coordinator is None
         coordinator = self._coordinator or WorkCoordinator(
-            self.engine_path, concurrency
+            self.engine_path, options.concurrency
         )
         if owns_coordinator:
             await coordinator.start()
@@ -112,48 +116,61 @@ class GameAnalyzer:
         results = {"processed": 0, "analyzed": 0, "skipped": 0, "failed": 0}
 
         try:  # noqa: WPS501 — conditional cleanup (`if owns_coordinator: shutdown`); not a single-resource context manager.
-            with tqdm(
-                total=len(game_ids), desc="Analyze games", unit="game"
-            ) as progress:
-                for game_id in game_ids:
-
-                    async def process_game(  # noqa: WPS430 — per-game closure for `coordinator.submit`; captures `results`/`progress`/`force` and the late-bound `_gid` default.
-                        engine: chess.engine.UciProtocol,
-                        *,
-                        _gid: str = game_id,
-                    ) -> None:
-                        skip = (
-                            await self.analysis_repo.analysis_exists(_gid) and not force
-                        )
-                        if skip:
-                            results["skipped"] += 1
-                            results["processed"] += 1
-                            progress.update(1)
-                            return
-
-                        try:  # noqa: WPS505 — per-game error isolation: a failure on one game must not abort the whole batch.
-                            await self.analyze_game(
-                                game_id=_gid,
-                                depth=depth,
-                                time_limit=time_limit,
-                                steps=steps,
-                                force_rerun=force,
-                                engine=engine,
-                            )
-                            results["analyzed"] += 1
-                            results["processed"] += 1
-                            progress.update(1)
-                        except Exception as e:
-                            self._log.error("Failed to analyze game %s: %s", _gid, e)
-                            results["failed"] += 1
-                            results["processed"] += 1
-                            progress.update(1)
-
-                    coordinator.submit(process_game)
-
-                await coordinator.drain()
+            await self._submit_all(coordinator, game_ids, options, results)
         finally:
             if owns_coordinator:
                 await coordinator.shutdown()
 
         return results
+
+    async def _submit_all(
+        self,
+        coordinator: WorkCoordinator,
+        game_ids: list[str],
+        options: BulkAnalysisOptions,
+        results: dict[str, int],
+    ) -> None:
+        with tqdm(total=len(game_ids), desc="Analyze games", unit="game") as progress:
+            for game_id in game_ids:
+                coordinator.submit(
+                    functools.partial(
+                        self._process_one_game,
+                        game_id=game_id,
+                        options=options,
+                        results=results,
+                        progress=progress,
+                    )
+                )
+            await coordinator.drain()
+
+    async def _process_one_game(
+        self,
+        engine: chess.engine.UciProtocol,
+        *,
+        game_id: str,
+        options: BulkAnalysisOptions,
+        results: dict[str, int],
+        progress: tqdm,
+    ) -> None:
+        already_analyzed = await self.analysis_repo.analysis_exists(game_id)
+        if already_analyzed and not options.force:
+            results["skipped"] += 1
+            results["processed"] += 1
+            progress.update(1)
+            return
+
+        try:  # noqa: WPS505 — per-game error isolation: a failure on one game must not abort the whole batch.
+            await self.analyze_game(
+                game_id=game_id,
+                depth=options.depth,
+                time_limit=options.time_limit,
+                steps=options.steps,
+                force_rerun=options.force,
+                engine=engine,
+            )
+            results["analyzed"] += 1
+        except Exception as exc:
+            self._log.error("Failed to analyze game %s: %s", game_id, exc)
+            results["failed"] += 1
+        results["processed"] += 1
+        progress.update(1)

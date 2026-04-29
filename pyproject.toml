@@ -194,8 +194,18 @@ per-file-ignores = [
   "blunder_tutor/repositories/*: WPS214, WPS226, WPS301, WPS336",
   "blunder_tutor/repositories/stats_repository.py: WPS202, WPS204, WPS210, WPS214, WPS226, WPS301, WPS336",
   "blunder_tutor/web/api/*: WPS226",
-  "blunder_tutor/utils/explanation.py: WPS226",
+  # explanation.py: WPS202 — explanation strategies form one cohesive PV
+  # walker + i18n message factory. Splitting the per-strategy helpers across
+  # submodules would scatter the ordered fallback chain (PV → static check
+  # → static pattern → retreat → capture → threat → cp-loss) without
+  # architectural benefit. WPS226: I18nMessage params share names by design.
+  "blunder_tutor/utils/explanation.py: WPS202, WPS226",
   "blunder_tutor/analysis/*: WPS301, WPS458",
+  # tactics.py: WPS202 — every detect_* / analyze_* and its tightly-coupled
+  # private helpers form one cohesive module. Splitting into submodules would
+  # scatter related detectors and their bitboard scratch helpers across 5+
+  # files for no architectural benefit.
+  "blunder_tutor/analysis/tactics.py: WPS202",
   "blunder_tutor/analysis/pipeline/*: WPS301, WPS458",
   "blunder_tutor/analysis/pipeline/steps/*: WPS301, WPS458",
   "blunder_tutor/background/jobs/*: WPS201, WPS301, WPS458",
