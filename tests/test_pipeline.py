@@ -22,6 +22,7 @@ class DummyStep(AnalysisStep):
     def __init__(self, step_id: str, depends: frozenset[str] | None = None):
         self._step_id = step_id
         self._depends = depends or frozenset()
+        self.execute_count = 0
 
     @property
     def step_id(self) -> str:
@@ -32,7 +33,28 @@ class DummyStep(AnalysisStep):
         return self._depends
 
     async def execute(self, ctx: StepContext) -> StepResult:
+        self.execute_count += 1
         return StepResult(step_id=self.step_id, success=True)
+
+
+class FailingStep(DummyStep):
+    def __init__(self, step_id: str, error: str):
+        super().__init__(step_id)
+        self._error = error
+
+    async def execute(self, ctx: StepContext) -> StepResult:
+        self.execute_count += 1
+        return StepResult(step_id=self.step_id, success=False, error=self._error)
+
+
+class RaisingStep(DummyStep):
+    def __init__(self, step_id: str, exc: Exception):
+        super().__init__(step_id)
+        self._exc = exc
+
+    async def execute(self, ctx: StepContext) -> StepResult:
+        self.execute_count += 1
+        raise self._exc
 
 
 class TestPipelineConfig:
@@ -199,6 +221,146 @@ class TestPipelineExecutor:
         assert report.success is True
         assert "test_step" in report.steps_executed
         assert "test_step" not in report.steps_skipped
+
+    async def test_execute_pipeline_aborts_on_game_load_failure(self, mock_repos):
+        analysis_repo, game_repo = mock_repos
+        game_repo.load_game = AsyncMock(side_effect=RuntimeError("disk gone"))
+
+        step = DummyStep("test_step")
+        config = PipelineConfig(steps=["test_step"])
+        pipeline = AnalysisPipeline(config, [step])
+
+        executor = PipelineExecutor(
+            analysis_repo=analysis_repo,
+            game_repo=game_repo,
+            engine_path="/path/to/engine",
+        )
+
+        report = await executor.execute_pipeline(
+            pipeline=pipeline,
+            game_id="test_game_id",
+        )
+
+        assert report.success is False
+        assert report.error is not None
+        assert report.error.startswith("Failed to load game")
+        assert report.completed_at != ""
+        assert step.execute_count == 0
+        analysis_repo.mark_steps_completed.assert_not_called()
+
+    async def test_execute_pipeline_aborts_on_missing_dependency(
+        self, mock_repos, sample_game
+    ):
+        analysis_repo, game_repo = mock_repos
+        game_repo.load_game = AsyncMock(return_value=sample_game)
+
+        step_b = DummyStep("step_b", frozenset(("step_a",)))
+        step_c = DummyStep("step_c", frozenset(("step_b",)))
+        config = PipelineConfig(steps=["step_b", "step_c"])
+        pipeline = AnalysisPipeline(config, [step_b, step_c])
+
+        executor = PipelineExecutor(
+            analysis_repo=analysis_repo,
+            game_repo=game_repo,
+            engine_path="/path/to/engine",
+        )
+
+        report = await executor.execute_pipeline(
+            pipeline=pipeline,
+            game_id="test_game_id",
+        )
+
+        assert report.success is False
+        assert report.steps_failed == ["step_b"]
+        assert report.error is not None
+        assert "missing dependencies" in report.error
+        assert step_b.execute_count == 0
+        assert step_c.execute_count == 0
+        analysis_repo.mark_steps_completed.assert_not_called()
+
+    async def test_execute_pipeline_aborts_on_step_failure_result(
+        self, mock_repos, sample_game
+    ):
+        analysis_repo, game_repo = mock_repos
+        game_repo.load_game = AsyncMock(return_value=sample_game)
+
+        step_a = FailingStep("step_a", error="boom")
+        step_b = DummyStep("step_b", frozenset(("step_a",)))
+        config = PipelineConfig(steps=["step_a", "step_b"])
+        pipeline = AnalysisPipeline(config, [step_a, step_b])
+
+        executor = PipelineExecutor(
+            analysis_repo=analysis_repo,
+            game_repo=game_repo,
+            engine_path="/path/to/engine",
+        )
+
+        report = await executor.execute_pipeline(
+            pipeline=pipeline,
+            game_id="test_game_id",
+        )
+
+        assert report.success is False
+        assert report.error == "boom"
+        assert "step_a" in report.steps_failed
+        assert step_b.execute_count == 0
+        assert "step_b" not in report.steps_executed
+        analysis_repo.mark_steps_completed.assert_not_called()
+
+    async def test_execute_pipeline_aborts_on_step_exception(
+        self, mock_repos, sample_game
+    ):
+        analysis_repo, game_repo = mock_repos
+        game_repo.load_game = AsyncMock(return_value=sample_game)
+
+        step_a = RaisingStep("step_a", RuntimeError("kaboom"))
+        step_b = DummyStep("step_b", frozenset(("step_a",)))
+        config = PipelineConfig(steps=["step_a", "step_b"])
+        pipeline = AnalysisPipeline(config, [step_a, step_b])
+
+        executor = PipelineExecutor(
+            analysis_repo=analysis_repo,
+            game_repo=game_repo,
+            engine_path="/path/to/engine",
+        )
+
+        report = await executor.execute_pipeline(
+            pipeline=pipeline,
+            game_id="test_game_id",
+        )
+
+        assert report.success is False
+        assert report.error == "kaboom"
+        assert "step_a" in report.steps_failed
+        assert step_b.execute_count == 0
+        analysis_repo.mark_steps_completed.assert_not_called()
+
+    async def test_execute_pipeline_skip_only_does_not_call_mark_completed(
+        self, mock_repos, sample_game
+    ):
+        analysis_repo, game_repo = mock_repos
+        game_repo.load_game = AsyncMock(return_value=sample_game)
+        analysis_repo.is_step_completed = AsyncMock(return_value=True)
+
+        step = DummyStep("test_step")
+        config = PipelineConfig(steps=["test_step"])
+        pipeline = AnalysisPipeline(config, [step])
+
+        executor = PipelineExecutor(
+            analysis_repo=analysis_repo,
+            game_repo=game_repo,
+            engine_path="/path/to/engine",
+        )
+
+        report = await executor.execute_pipeline(
+            pipeline=pipeline,
+            game_id="test_game_id",
+        )
+
+        assert report.success is True
+        assert report.steps_skipped == ["test_step"]
+        assert report.steps_executed == []
+        analysis_repo.mark_steps_completed.assert_not_called()
 
 
 class TestStepContext:

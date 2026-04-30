@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import io
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import chess.pgn
 import pytest
@@ -12,7 +12,58 @@ from blunder_tutor.analysis.pipeline.steps.eco import ECOClassifyStep
 from blunder_tutor.analysis.pipeline.steps.move_quality import MoveQualityStep
 from blunder_tutor.analysis.pipeline.steps.phase import PhaseClassifyStep
 from blunder_tutor.analysis.pipeline.steps.stockfish import StockfishAnalysisStep
+from blunder_tutor.analysis.pipeline.steps.tactics import TacticsClassifyStep
 from blunder_tutor.analysis.thresholds import Thresholds
+from blunder_tutor.constants import (
+    CLASSIFICATION_BLUNDER,
+    CLASSIFICATION_NORMAL,
+    MATE_SCORE_ANALYSIS,
+    MATE_THRESHOLD,
+)
+
+
+def _make_score_mock(*, is_mate: bool, mate: int | None = None) -> MagicMock:
+    pov = MagicMock()
+    pov.is_mate.return_value = is_mate
+    pov.mate.return_value = mate
+    score = MagicMock()
+    score.pov.return_value = pov
+    return score
+
+
+_BOARD_UNSET = object()
+
+
+def _make_move_eval(
+    *,
+    eval_before: int,
+    eval_after: int,
+    info_before_score: MagicMock | None = None,
+    board: object = _BOARD_UNSET,
+    ply: int = 1,
+    classification: int | None = None,
+) -> dict:
+    if info_before_score is None:
+        info_before_score = _make_score_mock(is_mate=False)
+    move_data = {
+        "ply": ply,
+        "move_number": 1,
+        "player": "white",
+        "uci": "e2e4",
+        "san": "e4",
+        "eval_before": eval_before,
+        "eval_after": eval_after,
+        "info_before": {"score": info_before_score},
+        "best_move_uci": "e2e4",
+        "best_move_san": "e4",
+        "best_line": "e4 e5",
+        "best_move_eval": eval_before,
+    }
+    if board is not _BOARD_UNSET:
+        move_data["board"] = board
+    if classification is not None:
+        move_data["classification"] = classification
+    return move_data
 
 
 @pytest.fixture
@@ -157,6 +208,164 @@ class TestMoveQualityStep:
         assert moves[0]["ply"] == 1
         assert "cp_loss" in moves[0]
         assert "classification" in moves[0]
+
+    async def test_execute_classifies_mate_created(self, mock_context):
+        move_eval = _make_move_eval(
+            eval_before=200,
+            eval_after=-MATE_THRESHOLD - 100,
+            info_before_score=_make_score_mock(is_mate=False),
+            board=chess.Board(),
+        )
+        mock_context.add_step_result(
+            StepResult(
+                step_id="stockfish", success=True, data={"move_evals": [move_eval]}
+            )
+        )
+
+        result = await MoveQualityStep().execute(mock_context)
+
+        assert result.success is True
+        # eval_before=200 ≥ -700 → BLUNDER per _classify_mate_created.
+        assert result.data["moves"][0]["classification"] == CLASSIFICATION_BLUNDER
+
+    async def test_execute_classifies_mate_delayed(self, mock_context):
+        move_eval = _make_move_eval(
+            eval_before=MATE_THRESHOLD + 200,
+            eval_after=-MATE_THRESHOLD - 100,
+            info_before_score=_make_score_mock(is_mate=True, mate=5),
+            board=chess.Board(),
+        )
+        mock_context.add_step_result(
+            StepResult(
+                step_id="stockfish", success=True, data={"move_evals": [move_eval]}
+            )
+        )
+
+        result = await MoveQualityStep().execute(mock_context)
+
+        assert result.success is True
+        moves = result.data["moves"]
+        # has_winning_mate_before AND has_losing_mate_after → mate_delayed → BLUNDER.
+        assert moves[0]["classification"] == CLASSIFICATION_BLUNDER
+        # has_winning_mate_before sets missed_mate_depth.
+        assert moves[0]["missed_mate_depth"] == 5
+
+    async def test_execute_records_checkmate_delivered_as_good(self, mock_context):
+        move_eval = _make_move_eval(
+            eval_before=500,
+            eval_after=MATE_SCORE_ANALYSIS,
+            info_before_score=_make_score_mock(is_mate=False),
+            board=chess.Board(),
+        )
+        mock_context.add_step_result(
+            StepResult(
+                step_id="stockfish", success=True, data={"move_evals": [move_eval]}
+            )
+        )
+
+        result = await MoveQualityStep().execute(mock_context)
+
+        assert result.success is True
+        moves = result.data["moves"]
+        assert moves[0]["cp_loss"] == 0
+        assert moves[0]["classification"] == CLASSIFICATION_NORMAL
+
+    async def test_execute_difficulty_none_when_board_missing(self, mock_context):
+        move_eval = _make_move_eval(
+            eval_before=20,
+            eval_after=15,
+            info_before_score=_make_score_mock(is_mate=False),
+            # board key intentionally absent
+        )
+        mock_context.add_step_result(
+            StepResult(
+                step_id="stockfish", success=True, data={"move_evals": [move_eval]}
+            )
+        )
+
+        result = await MoveQualityStep().execute(mock_context)
+
+        assert result.success is True
+        assert result.data["moves"][0]["difficulty"] is None
+
+
+class TestTacticsClassifyStep:
+    def _make_tactics_result_mock(self) -> MagicMock:
+        result = MagicMock()
+        result.primary_pattern.value = 0
+        result.primary_pattern_name = "None"
+        result.blunder_reason = ""
+        result.missed_tactic = None
+        result.allowed_tactic = None
+        return result
+
+    def _move_data(self, ply: int, classification: int) -> dict:
+        return {
+            "ply": ply,
+            "classification": classification,
+            "best_move_uci": "e2e4",
+        }
+
+    async def test_execute_fails_without_move_quality(self, mock_context):
+        step = TacticsClassifyStep()
+        result = await step.execute(mock_context)
+
+        assert result.success is False
+        assert "Move quality step not completed" in result.error
+
+    async def test_execute_skips_non_blunder_moves(self, mock_context):
+        moves = [
+            self._move_data(ply=1, classification=0),
+            self._move_data(ply=2, classification=1),
+            self._move_data(ply=3, classification=2),
+        ]
+        mock_context.add_step_result(
+            StepResult(step_id="move_quality", success=True, data={"moves": moves})
+        )
+
+        with patch(
+            "blunder_tutor.analysis.pipeline.steps.tactics.classify_blunder_tactics"
+        ) as mock_classify:
+            result = await TacticsClassifyStep().execute(mock_context)
+
+        assert result.success is True
+        assert result.data["tactics"] == []
+        mock_classify.assert_not_called()
+
+    async def test_execute_runs_tactics_for_blunder_with_correct_board_state(
+        self, mock_context
+    ):
+        # mainline of sample_game: e4 e5 Nf3 Nc6 Bb5 (5 plies). The 3rd ply
+        # is Nf3; its board_before should be the position after e4 e5.
+        moves = [
+            self._move_data(ply=1, classification=0),
+            self._move_data(ply=2, classification=0),
+            self._move_data(ply=3, classification=CLASSIFICATION_BLUNDER),
+        ]
+        mock_context.add_step_result(
+            StepResult(step_id="move_quality", success=True, data={"moves": moves})
+        )
+
+        expected_board = mock_context.game.board()
+        mainline = list(mock_context.game.mainline_moves())
+        expected_board.push(mainline[0])
+        expected_board.push(mainline[1])
+        expected_fen = expected_board.fen()
+        expected_third_move = mainline[2]
+
+        tactics_result = self._make_tactics_result_mock()
+        with patch(
+            "blunder_tutor.analysis.pipeline.steps.tactics.classify_blunder_tactics",
+            return_value=tactics_result,
+        ) as mock_classify:
+            result = await TacticsClassifyStep().execute(mock_context)
+
+        assert result.success is True
+        assert mock_classify.call_count == 1
+        call_args = mock_classify.call_args
+        board_before, move_played, _best = call_args.args
+        assert board_before.fen() == expected_fen
+        assert move_played == expected_third_move
 
 
 class TestStockfishAnalysisStep:
