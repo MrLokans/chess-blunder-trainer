@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 from fastapi.testclient import TestClient
 
 
 def test_debug_endpoint_game_not_found(app: TestClient) -> None:
     resp = app.get("/api/games/nonexistent/debug")
-    assert resp.status_code == 404
+    assert resp.status_code == HTTPStatus.NOT_FOUND
 
 
 async def test_debug_endpoint_returns_text(
@@ -69,7 +70,7 @@ async def test_debug_endpoint_returns_text(
     )
 
     resp = app.get("/api/games/test-game-001/debug")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert resp.headers["content-type"] == "text/plain; charset=utf-8"
 
     text = resp.text
@@ -83,7 +84,7 @@ async def test_debug_endpoint_returns_text(
     assert "Currently Investigating" not in text
 
     resp_with_ply = app.get("/api/games/test-game-001/debug?ply=2")
-    assert resp_with_ply.status_code == 200
+    assert resp_with_ply.status_code == HTTPStatus.OK
     text_with_ply = resp_with_ply.text
     assert "## ⚠️ Currently Investigating (ply 2)" in text_with_ply
     assert "← 🔍" in text_with_ply

@@ -18,8 +18,9 @@ import sys
 from datetime import timedelta
 from functools import partial
 from pathlib import Path
+from types import MappingProxyType
 
-from blunder_tutor.auth import (
+from blunder_tutor.auth import (  # noqa: WPS235 — operator CLI consumes the public auth namespace surface to wire AuthService + admin + invite policy in one place.
     CREDENTIALS_PROVIDER_NAME,
     AuthDb,
     AuthService,
@@ -29,6 +30,7 @@ from blunder_tutor.auth import (
     InviteCannotBeRegeneratedError,
     MaxUsersQuota,
     NoCredentialsIdentityError,
+    SessionConfig,
     SqliteStorage,
     UserNotFoundError,
     ValidationRules,
@@ -38,6 +40,7 @@ from blunder_tutor.auth import (
     make_username,
 )
 from blunder_tutor.cli.base import CLICommand
+from blunder_tutor.constants import AUTH_MODE_CREDENTIALS
 from blunder_tutor.web.auth_hooks import (
     BlunderTutorFilePermissionPolicy,
     cleanup_user_dir,
@@ -47,7 +50,7 @@ from blunder_tutor.web.config import AppConfig
 
 
 async def cmd_list_users(ctx: dict) -> None:
-    users = await admin.list_users(ctx["service"])
+    users = await admin.list_users(ctx["service"])  # noqa: WPS226 — `service` is the conventional context dict key, used by every cmd_* function.
     if not users:
         print("No users")
         return
@@ -132,29 +135,21 @@ async def cmd_prune_orphans(ctx: dict) -> None:
     print(f"Removed {removed} orphan director{'y' if removed == 1 else 'ies'}")
 
 
-_DISPATCH = {
-    "list-users": (cmd_list_users, ()),
-    # ``new_password`` is populated from stdin or getpass in the
-    # dispatcher, not from argparse — passwords must not appear on argv.
-    "reset-password": (cmd_reset_password, ("username", "new_password")),
-    "revoke-sessions": (cmd_revoke_sessions, ("username",)),
-    "delete-user": (cmd_delete_user, ("username",)),
-    "regenerate-invite": (cmd_regenerate_invite, ()),
-    "prune-orphans": (cmd_prune_orphans, ()),
-}
+_DISPATCH = MappingProxyType(
+    {
+        "list-users": (cmd_list_users, ()),
+        # ``new_password`` is populated from stdin or getpass in the
+        # dispatcher, not from argparse — passwords must not appear on argv.
+        "reset-password": (cmd_reset_password, ("username", "new_password")),  # noqa: WPS226 — argparse positional name `username`; identical signature across user-management subcommands.
+        "revoke-sessions": (cmd_revoke_sessions, ("username",)),
+        "delete-user": (cmd_delete_user, ("username",)),
+        "regenerate-invite": (cmd_regenerate_invite, ()),
+        "prune-orphans": (cmd_prune_orphans, ()),
+    }
+)
 
 
-def _resolve_new_password(args: argparse.Namespace) -> str:
-    """Read the new password from stdin (non-interactive) or prompt twice
-    via ``getpass`` (interactive). Never consults ``args.new_password``
-    because argparse doesn't expose it — the flag was intentionally
-    removed to prevent the value from landing on argv.
-    """
-    if getattr(args, "password_stdin", False):
-        password = sys.stdin.readline().rstrip("\n")
-        if not password:
-            raise SystemExit("reset-password: empty password on stdin")
-        return password
+def _read_password_interactive() -> str:
     # `getpass` silently falls back to `input()` when no TTY is
     # attached — and `input()` echoes. Refuse explicitly so an
     # operator running e.g. ``docker exec container auth reset-password
@@ -175,6 +170,20 @@ def _resolve_new_password(args: argparse.Namespace) -> str:
     return password
 
 
+def _resolve_new_password(args: argparse.Namespace) -> str:
+    """Read the new password from stdin (non-interactive) or prompt twice
+    via ``getpass`` (interactive). Never consults ``args.new_password``
+    because argparse doesn't expose it — the flag was intentionally
+    removed to prevent the value from landing on argv.
+    """
+    if getattr(args, "password_stdin", False):
+        password = sys.stdin.readline().rstrip("\n")
+        if not password:
+            raise SystemExit("reset-password: empty password on stdin")
+        return password
+    return _read_password_interactive()
+
+
 class AuthCommand(CLICommand):
     """`blunder-tutor auth <sub>` — operator tools for the credentials
     auth backend. All subcommands are no-ops outside ``AUTH_MODE=credentials``
@@ -185,55 +194,6 @@ class AuthCommand(CLICommand):
 
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
         asyncio.run(self._run_async(args, config))
-
-    async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
-        if config.auth.mode != "credentials":
-            raise SystemExit("`auth` subcommands require AUTH_MODE=credentials")
-        auth_db_path = config.data.db_path.parent / "auth.sqlite3"
-        users_dir = config.data.db_path.parent / "users"
-        users_dir.mkdir(parents=True, exist_ok=True)
-
-        await initialize_auth_schema(auth_db_path, BlunderTutorFilePermissionPolicy())
-        auth_db = AuthDb(auth_db_path)
-        await auth_db.connect()
-        try:
-            rules = ValidationRules.default()
-            hasher = BcryptHasher(rules, cost=config.auth.bcrypt_cost)
-            storage = SqliteStorage(auth_db)
-            service = AuthService(
-                storage=storage,
-                providers={
-                    CREDENTIALS_PROVIDER_NAME: CredentialsProvider(
-                        identities=storage.identities, hasher=hasher, rules=rules
-                    ),
-                },
-                hasher=hasher,
-                quota=MaxUsersQuota(config.auth.max_users),
-                invite_policy=HmacInvitePolicy(setup_repo=storage.setup),
-                on_after_register=partial(materialize_user_dir, users_dir),
-                on_after_delete=partial(cleanup_user_dir, users_dir),
-                session_max_age=timedelta(seconds=config.auth.session_max_age_seconds),
-                session_idle=timedelta(seconds=config.auth.session_idle_seconds),
-            )
-            ctx = {
-                "storage": storage,
-                "users_dir": users_dir,
-                "service": service,
-                "secret_key": config.auth.secret_key,
-            }
-            await self._dispatch(args, ctx)
-        finally:
-            await auth_db.close()
-
-    async def _dispatch(self, args: argparse.Namespace, ctx: dict) -> None:
-        # reset-password reads the new password from a non-argv source so
-        # it never appears in `ps`, shell history, or journald. Stdin mode
-        # is for piped/scripted invocation; interactive falls through to
-        # getpass with a confirmation prompt.
-        if args.auth_subcommand == "reset-password":
-            args.new_password = _resolve_new_password(args)
-        fn, arg_names = _DISPATCH[args.auth_subcommand]
-        await fn(ctx, *(getattr(args, name) for name in arg_names))
 
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
         auth_parser = subparsers.add_parser(
@@ -277,3 +237,50 @@ class AuthCommand(CLICommand):
             "prune-orphans",
             help="Delete per-user data directories that have no matching user row",
         )
+
+    async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
+        if config.auth.mode != AUTH_MODE_CREDENTIALS:
+            raise SystemExit("`auth` subcommands require AUTH_MODE=credentials")
+        auth_db_path = config.data.db_path.parent / "auth.sqlite3"
+        users_dir = config.data.db_path.parent / "users"
+        users_dir.mkdir(parents=True, exist_ok=True)
+
+        await initialize_auth_schema(auth_db_path, BlunderTutorFilePermissionPolicy())
+        async with AuthDb(auth_db_path) as auth_db:
+            rules = ValidationRules.default()
+            hasher = BcryptHasher(rules, cost=config.auth.bcrypt_cost)
+            storage = SqliteStorage(auth_db)
+            service = AuthService(
+                storage=storage,
+                providers={
+                    CREDENTIALS_PROVIDER_NAME: CredentialsProvider(
+                        identities=storage.identities, hasher=hasher, rules=rules
+                    ),
+                },
+                hasher=hasher,
+                quota=MaxUsersQuota(config.auth.max_users),
+                invite_policy=HmacInvitePolicy(setup_repo=storage.setup),
+                session_config=SessionConfig(
+                    max_age=timedelta(seconds=config.auth.session_max_age_seconds),
+                    idle=timedelta(seconds=config.auth.session_idle_seconds),
+                ),
+                on_after_register=partial(materialize_user_dir, users_dir),
+                on_after_delete=partial(cleanup_user_dir, users_dir),
+            )
+            ctx = {
+                "storage": storage,
+                "users_dir": users_dir,
+                "service": service,
+                "secret_key": config.auth.secret_key,
+            }
+            await self._dispatch(args, ctx)
+
+    async def _dispatch(self, args: argparse.Namespace, ctx: dict) -> None:
+        # reset-password reads the new password from a non-argv source so
+        # it never appears in `ps`, shell history, or journald. Stdin mode
+        # is for piped/scripted invocation; interactive falls through to
+        # getpass with a confirmation prompt.
+        if args.auth_subcommand == "reset-password":
+            args.new_password = _resolve_new_password(args)
+        fn, arg_names = _DISPATCH[args.auth_subcommand]
+        await fn(ctx, *(getattr(args, name) for name in arg_names))

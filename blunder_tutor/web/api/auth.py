@@ -13,24 +13,23 @@ just a thin pass-through.
 
 from __future__ import annotations
 
-from fastapi import HTTPException, Request, Response
+from fastapi import HTTPException, Request, Response, status
 from fastapi_throttle import RateLimiter
 
 from blunder_tutor.auth import AuthService
-from blunder_tutor.auth.fastapi import build_auth_router
-from blunder_tutor.web.cookies import (
+from blunder_tutor.auth.fastapi import (
+    CookieAdapter,
+    build_auth_router,
     clear_session_cookie,
 )
-from blunder_tutor.web.cookies import (
-    set_session_cookie as _set_session_cookie,
-)
+from blunder_tutor.web.cookies import set_session_cookie as _set_session_cookie
 
 
 def _auth_service_provider(request: Request) -> AuthService:
     auth = request.app.state.auth
     if auth is None:
         # Credentials mode not active — auth endpoints are offline.
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return auth.service
 
 
@@ -56,8 +55,10 @@ async def _signup_rate_limit(request: Request, response: Response) -> None:
 
 router = build_auth_router(
     auth_service_provider=_auth_service_provider,
-    set_session_cookie=_set_session_cookie_with_config,
-    clear_session_cookie=clear_session_cookie,
+    cookies=CookieAdapter(
+        set_cookie=_set_session_cookie_with_config,
+        clear_cookie=clear_session_cookie,
+    ),
     login_dependencies=[_login_rate_limit],
     signup_dependencies=[_signup_rate_limit],
 )

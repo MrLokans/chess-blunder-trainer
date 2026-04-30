@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 from fastapi.testclient import TestClient
 
 
 def test_review_endpoint_game_not_found(app: TestClient) -> None:
     resp = app.get("/api/games/nonexistent/review")
-    assert resp.status_code == 404
+    assert resp.status_code == HTTPStatus.NOT_FOUND
 
 
 async def test_review_returns_game_info(
@@ -31,7 +32,7 @@ async def test_review_returns_game_info(
     )
 
     resp = app.get("/api/games/review-test-001/review")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
 
     data = resp.json()
     assert data["game"]["id"] == "review-test-001"
@@ -105,7 +106,7 @@ async def test_review_returns_analyzed_moves_with_labels(
     )
 
     resp = app.get("/api/games/review-test-002/review")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
 
     data = resp.json()
     assert data["analyzed"] is True
@@ -147,7 +148,7 @@ async def test_review_includes_game_url(
     )
 
     resp = app.get("/api/games/review-test-003/review")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
 
     data = resp.json()
     assert data["game"]["game_url"] is not None
@@ -156,5 +157,5 @@ async def test_review_includes_game_url(
 
 def test_review_ui_route_returns_html(app: TestClient) -> None:
     resp = app.get("/game/some-game-id")
-    assert resp.status_code == 200
+    assert resp.status_code == HTTPStatus.OK
     assert "text/html" in resp.headers["content-type"]

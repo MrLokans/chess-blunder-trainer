@@ -21,8 +21,8 @@ from tests.helpers.engine import make_test_client
 @pytest.fixture
 def temp_dir() -> Generator[Path]:
     """Provide a temporary directory that cleans up after the test."""
-    with tempfile.TemporaryDirectory() as tmp:
-        yield Path(tmp)
+    with tempfile.TemporaryDirectory() as tmp_dir_path:
+        yield Path(tmp_dir_path)
 
 
 @pytest.fixture

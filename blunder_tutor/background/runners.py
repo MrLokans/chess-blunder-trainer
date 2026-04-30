@@ -8,6 +8,7 @@ after setting up the DependencyContext.
 from __future__ import annotations
 
 import logging
+from types import MappingProxyType
 from typing import Annotated, Any
 
 from fast_depends import Depends, inject
@@ -22,6 +23,17 @@ from blunder_tutor.background.jobs.delete_all_data import DeleteAllDataJob
 from blunder_tutor.background.jobs.import_games import ImportGamesJob
 from blunder_tutor.background.jobs.import_pgn import ImportPgnJob
 from blunder_tutor.background.jobs.sync_games import SyncGamesJob
+from blunder_tutor.constants import (
+    JOB_TYPE_ANALYZE,
+    JOB_TYPE_BACKFILL_ECO,
+    JOB_TYPE_BACKFILL_PHASES,
+    JOB_TYPE_BACKFILL_TACTICS,
+    JOB_TYPE_BACKFILL_TRAPS,
+    JOB_TYPE_DELETE_ALL_DATA,
+    JOB_TYPE_IMPORT,
+    JOB_TYPE_IMPORT_PGN,
+    JOB_TYPE_SYNC,
+)
 from blunder_tutor.core.dependencies import (
     get_analysis_repository,
     get_context,
@@ -33,7 +45,7 @@ from blunder_tutor.core.dependencies import (
     get_settings_repository,
     get_work_coordinator,
 )
-from blunder_tutor.events import EventBus
+from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import TrapsEvent
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository
@@ -44,17 +56,30 @@ from blunder_tutor.services.job_service import JobService
 
 logger = logging.getLogger(__name__)
 
+# Type aliases for the FastDepends-injected services. Hoisting these out
+# of the parameter lists keeps each runner signature short and avoids
+# repeating `Annotated[T, Depends(provider)]` at every site.
+JobServiceDep = Annotated[JobService, Depends(get_job_service)]
+SettingsRepoDep = Annotated[SettingsRepository, Depends(get_settings_repository)]
+GameRepoDep = Annotated[GameRepository, Depends(get_game_repository)]
+AnalysisRepoDep = Annotated[AnalysisRepository, Depends(get_analysis_repository)]
+EventBusDep = Annotated[EventBus, Depends(get_event_bus)]
+GameAnalyzerDep = Annotated[GameAnalyzer, Depends(get_game_analyzer)]
+DataManagementRepoDep = Annotated[
+    DataManagementRepository, Depends(get_data_management_repository)
+]
+
 
 @inject
-async def run_import_job(
+async def run_import_job(  # noqa: WPS211 — FastDepends @inject signature; each dependency is a parameter, the framework resolves them.
     job_id: str,
     source: str,
     username: str,
     max_games: int,
-    job_service: Annotated[JobService, Depends(get_job_service)],
-    settings_repo: Annotated[SettingsRepository, Depends(get_settings_repository)],
-    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
-    event_bus: Annotated[EventBus, Depends(get_event_bus)],
+    job_service: JobServiceDep,
+    settings_repo: SettingsRepoDep,
+    game_repo: GameRepoDep,
+    event_bus: EventBusDep,
 ) -> dict[str, Any]:
     ctx = get_context()
     job = ImportGamesJob(
@@ -75,10 +100,10 @@ async def run_import_job(
 @inject
 async def run_sync_job(
     job_id: str,
-    job_service: Annotated[JobService, Depends(get_job_service)],
-    settings_repo: Annotated[SettingsRepository, Depends(get_settings_repository)],
-    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
-    event_bus: Annotated[EventBus, Depends(get_event_bus)],
+    job_service: JobServiceDep,
+    settings_repo: SettingsRepoDep,
+    game_repo: GameRepoDep,
+    event_bus: EventBusDep,
 ) -> dict[str, Any]:
     ctx = get_context()
     job = SyncGamesJob(
@@ -92,12 +117,12 @@ async def run_sync_job(
 
 
 @inject
-async def run_analyze_job(
+async def run_analyze_job(  # noqa: WPS211 — FastDepends @inject signature; each dependency is a parameter, the framework resolves them.
     job_id: str,
-    job_service: Annotated[JobService, Depends(get_job_service)],
-    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
-    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
-    analyzer: Annotated[GameAnalyzer, Depends(get_game_analyzer)],
+    job_service: JobServiceDep,
+    game_repo: GameRepoDep,
+    analysis_repo: AnalysisRepoDep,
+    analyzer: GameAnalyzerDep,
     game_ids: list[str] | None = None,
     source: str | None = None,
     username: str | None = None,
@@ -125,9 +150,9 @@ async def run_analyze_job(
 @inject
 async def run_backfill_phases_job(
     job_id: str,
-    job_service: Annotated[JobService, Depends(get_job_service)],
-    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
-    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+    job_service: JobServiceDep,
+    analysis_repo: AnalysisRepoDep,
+    game_repo: GameRepoDep,
 ) -> dict[str, Any]:
     ctx = get_context()
     job = BackfillPhasesJob(
@@ -142,9 +167,9 @@ async def run_backfill_phases_job(
 @inject
 async def run_backfill_eco_job(
     job_id: str,
-    job_service: Annotated[JobService, Depends(get_job_service)],
-    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
-    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
+    job_service: JobServiceDep,
+    analysis_repo: AnalysisRepoDep,
+    game_repo: GameRepoDep,
     force: bool = False,
 ) -> dict[str, Any]:
     ctx = get_context()
@@ -160,10 +185,8 @@ async def run_backfill_eco_job(
 @inject
 async def run_delete_all_data_job(
     job_id: str,
-    job_service: Annotated[JobService, Depends(get_job_service)],
-    data_management_repo: Annotated[
-        DataManagementRepository, Depends(get_data_management_repository)
-    ],
+    job_service: JobServiceDep,
+    data_management_repo: DataManagementRepoDep,
 ) -> dict[str, Any]:
     job = DeleteAllDataJob(
         job_service=job_service,
@@ -175,9 +198,9 @@ async def run_delete_all_data_job(
 @inject
 async def run_backfill_tactics_job(
     job_id: str,
-    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
-    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
-    event_bus: Annotated[EventBus, Depends(get_event_bus)],
+    analysis_repo: AnalysisRepoDep,
+    game_repo: GameRepoDep,
+    event_bus: EventBusDep,
 ) -> dict[str, Any]:
     job = BackfillTacticsJob(
         analysis_repo=analysis_repo,
@@ -190,9 +213,9 @@ async def run_backfill_tactics_job(
 @inject
 async def run_backfill_traps_job(
     job_id: str,
-    job_service: Annotated[JobService, Depends(get_job_service)],
-    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
-    event_bus: Annotated[EventBus, Depends(get_event_bus)],
+    job_service: JobServiceDep,
+    game_repo: GameRepoDep,
+    event_bus: EventBusDep,
 ) -> dict[str, Any]:
     ctx = get_context()
     async with TrapRepository(db_path=ctx.db_path) as trap_repo:
@@ -204,7 +227,7 @@ async def run_backfill_traps_job(
         result = await job.execute(job_id=job_id)
 
         job_record = await job_service.get_job(job_id)
-        user_key = (job_record.get("username") if job_record else None) or "default"
+        user_key = (job_record.get("username") if job_record else None) or "default"  # noqa: WPS509 — single parenthesized ternary, `or` short-circuits to default.
         traps_event = TrapsEvent.create_traps_updated(user_key=user_key)
         await event_bus.publish(traps_event)
 
@@ -215,10 +238,10 @@ async def run_backfill_traps_job(
 async def run_import_pgn_job(
     job_id: str,
     game_id: str,
-    job_service: Annotated[JobService, Depends(get_job_service)],
-    game_repo: Annotated[GameRepository, Depends(get_game_repository)],
-    analysis_repo: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
-    analyzer: Annotated[GameAnalyzer, Depends(get_game_analyzer)],
+    job_service: JobServiceDep,
+    game_repo: GameRepoDep,
+    analysis_repo: AnalysisRepoDep,
+    analyzer: GameAnalyzerDep,
     username: str = "",
 ) -> dict[str, Any]:
     coordinator = get_work_coordinator()
@@ -235,14 +258,16 @@ async def run_import_pgn_job(
 
 
 # Mapping of job types to runner functions
-JOB_RUNNERS = {
-    "import": run_import_job,
-    "sync": run_sync_job,
-    "analyze": run_analyze_job,
-    "backfill_phases": run_backfill_phases_job,
-    "backfill_eco": run_backfill_eco_job,
-    "backfill_tactics": run_backfill_tactics_job,
-    "backfill_traps": run_backfill_traps_job,
-    "delete_all_data": run_delete_all_data_job,
-    "import_pgn": run_import_pgn_job,
-}
+JOB_RUNNERS = MappingProxyType(
+    {
+        JOB_TYPE_IMPORT: run_import_job,
+        JOB_TYPE_SYNC: run_sync_job,
+        JOB_TYPE_ANALYZE: run_analyze_job,
+        JOB_TYPE_BACKFILL_PHASES: run_backfill_phases_job,
+        JOB_TYPE_BACKFILL_ECO: run_backfill_eco_job,
+        JOB_TYPE_BACKFILL_TACTICS: run_backfill_tactics_job,
+        JOB_TYPE_BACKFILL_TRAPS: run_backfill_traps_job,
+        JOB_TYPE_DELETE_ALL_DATA: run_delete_all_data_job,
+        JOB_TYPE_IMPORT_PGN: run_import_pgn_job,
+    }
+)

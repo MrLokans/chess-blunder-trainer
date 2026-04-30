@@ -7,7 +7,12 @@ from fastapi_throttle import RateLimiter
 if TYPE_CHECKING:
     from blunder_tutor.web.config import AppConfig
 
-_NOOP_LIMITER = RateLimiter(times=999_999, seconds=1)
+# Effectively-unbounded request count for the no-op limiter — used when
+# demo mode is off and we want a Pass-through `RateLimiter` instance to
+# satisfy the dependency type without actually rate-limiting.
+_NOOP_RATE_LIMITER_TIMES = 999_999
+
+_NOOP_LIMITER = RateLimiter(times=_NOOP_RATE_LIMITER_TIMES, seconds=1)
 
 
 def create_engine_throttle(config: AppConfig) -> RateLimiter:

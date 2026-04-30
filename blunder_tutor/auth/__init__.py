@@ -29,7 +29,7 @@ from blunder_tutor.auth.core.errors import (
     UserCapReachedError,
     UserNotFoundError,
 )
-from blunder_tutor.auth.core.hashers import (
+from blunder_tutor.auth.core.hashers import (  # noqa: WPS458 — intentional re-export: `hashers` namespace is bound for monkeypatching (line 17), specific names are re-exported through `__all__` for the public auth API. Both forms are documented in the module docstring.
     BcryptHasher,
     hash_password,
     verify_password,
@@ -55,7 +55,7 @@ from blunder_tutor.auth.core.protocols import (
     Transaction,
     UserRepo,
 )
-from blunder_tutor.auth.core.service import AuthService
+from blunder_tutor.auth.core.service import AuthService, SessionConfig
 from blunder_tutor.auth.core.types import (
     CREDENTIALS_PROVIDER_NAME,
     EMAIL_RE,
@@ -121,6 +121,7 @@ __all__ = [
     "AuthService",
     "AuthMiddleware",
     "MiddlewareConfig",
+    "SessionConfig",
     # Hashers
     "BcryptHasher",
     "admin",

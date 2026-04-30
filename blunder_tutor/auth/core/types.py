@@ -11,7 +11,7 @@ from typing import NewType
 # import every recoverable failure mode without dragging in entity
 # plumbing; re-exported here so internal callers that need entities
 # and errors in one shot keep working with a single import.
-from blunder_tutor.auth.core.errors import (  # noqa: F401
+from blunder_tutor.auth.core.errors import (  # noqa: F401, WPS235 — full re-export contract; see module docstring above.
     AuthError,
     CorruptCredentialError,
     DuplicateEmailError,
@@ -66,6 +66,8 @@ EMAIL_RE = re.compile(
 
 PASSWORD_MIN_LEN = 8
 PASSWORD_MAX_BYTES = 72  # bcrypt hard limit — enforced in bytes, not chars
+EMAIL_MAX_LEN = 254  # RFC 5321 hard limit on the entire address.
+SESSION_TOKEN_HEX_BYTES = 32  # 32 random bytes = 64 hex chars = 256 bits.
 
 
 @dataclass(frozen=True)
@@ -94,7 +96,7 @@ class ValidationRules:
             email_re=EMAIL_RE,
             password_min=PASSWORD_MIN_LEN,
             password_max_bytes=PASSWORD_MAX_BYTES,
-            email_max_len=254,
+            email_max_len=EMAIL_MAX_LEN,
         )
 
     def make_username(self, raw: str) -> Username:
@@ -148,7 +150,7 @@ def make_identity_id() -> IdentityId:
 
 
 def make_session_token() -> SessionToken:
-    return SessionToken(secrets.token_hex(32))
+    return SessionToken(secrets.token_hex(SESSION_TOKEN_HEX_BYTES))
 
 
 # Datetime fields on every entity are tz-aware UTC. Repositories are

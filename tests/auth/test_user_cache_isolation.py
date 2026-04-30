@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 from datetime import timedelta
 from functools import partial
 from pathlib import Path
@@ -148,12 +149,12 @@ class TestSetupCacheIsolation:
         ) as client:
             # Warm the cache with user A (setup completed, no redirect).
             r_a = await client.get("/some-page", cookies={"session_token": token_a})
-            assert r_a.status_code == 200
+            assert r_a.status_code == HTTPStatus.OK
 
             # User B must still be redirected to /setup; they don't share
             # user A's cache entry.
             r_b = await client.get("/some-page", cookies={"session_token": token_b})
-        assert r_b.status_code == 303
+        assert r_b.status_code == HTTPStatus.SEE_OTHER
         assert r_b.headers["location"] == "/setup"
 
     async def test_cache_stores_per_user_keys(self, two_user_app):

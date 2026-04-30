@@ -11,6 +11,10 @@ import chess.polyglot
 
 from blunder_tutor.constants import DEFAULT_FIXTURES_PATH
 
+# Maps a Zobrist trigger-position hash → the (trap, position) pair that
+# triggers from there. Aliased so the annotation depth stays under WPS234.
+_TriggerLookup = dict[int, list[tuple["TrapDefinition", "TrapPosition"]]]
+
 
 @dataclass(frozen=True)
 class TrapPosition:
@@ -71,9 +75,7 @@ class TrapDatabase:
         self._traps = traps
         self._by_id: dict[str, TrapDefinition] = {t.id: t for t in traps}
         self._entry_lookup: dict[int, list[TrapDefinition]] = defaultdict(list)
-        self._trigger_lookup: dict[int, list[tuple[TrapDefinition, TrapPosition]]] = (
-            defaultdict(list)
-        )
+        self._trigger_lookup: _TriggerLookup = defaultdict(list)
 
         for trap in traps:
             for pos in trap.positions:
@@ -84,43 +86,46 @@ class TrapDatabase:
     def match_game(
         self, board: chess.Board, user_color: chess.Color
     ) -> list[TrapMatch]:
-        temp = board.root()
+        cursor = board.root()
         entered: dict[str, int] = {}
         triggered: dict[str, int] = {}
 
         for ply, move in enumerate(board.move_stack):
-            h = chess.polyglot.zobrist_hash(temp)
+            h = chess.polyglot.zobrist_hash(cursor)
 
-            if h in self._trigger_lookup:
-                san = temp.san(move)
-                for trap, pos in self._trigger_lookup[h]:
+            triggers = self._trigger_lookup.get(h)
+            if triggers:
+                san = cursor.san(move)
+                for trap, pos in triggers:
                     if san == pos.mistake_san and trap.id not in triggered:
                         triggered[trap.id] = ply + 1
 
-            if h in self._entry_lookup:
-                for trap in self._entry_lookup[h]:
+            entries = self._entry_lookup.get(h)
+            if entries:
+                for trap in entries:
                     if trap.id not in entered:
                         entered[trap.id] = ply
 
-            temp.push(move)
+            cursor.push(move)
 
-        h = chess.polyglot.zobrist_hash(temp)
-        if h in self._entry_lookup:
-            for trap in self._entry_lookup[h]:
+        final_entries = self._entry_lookup.get(chess.polyglot.zobrist_hash(cursor))
+        if final_entries:
+            for trap in final_entries:
                 if trap.id not in entered:
                     entered[trap.id] = len(board.move_stack)
 
         results: list[TrapMatch] = []
         for trap_id in entered.keys() | triggered.keys():
-            trap = self._by_id[trap_id]
-            victim_is_white = trap.victim_side == "white"
-            user_is_victim = (user_color == chess.WHITE and victim_is_white) or (
-                user_color == chess.BLACK and not victim_is_white
-            )
+            trap_def = self._by_id[trap_id]
+            victim_is_white = trap_def.victim_side == "white"
+            user_is_victim = (  # noqa: WPS408 — complementary, not duplicate: white-on-white-victim OR black-on-black-victim.
+                user_color == chess.WHITE and victim_is_white
+            ) or (user_color == chess.BLACK and not victim_is_white)
 
-            if trap_id in triggered:
+            triggered_ply = triggered.get(trap_id)
+            if triggered_ply is not None:
                 match_type = "sprung" if user_is_victim else "executed"
-                mistake_ply = triggered[trap_id]
+                mistake_ply = triggered_ply
             else:
                 match_type = "entered"
                 mistake_ply = None

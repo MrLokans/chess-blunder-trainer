@@ -55,19 +55,19 @@ class TrapDetectionStep(AnalysisStep):
 
         if matches:
             async with TrapRepository(db_path=ctx.analysis_repo.db_path) as trap_repo:
-                for m in matches:
+                for match in matches:
                     victim_side = (
-                        trap_db.get_trap(m.trap_id).victim_side
-                        if trap_db.get_trap(m.trap_id)
+                        trap_db.get_trap(match.trap_id).victim_side
+                        if trap_db.get_trap(match.trap_id)
                         else "unknown"
                     )
                     await trap_repo.save_trap_match(
                         game_id=ctx.game_id,
-                        trap_id=m.trap_id,
-                        match_type=m.match_type,
+                        trap_id=match.trap_id,
+                        match_type=match.match_type,
                         victim_side=victim_side,
-                        user_was_victim=m.user_was_victim,
-                        mistake_ply=m.mistake_ply,
+                        user_was_victim=match.user_was_victim,
+                        mistake_ply=match.mistake_ply,
                     )
 
             logger.info(

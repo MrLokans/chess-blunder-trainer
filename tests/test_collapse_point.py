@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from http import HTTPStatus
 import pytest
 
 from blunder_tutor.repositories.stats_repository import StatsFilter, StatsRepository
@@ -152,7 +153,7 @@ async def test_no_blunders_at_all(stats_repo):
 
 def test_api_endpoint_returns_200(app):
     response = app.get("/api/stats/collapse-point")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert "avg_collapse_move" in data
     assert "median_collapse_move" in data
@@ -163,11 +164,11 @@ def test_api_endpoint_returns_200(app):
 
 def test_api_endpoint_accepts_game_types(app):
     response = app.get("/api/stats/collapse-point?game_types=bullet&game_types=blitz")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
 
 
 def test_api_endpoint_accepts_date_filters(app):
     response = app.get(
         "/api/stats/collapse-point?start_date=2025-01-01&end_date=2025-12-31"
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK

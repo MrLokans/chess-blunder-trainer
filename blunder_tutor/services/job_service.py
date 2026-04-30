@@ -2,15 +2,29 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
+from blunder_tutor.constants import (
+    JOB_STATUS_COMPLETED,
+    JOB_STATUS_FAILED,
+    JOB_STATUS_PENDING,
+    JOB_STATUS_RUNNING,
+)
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import JobEvent, StatsEvent
 from blunder_tutor.repositories.job_repository import JobRepository
 
+type ProgressCallback = Callable[[int], Awaitable[None]]
+type JobBody[T] = Callable[[ProgressCallback], Awaitable[T]]
+
 logger = logging.getLogger(__name__)
 
 PROGRESS_FLUSH_INTERVAL = 2.0
+
+# Fallback user_key when a job has no associated username — keeps the
+# stats-updated event addressable in single-user mode.
+_DEFAULT_USER_KEY = "default"
 
 
 @dataclass
@@ -46,7 +60,7 @@ class JobService:
             max_games=max_games,
         )
 
-        event = JobEvent.create_status_changed(job_id, job_type, "pending")
+        event = JobEvent.create_status_changed(job_id, job_type, JOB_STATUS_PENDING)
         await self.event_bus.publish(event)
 
         return job_id
@@ -69,9 +83,9 @@ class JobService:
             )
             await self.event_bus.publish(event)
 
-            if status == "completed":
+            if status == JOB_STATUS_COMPLETED:
                 stats_event = StatsEvent.create_stats_updated(
-                    user_key=job.get("username", "default") or "default"
+                    user_key=job.get("username", _DEFAULT_USER_KEY) or _DEFAULT_USER_KEY
                 )
                 await self.event_bus.publish(stats_event)
 
@@ -128,17 +142,46 @@ class JobService:
         job = await self.job_repository.get_job(job_id)
         if job:
             event = JobEvent.create_status_changed(
-                job_id=job_id, job_type=job["job_type"], status="completed"
+                job_id=job_id, job_type=job["job_type"], status=JOB_STATUS_COMPLETED
             )
             await self.event_bus.publish(event)
 
             stats_event = StatsEvent.create_stats_updated(
-                user_key=job.get("username", "default") or "default"
+                user_key=job.get("username", _DEFAULT_USER_KEY) or _DEFAULT_USER_KEY
             )
             await self.event_bus.publish(stats_event)
 
     async def get_job(self, job_id: str) -> dict[str, object] | None:
         return await self.job_repository.get_job(job_id)
+
+    async def run_with_lifecycle[T: dict[str, object]](  # noqa: WPS217 — lifecycle manager coordinates 5 status transitions; the await count IS the contract.
+        self,
+        job_id: str,
+        total: int,
+        body: JobBody[T],
+    ) -> T:
+        """Run `body` with the standard job lifecycle.
+
+        Sets status to `running`, initializes progress at 0/total, then
+        invokes `body(progress)` where `progress(current)` updates the
+        job's progress. On success, marks the job complete with the body's
+        return value. On exception, marks the job failed with the
+        exception message and re-raises.
+        """
+        await self.update_job_status(job_id, JOB_STATUS_RUNNING)
+        await self.update_job_progress(job_id, 0, total)
+
+        async def progress(current: int) -> None:  # noqa: WPS430 — closure binds `job_id`/`total` so the body-callback signature stays `(current,) -> None`.
+            await self.update_job_progress(job_id, current, total)
+
+        try:
+            result = await body(progress)
+        except Exception as exc:
+            logger.exception("Job %s failed", job_id)
+            await self.update_job_status(job_id, JOB_STATUS_FAILED, str(exc))
+            raise
+        await self.complete_job(job_id, result)
+        return result
 
     async def list_jobs(
         self,

@@ -23,6 +23,19 @@ from blunder_tutor.auth.core.errors import (
     _InputError,
 )
 
+_HttpErrorEntry = tuple[type[AuthError], int, str]
+
+# Direct AuthError → (status, slug) mappings. Subclasses with conditional
+# branches (InvalidInviteCodeError, _InputError) stay inline below.
+_DIRECT_ERROR_MAP: tuple[_HttpErrorEntry, ...] = (
+    (UserCapReachedError, 403, "user_cap_reached"),
+    (DuplicateUsernameError, 409, "username_taken"),
+    (DuplicateEmailError, 409, "email_taken"),
+    (UserNotFoundError, 404, "user_not_found"),
+    (NoCredentialsIdentityError, 409, "no_credentials_identity"),
+    (InviteCannotBeRegeneratedError, 409, "users_already_exist"),
+)
+
 
 class DefaultErrorCodec:
     """Status + detail mapping that preserves blunder_tutor's API
@@ -35,8 +48,9 @@ class DefaultErrorCodec:
     """
 
     def to_http(self, exc: AuthError) -> tuple[int, str]:
-        if isinstance(exc, UserCapReachedError):
-            return 403, "user_cap_reached"
+        for err_type, status, slug in _DIRECT_ERROR_MAP:
+            if isinstance(exc, err_type):
+                return status, slug
         if isinstance(exc, InvalidInviteCodeError):
             # Don't split "missing" / "rotated" / "not_issued" into
             # distinct statuses — a single response shape avoids an
@@ -49,16 +63,6 @@ class DefaultErrorCodec:
                 else "invite_code_invalid"
             )
             return 403, detail
-        if isinstance(exc, DuplicateUsernameError):
-            return 409, "username_taken"
-        if isinstance(exc, DuplicateEmailError):
-            return 409, "email_taken"
-        if isinstance(exc, UserNotFoundError):
-            return 404, "user_not_found"
-        if isinstance(exc, NoCredentialsIdentityError):
-            return 409, "no_credentials_identity"
-        if isinstance(exc, InviteCannotBeRegeneratedError):
-            return 409, "users_already_exist"
         if isinstance(exc, _InputError):
             # ``code`` is the stable slug on every input-error subclass
             # (``invalid_username``, ``invalid_email``, ``invalid_password``,

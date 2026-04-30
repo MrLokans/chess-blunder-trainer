@@ -4,6 +4,12 @@ import json
 import uuid
 from datetime import datetime
 
+from blunder_tutor.constants import (
+    JOB_STATUS_COMPLETED,
+    JOB_STATUS_FAILED,
+    JOB_STATUS_PENDING,
+    JOB_STATUS_RUNNING,
+)
 from blunder_tutor.repositories.base import BaseDbRepository
 
 
@@ -31,7 +37,7 @@ class JobRepository(BaseDbRepository):
                 (
                     job_id,
                     job_type,
-                    "pending",
+                    JOB_STATUS_PENDING,
                     username,
                     source,
                     start_date,
@@ -52,9 +58,9 @@ class JobRepository(BaseDbRepository):
         timestamp_field = None
         timestamp_value = datetime.utcnow().isoformat()
 
-        if status == "running":
+        if status == JOB_STATUS_RUNNING:
             timestamp_field = "started_at"
-        elif status in ("completed", "failed"):
+        elif status in (JOB_STATUS_COMPLETED, JOB_STATUS_FAILED):
             timestamp_field = "completed_at"
 
         async with self.write_transaction() as conn:
@@ -129,25 +135,10 @@ class JobRepository(BaseDbRepository):
         if not row:
             return None
 
-        result_json = row[14]
-        result = json.loads(result_json) if result_json else None
-
+        result_json = row["result_json"]
         return {
-            "job_id": row[0],
-            "job_type": row[1],
-            "status": row[2],
-            "username": row[3],
-            "source": row[4],
-            "start_date": row[5],
-            "end_date": row[6],
-            "max_games": row[7],
-            "progress_current": row[8],
-            "progress_total": row[9],
-            "created_at": row[10],
-            "started_at": row[11],
-            "completed_at": row[12],
-            "error_message": row[13],
-            "result": result,
+            **{key: row[key] for key in row.keys() if key != "result_json"},  # noqa: SIM118 — aiosqlite.Row iterates values; .keys() is required.
+            "result": json.loads(result_json) if result_json else None,
         }
 
     async def list_jobs(

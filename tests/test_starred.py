@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 from collections.abc import AsyncGenerator
 from pathlib import Path
 
@@ -83,33 +84,33 @@ class TestStarredPuzzleRepository:
 class TestStarredAPI:
     def test_star_puzzle(self, app):
         resp = app.put("/api/starred/game1/10", json={})
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
         assert resp.json()["starred"] is True
 
     def test_check_starred(self, app):
         app.put("/api/starred/game1/10", json={})
         resp = app.get("/api/starred/game1/10")
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
         assert resp.json()["starred"] is True
 
     def test_check_not_starred(self, app):
         resp = app.get("/api/starred/game1/10")
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
         assert resp.json()["starred"] is False
 
     def test_unstar_puzzle(self, app):
         app.put("/api/starred/game1/10", json={})
         resp = app.delete("/api/starred/game1/10")
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
         assert resp.json()["starred"] is False
 
     def test_unstar_nonexistent_returns_404(self, app):
         resp = app.delete("/api/starred/game1/10")
-        assert resp.status_code == 404
+        assert resp.status_code == HTTPStatus.NOT_FOUND
 
     def test_list_starred_empty(self, app):
         resp = app.get("/api/starred")
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
         data = resp.json()
         assert data["items"] == []
         assert data["total"] == 0
@@ -118,7 +119,7 @@ class TestStarredAPI:
         app.put("/api/starred/game1/10", json={})
         app.put("/api/starred/game2/20", json={"note": "test note"})
         resp = app.get("/api/starred")
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
         data = resp.json()
         assert data["total"] == 2
         assert len(data["items"]) == 2
@@ -131,7 +132,7 @@ class TestStarredAPI:
 
     def test_starred_page_loads(self, app):
         resp = app.get("/starred")
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
 
 
 class TestStarredDemoMode:
@@ -142,19 +143,19 @@ class TestStarredDemoMode:
 
     def test_demo_blocks_star(self, demo_app):
         resp = demo_app.put("/api/starred/game1/10", json={})
-        assert resp.status_code == 403
+        assert resp.status_code == HTTPStatus.FORBIDDEN
 
     def test_demo_blocks_unstar(self, demo_app):
         resp = demo_app.delete("/api/starred/game1/10")
-        assert resp.status_code == 403
+        assert resp.status_code == HTTPStatus.FORBIDDEN
 
     def test_demo_allows_list(self, demo_app):
         resp = demo_app.get("/api/starred")
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
 
     def test_demo_allows_check(self, demo_app):
         resp = demo_app.get("/api/starred/game1/10")
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
 
 
 class TestDataWipeIncludesStarred:

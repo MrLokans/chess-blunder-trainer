@@ -8,6 +8,10 @@ from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.web.config import AppConfig
 
+# Default Lichess pagination batch size — matches Lichess's documented
+# per-request soft cap.
+DEFAULT_LICHESS_BATCH_SIZE = 200
+
 
 class FetchCommand(CLICommand):
     def should_run(self, args: argparse.Namespace) -> bool:
@@ -15,49 +19,6 @@ class FetchCommand(CLICommand):
 
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
         asyncio.run(self._run_async(args, config))
-
-    async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
-        run_migrations(config.data.db_path)
-        game_repo = GameRepository.from_config(config)
-
-        try:
-            since = await self._resolve_since(args, game_repo)
-            if since:
-                print(f"Incremental fetch: only games after {since.isoformat()}")
-
-            if args.source == "lichess":
-                games, _seen_ids = await lichess.fetch(
-                    username=args.username,
-                    max_games=args.max,
-                    since=since,
-                    batch_size=args.batch_size,
-                )
-                inserted = await game_repo.insert_games(games)
-                skipped = len(games) - inserted
-                print(f"Lichess: stored {inserted}, skipped {skipped}.")
-                return
-
-            if args.source == "chesscom":
-                games, _seen_ids = await chesscom.fetch(
-                    username=args.username,
-                    max_games=args.max,
-                    since=since,
-                )
-                inserted = await game_repo.insert_games(games)
-                skipped = len(games) - inserted
-                print(f"Chess.com: stored {inserted}, skipped {skipped}.")
-                return
-        finally:
-            await game_repo.close()
-
-    async def _resolve_since(
-        self, args: argparse.Namespace, game_repo: GameRepository
-    ) -> datetime | None:
-        if getattr(args, "incremental", False):
-            return await game_repo.get_latest_game_time(args.source, args.username)
-        if getattr(args, "since", None):
-            return datetime.fromisoformat(args.since)
-        return None
 
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
         fetch_parser = subparsers.add_parser("fetch", help="Fetch games by username")
@@ -76,7 +37,7 @@ class FetchCommand(CLICommand):
         lichess_parser.add_argument(
             "--batch-size",
             type=int,
-            default=200,
+            default=DEFAULT_LICHESS_BATCH_SIZE,
             help="Lichess pagination batch size",
         )
         lichess_parser.add_argument(
@@ -113,4 +74,41 @@ class FetchCommand(CLICommand):
             help="Only fetch games after this ISO datetime (e.g., 2024-01-15T00:00:00)",
         )
 
-        return
+    async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
+        run_migrations(config.data.db_path)
+        async with GameRepository.from_config(config) as game_repo:
+            since = await self._resolve_since(args, game_repo)
+            if since:
+                print(f"Incremental fetch: only games after {since.isoformat()}")
+
+            if args.source == "lichess":
+                games, _seen_ids = await lichess.fetch(
+                    username=args.username,
+                    max_games=args.max,
+                    since=since,
+                    batch_size=args.batch_size,
+                )
+                inserted = await game_repo.insert_games(games)
+                skipped = len(games) - inserted
+                print(f"Lichess: stored {inserted}, skipped {skipped}.")
+                return
+
+            if args.source == "chesscom":
+                games, _seen_ids = await chesscom.fetch(
+                    username=args.username,
+                    max_games=args.max,
+                    since=since,
+                )
+                inserted = await game_repo.insert_games(games)
+                skipped = len(games) - inserted
+                print(f"Chess.com: stored {inserted}, skipped {skipped}.")
+                return
+
+    async def _resolve_since(
+        self, args: argparse.Namespace, game_repo: GameRepository
+    ) -> datetime | None:
+        if getattr(args, "incremental", False):
+            return await game_repo.get_latest_game_time(args.source, args.username)
+        if getattr(args, "since", None):
+            return datetime.fromisoformat(args.since)
+        return None

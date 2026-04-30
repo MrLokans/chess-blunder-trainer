@@ -19,6 +19,7 @@ from blunder_tutor.auth.fastapi.errors import DefaultErrorCodec
 from blunder_tutor.auth.fastapi.middleware import AuthMiddleware, MiddlewareConfig
 from blunder_tutor.auth.fastapi.protocols import RateLimiter
 from blunder_tutor.auth.fastapi.router import (
+    CookieAdapter,
     LoginRequest,
     MeResponse,
     SignupRequest,
@@ -28,6 +29,7 @@ from blunder_tutor.auth.fastapi.router import (
 __all__ = [
     "SESSION_COOKIE_NAME",
     "AuthMiddleware",
+    "CookieAdapter",
     "DefaultErrorCodec",
     "LoginRequest",
     "MeResponse",

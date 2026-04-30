@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from enum import IntEnum
+from types import MappingProxyType
 
 # Time control patterns
 # Format: "base+increment" where base is seconds and increment is seconds
@@ -25,17 +26,32 @@ class GameType(IntEnum):
     UNKNOWN = 6
 
 
-GAME_TYPE_LABELS: dict[int, str] = {
-    GameType.ULTRABULLET: "ultrabullet",
-    GameType.BULLET: "bullet",
-    GameType.BLITZ: "blitz",
-    GameType.RAPID: "rapid",
-    GameType.CLASSICAL: "classical",
-    GameType.CORRESPONDENCE: "correspondence",
-    GameType.UNKNOWN: "unknown",
-}
+GAME_TYPE_LABELS: MappingProxyType[int, str] = MappingProxyType(
+    {
+        GameType.ULTRABULLET: "ultrabullet",
+        GameType.BULLET: "bullet",
+        GameType.BLITZ: "blitz",
+        GameType.RAPID: "rapid",
+        GameType.CLASSICAL: "classical",
+        GameType.CORRESPONDENCE: "correspondence",
+        GameType.UNKNOWN: "unknown",
+    }
+)
 
-GAME_TYPE_FROM_STRING: dict[str, int] = {v: k for k, v in GAME_TYPE_LABELS.items()}
+GAME_TYPE_FROM_STRING: MappingProxyType[str, int] = MappingProxyType(
+    {v: k for k, v in GAME_TYPE_LABELS.items()}
+)
+
+# Lichess game-type classifier — duration thresholds in seconds. Boundaries
+# match the published Lichess rules; see classify_game_type() docstring.
+ULTRABULLET_MAX_SECONDS = 29
+BULLET_MAX_SECONDS = 180  # 3 min
+BLITZ_MAX_SECONDS = 480  # 8 min
+RAPID_MAX_SECONDS = 1500  # 25 min
+
+# Game-duration estimator: base + AVG_MOVES_PER_PLAYER * increment, where
+# 40 is the standard estimate for moves per player in a typical game.
+AVG_MOVES_PER_PLAYER = 40
 
 
 def parse_time_control(time_control: str | None) -> tuple[int, int] | None:
@@ -69,7 +85,23 @@ def estimate_game_duration(base_seconds: int, increment_seconds: int) -> int:
     Uses the standard formula: base + 40 * increment
     (assuming ~40 moves per player in a typical game)
     """
-    return base_seconds + 40 * increment_seconds
+    return base_seconds + AVG_MOVES_PER_PLAYER * increment_seconds
+
+
+# Lichess-standard duration tiers (ordered ascending; first match wins).
+_DURATION_TIERS: tuple[tuple[int, GameType], ...] = (
+    (ULTRABULLET_MAX_SECONDS, GameType.ULTRABULLET),
+    (BULLET_MAX_SECONDS, GameType.BULLET),
+    (BLITZ_MAX_SECONDS, GameType.BLITZ),
+    (RAPID_MAX_SECONDS, GameType.RAPID),
+)
+
+
+def _duration_to_game_type(duration: int) -> GameType:
+    for threshold, game_type in _DURATION_TIERS:
+        if duration < threshold:
+            return game_type
+    return GameType.CLASSICAL
 
 
 def classify_game_type(time_control: str | None) -> GameType:
@@ -86,12 +118,11 @@ def classify_game_type(time_control: str | None) -> GameType:
     if not time_control:
         return GameType.UNKNOWN
 
-    # Handle special cases
+    # Chess.com uses "-" for daily/correspondence games
     if time_control == "-":
-        # Chess.com uses "-" for daily/correspondence games
         return GameType.CORRESPONDENCE
 
-    # Check for correspondence format (e.g., "1/86400")
+    # Correspondence format (e.g., "1/86400")
     if CORRESPONDENCE_PATTERN.match(time_control):
         return GameType.CORRESPONDENCE
 
@@ -100,17 +131,7 @@ def classify_game_type(time_control: str | None) -> GameType:
         return GameType.UNKNOWN
 
     base, increment = parsed
-    duration = estimate_game_duration(base, increment)
-
-    if duration < 29:
-        return GameType.ULTRABULLET
-    if duration < 180:
-        return GameType.BULLET
-    if duration < 480:
-        return GameType.BLITZ
-    if duration < 1500:
-        return GameType.RAPID
-    return GameType.CLASSICAL
+    return _duration_to_game_type(estimate_game_duration(base, increment))
 
 
 def get_game_type_label(game_type: GameType | int) -> str:

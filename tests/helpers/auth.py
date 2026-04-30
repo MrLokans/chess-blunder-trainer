@@ -14,6 +14,7 @@ from blunder_tutor.auth import (
     InvitePolicy,
     MaxUsersQuota,
     QuotaPolicy,
+    SessionConfig,
     SqliteStorage,
     Storage,
     ValidationRules,
@@ -83,8 +84,7 @@ def _build_auth_service(
         hasher=hasher,
         quota=quota,
         invite_policy=invite_policy,
+        session_config=SessionConfig(max_age=session_max_age, idle=session_idle),
         on_after_register=partial(materialize_user_dir, users_dir),
         on_after_delete=partial(cleanup_user_dir, users_dir),
-        session_max_age=session_max_age,
-        session_idle=session_idle,
     )

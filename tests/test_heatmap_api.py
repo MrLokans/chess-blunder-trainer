@@ -1,11 +1,12 @@
 """Tests for activity heatmap API endpoint."""
 
+from http import HTTPStatus
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
 
 
 def test_get_activity_heatmap_returns_empty_when_no_data(app):
     response = app.get("/api/stats/activity-heatmap")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
 
     data = response.json()
     assert data["daily_counts"] == {}
@@ -16,7 +17,7 @@ def test_get_activity_heatmap_returns_empty_when_no_data(app):
 
 def test_get_activity_heatmap_accepts_days_param(app):
     response = app.get("/api/stats/activity-heatmap?days=30")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
 
     data = response.json()
     assert "daily_counts" in data
@@ -25,10 +26,10 @@ def test_get_activity_heatmap_accepts_days_param(app):
 
 def test_get_activity_heatmap_rejects_invalid_days(app):
     response = app.get("/api/stats/activity-heatmap?days=10")
-    assert response.status_code == 422
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
     response = app.get("/api/stats/activity-heatmap?days=500")
-    assert response.status_code == 422
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 async def test_heatmap_reflects_puzzle_attempts(db_path, app):
@@ -40,7 +41,7 @@ async def test_heatmap_reflects_puzzle_attempts(db_path, app):
         await repo.close()
 
     response = app.get("/api/stats/activity-heatmap?days=30")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert data["total_attempts"] >= 2
     assert data["max_count"] >= 1

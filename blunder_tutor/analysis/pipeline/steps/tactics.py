@@ -32,7 +32,7 @@ class TacticsClassifyStep(AnalysisStep):
 
     @property
     def depends_on(self) -> frozenset[str]:
-        return frozenset({"move_quality"})
+        return frozenset(("move_quality",))
 
     async def execute(self, ctx: StepContext) -> StepResult:
         move_quality_result = ctx.get_step_result("move_quality")

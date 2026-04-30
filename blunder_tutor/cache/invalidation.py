@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from types import MappingProxyType
 
 from blunder_tutor.cache.backend import CacheBackend
 from blunder_tutor.events.event_bus import EventBus
@@ -9,11 +10,13 @@ from blunder_tutor.events.event_types import CacheEvent, EventType
 
 logger = logging.getLogger(__name__)
 
-EVENT_TAG_MAPPING: dict[EventType, str] = {
-    EventType.STATS_UPDATED: "stats",
-    EventType.TRAPS_UPDATED: "traps",
-    EventType.TRAINING_UPDATED: "training",
-}
+EVENT_TAG_MAPPING: MappingProxyType[EventType, str] = MappingProxyType(
+    {
+        EventType.STATS_UPDATED: "stats",
+        EventType.TRAPS_UPDATED: "traps",
+        EventType.TRAINING_UPDATED: "training",
+    }
+)
 
 
 class CacheInvalidator:
@@ -32,22 +35,16 @@ class CacheInvalidator:
 
         merged: asyncio.Queue = asyncio.Queue()
 
-        async def _forward(source: asyncio.Queue) -> None:
+        async def _forward(source: asyncio.Queue) -> None:  # noqa: WPS430 — fan-in forwarder spawned per source queue; captures `self._running` and `merged`.
             while self._running:
-                try:
-                    event = await source.get()
-                    await merged.put(event)
-                except asyncio.CancelledError:
-                    raise
+                event = await source.get()
+                await merged.put(event)
 
         tasks = [asyncio.create_task(_forward(q)) for _, q in self._queues]
 
-        try:
+        try:  # noqa: WPS501 — fire-and-forget forwarder tasks cancelled on shutdown; TaskGroup would re-raise inner exceptions, changing semantics.
             while self._running:
-                try:
-                    event = await merged.get()
-                except asyncio.CancelledError:
-                    raise
+                event = await merged.get()
 
                 tag_base = EVENT_TAG_MAPPING[event.type]
                 user_key = event.data.get("user_key", "default")

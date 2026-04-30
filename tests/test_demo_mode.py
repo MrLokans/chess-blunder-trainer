@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from http import HTTPStatus
 from pathlib import Path
 
 import pytest
@@ -52,32 +53,33 @@ BLOCKED_ENDPOINTS = [
 @pytest.mark.parametrize("method,path", BLOCKED_ENDPOINTS)
 def test_demo_mode_blocks_mutations(demo_app: TestClient, method: str, path: str):
     response = demo_app.request(method, path)
-    assert response.status_code == 403
+    assert response.status_code == HTTPStatus.FORBIDDEN
     body = response.json()
     assert body["error"] == "demo_mode"
 
 
 def test_demo_mode_allows_get_endpoints(demo_app: TestClient):
     response = demo_app.get("/api/jobs/html")
-    assert response.status_code != 403
+    assert response.status_code != HTTPStatus.FORBIDDEN
 
 
 def test_demo_mode_allows_locale_change(demo_app: TestClient):
     response = demo_app.post("/api/settings/locale", json={"locale": "ru"})
-    assert response.status_code != 403
+    assert response.status_code != HTTPStatus.FORBIDDEN
 
 
 def test_normal_mode_allows_mutations(app: TestClient):
     response = app.post("/api/settings", json={})
     # May return 422 (validation error) but NOT 403
-    assert response.status_code != 403
+    assert response.status_code != HTTPStatus.FORBIDDEN
 
 
 def test_demo_mode_skips_setup_redirect(demo_app: TestClient):
     response = demo_app.get("/", follow_redirects=False)
     # Should NOT redirect to /setup
-    assert response.status_code != 303 or "/setup" not in response.headers.get(
-        "location", ""
+    assert (
+        response.status_code != HTTPStatus.SEE_OTHER
+        or "/setup" not in response.headers.get("location", "")
     )
 
 
@@ -88,5 +90,5 @@ def test_demo_banner_present_in_html(demo_app: TestClient):
 
 def test_normal_mode_no_demo_banner(app: TestClient):
     response = app.get("/", follow_redirects=False)
-    if response.status_code == 200:
+    if response.status_code == HTTPStatus.OK:
         assert "demo-banner" not in response.text

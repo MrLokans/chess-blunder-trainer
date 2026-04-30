@@ -11,22 +11,9 @@ from __future__ import annotations
 
 from fastapi import Request, Response
 
-from blunder_tutor.auth.fastapi import (
-    SESSION_COOKIE_NAME,
-    clear_session_cookie,
-)
-from blunder_tutor.auth.fastapi import (
-    set_session_cookie as _set_session_cookie,
-)
+from blunder_tutor.auth.fastapi import set_session_cookie as _set_session_cookie
 from blunder_tutor.web.config import AppConfig
 from blunder_tutor.web.tls import is_https_request
-
-__all__ = [
-    "SESSION_COOKIE_NAME",
-    "clear_session_cookie",
-    "compute_cookie_secure",
-    "set_session_cookie",
-]
 
 
 def compute_cookie_secure(config: AppConfig, request: Request) -> bool:

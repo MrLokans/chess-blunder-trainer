@@ -1,14 +1,21 @@
 from __future__ import annotations
 
 import argparse
-import typing
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Literal, Self
 
 from pydantic import BaseModel, model_validator
 
-from blunder_tutor import constants
 from blunder_tutor.cache.config import CacheConfig
+from blunder_tutor.constants import (
+    AUTH_MODE_CREDENTIALS,
+    AUTH_MODE_NONE,
+    DEFAULT_DB_PATH,
+    DEFAULT_ENGINE_DEPTH,
+    DEFAULT_ENGINE_TIME_LIMIT,
+    TEMPLATES_PATH,
+)
 
 AuthMode = Literal["none", "credentials"]
 
@@ -18,8 +25,20 @@ AuthMode = Literal["none", "credentials"]
 # CSRF tokens; 128+ bits of entropy is the operational floor.
 SECRET_KEY_MIN_LEN = 64
 
-_TRUTHY = frozenset({"true", "1", "yes"})
-_FALSY = frozenset({"false", "0", "no"})
+# Session lifetime defaults: 30 days for absolute max, 7 days for idle
+# expiry. Values match OWASP "remember-me" guidance for self-hosted apps.
+_SECONDS_PER_DAY = 60 * 60 * 24
+_SESSION_MAX_AGE_DAYS = 30
+_SESSION_IDLE_DAYS = 7
+_SESSION_MAX_AGE_DEFAULT = _SECONDS_PER_DAY * _SESSION_MAX_AGE_DAYS
+_SESSION_IDLE_DEFAULT = _SECONDS_PER_DAY * _SESSION_IDLE_DAYS
+
+# bcrypt cost ceiling per spec (4 is the floor; 31 is the ceiling, though
+# in practice anything past ~14 is too slow for a login path).
+_BCRYPT_COST_MAX = 31
+
+_TRUTHY = frozenset(("true", "1", "yes"))
+_FALSY = frozenset(("false", "0", "no"))
 
 
 def _parse_bool(raw: str | None, *, default: bool) -> bool:
@@ -34,16 +53,16 @@ def _parse_bool(raw: str | None, *, default: bool) -> bool:
 
 
 class DataConfig(BaseModel):
-    db_path: Path = constants.DEFAULT_DB_PATH
-    template_dir: Path = constants.TEMPLATES_PATH
+    db_path: Path = DEFAULT_DB_PATH
+    template_dir: Path = TEMPLATES_PATH
 
 
 class AuthConfig(BaseModel):
     mode: AuthMode = "none"
     secret_key: str | None = None
     max_users: int = 1
-    session_max_age_seconds: int = 60 * 60 * 24 * 30
-    session_idle_seconds: int = 60 * 60 * 24 * 7
+    session_max_age_seconds: int = _SESSION_MAX_AGE_DEFAULT
+    session_idle_seconds: int = _SESSION_IDLE_DEFAULT
     # Tri-state: `None` ⇒ "derive from request scheme + vite_dev" (dev
     # convenience); `True` / `False` ⇒ explicit override for prod
     # deployments behind a TLS-terminating reverse proxy where
@@ -76,10 +95,18 @@ class AuthConfig(BaseModel):
     def _check_invariants(self) -> Self:
         if self.max_users < 1:
             raise ValueError(f"MAX_USERS must be >= 1, got {self.max_users}")
-        if self.bcrypt_cost is not None and not 4 <= self.bcrypt_cost <= 31:
+        if (
+            self.bcrypt_cost is not None
+            and not 4 <= self.bcrypt_cost <= _BCRYPT_COST_MAX
+        ):
             raise ValueError(
                 f"AUTH_BCRYPT_COST must be between 4 and 31, got {self.bcrypt_cost}"
             )
+        self._validate_sessions()
+        self._validate_secret_key()
+        return self
+
+    def _validate_sessions(self) -> None:
         if self.session_max_age_seconds < 1:
             raise ValueError(
                 f"SESSION_MAX_AGE_SECONDS must be >= 1, got {self.session_max_age_seconds}"
@@ -93,23 +120,25 @@ class AuthConfig(BaseModel):
                 "SESSION_IDLE_SECONDS must be <= SESSION_MAX_AGE_SECONDS "
                 f"({self.session_idle_seconds} > {self.session_max_age_seconds})"
             )
-        if self.mode == "credentials":
-            if not self.secret_key:
-                raise ValueError(
-                    "SECRET_KEY env var is required when AUTH_MODE=credentials"
-                )
-            if len(self.secret_key) < SECRET_KEY_MIN_LEN:
-                raise ValueError(
-                    f"SECRET_KEY must be at least {SECRET_KEY_MIN_LEN} chars "
-                    f"when AUTH_MODE=credentials (got {len(self.secret_key)})"
-                )
-        return self
+
+    def _validate_secret_key(self) -> None:
+        if self.mode != AUTH_MODE_CREDENTIALS:
+            return
+        if not self.secret_key:
+            raise ValueError(
+                "SECRET_KEY env var is required when AUTH_MODE=credentials"
+            )
+        if len(self.secret_key) < SECRET_KEY_MIN_LEN:
+            raise ValueError(
+                f"SECRET_KEY must be at least {SECRET_KEY_MIN_LEN} chars "
+                f"when AUTH_MODE=credentials (got {len(self.secret_key)})"
+            )
 
 
 class EngineConfig(BaseModel):
     path: str
-    depth: int = constants.DEFAULT_ENGINE_DEPTH
-    time_limit: float = constants.DEFAULT_ENGINE_TIME_LIMIT
+    depth: int = DEFAULT_ENGINE_DEPTH
+    time_limit: float = DEFAULT_ENGINE_TIME_LIMIT
 
 
 class ThrottleConfig(BaseModel):
@@ -147,12 +176,12 @@ class AppConfig(BaseModel):
 
     @model_validator(mode="after")
     def _check_mode_compatibility(self) -> Self:
-        if self.demo_mode and self.auth.mode == "credentials":
+        if self.demo_mode and self.auth.mode == AUTH_MODE_CREDENTIALS:
             raise ValueError("DEMO_MODE cannot be combined with AUTH_MODE=credentials")
         return self
 
 
-def _parse_positive_int(environ: typing.Mapping, key: str, default: int) -> int:
+def _parse_positive_int(environ: Mapping, key: str, default: int) -> int:
     raw = environ.get(key)
     if raw is None:
         return default
@@ -171,10 +200,10 @@ def _parse_positive_int(environ: typing.Mapping, key: str, default: int) -> int:
 
 def _parse_auth_mode(raw: str | None) -> AuthMode:
     mode_raw = (raw or "").strip().lower()
-    if mode_raw in ("", "none"):
-        return "none"
-    if mode_raw == "credentials":
-        return "credentials"
+    if mode_raw in ("", AUTH_MODE_NONE):
+        return AUTH_MODE_NONE
+    if mode_raw == AUTH_MODE_CREDENTIALS:
+        return AUTH_MODE_CREDENTIALS
     raise ValueError(f"AUTH_MODE must be 'none' or 'credentials', got {mode_raw!r}")
 
 
@@ -189,17 +218,17 @@ def _parse_optional_bool(raw: str | None) -> bool | None:
     raise ValueError(f"expected boolean-like value, got {raw!r}")
 
 
-def _build_auth_config(environ: typing.Mapping) -> AuthConfig:
+def _build_auth_config(environ: Mapping) -> AuthConfig:
     """Extract auth-related env vars and let AuthConfig validate them."""
     return AuthConfig(
         mode=_parse_auth_mode(environ.get("AUTH_MODE")),
         secret_key=environ.get("SECRET_KEY") or None,
         max_users=_parse_positive_int(environ, "MAX_USERS", 1),
         session_max_age_seconds=_parse_positive_int(
-            environ, "SESSION_MAX_AGE_SECONDS", 60 * 60 * 24 * 30
+            environ, "SESSION_MAX_AGE_SECONDS", _SESSION_MAX_AGE_DEFAULT
         ),
         session_idle_seconds=_parse_positive_int(
-            environ, "SESSION_IDLE_SECONDS", 60 * 60 * 24 * 7
+            environ, "SESSION_IDLE_SECONDS", _SESSION_IDLE_DEFAULT
         ),
         cookie_secure=_parse_optional_bool(environ.get("AUTH_COOKIE_SECURE")),
         login_rate_limit=_parse_positive_int(environ, "AUTH_LOGIN_RATE_LIMIT", 5),
@@ -224,7 +253,7 @@ def _parse_optional_positive_int(raw: str | None) -> int | None:
     return value
 
 
-def get_engine_path(environ: typing.Mapping) -> str:
+def get_engine_path(environ: Mapping) -> str:
     engine_path = environ.get("STOCKFISH_BINARY")
     if engine_path is not None:
         return engine_path
@@ -240,9 +269,7 @@ def get_engine_path(environ: typing.Mapping) -> str:
     )
 
 
-def config_factory(
-    parsed_args: argparse.Namespace, environ: typing.Mapping
-) -> AppConfig:
+def config_factory(parsed_args: argparse.Namespace, environ: Mapping) -> AppConfig:
     final_engine_path = (
         parsed_args and parsed_args.engine_path or get_engine_path(environ)
     )

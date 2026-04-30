@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 import argparse as _ap
 import os as _os
 from pathlib import Path
@@ -34,7 +35,7 @@ class TestExtractHost:
         assert _extract_host(url) == expected
 
 
-class _R:
+class _FakeRequest:
     """Minimal request stand-in for the pure-logic host test."""
 
     def __init__(self, headers):
@@ -43,29 +44,29 @@ class _R:
 
 class TestOriginMatchesHost:
     def test_origin_matches(self):
-        r = _R({"origin": "http://example.com:8000", "host": "example.com"})
+        r = _FakeRequest({"origin": "http://example.com:8000", "host": "example.com"})
         assert _origin_matches_host(r) is True  # type: ignore[arg-type]
 
     def test_origin_mismatch_rejected(self):
-        r = _R({"origin": "https://evil.com", "host": "example.com"})
+        r = _FakeRequest({"origin": "https://evil.com", "host": "example.com"})
         assert _origin_matches_host(r) is False  # type: ignore[arg-type]
 
     def test_referer_fallback(self):
-        r = _R({"referer": "http://example.com/foo", "host": "example.com"})
+        r = _FakeRequest({"referer": "http://example.com/foo", "host": "example.com"})
         assert _origin_matches_host(r) is True  # type: ignore[arg-type]
 
     def test_referer_mismatch_rejected(self):
-        r = _R({"referer": "https://evil.com/foo", "host": "example.com"})
+        r = _FakeRequest({"referer": "https://evil.com/foo", "host": "example.com"})
         assert _origin_matches_host(r) is False  # type: ignore[arg-type]
 
     def test_neither_header_allowed(self):
-        r = _R({"host": "example.com"})
+        r = _FakeRequest({"host": "example.com"})
         # Absent-both is the non-browser client path; SameSite=Lax on
         # the session cookie is the primary defense in that case.
         assert _origin_matches_host(r) is True  # type: ignore[arg-type]
 
     def test_case_insensitive_host(self):
-        r = _R({"origin": "http://EXAMPLE.com", "host": "Example.COM"})
+        r = _FakeRequest({"origin": "http://EXAMPLE.com", "host": "Example.COM"})
         assert _origin_matches_host(r) is True  # type: ignore[arg-type]
 
 
@@ -97,7 +98,7 @@ class TestCsrfMiddleware:
             headers={"Origin": "http://testserver"},
         )
         # May 400 on content validation but MUST NOT be the CSRF 403.
-        assert r.status_code != 403 or r.json().get("error") != "csrf"
+        assert r.status_code != HTTPStatus.FORBIDDEN or r.json().get("error") != "csrf"
 
     async def test_cross_origin_post_rejected_with_csrf_403(
         self, app_client: httpx.AsyncClient
@@ -107,12 +108,12 @@ class TestCsrfMiddleware:
             json={"platform": "lichess", "username": "whoever"},
             headers={"Origin": "https://evil.com"},
         )
-        assert r.status_code == 403
+        assert r.status_code == HTTPStatus.FORBIDDEN
         assert r.json()["error"] == "csrf"
 
     async def test_get_requests_are_untouched(self, app_client: httpx.AsyncClient):
         r = await app_client.get("/health", headers={"Origin": "https://evil.com"})
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
 
     async def test_absent_headers_allowed_by_default(
         self, app_client: httpx.AsyncClient
@@ -122,7 +123,7 @@ class TestCsrfMiddleware:
             "/api/validate-username",
             json={"platform": "lichess", "username": "whoever"},
         )
-        assert r.status_code != 403 or r.json().get("error") != "csrf"
+        assert r.status_code != HTTPStatus.FORBIDDEN or r.json().get("error") != "csrf"
 
 
 @pytest.fixture
@@ -152,7 +153,7 @@ async def host_pinned_client(tmp_path: Path, monkeypatch):
 class TestTrustedHostMiddleware:
     async def test_allowed_host_passes(self, host_pinned_client: httpx.AsyncClient):
         r = await host_pinned_client.get("/health")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
 
     async def test_spoofed_host_rejected(self, host_pinned_client: httpx.AsyncClient):
         # Cross-origin attacker tries to pass Origin==Host by spoofing
@@ -161,4 +162,4 @@ class TestTrustedHostMiddleware:
         r = await host_pinned_client.get(
             "/health", headers={"host": "attacker.example"}
         )
-        assert r.status_code == 400
+        assert r.status_code == HTTPStatus.BAD_REQUEST

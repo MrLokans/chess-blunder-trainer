@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 from pathlib import Path
 
 import pytest
@@ -34,10 +35,10 @@ def test_throttle_returns_429_after_limit(throttled_app: TestClient):
 
     for _ in range(3):
         resp = throttled_app.post("/api/analyze", json=payload)
-        assert resp.status_code != 429
+        assert resp.status_code != HTTPStatus.TOO_MANY_REQUESTS
 
     resp = throttled_app.post("/api/analyze", json=payload)
-    assert resp.status_code == 429
+    assert resp.status_code == HTTPStatus.TOO_MANY_REQUESTS
 
 
 def test_throttle_shared_across_engine_endpoints(throttled_app: TestClient):
@@ -49,7 +50,7 @@ def test_throttle_shared_across_engine_endpoints(throttled_app: TestClient):
         throttled_app.post("/api/analyze", json=analyze_payload)
 
     resp = throttled_app.get("/api/puzzle")
-    assert resp.status_code == 429
+    assert resp.status_code == HTTPStatus.TOO_MANY_REQUESTS
 
 
 def test_throttle_adds_rate_limit_headers(throttled_app: TestClient):
@@ -63,4 +64,4 @@ def test_normal_mode_no_throttle(app: TestClient):
     payload = {"fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"}
     for _ in range(10):
         resp = app.post("/api/analyze", json=payload)
-        assert resp.status_code != 429
+        assert resp.status_code != HTTPStatus.TOO_MANY_REQUESTS

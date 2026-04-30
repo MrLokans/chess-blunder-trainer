@@ -3,22 +3,15 @@ from __future__ import annotations
 import json
 import re
 
-from fastapi import Request
+from fastapi import Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.features import DEFAULTS
 from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
-from blunder_tutor.web.request_helpers import _cache_key, _db_path_for
+from blunder_tutor.web.request_helpers import _cache_key
 from blunder_tutor.web.settings_snapshot import get_settings_snapshot
 from blunder_tutor.web.tls import is_https_request
-
-# Re-exported so existing call sites (`web/api/settings.py`, tests)
-# don't need to update their imports. The canonical home is
-# `web/request_helpers.py` — that's where settings_snapshot.py imports
-# from to break what would otherwise be a circular import via this
-# module.
-__all__ = ["_cache_key", "_db_path_for"]
 
 
 class UserDbPathMiddleware(BaseHTTPMiddleware):
@@ -48,10 +41,11 @@ class UserDbPathMiddleware(BaseHTTPMiddleware):
         if ctx is not None:
             resolver = request.app.state.db_path_resolver
             request.state.user_db_path = resolver(ctx.user_id)
-        return await call_next(request)
+        return await call_next(request)  # noqa: WPS204 — Starlette dispatch idiom; every middleware ends with this call.
 
 
-MUTATION_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+_HTTP_POST = "POST"
+MUTATION_METHODS = frozenset((_HTTP_POST, "PUT", "PATCH", "DELETE"))
 
 
 # Paths that accept mutations from cross-origin contexts by design.
@@ -87,7 +81,7 @@ class CsrfOriginMiddleware(BaseHTTPMiddleware):
         if not _origin_matches_host(request):
             return JSONResponse(
                 {"error": "csrf", "message": "Origin header mismatch"},
-                status_code=403,
+                status_code=status.HTTP_403_FORBIDDEN,
             )
         return await call_next(request)
 
@@ -138,12 +132,12 @@ def _extract_host(url: str) -> str | None:
     return after_scheme.split(":", 1)[0].lower()
 
 
-DEMO_ALLOWED_MUTATIONS: list[tuple[str, re.Pattern]] = [
-    ("POST", re.compile(r"^/api/submit$")),
-    ("POST", re.compile(r"^/api/analyze$")),
-    ("POST", re.compile(r"^/api/settings/locale$")),
-    ("POST", re.compile(r"^/api/validate-username$")),
-]
+DEMO_ALLOWED_MUTATIONS: tuple[tuple[str, re.Pattern], ...] = (
+    (_HTTP_POST, re.compile(r"^/api/submit$")),
+    (_HTTP_POST, re.compile(r"^/api/analyze$")),
+    (_HTTP_POST, re.compile(r"^/api/settings/locale$")),
+    (_HTTP_POST, re.compile(r"^/api/validate-username$")),
+)
 
 
 class DemoModeMiddleware(BaseHTTPMiddleware):
@@ -160,7 +154,7 @@ class DemoModeMiddleware(BaseHTTPMiddleware):
                     return await call_next(request)
 
             return JSONResponse(
-                status_code=403,
+                status_code=status.HTTP_403_FORBIDDEN,
                 content={
                     "error": "demo_mode",
                     "message": "This action is disabled in demo mode",
@@ -170,20 +164,21 @@ class DemoModeMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-class SetupCheckMiddleware(BaseHTTPMiddleware):
-    # `SetupCheckMiddleware` matches via ``startswith``, so `/api/` here
-    # covers every API surface (not just `/api/auth/`). We still list
-    # `AUTH_API_PREFIX` explicitly so a future refactor that tightens the
-    # `/api/` guard doesn't accidentally trap the auth API behind setup.
-    EXEMPT_PATHS = AUTH_UI_PATHS | frozenset(
-        {"/api/", "/health", "/static", "/favicon.ico", AUTH_API_PREFIX}
-    )
+# `SetupCheckMiddleware` matches via ``startswith``, so `/api/` here
+# covers every API surface (not just `/api/auth/`). We still list
+# `AUTH_API_PREFIX` explicitly so a future refactor that tightens the
+# `/api/` guard doesn't accidentally trap the auth API behind setup.
+_SETUP_EXEMPT_PATHS = AUTH_UI_PATHS | frozenset(
+    ("/api/", "/health", "/static", "/favicon.ico", AUTH_API_PREFIX)
+)
 
+
+class SetupCheckMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if getattr(request.app.state, "demo_mode", False):
             return await call_next(request)
 
-        if any(request.url.path.startswith(path) for path in self.EXEMPT_PATHS):
+        if any(request.url.path.startswith(path) for path in _SETUP_EXEMPT_PATHS):
             return await call_next(request)
 
         cache = request.app.state.setup_completed_cache
@@ -202,7 +197,7 @@ class SetupCheckMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
 
         if not completed:
-            return RedirectResponse(url="/setup", status_code=303)
+            return RedirectResponse(url="/setup", status_code=status.HTTP_303_SEE_OTHER)
 
         return await call_next(request)
 

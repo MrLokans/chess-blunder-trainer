@@ -6,6 +6,8 @@ from blunder_tutor.cli.base import CLICommand
 from blunder_tutor.constants import DEFAULT_ENGINE_DEPTH
 from blunder_tutor.web.app import AppConfig, create_app
 
+DEFAULT_TRAINER_PORT = 8000
+
 
 class TrainUICommand(CLICommand):
     def should_run(self, args: argparse.Namespace) -> bool:
@@ -46,7 +48,6 @@ class TrainUICommand(CLICommand):
         train_ui_parser.add_argument(
             "--port",
             type=int,
-            default=8000,
+            default=DEFAULT_TRAINER_PORT,
             help="Port to bind the server to",
         )
-        return

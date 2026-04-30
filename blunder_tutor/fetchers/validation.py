@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from blunder_tutor.fetchers import chesscom, lichess
 
-VALIDATORS = {
+# Kept as a mutable dict because tests use `patch.dict(...)` to swap in
+# mocks. Treat as read-only at runtime.
+VALIDATORS = {  # noqa: WPS407
     "lichess": lichess.validate_username,
     "chesscom": chesscom.validate_username,
 }

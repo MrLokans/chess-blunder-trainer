@@ -1,9 +1,11 @@
+from http import HTTPStatus
+
 """Tests for board settings API endpoints."""
 
 
 def test_get_piece_sets(app):
     response = app.get("/api/settings/board/piece-sets")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert "piece_sets" in data
     assert len(data["piece_sets"]) > 0
@@ -13,7 +15,7 @@ def test_get_piece_sets(app):
 
 def test_get_board_color_presets(app):
     response = app.get("/api/settings/board/color-presets")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert "presets" in data
     assert len(data["presets"]) > 0
@@ -24,7 +26,7 @@ def test_get_board_color_presets(app):
 
 def test_get_board_settings_defaults(app):
     response = app.get("/api/settings/board")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert data["piece_set"] == "gioco"
     assert data["board_light"] == "#E0E0E0"
@@ -41,12 +43,12 @@ def test_update_board_settings(app):
             "board_dark": "#8ca2ad",
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["success"] is True
 
     # Verify they were saved
     response = app.get("/api/settings/board")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert data["piece_set"] == "cburnett"
     assert data["board_light"] == "#dee3e6"
@@ -58,7 +60,7 @@ def test_update_board_settings_invalid_piece_set(app):
         "/api/settings/board",
         json={"piece_set": "nonexistent"},
     )
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
     assert "Invalid piece set" in response.json()["detail"]
 
 
@@ -67,7 +69,7 @@ def test_update_board_settings_invalid_color(app):
         "/api/settings/board",
         json={"board_light": "not-a-color"},
     )
-    assert response.status_code == 400
+    assert response.status_code == HTTPStatus.BAD_REQUEST
     assert "hex color" in response.json()["detail"]
 
 
@@ -80,7 +82,7 @@ def test_reset_board_settings(app):
 
     # Reset
     response = app.post("/api/settings/board/reset")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["success"] is True
 
     # Verify defaults

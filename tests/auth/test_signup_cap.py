@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 import httpx
 
 
@@ -11,7 +12,7 @@ class TestSignupCap:
             "/api/auth/signup",
             json={"username": "alice", "password": "password123"},
         )
-        assert r.status_code == 403
+        assert r.status_code == HTTPStatus.FORBIDDEN
         assert r.json()["detail"] == "invite_code_required"
 
     async def test_first_user_with_bad_invite_rejected(
@@ -25,7 +26,7 @@ class TestSignupCap:
                 "invite_code": "not-a-real-code",
             },
         )
-        assert r.status_code == 403
+        assert r.status_code == HTTPStatus.FORBIDDEN
         assert r.json()["detail"] == "invite_code_invalid"
 
     async def test_first_user_with_valid_invite_succeeds(
@@ -39,7 +40,7 @@ class TestSignupCap:
                 "invite_code": invite_code,
             },
         )
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert r.json()["username"] == "alice"
         assert "session_token" in r.cookies
 
@@ -64,7 +65,7 @@ class TestSignupCap:
                 "invite_code": invite_code,
             },
         )
-        assert r.status_code == 403
+        assert r.status_code == HTTPStatus.FORBIDDEN
 
     async def test_max_users_cap_blocks_second_signup(
         self, client_credentials_mode: httpx.AsyncClient, invite_code: str
@@ -77,14 +78,14 @@ class TestSignupCap:
                 "invite_code": invite_code,
             },
         )
-        assert first.status_code == 200
+        assert first.status_code == HTTPStatus.OK
         # MAX_USERS=1 (fixture default) → any subsequent signup 403s even
         # without an invite code.
         r = await client_credentials_mode.post(
             "/api/auth/signup",
             json={"username": "bob", "password": "password123"},
         )
-        assert r.status_code == 403
+        assert r.status_code == HTTPStatus.FORBIDDEN
         assert r.json()["detail"] == "user_cap_reached"
 
     async def test_signup_rejects_invalid_username(
@@ -98,7 +99,7 @@ class TestSignupCap:
                 "invite_code": invite_code,
             },
         )
-        assert r.status_code == 400
+        assert r.status_code == HTTPStatus.BAD_REQUEST
 
     async def test_signup_rejects_short_password(
         self, client_credentials_mode: httpx.AsyncClient, invite_code: str
@@ -111,4 +112,4 @@ class TestSignupCap:
                 "invite_code": invite_code,
             },
         )
-        assert r.status_code == 400
+        assert r.status_code == HTTPStatus.BAD_REQUEST

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 import logging
 from pathlib import Path
 
@@ -25,13 +26,13 @@ class TestAccountDeletion:
                 "invite_code": invite_code,
             },
         )
-        assert r.status_code == 200, r.text
+        assert r.status_code == HTTPStatus.OK, r.text
         user_id = r.json()["id"]
         user_dir = tmp_path / "users" / user_id
         assert user_dir.exists(), "signup should have materialized per-user dir"
 
         r = await client_credentials_mode.delete("/api/auth/account")
-        assert r.status_code == 204
+        assert r.status_code == HTTPStatus.NO_CONTENT
 
         assert not user_dir.exists(), (
             "account delete must remove the per-user directory; a leftover dir "
@@ -39,7 +40,9 @@ class TestAccountDeletion:
         )
 
         r = await client_credentials_mode.get("/api/auth/me")
-        assert r.status_code == 401, "session must be revoked after account delete"
+        assert r.status_code == HTTPStatus.UNAUTHORIZED, (
+            "session must be revoked after account delete"
+        )
 
 
 class TestOrphanScan:
@@ -81,7 +84,7 @@ class TestOrphanScan:
                 "invite_code": invite_code,
             },
         )
-        assert r.status_code == 200, r.text
+        assert r.status_code == HTTPStatus.OK, r.text
 
         users_dir: Path = credentials_app.state.auth.users_dir
         users = credentials_app.state.auth.storage.users

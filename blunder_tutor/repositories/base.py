@@ -19,12 +19,15 @@ class BaseDbRepository:
         self.db_path = db_path
         self._conn: aiosqlite.Connection | None = None
 
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        await self.close()
+
     @classmethod
-    def _get_write_lock(cls, db_path: Path) -> asyncio.Lock:
-        key = str(db_path.resolve())
-        if key not in cls._write_locks:
-            cls._write_locks[key] = asyncio.Lock()
-        return cls._write_locks[key]
+    def from_config(cls, config: AppConfig) -> Self:
+        return cls(db_path=config.data.db_path)
 
     async def get_connection(self) -> aiosqlite.Connection:
         if self._conn is None:
@@ -48,12 +51,9 @@ class BaseDbRepository:
             await self._conn.close()
             self._conn = None
 
-    async def __aenter__(self) -> Self:
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        await self.close()
-
     @classmethod
-    def from_config(cls, config: AppConfig) -> Self:
-        return cls(db_path=config.data.db_path)
+    def _get_write_lock(cls, db_path: Path) -> asyncio.Lock:
+        key = str(db_path.resolve())
+        if key not in cls._write_locks:
+            cls._write_locks[key] = asyncio.Lock()
+        return cls._write_locks[key]

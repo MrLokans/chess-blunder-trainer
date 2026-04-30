@@ -1,7 +1,10 @@
+import logging
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from blunder_tutor.events.websocket_manager import ConnectionManager
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -27,6 +30,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
     except WebSocketDisconnect:
         await connection_manager.disconnect(connection_id)
-    except Exception as e:
-        print(f"WebSocket error: {e}")
+    except Exception:
+        logger.exception("WebSocket error")
         await connection_manager.disconnect(connection_id)

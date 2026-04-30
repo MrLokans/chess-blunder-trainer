@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 import httpx
 import pytest
 from fastapi import FastAPI
@@ -37,7 +38,7 @@ class TestLoginRotation:
             "/api/auth/login",
             json={"username": DEFAULT_USERNAME, "password": DEFAULT_PASSWORD},
         )
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         new_token = client_credentials_mode.cookies.get("session_token")
         assert new_token is not None
         assert new_token != old_token
@@ -65,7 +66,7 @@ class TestLoginRotation:
             json={"username": DEFAULT_USERNAME, "password": DEFAULT_PASSWORD},
             headers={"Cookie": "session_token=" + "deadbeef" * 8},
         )
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         new_token = r.cookies.get("session_token")
         assert new_token is not None
         assert await _session_row_exists(credentials_app, new_token)
@@ -87,7 +88,7 @@ class TestLoginRotation:
             "/api/auth/login",
             json={"username": DEFAULT_USERNAME, "password": "wrong-password"},
         )
-        assert r.status_code == 401
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
 
         assert await _session_row_exists(credentials_app, live_token)
 
@@ -125,7 +126,7 @@ class TestSignupRotation:
             "/api/auth/signup",
             json={"username": "bob", "password": DEFAULT_PASSWORD},
         )
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         new_token = client_multi.cookies.get("session_token")
         assert new_token is not None
         assert new_token != old_token
@@ -151,6 +152,6 @@ class TestSignupRotation:
             "/api/auth/signup",
             json={"username": "alice", "password": DEFAULT_PASSWORD},
         )
-        assert r.status_code == 409
+        assert r.status_code == HTTPStatus.CONFLICT
 
         assert await _session_row_exists(credentials_app_multi, live_token)

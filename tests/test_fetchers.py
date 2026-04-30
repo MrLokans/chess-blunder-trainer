@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
@@ -187,7 +188,9 @@ class TestLichessFetch:
 
     async def test_http_error_propagates(self, monkeypatch: pytest.MonkeyPatch):
         def handler(url: str) -> MagicMock:
-            return create_mock_response(status_code=404, text="Not found")
+            return create_mock_response(
+                status_code=HTTPStatus.NOT_FOUND, text="Not found"
+            )
 
         mock_client = create_mock_client(handler)
         monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
@@ -240,7 +243,7 @@ class TestChesscomFetch:
                 return create_mock_response(json_data=games_jan)
             if "2024/02" in url:
                 return create_mock_response(json_data=games_feb)
-            return create_mock_response(status_code=404)
+            return create_mock_response(status_code=HTTPStatus.NOT_FOUND)
 
         mock_client = create_mock_client(handler)
         monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
@@ -383,7 +386,9 @@ class TestChesscomFetch:
 
     async def test_http_error_propagates(self, monkeypatch: pytest.MonkeyPatch):
         def handler(url: str) -> MagicMock:
-            return create_mock_response(status_code=404, text="Not found")
+            return create_mock_response(
+                status_code=HTTPStatus.NOT_FOUND, text="Not found"
+            )
 
         mock_client = create_mock_client(handler)
         monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)

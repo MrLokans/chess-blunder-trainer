@@ -6,13 +6,13 @@ from unittest.mock import AsyncMock, MagicMock
 import chess.pgn
 import pytest
 
-from blunder_tutor.analysis.pipeline import (
+from blunder_tutor.analysis.pipeline.context import StepContext, StepResult
+from blunder_tutor.analysis.pipeline.executor import PipelineExecutor
+from blunder_tutor.analysis.pipeline.pipeline import (
     AnalysisPipeline,
     PipelineConfig,
-    PipelineExecutor,
     PipelinePreset,
 )
-from blunder_tutor.analysis.pipeline.context import StepContext, StepResult
 from blunder_tutor.analysis.pipeline.steps import get_all_steps
 from blunder_tutor.analysis.pipeline.steps.base import AnalysisStep
 from blunder_tutor.analysis.thresholds import Thresholds
@@ -73,8 +73,8 @@ class TestAnalysisPipeline:
 
     def test_get_ordered_steps_with_dependencies(self):
         step_a = DummyStep("a")
-        step_b = DummyStep("b", frozenset({"a"}))
-        step_c = DummyStep("c", frozenset({"b"}))
+        step_b = DummyStep("b", frozenset(("a",)))
+        step_c = DummyStep("c", frozenset(("b",)))
         steps = [step_a, step_b, step_c]
 
         config = PipelineConfig(steps=["c", "b", "a"])

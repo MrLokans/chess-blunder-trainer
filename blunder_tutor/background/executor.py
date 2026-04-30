@@ -13,7 +13,8 @@ from blunder_tutor.core.dependencies import (
     clear_context,
     set_context,
 )
-from blunder_tutor.events import EventBus, EventType, JobExecutionRequestEvent
+from blunder_tutor.events.event_bus import EventBus
+from blunder_tutor.events.event_types import EventType, JobExecutionRequestEvent
 
 if TYPE_CHECKING:
     from blunder_tutor.analysis.engine_pool import WorkCoordinator
@@ -80,6 +81,23 @@ class JobExecutor:
                 break
             except Exception as e:
                 logger.exception(f"Error processing job execution event: {e}")
+
+    async def shutdown(self) -> None:
+        logger.info("Shutting down JobExecutor...")
+        self._shutdown = True
+
+        if self._queue:
+            await self._event_bus.unsubscribe(
+                self._queue, EventType.JOB_EXECUTION_REQUESTED
+            )
+
+        if self._running_tasks:
+            logger.info(f"Cancelling {len(self._running_tasks)} running tasks...")
+            for task in self._running_tasks.values():
+                task.cancel()
+            await asyncio.gather(*self._running_tasks.values(), return_exceptions=True)
+
+        logger.info("JobExecutor shutdown complete")
 
     async def _handle_execution_request(self, event: JobExecutionRequestEvent) -> None:
         job_id = event.data["job_id"]
@@ -155,20 +173,3 @@ class JobExecutor:
 
         finally:
             clear_context()
-
-    async def shutdown(self) -> None:
-        logger.info("Shutting down JobExecutor...")
-        self._shutdown = True
-
-        if self._queue:
-            await self._event_bus.unsubscribe(
-                self._queue, EventType.JOB_EXECUTION_REQUESTED
-            )
-
-        if self._running_tasks:
-            logger.info(f"Cancelling {len(self._running_tasks)} running tasks...")
-            for task in self._running_tasks.values():
-                task.cancel()
-            await asyncio.gather(*self._running_tasks.values(), return_exceptions=True)
-
-        logger.info("JobExecutor shutdown complete")

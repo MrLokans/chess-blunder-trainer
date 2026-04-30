@@ -23,7 +23,7 @@ class SettingsRepository(BaseDbRepository):
                 """
             )
 
-    async def get_setting(self, key: str) -> str | None:
+    async def read_setting(self, key: str) -> str | None:
         conn = await self.get_connection()
         async with conn.execute(
             "SELECT value FROM app_settings WHERE key = ?", (key,)
@@ -31,7 +31,7 @@ class SettingsRepository(BaseDbRepository):
             row = await cursor.fetchone()
         return row[0] if row else None
 
-    async def set_setting(self, key: str, value: str | None) -> None:
+    async def write_setting(self, key: str, value: str | None) -> None:
         async with self.write_transaction() as conn:
             await conn.execute(
                 """
@@ -48,13 +48,13 @@ class SettingsRepository(BaseDbRepository):
         return {row[0]: row[1] for row in rows if row[1] is not None}
 
     async def is_setup_completed(self) -> bool:
-        value = await self.get_setting("setup_completed")
+        value = await self.read_setting("setup_completed")
         return value == "true"
 
     async def mark_setup_completed(self) -> None:
-        await self.set_setting("setup_completed", "true")
+        await self.write_setting("setup_completed", "true")
 
-    async def get_feature_flags(self) -> dict[str, bool]:
+    async def read_feature_flags(self) -> dict[str, bool]:
         all_settings = await self.get_all_settings()
         result = {}
         for feature in Feature:
@@ -64,15 +64,17 @@ class SettingsRepository(BaseDbRepository):
             )
         return result
 
-    async def set_feature_flags(self, flags: dict[str, bool]) -> None:
+    async def write_feature_flags(self, flags: dict[str, bool]) -> None:
         for key, enabled in flags.items():
             if Feature.is_valid(key):
-                await self.set_setting(f"feature_{key}", "true" if enabled else "false")
+                await self.write_setting(
+                    f"feature_{key}", "true" if enabled else "false"
+                )
 
     async def get_configured_usernames(self) -> dict[str, str]:
         usernames = {}
-        lichess = await self.get_setting("lichess_username")
-        chesscom = await self.get_setting("chesscom_username")
+        lichess = await self.read_setting("lichess_username")
+        chesscom = await self.read_setting("chesscom_username")
 
         if lichess:
             usernames["lichess"] = lichess

@@ -3,10 +3,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from blunder_tutor.analysis.pipeline import (
+from blunder_tutor.analysis.pipeline.executor import PipelineExecutor
+from blunder_tutor.analysis.pipeline.pipeline import (
     AnalysisPipeline,
     PipelineConfig,
-    PipelineExecutor,
     PipelinePreset,
 )
 from blunder_tutor.analysis.pipeline.steps import get_all_steps
@@ -16,7 +16,7 @@ from blunder_tutor.background.registry import register_job
 if TYPE_CHECKING:
     from blunder_tutor.repositories.analysis import AnalysisRepository
     from blunder_tutor.repositories.game_repository import GameRepository
-    from blunder_tutor.services.job_service import JobService
+    from blunder_tutor.services.job_service import JobService, ProgressCallback
 
 logger = logging.getLogger(__name__)
 
@@ -45,44 +45,38 @@ class BackfillPhasesJob(BaseJob):
         game_ids = await self.analysis_repo.get_game_ids_missing_phase()
 
         if not game_ids:
-            result = {"games_processed": 0, "moves_updated": 0}
-            await self.job_service.complete_job(job_id, result)
-            return result
+            empty = {"games_processed": 0, "moves_updated": 0}
+            await self.job_service.complete_job(job_id, empty)
+            return empty
 
-        await self.job_service.update_job_status(job_id, "running")
-        await self.job_service.update_job_progress(job_id, 0, len(game_ids))
+        return await self.job_service.run_with_lifecycle(
+            job_id,
+            len(game_ids),
+            lambda progress: self._backfill(job_id, game_ids, progress),
+        )
 
+    async def _backfill(
+        self,
+        job_id: str,
+        game_ids: list[str],
+        progress: ProgressCallback,
+    ) -> dict[str, Any]:
+        config = PipelineConfig.from_preset(PipelinePreset.BACKFILL_PHASE)
+        pipeline = AnalysisPipeline(config, get_all_steps())
         games_processed = 0
         moves_updated = 0
-        available_steps = get_all_steps()
 
-        try:
-            config = PipelineConfig.from_preset(PipelinePreset.BACKFILL_PHASE)
-            pipeline = AnalysisPipeline(config, available_steps)
+        for i, game_id in enumerate(game_ids):
+            if await self._is_cancelled(job_id):
+                break
+            report = await self._executor.execute_pipeline(pipeline, game_id)
+            if report.success and "phase" in report.steps_executed:
+                moves_updated += 1
+            games_processed += 1
+            await progress(i + 1)
 
-            for i, game_id in enumerate(game_ids):
-                job = await self.job_service.get_job(job_id)
-                if job and job.get("status") == "failed":
-                    return {
-                        "games_processed": games_processed,
-                        "moves_updated": moves_updated,
-                    }
+        return {"games_processed": games_processed, "moves_updated": moves_updated}
 
-                report = await self._executor.execute_pipeline(pipeline, game_id)
-                if report.success and "phase" in report.steps_executed:
-                    moves_updated += 1
-                games_processed += 1
-
-                await self.job_service.update_job_progress(job_id, i + 1, len(game_ids))
-
-            result = {
-                "games_processed": games_processed,
-                "moves_updated": moves_updated,
-            }
-            await self.job_service.complete_job(job_id, result)
-            return result
-
-        except Exception as e:
-            logger.error(f"Error in backfill phases job {job_id}: {e}")
-            await self.job_service.update_job_status(job_id, "failed", str(e))
-            raise
+    async def _is_cancelled(self, job_id: str) -> bool:
+        job = await self.job_service.get_job(job_id)
+        return bool(job and job.get("status") == "failed")

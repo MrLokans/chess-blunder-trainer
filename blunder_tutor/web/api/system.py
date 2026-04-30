@@ -9,6 +9,10 @@ from pydantic import BaseModel, Field
 system_router = APIRouter()
 
 
+async def _read_engine_id(engine) -> dict[str, str]:  # type: ignore[no-untyped-def]
+    return getattr(engine, "id", {})
+
+
 class EngineStatusResponse(BaseModel):
     available: bool = Field(description="Whether the engine is accessible")
     name: str | None = Field(None, description="Engine name")
@@ -35,11 +39,8 @@ async def get_engine_status(request: Request) -> dict[str, Any]:
             "path": engine_path,
         }
 
-    async def _get_id(engine):  # type: ignore[no-untyped-def]
-        return getattr(engine, "id", {})
-
     try:
-        engine_id = await coordinator.submit(_get_id)
+        engine_id = await coordinator.submit(_read_engine_id)
     except Exception:
         return {
             "available": False,

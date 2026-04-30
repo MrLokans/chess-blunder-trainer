@@ -9,6 +9,7 @@ core no longer carries any awareness of single-user mode.
 
 from __future__ import annotations
 
+from http import HTTPStatus
 import httpx
 from fastapi import FastAPI, Request
 from httpx import ASGITransport
@@ -57,7 +58,7 @@ class TestBypassAuthMiddleware:
         app = _make_app()
         async with _client(app) as client:
             r = await client.get("/echo")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         body = r.json()
         assert body["user_id"] == LOCAL_USER_ID
         assert body["username"] == LOCAL_USERNAME
@@ -82,7 +83,7 @@ class TestBypassAuthMiddleware:
         app = _make_app()
         async with _client(app) as client:
             r = await client.get("/api/echo")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert r.json()["user_id"] == LOCAL_USER_ID
 
     async def test_session_cookie_is_ignored(self):
@@ -92,5 +93,5 @@ class TestBypassAuthMiddleware:
         app = _make_app()
         async with _client(app, cookies={"session_token": "anything"}) as client:
             r = await client.get("/echo")
-        assert r.status_code == 200
+        assert r.status_code == HTTPStatus.OK
         assert r.json()["user_id"] == LOCAL_USER_ID

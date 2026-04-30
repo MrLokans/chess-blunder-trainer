@@ -46,6 +46,44 @@ class EnginePool:
         self._workers: list[asyncio.Task] = []
         self._shutting_down = False
 
+    async def start(self) -> None:
+        for _ in range(self._size):
+            await self._spawn_engine()
+        self._workers = [
+            asyncio.create_task(self._worker(engine)) for engine in self._engines
+        ]
+        logger.info("Engine pool started with %d workers", self._size)
+
+    def submit(
+        self,
+        fn: Callable[[chess.engine.UciProtocol], Awaitable[T]],
+    ) -> asyncio.Future[T]:
+        future: asyncio.Future[T] = asyncio.get_event_loop().create_future()
+        self._queue.put_nowait((fn, future))
+        return future
+
+    async def drain(self) -> None:
+        await self._queue.join()
+
+    async def shutdown(self) -> None:
+        self._shutting_down = True
+
+        for _ in self._workers:
+            self._queue.put_nowait(_SENTINEL)
+
+        if self._workers:
+            await asyncio.gather(*self._workers, return_exceptions=True)
+        self._workers.clear()
+
+        for engine in self._engines:
+            try:
+                if _is_alive(engine):
+                    await engine.quit()
+            except Exception:
+                logger.debug("Engine quit error during shutdown", exc_info=True)
+        self._engines.clear()
+        logger.info("Engine pool shut down")
+
     async def _spawn_engine(self) -> chess.engine.UciProtocol:
         _, engine = await chess.engine.popen_uci(self._engine_path)
         options: dict[str, int] = {}
@@ -69,22 +107,6 @@ class EnginePool:
         if engine in self._engines:
             self._engines.remove(engine)
         return await self._spawn_engine()
-
-    async def start(self) -> None:
-        for _ in range(self._size):
-            await self._spawn_engine()
-        self._workers = [
-            asyncio.create_task(self._worker(engine)) for engine in self._engines
-        ]
-        logger.info("Engine pool started with %d workers", self._size)
-
-    def submit(
-        self,
-        fn: Callable[[chess.engine.UciProtocol], Awaitable[T]],
-    ) -> asyncio.Future[T]:
-        future: asyncio.Future[T] = asyncio.get_event_loop().create_future()
-        self._queue.put_nowait((fn, future))
-        return future
 
     async def _kill_and_respawn(
         self, engine: chess.engine.UciProtocol
@@ -140,28 +162,6 @@ class EnginePool:
                     future.set_exception(exc)
             finally:
                 self._queue.task_done()
-
-    async def drain(self) -> None:
-        await self._queue.join()
-
-    async def shutdown(self) -> None:
-        self._shutting_down = True
-
-        for _ in self._workers:
-            self._queue.put_nowait(_SENTINEL)
-
-        if self._workers:
-            await asyncio.gather(*self._workers, return_exceptions=True)
-        self._workers.clear()
-
-        for engine in self._engines:
-            try:
-                if _is_alive(engine):
-                    await engine.quit()
-            except Exception:
-                logger.debug("Engine quit error during shutdown", exc_info=True)
-        self._engines.clear()
-        logger.info("Engine pool shut down")
 
 
 class WorkCoordinator:

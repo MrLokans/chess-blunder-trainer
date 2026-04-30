@@ -21,14 +21,19 @@ class _CacheWrapper:
     value: Any
 
 
+# Cache key is sha256-hashed and truncated to 32 hex chars (128 bits) — long
+# enough to make collisions practically impossible across the cache lifetime
+# while keeping keys short for storage backends.
+_CACHE_KEY_HEX_LEN = 32
+
 _cache_backend: CacheBackend | None = None
 _default_ttl: int = 300
 
 
 def set_cache_backend(backend: CacheBackend | None, *, default_ttl: int = 300) -> None:
-    global _cache_backend, _default_ttl
-    _cache_backend = backend
-    _default_ttl = default_ttl
+    global _cache_backend, _default_ttl  # noqa: PLW0603 — intentional module-level singleton: cache backend + default TTL are configured once at app boot from `cache/__init__.py`.
+    _cache_backend = backend  # noqa: WPS122 — module-level state, not a throwaway.
+    _default_ttl = default_ttl  # noqa: WPS122 — module-level state, not a throwaway.
 
 
 def get_cache_backend() -> CacheBackend | None:
@@ -39,13 +44,7 @@ def resolve_user_key(request: Request) -> str:
     return getattr(request.state, "username", "default")
 
 
-def _serialize_param(value: Any) -> str:
-    if value is None:
-        return "null"
-    if isinstance(value, BaseModel):
-        return value.model_dump_json()
-    if dataclasses.is_dataclass(value) and not isinstance(value, type):
-        return json.dumps(dataclasses.asdict(value), sort_keys=True, default=str)
+def _serialize_collection(value: Any) -> str | None:
     if isinstance(value, (str, int, float, bool)):
         return json.dumps(value)
     if isinstance(value, (list, tuple)):
@@ -55,7 +54,18 @@ def _serialize_param(value: Any) -> str:
             {k: _serialize_param(v) for k, v in sorted(value.items())},
             sort_keys=True,
         )
-    return str(value)
+    return None
+
+
+def _serialize_param(value: Any) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, BaseModel):
+        return value.model_dump_json()
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        return json.dumps(dataclasses.asdict(value), sort_keys=True, default=str)
+    serialized = _serialize_collection(value)
+    return serialized if serialized is not None else str(value)
 
 
 def _build_cache_key(
@@ -75,7 +85,7 @@ def _build_cache_key(
         parts.append(f"{name}={_serialize_param(value)}")
 
     raw = ":".join(parts)
-    return hashlib.sha256(raw.encode()).hexdigest()[:32]
+    return hashlib.sha256(raw.encode()).hexdigest()[:_CACHE_KEY_HEX_LEN]
 
 
 def cached(

@@ -13,13 +13,13 @@ class PerUserCache[V]:
     """
 
     def __init__(self) -> None:
-        self._data: dict[str, V] = {}
+        self._entries: dict[str, V] = {}
 
     def get(self, key: str) -> V | None:
-        return self._data.get(key)
+        return self._entries.get(key)
 
     def set(self, key: str, value: V) -> None:
-        self._data[key] = value
+        self._entries[key] = value
 
     def invalidate(self, key: str) -> None:
-        self._data.pop(key, None)
+        self._entries.pop(key, None)

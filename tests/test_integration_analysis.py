@@ -15,11 +15,11 @@ import chess.engine
 import chess.pgn
 import pytest
 
-from blunder_tutor.analysis.logic import GameAnalyzer
-from blunder_tutor.analysis.pipeline import (
+from blunder_tutor.analysis.logic import BulkAnalysisOptions, GameAnalyzer
+from blunder_tutor.analysis.pipeline.executor import PipelineExecutor
+from blunder_tutor.analysis.pipeline.pipeline import (
     AnalysisPipeline,
     PipelineConfig,
-    PipelineExecutor,
     PipelinePreset,
 )
 from blunder_tutor.analysis.pipeline.steps import get_all_steps
@@ -28,7 +28,7 @@ from blunder_tutor.constants import CLASSIFICATION_BLUNDER
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
-from blunder_tutor.trainer import Trainer
+from blunder_tutor.trainer import BlunderFilter, Trainer
 
 STOCKFISH_PATHS = [
     os.environ.get("STOCKFISH_BINARY"),
@@ -286,10 +286,12 @@ class TestGameAnalyzerIntegration:
         )
 
         result = await analyzer.analyze_bulk(
-            depth=8,
-            source="test",
-            username="testuser",
-            concurrency=1,
+            BulkAnalysisOptions(
+                depth=8,
+                source="test",
+                username="testuser",
+                concurrency=1,
+            )
         )
 
         assert result["analyzed"] == 2
@@ -318,10 +320,12 @@ class TestGameAnalyzerIntegration:
         )
 
         result = await analyzer.analyze_bulk(
-            depth=8,
-            source="test",
-            username="testuser",
-            concurrency=2,
+            BulkAnalysisOptions(
+                depth=8,
+                source="test",
+                username="testuser",
+                concurrency=2,
+            )
         )
 
         assert result["analyzed"] == 3
@@ -350,10 +354,12 @@ class TestGameAnalyzerIntegration:
 
         # Analyze first time
         result1 = await analyzer.analyze_bulk(
-            depth=8,
-            source="test",
-            username="testuser",
-            concurrency=1,
+            BulkAnalysisOptions(
+                depth=8,
+                source="test",
+                username="testuser",
+                concurrency=1,
+            )
         )
         assert result1["analyzed"] == 1
 
@@ -362,10 +368,12 @@ class TestGameAnalyzerIntegration:
 
         # Analyze again - should skip the first, analyze the second
         result2 = await analyzer.analyze_bulk(
-            depth=8,
-            source="test",
-            username="testuser",
-            concurrency=1,
+            BulkAnalysisOptions(
+                depth=8,
+                source="test",
+                username="testuser",
+                concurrency=1,
+            )
         )
         assert result2["analyzed"] == 1
         assert result2["skipped"] == 1
@@ -477,7 +485,7 @@ class TestTrainingPipelineIntegration:
         )
 
         puzzle = await trainer.pick_random_blunder(
-            exclude_recently_solved=False,
+            BlunderFilter(exclude_recently_solved=False),
         )
 
         # Verify puzzle has valid data
@@ -516,7 +524,7 @@ class TestTrainingPipelineIntegration:
 
         # Pick puzzle — testuser played as Black (Player2)
         puzzle = await trainer.pick_random_blunder(
-            exclude_recently_solved=False,
+            BlunderFilter(exclude_recently_solved=False),
         )
 
         # The blunder should be by Black (player_color = black)

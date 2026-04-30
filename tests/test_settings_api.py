@@ -1,9 +1,11 @@
+from http import HTTPStatus
+
 """Tests for settings and stats API endpoints."""
 
 
 def test_get_settings_returns_defaults(app):
     response = app.get("/api/settings")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
 
     data = response.json()
     assert data["auto_sync"] is False
@@ -24,10 +26,10 @@ def test_post_settings_persists_and_get_retrieves(app):
             "spaced_repetition_days": 14,
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
 
     response = app.get("/api/settings")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
 
     data = response.json()
     assert data["auto_sync"] is True
@@ -39,7 +41,7 @@ def test_post_settings_persists_and_get_retrieves(app):
 
 def test_get_features_returns_all_defaults_true(app):
     response = app.get("/api/settings/features")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert "features" in data
     assert data["features"]["page.dashboard"] is True
@@ -51,7 +53,7 @@ def test_post_features_persists(app):
         "/api/settings/features",
         json={"features": {"page.dashboard": False, "trainer.threats": False}},
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
 
     response = app.get("/api/settings/features")
     data = response.json()

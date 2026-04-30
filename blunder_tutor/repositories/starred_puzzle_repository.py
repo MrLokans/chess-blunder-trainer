@@ -53,25 +53,7 @@ class StarredPuzzleRepository(BaseDbRepository):
         ) as cursor:
             rows = await cursor.fetchall()
 
-        return [
-            {
-                "game_id": row[0],
-                "ply": row[1],
-                "starred_at": row[2],
-                "note": row[3],
-                "san": row[4],
-                "eval_before": row[5],
-                "eval_after": row[6],
-                "cp_loss": row[7],
-                "game_phase": row[8],
-                "tactical_pattern": row[9],
-                "white": row[10],
-                "black": row[11],
-                "date": row[12],
-                "source": row[13],
-            }
-            for row in rows
-        ]
+        return [dict(row) for row in rows]
 
     async def count_starred(self) -> int:
         conn = await self.get_connection()

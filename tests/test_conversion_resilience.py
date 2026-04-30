@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from http import HTTPStatus
 import pytest
 
 from blunder_tutor.repositories.stats_repository import StatsFilter, StatsRepository
@@ -129,7 +130,7 @@ async def test_no_qualifying_positions(stats_repo):
 
 def test_api_endpoint_returns_200(app):
     response = app.get("/api/stats/conversion-resilience")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert "conversion_rate" in data
     assert "resilience_rate" in data
@@ -143,4 +144,4 @@ def test_api_endpoint_accepts_game_types(app):
     response = app.get(
         "/api/stats/conversion-resilience?game_types=bullet&game_types=blitz"
     )
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK

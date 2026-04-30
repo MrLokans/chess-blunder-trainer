@@ -39,7 +39,7 @@ class AnalysisService:
         board = chess.Board(fen)
         limit = self.limit
 
-        async def _work(engine: chess.engine.UciProtocol) -> chess.engine.InfoDict:
+        async def _work(engine: chess.engine.UciProtocol) -> chess.engine.InfoDict:  # noqa: WPS430 — `coordinator.submit` closure; captures `board`/`limit`.
             return await engine.analyse(board, limit)
 
         info = await self._coordinator.submit(_work)
@@ -89,7 +89,7 @@ class AnalysisService:
         board.push(move)
         limit = self.limit
 
-        async def _work(engine: chess.engine.UciProtocol) -> chess.engine.InfoDict:
+        async def _work(engine: chess.engine.UciProtocol) -> chess.engine.InfoDict:  # noqa: WPS430 — `coordinator.submit` closure; captures `board`/`limit`.
             return await engine.analyse(board, limit)
 
         info = await self._coordinator.submit(_work)

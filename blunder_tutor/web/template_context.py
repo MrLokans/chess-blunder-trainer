@@ -1,20 +1,23 @@
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Any
 
 from fastapi import Request
 
-LOCALE_DISPLAY_NAMES = {
-    "en": "English",
-    "ru": "Русский",
-    "uk": "Українська",
-    "de": "Deutsch",
-    "fr": "Français",
-    "es": "Español",
-    "pl": "Polski",
-    "be": "Беларуская",
-    "zh": "中文",
-}
+LOCALE_DISPLAY_NAMES = MappingProxyType(
+    {
+        "en": "English",
+        "ru": "Русский",
+        "uk": "Українська",
+        "de": "Deutsch",
+        "fr": "Français",
+        "es": "Español",
+        "pl": "Polski",
+        "be": "Беларуская",
+        "zh": "中文",
+    }
+)
 
 
 def _default_t(key: str, **_: Any) -> str:

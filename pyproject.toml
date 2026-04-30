@@ -25,6 +25,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "flake8>=7.3.0",
+  "flake8-pyproject>=1.2.3",
   "pytest>=8.0.0",
   "pytest-asyncio>=0.24.0",
   "pytest-cov>=5.0.0",
@@ -32,6 +34,7 @@ dev = [
   "pytest-randomly>=3.15.0",
   "pytest-xdist>=3.6.0",
   "ruff>=0.8.6",
+  "wemake-python-styleguide>=1.6.1",
 ]
 
 [project.scripts]
@@ -69,14 +72,245 @@ select = [
   "B",   # flake8-bugbear
   "C4",  # flake8-comprehensions
   "SIM", # flake8-simplify
+  "PLW0603", # discourage `global` — WPS420 is silenced for pass/nonlocal noise; PLW0603 keeps a finer rule live for `global` introductions.
 ]
 ignore = [
   "E501", # line too long (handled by formatter)
 ]
+# WPS codes are owned by wemake-python-styleguide (flake8 plugin) — ruff
+# doesn't know them, so without this it warns "Invalid rule code provided
+# to # noqa: WPS***" on every WPS-targeted suppression. Listing the prefix
+# here lets ruff pass those codes through unchanged.
+external = ["WPS"]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.flake8]
+# wemake-python-styleguide config. Ruff is the primary linter + formatter
+# (see [tool.ruff]); flake8 is here only to host WPS rules ruff doesn't
+# implement (cognitive complexity, await-in-for, mutable module
+# constants, inconsistent returns, etc.). Read by flake8 via the
+# Flake8-pyproject plugin.
+select = ["WPS"]
+
+# Threshold tuning. WPS defaults are calibrated for small pure-function
+# libraries; this codebase is async FastAPI with services and handlers
+# that legitimately exceed the upstream ceilings. Still strict — these
+# target real outliers, not every handler.
+max-local-variables = 8
+max-arguments = 7
+max-expressions = 12
+max-methods = 12
+max-await-expressions = 8
+max-cognitive-score = 15
+max-cognitive-average = 10
+max-import-from-members = 12
+max-try-body-length = 3
+max-line-complexity = 18
+max-module-members = 10
+max-imports = 15
+
+# WPS110 allowlist: names that are Pythonic / library-driven here
+# (SQL params, dict iteration, python-chess InfoDict, event payloads,
+# return values) plus single-letter loop / TypeVar / gettext idioms.
+# Names not listed (temp, val, _data, cur, ...) still trip.
+allowed-domain-names = [
+  "params", "value", "values", "item", "items",
+  "info", "data", "result", "results", "handler",
+  "e", "i", "n", "m", "k", "t", "w", "v", "p", "g",
+  "f", "d", "u", "r", "h", "b", "a", "c", "s", "x",
+  "y", "o", "q", "T", "V",
+  "_t",  # i18n / gettext convention
+  "_",   # throwaway / Pydantic sentinel
+]
+
+# Globally silenced — wrong-shape for this codebase:
+#   WPS114  underscored numbers in pytest names describe the assertion
+#           target (e.g. test_..._409_username_taken).
+#   WPS118  long pytest names communicate intent; renaming would need
+#           a comment to recover the meaning.
+#   WPS237  short f-string method calls / joins; hoisting to a local
+#           costs more readability than it saves.
+#   WPS358  `0.0` is load-bearing in stats/accuracy code (float type,
+#           SQL COALESCE fallbacks); `0` would change semantics.
+#   WPS363  `raise SystemExit(...) from exc` in CLI argparse subparsers
+#           preserves the cause chain; `sys.exit` cannot.
+#   WPS404  fires on FastAPI Path/Query/Body markers and immutable
+#           timedelta defaults — neither is the mutable-default trap
+#           the rule targets.
+#   WPS412  fires on every __init__.py with __all__, docstring, or
+#           __future__ import — re-export aggregators are wrong-shape.
+#   WPS420  collapses pass/nonlocal/global/del. `pass` (stub bodies)
+#           and `nonlocal` (closure progress counters) are idiomatic;
+#           `global` is caught more granularly by ruff PLW0603.
+#   WPS476  await-in-for: every site here is sequential by design
+#           (serialized SQLite writes, rate-limited HTTP with cursor
+#           pagination, queue consumers, first-match middleware).
+#   WPS504  `X if Y is not None else D` reads naturally; flipping
+#           hurts readability.
+extend-ignore = [
+  "WPS114", "WPS118", "WPS237", "WPS358", "WPS363",
+  "WPS404", "WPS412", "WPS420", "WPS476", "WPS504",
+]
+
+# Per-tree relaxations.
+#
+# tests/* — production thresholds don't fit test code: many asserts,
+#   float compares, repeated factory calls, schema-mirror factories
+#   whose arg count = SQL row width, multi-step integration scenarios.
+#   WPS301/WPS458 cover python-chess submodules + httpx ASGITransport.
+# blunder_tutor/cli/* — `print()` is the right output channel for
+#   operator-facing CLI UX (confirmations, list rows, errors).
+# blunder_tutor/repositories/* — raw aiosqlite SQL clause concat with
+#   `?` parameter binding (safe). Repeated SQL keys / column names are
+#   the wire format.
+# blunder_tutor/web/api/* — repeated FastAPI/OpenAPI metadata keys
+#   (description, model, summary) per endpoint are the framework shape;
+#   extracting hides instead of removing the repetition.
+# explanation.py — I18nMessage params share names by design; renaming
+#   one breaks the corresponding locale key.
+# python-chess submodule trees — `import chess.engine|pgn|polyglot` is
+#   library convention; WPS458 fires whenever a file needs both
+#   `import chess` and a submodule.
+# auth/** — structured as a publishable plug-and-play package; __all__
+#   is the public-API contract for external consumers.
+# blunder_tutor/repositories/* WPS214 — repos expose one method per query
+#   operation; analysis (23) and stats (17) cross the 12-method threshold by
+#   API surface count, not by doing too many things.
+# blunder_tutor/repositories/stats_repository.py WPS202/WPS204/WPS210 —
+#   module-private query helpers (16 of them) live here because they are
+#   tightly coupled to the per-report SQL; splitting into _stats_helpers.py
+#   is over-engineering for private utilities. WPS204 covers the canonical
+#   `criteria = filters or StatsFilter()` opt-arg coercion repeated across
+#   every public method. WPS210: query construction + execute + result
+#   mapping inherently uses 8-10 locals (filters, query, params, rows, total,
+#   entries, intermediate); reducing further fragments each method into too
+#   many tiny helpers without simplifying the shape.
+per-file-ignores = [
+  # tests/*: extra silenced rules are test-shape mismatches:
+  #   WPS219 (deep access) — Mock attribute chains for stubbed return paths.
+  #   WPS227 (long output tuple) — fixtures returning multi-piece scenarios.
+  #   WPS235 (too many imports) — test modules pull many fixtures/types from
+  #     auth.types, conftest, etc.
+  #   WPS236 (tuple unpack) — fixture rows unpack multi-field test scenarios.
+  #   WPS324 (inconsistent return) — handlers under test mirror prod shape
+  #     (`return None` vs bare `return`); changing one breaks the contract.
+  #   WPS328 (useless asyncwith) — `async with ... : pass` invokes the
+  #     lifespan context purely for side effects under test.
+  #   WPS335 (wrong for-iter) — list literals as test data fixtures read
+  #     more naturally than tuples.
+  #   WPS338 (method order) — test helpers (`_seed`, `_factory`) live near the
+  #     tests that consume them, not at the bottom of the class.
+  #   WPS431 (nested class) — small dataclass / Mock-shape classes scoped to
+  #     a single test.
+  #   WPS481 (leaking for) — module-level loops that build immutable lookup
+  #     tables (translation maps, locale fallbacks).
+  #   WPS501 (try/finally) — cleanup pattern around third-party resources
+  #     (chess.engine, ad-hoc Repository instances) without an existing
+  #     async-context manager.
+  #   WPS505 (nested try) — fixture cleanup nested with per-test cleanup.
+  #   WPS522 (lambda primitive) — `lambda: None` / `lambda: False` patches.
+  "tests/*: WPS204, WPS210, WPS211, WPS214, WPS217, WPS218, WPS219, WPS226, WPS227, WPS235, WPS236, WPS301, WPS324, WPS328, WPS335, WPS336, WPS338, WPS407, WPS430, WPS431, WPS432, WPS458, WPS459, WPS481, WPS501, WPS505, WPS522",
+  "blunder_tutor/cli/*: WPS421",
+  "blunder_tutor/repositories/*: WPS214, WPS226, WPS301, WPS336",
+  "blunder_tutor/repositories/stats_repository.py: WPS202, WPS204, WPS210, WPS214, WPS226, WPS301, WPS336",
+  "blunder_tutor/web/api/*: WPS226",
+  # _debug_render.py: WPS202 — markdown-builder pipeline. Each `_render_*`
+  # is one document section + small label/lookup helpers. Splitting
+  # further would scatter the linear render order across more files
+  # without architectural benefit.
+  "blunder_tutor/web/api/_debug_render.py: WPS202, WPS226",
+  # _settings_schemas.py: WPS202 — Pydantic request/response models +
+  # theme/board lookup tables form one cohesive `/api/settings` API
+  # contract. Splitting models across more files would scatter the
+  # request/response pairs. WPS226 is the API-wildcard inheritance.
+  "blunder_tutor/web/api/_settings_schemas.py: WPS202, WPS226",
+  # _analysis_schemas.py: WPS202 — Pydantic request/response models +
+  # filter enums + lookup tables form one cohesive `/api/puzzle` and
+  # `/api/submit` API contract. WPS226 is the API-wildcard inheritance.
+  "blunder_tutor/web/api/_analysis_schemas.py: WPS202, WPS226",
+  # settings.py: WPS202 — 18 endpoint functions form one cohesive
+  # `/api/settings` router. Splitting routes into sub-routers would
+  # scatter shared dependencies (settings_repo, _cache_key) across more
+  # files for no architectural benefit. WPS201: TYPE_CHECKING-only
+  # imports for helper signatures push past the 15-import threshold;
+  # they are zero-runtime-cost type hints, not real dependencies.
+  # WPS226 is the API-wildcard inheritance.
+  "blunder_tutor/web/api/settings.py: WPS201, WPS202, WPS226",
+  # analysis.py: WPS201 — same TYPE_CHECKING-import shape as settings.py.
+  # WPS226 is the API-wildcard inheritance.
+  "blunder_tutor/web/api/analysis.py: WPS201, WPS226",
+  # explanation.py: WPS202 — explanation strategies form one cohesive PV
+  # walker + i18n message factory. Splitting the per-strategy helpers across
+  # submodules would scatter the ordered fallback chain (PV → static check
+  # → static pattern → retreat → capture → threat → cp-loss) without
+  # architectural benefit. WPS226: I18nMessage params share names by design.
+  "blunder_tutor/utils/explanation.py: WPS202, WPS226",
+  "blunder_tutor/analysis/*: WPS301, WPS458",
+  # tactics.py: WPS202 — every detect_* / analyze_* and its tightly-coupled
+  # private helpers form one cohesive module. Splitting into submodules would
+  # scatter related detectors and their bitboard scratch helpers across 5+
+  # files for no architectural benefit.
+  "blunder_tutor/analysis/tactics.py: WPS202",
+  "blunder_tutor/analysis/pipeline/*: WPS301, WPS458",
+  "blunder_tutor/analysis/pipeline/steps/*: WPS301, WPS458",
+  "blunder_tutor/background/jobs/*: WPS201, WPS301, WPS458",
+  "blunder_tutor/fetchers/lichess.py: WPS301",
+  "blunder_tutor/services/*: WPS301, WPS458",
+  "blunder_tutor/utils/chess_utils.py: WPS301, WPS458",
+  "blunder_tutor/utils/pgn_utils.py: WPS301, WPS458",
+  "blunder_tutor/web/app.py: WPS301",
+  # app_lifecycle.py: WPS201/WPS202/WPS203 — by design. Holds the
+  # FastAPI lifespan + bootstrap helpers so `web/app.py` stays a thin
+  # builder. Splitting further would scatter the startup ordering
+  # invariants (auth before scheduler, scheduler before WS broadcast)
+  # across more files. WPS301 covers `chess.engine` like web/app.py.
+  "blunder_tutor/web/app_lifecycle.py: WPS201, WPS202, WPS203, WPS301",
+  "blunder_tutor/web/api/import_game.py: WPS301",
+  "blunder_tutor/web/dependencies.py: WPS301",
+  # auth/__init__.py: WPS203, WPS235 — library shape aggregator. The package
+  # is structured to be a publishable plug-and-play library (TREK-56 / EPIC-3
+  # P4.1); __all__ is the single public-API contract. Splitting re-exports
+  # across submodules would break consumers and contradict the module
+  # docstring.
+  "blunder_tutor/auth/__init__.py: WPS203, WPS235, WPS410",
+  # auth/core/service.py: WPS214 — `AuthService` is the auth API surface
+  # (signup/login/logout/me/list-users/identities-for/sessions/...);
+  # 21 methods are independently-callable operations, not "doing too
+  # many things." WPS211 — the `__init__` takes one independently-
+  # swappable Protocol per concern (storage, providers, hasher, quota,
+  # invite_policy) plus session_config + 2 post-event hooks; further
+  # grouping would conflate orthogonal injection points.
+  "blunder_tutor/auth/core/service.py: WPS211, WPS214",
+  # auth/fastapi/router.py: WPS430/WPS217/WPS202 — `build_auth_router`
+  # is a parameterized factory by design: every route handler is an
+  # inner function closing over the per-app `_RouterCtx`, which is
+  # what lets a consumer swap any piece (TLS posture, error shape,
+  # rate limiters) without forking the route bodies. WPS430 fires on
+  # every inner route — they are the API surface, not "incidental
+  # nesting." WPS217: `_do_signup` / `_do_login` / `_issue_session_cookie`
+  # legitimately await 3+ times per call (revoke pre-existing → create
+  # session → set cookie + per-route service work); each await is a
+  # distinct DB / cookie operation, not a refactorable chain. WPS202
+  # covers the small per-file dataclasses (`_RouterCtx`, `CookieAdapter`)
+  # plus Pydantic request/response models that form the cohesive auth
+  # router contract.
+  "blunder_tutor/auth/fastapi/router.py: WPS202, WPS217, WPS430",
+  "blunder_tutor/auth/core/protocols.py: WPS410",
+  "blunder_tutor/auth/fastapi/__init__.py: WPS410",
+  "blunder_tutor/auth/fastapi/protocols.py: WPS410",
+  "blunder_tutor/auth/providers/__init__.py: WPS410",
+  "blunder_tutor/auth/providers/base.py: WPS410",
+]
+
+extend-exclude = [
+  ".venv", "node_modules", "alembic/versions", "frontend",
+  "e2e", "landing", "profiling", "prof", "test-results",
+  ".playwright-mcp", "data", "fixtures", "images", "demo",
+  "docs", "scripts",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -2,16 +2,20 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from blunder_tutor.web.dependencies import StarredPuzzleRepoDep
 
 starred_router = APIRouter()
 
+STAR_NOTE_MAX_LEN = 500
+LIST_LIMIT_DEFAULT = 50
+LIST_LIMIT_MAX = 200
+
 
 class StarRequest(BaseModel):
-    note: str | None = Field(default=None, max_length=500)
+    note: str | None = Field(default=None, max_length=STAR_NOTE_MAX_LEN)
 
 
 class StarredResponse(BaseModel):
@@ -43,7 +47,9 @@ async def unstar_puzzle(
 ) -> dict[str, bool]:
     removed = await repo.unstar(game_id, ply)
     if not removed:
-        raise HTTPException(status_code=404, detail="Puzzle not starred")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Puzzle not starred"
+        )
     return {"starred": False}
 
 
@@ -60,7 +66,7 @@ async def check_starred(
 @starred_router.get("/api/starred")
 async def list_starred(
     repo: StarredPuzzleRepoDep,
-    limit: int = Query(default=50, ge=1, le=200),
+    limit: int = Query(default=LIST_LIMIT_DEFAULT, ge=1, le=LIST_LIMIT_MAX),
     offset: int = Query(default=0, ge=0),
 ) -> dict[str, Any]:
     items = await repo.list_starred(limit=limit, offset=offset)

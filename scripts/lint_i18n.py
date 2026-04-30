@@ -83,9 +83,7 @@ SOURCE_ROOTS: tuple[str, ...] = (
 
 #: File extensions considered source. ``.html`` covers Jinja templates,
 #: ``.py`` covers the backend.
-SOURCE_EXTENSIONS: frozenset[str] = frozenset(
-    {".ts", ".tsx", ".js", ".html", ".py"}
-)
+SOURCE_EXTENSIONS: frozenset[str] = frozenset({".ts", ".tsx", ".js", ".html", ".py"})
 
 #: Path fragments that mark a directory as build output, never source.
 EXCLUDED_PATH_FRAGMENTS: tuple[str, ...] = (
@@ -106,6 +104,25 @@ DYNAMIC_PREFIXES: tuple[str, ...] = (
     "explanation.blunder.",
 )
 
+#: Allowlist for the English-fallback warning. Keyed on ``(locale,
+#: key)``; the value is a one-line justification kept inline so the
+#: rationale travels with the entry. Add an entry here only when the
+#: identical-to-English value is a *deliberate* borrowing (file
+#: formats, brand names, project-standardized loanwords) — never as a
+#: shortcut around an unfinished translation.
+INTENTIONAL_BORROWINGS: dict[tuple[str, str], str] = {
+    # Spanish locale uses ``puzzle`` / ``puzzles`` as the established
+    # chess-training vocabulary (cf. ``dashboard.chart.puzzle_activity
+    # = "Actividad de puzzles"``, ``settings.features.starred_puzzles
+    # = "Puzzles favoritos"``). Translating these heatmap strings to
+    # ``rompecabezas`` would diverge from the rest of the locale.
+    ("es", "heatmap.tooltip"): "es puzzle borrowing (matches rest of es locale)",
+    ("es", "heatmap.total"): "es puzzle borrowing (matches rest of es locale)",
+    # ``PGN`` is the chess game file format — universally untranslated.
+    # ``Import`` is also a valid Polish noun (cognate with English).
+    ("pl", "import.title"): "PGN file format + Polish/English cognate noun",
+}
+
 # ---------------------------------------------------------------------------
 # Regexes
 # ---------------------------------------------------------------------------
@@ -118,9 +135,7 @@ _LITERAL_KEY = re.compile(r"\bt\(\s*['\"]([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)['\"]
 #: ``${``. The regex is intentionally non-greedy so a trailing ``${``
 #: terminates capture; anything inside the literal after that is
 #: dynamic and contributes only its prefix as a wildcard.
-_TEMPLATE_KEY_PREFIX = re.compile(
-    r"\bt\(\s*`([a-z][a-z0-9_.]*?)\$\{"
-)
+_TEMPLATE_KEY_PREFIX = re.compile(r"\bt\(\s*`([a-z][a-z0-9_.]*?)\$\{")
 
 #: ``t('foo.bar.' + var)`` / ``t("foo.bar." + var)`` — extract the
 #: static prefix. Requires the prefix to end with ``.`` so we don't
@@ -135,9 +150,7 @@ _CONCAT_KEY_PREFIX = re.compile(
 #: equals a known locale key (filtered downstream). The shape is
 #: distinctive enough that accidental matches against non-i18n
 #: strings (URLs, log tags, etc.) are extremely rare.
-_BARE_KEY = re.compile(
-    r"['\"`]([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)['\"`]"
-)
+_BARE_KEY = re.compile(r"['\"`]([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)['\"`]")
 
 
 # ---------------------------------------------------------------------------
@@ -155,9 +168,8 @@ class Findings:
     defined_not_used: list[str] = field(default_factory=list)
 
     def error_count(self) -> int:
-        return (
-            sum(len(v) for v in self.missing_in_locales.values())
-            + len(self.used_not_defined)
+        return sum(len(v) for v in self.missing_in_locales.values()) + len(
+            self.used_not_defined
         )
 
     def warning_count(self) -> int:
@@ -276,8 +288,13 @@ def check_english_fallback(
             # Single-word values (brand names, chess terms) often
             # legitimately stay in English. Multi-word identical
             # values are almost certainly an unfinished translation.
-            if len(value.split()) >= 2:
-                findings.english_fallback.append((locale, key, value))
+            if len(value.split()) < 2:
+                continue
+            # Explicitly-acknowledged borrowings (PGN, project's
+            # established Spanish "puzzle" vocabulary, etc.).
+            if (locale, key) in INTENTIONAL_BORROWINGS:
+                continue
+            findings.english_fallback.append((locale, key, value))
 
 
 def check_used_not_defined(
@@ -290,9 +307,7 @@ def check_used_not_defined(
         if key in en_keys:
             continue
         first_path, first_line = literal_refs[key][0]
-        findings.used_not_defined.append(
-            (key, f"{first_path.as_posix()}:{first_line}")
-        )
+        findings.used_not_defined.append((key, f"{first_path.as_posix()}:{first_line}"))
 
 
 def check_defined_not_used(

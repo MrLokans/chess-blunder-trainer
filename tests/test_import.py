@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from http import HTTPStatus
 from pathlib import Path
 
 import pytest
@@ -147,7 +148,7 @@ class TestImportEndpoint:
         job_id = resp.json()["job_id"]
 
         status_resp = import_app.get(f"/api/import/status/{job_id}")
-        assert status_resp.status_code == 200
+        assert status_resp.status_code == HTTPStatus.OK
         status = status_resp.json()
         assert status["job_type"] == "import_pgn"
         assert status["status"] in ("pending", "running", "completed", "failed")
@@ -165,4 +166,4 @@ class TestImportEndpoint:
         )
         for client in make_test_client(config):
             resp = client.post("/api/import/pgn", json={"pgn": VALID_PGN})
-            assert resp.status_code == 403
+            assert resp.status_code == HTTPStatus.FORBIDDEN

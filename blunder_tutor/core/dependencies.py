@@ -17,9 +17,9 @@ from fast_depends import Depends
 # Runtime imports needed for FastDepends/Pydantic validation
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.analysis.logic import GameAnalyzer
-from blunder_tutor.analysis.pipeline import PipelineExecutor
+from blunder_tutor.analysis.pipeline.executor import PipelineExecutor
 from blunder_tutor.auth import UserId
-from blunder_tutor.events import EventBus
+from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository

@@ -8,6 +8,7 @@ handlers — by passing a custom :class:`ErrorCodec` to the factory.
 
 from __future__ import annotations
 
+from http import HTTPStatus
 from datetime import timedelta
 from pathlib import Path
 
@@ -24,6 +25,7 @@ from blunder_tutor.auth import (
     Username,
 )
 from blunder_tutor.auth.fastapi import (
+    CookieAdapter,
     DefaultErrorCodec,
     build_auth_router,
 )
@@ -57,8 +59,10 @@ def _make_app(service: AuthService, *, error_codec=None) -> FastAPI:
 
     router = build_auth_router(
         auth_service_provider=auth_service_provider,
-        set_session_cookie=_set_test_cookie,
-        clear_session_cookie=_clear_test_cookie,
+        cookies=CookieAdapter(
+            set_cookie=_set_test_cookie,
+            clear_cookie=_clear_test_cookie,
+        ),
         error_codec=error_codec,
     )
     app.include_router(router)
@@ -82,7 +86,7 @@ class TestDefaultErrorCodec:
                 "/api/auth/signup",
                 json={"username": "alice", "password": "password123"},
             )
-        assert r.status_code == 409
+        assert r.status_code == HTTPStatus.CONFLICT
         assert r.json()["detail"] == "username_taken"
 
 
@@ -110,7 +114,7 @@ class TestCustomErrorCodec:
                 "/api/auth/signup",
                 json={"username": "alice", "password": "password123"},
             )
-        assert r.status_code == 422
+        assert r.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
         assert r.json()["detail"] == "duplicate_login"
 
     async def test_unmapped_errors_fall_through_to_default(
@@ -133,5 +137,5 @@ class TestCustomErrorCodec:
                 "/api/auth/signup",
                 json={"username": "??", "password": "password123"},
             )
-        assert r.status_code == 400
+        assert r.status_code == HTTPStatus.BAD_REQUEST
         assert r.json()["detail"] == "invalid_username"

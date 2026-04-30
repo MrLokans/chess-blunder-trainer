@@ -8,7 +8,7 @@ import pytest
 
 from blunder_tutor.services.analysis_service import AnalysisService, PositionAnalysis
 from blunder_tutor.services.puzzle_service import PuzzleService
-from blunder_tutor.trainer import BlunderPuzzle, Trainer
+from blunder_tutor.trainer import BlunderFilter, BlunderPuzzle, Trainer
 
 
 def _make_puzzle(**overrides) -> BlunderPuzzle:
@@ -108,7 +108,7 @@ class TestGetPuzzleWithAnalysis:
         puzzle = _make_puzzle()
         mock_trainer.pick_random_blunder = AsyncMock(return_value=puzzle)
 
-        await puzzle_service.get_puzzle_with_analysis(
+        criteria = BlunderFilter(
             start_date="2024-01-01",
             end_date="2024-12-31",
             game_phases=[0, 1],
@@ -117,18 +117,9 @@ class TestGetPuzzleWithAnalysis:
             player_colors=[0],
             difficulty_ranges=[(20, 60)],
         )
+        await puzzle_service.get_puzzle_with_analysis(criteria)
 
-        mock_trainer.pick_random_blunder.assert_called_once_with(
-            start_date="2024-01-01",
-            end_date="2024-12-31",
-            exclude_recently_solved=True,
-            spaced_repetition_days=30,
-            game_phases=[0, 1],
-            tactical_patterns=[1],
-            game_types=[2],
-            player_colors=[0],
-            difficulty_ranges=[(20, 60)],
-        )
+        mock_trainer.pick_random_blunder.assert_called_once_with(criteria)
 
 
 class TestGetSpecificPuzzle:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from http import HTTPStatus
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -111,7 +112,7 @@ def test_validate_username_api_endpoint(app):
             "/api/validate-username",
             json={"platform": "lichess", "username": "testuser"},
         )
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
         data = resp.json()
         assert data["valid"] is True
         assert data["platform"] == "lichess"
@@ -122,14 +123,14 @@ def test_validate_username_api_invalid_platform(app):
     resp = app.post(
         "/api/validate-username", json={"platform": "badplatform", "username": "test"}
     )
-    assert resp.status_code == 400
+    assert resp.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_validate_username_api_empty_username(app):
     resp = app.post(
         "/api/validate-username", json={"platform": "lichess", "username": ""}
     )
-    assert resp.status_code == 400
+    assert resp.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_setup_returns_import_job_ids(app):
@@ -139,7 +140,7 @@ def test_setup_returns_import_job_ids(app):
         return_value=True,
     ):
         resp = app.post("/api/setup", json={"lichess": "testuser", "chesscom": ""})
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
         data = resp.json()
         assert data["success"] is True
         assert "import_job_ids" in data
@@ -153,7 +154,7 @@ def test_setup_returns_multiple_job_ids_for_both_platforms(app):
         return_value=True,
     ):
         resp = app.post("/api/setup", json={"lichess": "user1", "chesscom": "user2"})
-        assert resp.status_code == 200
+        assert resp.status_code == HTTPStatus.OK
         data = resp.json()
         assert data["success"] is True
         assert len(data["import_job_ids"]) == 2
@@ -166,7 +167,7 @@ def test_setup_rejects_invalid_username(app):
         return_value=False,
     ):
         resp = app.post("/api/setup", json={"lichess": "baduser", "chesscom": ""})
-        assert resp.status_code == 400
+        assert resp.status_code == HTTPStatus.BAD_REQUEST
         assert "not found" in resp.json()["detail"].lower()
 
 
@@ -181,5 +182,5 @@ def test_setup_rejects_one_invalid_of_two(app):
         resp = app.post(
             "/api/setup", json={"lichess": "gooduser", "chesscom": "baduser"}
         )
-        assert resp.status_code == 400
+        assert resp.status_code == HTTPStatus.BAD_REQUEST
         assert "chess.com" in resp.json()["detail"].lower()

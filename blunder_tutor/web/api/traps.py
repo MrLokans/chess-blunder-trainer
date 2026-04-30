@@ -16,6 +16,10 @@ from blunder_tutor.web.dependencies import TrapRepoDep, set_request_username
 
 traps_router = APIRouter(dependencies=[Depends(set_request_username)])
 
+# Cache TTL for trap catalog/stats endpoints. 5 minutes balances trap-DB
+# refresh cadence (rarely changes) with the cost of full-table scans.
+TRAPS_CACHE_TTL_SECONDS = 300
+
 
 def _serialize_trap(t: TrapDefinition) -> dict[str, Any]:
     entry_san = [_parse_pgn_to_san(p.pgn) for p in t.positions]
@@ -45,14 +49,14 @@ def _serialize_trap(t: TrapDefinition) -> dict[str, Any]:
 
 
 @traps_router.get("/api/traps/catalog")
-@cached(tag="traps", ttl=300, version=1, key_params=[])
+@cached(tag="traps", ttl=TRAPS_CACHE_TTL_SECONDS, version=1, key_params=[])
 async def get_trap_catalog(request: Request) -> list[dict[str, Any]]:
     db = get_trap_database()
     return [_serialize_trap(t) for t in db.all_traps]
 
 
 @traps_router.get("/api/traps/stats")
-@cached(tag="traps", ttl=300, version=1, key_params=[])
+@cached(tag="traps", ttl=TRAPS_CACHE_TTL_SECONDS, version=1, key_params=[])
 async def get_trap_stats(request: Request, trap_repo: TrapRepoDep) -> dict[str, Any]:
     stats = await trap_repo.get_trap_stats()
     summary = await trap_repo.get_trap_summary()
@@ -73,7 +77,7 @@ async def get_trap_stats(request: Request, trap_repo: TrapRepoDep) -> dict[str, 
 
 
 @traps_router.get("/api/traps/{trap_id}")
-@cached(tag="traps", ttl=300, version=1, key_params=["trap_id"])
+@cached(tag="traps", ttl=TRAPS_CACHE_TTL_SECONDS, version=1, key_params=["trap_id"])
 async def get_trap_detail(
     request: Request, trap_id: str, trap_repo: TrapRepoDep
 ) -> dict[str, Any]:

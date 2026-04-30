@@ -32,7 +32,7 @@ FORCE :=
 .PHONY: help install install-dev cli clean
 .PHONY: fetch-lichess fetch-chesscom list show index
 .PHONY: analyze analyze-bulk train-ui
-.PHONY: format lint lint/be lint/fe check test test/be test/fe typecheck/fe build/fe download-pieces migrate
+.PHONY: format lint lint/be lint/be-wps lint/fe check test test/be test/fe typecheck/fe build/fe download-pieces migrate
 .PHONY: docker/build docker/run docker/stop
 .PHONY: landing
 .PHONY: db/backup db/restore db/rm
@@ -118,14 +118,17 @@ lint: lint/be lint/fe lint/e2e lint/i18n ## Lint all code
 lint/be: ## Lint Python with ruff
 	$(UV) run ruff check blunder_tutor/ main.py
 
+lint/be-wps: ## Lint Python with wemake-python-styleguide (warning-only, not in `lint`)
+	$(UV) run flake8 --select=WPS blunder_tutor/ main.py tests/
+
 lint/fe: ## Lint TypeScript with ESLint
 	npm run lint
 
 lint/e2e: ## Lint E2E tests with ESLint
 	cd e2e && npm run lint
 
-lint/i18n: ## Lint i18n locale files + key references (errors only by default; LINT_I18N_STRICT=1 promotes warnings)
-	$(UV) run python scripts/lint_i18n.py $(if $(LINT_I18N_STRICT),--strict)
+lint/i18n: ## Lint i18n locale files + key references (strict by default — matches CI; LINT_I18N_LENIENT=1 demotes warnings)
+	$(UV) run python scripts/lint_i18n.py $(if $(LINT_I18N_LENIENT),,--strict)
 
 typecheck/e2e: ## Run TypeScript type checking on E2E tests
 	cd e2e && npm run typecheck

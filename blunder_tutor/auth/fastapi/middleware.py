@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from fastapi import Request
+from fastapi import Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -77,8 +77,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         if ctx is None:
             if _wants_html(request):
-                return RedirectResponse(url=f"/login?next={path}", status_code=302)
-            return JSONResponse({"error": "unauthorized"}, status_code=401)
+                return RedirectResponse(
+                    url=f"/login?next={path}", status_code=status.HTTP_302_FOUND
+                )
+            return JSONResponse(
+                {"error": "unauthorized"}, status_code=status.HTTP_401_UNAUTHORIZED
+            )
 
         request.state.user_ctx = ctx
         return await call_next(request)
