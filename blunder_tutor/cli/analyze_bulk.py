@@ -17,37 +17,6 @@ class AnalyzeBulkCommand(CLICommand):
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
         asyncio.run(self._run_async(args, config))
 
-    async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
-        db_path = config.data.db_path
-        run_migrations(db_path)
-
-        async with (
-            AnalysisRepository.from_config(config) as analysis_repo,
-            GameRepository.from_config(config) as games_repo,
-        ):
-            analyzer = GameAnalyzer(
-                analysis_repo=analysis_repo,
-                games_repo=games_repo,
-                engine_path=config.engine_path,
-            )
-            result = await analyzer.analyze_bulk(
-                BulkAnalysisOptions(
-                    depth=args.depth,
-                    time_limit=args.time,
-                    source=args.source,
-                    username=args.username,
-                    limit=args.limit,
-                    force=args.force,
-                    concurrency=args.concurrency,
-                )
-            )
-            print(
-                "Bulk analysis complete: "
-                f"processed {result['processed']}, "
-                f"analyzed {result['analyzed']}, "
-                f"skipped {result['skipped']}."
-            )
-
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
         analyze_bulk_parser = subparsers.add_parser(
             "analyze-bulk", help="Analyze multiple stored games"
@@ -88,3 +57,34 @@ class AnalyzeBulkCommand(CLICommand):
             default=DEFAULT_CONCURRENCY,
             help=f"Number of parallel engine processes (default: {DEFAULT_CONCURRENCY})",
         )
+
+    async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
+        db_path = config.data.db_path
+        run_migrations(db_path)
+
+        async with (
+            AnalysisRepository.from_config(config) as analysis_repo,
+            GameRepository.from_config(config) as games_repo,
+        ):
+            analyzer = GameAnalyzer(
+                analysis_repo=analysis_repo,
+                games_repo=games_repo,
+                engine_path=config.engine_path,
+            )
+            result = await analyzer.analyze_bulk(
+                BulkAnalysisOptions(
+                    depth=args.depth,
+                    time_limit=args.time,
+                    source=args.source,
+                    username=args.username,
+                    limit=args.limit,
+                    force=args.force,
+                    concurrency=args.concurrency,
+                )
+            )
+            print(
+                "Bulk analysis complete: "
+                f"processed {result['processed']}, "
+                f"analyzed {result['analyzed']}, "
+                f"skipped {result['skipped']}."
+            )

@@ -11,7 +11,7 @@ from typing import NewType
 # import every recoverable failure mode without dragging in entity
 # plumbing; re-exported here so internal callers that need entities
 # and errors in one shot keep working with a single import.
-from blunder_tutor.auth.core.errors import (  # noqa: F401
+from blunder_tutor.auth.core.errors import (  # noqa: F401, WPS235 — full re-export contract; see module docstring above.
     AuthError,
     CorruptCredentialError,
     DuplicateEmailError,

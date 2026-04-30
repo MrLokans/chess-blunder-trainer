@@ -38,12 +38,6 @@ class AnalysisPipeline:
         self._steps_by_id = {step.step_id: step for step in available_steps}
         self._validate_steps()
 
-    def _validate_steps(self) -> None:
-        for step_id in self.config.steps:
-            if step_id not in self._steps_by_id:
-                available = list(self._steps_by_id.keys())
-                raise ValueError(f"Unknown step '{step_id}'. Available: {available}")
-
     @classmethod
     def from_preset(
         cls,
@@ -66,6 +60,12 @@ class AnalysisPipeline:
                         requested_ids.add(dep_id)
 
         return self._topological_sort(requested_ids)
+
+    def _validate_steps(self) -> None:
+        for step_id in self.config.steps:
+            if step_id not in self._steps_by_id:
+                available = list(self._steps_by_id.keys())
+                raise ValueError(f"Unknown step '{step_id}'. Available: {available}")
 
     def _topological_sort(self, step_ids: set[str]) -> list[AnalysisStep]:
         visited: set[str] = set()

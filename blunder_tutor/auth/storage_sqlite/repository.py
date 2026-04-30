@@ -31,7 +31,8 @@ def _row_to_user(row) -> User:  # type: ignore[no-untyped-def]
 
 
 def _row_to_identity(row) -> Identity:  # type: ignore[no-untyped-def]
-    iid, uid, prov, subj, cred, created = row
+    iid, uid, prov = row[:3]
+    subj, cred, created = row[3:]
     return Identity(
         id=IdentityId(iid),
         user_id=UserId(uid),
@@ -43,7 +44,8 @@ def _row_to_identity(row) -> Identity:  # type: ignore[no-untyped-def]
 
 
 def _row_to_session(row) -> Session:  # type: ignore[no-untyped-def]
-    tok, uid, created, expires, last_seen, ua, ip = row
+    tok, uid, created = row[:3]
+    expires, last_seen, ua, ip = row[3:]
     return Session(
         token=SessionToken(tok),
         user_id=UserId(uid),

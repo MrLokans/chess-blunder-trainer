@@ -10,12 +10,12 @@ log = logging.getLogger(__name__)
 
 DB_FILE_MODE = 0o600
 USER_DIR_MODE = 0o700
-RESTRICTIVE_UMASK = 0o077
+RESTRICTIVE_UMASK = 0o77
 
 
 @contextmanager
 def restrict_umask() -> Iterator[None]:
-    """Temporarily tighten the process umask to ``0o077`` so any file
+    """Temporarily tighten the process umask to ``0o77`` so any file
     *created* inside the block lands with mode ``0o600`` (for files) or
     ``0o700`` (for directories) before any attacker can read it.
 

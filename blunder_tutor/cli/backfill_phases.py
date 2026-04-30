@@ -18,6 +18,12 @@ class BackfillPhasesCommand(CLICommand):
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
         asyncio.run(self._run_async(args, config))
 
+    def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
+        subparsers.add_parser(
+            "backfill-phases",
+            help="Backfill game phase data for analyzed games missing phase info",
+        )
+
     async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
         db_path = config.data.db_path
         run_migrations(db_path)
@@ -52,9 +58,3 @@ class BackfillPhasesCommand(CLICommand):
                 f"Backfill complete: {len(game_ids)} games processed, "
                 f"{total_moves} moves updated."
             )
-
-    def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
-        subparsers.add_parser(
-            "backfill-phases",
-            help="Backfill game phase data for analyzed games missing phase info",
-        )

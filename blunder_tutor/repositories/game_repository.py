@@ -9,6 +9,8 @@ from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.utils.pgn_utils import load_game_from_string
 from blunder_tutor.utils.time_control import classify_game_type
 
+GameRow = dict[str, object]
+
 
 class GameRepository(BaseDbRepository):
     async def get_pgn_content(self, game_id: str) -> str:
@@ -145,7 +147,7 @@ class GameRepository(BaseDbRepository):
         analyzed_only: bool = False,
         limit: int | None = None,
         offset: int = 0,
-    ) -> tuple[list[dict[str, object]], int]:
+    ) -> tuple[list[GameRow], int]:
         query = """
             SELECT game_id AS id, source, username, white, black, result,
                    date, end_time_utc, time_control, analyzed

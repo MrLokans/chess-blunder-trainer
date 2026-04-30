@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import uuid
 
 from fastapi import WebSocket
 
-from .event_bus import EventBus
-from .event_types import Event, EventType
+from blunder_tutor.events.event_bus import EventBus
+from blunder_tutor.events.event_types import Event, EventType
 
 
 class ConnectionManager:
@@ -32,10 +33,9 @@ class ConnectionManager:
         if subscriptions is None:
             return
         for event_type_str in event_types:
-            try:
+            # Skip strings that don't map to a known EventType.
+            with contextlib.suppress(ValueError):
                 subscriptions.add(EventType(event_type_str))
-            except ValueError:
-                continue  # Invalid event type, skip
 
     async def broadcast_event(self, event: Event) -> None:
         message = event.to_dict()

@@ -6,7 +6,7 @@ import logging
 import os
 from collections import defaultdict
 
-from .event_types import Event, EventType
+from blunder_tutor.events.event_types import Event, EventType
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +66,5 @@ class EventBus:
             if event_type is None:
                 if queue in self._all_subscribers:
                     self._all_subscribers.remove(queue)
-            else:
-                if queue in self._subscribers[event_type]:
-                    self._subscribers[event_type].remove(queue)
+            elif queue in self._subscribers[event_type]:
+                self._subscribers[event_type].remove(queue)

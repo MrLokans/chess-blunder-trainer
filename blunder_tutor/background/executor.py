@@ -82,6 +82,23 @@ class JobExecutor:
             except Exception as e:
                 logger.exception(f"Error processing job execution event: {e}")
 
+    async def shutdown(self) -> None:
+        logger.info("Shutting down JobExecutor...")
+        self._shutdown = True
+
+        if self._queue:
+            await self._event_bus.unsubscribe(
+                self._queue, EventType.JOB_EXECUTION_REQUESTED
+            )
+
+        if self._running_tasks:
+            logger.info(f"Cancelling {len(self._running_tasks)} running tasks...")
+            for task in self._running_tasks.values():
+                task.cancel()
+            await asyncio.gather(*self._running_tasks.values(), return_exceptions=True)
+
+        logger.info("JobExecutor shutdown complete")
+
     async def _handle_execution_request(self, event: JobExecutionRequestEvent) -> None:
         job_id = event.data["job_id"]
         job_type = event.data["job_type"]
@@ -156,20 +173,3 @@ class JobExecutor:
 
         finally:
             clear_context()
-
-    async def shutdown(self) -> None:
-        logger.info("Shutting down JobExecutor...")
-        self._shutdown = True
-
-        if self._queue:
-            await self._event_bus.unsubscribe(
-                self._queue, EventType.JOB_EXECUTION_REQUESTED
-            )
-
-        if self._running_tasks:
-            logger.info(f"Cancelling {len(self._running_tasks)} running tasks...")
-            for task in self._running_tasks.values():
-                task.cancel()
-            await asyncio.gather(*self._running_tasks.values(), return_exceptions=True)
-
-        logger.info("JobExecutor shutdown complete")

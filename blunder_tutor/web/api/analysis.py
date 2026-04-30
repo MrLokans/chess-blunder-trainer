@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from blunder_tutor.analysis.tactics import PATTERN_LABELS, TacticalPattern
 from blunder_tutor.constants import PHASE_FROM_STRING, PHASE_LABELS
 from blunder_tutor.events.event_types import TrainingEvent
+from blunder_tutor.trainer import BlunderFilter
 from blunder_tutor.utils.chess_utils import format_eval
 from blunder_tutor.utils.explanation import generate_explanation, resolve_explanation
 from blunder_tutor.web.api.schemas import ErrorResponse
@@ -278,15 +279,17 @@ async def puzzle(
 
     try:
         puzzle_with_analysis = await puzzle_service.get_puzzle_with_analysis(
-            start_date=start_date_str,
-            end_date=end_date_str,
-            exclude_recently_solved=True,
-            spaced_repetition_days=spaced_repetition_days,
-            game_phases=game_phases_int,
-            tactical_patterns=tactical_patterns_int,
-            game_types=game_types_int,
-            player_colors=colors_int,
-            difficulty_ranges=difficulty_ranges_list,
+            BlunderFilter(
+                start_date=start_date_str,
+                end_date=end_date_str,
+                exclude_recently_solved=True,
+                spaced_repetition_days=spaced_repetition_days,
+                game_phases=game_phases_int,
+                tactical_patterns=tactical_patterns_int,
+                game_types=game_types_int,
+                player_colors=colors_int,
+                difficulty_ranges=difficulty_ranges_list,
+            )
         )
     except Exception as exc:
         raise HTTPException(

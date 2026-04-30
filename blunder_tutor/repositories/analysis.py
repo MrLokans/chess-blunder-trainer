@@ -18,7 +18,7 @@ class AnalysisRepository(BaseDbRepository):
             row = await cursor.fetchone()
         return row is not None
 
-    async def write_analysis(
+    async def write_analysis(  # noqa: WPS211 — args mirror analysis_games + analysis_moves SQL row width.
         self,
         *,
         game_id: str,

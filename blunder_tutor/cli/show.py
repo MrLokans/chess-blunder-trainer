@@ -13,6 +13,10 @@ class ShowCommand(CLICommand):
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
         asyncio.run(self._run_async(args, config))
 
+    def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
+        show_parser = subparsers.add_parser("show", help="Show stored game metadata")
+        show_parser.add_argument("game_id", help="Game id (sha256)")
+
     async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
         async with GameRepository.from_config(config=config) as repo:
             record = await repo.get_game(args.game_id)
@@ -20,7 +24,3 @@ class ShowCommand(CLICommand):
                 print(record)
             else:
                 print(f"Game not found: {args.game_id}")
-
-    def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
-        show_parser = subparsers.add_parser("show", help="Show stored game metadata")
-        show_parser.add_argument("game_id", help="Game id (sha256)")

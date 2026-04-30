@@ -71,7 +71,7 @@ DataManagementRepoDep = Annotated[
 
 
 @inject
-async def run_import_job(
+async def run_import_job(  # noqa: WPS211 — FastDepends @inject signature; each dependency is a parameter, the framework resolves them.
     job_id: str,
     source: str,
     username: str,
@@ -117,7 +117,7 @@ async def run_sync_job(
 
 
 @inject
-async def run_analyze_job(
+async def run_analyze_job(  # noqa: WPS211 — FastDepends @inject signature; each dependency is a parameter, the framework resolves them.
     job_id: str,
     job_service: JobServiceDep,
     game_repo: GameRepoDep,

@@ -20,29 +20,9 @@ class PuzzleService:
 
     async def get_puzzle_with_analysis(
         self,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        exclude_recently_solved: bool = True,
-        spaced_repetition_days: int = 30,
-        game_phases: list[int] | None = None,
-        tactical_patterns: list[int] | None = None,
-        game_types: list[int] | None = None,
-        player_colors: list[int] | None = None,
-        difficulty_ranges: list[tuple[int, int]] | None = None,
+        criteria: BlunderFilter | None = None,
     ) -> PuzzleWithAnalysis:
-        puzzle = await self.trainer.pick_random_blunder(
-            BlunderFilter(
-                start_date=start_date,
-                end_date=end_date,
-                exclude_recently_solved=exclude_recently_solved,
-                spaced_repetition_days=spaced_repetition_days,
-                game_phases=game_phases,
-                tactical_patterns=tactical_patterns,
-                game_types=game_types,
-                player_colors=player_colors,
-                difficulty_ranges=difficulty_ranges,
-            ),
-        )
+        puzzle = await self.trainer.pick_random_blunder(criteria or BlunderFilter())
 
         if puzzle.best_move_uci and puzzle.best_move_san and puzzle.best_line:
             best_line_list = puzzle.best_line.split()

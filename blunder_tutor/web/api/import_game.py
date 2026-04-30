@@ -34,25 +34,24 @@ class ImportResponse(BaseModel):
     errors: list[str] | None = None
 
 
+def _try_read_pgn(pgn_text: str) -> chess.pgn.Game | None:
+    try:
+        return chess.pgn.read_game(io.StringIO(pgn_text), Visitor=chess.pgn.GameBuilder)
+    except Exception:
+        return None
+
+
 def _validate_and_parse_pgn(pgn_text: str) -> tuple[chess.pgn.Game | None, list[str]]:
     pgn_text = pgn_text.strip()
     if not pgn_text:
         return None, ["Invalid PGN format"]
-
-    try:
-        game = chess.pgn.read_game(io.StringIO(pgn_text), Visitor=chess.pgn.GameBuilder)
-    except Exception:
-        return None, ["Invalid PGN format"]
-
+    game = _try_read_pgn(pgn_text)
     if game is None:
         return None, ["Invalid PGN format"]
-
     if game.errors:
         return None, [f"Illegal move in PGN: {e}" for e in game.errors[:3]]
-
     if not list(game.mainline_moves()):
         return None, ["PGN contains no moves"]
-
     return game, []
 
 

@@ -72,7 +72,7 @@ class JobEvent(Event):
 
 @dataclass
 class ProgressEvent(Event):
-    pass
+    """Progress update for a long-running job."""
 
 
 @dataclass

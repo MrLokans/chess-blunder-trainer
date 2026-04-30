@@ -54,7 +54,9 @@ DEFAULTS: MappingProxyType[Feature, bool] = MappingProxyType(
     }
 )
 
-FEATURE_GROUPS: tuple[tuple[str, tuple[Feature, ...]], ...] = (
+FeatureGroup = tuple[str, tuple[Feature, ...]]
+
+FEATURE_GROUPS: tuple[FeatureGroup, ...] = (
     (
         "settings.features.group.pages",
         (

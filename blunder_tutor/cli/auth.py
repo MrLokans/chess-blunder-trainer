@@ -20,7 +20,7 @@ from functools import partial
 from pathlib import Path
 from types import MappingProxyType
 
-from blunder_tutor.auth import (
+from blunder_tutor.auth import (  # noqa: WPS235 — operator CLI consumes the public auth namespace surface to wire AuthService + admin + invite policy in one place.
     CREDENTIALS_PROVIDER_NAME,
     AuthDb,
     AuthService,
@@ -148,17 +148,7 @@ _DISPATCH = MappingProxyType(
 )
 
 
-def _resolve_new_password(args: argparse.Namespace) -> str:
-    """Read the new password from stdin (non-interactive) or prompt twice
-    via ``getpass`` (interactive). Never consults ``args.new_password``
-    because argparse doesn't expose it — the flag was intentionally
-    removed to prevent the value from landing on argv.
-    """
-    if getattr(args, "password_stdin", False):
-        password = sys.stdin.readline().rstrip("\n")
-        if not password:
-            raise SystemExit("reset-password: empty password on stdin")
-        return password
+def _read_password_interactive() -> str:
     # `getpass` silently falls back to `input()` when no TTY is
     # attached — and `input()` echoes. Refuse explicitly so an
     # operator running e.g. ``docker exec container auth reset-password
@@ -179,6 +169,20 @@ def _resolve_new_password(args: argparse.Namespace) -> str:
     return password
 
 
+def _resolve_new_password(args: argparse.Namespace) -> str:
+    """Read the new password from stdin (non-interactive) or prompt twice
+    via ``getpass`` (interactive). Never consults ``args.new_password``
+    because argparse doesn't expose it — the flag was intentionally
+    removed to prevent the value from landing on argv.
+    """
+    if getattr(args, "password_stdin", False):
+        password = sys.stdin.readline().rstrip("\n")
+        if not password:
+            raise SystemExit("reset-password: empty password on stdin")
+        return password
+    return _read_password_interactive()
+
+
 class AuthCommand(CLICommand):
     """`blunder-tutor auth <sub>` — operator tools for the credentials
     auth backend. All subcommands are no-ops outside ``AUTH_MODE=credentials``
@@ -189,6 +193,49 @@ class AuthCommand(CLICommand):
 
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
         asyncio.run(self._run_async(args, config))
+
+    def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
+        auth_parser = subparsers.add_parser(
+            "auth", help="Manage auth users, sessions, and invite codes"
+        )
+        auth_subs = auth_parser.add_subparsers(dest="auth_subcommand", required=True)
+
+        auth_subs.add_parser("list-users", help="Print all users")
+
+        reset = auth_subs.add_parser(
+            "reset-password",
+            help="Set a new password for a user and revoke all their sessions",
+        )
+        reset.add_argument("username")
+        reset.add_argument(
+            "--password-stdin",
+            action="store_true",
+            help="Read the new password from stdin. Default is an "
+            "interactive getpass prompt with confirmation. The new "
+            "password is never accepted as a CLI argument.",
+        )
+
+        revoke = auth_subs.add_parser(
+            "revoke-sessions",
+            help="Invalidate every active session for a user",
+        )
+        revoke.add_argument("username")
+
+        delete = auth_subs.add_parser(
+            "delete-user",
+            help="Hard-delete a user, their sessions, and their data directory",
+        )
+        delete.add_argument("username")
+
+        auth_subs.add_parser(
+            "regenerate-invite",
+            help="Mint a new first-user invite code (refuses if any users exist)",
+        )
+
+        auth_subs.add_parser(
+            "prune-orphans",
+            help="Delete per-user data directories that have no matching user row",
+        )
 
     async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
         if config.auth.mode != AUTH_MODE_CREDENTIALS:
@@ -234,46 +281,3 @@ class AuthCommand(CLICommand):
             args.new_password = _resolve_new_password(args)
         fn, arg_names = _DISPATCH[args.auth_subcommand]
         await fn(ctx, *(getattr(args, name) for name in arg_names))
-
-    def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
-        auth_parser = subparsers.add_parser(
-            "auth", help="Manage auth users, sessions, and invite codes"
-        )
-        auth_subs = auth_parser.add_subparsers(dest="auth_subcommand", required=True)
-
-        auth_subs.add_parser("list-users", help="Print all users")
-
-        reset = auth_subs.add_parser(
-            "reset-password",
-            help="Set a new password for a user and revoke all their sessions",
-        )
-        reset.add_argument("username")
-        reset.add_argument(
-            "--password-stdin",
-            action="store_true",
-            help="Read the new password from stdin. Default is an "
-            "interactive getpass prompt with confirmation. The new "
-            "password is never accepted as a CLI argument.",
-        )
-
-        revoke = auth_subs.add_parser(
-            "revoke-sessions",
-            help="Invalidate every active session for a user",
-        )
-        revoke.add_argument("username")
-
-        delete = auth_subs.add_parser(
-            "delete-user",
-            help="Hard-delete a user, their sessions, and their data directory",
-        )
-        delete.add_argument("username")
-
-        auth_subs.add_parser(
-            "regenerate-invite",
-            help="Mint a new first-user invite code (refuses if any users exist)",
-        )
-
-        auth_subs.add_parser(
-            "prune-orphans",
-            help="Delete per-user data directories that have no matching user row",
-        )

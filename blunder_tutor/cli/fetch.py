@@ -20,45 +20,6 @@ class FetchCommand(CLICommand):
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
         asyncio.run(self._run_async(args, config))
 
-    async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
-        run_migrations(config.data.db_path)
-        async with GameRepository.from_config(config) as game_repo:
-            since = await self._resolve_since(args, game_repo)
-            if since:
-                print(f"Incremental fetch: only games after {since.isoformat()}")
-
-            if args.source == "lichess":
-                games, _seen_ids = await lichess.fetch(
-                    username=args.username,
-                    max_games=args.max,
-                    since=since,
-                    batch_size=args.batch_size,
-                )
-                inserted = await game_repo.insert_games(games)
-                skipped = len(games) - inserted
-                print(f"Lichess: stored {inserted}, skipped {skipped}.")
-                return
-
-            if args.source == "chesscom":
-                games, _seen_ids = await chesscom.fetch(
-                    username=args.username,
-                    max_games=args.max,
-                    since=since,
-                )
-                inserted = await game_repo.insert_games(games)
-                skipped = len(games) - inserted
-                print(f"Chess.com: stored {inserted}, skipped {skipped}.")
-                return
-
-    async def _resolve_since(
-        self, args: argparse.Namespace, game_repo: GameRepository
-    ) -> datetime | None:
-        if getattr(args, "incremental", False):
-            return await game_repo.get_latest_game_time(args.source, args.username)
-        if getattr(args, "since", None):
-            return datetime.fromisoformat(args.since)
-        return None
-
     def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
         fetch_parser = subparsers.add_parser("fetch", help="Fetch games by username")
         fetch_subparsers = fetch_parser.add_subparsers(dest="source", required=True)
@@ -112,3 +73,42 @@ class FetchCommand(CLICommand):
             default=None,
             help="Only fetch games after this ISO datetime (e.g., 2024-01-15T00:00:00)",
         )
+
+    async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
+        run_migrations(config.data.db_path)
+        async with GameRepository.from_config(config) as game_repo:
+            since = await self._resolve_since(args, game_repo)
+            if since:
+                print(f"Incremental fetch: only games after {since.isoformat()}")
+
+            if args.source == "lichess":
+                games, _seen_ids = await lichess.fetch(
+                    username=args.username,
+                    max_games=args.max,
+                    since=since,
+                    batch_size=args.batch_size,
+                )
+                inserted = await game_repo.insert_games(games)
+                skipped = len(games) - inserted
+                print(f"Lichess: stored {inserted}, skipped {skipped}.")
+                return
+
+            if args.source == "chesscom":
+                games, _seen_ids = await chesscom.fetch(
+                    username=args.username,
+                    max_games=args.max,
+                    since=since,
+                )
+                inserted = await game_repo.insert_games(games)
+                skipped = len(games) - inserted
+                print(f"Chess.com: stored {inserted}, skipped {skipped}.")
+                return
+
+    async def _resolve_since(
+        self, args: argparse.Namespace, game_repo: GameRepository
+    ) -> datetime | None:
+        if getattr(args, "incremental", False):
+            return await game_repo.get_latest_game_time(args.source, args.username)
+        if getattr(args, "since", None):
+            return datetime.fromisoformat(args.since)
+        return None

@@ -18,6 +18,12 @@ class BackfillECOCommand(CLICommand):
     def run(self, args: argparse.Namespace, config: AppConfig) -> None:
         asyncio.run(self._run_async(args, config))
 
+    def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
+        subparsers.add_parser(
+            "backfill-eco",
+            help="Backfill ECO opening codes for analyzed games missing ECO info",
+        )
+
     async def _run_async(self, args: argparse.Namespace, config: AppConfig) -> None:
         db_path = config.data.db_path
         run_migrations(db_path)
@@ -53,9 +59,3 @@ class BackfillECOCommand(CLICommand):
                 f"Backfill complete: {len(game_ids)} games processed, "
                 f"{classified} games classified with ECO codes."
             )
-
-    def register_subparser(self, subparsers: argparse._SubParsersAction) -> None:
-        subparsers.add_parser(
-            "backfill-eco",
-            help="Backfill ECO opening codes for analyzed games missing ECO info",
-        )

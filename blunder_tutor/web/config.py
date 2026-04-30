@@ -102,6 +102,11 @@ class AuthConfig(BaseModel):
             raise ValueError(
                 f"AUTH_BCRYPT_COST must be between 4 and 31, got {self.bcrypt_cost}"
             )
+        self._validate_sessions()
+        self._validate_secret_key()
+        return self
+
+    def _validate_sessions(self) -> None:
         if self.session_max_age_seconds < 1:
             raise ValueError(
                 f"SESSION_MAX_AGE_SECONDS must be >= 1, got {self.session_max_age_seconds}"
@@ -115,17 +120,19 @@ class AuthConfig(BaseModel):
                 "SESSION_IDLE_SECONDS must be <= SESSION_MAX_AGE_SECONDS "
                 f"({self.session_idle_seconds} > {self.session_max_age_seconds})"
             )
-        if self.mode == AUTH_MODE_CREDENTIALS:
-            if not self.secret_key:
-                raise ValueError(
-                    "SECRET_KEY env var is required when AUTH_MODE=credentials"
-                )
-            if len(self.secret_key) < SECRET_KEY_MIN_LEN:
-                raise ValueError(
-                    f"SECRET_KEY must be at least {SECRET_KEY_MIN_LEN} chars "
-                    f"when AUTH_MODE=credentials (got {len(self.secret_key)})"
-                )
-        return self
+
+    def _validate_secret_key(self) -> None:
+        if self.mode != AUTH_MODE_CREDENTIALS:
+            return
+        if not self.secret_key:
+            raise ValueError(
+                "SECRET_KEY env var is required when AUTH_MODE=credentials"
+            )
+        if len(self.secret_key) < SECRET_KEY_MIN_LEN:
+            raise ValueError(
+                f"SECRET_KEY must be at least {SECRET_KEY_MIN_LEN} chars "
+                f"when AUTH_MODE=credentials (got {len(self.secret_key)})"
+            )
 
 
 class EngineConfig(BaseModel):

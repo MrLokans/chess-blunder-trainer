@@ -189,7 +189,30 @@ extend-ignore = [
 #   entries, intermediate); reducing further fragments each method into too
 #   many tiny helpers without simplifying the shape.
 per-file-ignores = [
-  "tests/*: WPS204, WPS210, WPS211, WPS214, WPS217, WPS218, WPS226, WPS301, WPS336, WPS407, WPS430, WPS432, WPS458, WPS459",
+  # tests/*: extra silenced rules are test-shape mismatches:
+  #   WPS219 (deep access) — Mock attribute chains for stubbed return paths.
+  #   WPS227 (long output tuple) — fixtures returning multi-piece scenarios.
+  #   WPS235 (too many imports) — test modules pull many fixtures/types from
+  #     auth.types, conftest, etc.
+  #   WPS236 (tuple unpack) — fixture rows unpack multi-field test scenarios.
+  #   WPS324 (inconsistent return) — handlers under test mirror prod shape
+  #     (`return None` vs bare `return`); changing one breaks the contract.
+  #   WPS328 (useless asyncwith) — `async with ... : pass` invokes the
+  #     lifespan context purely for side effects under test.
+  #   WPS335 (wrong for-iter) — list literals as test data fixtures read
+  #     more naturally than tuples.
+  #   WPS338 (method order) — test helpers (`_seed`, `_factory`) live near the
+  #     tests that consume them, not at the bottom of the class.
+  #   WPS431 (nested class) — small dataclass / Mock-shape classes scoped to
+  #     a single test.
+  #   WPS481 (leaking for) — module-level loops that build immutable lookup
+  #     tables (translation maps, locale fallbacks).
+  #   WPS501 (try/finally) — cleanup pattern around third-party resources
+  #     (chess.engine, ad-hoc Repository instances) without an existing
+  #     async-context manager.
+  #   WPS505 (nested try) — fixture cleanup nested with per-test cleanup.
+  #   WPS522 (lambda primitive) — `lambda: None` / `lambda: False` patches.
+  "tests/*: WPS204, WPS210, WPS211, WPS214, WPS217, WPS218, WPS219, WPS226, WPS227, WPS235, WPS236, WPS301, WPS324, WPS328, WPS335, WPS336, WPS338, WPS407, WPS430, WPS431, WPS432, WPS458, WPS459, WPS481, WPS501, WPS505, WPS522",
   "blunder_tutor/cli/*: WPS421",
   "blunder_tutor/repositories/*: WPS214, WPS226, WPS301, WPS336",
   "blunder_tutor/repositories/stats_repository.py: WPS202, WPS204, WPS210, WPS214, WPS226, WPS301, WPS336",
@@ -216,7 +239,12 @@ per-file-ignores = [
   "blunder_tutor/web/app.py: WPS301",
   "blunder_tutor/web/api/import_game.py: WPS301",
   "blunder_tutor/web/dependencies.py: WPS301",
-  "blunder_tutor/auth/__init__.py: WPS410",
+  # auth/__init__.py: WPS203, WPS235 — library shape aggregator. The package
+  # is structured to be a publishable plug-and-play library (TREK-56 / EPIC-3
+  # P4.1); __all__ is the single public-API contract. Splitting re-exports
+  # across submodules would break consumers and contradict the module
+  # docstring.
+  "blunder_tutor/auth/__init__.py: WPS203, WPS235, WPS410",
   "blunder_tutor/auth/core/protocols.py: WPS410",
   "blunder_tutor/auth/fastapi/__init__.py: WPS410",
   "blunder_tutor/auth/fastapi/protocols.py: WPS410",

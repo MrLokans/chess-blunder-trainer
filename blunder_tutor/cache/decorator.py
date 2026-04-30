@@ -44,13 +44,7 @@ def resolve_user_key(request: Request) -> str:
     return getattr(request.state, "username", "default")
 
 
-def _serialize_param(value: Any) -> str:
-    if value is None:
-        return "null"
-    if isinstance(value, BaseModel):
-        return value.model_dump_json()
-    if dataclasses.is_dataclass(value) and not isinstance(value, type):
-        return json.dumps(dataclasses.asdict(value), sort_keys=True, default=str)
+def _serialize_collection(value: Any) -> str | None:
     if isinstance(value, (str, int, float, bool)):
         return json.dumps(value)
     if isinstance(value, (list, tuple)):
@@ -60,7 +54,18 @@ def _serialize_param(value: Any) -> str:
             {k: _serialize_param(v) for k, v in sorted(value.items())},
             sort_keys=True,
         )
-    return str(value)
+    return None
+
+
+def _serialize_param(value: Any) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, BaseModel):
+        return value.model_dump_json()
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        return json.dumps(dataclasses.asdict(value), sort_keys=True, default=str)
+    serialized = _serialize_collection(value)
+    return serialized if serialized is not None else str(value)
 
 
 def _build_cache_key(

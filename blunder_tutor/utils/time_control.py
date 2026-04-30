@@ -88,6 +88,22 @@ def estimate_game_duration(base_seconds: int, increment_seconds: int) -> int:
     return base_seconds + AVG_MOVES_PER_PLAYER * increment_seconds
 
 
+# Lichess-standard duration tiers (ordered ascending; first match wins).
+_DURATION_TIERS: tuple[tuple[int, GameType], ...] = (
+    (ULTRABULLET_MAX_SECONDS, GameType.ULTRABULLET),
+    (BULLET_MAX_SECONDS, GameType.BULLET),
+    (BLITZ_MAX_SECONDS, GameType.BLITZ),
+    (RAPID_MAX_SECONDS, GameType.RAPID),
+)
+
+
+def _duration_to_game_type(duration: int) -> GameType:
+    for threshold, game_type in _DURATION_TIERS:
+        if duration < threshold:
+            return game_type
+    return GameType.CLASSICAL
+
+
 def classify_game_type(time_control: str | None) -> GameType:
     """Classify a game into a type based on its time control.
 
@@ -102,12 +118,11 @@ def classify_game_type(time_control: str | None) -> GameType:
     if not time_control:
         return GameType.UNKNOWN
 
-    # Handle special cases
+    # Chess.com uses "-" for daily/correspondence games
     if time_control == "-":
-        # Chess.com uses "-" for daily/correspondence games
         return GameType.CORRESPONDENCE
 
-    # Check for correspondence format (e.g., "1/86400")
+    # Correspondence format (e.g., "1/86400")
     if CORRESPONDENCE_PATTERN.match(time_control):
         return GameType.CORRESPONDENCE
 
@@ -116,17 +131,7 @@ def classify_game_type(time_control: str | None) -> GameType:
         return GameType.UNKNOWN
 
     base, increment = parsed
-    duration = estimate_game_duration(base, increment)
-
-    if duration < ULTRABULLET_MAX_SECONDS:
-        return GameType.ULTRABULLET
-    if duration < BULLET_MAX_SECONDS:
-        return GameType.BULLET
-    if duration < BLITZ_MAX_SECONDS:
-        return GameType.BLITZ
-    if duration < RAPID_MAX_SECONDS:
-        return GameType.RAPID
-    return GameType.CLASSICAL
+    return _duration_to_game_type(estimate_game_duration(base, increment))
 
 
 def get_game_type_label(game_type: GameType | int) -> str:

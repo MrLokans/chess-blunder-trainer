@@ -81,7 +81,7 @@ async def starred_page(request: Request) -> HTMLResponse:
     return _page(request, "starred.html", "Starred Puzzles")
 
 
-_GET = ["GET"]
+_GET = frozenset(("GET",))
 
 ui_router = APIRouter()
 ui_router.add_api_route("/", home, response_class=HTMLResponse, methods=_GET)
