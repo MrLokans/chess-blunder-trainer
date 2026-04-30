@@ -212,9 +212,23 @@ per-file-ignores = [
   #     async-context manager.
   #   WPS505 (nested try) — fixture cleanup nested with per-test cleanup.
   #   WPS522 (lambda primitive) — `lambda: None` / `lambda: False` patches.
-  "tests/*: WPS204, WPS210, WPS211, WPS214, WPS217, WPS218, WPS219, WPS226, WPS227, WPS235, WPS236, WPS301, WPS324, WPS328, WPS335, WPS336, WPS338, WPS407, WPS430, WPS431, WPS432, WPS458, WPS459, WPS481, WPS501, WPS505, WPS522",
-  "blunder_tutor/cli/*: WPS421",
-  "blunder_tutor/repositories/*: WPS214, WPS226, WPS301, WPS336",
+  # Additions for integration-test shapes:
+  #   WPS201 (too many imports) — integration tests pull fixtures + factories
+  #     + auth-types + repositories + httpx + every service under test.
+  #   WPS202 (too many module members) — test files legitimately accumulate
+  #     12-16 helper functions + parametrize tables + fixtures.
+  #   WPS213 (too many expressions) — rate-limit / request-sequence tests.
+  #   WPS220 (deep nesting) — cross-resource × cross-user matrix loops.
+  #   WPS229 (long try body) — `with pytest.raises:` wrapping multi-step setups.
+  "tests/*: WPS201, WPS202, WPS204, WPS210, WPS211, WPS213, WPS214, WPS217, WPS218, WPS219, WPS220, WPS226, WPS227, WPS229, WPS235, WPS236, WPS301, WPS324, WPS328, WPS335, WPS336, WPS338, WPS407, WPS430, WPS431, WPS432, WPS458, WPS459, WPS481, WPS501, WPS505, WPS522",
+  # cli/*: WPS210 — CLI command runners legitimately wire up 9+ locals
+  #   (parsed args + repos + services + summary state). WPS421 is print().
+  "blunder_tutor/cli/*: WPS210, WPS421",
+  # repositories/*: WPS210, WPS220 — query construction + execute + result
+  #   mapping intrinsically uses 8-13 locals (filters, query, params, rows,
+  #   total, intermediate dicts). WPS220 covers safe-wipe table loops that
+  #   nest "for table: for column: for row" by construction.
+  "blunder_tutor/repositories/*: WPS210, WPS214, WPS220, WPS226, WPS301, WPS336",
   "blunder_tutor/repositories/stats_repository.py: WPS202, WPS204, WPS210, WPS214, WPS226, WPS301, WPS336",
   "blunder_tutor/web/api/*: WPS226",
   # _debug_render.py: WPS202 — markdown-builder pipeline. Each `_render_*`
@@ -242,6 +256,45 @@ per-file-ignores = [
   # analysis.py: WPS201 — same TYPE_CHECKING-import shape as settings.py.
   # WPS226 is the API-wildcard inheritance.
   "blunder_tutor/web/api/analysis.py: WPS201, WPS226",
+  # stats.py: WPS202 — 22 endpoint functions + 22 Pydantic response
+  # models + 5 helpers + StatsFilterDep alias = 53 cohesive members of
+  # the `/api/stats` router. Splitting per-resource sub-routers would
+  # scatter shared `cached()` keys, `StatsFilter` coercion, and the
+  # `StatsRepoDep` injection across files. Same shape as settings.py.
+  # WPS226 is the API-wildcard inheritance.
+  "blunder_tutor/web/api/stats.py: WPS202, WPS226",
+  # jobs.py: WPS202 — ~14 endpoints + 9 Pydantic schemas + 3 helpers
+  # (HTML+JSON list view, attachment formatters) form one cohesive
+  # `/api/jobs` router. Same shape rationale as stats.py.
+  "blunder_tutor/web/api/jobs.py: WPS202, WPS226",
+  # websocket.py: WPS217 — handler awaits connect → receive →
+  # subscribe → send → disconnect per session. Each await is a
+  # distinct WebSocket protocol step, not a refactorable chain.
+  "blunder_tutor/web/api/websocket.py: WPS217",
+  # core/dependencies.py: WPS201, WPS202 — background-jobs DI mirror of
+  # web/dependencies.py; every repo + service gets one Depends alias.
+  # Splitting fragments the consumer's import path.
+  "blunder_tutor/core/dependencies.py: WPS201, WPS202",
+  # web/routes.py: WPS201, WPS213 — sub-router aggregator. 18 imports
+  # = one per sub-router; 16 expressions = `app.include_router(...)`
+  # calls + health route + middleware order. By construction every new
+  # top-level resource adds one of each.
+  "blunder_tutor/web/routes.py: WPS201, WPS213",
+  # web/config.py: WPS202, WPS210 — AppConfig + ~10 nested config
+  # dataclasses (Throttle/Data/Auth/Cache/Engine/Vite/Analytics/Demo).
+  # config_factory reads N env vars into N config dataclasses; 9 locals
+  # is intrinsic to env→config translation.
+  "blunder_tutor/web/config.py: WPS202, WPS210",
+  # i18n/manager.py: WPS210 — translation-resolution method assembles
+  # message + locale + fallback + params + cache + interpolation; the
+  # locals track those steps inline.
+  "blunder_tutor/i18n/manager.py: WPS210",
+  # web/settings_snapshot.py: WPS210 — snapshot builders are inherently
+  # many-locals (one per output field assembled from repo + config + flags).
+  "blunder_tutor/web/settings_snapshot.py: WPS210",
+  # web/ui/router.py: WPS210 — UI route handler builds template context
+  # by assembling user data + flags + nav + i18n + breadcrumbs in one place.
+  "blunder_tutor/web/ui/router.py: WPS210",
   # explanation.py: WPS202 — explanation strategies form one cohesive PV
   # walker + i18n message factory. Splitting the per-strategy helpers across
   # submodules would scatter the ordered fallback chain (PV → static check
@@ -255,8 +308,17 @@ per-file-ignores = [
   # files for no architectural benefit.
   "blunder_tutor/analysis/tactics.py: WPS202",
   "blunder_tutor/analysis/pipeline/*: WPS301, WPS458",
-  "blunder_tutor/analysis/pipeline/steps/*: WPS301, WPS458",
+  # analysis/pipeline/steps/* WPS210 — write/traps step builders pack
+  #   row dicts column-by-column for SQLite insert + cache; the local
+  #   count tracks DB schema width, not function complexity.
+  "blunder_tutor/analysis/pipeline/steps/*: WPS210, WPS301, WPS458",
   "blunder_tutor/background/jobs/*: WPS201, WPS301, WPS458",
+  # background/runners.py + scheduler.py: WPS201 — job dispatch
+  # surface needs every service + repo + dependency-context shim.
+  # 25 / 19 imports is the dispatch shape, not an architectural smell;
+  # splitting would scatter the runner registry across files.
+  "blunder_tutor/background/runners.py: WPS201",
+  "blunder_tutor/background/scheduler.py: WPS201",
   "blunder_tutor/fetchers/lichess.py: WPS301",
   "blunder_tutor/services/*: WPS301, WPS458",
   "blunder_tutor/utils/chess_utils.py: WPS301, WPS458",
@@ -268,14 +330,30 @@ per-file-ignores = [
   # invariants (auth before scheduler, scheduler before WS broadcast)
   # across more files. WPS301 covers `chess.engine` like web/app.py.
   "blunder_tutor/web/app_lifecycle.py: WPS201, WPS202, WPS203, WPS301",
-  "blunder_tutor/web/api/import_game.py: WPS301",
-  "blunder_tutor/web/dependencies.py: WPS301",
+  # web/api/import_game.py: WPS210 — handler unpacks PGN, validates, opens
+  #   transaction, bulk-inserts; the locals track validation step state.
+  "blunder_tutor/web/api/import_game.py: WPS210, WPS301",
+  # web/dependencies.py: WPS201, WPS202 — DI aggregator. Every repo +
+  #   service + auth resolver gets one `Annotated[..., Depends(...)]`
+  #   alias; consumers import them all from one canonical path. Splitting
+  #   would scatter the dependency graph across multiple modules and
+  #   require consumers to track which alias lives where.
+  "blunder_tutor/web/dependencies.py: WPS201, WPS202, WPS301",
   # auth/__init__.py: WPS203, WPS235 — library shape aggregator. The package
   # is structured to be a publishable plug-and-play library (TREK-56 / EPIC-3
   # P4.1); __all__ is the single public-API contract. Splitting re-exports
   # across submodules would break consumers and contradict the module
   # docstring.
   "blunder_tutor/auth/__init__.py: WPS203, WPS235, WPS410",
+  # auth/core/errors.py: WPS202 — `AuthError` base + `_InputError`
+  # shared parent + 11 leaf exception classes = the single import target
+  # for "every recoverable failure mode" (per module docstring).
+  # Splitting would force consumers to know which error lives where.
+  "blunder_tutor/auth/core/errors.py: WPS202",
+  # auth/core/types.py: WPS202 — ~7 NewType aliases + 4 entity dataclasses.
+  # NewType plumbing belongs together with the entities that use them;
+  # splitting fragments the entity ↔ alias relationship.
+  "blunder_tutor/auth/core/types.py: WPS202",
   # auth/core/service.py: WPS214 — `AuthService` is the auth API surface
   # (signup/login/logout/me/list-users/identities-for/sessions/...);
   # 21 methods are independently-callable operations, not "doing too

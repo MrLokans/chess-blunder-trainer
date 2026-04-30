@@ -5,7 +5,7 @@ import asyncio
 import pytest
 
 from blunder_tutor.cache.backend import InMemoryCacheBackend
-from blunder_tutor.cache.invalidation import CacheInvalidator
+from blunder_tutor.cache.invalidation import EVENT_TAG_MAPPING, CacheInvalidator
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import (
     EventType,
@@ -109,3 +109,21 @@ class TestCacheInvalidator:
         event = StatsEvent.create_stats_updated()
         await self._start_and_publish(invalidator, event_bus, event)
         assert await cache.get("k1") is None
+
+    async def test_stop_cancels_forwarder_tasks(self, invalidator, event_bus):
+        tasks_before = set(asyncio.all_tasks())
+        main_task = asyncio.create_task(invalidator.start())
+        await asyncio.sleep(0.05)
+
+        spawned = set(asyncio.all_tasks()) - tasks_before - {main_task}
+        # One forwarder per subscribed event type (stats, traps, training).
+        assert len(spawned) == len(EVENT_TAG_MAPPING)
+
+        await invalidator.stop()
+        main_task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await main_task
+
+        await asyncio.sleep(0.05)
+        for forwarder in spawned:
+            assert forwarder.done()

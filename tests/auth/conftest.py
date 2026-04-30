@@ -28,7 +28,7 @@ from tests.helpers.engine import mock_engine_context
 @pytest.fixture(autouse=True)
 def _cheap_default_hasher(monkeypatch):
     """Force the module-level `hash_password` / `verify_password` shims
-    to use the test cost factor. They go through `_get_default_hasher`
+    to use the test cost factor. They go through `_get_cached_hasher`
     which lazily constructs a `BcryptHasher` with the library default
     cost (~160ms/hash); for tests that use those shims directly
     (`test_types.TestPasswordHashing`) the saving is the whole bcrypt
@@ -36,7 +36,7 @@ def _cheap_default_hasher(monkeypatch):
     because it imports the module fresh outside the test session.
     """
     cheap = BcryptHasher(ValidationRules.default(), cost=TEST_BCRYPT_COST)
-    monkeypatch.setattr(_hashers_module, "_default_hasher", cheap)
+    monkeypatch.setattr(_hashers_module, "cached_hasher", cheap)
 
 
 # Centralized test credentials. Any test that needs "a user" without

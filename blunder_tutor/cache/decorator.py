@@ -5,7 +5,7 @@ import functools
 import hashlib
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from fastapi import Request
@@ -26,18 +26,18 @@ class _CacheWrapper:
 # while keeping keys short for storage backends.
 _CACHE_KEY_HEX_LEN = 32
 
-_cache_backend: CacheBackend | None = None
-_default_ttl: int = 300
+cache_backend: CacheBackend | None = None
+default_ttl: int = 300
 
 
-def set_cache_backend(backend: CacheBackend | None, *, default_ttl: int = 300) -> None:
-    global _cache_backend, _default_ttl  # noqa: PLW0603 — intentional module-level singleton: cache backend + default TTL are configured once at app boot from `cache/__init__.py`.
-    _cache_backend = backend  # noqa: WPS122 — module-level state, not a throwaway.
-    _default_ttl = default_ttl  # noqa: WPS122 — module-level state, not a throwaway.
+def set_cache_backend(backend: CacheBackend | None, *, ttl: int = 300) -> None:
+    global cache_backend, default_ttl  # noqa: PLW0603 — intentional module-level singleton: cache backend + default TTL are configured once at app boot from `cache/__init__.py`.
+    cache_backend = backend
+    default_ttl = ttl
 
 
 def get_cache_backend() -> CacheBackend | None:
-    return _cache_backend
+    return cache_backend
 
 
 def resolve_user_key(request: Request) -> str:
@@ -88,6 +88,32 @@ def _build_cache_key(
     return hashlib.sha256(raw.encode()).hexdigest()[:_CACHE_KEY_HEX_LEN]
 
 
+def _resolve_request(args: tuple[Any, ...], kwargs: dict[str, Any]) -> Request | None:
+    request = kwargs.get("request")
+    if request is not None:
+        return request
+    for arg in args:
+        if isinstance(arg, Request):
+            return arg
+    return None
+
+
+async def _get_or_compute(
+    backend: CacheBackend,
+    cache_key: str,
+    scoped_tag: str,
+    ttl: int,
+    factory: Callable[[], Awaitable[Any]],
+) -> Any:
+    cached_entry = await backend.get(cache_key)
+    if isinstance(cached_entry, _CacheWrapper):
+        return cached_entry.value
+
+    result = await factory()
+    await backend.set(cache_key, _CacheWrapper(result), ttl=ttl, tags={scoped_tag})
+    return result
+
+
 def cached(
     *,
     tag: str,
@@ -102,29 +128,19 @@ def cached(
             if backend is None:
                 return await func(*args, **kwargs)
 
-            request: Request | None = kwargs.get("request")
-            if request is None:
-                for arg in args:
-                    if isinstance(arg, Request):
-                        request = arg
-                        break
-
+            request = _resolve_request(args, kwargs)
             user_key = resolve_user_key(request) if request else "default"
             cache_key = _build_cache_key(func, version, user_key, key_params, kwargs)
             scoped_tag = f"{tag}:{user_key}"
+            effective_ttl = ttl if ttl is not None else default_ttl
 
-            cached_entry = await backend.get(cache_key)
-            if isinstance(cached_entry, _CacheWrapper):
-                return cached_entry.value
-
-            result = await func(*args, **kwargs)
-
-            effective_ttl = ttl if ttl is not None else _default_ttl
-
-            await backend.set(
-                cache_key, _CacheWrapper(result), ttl=effective_ttl, tags={scoped_tag}
+            return await _get_or_compute(
+                backend,
+                cache_key,
+                scoped_tag,
+                effective_ttl,
+                lambda: func(*args, **kwargs),
             )
-            return result
 
         return wrapper
 

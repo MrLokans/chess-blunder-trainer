@@ -75,21 +75,19 @@ class BcryptHasher:
 # verify without instantiating the class. Lazy so importing the
 # module doesn't cost a bcrypt round (the hasher itself is cheap to
 # construct; only the dummy is).
-_default_hasher: BcryptHasher | None = None
+cached_hasher: BcryptHasher | None = None
 
 
-def _get_default_hasher() -> BcryptHasher:
-    global _default_hasher  # noqa: PLW0603 — intentional module-level singleton: lazy-init the dummy hasher used by timing-equalization in `verify_password` before the per-process default exists.
-    if _default_hasher is None:
-        _default_hasher = BcryptHasher(  # noqa: WPS122 — module-level lazy-init, not a throwaway.
-            ValidationRules.default(),
-        )
-    return _default_hasher
+def _get_cached_hasher() -> BcryptHasher:
+    global cached_hasher  # noqa: PLW0603 — intentional module-level singleton: lazy-init the dummy hasher used by timing-equalization in `verify_password` before the per-process default exists.
+    if cached_hasher is None:
+        cached_hasher = BcryptHasher(ValidationRules.default())
+    return cached_hasher
 
 
 def hash_password(raw: str) -> PasswordHash:
-    return _get_default_hasher().hash(raw)
+    return _get_cached_hasher().hash(raw)
 
 
 def verify_password(raw: str, hashed: PasswordHash) -> bool:
-    return _get_default_hasher().verify(raw, hashed)
+    return _get_cached_hasher().verify(raw, hashed)

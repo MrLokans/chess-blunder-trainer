@@ -250,6 +250,14 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+def _match_accept_language(header: str, available) -> str | None:
+    for part in header.split(","):
+        lang = part.split(";")[0].strip().split("-")[0].lower()
+        if lang in available:
+            return lang
+    return None
+
+
 class LocaleMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         locale = await self._detect_locale(request)
@@ -292,25 +300,19 @@ class LocaleMiddleware(BaseHTTPMiddleware):
 
     async def _detect_locale(self, request: Request) -> str:
         i18n = getattr(request.app.state, "i18n", None)
+        available = i18n.available_locales() if i18n else ()
 
         cookie_locale = request.cookies.get("locale")
-        if cookie_locale and i18n and cookie_locale in i18n.available_locales():
+        if cookie_locale in available:
             return cookie_locale
 
-        key = _cache_key(request)
-        cached = request.app.state.locale_cache.get(key)
+        cached = request.app.state.locale_cache.get(_cache_key(request))
         if cached is not None:
             return cached
 
         snapshot = await get_settings_snapshot(request)
-        db_locale = snapshot.locale
-        if db_locale and i18n and db_locale in i18n.available_locales():
-            return db_locale
+        if snapshot.locale in available:
+            return snapshot.locale
 
         accept = request.headers.get("accept-language", "")
-        for part in accept.split(","):
-            lang = part.split(";")[0].strip().split("-")[0].lower()
-            if i18n and lang in i18n.available_locales():
-                return lang
-
-        return "en"
+        return _match_accept_language(accept, available) or "en"

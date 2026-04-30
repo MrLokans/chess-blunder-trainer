@@ -322,7 +322,7 @@ def _init_caches(app: FastAPI, config: AppConfig) -> None:
         InMemoryCacheBackend() if config.cache.enabled else NullCacheBackend()
     )
     app.state.cache = cache_backend
-    set_cache_backend(cache_backend, default_ttl=config.cache.default_ttl)
+    set_cache_backend(cache_backend, ttl=config.cache.default_ttl)
     app.state.cache_invalidator = CacheInvalidator(
         cache=cache_backend, event_bus=app.state.event_bus
     )
