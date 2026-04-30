@@ -217,6 +217,31 @@ per-file-ignores = [
   "blunder_tutor/repositories/*: WPS214, WPS226, WPS301, WPS336",
   "blunder_tutor/repositories/stats_repository.py: WPS202, WPS204, WPS210, WPS214, WPS226, WPS301, WPS336",
   "blunder_tutor/web/api/*: WPS226",
+  # _debug_render.py: WPS202 — markdown-builder pipeline. Each `_render_*`
+  # is one document section + small label/lookup helpers. Splitting
+  # further would scatter the linear render order across more files
+  # without architectural benefit.
+  "blunder_tutor/web/api/_debug_render.py: WPS202, WPS226",
+  # _settings_schemas.py: WPS202 — Pydantic request/response models +
+  # theme/board lookup tables form one cohesive `/api/settings` API
+  # contract. Splitting models across more files would scatter the
+  # request/response pairs. WPS226 is the API-wildcard inheritance.
+  "blunder_tutor/web/api/_settings_schemas.py: WPS202, WPS226",
+  # _analysis_schemas.py: WPS202 — Pydantic request/response models +
+  # filter enums + lookup tables form one cohesive `/api/puzzle` and
+  # `/api/submit` API contract. WPS226 is the API-wildcard inheritance.
+  "blunder_tutor/web/api/_analysis_schemas.py: WPS202, WPS226",
+  # settings.py: WPS202 — 18 endpoint functions form one cohesive
+  # `/api/settings` router. Splitting routes into sub-routers would
+  # scatter shared dependencies (settings_repo, _cache_key) across more
+  # files for no architectural benefit. WPS201: TYPE_CHECKING-only
+  # imports for helper signatures push past the 15-import threshold;
+  # they are zero-runtime-cost type hints, not real dependencies.
+  # WPS226 is the API-wildcard inheritance.
+  "blunder_tutor/web/api/settings.py: WPS201, WPS202, WPS226",
+  # analysis.py: WPS201 — same TYPE_CHECKING-import shape as settings.py.
+  # WPS226 is the API-wildcard inheritance.
+  "blunder_tutor/web/api/analysis.py: WPS201, WPS226",
   # explanation.py: WPS202 — explanation strategies form one cohesive PV
   # walker + i18n message factory. Splitting the per-strategy helpers across
   # submodules would scatter the ordered fallback chain (PV → static check
@@ -237,6 +262,12 @@ per-file-ignores = [
   "blunder_tutor/utils/chess_utils.py: WPS301, WPS458",
   "blunder_tutor/utils/pgn_utils.py: WPS301, WPS458",
   "blunder_tutor/web/app.py: WPS301",
+  # app_lifecycle.py: WPS201/WPS202/WPS203 — by design. Holds the
+  # FastAPI lifespan + bootstrap helpers so `web/app.py` stays a thin
+  # builder. Splitting further would scatter the startup ordering
+  # invariants (auth before scheduler, scheduler before WS broadcast)
+  # across more files. WPS301 covers `chess.engine` like web/app.py.
+  "blunder_tutor/web/app_lifecycle.py: WPS201, WPS202, WPS203, WPS301",
   "blunder_tutor/web/api/import_game.py: WPS301",
   "blunder_tutor/web/dependencies.py: WPS301",
   # auth/__init__.py: WPS203, WPS235 — library shape aggregator. The package

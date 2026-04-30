@@ -30,7 +30,10 @@ ALLOWED_READERS = frozenset(
         # sole writer; per-user DB path now routes through
         # `app.state.db_path_resolver` + `UserDbPathMiddleware` instead
         # of being read directly from `none_mode_db_path` by other modules.
-        "blunder_tutor/web/app.py",
+        # Lives in app_lifecycle.py (split from app.py to keep the latter
+        # a thin builder); the writer is gated on `mode == AUTH_MODE_NONE`
+        # in `_init_state`.
+        "blunder_tutor/web/app_lifecycle.py",
     )
 )
 
