@@ -17,7 +17,11 @@ from fastapi import HTTPException, Request, Response, status
 from fastapi_throttle import RateLimiter
 
 from blunder_tutor.auth import AuthService
-from blunder_tutor.auth.fastapi import build_auth_router, clear_session_cookie
+from blunder_tutor.auth.fastapi import (
+    CookieAdapter,
+    build_auth_router,
+    clear_session_cookie,
+)
 from blunder_tutor.web.cookies import set_session_cookie as _set_session_cookie
 
 
@@ -51,8 +55,10 @@ async def _signup_rate_limit(request: Request, response: Response) -> None:
 
 router = build_auth_router(
     auth_service_provider=_auth_service_provider,
-    set_session_cookie=_set_session_cookie_with_config,
-    clear_session_cookie=clear_session_cookie,
+    cookies=CookieAdapter(
+        set_cookie=_set_session_cookie_with_config,
+        clear_cookie=clear_session_cookie,
+    ),
     login_dependencies=[_login_rate_limit],
     signup_dependencies=[_signup_rate_limit],
 )

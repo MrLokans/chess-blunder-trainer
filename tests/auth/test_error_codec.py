@@ -25,6 +25,7 @@ from blunder_tutor.auth import (
     Username,
 )
 from blunder_tutor.auth.fastapi import (
+    CookieAdapter,
     DefaultErrorCodec,
     build_auth_router,
 )
@@ -58,8 +59,10 @@ def _make_app(service: AuthService, *, error_codec=None) -> FastAPI:
 
     router = build_auth_router(
         auth_service_provider=auth_service_provider,
-        set_session_cookie=_set_test_cookie,
-        clear_session_cookie=_clear_test_cookie,
+        cookies=CookieAdapter(
+            set_cookie=_set_test_cookie,
+            clear_cookie=_clear_test_cookie,
+        ),
         error_codec=error_codec,
     )
     app.include_router(router)

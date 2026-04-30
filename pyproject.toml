@@ -276,6 +276,28 @@ per-file-ignores = [
   # across submodules would break consumers and contradict the module
   # docstring.
   "blunder_tutor/auth/__init__.py: WPS203, WPS235, WPS410",
+  # auth/core/service.py: WPS214 — `AuthService` is the auth API surface
+  # (signup/login/logout/me/list-users/identities-for/sessions/...);
+  # 21 methods are independently-callable operations, not "doing too
+  # many things." WPS211 — the `__init__` takes one independently-
+  # swappable Protocol per concern (storage, providers, hasher, quota,
+  # invite_policy) plus session_config + 2 post-event hooks; further
+  # grouping would conflate orthogonal injection points.
+  "blunder_tutor/auth/core/service.py: WPS211, WPS214",
+  # auth/fastapi/router.py: WPS430/WPS217/WPS202 — `build_auth_router`
+  # is a parameterized factory by design: every route handler is an
+  # inner function closing over the per-app `_RouterCtx`, which is
+  # what lets a consumer swap any piece (TLS posture, error shape,
+  # rate limiters) without forking the route bodies. WPS430 fires on
+  # every inner route — they are the API surface, not "incidental
+  # nesting." WPS217: `_do_signup` / `_do_login` / `_issue_session_cookie`
+  # legitimately await 3+ times per call (revoke pre-existing → create
+  # session → set cookie + per-route service work); each await is a
+  # distinct DB / cookie operation, not a refactorable chain. WPS202
+  # covers the small per-file dataclasses (`_RouterCtx`, `CookieAdapter`)
+  # plus Pydantic request/response models that form the cohesive auth
+  # router contract.
+  "blunder_tutor/auth/fastapi/router.py: WPS202, WPS217, WPS430",
   "blunder_tutor/auth/core/protocols.py: WPS410",
   "blunder_tutor/auth/fastapi/__init__.py: WPS410",
   "blunder_tutor/auth/fastapi/protocols.py: WPS410",

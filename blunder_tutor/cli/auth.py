@@ -30,6 +30,7 @@ from blunder_tutor.auth import (  # noqa: WPS235 — operator CLI consumes the p
     InviteCannotBeRegeneratedError,
     MaxUsersQuota,
     NoCredentialsIdentityError,
+    SessionConfig,
     SqliteStorage,
     UserNotFoundError,
     ValidationRules,
@@ -259,10 +260,12 @@ class AuthCommand(CLICommand):
                 hasher=hasher,
                 quota=MaxUsersQuota(config.auth.max_users),
                 invite_policy=HmacInvitePolicy(setup_repo=storage.setup),
+                session_config=SessionConfig(
+                    max_age=timedelta(seconds=config.auth.session_max_age_seconds),
+                    idle=timedelta(seconds=config.auth.session_idle_seconds),
+                ),
                 on_after_register=partial(materialize_user_dir, users_dir),
                 on_after_delete=partial(cleanup_user_dir, users_dir),
-                session_max_age=timedelta(seconds=config.auth.session_max_age_seconds),
-                session_idle=timedelta(seconds=config.auth.session_idle_seconds),
             )
             ctx = {
                 "storage": storage,

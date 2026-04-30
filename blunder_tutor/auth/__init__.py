@@ -55,7 +55,7 @@ from blunder_tutor.auth.core.protocols import (
     Transaction,
     UserRepo,
 )
-from blunder_tutor.auth.core.service import AuthService
+from blunder_tutor.auth.core.service import AuthService, SessionConfig
 from blunder_tutor.auth.core.types import (
     CREDENTIALS_PROVIDER_NAME,
     EMAIL_RE,
@@ -121,6 +121,7 @@ __all__ = [
     "AuthService",
     "AuthMiddleware",
     "MiddlewareConfig",
+    "SessionConfig",
     # Hashers
     "BcryptHasher",
     "admin",
