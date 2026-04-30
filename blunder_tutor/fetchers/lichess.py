@@ -9,9 +9,11 @@ import chess.pgn
 import httpx
 from tqdm import tqdm
 
-from blunder_tutor.fetchers import USER_AGENT
+from blunder_tutor.fetchers import USER_AGENT, RateLimitError
+from blunder_tutor.fetchers._modes import lichess_to_canonical
 from blunder_tutor.fetchers._state import FetchState
-from blunder_tutor.fetchers.resilience import fetch_with_retry
+from blunder_tutor.fetchers.resilience import RetryableHTTPError, fetch_with_retry
+from blunder_tutor.repositories.profile_types import ProfileStatSnapshot
 from blunder_tutor.utils.date_utils import parse_pgn_datetime_ms
 from blunder_tutor.utils.pgn_utils import (
     build_game_metadata,
@@ -147,3 +149,31 @@ async def validate_username(username: str) -> bool:
             return response.status_code == HTTPStatus.OK
         except httpx.HTTPError:
             return False
+
+
+async def fetch_user_perfs(username: str) -> list[ProfileStatSnapshot]:
+    """Fetch per-mode rating + game count from Lichess `/api/user/{u}`.
+
+    Raises `RateLimitError` if Lichess persistently 429s the request after
+    the resilience layer's retry budget is exhausted. 404s and other
+    non-retryable status codes propagate as `httpx.HTTPStatusError`.
+    """
+    url = LICHESS_USER_URL.format(username=username)
+    async with httpx.AsyncClient(
+        timeout=10,
+        headers={
+            "Accept": "application/json",
+            "User-Agent": USER_AGENT,
+        },
+    ) as client:
+        try:
+            response = await fetch_with_retry(client, url)
+        except RetryableHTTPError as exc:
+            if exc.response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+                raise RateLimitError("lichess") from exc
+            raise
+    payload = response.json()
+    perfs = payload.get("perfs", {}) if isinstance(payload, dict) else {}
+    if not isinstance(perfs, dict):
+        return []
+    return lichess_to_canonical(perfs)

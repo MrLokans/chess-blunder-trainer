@@ -238,6 +238,14 @@ class TestDataStepBackfill:
 
         assert _game_profile_id(db, "g_orphan") is None
 
+    def test_normalizes_username_case_and_tags_games(self, tmp_path: Path) -> None:
+        db = _stage_db_at_007(tmp_path, lichess_username="Alice")
+        _insert_game(db, game_id="g_alice", source="lichess", username="alice")
+        _migrate(db, "head")
+
+        assert _list_profiles(db) == [("lichess", "alice", 1)]
+        assert _game_profile_id(db, "g_alice") is not None
+
     def test_idempotent_when_data_step_replayed(self, tmp_path: Path) -> None:
         db = _stage_db_at_007(
             tmp_path, lichess_username="alice", chesscom_username="bob"

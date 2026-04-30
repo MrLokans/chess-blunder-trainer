@@ -8,9 +8,11 @@ from http import HTTPStatus
 import httpx
 from tqdm import tqdm
 
-from blunder_tutor.fetchers import USER_AGENT
+from blunder_tutor.fetchers import USER_AGENT, RateLimitError
+from blunder_tutor.fetchers._modes import chesscom_to_canonical
 from blunder_tutor.fetchers._state import FetchState
-from blunder_tutor.fetchers.resilience import fetch_with_retry
+from blunder_tutor.fetchers.resilience import RetryableHTTPError, fetch_with_retry
+from blunder_tutor.repositories.profile_types import ProfileStatSnapshot
 from blunder_tutor.utils.pgn_utils import (
     build_game_metadata,
     compute_game_id,
@@ -19,6 +21,7 @@ from blunder_tutor.utils.pgn_utils import (
 
 CHESSCOM_BASE_URL = "https://api.chess.com"
 CHESSCOM_USER_URL = f"{CHESSCOM_BASE_URL}/pub/player/{{username}}"
+CHESSCOM_STATS_URL = f"{CHESSCOM_BASE_URL}/pub/player/{{username}}/stats"
 ARCHIVE_URL_PATTERN = re.compile(r"/games/(\d{4})/(\d{2})$")
 
 type _FetchResult = tuple[list[dict[str, object]], set[str]]
@@ -159,3 +162,28 @@ async def validate_username(username: str) -> bool:
             return response.status_code == HTTPStatus.OK
         except httpx.HTTPError:
             return False
+
+
+async def fetch_user_stats(username: str) -> list[ProfileStatSnapshot]:
+    """Fetch per-mode rating + game count from Chess.com `/pub/player/{u}/stats`.
+
+    Raises `RateLimitError` if Chess.com persistently 429s the request after
+    the resilience layer's retry budget is exhausted. 404s and other
+    non-retryable status codes propagate as `httpx.HTTPStatusError`.
+    """
+    url = CHESSCOM_STATS_URL.format(username=username.lower())
+    async with httpx.AsyncClient(
+        timeout=10,
+        follow_redirects=True,
+        headers={"User-Agent": USER_AGENT},
+    ) as client:
+        try:
+            response = await fetch_with_retry(client, url)
+        except RetryableHTTPError as exc:
+            if exc.response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+                raise RateLimitError("chesscom") from exc
+            raise
+    payload = response.json()
+    if not isinstance(payload, dict):
+        return []
+    return chesscom_to_canonical(payload)

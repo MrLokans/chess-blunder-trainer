@@ -45,7 +45,11 @@ def _apply_legacy_backfill(connection: sa.Connection) -> None:
         ).fetchone()
         if row is None:
             continue
-        username = row[0]
+        # Lowercase to match the runtime ProfileRepository contract — both
+        # Lichess and Chess.com treat usernames case-insensitively, and the
+        # join below would otherwise miss games whose stored username casing
+        # differs from the legacy settings value.
+        username = row[0].lower()
         connection.execute(
             sa.text(
                 "INSERT OR IGNORE INTO profile (platform, username, is_primary) "
@@ -54,15 +58,12 @@ def _apply_legacy_backfill(connection: sa.Connection) -> None:
             {"p": platform, "u": username},
         )
         profile_id = connection.execute(
-            sa.text(
-                "SELECT id FROM profile WHERE platform = :p AND username = :u"
-            ),
+            sa.text("SELECT id FROM profile WHERE platform = :p AND username = :u"),
             {"p": platform, "u": username},
         ).scalar_one()
         connection.execute(
             sa.text(
-                "INSERT OR IGNORE INTO profile_preferences (profile_id) "
-                "VALUES (:pid)"
+                "INSERT OR IGNORE INTO profile_preferences (profile_id) VALUES (:pid)"
             ),
             {"pid": profile_id},
         )
@@ -72,7 +73,7 @@ def _apply_legacy_backfill(connection: sa.Connection) -> None:
             "UPDATE game_index_cache SET profile_id = ("
             "    SELECT id FROM profile "
             "    WHERE profile.platform = game_index_cache.source "
-            "      AND profile.username = game_index_cache.username"
+            "      AND LOWER(profile.username) = LOWER(game_index_cache.username)"
             ") WHERE profile_id IS NULL"
         )
     )
