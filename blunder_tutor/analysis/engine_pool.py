@@ -4,7 +4,7 @@ import asyncio
 import logging
 import os
 from collections.abc import Awaitable, Callable
-from typing import TypeVar
+from typing import Any, TypeVar
 
 import chess.engine
 
@@ -131,37 +131,47 @@ class EnginePool:
                 break
 
             fn, future = item
-            try:
-                engine = await self._ensure_alive(engine)
-                if self._task_timeout is not None:
-                    result = await asyncio.wait_for(
-                        fn(engine), timeout=self._task_timeout
-                    )
-                else:
-                    result = await fn(engine)
-                if not future.cancelled():
-                    future.set_result(result)
-            except TimeoutError:
-                logger.error(
-                    "Task timed out after %ss, killing engine", self._task_timeout
-                )
-                engine = await self._kill_and_respawn(engine)
-                if not future.done():
-                    future.set_exception(
-                        TimeoutError(
-                            f"Engine task timed out after {self._task_timeout}s"
-                        )
-                    )
-            except asyncio.CancelledError:
-                if not future.done():
-                    future.cancel()
-                self._queue.task_done()
+            engine, should_continue = await self._handle_task(engine, fn, future)
+            if not should_continue:
                 break
-            except Exception as exc:
-                if not future.cancelled():
-                    future.set_exception(exc)
-            finally:
-                self._queue.task_done()
+
+    async def _run_with_optional_timeout(
+        self,
+        engine: chess.engine.UciProtocol,
+        fn: Callable[[chess.engine.UciProtocol], Awaitable[Any]],
+    ) -> Any:
+        if self._task_timeout is None:
+            return await fn(engine)
+        return await asyncio.wait_for(fn(engine), timeout=self._task_timeout)
+
+    async def _handle_task(
+        self,
+        engine: chess.engine.UciProtocol,
+        fn: Callable[[chess.engine.UciProtocol], Awaitable[Any]],
+        future: asyncio.Future,
+    ) -> tuple[chess.engine.UciProtocol, bool]:
+        try:
+            engine = await self._ensure_alive(engine)
+            result = await self._run_with_optional_timeout(engine, fn)
+            if not future.cancelled():
+                future.set_result(result)
+        except TimeoutError:
+            logger.error("Task timed out after %ss, killing engine", self._task_timeout)
+            engine = await self._kill_and_respawn(engine)
+            if not future.done():
+                future.set_exception(
+                    TimeoutError(f"Engine task timed out after {self._task_timeout}s")
+                )
+        except asyncio.CancelledError:
+            if not future.done():
+                future.cancel()
+            return engine, False
+        except Exception as exc:
+            if not future.cancelled():
+                future.set_exception(exc)
+        finally:
+            self._queue.task_done()
+        return engine, True
 
 
 class WorkCoordinator:

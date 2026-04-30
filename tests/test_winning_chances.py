@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from blunder_tutor.analysis.pipeline.steps.move_quality import (
-    MoveQualityStep,
-    _class_to_int,
+from blunder_tutor.analysis.pipeline.steps._move_quality_classifier import (
     _classify_wc,
+    class_to_int,
 )
+from blunder_tutor.analysis.pipeline.steps.move_quality import MoveQualityStep
 from blunder_tutor.analysis.thresholds import Thresholds, winning_chances
 from blunder_tutor.constants import MATE_SCORE_ANALYSIS
 from tests.helpers.pipeline import make_mock_context, make_move_eval, make_pov_score
@@ -55,7 +55,7 @@ class TestAlreadyLostPositionNotBlunder:
         step = MoveQualityStep()
         result = await step.execute(ctx)
         m = result.data["moves"][0]
-        assert m["classification"] == _class_to_int("mistake")
+        assert m["classification"] == class_to_int("mistake")
 
     async def test_losing_to_mate_is_blunder_from_decent_position(self):
         move = make_move_eval(eval_before=-200, eval_after=-MATE_SCORE_ANALYSIS)
@@ -63,7 +63,7 @@ class TestAlreadyLostPositionNotBlunder:
         step = MoveQualityStep()
         result = await step.execute(ctx)
         m = result.data["moves"][0]
-        assert m["classification"] == _class_to_int("blunder")
+        assert m["classification"] == class_to_int("blunder")
 
     async def test_equal_to_large_loss_is_blunder(self):
         move = make_move_eval(eval_before=50, eval_after=-350)
@@ -71,7 +71,7 @@ class TestAlreadyLostPositionNotBlunder:
         step = MoveQualityStep()
         result = await step.execute(ctx)
         m = result.data["moves"][0]
-        assert m["classification"] == _class_to_int("blunder")
+        assert m["classification"] == class_to_int("blunder")
 
     async def test_deeply_lost_to_slightly_more_lost_not_blunder(self):
         move = make_move_eval(eval_before=-1000, eval_after=-MATE_SCORE_ANALYSIS)
@@ -79,7 +79,7 @@ class TestAlreadyLostPositionNotBlunder:
         step = MoveQualityStep()
         result = await step.execute(ctx)
         m = result.data["moves"][0]
-        assert m["classification"] <= _class_to_int("inaccuracy")
+        assert m["classification"] <= class_to_int("inaccuracy")
 
     async def test_within_mate_sequence_is_good(self):
         move = make_move_eval(
@@ -91,4 +91,4 @@ class TestAlreadyLostPositionNotBlunder:
         step = MoveQualityStep()
         result = await step.execute(ctx)
         m = result.data["moves"][0]
-        assert m["classification"] == _class_to_int("good")
+        assert m["classification"] == class_to_int("good")

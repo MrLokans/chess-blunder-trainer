@@ -44,55 +44,59 @@ class TacticsClassifyStep(AnalysisStep):
             )
 
         moves = move_quality_result.data.get("moves", [])
-        tactics_data: list[dict] = []
-
-        # Build board state for each move
-        board = ctx.game.board()
-        move_iter = iter(ctx.game.mainline_moves())
-
-        for move_data in moves:
-            ply = move_data["ply"]
-            classification = move_data["classification"]
-
-            # Get the actual move
-            try:
-                move = next(move_iter)
-            except StopIteration:
-                break
-
-            board_before = board.copy()
-
-            # Only analyze blunders (classification == 3)
-            if classification == 3:  # Blunder
-                best_move_uci = move_data.get("best_move_uci")
-                best_move = None
-                if best_move_uci:
-                    with contextlib.suppress(ValueError):
-                        best_move = chess.Move.from_uci(best_move_uci)
-
-                # Analyze tactics around this blunder
-                result = classify_blunder_tactics(board_before, move, best_move)
-
-                tactics_data.append(
-                    {
-                        "ply": ply,
-                        "primary_pattern": result.primary_pattern.value,
-                        "primary_pattern_name": result.primary_pattern_name,
-                        "blunder_reason": result.blunder_reason,
-                        "missed_tactic": PATTERN_LABELS[result.missed_tactic.pattern]
-                        if result.missed_tactic
-                        else None,
-                        "allowed_tactic": PATTERN_LABELS[result.allowed_tactic.pattern]
-                        if result.allowed_tactic
-                        else None,
-                    }
-                )
-
-            # Advance the board
-            board.push(move)
+        tactics_data = _scan_blunders(ctx.game, moves)
 
         return StepResult(
             step_id=self.step_id,
             success=True,
             data={"tactics": tactics_data},
         )
+
+
+def _scan_blunders(game: chess.pgn.Game, moves: list[dict]) -> list[dict]:
+    tactics_data: list[dict] = []
+    board = game.board()
+    move_iter = iter(game.mainline_moves())
+
+    for move_data in moves:
+        try:
+            move = next(move_iter)
+        except StopIteration:
+            break
+
+        board_before = board.copy()
+
+        if move_data["classification"] == 3:  # Blunder
+            tactics_data.append(_classify_blunder_at(board_before, move, move_data))
+
+        board.push(move)
+
+    return tactics_data
+
+
+def _classify_blunder_at(
+    board_before: chess.Board, move: chess.Move, move_data: dict
+) -> dict:
+    best_move_uci = move_data.get("best_move_uci")
+    best_move: chess.Move | None = None
+    if best_move_uci:
+        with contextlib.suppress(ValueError):
+            best_move = chess.Move.from_uci(best_move_uci)
+
+    result = classify_blunder_tactics(board_before, move, best_move)
+    return {
+        "ply": move_data["ply"],
+        "primary_pattern": result.primary_pattern.value,
+        "primary_pattern_name": result.primary_pattern_name,
+        "blunder_reason": result.blunder_reason,
+        "missed_tactic": (
+            PATTERN_LABELS[result.missed_tactic.pattern]
+            if result.missed_tactic
+            else None
+        ),
+        "allowed_tactic": (
+            PATTERN_LABELS[result.allowed_tactic.pattern]
+            if result.allowed_tactic
+            else None
+        ),
+    }

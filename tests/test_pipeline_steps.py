@@ -327,10 +327,10 @@ class TestTacticsClassifyStep:
             "blunder_tutor.analysis.pipeline.steps.tactics.classify_blunder_tactics"
         ) as mock_classify:
             result = await TacticsClassifyStep().execute(mock_context)
+            mock_classify.assert_not_called()
 
         assert result.success is True
         assert result.data["tactics"] == []
-        mock_classify.assert_not_called()
 
     async def test_execute_runs_tactics_for_blunder_with_correct_board_state(
         self, mock_context
@@ -359,11 +359,10 @@ class TestTacticsClassifyStep:
             return_value=tactics_result,
         ) as mock_classify:
             result = await TacticsClassifyStep().execute(mock_context)
+            assert mock_classify.call_count == 1
+            board_before, move_played, _best = mock_classify.call_args.args
 
         assert result.success is True
-        assert mock_classify.call_count == 1
-        call_args = mock_classify.call_args
-        board_before, move_played, _best = call_args.args
         assert board_before.fen() == expected_fen
         assert move_played == expected_third_move
 

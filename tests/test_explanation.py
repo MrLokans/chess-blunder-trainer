@@ -19,9 +19,9 @@ _EN_PIECES = {
     "chess.piece.king": "king",
 }
 # English case forms are identical to nominative
-for _piece in ["pawn", "knight", "bishop", "rook", "queen", "king"]:
-    for _case in ["gen", "acc", "inst"]:
-        _EN_PIECES[f"chess.piece.{_piece}.{_case}"] = _piece
+for piece in ["pawn", "knight", "bishop", "rook", "queen", "king"]:
+    for case in ["gen", "acc", "inst"]:
+        _EN_PIECES[f"chess.piece.{piece}.{case}"] = piece
 
 _EN_TEMPLATES = {
     "explanation.blunder.missed_mate": "You missed a checkmate in one move.",

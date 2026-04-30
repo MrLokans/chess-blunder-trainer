@@ -82,7 +82,7 @@ class FetchCommand(CLICommand):
                 print(f"Incremental fetch: only games after {since.isoformat()}")
 
             if args.source == "lichess":
-                games, _seen_ids = await lichess.fetch(
+                games, _ = await lichess.fetch(
                     username=args.username,
                     max_games=args.max,
                     since=since,
@@ -94,7 +94,7 @@ class FetchCommand(CLICommand):
                 return
 
             if args.source == "chesscom":
-                games, _seen_ids = await chesscom.fetch(
+                games, _ = await chesscom.fetch(
                     username=args.username,
                     max_games=args.max,
                     since=since,

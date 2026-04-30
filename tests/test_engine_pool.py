@@ -203,7 +203,12 @@ class TestEnginePool:
 
         for w in pool._workers:
             w.cancel()
-        await asyncio.gather(*pool._workers, return_exceptions=True)
+        results = await asyncio.gather(*pool._workers, return_exceptions=True)
+
+        # Worker must exit via CancelledError, not the latent ValueError
+        # from a double `task_done()` call (was a bug pre-TREK-93).
+        for outcome in results:
+            assert isinstance(outcome, asyncio.CancelledError) or outcome is None
 
         assert future.cancelled()
         await pool.shutdown()

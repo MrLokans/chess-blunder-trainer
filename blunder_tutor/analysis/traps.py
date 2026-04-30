@@ -91,55 +91,15 @@ class TrapDatabase:
         triggered: dict[str, int] = {}
 
         for ply, move in enumerate(board.move_stack):
-            h = chess.polyglot.zobrist_hash(cursor)
-
-            triggers = self._trigger_lookup.get(h)
-            if triggers:
-                san = cursor.san(move)
-                for trap, pos in triggers:
-                    if san == pos.mistake_san and trap.id not in triggered:
-                        triggered[trap.id] = ply + 1
-
-            entries = self._entry_lookup.get(h)
-            if entries:
-                for trap in entries:
-                    if trap.id not in entered:
-                        entered[trap.id] = ply
-
+            self._scan_position(cursor, move, ply, entered, triggered)
             cursor.push(move)
 
-        final_entries = self._entry_lookup.get(chess.polyglot.zobrist_hash(cursor))
-        if final_entries:
-            for trap in final_entries:
-                if trap.id not in entered:
-                    entered[trap.id] = len(board.move_stack)
+        self._finalize_entries(cursor, entered, len(board.move_stack))
 
-        results: list[TrapMatch] = []
-        for trap_id in entered.keys() | triggered.keys():
-            trap_def = self._by_id[trap_id]
-            victim_is_white = trap_def.victim_side == "white"
-            user_is_victim = (  # noqa: WPS408 — complementary, not duplicate: white-on-white-victim OR black-on-black-victim.
-                user_color == chess.WHITE and victim_is_white
-            ) or (user_color == chess.BLACK and not victim_is_white)
-
-            triggered_ply = triggered.get(trap_id)
-            if triggered_ply is not None:
-                match_type = "sprung" if user_is_victim else "executed"
-                mistake_ply = triggered_ply
-            else:
-                match_type = "entered"
-                mistake_ply = None
-
-            results.append(
-                TrapMatch(
-                    trap_id=trap_id,
-                    match_type=match_type,
-                    user_was_victim=user_is_victim,
-                    mistake_ply=mistake_ply,
-                )
-            )
-
-        return results
+        return [
+            self._build_match(trap_id, triggered.get(trap_id), user_color)
+            for trap_id in entered.keys() | triggered.keys()
+        ]
 
     def get_trap(self, trap_id: str) -> TrapDefinition | None:
         return self._by_id.get(trap_id)
@@ -147,6 +107,62 @@ class TrapDatabase:
     @property
     def all_traps(self) -> list[TrapDefinition]:
         return list(self._traps)
+
+    def _scan_position(
+        self,
+        cursor: chess.Board,
+        move: chess.Move,
+        ply: int,
+        entered: dict[str, int],
+        triggered: dict[str, int],
+    ) -> None:
+        h = chess.polyglot.zobrist_hash(cursor)
+
+        triggers = self._trigger_lookup.get(h)
+        if triggers:
+            san = cursor.san(move)
+            for trap, pos in triggers:
+                if san == pos.mistake_san and trap.id not in triggered:
+                    triggered[trap.id] = ply + 1
+
+        entries = self._entry_lookup.get(h)
+        if entries:
+            for trap in entries:
+                if trap.id not in entered:
+                    entered[trap.id] = ply
+
+    def _finalize_entries(
+        self, cursor: chess.Board, entered: dict[str, int], move_stack_len: int
+    ) -> None:
+        final_entries = self._entry_lookup.get(chess.polyglot.zobrist_hash(cursor))
+        if not final_entries:
+            return
+        for trap in final_entries:
+            if trap.id not in entered:
+                entered[trap.id] = move_stack_len
+
+    def _build_match(
+        self, trap_id: str, triggered_ply: int | None, user_color: chess.Color
+    ) -> TrapMatch:
+        trap_def = self._by_id[trap_id]
+        victim_is_white = trap_def.victim_side == "white"
+        user_is_victim = (  # noqa: WPS408 — complementary, not duplicate: white-on-white-victim OR black-on-black-victim.
+            user_color == chess.WHITE and victim_is_white
+        ) or (user_color == chess.BLACK and not victim_is_white)
+
+        if triggered_ply is None:
+            return TrapMatch(
+                trap_id=trap_id,
+                match_type="entered",
+                user_was_victim=user_is_victim,
+                mistake_ply=None,
+            )
+        return TrapMatch(
+            trap_id=trap_id,
+            match_type="sprung" if user_is_victim else "executed",
+            user_was_victim=user_is_victim,
+            mistake_ply=triggered_ply,
+        )
 
 
 def _build_position_from_pgn_and_san(

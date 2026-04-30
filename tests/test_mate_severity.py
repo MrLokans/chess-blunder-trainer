@@ -6,11 +6,11 @@ import chess
 import pytest
 
 from blunder_tutor.analysis.filtering import is_valid_blunder
-from blunder_tutor.analysis.pipeline.steps.move_quality import (
-    MoveQualityStep,
-    _class_to_int,
+from blunder_tutor.analysis.pipeline.steps._move_quality_classifier import (
     _get_mate_depth,
+    class_to_int,
 )
+from blunder_tutor.analysis.pipeline.steps.move_quality import MoveQualityStep
 from blunder_tutor.constants import (
     LONG_MATE_DEPTH_THRESHOLD,
     MATE_SCORE_ANALYSIS,
@@ -124,7 +124,7 @@ class TestMateLostClassification:
         step = MoveQualityStep()
         result = await step.execute(ctx)
         m = result.data["moves"][0]
-        assert m["classification"] == _class_to_int("blunder")
+        assert m["classification"] == class_to_int("blunder")
         assert m["missed_mate_depth"] == 2
 
     async def test_mate_lost_still_crushing_is_inaccuracy(self):
@@ -137,7 +137,7 @@ class TestMateLostClassification:
         step = MoveQualityStep()
         result = await step.execute(ctx)
         m = result.data["moves"][0]
-        assert m["classification"] == _class_to_int("inaccuracy")
+        assert m["classification"] == class_to_int("inaccuracy")
 
     async def test_mate_lost_still_winning_is_mistake(self):
         move = make_move_eval(
@@ -149,7 +149,7 @@ class TestMateLostClassification:
         step = MoveQualityStep()
         result = await step.execute(ctx)
         m = result.data["moves"][0]
-        assert m["classification"] == _class_to_int("mistake")
+        assert m["classification"] == class_to_int("mistake")
 
     async def test_mate_lost_to_equal_is_blunder(self):
         move = make_move_eval(
@@ -161,7 +161,7 @@ class TestMateLostClassification:
         step = MoveQualityStep()
         result = await step.execute(ctx)
         m = result.data["moves"][0]
-        assert m["classification"] == _class_to_int("blunder")
+        assert m["classification"] == class_to_int("blunder")
 
 
 class TestFilteringWithMateDepth:

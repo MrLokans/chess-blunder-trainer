@@ -50,16 +50,17 @@ class AnalysisPipeline:
 
     def get_ordered_steps(self) -> list[AnalysisStep]:
         requested_ids = set(self.config.steps)
+        self._pull_in_missing_deps(requested_ids)
+        return self._topological_sort(requested_ids)
 
+    def _pull_in_missing_deps(self, requested_ids: set[str]) -> None:
+        # Iterates the original config list, not requested_ids, so adding to
+        # the set during the loop is safe.
         for step_id in self.config.steps:
             step = self._steps_by_id[step_id]
-            missing_deps = step.depends_on - requested_ids
-            if missing_deps:
-                for dep_id in missing_deps:
-                    if dep_id in self._steps_by_id and dep_id not in requested_ids:
-                        requested_ids.add(dep_id)
-
-        return self._topological_sort(requested_ids)
+            for dep_id in step.depends_on - requested_ids:
+                if dep_id in self._steps_by_id:
+                    requested_ids.add(dep_id)
 
     def _validate_steps(self) -> None:
         for step_id in self.config.steps:

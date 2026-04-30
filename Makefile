@@ -113,12 +113,12 @@ migrate: ## Run database migrations
 	$(UV) run blunder-tutor-db
 
 # Code quality
-lint: lint/be lint/fe lint/e2e lint/i18n ## Lint all code
+lint: lint/be lint/be-wps lint/fe lint/e2e lint/i18n ## Lint all code
 
 lint/be: ## Lint Python with ruff
 	$(UV) run ruff check blunder_tutor/ main.py
 
-lint/be-wps: ## Lint Python with wemake-python-styleguide (warning-only, not in `lint`)
+lint/be-wps: ## Lint Python with wemake-python-styleguide
 	$(UV) run flake8 --select=WPS blunder_tutor/ main.py tests/
 
 lint/fe: ## Lint TypeScript with ESLint
