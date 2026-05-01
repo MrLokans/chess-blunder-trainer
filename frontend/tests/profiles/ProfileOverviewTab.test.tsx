@@ -37,7 +37,7 @@ afterEach(() => {
 
 describe('ProfileOverviewTab', () => {
   test('renders username, platform badge, and a rating card per stat entry', () => {
-    render(<ProfileOverviewTab profile={makeProfile()} onProfileChange={() => {}} />);
+    render(<ProfileOverviewTab profile={makeProfile()} onProfileChange={() => {}} onSyncToast={() => {}} />);
     expect(screen.getByRole('heading', { name: 'magnuscarlsen' })).toBeDefined();
     expect(screen.getByText('Lichess')).toBeDefined();
     expect(screen.getByText('profiles.stats.mode.bullet')).toBeDefined();
@@ -48,7 +48,7 @@ describe('ProfileOverviewTab', () => {
   });
 
   test('shows primary badge when profile is primary', () => {
-    render(<ProfileOverviewTab profile={makeProfile({ is_primary: true })} onProfileChange={() => {}} />);
+    render(<ProfileOverviewTab profile={makeProfile({ is_primary: true })} onProfileChange={() => {}} onSyncToast={() => {}} />);
     expect(screen.getByText('profiles.overview.primary_badge')).toBeDefined();
     expect(screen.queryByRole('button', { name: 'profiles.overview.make_primary' })).toBeNull();
   });
@@ -64,6 +64,7 @@ describe('ProfileOverviewTab', () => {
       <ProfileOverviewTab
         profile={makeProfile({ is_primary: false })}
         onProfileChange={onProfileChange}
+        onSyncToast={() => {}}
       />,
     );
     await user.click(screen.getByRole('button', { name: 'profiles.overview.make_primary' }));
@@ -86,7 +87,7 @@ describe('ProfileOverviewTab', () => {
       new Response(JSON.stringify({ job_id: 'job-123' }), { status: 200 }),
     );
     const user = userEvent.setup();
-    render(<ProfileOverviewTab profile={makeProfile()} onProfileChange={() => {}} />);
+    render(<ProfileOverviewTab profile={makeProfile()} onProfileChange={() => {}} onSyncToast={() => {}} />);
     await user.click(screen.getByRole('button', { name: 'profiles.overview.sync_now' }));
     await waitFor(() => {
       expect(fetchSpy).toHaveBeenCalledWith(
@@ -94,8 +95,21 @@ describe('ProfileOverviewTab', () => {
         expect.objectContaining({ method: 'POST' }),
       );
     });
+  });
+
+  test('Sync Now toast is dispatched via the onSyncToast callback (lifted to parent)', async () => {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ job_id: 'job-1' }), { status: 200 }),
+    );
+    const onSyncToast = vi.fn();
+    const user = userEvent.setup();
+    render(<ProfileOverviewTab profile={makeProfile()} onProfileChange={() => {}} onSyncToast={onSyncToast} />);
+    await user.click(screen.getByRole('button', { name: 'profiles.overview.sync_now' }));
     await waitFor(() => {
-      expect(screen.getByText('profiles.overview.sync_started')).toBeDefined();
+      expect(onSyncToast).toHaveBeenCalledWith({
+        type: 'success',
+        text: 'profiles.overview.sync_started',
+      });
     });
   });
 
@@ -111,7 +125,7 @@ describe('ProfileOverviewTab', () => {
       ),
     );
     const user = userEvent.setup();
-    render(<ProfileOverviewTab profile={makeProfile()} onProfileChange={onProfileChange} />);
+    render(<ProfileOverviewTab profile={makeProfile()} onProfileChange={onProfileChange} onSyncToast={() => {}} />);
     await user.click(screen.getByRole('button', { name: 'profiles.overview.refresh_stats' }));
     await waitFor(() => {
       expect(fetchSpy).toHaveBeenCalledWith(
@@ -132,6 +146,7 @@ describe('ProfileOverviewTab', () => {
       <ProfileOverviewTab
         profile={makeProfile({ is_primary: false })}
         onProfileChange={() => {}}
+        onSyncToast={() => {}}
         demoMode
       />,
     );
@@ -144,12 +159,12 @@ describe('ProfileOverviewTab', () => {
   });
 
   test('shows empty stats hint when stats array is empty', () => {
-    render(<ProfileOverviewTab profile={makeProfile({ stats: [] })} onProfileChange={() => {}} />);
+    render(<ProfileOverviewTab profile={makeProfile({ stats: [] })} onProfileChange={() => {}} onSyncToast={() => {}} />);
     expect(screen.getByText('profiles.overview.no_stats_yet')).toBeDefined();
   });
 
   test('rating card with null rating renders the placeholder', () => {
-    render(<ProfileOverviewTab profile={makeProfile()} onProfileChange={() => {}} />);
+    render(<ProfileOverviewTab profile={makeProfile()} onProfileChange={() => {}} onSyncToast={() => {}} />);
     expect(screen.getByText('profiles.overview.no_rating')).toBeDefined();
   });
 });

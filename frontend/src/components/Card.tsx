@@ -6,12 +6,21 @@ export type CardElement = 'div' | 'section' | 'article';
 export interface CardProps {
   as?: CardElement;
   interactive?: boolean;
+  selected?: boolean;
   onClick?: () => void;
   children?: ComponentChildren;
 }
 
-export function Card({ as = 'div', interactive = false, onClick, children }: CardProps) {
-  const className = `card-surface${interactive ? ' card-surface--interactive' : ''}`;
+export function Card({
+  as = 'div',
+  interactive = false,
+  selected = false,
+  onClick,
+  children,
+}: CardProps) {
+  const className = `card-surface${interactive ? ' card-surface--interactive' : ''}${
+    selected ? ' card-surface--selected' : ''
+  }`;
   const props: Record<string, unknown> = { class: className };
 
   if (interactive) {

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'preact/hooks';
 import { client, ApiError } from '../shared/api';
 import type { Profile } from '../types/profiles';
 import { ProfileList } from './ProfileList';
-import { ProfileOverviewTab } from './ProfileOverviewTab';
+import { ProfileOverviewTab, type OverviewToast } from './ProfileOverviewTab';
 import { ProfilePreferencesTab } from './ProfilePreferencesTab';
 import { AddProfileModal } from './AddProfileModal';
 import { Button } from '../components/Button';
@@ -46,6 +46,10 @@ export function ProfilesApp({ demoMode = false }: ProfilesAppProps) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<DetailTab>('overview');
   const [addOpen, setAddOpen] = useState(false);
+  // Lifted out of ProfileOverviewTab so the "Sync dispatched" toast survives a
+  // tab switch — Tabs unmounts the inactive tab body, which would otherwise
+  // drop the local state and lose the only signal that sync was kicked off.
+  const [syncToast, setSyncToast] = useState<OverviewToast | null>(null);
 
   const loadProfiles = useCallback(async () => {
     try {
@@ -66,11 +70,18 @@ export function ProfilesApp({ demoMode = false }: ProfilesAppProps) {
   useEffect(() => {
     if (!profiles || profiles.length === 0) return;
     const { profileId, tab } = readUrlParams();
-    const target = profileId !== null && profiles.some(p => p.id === profileId)
-      ? profileId
-      : profiles[0]?.id ?? null;
+    const requestedExists = profileId !== null && profiles.some(p => p.id === profileId);
+    const target = requestedExists ? profileId : profiles[0]?.id ?? null;
     setSelectedId(prev => prev ?? target);
     if (tab) setActiveTab(tab);
+
+    // If the URL named a profile that doesn't exist (deleted, wrong link),
+    // strip the bad param so a refresh doesn't keep showing it.
+    if (profileId !== null && !requestedExists && typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('profile_id');
+      window.history.replaceState({}, '', url.toString());
+    }
   }, [profiles]);
 
   const handleSelect = useCallback((id: number) => {
@@ -157,6 +168,7 @@ export function ProfilesApp({ demoMode = false }: ProfilesAppProps) {
   return (
     <div class="profiles-app">
       <Alert type="error" message={error} />
+      {syncToast && <Alert type={syncToast.type} message={syncToast.text} />}
       <aside class="profiles-app__sidebar">
         <ProfileList
           profiles={profiles}
@@ -176,14 +188,22 @@ export function ProfilesApp({ demoMode = false }: ProfilesAppProps) {
             value={activeTab}
             onChange={setActiveTab}
           >
+            {/* `key={selected.id}` forces a fresh mount of the active tab body
+                when the user selects a different profile — the cheapest way
+                to reset Preferences-tab form state without an effect that
+                would otherwise drop typed-but-unsaved edits on parent
+                re-renders. */}
             {activeTab === 'overview' ? (
               <ProfileOverviewTab
+                key={selected.id}
                 profile={selected}
                 onProfileChange={handleProfileChange}
+                onSyncToast={setSyncToast}
                 demoMode={demoMode}
               />
             ) : (
               <ProfilePreferencesTab
+                key={selected.id}
                 profile={selected}
                 onProfileChange={handleProfileChange}
                 onProfileDeleted={handleProfileDeleted}

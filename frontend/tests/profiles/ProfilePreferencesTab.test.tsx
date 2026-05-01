@@ -196,10 +196,15 @@ describe('ProfilePreferencesTab', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  test('switching to a different profile resets the form', () => {
+  test('switching to a different profile resets the form (via key remount)', () => {
+    // Form-reset is now handled by the parent passing `key={profile.id}`,
+    // which forces a fresh mount. Re-rendering without the key change does
+    // NOT reset (intentionally — protects unsaved edits when a sibling
+    // action causes the parent to refresh the same profile object).
     const { rerender } = render(
       <ProfilePreferencesTab
-        profile={makeProfile({ preferences: { auto_sync_enabled: true, sync_max_games: 200 } })}
+        key={1}
+        profile={makeProfile({ id: 1, preferences: { auto_sync_enabled: true, sync_max_games: 200 } })}
         onProfileChange={() => {}}
         onProfileDeleted={() => {}}
       />,
@@ -208,6 +213,7 @@ describe('ProfilePreferencesTab', () => {
     expect((input as HTMLInputElement).value).toBe('200');
     rerender(
       <ProfilePreferencesTab
+        key={99}
         profile={makeProfile({ id: 99, preferences: { auto_sync_enabled: false, sync_max_games: null } })}
         onProfileChange={() => {}}
         onProfileDeleted={() => {}}
@@ -216,6 +222,35 @@ describe('ProfilePreferencesTab', () => {
     const input2 = screen.getByRole('spinbutton');
     expect((input2 as HTMLInputElement).value).toBe('');
     expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('false');
+  });
+
+  test('rerender without key change preserves typed-but-unsaved edits', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <ProfilePreferencesTab
+        profile={makeProfile({ preferences: { auto_sync_enabled: true, sync_max_games: 200 } })}
+        onProfileChange={() => {}}
+        onProfileDeleted={() => {}}
+      />,
+    );
+    // User starts editing — types 50 over the existing 200.
+    const input = screen.getByRole('spinbutton');
+    await user.clear(input);
+    await user.type(input, '50');
+    expect((input as HTMLInputElement).value).toBe('50');
+
+    // Parent re-renders the same profile (e.g. sibling primary-flag mirror).
+    rerender(
+      <ProfilePreferencesTab
+        profile={makeProfile({ preferences: { auto_sync_enabled: true, sync_max_games: 200 } })}
+        onProfileChange={() => {}}
+        onProfileDeleted={() => {}}
+      />,
+    );
+
+    // The user's unsaved "50" is preserved, NOT reset to "200".
+    const preserved = screen.getByRole('spinbutton');
+    expect((preserved as HTMLInputElement).value).toBe('50');
   });
 
   test('demo mode disables both inputs and the save/delete buttons', () => {

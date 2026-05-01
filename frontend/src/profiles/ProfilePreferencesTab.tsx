@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useCallback } from 'preact/hooks';
 import { client, ApiError } from '../shared/api';
 import type { Profile } from '../types/profiles';
 import { Button } from '../components/Button';
@@ -49,13 +49,13 @@ export function ProfilePreferencesTab({
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // Reset form when the selected profile changes from outside.
-  useEffect(() => {
-    setAutoSync(profile.preferences.auto_sync_enabled);
-    setMaxGamesText(maxGamesToString(profile.preferences.sync_max_games));
-    setMaxGamesError(null);
-    setSaveStatus(null);
-  }, [profile]);
+  // Form state is initialized once from `profile` and intentionally NOT
+  // re-synced on parent re-renders — that would silently drop the user's
+  // typed-but-unsaved edits whenever a sibling action (e.g. the Overview
+  // tab promoting this profile) refreshes the parent's profile object.
+  // Per-profile reset is handled by the parent passing `key={profile.id}`
+  // to this component, which forces a fresh mount when the user selects
+  // a different profile.
 
   const handleSave = useCallback(async () => {
     const parsed = parseMaxGames(maxGamesText);

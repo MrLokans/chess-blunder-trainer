@@ -172,6 +172,11 @@
   box-shadow: var(--focus-ring);
 }
 
+.card-surface--selected {
+  background: var(--warm-gray);
+  border-color: var(--blue);
+}
+
 /* --------------------------------------------------------------------------
    FormField — wraps a labelled input with optional help/error text.
    -------------------------------------------------------------------------- */

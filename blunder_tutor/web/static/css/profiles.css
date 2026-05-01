@@ -58,11 +58,6 @@
   display: block;
 }
 
-.profile-list__item--selected .card-surface {
-  background: var(--warm-gray);
-  border-color: var(--blue);
-}
-
 .profile-list__row {
   display: flex;
   align-items: center;
@@ -93,26 +88,6 @@
   font-family: var(--font-sans);
   font-size: var(--text-xs);
   color: var(--mid-gray);
-}
-
-/* --------------------------------------------------------------------------
-   Detail panel placeholder (real content lands in TREK-120/121)
-   -------------------------------------------------------------------------- */
-
-.profiles-detail-placeholder {
-  padding: var(--s-md) 0;
-}
-
-.profiles-detail-placeholder__heading {
-  font-family: var(--font-ui);
-  font-size: var(--text-xl);
-  margin: 0 0 var(--s-sm);
-}
-
-.profiles-detail-placeholder__body {
-  font-family: var(--font-sans);
-  color: var(--mid-gray);
-  margin: 0;
 }
 
 .profiles-add-placeholder {

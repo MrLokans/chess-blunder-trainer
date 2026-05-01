@@ -1,4 +1,5 @@
-import { test, expect, type APIRequestContext, type Page } from '../fixtures/app.fixture';
+import type { APIRequestContext, Page } from '@playwright/test';
+import { test, expect } from '../fixtures/app.fixture';
 
 // `DrNykterstein` is Magnus Carlsen's Lichess account — well-known stable
 // public profile, used here so the create flow's upstream existence check
@@ -46,9 +47,9 @@ async function mockValidate(
   });
 }
 
-test.describe.configure({ mode: 'serial' });
-
 test.describe('Profiles page — five core flows', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeAll(async ({ request }) => {
     await deleteAllProfiles(request);
   });
@@ -104,20 +105,25 @@ test.describe('Profiles page — five core flows', () => {
     await expect(profilesPage.modal).toBeHidden();
   });
 
-  test('4. edit preferences persists across reload', async ({ profilesPage }) => {
+  test('4. edit preferences persists across reload', async ({ profilesPage, page }) => {
     await profilesPage.goto();
     await profilesPage.cardForUsername(REAL_USER).click();
     await profilesPage.tablistPreferences.click();
 
-    // Toggle auto-sync off, set max games to 50.
+    // Toggle auto-sync off, set max games to 50. Wait for the PATCH to land.
     const toggle = profilesPage.autoSyncToggle;
     await expect(toggle).toHaveAttribute('aria-checked', 'true');
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-checked', 'false');
 
     await profilesPage.maxGamesInput.fill('50');
+
+    const patchPromise = page.waitForResponse(
+      (resp) => resp.url().includes('/api/profiles/') && resp.request().method() === 'PATCH',
+    );
     await profilesPage.preferencesSaveButton.click();
-    await expect(profilesPage.page.getByRole('alert')).toContainText(/saved/i);
+    const patchResp = await patchPromise;
+    expect(patchResp.status()).toBe(200);
 
     // Reload + re-select profile. Preferences tab should show the saved values.
     await profilesPage.goto();

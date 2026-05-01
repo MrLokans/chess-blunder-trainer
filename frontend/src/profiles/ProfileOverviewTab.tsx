@@ -1,20 +1,23 @@
 import { useState, useCallback } from 'preact/hooks';
 import { client, ApiError } from '../shared/api';
 import type { Profile } from '../types/profiles';
+import { PLATFORM_LABEL } from '../types/profiles';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { Alert } from '../components/Alert';
 import { RatingCard } from './RatingCard';
 import { formatRelativeAgo } from '../shared/relative-time';
 
-const PLATFORM_LABEL: Record<Profile['platform'], string> = {
-  lichess: 'Lichess',
-  chesscom: 'Chess.com',
-};
+export interface OverviewToast {
+  type: 'success' | 'error';
+  text: string;
+}
 
 export interface ProfileOverviewTabProps {
   profile: Profile;
   onProfileChange: (next: Profile) => void;
+  /** Toast lifted to ProfilesApp so it survives a tab switch. */
+  onSyncToast: (toast: OverviewToast) => void;
   demoMode?: boolean;
 }
 
@@ -23,8 +26,12 @@ interface Status {
   text: string;
 }
 
-export function ProfileOverviewTab({ profile, onProfileChange, demoMode = false }: ProfileOverviewTabProps) {
-  const [syncStatus, setSyncStatus] = useState<Status | null>(null);
+export function ProfileOverviewTab({
+  profile,
+  onProfileChange,
+  onSyncToast,
+  demoMode = false,
+}: ProfileOverviewTabProps) {
   const [refreshStatus, setRefreshStatus] = useState<Status | null>(null);
   const [primaryStatus, setPrimaryStatus] = useState<Status | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -32,18 +39,17 @@ export function ProfileOverviewTab({ profile, onProfileChange, demoMode = false 
   const [promoting, setPromoting] = useState(false);
 
   const handleSync = useCallback(async () => {
-    setSyncStatus(null);
     setSyncing(true);
     try {
       await client.profiles.sync(profile.id);
-      setSyncStatus({ type: 'success', text: t('profiles.overview.sync_started') });
+      onSyncToast({ type: 'success', text: t('profiles.overview.sync_started') });
     } catch (err) {
       const msg = err instanceof ApiError || err instanceof Error ? err.message : t('common.error');
-      setSyncStatus({ type: 'error', text: t('profiles.overview.sync_failed', { error: msg }) });
+      onSyncToast({ type: 'error', text: t('profiles.overview.sync_failed', { error: msg }) });
     } finally {
       setSyncing(false);
     }
-  }, [profile.id]);
+  }, [profile.id, onSyncToast]);
 
   const handleRefreshStats = useCallback(async () => {
     setRefreshStatus(null);
@@ -103,7 +109,9 @@ export function ProfileOverviewTab({ profile, onProfileChange, demoMode = false 
         </div>
       </header>
 
-      <Alert type="error" message={primaryStatus?.type === 'error' ? primaryStatus.text : null} />
+      {primaryStatus?.type === 'error' && (
+        <Alert type="error" message={primaryStatus.text} />
+      )}
 
       <dl class="profile-overview__meta">
         <div class="profile-overview__meta-row">
@@ -146,8 +154,7 @@ export function ProfileOverviewTab({ profile, onProfileChange, demoMode = false 
           {t('profiles.overview.refresh_stats')}
         </Button>
       </div>
-      <Alert type={syncStatus?.type ?? 'success'} message={syncStatus?.text ?? null} />
-      <Alert type={refreshStatus?.type ?? 'success'} message={refreshStatus?.text ?? null} />
+      {refreshStatus && <Alert type={refreshStatus.type} message={refreshStatus.text} />}
     </div>
   );
 }

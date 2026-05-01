@@ -1,5 +1,10 @@
 export type ProfilePlatform = 'lichess' | 'chesscom';
 
+export const PLATFORM_LABEL: Record<ProfilePlatform, string> = {
+  lichess: 'Lichess',
+  chesscom: 'Chess.com',
+};
+
 export interface ProfilePreferences {
   auto_sync_enabled: boolean;
   sync_max_games: number | null;

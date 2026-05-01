@@ -7,6 +7,7 @@ from types import MappingProxyType
 class Feature(StrEnum):
     PAGE_DASHBOARD = "page.dashboard"
     PAGE_MANAGEMENT = "page.management"
+    PAGE_PROFILES = "page.profiles"
 
     TRAINER_THREATS = "trainer.threats"
     TRAINER_TACTICS = "trainer.tactics"
@@ -62,6 +63,7 @@ FEATURE_GROUPS: tuple[FeatureGroup, ...] = (
         (
             Feature.PAGE_DASHBOARD,
             Feature.PAGE_MANAGEMENT,
+            Feature.PAGE_PROFILES,
             Feature.PAGE_IMPORT,
             Feature.PAGE_GAME_REVIEW,
         ),
@@ -110,6 +112,7 @@ FEATURE_LABELS: MappingProxyType[Feature, str] = MappingProxyType(
     {
         Feature.PAGE_DASHBOARD: "settings.features.page_dashboard",
         Feature.PAGE_MANAGEMENT: "settings.features.page_management",
+        Feature.PAGE_PROFILES: "settings.features.page_profiles",
         Feature.TRAINER_THREATS: "settings.features.trainer_threats",
         Feature.TRAINER_TACTICS: "settings.features.trainer_tactics",
         Feature.TRAINER_FILTER_PHASE: "settings.features.trainer_filter_phase",
