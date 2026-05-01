@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from http import HTTPStatus
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -100,87 +99,3 @@ async def test_validate_username_dispatcher():
 @pytest.mark.asyncio
 async def test_validate_username_unknown_platform():
     assert await validate_username("unknown_platform", "test") is False
-
-
-def test_validate_username_api_endpoint(app):
-    with patch(
-        "blunder_tutor.web.api.settings.validate_username",
-        new_callable=AsyncMock,
-        return_value=True,
-    ):
-        resp = app.post(
-            "/api/validate-username",
-            json={"platform": "lichess", "username": "testuser"},
-        )
-        assert resp.status_code == HTTPStatus.OK
-        data = resp.json()
-        assert data["valid"] is True
-        assert data["platform"] == "lichess"
-        assert data["username"] == "testuser"
-
-
-def test_validate_username_api_invalid_platform(app):
-    resp = app.post(
-        "/api/validate-username", json={"platform": "badplatform", "username": "test"}
-    )
-    assert resp.status_code == HTTPStatus.BAD_REQUEST
-
-
-def test_validate_username_api_empty_username(app):
-    resp = app.post(
-        "/api/validate-username", json={"platform": "lichess", "username": ""}
-    )
-    assert resp.status_code == HTTPStatus.BAD_REQUEST
-
-
-def test_setup_returns_import_job_ids(app):
-    with patch(
-        "blunder_tutor.web.api.settings.validate_username",
-        new_callable=AsyncMock,
-        return_value=True,
-    ):
-        resp = app.post("/api/setup", json={"lichess": "testuser", "chesscom": ""})
-        assert resp.status_code == HTTPStatus.OK
-        data = resp.json()
-        assert data["success"] is True
-        assert "import_job_ids" in data
-        assert len(data["import_job_ids"]) == 1
-
-
-def test_setup_returns_multiple_job_ids_for_both_platforms(app):
-    with patch(
-        "blunder_tutor.web.api.settings.validate_username",
-        new_callable=AsyncMock,
-        return_value=True,
-    ):
-        resp = app.post("/api/setup", json={"lichess": "user1", "chesscom": "user2"})
-        assert resp.status_code == HTTPStatus.OK
-        data = resp.json()
-        assert data["success"] is True
-        assert len(data["import_job_ids"]) == 2
-
-
-def test_setup_rejects_invalid_username(app):
-    with patch(
-        "blunder_tutor.web.api.settings.validate_username",
-        new_callable=AsyncMock,
-        return_value=False,
-    ):
-        resp = app.post("/api/setup", json={"lichess": "baduser", "chesscom": ""})
-        assert resp.status_code == HTTPStatus.BAD_REQUEST
-        assert "not found" in resp.json()["detail"].lower()
-
-
-def test_setup_rejects_one_invalid_of_two(app):
-    async def mock_validate(platform: str, username: str) -> bool:
-        return platform == "lichess"
-
-    with patch(
-        "blunder_tutor.web.api.settings.validate_username",
-        side_effect=mock_validate,
-    ):
-        resp = app.post(
-            "/api/setup", json={"lichess": "gooduser", "chesscom": "baduser"}
-        )
-        assert resp.status_code == HTTPStatus.BAD_REQUEST
-        assert "chess.com" in resp.json()["detail"].lower()

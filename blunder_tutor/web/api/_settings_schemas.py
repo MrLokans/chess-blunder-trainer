@@ -11,31 +11,6 @@ SPACED_REPETITION_DAYS_DEFAULT = 30
 SPACED_REPETITION_DAYS_MAX = 365
 
 
-class ValidateUsernameRequest(BaseModel):
-    platform: str = Field(description="Platform: 'lichess' or 'chesscom'")
-    username: str = Field(description="Username to validate")
-
-
-class ValidateUsernameResponse(BaseModel):
-    valid: bool = Field(description="Whether the username exists on the platform")
-    platform: str = Field(description="Platform that was checked")
-    username: str = Field(description="Username that was checked")
-
-
-class SetupRequest(BaseModel):
-    lichess: str = Field(default="", description="Lichess username")
-    chesscom: str = Field(
-        default="", description="Chess.com username (with or without alias)"
-    )
-
-
-class SetupResponse(BaseModel):
-    success: bool = Field(description="Operation success status")
-    import_job_ids: list[str] = Field(
-        default_factory=list, description="Job IDs for triggered imports"
-    )
-
-
 class ThemeColors(BaseModel):
     primary: str = Field(default="#4f6d7a", description="Primary accent color")
     success: str = Field(default="#3d8b6e", description="Success/positive color")

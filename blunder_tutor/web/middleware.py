@@ -150,7 +150,6 @@ DEMO_ALLOWED_MUTATIONS: tuple[tuple[str, re.Pattern], ...] = (
     # `demo_mode`, so the persisted flag is never actually read in demo —
     # the on-disk write is harmless.
     (_HTTP_POST, re.compile(r"^/api/setup/complete$")),
-    (_HTTP_POST, re.compile(r"^/api/validate-username$")),
     (_HTTP_POST, re.compile(r"^/api/profiles/validate$")),
     (_HTTP_POST, re.compile(r"^/api/profiles$")),
     (_HTTP_PATCH, re.compile(r"^/api/profiles/\d+$")),

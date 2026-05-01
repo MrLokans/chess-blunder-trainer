@@ -213,10 +213,3 @@ export interface TrapStatsResponse {
   stats: TrapStat[];
   summary: TrapSummary;
 }
-
-// Setup types
-
-export interface SetupPayload {
-  lichess: string;
-  chesscom: string;
-}

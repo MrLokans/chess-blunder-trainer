@@ -65,9 +65,21 @@ export function ImportSection({ demoMode, configuredUsernames, onImportStarted, 
     }
     setValidationState('checking');
     try {
-      const result = await client.setup.validateUsername(src, uname);
-      setUsernameValid(result.valid);
-      setValidationState(result.valid ? 'valid' : 'invalid');
+      const result = await client.profiles.validate({
+        platform: src as 'lichess' | 'chesscom',
+        username: uname,
+      });
+      // Treat rate_limited as inconclusive — leave the field idle so the
+      // user can retry rather than seeing a false "invalid". Bulk Import's
+      // form gets a full overhaul in TREK-113; this is the minimal swap to
+      // keep it working after /api/validate-username goes away.
+      if (result.rate_limited) {
+        setUsernameValid(null);
+        setValidationState('idle');
+        return;
+      }
+      setUsernameValid(result.exists);
+      setValidationState(result.exists ? 'valid' : 'invalid');
     } catch {
       setUsernameValid(null);
       setValidationState('idle');
@@ -125,9 +137,17 @@ export function ImportSection({ demoMode, configuredUsernames, onImportStarted, 
     if (usernameValid === null && source && username) {
       setValidationState('checking');
       try {
-        const result = await client.setup.validateUsername(source, username);
-        setUsernameValid(result.valid);
-        setValidationState(result.valid ? 'valid' : 'invalid');
+        const result = await client.profiles.validate({
+          platform: source as 'lichess' | 'chesscom',
+          username,
+        });
+        if (result.rate_limited) {
+          setUsernameValid(null);
+          setValidationState('idle');
+        } else {
+          setUsernameValid(result.exists);
+          setValidationState(result.exists ? 'valid' : 'invalid');
+        }
       } catch {
         setUsernameValid(null);
         setValidationState('idle');

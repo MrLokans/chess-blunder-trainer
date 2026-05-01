@@ -3,7 +3,6 @@ import type {
   PuzzleData, SubmitMovePayload, SubmitMoveResponse,
   ReviewData, StarredItem,
   TrapCatalogEntry, TrapStatsResponse, TrapDetailData,
-  SetupPayload,
 } from '../types/api';
 import type {
   ProfilesListResponse,
@@ -147,10 +146,6 @@ interface JobStarted {
   job_id: string;
 }
 
-interface UsernameValidation {
-  valid: boolean;
-}
-
 export const client = {
   system: {
     engineStatus: () => request<{ available: boolean; name?: string; path?: string }>('/api/system/engine'),
@@ -254,10 +249,7 @@ export const client = {
   },
 
   setup: {
-    complete: (data: SetupPayload) => post<{ import_job_ids?: string[] }>('/api/setup', data),
     markComplete: () => post<{ success: boolean }>('/api/setup/complete', {}),
-    validateUsername: (platform: string, username: string) =>
-      post<UsernameValidation>('/api/validate-username', { platform, username }),
   },
 
   auth: {

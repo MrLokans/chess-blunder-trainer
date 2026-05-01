@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from http import HTTPStatus
 import argparse as _ap
 import os as _os
+from http import HTTPStatus
 from pathlib import Path
 
 import httpx
@@ -93,7 +93,7 @@ async def app_client(tmp_path: Path, monkeypatch):
 class TestCsrfMiddleware:
     async def test_same_origin_post_allowed(self, app_client: httpx.AsyncClient):
         r = await app_client.post(
-            "/api/validate-username",
+            "/api/profiles/validate",
             json={"platform": "lichess", "username": "whoever"},
             headers={"Origin": "http://testserver"},
         )
@@ -104,7 +104,7 @@ class TestCsrfMiddleware:
         self, app_client: httpx.AsyncClient
     ):
         r = await app_client.post(
-            "/api/validate-username",
+            "/api/profiles/validate",
             json={"platform": "lichess", "username": "whoever"},
             headers={"Origin": "https://evil.com"},
         )
@@ -120,7 +120,7 @@ class TestCsrfMiddleware:
     ):
         # Httpx doesn't set Origin — simulates CLI / programmatic access.
         r = await app_client.post(
-            "/api/validate-username",
+            "/api/profiles/validate",
             json={"platform": "lichess", "username": "whoever"},
         )
         assert r.status_code != HTTPStatus.FORBIDDEN or r.json().get("error") != "csrf"

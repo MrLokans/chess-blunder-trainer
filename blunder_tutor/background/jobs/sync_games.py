@@ -86,11 +86,12 @@ class SyncGamesJob(BaseJob):
         profile_id = kwargs.get("profile_id")
         if profile_id is not None:
             return await self._execute_for_profile(int(profile_id))
-        # TREK-7.X (Epic 3 setup rewrite): drop the legacy branch + helpers
-        # below when the scheduler always passes profile_id (TREK-108) and
-        # /api/setup is gone. One log per parent dispatch — child sync jobs
-        # iterating over (source, username) do not log again. `info` because
-        # the legacy path is the expected state during the transition window.
+        # /api/setup has been removed. The legacy branch below now serves
+        # only scheduler dispatches that haven't been migrated to per-profile
+        # fan-out (TREK-108) and any remaining /api/sync/start callers.
+        # One log per parent dispatch — child sync jobs iterating over
+        # (source, username) do not log again. `info` because the legacy
+        # path is the expected state during the transition window.
         logger.info(
             f"sync {job_id}: legacy payload without profile_id — "
             f"rows inserted with profile_id=NULL"

@@ -79,10 +79,12 @@ class ImportGamesJob(BaseJob):
         profile_id = kwargs.get("profile_id")
         if profile_id is not None:
             return await self._execute_for_profile(job_id, int(profile_id))
-        # TREK-7.X (Epic 3 setup rewrite): drop the legacy branch + helpers
-        # below when /api/setup is removed and the scheduler always passes
-        # profile_id. `info` rather than `warning` because the legacy path
-        # is the *expected* state for the entire transition window.
+        # /api/setup has been removed; the remaining caller of the legacy
+        # source/username payload is /api/import/start (Bulk Import). Drop
+        # this branch + helpers when TREK-113 replaces ImportSection with
+        # BulkImportPanel (which dispatches via /api/profiles/{id}/sync).
+        # `info` rather than `warning` because the legacy path is the
+        # *expected* state for the entire transition window.
         logger.info(
             f"import {job_id}: legacy payload without profile_id — "
             f"rows inserted with profile_id=NULL"
@@ -114,13 +116,14 @@ class ImportGamesJob(BaseJob):
         )
         return result
 
-    # TREK-7.X (Epic 3 setup rewrite): _execute_legacy and its helpers
-    # (_resolve_max_games override path, _required_source_and_username) are
-    # the legacy username-pair entry-point. Delete this method, the
-    # `override` branch in _resolve_max_games, and _required_source_and_username
-    # when /api/setup and /api/import/start no longer dispatch source/username
-    # without a profile_id. Rows inserted by this branch get profile_id=NULL;
-    # the Epic 3 cleanup migration backfills them by (source, username) match.
+    # _execute_legacy and its helpers (_resolve_max_games override path,
+    # _required_source_and_username) are the legacy username-pair
+    # entry-point — now only reached via /api/import/start (Bulk Import).
+    # Delete this method, the `override` branch in _resolve_max_games, and
+    # _required_source_and_username when TREK-113's BulkImportPanel
+    # replaces ImportSection (dispatching via /api/profiles/{id}/sync
+    # instead). Rows inserted by this branch get profile_id=NULL; the
+    # cleanup migration backfills them by (source, username) match.
     async def _execute_legacy(
         self, job_id: str, kwargs: dict[str, Any]
     ) -> dict[str, Any]:

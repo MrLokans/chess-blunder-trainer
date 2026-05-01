@@ -14,8 +14,13 @@ vi.mock('../../src/shared/api', () => ({
       startImport: vi.fn().mockResolvedValue({ job_id: 'import-job-1' }),
       startSync: vi.fn().mockResolvedValue({}),
     },
-    setup: {
-      validateUsername: vi.fn().mockResolvedValue({ valid: true }),
+    profiles: {
+      validate: vi.fn().mockResolvedValue({
+        exists: true,
+        already_tracked: false,
+        profile_id: null,
+        rate_limited: false,
+      }),
     },
     analysis: {
       status: vi.fn().mockResolvedValue({ status: 'idle' }),

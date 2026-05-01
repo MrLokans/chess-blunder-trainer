@@ -13,12 +13,10 @@ from blunder_tutor.constants import (
     JOB_STATUS_NO_JOBS,
     JOB_STATUS_RUNNING,
     JOB_TYPE_DELETE_ALL_DATA,
-    JOB_TYPE_IMPORT,
 )
 from blunder_tutor.events.event_types import JobExecutionRequestEvent
-from blunder_tutor.fetchers.validation import validate_username
 from blunder_tutor.web.api import _settings_schemas as schemas
-from blunder_tutor.web.api.schemas import ErrorResponse, SuccessResponse
+from blunder_tutor.web.api.schemas import SuccessResponse
 from blunder_tutor.web.dependencies import (
     EventBusDep,
     JobServiceDep,
@@ -27,9 +25,7 @@ from blunder_tutor.web.dependencies import (
 from blunder_tutor.web.request_helpers import _cache_key
 
 if TYPE_CHECKING:
-    from blunder_tutor.events.event_bus import EventBus
     from blunder_tutor.repositories.settings import SettingsRepository
-    from blunder_tutor.services.job_service import JobService
 
 _SECONDS_PER_HOUR = 3600
 _HOURS_PER_DAY = 24
@@ -37,133 +33,6 @@ _DAYS_PER_YEAR = 365
 LOCALE_COOKIE_MAX_AGE_SECONDS = _DAYS_PER_YEAR * _HOURS_PER_DAY * _SECONDS_PER_HOUR
 
 settings_router = APIRouter()
-
-
-@settings_router.post(
-    "/api/validate-username",
-    response_model=schemas.ValidateUsernameResponse,
-    summary="Validate chess platform username",
-    description="Check whether a username exists on the specified chess platform.",
-)
-async def validate_username_endpoint(
-    payload: schemas.ValidateUsernameRequest,
-) -> dict[str, Any]:
-    username = payload.username.strip()
-    platform = payload.platform.strip().lower()
-
-    if platform not in ("lichess", "chesscom"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Platform must be 'lichess' or 'chesscom'",
-        )
-
-    if not username:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Username is required"
-        )
-
-    valid = await validate_username(platform, username)
-    return {"valid": valid, "platform": platform, "username": username}
-
-
-async def _validate_setup_usernames(lichess: str, chesscom: str) -> None:
-    if not lichess and not chesscom:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="At least one username is required (Lichess or Chess.com)",
-        )
-
-    invalid: list[str] = []
-    if lichess and not await validate_username("lichess", lichess):
-        invalid.append(f"Lichess user '{lichess}' not found")
-    if chesscom and not await validate_username("chesscom", chesscom):
-        invalid.append(f"Chess.com user '{chesscom}' not found")
-
-    if invalid:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="; ".join(invalid)
-        )
-
-
-async def _persist_setup_usernames(
-    settings_repo: SettingsRepository, lichess: str, chesscom: str
-) -> None:
-    await settings_repo.write_setting("lichess_username", lichess if lichess else None)
-    await settings_repo.write_setting(
-        "chesscom_username", chesscom if chesscom else None
-    )
-    await settings_repo.mark_setup_completed()
-
-
-async def _trigger_setup_imports(
-    job_service: JobService,
-    event_bus: EventBus,
-    user_id: str,
-    sources: tuple[tuple[str, str], ...],
-    max_games: int,
-) -> list[str]:
-    job_ids: list[str] = []
-    for source, username in sources:
-        if not username:
-            continue
-        job_id = await job_service.create_job(
-            job_type=JOB_TYPE_IMPORT,
-            username=username,
-            source=source,
-            max_games=max_games,
-        )
-        event = JobExecutionRequestEvent.create(
-            job_id=job_id,
-            job_type=JOB_TYPE_IMPORT,
-            user_id=user_id,
-            source=source,
-            username=username,
-            max_games=max_games,
-        )
-        await event_bus.publish(event)
-        job_ids.append(job_id)
-    return job_ids
-
-
-@settings_router.post(
-    "/api/setup",
-    response_model=schemas.SetupResponse,
-    responses={
-        400: {
-            "model": ErrorResponse,
-            "description": "At least one username is required",
-        }
-    },
-    summary="Complete initial setup",
-    description="Configure usernames for Lichess and/or Chess.com accounts. Triggers background import.",
-    deprecated=True,
-)
-async def setup_submit(
-    request: Request,
-    payload: schemas.SetupRequest,
-    settings_repo: SettingsRepoDep,
-    job_service: JobServiceDep,
-    event_bus: EventBusDep,
-    user_ctx: UserContextDep,
-) -> dict[str, Any]:
-    lichess = payload.lichess.strip()
-    chesscom = payload.chesscom.strip()
-
-    await _validate_setup_usernames(lichess, chesscom)
-    await _persist_setup_usernames(settings_repo, lichess, chesscom)
-    request.app.state.setup_completed_cache.invalidate(_cache_key(request))
-
-    max_games_str = await settings_repo.read_setting("sync_max_games")
-    max_games = int(max_games_str) if max_games_str else 100
-
-    import_job_ids = await _trigger_setup_imports(
-        job_service,
-        event_bus,
-        user_ctx.user_id,
-        (("lichess", lichess), ("chesscom", chesscom)),
-        max_games,
-    )
-    return {"success": True, "import_job_ids": import_job_ids}
 
 
 @settings_router.post(
