@@ -543,7 +543,7 @@
   "settings.theme.warning_help": "Advertencias, jugadas del usuario",
   "settings.title": "Ajustes",
   "settings.training.title": "Ajustes de entrenamiento",
-  "setup.already_tracked": "\"{username}\" ya está registrado en otro perfil.",
+  "setup.already_tracked": "\"{username}\" ya está guardado — sincronizaremos este perfil.",
   "setup.analyzing": "Analizando partidas — casi listo...",
   "setup.chesscom_help": "Opcional: déjalo en blanco si no usas Chess.com",
   "setup.chesscom_label": "Nombre de usuario de Chess.com",

@@ -52,11 +52,28 @@ export class ApiError extends Error {
 
 type QueryParams = Record<string, string | number | boolean | null | undefined | string[]>;
 
+function extractErrorMessage(data: ApiErrorResponse): string {
+  // Some endpoints (notably /api/profiles) return structured `detail`
+  // objects like {error, profile_id}; bare `??` would surface them as
+  // "[object Object]" once Error stringifies them. Unwrap a string `error`
+  // field if present, otherwise fall back to a stable JSON dump.
+  const { detail, error } = data;
+  if (typeof detail === 'string') return detail;
+  if (detail && typeof detail === 'object') {
+    const inner = (detail as { error?: unknown; message?: unknown });
+    if (typeof inner.message === 'string') return inner.message;
+    if (typeof inner.error === 'string') return inner.error;
+    return JSON.stringify(detail);
+  }
+  if (typeof error === 'string') return error;
+  return 'Request failed';
+}
+
 async function request<T = unknown>(url: string, options: RequestInit = {}): Promise<T> {
   const resp = await fetch(url, options);
   if (!resp.ok) {
     const data = await resp.json().catch(() => ({})) as ApiErrorResponse;
-    throw new ApiError(resp.status, data.detail ?? data.error ?? 'Request failed');
+    throw new ApiError(resp.status, extractErrorMessage(data));
   }
   // 204 No Content and same-class responses have empty bodies; calling
   // .json() on them throws SyntaxError. Return `undefined` cast to T so
@@ -69,7 +86,7 @@ async function requestText(url: string, options: RequestInit = {}): Promise<stri
   const resp = await fetch(url, options);
   if (!resp.ok) {
     const data = await resp.json().catch(() => ({})) as ApiErrorResponse;
-    throw new ApiError(resp.status, data.detail ?? data.error ?? 'Request failed');
+    throw new ApiError(resp.status, extractErrorMessage(data));
   }
   return resp.text();
 }

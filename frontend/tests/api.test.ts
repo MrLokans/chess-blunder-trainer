@@ -118,6 +118,23 @@ describe('request error handling', () => {
       expect((err as ApiError).message).toBe('Request failed');
     }
   });
+
+  it('unwraps structured detail.error from object payloads', async () => {
+    // /api/profiles returns FastAPI HTTPException with a dict detail like
+    // {"error": "already_tracked", "profile_id": 1}. The error message
+    // surfaced to UI must be a string, not "[object Object]".
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 409,
+      json: () => Promise.resolve({ detail: { error: 'already_tracked', profile_id: 1 } }),
+    }));
+    try {
+      await client.profiles.create({ platform: 'lichess', username: 'x' });
+    } catch (err) {
+      expect((err as ApiError).message).toBe('already_tracked');
+      expect((err as ApiError).message).not.toContain('[object Object]');
+    }
+  });
 });
 
 describe('POST requests', () => {

@@ -21,7 +21,11 @@ export interface BlunderPuzzle {
 }
 
 export interface ApiErrorResponse {
-  detail?: string;
+  // FastAPI returns `detail` as a string for HTTPException(detail="...") and
+  // as a dict (e.g. {"error": "already_tracked", "profile_id": 1}) when the
+  // handler raises with a structured payload. The shared error extractor
+  // unwraps both shapes.
+  detail?: string | Record<string, unknown>;
   error?: string;
 }
 

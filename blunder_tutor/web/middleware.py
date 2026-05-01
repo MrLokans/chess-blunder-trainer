@@ -145,6 +145,10 @@ DEMO_ALLOWED_MUTATIONS: tuple[tuple[str, re.Pattern], ...] = (
     (_HTTP_POST, re.compile(r"^/api/submit$")),
     (_HTTP_POST, re.compile(r"^/api/analyze$")),
     (_HTTP_POST, re.compile(r"^/api/settings/locale$")),
+    # `/api/setup/complete` is allowed in demo mode for symmetry with the
+    # rewritten Setup flow; SetupCheckMiddleware short-circuits on
+    # `demo_mode`, so the persisted flag is never actually read in demo —
+    # the on-disk write is harmless.
     (_HTTP_POST, re.compile(r"^/api/setup/complete$")),
     (_HTTP_POST, re.compile(r"^/api/validate-username$")),
     (_HTTP_POST, re.compile(r"^/api/profiles/validate$")),

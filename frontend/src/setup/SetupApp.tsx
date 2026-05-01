@@ -27,12 +27,18 @@ interface SetupPhase {
 
 function FieldStatus({ state, username }: { state: ValidationState; username: string }) {
   if (state === 'idle') return null;
+  // `already_tracked` is informational, not an error: the submit path
+  // recovers via `knownProfileId` and skips the create. Rendering it
+  // green-ish ('valid') keeps visual signal consistent with behavior.
+  // `rate_limited` is a soft warning that the submit path treats as
+  // blocking — yellow keeps it distinct from both red (invalid) and
+  // green (valid).
   const classMap: Record<ValidationState, string> = {
     idle: '',
     checking: 'field-validation checking',
     valid: 'field-validation valid',
     invalid: 'field-validation invalid',
-    already_tracked: 'field-validation invalid',
+    already_tracked: 'field-validation valid',
     rate_limited: 'field-validation warning',
   };
   const labelMap: Record<ValidationState, string> = {
@@ -43,7 +49,11 @@ function FieldStatus({ state, username }: { state: ValidationState; username: st
     already_tracked: t('setup.already_tracked', { username }),
     rate_limited: t('setup.rate_limited', { username }),
   };
-  return <span class={classMap[state]}>{labelMap[state]}</span>;
+  return (
+    <span class={classMap[state]} role="status" aria-live="polite">
+      {labelMap[state]}
+    </span>
+  );
 }
 
 function classifyValidation(result: ProfileValidateResponse): ValidationState {
@@ -165,6 +175,15 @@ export function SetupApp() {
     if (chesscomUsername && chesscomState === 'invalid') {
       errors.push(t('setup.chesscom_not_found', { username: chesscomUsername }));
     }
+    // Block the submit when either upstream check came back rate-limited;
+    // letting it through means `client.profiles.create`'s own existence
+    // check would 503 with an unfriendly server message.
+    if (lichessUsername && lichessState === 'rate_limited') {
+      errors.push(t('setup.rate_limited', { username: lichessUsername }));
+    }
+    if (chesscomUsername && chesscomState === 'rate_limited') {
+      errors.push(t('setup.rate_limited', { username: chesscomUsername }));
+    }
     return errors;
   }
 
@@ -268,6 +287,9 @@ export function SetupApp() {
 
     try {
       const jobIds: string[] = [];
+      // Sequential, not Promise.all: a failed Lichess create should abort
+      // before we kick off Chess.com. Promise.all would force per-result
+      // error mapping and split-success semantics.
       for (const { platform, username, knownProfileId } of submissions) {
         const jobId = await dispatchProfileSubmission(platform, username, knownProfileId);
         jobIds.push(jobId);

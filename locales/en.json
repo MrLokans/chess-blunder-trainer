@@ -543,7 +543,7 @@
   "settings.theme.warning_help": "Warnings, user moves",
   "settings.title": "Settings",
   "settings.training.title": "Training Settings",
-  "setup.already_tracked": "\"{username}\" is already tracked under another profile.",
+  "setup.already_tracked": "\"{username}\" is already saved — we'll sync this profile.",
   "setup.analyzing": "Analyzing games — almost ready...",
   "setup.chesscom_help": "Optional: Leave blank if you don't use Chess.com",
   "setup.chesscom_label": "Chess.com Username",

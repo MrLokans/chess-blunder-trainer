@@ -543,7 +543,7 @@
   "settings.theme.warning_help": "Попередження, ходи користувача",
   "settings.title": "Налаштування",
   "settings.training.title": "Налаштування тренування",
-  "setup.already_tracked": "Профіль «{username}» уже відстежується.",
+  "setup.already_tracked": "«{username}» уже збережено — синхронізуємо цей профіль.",
   "setup.analyzing": "Аналізуємо партії — майже готово...",
   "setup.chesscom_help": "Необов'язково: залиште порожнім, якщо не користуєтеся Chess.com",
   "setup.chesscom_label": "Ім'я користувача Chess.com",

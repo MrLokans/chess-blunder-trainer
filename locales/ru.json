@@ -543,7 +543,7 @@
   "settings.theme.warning_help": "Предупреждения, ходы пользователя",
   "settings.title": "Настройки",
   "settings.training.title": "Настройки тренировки",
-  "setup.already_tracked": "Профиль «{username}» уже отслеживается.",
+  "setup.already_tracked": "«{username}» уже сохранён — синхронизируем этот профиль.",
   "setup.analyzing": "Анализируем партии — почти готово...",
   "setup.chesscom_help": "Необязательно: оставьте пустым, если не используете Chess.com",
   "setup.chesscom_label": "Имя на Chess.com",

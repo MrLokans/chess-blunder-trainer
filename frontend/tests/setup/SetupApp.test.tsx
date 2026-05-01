@@ -8,47 +8,61 @@ vi.mock('../../src/shared/api', async () => {
   return {
     ...actual,
     client: {
-      profiles: {
-        validate: vi.fn().mockResolvedValue({
-          exists: true,
-          already_tracked: false,
-          profile_id: null,
-          rate_limited: false,
-        }),
-        create: vi.fn().mockImplementation(({ platform, username }: { platform: string; username: string }) =>
-          Promise.resolve({
-            id: platform === 'lichess' ? 1 : 2,
-            platform,
-            username,
-            is_primary: true,
-            created_at: '2026-05-01T00:00:00Z',
-            last_validated_at: null,
-            preferences: { auto_sync_enabled: true, sync_max_games: null },
-            stats: [],
-            last_game_sync_at: null,
-            last_stats_sync_at: null,
-          }),
-        ),
-        sync: vi.fn().mockResolvedValue({ job_id: 'job1' }),
-      },
-      setup: {
-        markComplete: vi.fn().mockResolvedValue({ success: true }),
-      },
-      analysis: {
-        status: vi.fn().mockResolvedValue({ status: 'idle' }),
-      },
-      jobs: {
-        getImportStatus: vi.fn().mockResolvedValue({ status: 'completed' }),
-      },
+      profiles: { validate: vi.fn(), create: vi.fn(), sync: vi.fn() },
+      setup: { markComplete: vi.fn() },
+      analysis: { status: vi.fn() },
+      jobs: { getImportStatus: vi.fn() },
     },
   };
 });
 
 import { client } from '../../src/shared/api';
 
+const VALIDATE_OK = {
+  exists: true,
+  already_tracked: false,
+  profile_id: null,
+  rate_limited: false,
+};
+
+// Full per-test reset: mockReset() also drains queued mockResolvedValueOnce
+// values that mockClear() leaves behind. Without this, an Once override that
+// outlives its test (because the source called it fewer times than queued)
+// leaks into the next test as a phantom return value.
+function resetClientDefaults() {
+  const allMocks = [
+    client.profiles.validate,
+    client.profiles.create,
+    client.profiles.sync,
+    client.setup.markComplete,
+    client.analysis.status,
+    client.jobs.getImportStatus,
+  ];
+  for (const m of allMocks) vi.mocked(m).mockReset();
+  vi.mocked(client.profiles.validate).mockResolvedValue(VALIDATE_OK);
+  vi.mocked(client.profiles.create).mockImplementation(({ platform, username }) =>
+    Promise.resolve({
+      id: platform === 'lichess' ? 1 : 2,
+      platform,
+      username,
+      is_primary: true,
+      created_at: '2026-05-01T00:00:00Z',
+      last_validated_at: null,
+      preferences: { auto_sync_enabled: true, sync_max_games: null },
+      stats: [],
+      last_game_sync_at: null,
+      last_stats_sync_at: null,
+    }),
+  );
+  vi.mocked(client.profiles.sync).mockResolvedValue({ job_id: 'job1' });
+  vi.mocked(client.setup.markComplete).mockResolvedValue({ success: true });
+  vi.mocked(client.analysis.status).mockResolvedValue({ status: 'idle' });
+  vi.mocked(client.jobs.getImportStatus).mockResolvedValue({ status: 'completed' });
+}
+
 describe('SetupApp', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    resetClientDefaults();
     Object.defineProperty(window, 'location', {
       value: { href: '' },
       writable: true,
@@ -177,6 +191,26 @@ describe('SetupApp', () => {
     vi.useRealTimers();
   });
 
+  test('blocks submit when validation is rate-limited', async () => {
+    // Once-values cover the synchronous submit-time call plus the eventual
+    // debounced re-validation; using a persistent mockResolvedValue here
+    // would leak the rate_limited base into later tests.
+    vi.mocked(client.profiles.validate)
+      .mockResolvedValueOnce({
+        exists: false, already_tracked: false, profile_id: null, rate_limited: true,
+      })
+      .mockResolvedValueOnce({
+        exists: false, already_tracked: false, profile_id: null, rate_limited: true,
+      });
+    render(<SetupApp />);
+    fireEvent.input(screen.getByLabelText(t('setup.lichess_label')), { target: { value: 'flaky' } });
+    fireEvent.click(screen.getByRole('button', { name: t('setup.submit') }));
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeDefined();
+    });
+    expect(client.profiles.create).not.toHaveBeenCalled();
+  });
+
   test('creates one profile + dispatches one sync when only Lichess filled', async () => {
     render(<SetupApp />);
     const lichessInput = screen.getByLabelText(t('setup.lichess_label'));
@@ -233,6 +267,34 @@ describe('SetupApp', () => {
       expect(screen.getByRole('alert')).toBeDefined();
       expect(screen.getByText('Server error')).toBeDefined();
     });
+  });
+
+  test('reuses already_tracked profile_id at submit (partial-success retry)', async () => {
+    // Scenario: a previous submit created the Lichess profile but the
+    // Chess.com create failed mid-flight. User retries: validate now reports
+    // already_tracked=true with a profile_id, the submit path skips create
+    // and goes straight to sync — exactly what `knownProfileId` exists for.
+    vi.mocked(client.profiles.validate).mockResolvedValue({
+      exists: true,
+      already_tracked: true,
+      profile_id: 7,
+      rate_limited: false,
+    });
+    vi.useFakeTimers();
+    render(<SetupApp />);
+    fireEvent.input(screen.getByLabelText(t('setup.lichess_label')), { target: { value: 'recovered' } });
+    vi.advanceTimersByTime(600);
+    await waitFor(() => {
+      expect(client.profiles.validate).toHaveBeenCalled();
+    });
+    vi.useRealTimers();
+
+    fireEvent.click(screen.getByRole('button', { name: t('setup.submit') }));
+    await waitFor(() => {
+      expect(client.profiles.sync).toHaveBeenCalledWith(7);
+      expect(client.setup.markComplete).toHaveBeenCalledTimes(1);
+    });
+    expect(client.profiles.create).not.toHaveBeenCalled();
   });
 
   test('recovers from 409 conflict by recovering profile_id from validate', async () => {
