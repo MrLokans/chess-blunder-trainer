@@ -55,15 +55,6 @@ class SettingsRequest(BaseModel):
     theme: ThemeColors | None = Field(default=None, description="Theme color settings")
 
 
-class UsernamesResponse(BaseModel):
-    lichess_username: str | None = Field(
-        None, description="Configured Lichess username"
-    )
-    chesscom_username: str | None = Field(
-        None, description="Configured Chess.com username"
-    )
-
-
 class SettingsResponse(BaseModel):
     lichess_username: str | None = Field(None, description="Lichess username")
     chesscom_username: str | None = Field(None, description="Chess.com username")

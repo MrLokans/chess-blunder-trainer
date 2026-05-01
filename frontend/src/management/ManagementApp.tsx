@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { client } from '../shared/api';
+import { BulkImportPanel } from '../components/BulkImportPanel';
 import { JobCard } from '../components/JobCard';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { debounce } from '../shared/debounce';
 import type { ExternalJobStatus } from '../components/JobCard';
-import { ImportSection } from './ImportSection';
-import type { ConfiguredUsernames } from './ImportSection';
+import type { Profile } from '../types/profiles';
 import { DangerSection } from './DangerSection';
 
 interface ManagementInit {
@@ -172,7 +172,8 @@ function JobsSection({ jobsRefreshKey }: JobsSectionProps) {
 }
 
 export function ManagementApp({ demoMode }: ManagementInit) {
-  const [configuredUsernames, setConfiguredUsernames] = useState<ConfiguredUsernames>({});
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profilesLoading, setProfilesLoading] = useState(true);
   const [importJobId, setImportJobId] = useState<string | null>(null);
   const [jobsRefreshKey, setJobsRefreshKey] = useState(0);
 
@@ -186,10 +187,12 @@ export function ManagementApp({ demoMode }: ManagementInit) {
   useEffect(() => {
     async function load() {
       try {
-        const usernames = await client.settings.getUsernames();
-        setConfiguredUsernames(usernames);
+        const resp = await client.profiles.list();
+        setProfiles(resp.profiles);
       } catch (err) {
-        console.error('Failed to load configured usernames:', err);
+        console.error('Failed to load profiles:', err);
+      } finally {
+        setProfilesLoading(false);
       }
     }
     void load();
@@ -276,12 +279,20 @@ export function ManagementApp({ demoMode }: ManagementInit) {
 
       <hr class="section-divider" />
 
-      <ImportSection
-        demoMode={demoMode}
-        configuredUsernames={configuredUsernames}
-        onImportStarted={handleImportStarted}
-        importJobStatus={importStatus}
-      />
+      <section>
+        <h2>{t('management.import.title')}</h2>
+        {demoMode ? (
+          <p class="section-description">{t('demo.disabled_action')}</p>
+        ) : (
+          <BulkImportPanel
+            profiles={profiles}
+            loading={profilesLoading}
+            demoMode={demoMode}
+            externalStatus={importStatus}
+            onImportStarted={handleImportStarted}
+          />
+        )}
+      </section>
 
       <hr class="section-divider" />
 

@@ -55,21 +55,6 @@ async def setup_complete(
 
 
 @settings_router.get(
-    "/api/settings/usernames",
-    response_model=schemas.UsernamesResponse,
-    summary="Get configured usernames",
-    description="Retrieve the currently configured usernames for Lichess and Chess.com.",
-)
-async def get_usernames(settings_repo: SettingsRepoDep) -> dict[str, Any]:
-    usernames = await settings_repo.get_configured_usernames()
-
-    return {
-        "lichess_username": usernames.get("lichess"),
-        "chesscom_username": usernames.get("chesscom"),
-    }
-
-
-@settings_router.get(
     "/api/settings",
     response_model=schemas.SettingsResponse,
     summary="Get all settings",

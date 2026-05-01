@@ -204,7 +204,6 @@ export const client = {
   settings: {
     get: () => request<SyncSettings>('/api/settings'),
     save: (data: SyncSettings & { theme: ThemeColors }) => post('/api/settings', data),
-    getUsernames: () => request<{ lichess_username?: string; chesscom_username?: string }>('/api/settings/usernames'),
     getTheme: () => request<ThemeColors>('/api/settings/theme'),
     getThemePresets: () => request<{ presets: ThemePreset[] }>('/api/settings/theme/presets'),
     getBoard: () => request<BoardSettings>('/api/settings/board'),
