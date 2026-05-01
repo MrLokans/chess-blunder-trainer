@@ -38,15 +38,4 @@ export default [
       sourceType: 'script',
     },
   },
-  {
-    files: ['tests_fe/**/*.js'],
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
-      globals: {
-        ...globals.node,
-        Chess: 'readonly',
-      },
-    },
-  },
 ];

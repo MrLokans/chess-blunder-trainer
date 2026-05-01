@@ -7,7 +7,6 @@ hooks = [
     { id = "end-of-file-fixer" },
     { id = "check-added-large-files", args = ["--maxkb=500"] },
     { id = "check-merge-conflict" },
-
 ]
 
 [[repos]]
@@ -28,12 +27,46 @@ language = "system"
 types = ["python"]
 
 [[repos.hooks]]
-id = "eslint"
-name = "eslint"
+id = "eslint-static"
+name = "eslint (static/js)"
 entry = "npx eslint --fix"
 language = "system"
 types = ["javascript"]
-files = "blunder_tutor/web/static/js/"
+files = "^blunder_tutor/web/static/js/"
+
+[[repos.hooks]]
+id = "eslint-frontend"
+name = "eslint (frontend)"
+entry = "npm run lint:fix"
+language = "system"
+pass_filenames = false
+files = "^frontend/(src|tests)/.+\\.(ts|tsx)$"
+
+[[repos.hooks]]
+id = "i18n-lint"
+name = "i18n lint"
+entry = "uv run python scripts/lint_i18n.py --strict"
+language = "system"
+pass_filenames = false
+files = "^(locales/|frontend/src/|frontend/tests/|templates/|blunder_tutor/web/static/js/).+\\.(json|ts|tsx|js|html|py)$"
+
+[[repos.hooks]]
+id = "wps"
+name = "wemake-python-styleguide"
+entry = "uv run flake8 --select=WPS blunder_tutor/ main.py tests/"
+language = "system"
+pass_filenames = false
+types = ["python"]
+stages = ["pre-push"]
+
+[[repos.hooks]]
+id = "typecheck-fe"
+name = "frontend typecheck (tsc)"
+entry = "npm run typecheck"
+language = "system"
+pass_filenames = false
+files = "^frontend/.+\\.(ts|tsx)$"
+stages = ["pre-push"]
 
 [[repos.hooks]]
 id = "pytest"
@@ -44,11 +77,10 @@ pass_filenames = false
 stages = ["pre-push"]
 
 [[repos.hooks]]
-id = "fe-tests"
-name = "frontend tests"
-entry = "node --test"
+id = "vitest"
+name = "vitest (frontend)"
+entry = "npm run test"
 language = "system"
 pass_filenames = false
-files = "(blunder_tutor/web/static/js/|tests_fe/)"
-types = ["javascript"]
+files = "^frontend/.+\\.(ts|tsx)$"
 stages = ["pre-push"]
