@@ -1,3 +1,7 @@
+# flake8: noqa: WPS202
+# Pydantic request/response schemas for every /api/profiles/* endpoint.
+# All members are part of one resource's API contract; splitting across
+# files would just spread cross-references with no clarity gain.
 from __future__ import annotations
 
 from typing import Literal, Self
@@ -48,6 +52,18 @@ class ProfileShape(BaseModel):
 
 class ProfilesListResponse(BaseModel):
     profiles: list[ProfileShape]
+
+
+class ProfileSyncDispatchResponse(BaseModel):
+    job_id: str = Field(
+        description="ID of the background_jobs row created for this sync. "
+        "UI polls /api/import/status/{job_id} for progress."
+    )
+
+
+class ProfileStatsRefreshResponse(BaseModel):
+    stats: list[StatsSnapshotShape]
+    last_validated_at: str | None
 
 
 class ProfileCreateRequest(BaseModel):

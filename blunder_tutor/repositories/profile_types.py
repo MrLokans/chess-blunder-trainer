@@ -30,6 +30,32 @@ class ProfileStatSnapshot:
     synced_at: str | None = None
 
 
+@dataclass(frozen=True)
+class ProfileSyncCandidate:
+    """Scheduler-facing tuple for both game-sync and stats-sync dispatch.
+
+    Surfaces every profile with `auto_sync_enabled = 1` plus the data
+    each dispatcher needs to decide "is this one due?":
+    - stats dispatcher uses `last_stats_sync_at` (from `profile_stats`).
+    - game-sync dispatcher uses `platform` + `username` to look up
+      the most recent completed import/sync job in `background_jobs`.
+
+    `last_stats_sync_at` is `None` for a profile that has never synced
+    stats (first-sync path; treated as overdue).
+
+    The shape works because both consumers ignore exactly one field
+    each. If a third consumer (or a JOIN-folded `last_game_sync_at`)
+    arrives, prefer adding a separate repo method that returns a
+    purpose-built dataclass over growing this one — the symmetry is
+    what makes the current shape sustainable.
+    """
+
+    profile_id: int
+    platform: str
+    username: str
+    last_stats_sync_at: str | None
+
+
 class ProfileNotFoundError(LookupError):
     """Raised when a profile lookup by id finds no row."""
 
@@ -63,4 +89,5 @@ class ProfileRepository(Protocol):
         self, profile_id: int, snapshots: list[ProfileStatSnapshot]
     ) -> None: ...
     async def list_stats(self, profile_id: int) -> list[ProfileStatSnapshot]: ...
+    async def list_auto_sync_candidates(self) -> list[ProfileSyncCandidate]: ...
     async def touch_validated_at(self, profile_id: int) -> None: ...

@@ -10,6 +10,7 @@ from blunder_tutor.repositories.profile_types import (
     ProfileNotFoundError,
     ProfilePreferences,
     ProfileStatSnapshot,
+    ProfileSyncCandidate,
 )
 
 # Per-game tables that participate in the cascade-delete path. Children are
@@ -292,6 +293,45 @@ class SqliteProfileRepository(BaseDbRepository):
         ) as cursor:
             rows = await cursor.fetchall()
         return [_row_to_stat(row) for row in rows]
+
+    async def list_auto_sync_candidates(self) -> list[ProfileSyncCandidate]:
+        """Return profiles eligible for auto sync, with their latest
+        `profile_stats.synced_at` plus enough identity (`platform`,
+        `username`) for the game-sync dispatcher to look up its own
+        last-sync time in `background_jobs`. The repo just narrows by
+        `auto_sync_enabled = 1` and joins in the stats timestamp; the
+        scheduler does the time-based due-vs-fresh filtering.
+
+        `LEFT JOIN` so a profile that has never synced stats still
+        surfaces with `last_stats_sync_at = None` — the first-sync
+        path the scheduler treats as overdue.
+        """
+        conn = await self.get_connection()
+        async with conn.execute(
+            """
+            SELECT
+                p.id AS profile_id,
+                p.platform AS platform,
+                p.username AS username,
+                MAX(ps.synced_at) AS last_stats_sync_at
+            FROM profile p
+            JOIN profile_preferences pp ON pp.profile_id = p.id
+            LEFT JOIN profile_stats ps ON ps.profile_id = p.id
+            WHERE pp.auto_sync_enabled = 1
+            GROUP BY p.id
+            ORDER BY p.id
+            """
+        ) as cursor:
+            rows = await cursor.fetchall()
+        return [
+            ProfileSyncCandidate(
+                profile_id=row["profile_id"],
+                platform=row["platform"],
+                username=row["username"],
+                last_stats_sync_at=row["last_stats_sync_at"],
+            )
+            for row in rows
+        ]
 
     async def touch_validated_at(self, profile_id: int) -> None:
         now = _now_iso()

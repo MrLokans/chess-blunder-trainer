@@ -132,6 +132,13 @@ def _extract_host(url: str) -> str | None:
     return after_scheme.split(":", 1)[0].lower()
 
 
+# EPIC-6 (Profile UI / Epic 4) deferral: `POST /api/profiles/{id}/sync`
+# and `POST /api/profiles/{id}/stats/refresh` are intentionally NOT
+# allowed here despite the spec listing them. Both hit real upstream
+# providers against the real per-user DB; allowing them in demo mode
+# without an in-memory profile repo (Epic 4 scope) would let demo users
+# drive lichess/chess.com requests through the origin. Add them to this
+# allowlist together with the in-memory repo.
 DEMO_ALLOWED_MUTATIONS: tuple[tuple[str, re.Pattern], ...] = (
     (_HTTP_POST, re.compile(r"^/api/submit$")),
     (_HTTP_POST, re.compile(r"^/api/analyze$")),

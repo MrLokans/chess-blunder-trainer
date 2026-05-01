@@ -5,7 +5,16 @@ import sqlite3
 import aiosqlite
 from fastapi import APIRouter, HTTPException, Response, status
 
-from blunder_tutor.repositories.profile import ProfileNotFoundError
+from blunder_tutor.auth.fastapi import UserContextDep
+from blunder_tutor.background.jobs.stats_sync import fetch_stats_for_profile
+from blunder_tutor.constants import JOB_TYPE_IMPORT
+from blunder_tutor.events.event_types import JobExecutionRequestEvent
+from blunder_tutor.fetchers import RateLimitError
+from blunder_tutor.repositories.profile import (
+    ProfileNotFoundError,
+    SqliteProfileRepository,
+)
+from blunder_tutor.repositories.profile_types import Profile
 from blunder_tutor.web.api._profile_helpers import (
     apply_patch_identity,
     apply_patch_preferences,
@@ -19,11 +28,19 @@ from blunder_tutor.web.api._profile_schemas import (
     ProfileCreateRequest,
     ProfileShape,
     ProfilesListResponse,
+    ProfileStatsRefreshResponse,
+    ProfileSyncDispatchResponse,
     ProfileUpdateRequest,
     ProfileValidateRequest,
     ProfileValidateResponse,
+    StatsSnapshotShape,
 )
-from blunder_tutor.web.dependencies import JobRepoDep, ProfileRepoDep
+from blunder_tutor.web.dependencies import (
+    EventBusDep,
+    JobRepoDep,
+    JobServiceDep,
+    ProfileRepoDep,
+)
 
 profiles_router = APIRouter()
 
@@ -168,6 +185,127 @@ async def update_profile(
         ) from exc
     return await finalize_patch(
         repo, jobs, profile_id=profile_id, confirmed_existence=confirmed
+    )
+
+
+@profiles_router.post(
+    "/api/profiles/{profile_id}/sync",
+    response_model=ProfileSyncDispatchResponse,
+    summary="Trigger a manual game sync for a profile",
+    description=(
+        "Dispatches a background `JOB_TYPE_IMPORT` job for the profile "
+        "and returns its `job_id`. The UI polls "
+        "`/api/import/status/{job_id}` for progress, same shape as the "
+        "Bulk Import flow."
+    ),
+)
+async def trigger_profile_sync(
+    profile_id: int,
+    repo: ProfileRepoDep,
+    job_service: JobServiceDep,
+    event_bus: EventBusDep,
+    user_ctx: UserContextDep,
+) -> ProfileSyncDispatchResponse:
+    profile = await repo.get(profile_id)
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="profile not found",
+        )
+
+    # Manual trigger uses `JOB_TYPE_IMPORT` (backfill semantics, capped by
+    # `preferences.sync_max_games` or the global default) rather than
+    # `JOB_TYPE_SYNC` (incremental from last sync) — spec choice. The user
+    # clicking "Sync Now" gets a fresh pull; the scheduler's auto-sync
+    # path uses `JOB_TYPE_SYNC` for incremental fetches.
+    job_id = await job_service.create_job(
+        job_type=JOB_TYPE_IMPORT,
+        username=profile.username,
+        source=profile.platform,
+    )
+    event = JobExecutionRequestEvent.create(
+        job_id=job_id,
+        job_type=JOB_TYPE_IMPORT,
+        user_id=user_ctx.user_id,
+        profile_id=profile.id,
+    )
+    await event_bus.publish(event)
+    return ProfileSyncDispatchResponse(job_id=job_id)
+
+
+@profiles_router.post(
+    "/api/profiles/{profile_id}/stats/refresh",
+    response_model=ProfileStatsRefreshResponse,
+    summary="Synchronously refresh a profile's per-mode stats",
+    description=(
+        "One cheap upstream HTTP call: fetches per-mode rating + games "
+        "count, UPSERTs `profile_stats`, touches `last_validated_at`, "
+        "and returns the refreshed snapshot. Returns 429 with "
+        "`rate_limited: true` when the upstream provider is rate-limiting "
+        "the existence check."
+    ),
+)
+async def refresh_profile_stats(
+    profile_id: int,
+    repo: ProfileRepoDep,
+) -> ProfileStatsRefreshResponse:
+    profile = await repo.get(profile_id)
+    if profile is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="profile not found",
+        )
+
+    try:
+        await _do_stats_refresh(repo, profile)
+    except RateLimitError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={"error": "rate_limited", "rate_limited": True},
+        ) from exc
+
+    return await _build_stats_refresh_response(repo, profile_id)
+
+
+async def _do_stats_refresh(repo: SqliteProfileRepository, profile: Profile) -> None:
+    """Fetch + upsert + touch_validated_at — the write path of stats refresh.
+
+    Split from `_build_stats_refresh_response` so the upstream-error window
+    (`RateLimitError` → 429) is bounded to the write path and doesn't
+    overlap with the post-write read (which can race against a concurrent
+    profile delete and surface as 404).
+    """
+    snapshots = await fetch_stats_for_profile(profile)
+    if snapshots:
+        await repo.upsert_stats(profile.id, snapshots)
+    await repo.touch_validated_at(profile.id)
+
+
+async def _build_stats_refresh_response(
+    repo: SqliteProfileRepository, profile_id: int
+) -> ProfileStatsRefreshResponse:
+    refreshed = await repo.get(profile_id)
+    if refreshed is None:
+        # Profile was deleted concurrently with this refresh. Return 404
+        # rather than a stale shape — the upserted stats rows are now
+        # orphaned (next operation against this profile_id will fail).
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="profile not found",
+        )
+
+    stats_rows = await repo.list_stats(profile_id)
+    return ProfileStatsRefreshResponse(
+        stats=[
+            StatsSnapshotShape(
+                mode=row.mode,
+                rating=row.rating,
+                games_count=row.games_count,
+                synced_at=row.synced_at,
+            )
+            for row in stats_rows
+        ],
+        last_validated_at=refreshed.last_validated_at,
     )
 
 

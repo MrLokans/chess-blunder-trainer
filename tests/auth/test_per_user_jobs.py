@@ -34,6 +34,7 @@ from blunder_tutor.core.dependencies import (
 )
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import EventType, JobExecutionRequestEvent
+from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.web.bypass_auth import LOCAL_USER_ID
 from tests.auth.conftest import (
     DEFAULT_PASSWORD,
@@ -180,7 +181,10 @@ class TestTwoUserJobIsolation:
 class TestFanoutSchedulerDispatchesPerUser:
     """The fanout tick reads each user's settings on its own DB, so a
     user with auto-sync enabled gets a sync job dispatched while a user
-    with auto-sync disabled does not.
+    with auto-sync disabled does not. Post-EPIC-6 (TREK-108): dispatch
+    is per-(user, profile) — alice needs a tracked profile to fire any
+    events, and bob's global kill-switch suppresses dispatch regardless
+    of whether he has a profile.
     """
 
     async def test_dispatch_only_when_due_and_enabled(
@@ -195,8 +199,9 @@ class TestFanoutSchedulerDispatchesPerUser:
                 transport=transport, base_url="http://testserver"
             ) as client_b,
         ):
-            await signup_via_http(client_a, invite_code, username="alice")
+            signup_a = await signup_via_http(client_a, invite_code, username="alice")
             await signup_via_http(client_b, invite_code, username="bob")
+            alice_user_id = signup_a.json()["id"]
             # Alice opts in to auto-sync; Bob opts out.
             await client_a.post(
                 "/api/settings",
@@ -220,6 +225,18 @@ class TestFanoutSchedulerDispatchesPerUser:
             )
 
             users_dir = credentials_app_multi.state.auth.users_dir
+            # Seed alice with a tracked profile via her per-user DB. Per-
+            # (user, profile) dispatch (TREK-108) needs at least one
+            # profile per user with `auto_sync_enabled = 1` to fire — the
+            # API path would also do an upstream existence check we want
+            # to avoid in this scheduler-focused test. `repo.create` inserts
+            # a `profile_preferences` row with the default
+            # `auto_sync_enabled = 1`; if that default ever flips, this
+            # test silently changes meaning and should be revisited.
+            alice_db = users_dir / alice_user_id / "main.sqlite3"
+            async with SqliteProfileRepository(alice_db) as alice_profiles:
+                await alice_profiles.create("lichess", "alice_chess", make_primary=True)
+
             user_dirs = sorted(p for p in users_dir.iterdir() if p.is_dir())
             event_bus: EventBus = credentials_app_multi.state.event_bus
 
@@ -257,6 +274,7 @@ class TestFanoutSchedulerDispatchesPerUser:
 
             # Exactly one dispatch — Alice's. Bob's auto-sync is off.
             assert len(dispatched_user_ids) == 1, dispatched_user_ids
+            assert dispatched_user_ids[0] == alice_user_id
 
 
 class TestSyncDuePredicate:

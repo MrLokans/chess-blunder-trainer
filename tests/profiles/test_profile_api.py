@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import sqlite3
 from contextlib import closing
 from http import HTTPStatus
@@ -10,7 +11,9 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from blunder_tutor.fetchers import ExistenceCheck
+from blunder_tutor.constants import JOB_TYPE_IMPORT
+from blunder_tutor.events.event_types import EventType
+from blunder_tutor.fetchers import ExistenceCheck, RateLimitError
 from blunder_tutor.fetchers.resilience import RetryableHTTPError
 from blunder_tutor.repositories.profile import (
     ProfileStatSnapshot,
@@ -547,3 +550,130 @@ class TestDeleteProfile:
         assert len(listing) == 1
         assert listing[0]["id"] == secondary.id
         assert listing[0]["is_primary"] is False
+
+
+def _patch_stats_fetcher(
+    monkeypatch: pytest.MonkeyPatch, snapshots: list[ProfileStatSnapshot]
+) -> None:
+    async def _lichess(_username: str) -> list[ProfileStatSnapshot]:
+        return snapshots
+
+    async def _chesscom(_username: str) -> list[ProfileStatSnapshot]:
+        return snapshots
+
+    monkeypatch.setattr(
+        "blunder_tutor.background.jobs.stats_sync.lichess.fetch_user_perfs",
+        _lichess,
+    )
+    monkeypatch.setattr(
+        "blunder_tutor.background.jobs.stats_sync.chesscom.fetch_user_stats",
+        _chesscom,
+    )
+
+
+def _patch_stats_fetcher_rate_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def _raise(_username: str) -> list[ProfileStatSnapshot]:
+        raise RateLimitError("lichess")
+
+    monkeypatch.setattr(
+        "blunder_tutor.background.jobs.stats_sync.lichess.fetch_user_perfs",
+        _raise,
+    )
+
+
+class TestProfileSyncEndpoint:
+    async def test_post_sync_returns_job_id_and_publishes_event(
+        self, app: TestClient, db_path: Path
+    ) -> None:
+        async with SqliteProfileRepository(db_path) as repo:
+            profile = await repo.create("lichess", "alice")
+
+        bus = app.app.state.event_bus
+        queue = await bus.subscribe(EventType.JOB_EXECUTION_REQUESTED)
+
+        response = app.post(f"/api/profiles/{profile.id}/sync")
+
+        assert response.status_code == HTTPStatus.OK
+        body = response.json()
+        assert body["job_id"]
+
+        event = await asyncio.wait_for(queue.get(), timeout=1.0)
+        assert event.data["job_type"] == JOB_TYPE_IMPORT
+        assert event.data["job_id"] == body["job_id"]
+        assert event.data["kwargs"]["profile_id"] == profile.id
+
+    def test_post_sync_unknown_profile_returns_404(self, app: TestClient) -> None:
+        response = app.post("/api/profiles/9999/sync")
+        assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+class TestProfileStatsRefreshEndpoint:
+    async def test_post_refresh_returns_refreshed_stats(
+        self,
+        app: TestClient,
+        db_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        async with SqliteProfileRepository(db_path) as repo:
+            profile = await repo.create("lichess", "alice")
+
+        snapshots = [
+            ProfileStatSnapshot(mode="bullet", rating=2400, games_count=1500),
+            ProfileStatSnapshot(mode="blitz", rating=2300, games_count=900),
+        ]
+        _patch_stats_fetcher(monkeypatch, snapshots)
+
+        response = app.post(f"/api/profiles/{profile.id}/stats/refresh")
+
+        assert response.status_code == HTTPStatus.OK
+        body = response.json()
+        # Repo lists stats ordered by mode → blitz, bullet alphabetic.
+        modes = [stat["mode"] for stat in body["stats"]]
+        assert sorted(modes) == ["blitz", "bullet"]
+        ratings = {stat["mode"]: stat["rating"] for stat in body["stats"]}
+        assert ratings == {"bullet": 2400, "blitz": 2300}
+        assert body["last_validated_at"] is not None
+
+    async def test_post_refresh_rate_limited_returns_429(
+        self,
+        app: TestClient,
+        db_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        async with SqliteProfileRepository(db_path) as repo:
+            profile = await repo.create("lichess", "alice")
+
+        _patch_stats_fetcher_rate_limit(monkeypatch)
+
+        response = app.post(f"/api/profiles/{profile.id}/stats/refresh")
+
+        assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS
+        body = response.json()
+        # FastAPI wraps the dict detail under `detail`.
+        assert body["detail"]["rate_limited"] is True
+
+    async def test_post_refresh_does_not_touch_validated_at_on_rate_limit(
+        self,
+        app: TestClient,
+        db_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        async with SqliteProfileRepository(db_path) as repo:
+            profile = await repo.create("lichess", "alice")
+
+        _patch_stats_fetcher_rate_limit(monkeypatch)
+
+        app.post(f"/api/profiles/{profile.id}/stats/refresh")
+
+        # `last_validated_at` is the freshness signal — must NOT advance
+        # when the upstream couldn't be reached.
+        with closing(sqlite3.connect(str(db_path))) as conn:
+            row = conn.execute(
+                "SELECT last_validated_at FROM profile WHERE id = ?",
+                (profile.id,),
+            ).fetchone()
+        assert row[0] is None
+
+    def test_post_refresh_unknown_profile_returns_404(self, app: TestClient) -> None:
+        response = app.post("/api/profiles/9999/stats/refresh")
+        assert response.status_code == HTTPStatus.NOT_FOUND
