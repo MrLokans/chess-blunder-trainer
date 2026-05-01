@@ -53,10 +53,12 @@ def build_profile_shape(
     stats: list[ProfileStatSnapshot],
     last_game_sync_at: str | None,
 ) -> ProfileShape:
-    last_stats_sync_at = (
-        max(snap.synced_at for snap in stats if snap.synced_at is not None)
-        if stats
-        else None
+    # `default=None` covers the case where every snapshot has
+    # `synced_at = None` (e.g. demo-mode in-memory seed) — without it, the
+    # generator's empty-after-filter raises `ValueError`.
+    last_stats_sync_at = max(
+        (snap.synced_at for snap in stats if snap.synced_at is not None),
+        default=None,
     )
     return ProfileShape(
         id=profile.id,

@@ -132,19 +132,26 @@ def _extract_host(url: str) -> str | None:
     return after_scheme.split(":", 1)[0].lower()
 
 
-# EPIC-6 (Profile UI / Epic 4) deferral: `POST /api/profiles/{id}/sync`
-# and `POST /api/profiles/{id}/stats/refresh` are intentionally NOT
-# allowed here despite the spec listing them. Both hit real upstream
-# providers against the real per-user DB; allowing them in demo mode
-# without an in-memory profile repo (Epic 4 scope) would let demo users
-# drive lichess/chess.com requests through the origin. Add them to this
-# allowlist together with the in-memory repo.
+_HTTP_PATCH = "PATCH"
+_HTTP_DELETE = "DELETE"
+
+# Profile endpoints are demo-safe because the in-memory `ProfileRepository`
+# (selected by `get_profile_repository` when `demo_mode=True`) intercepts
+# every mutation — nothing touches the SQLite DB. The two upstream-hitting
+# endpoints (`/sync`, `/stats/refresh`) still issue a real Lichess/Chess.com
+# call, which is read-only and bounded by the upstream provider's own
+# rate-limiter; we accept that as the demo's exposure surface.
 DEMO_ALLOWED_MUTATIONS: tuple[tuple[str, re.Pattern], ...] = (
     (_HTTP_POST, re.compile(r"^/api/submit$")),
     (_HTTP_POST, re.compile(r"^/api/analyze$")),
     (_HTTP_POST, re.compile(r"^/api/settings/locale$")),
     (_HTTP_POST, re.compile(r"^/api/validate-username$")),
     (_HTTP_POST, re.compile(r"^/api/profiles/validate$")),
+    (_HTTP_POST, re.compile(r"^/api/profiles$")),
+    (_HTTP_PATCH, re.compile(r"^/api/profiles/\d+$")),
+    (_HTTP_DELETE, re.compile(r"^/api/profiles/\d+$")),
+    (_HTTP_POST, re.compile(r"^/api/profiles/\d+/sync$")),
+    (_HTTP_POST, re.compile(r"^/api/profiles/\d+/stats/refresh$")),
 )
 
 

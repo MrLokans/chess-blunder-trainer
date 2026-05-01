@@ -357,3 +357,12 @@ class SqliteProfileRepository(BaseDbRepository):
         if result is None:
             raise ProfileNotFoundError(profile_id)
         return result
+
+
+# In-memory demo-mode implementation lives in `profile_demo.py`. Re-exported
+# here for back-compat with tests that import from `repositories.profile`.
+from blunder_tutor.repositories.profile_demo import (  # noqa: E402, F401
+    InMemoryProfileRepository,
+    get_demo_profile_repository,
+    reset_demo_profile_repository,
+)
