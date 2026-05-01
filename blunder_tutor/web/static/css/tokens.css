@@ -25,6 +25,11 @@
   --bg-pending: #FFFFF0;
   --bg-phase: rgba(242, 193, 46, 0.2);
 
+  /* Hover/state shades — derived from primary triad */
+  --yellow-hover: #E0B020;
+  --red-hover: #B81E1E;
+  --red-focus-ring: rgba(212, 40, 40, 0.25);
+
   /* Legacy aliases for compatibility */
   --bg: var(--white);
   --bg-elevated: var(--white);

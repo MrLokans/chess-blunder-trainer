@@ -6,6 +6,16 @@ import type {
   SetupPayload,
 } from '../types/api';
 import type {
+  ProfilesListResponse,
+  ProfileValidateRequest,
+  ProfileValidateResponse,
+  ProfileCreateRequest,
+  ProfileUpdateRequest,
+  ProfileSyncDispatchResponse,
+  ProfileStatsRefreshResponse,
+  Profile,
+} from '../types/profiles';
+import type {
   OverviewData,
   AnalysisStatus,
   PhaseData,
@@ -87,6 +97,14 @@ export function isAbortError(err: unknown): boolean {
 
 function del<T = unknown>(url: string): Promise<T> {
   return request<T>(url, { method: 'DELETE' });
+}
+
+function patch<T = unknown>(url: string, body: unknown): Promise<T> {
+  return request<T>(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
 }
 
 function withQuery(url: string, params?: QueryParams): string {
@@ -230,6 +248,21 @@ export const client = {
     signup: (data: SignupPayload) => post<MeResponse>('/api/auth/signup', data),
     logout: (): Promise<void> => post('/api/auth/logout', {}),
     me: () => request<MeResponse>('/api/auth/me'),
+  },
+
+  profiles: {
+    list: () => request<ProfilesListResponse>('/api/profiles'),
+    create: (data: ProfileCreateRequest) => post<Profile>('/api/profiles', data),
+    update: (id: number, data: ProfileUpdateRequest) =>
+      patch<Profile>(`/api/profiles/${String(id)}`, data),
+    delete: (id: number, detachGames: boolean): Promise<void> =>
+      del(`/api/profiles/${String(id)}?detach_games=${String(detachGames)}`),
+    validate: (data: ProfileValidateRequest) =>
+      post<ProfileValidateResponse>('/api/profiles/validate', data),
+    sync: (id: number) =>
+      post<ProfileSyncDispatchResponse>(`/api/profiles/${String(id)}/sync`, {}),
+    refreshStats: (id: number) =>
+      post<ProfileStatsRefreshResponse>(`/api/profiles/${String(id)}/stats/refresh`, {}),
   },
 };
 

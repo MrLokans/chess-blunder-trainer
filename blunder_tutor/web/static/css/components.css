@@ -1,0 +1,422 @@
+/* ==========================================================================
+   Bauhaus Component Library — shared primitives (Button / Badge / Card / ...)
+   Tokens come from tokens.css (loaded globally before this file).
+   New BEM-style modifiers; coexists with legacy .btn-primary / .card classes.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Button — BEM modifiers layered on top of base .btn (defined in base.css).
+   -------------------------------------------------------------------------- */
+
+.btn--primary {
+  background: var(--yellow);
+  border: 2px solid var(--yellow);
+  color: var(--black);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--yellow-hover);
+  border-color: var(--yellow-hover);
+  color: var(--black);
+}
+
+.btn--secondary {
+  background: transparent;
+  color: var(--black);
+  border: 2px solid var(--black);
+}
+
+.btn--secondary:hover:not(:disabled) {
+  background: var(--black);
+  color: var(--white);
+}
+
+.btn--danger {
+  background: var(--red);
+  border: 2px solid var(--red);
+  color: var(--white);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: var(--red-hover);
+  border-color: var(--red-hover);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--mid-gray);
+  border: none;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: var(--ls-tight);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: transparent;
+  color: var(--dark-gray);
+}
+
+/* Sizes */
+.btn--sm {
+  padding: var(--s-xs) var(--s-sm);
+  font-size: var(--text-xs);
+}
+
+.btn--md {
+  padding: var(--s-sm) var(--s-md);
+  font-size: var(--text-xs);
+}
+
+.btn--lg {
+  padding: var(--s-md) var(--s-lg);
+  font-size: var(--text-sm);
+}
+
+/* Loading state */
+.btn--loading {
+  cursor: progress;
+}
+
+.btn__spinner {
+  display: inline-block;
+  width: 0.75em;
+  height: 0.75em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+}
+
+.btn__label {
+  display: inline-block;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------------------
+   Badge — small inline label.
+   -------------------------------------------------------------------------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--s-sm);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--ls-normal);
+  text-transform: uppercase;
+  line-height: 1.4;
+  border: 2px solid var(--black);
+  border-radius: 0;
+  background: var(--white);
+  color: var(--black);
+}
+
+.badge--primary {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: var(--black);
+}
+
+.badge--info {
+  background: var(--white);
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.badge--warning {
+  background: var(--bg-pending);
+  border-color: var(--yellow);
+  color: var(--dark-gray);
+}
+
+.badge--danger {
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--white);
+}
+
+.badge--neutral {
+  background: var(--white);
+  border-color: var(--mid-gray-light);
+  color: var(--mid-gray);
+}
+
+/* --------------------------------------------------------------------------
+   Card surface — fully-bordered container (distinct from legacy .card which
+   uses a single top border for stacked-list layouts).
+   -------------------------------------------------------------------------- */
+
+.card-surface {
+  background: var(--white);
+  border: 2px solid var(--black);
+  border-radius: 0;
+  padding: var(--s-lg);
+}
+
+.card-surface--interactive {
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+
+.card-surface--interactive:hover {
+  background: var(--warm-gray);
+}
+
+.card-surface--interactive:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* --------------------------------------------------------------------------
+   FormField — wraps a labelled input with optional help/error text.
+   -------------------------------------------------------------------------- */
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-xs);
+  margin-bottom: var(--s-md);
+}
+
+.form-field__label {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--mid-gray);
+  margin: 0;
+}
+
+.form-field__required {
+  color: var(--red);
+  margin-left: 2px;
+}
+
+.form-field__control {
+  display: block;
+}
+
+.form-field__help {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--mid-gray);
+}
+
+.form-field__error {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--red);
+  font-weight: 500;
+}
+
+.form-field--error .text-input {
+  border-color: var(--red);
+}
+
+/* --------------------------------------------------------------------------
+   TextInput — base input styled distinctly from the global attribute selector
+   so it can be used inside FormField without inheriting form-group spacing.
+   -------------------------------------------------------------------------- */
+
+.text-input {
+  width: 100%;
+  padding: var(--s-sm);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--black);
+  background: var(--white);
+  border: 2px solid var(--black);
+  border-radius: 0;
+  transition: border-color var(--transition);
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: var(--focus-ring);
+}
+
+.text-input:disabled {
+  background: var(--warm-gray);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.text-input--invalid {
+  border-color: var(--red);
+}
+
+.text-input--invalid:focus {
+  border-color: var(--red);
+  box-shadow: 0 0 0 2px var(--red-focus-ring);
+}
+
+/* --------------------------------------------------------------------------
+   Toggle — Bauhaus switch (sharp corners, 2px black border).
+   -------------------------------------------------------------------------- */
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-sm);
+  cursor: pointer;
+}
+
+.toggle--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.toggle__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  padding: 0;
+  border: 2px solid var(--black);
+  background: var(--white);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.toggle__track:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.toggle__track:disabled {
+  cursor: not-allowed;
+}
+
+.toggle__track--on {
+  background: var(--blue);
+}
+
+.toggle__thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  background: var(--black);
+  transition: transform var(--transition);
+}
+
+.toggle__track--on .toggle__thumb {
+  background: var(--white);
+  transform: translateX(16px);
+}
+
+.toggle__label {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--black);
+}
+
+/* --------------------------------------------------------------------------
+   Modal — size modifiers + body slot. Reuses base.css `.modal-overlay`,
+   `.modal`, `.modal-header`, `.modal-close`.
+   -------------------------------------------------------------------------- */
+
+/* `.modal.modal--*` (compound selector) raises specificity above base.css's
+   `.modal { max-width: 480px; min-width: 320px }` so size modifiers actually
+   win. Drop these prefixes only if base.css's `.modal` rule is also removed. */
+.modal.modal--sm { max-width: 360px; min-width: 280px; }
+.modal.modal--md { max-width: 480px; min-width: 320px; }
+.modal.modal--lg { max-width: 720px; min-width: 320px; }
+
+.modal__body {
+  font-family: var(--font-sans);
+  color: var(--black);
+}
+
+/* --------------------------------------------------------------------------
+   ConfirmDialog
+   -------------------------------------------------------------------------- */
+
+.confirm-dialog__message {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--dark-gray);
+  line-height: 1.5;
+  margin: 0 0 var(--s-lg);
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  gap: var(--s-sm);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   Tabs — generalized from the legacy `.sequence-player-tabs` / `.tab-btn`
+   pattern. Distinct class names so existing pages keep their markup.
+   -------------------------------------------------------------------------- */
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs__bar {
+  display: flex;
+  gap: var(--s-xs);
+  border-bottom: 2px solid var(--black);
+  margin-bottom: var(--s-md);
+}
+
+.tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-xs);
+  padding: var(--s-sm) var(--s-md);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--ls-normal);
+  text-transform: uppercase;
+  background: transparent;
+  border: 2px solid transparent;
+  border-bottom: none;
+  color: var(--mid-gray);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+  margin-bottom: -2px;
+}
+
+.tabs__tab:hover {
+  color: var(--black);
+}
+
+.tabs__tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.tabs__tab--active {
+  color: var(--black);
+  background: var(--white);
+  border-color: var(--black);
+}
+
+.tabs__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--s-xs);
+  min-width: 1.2em;
+  height: 1.2em;
+  font-size: var(--text-xs);
+  background: var(--blue);
+  color: var(--white);
+}
+
+.tabs__panel {
+  flex: 1;
+}
