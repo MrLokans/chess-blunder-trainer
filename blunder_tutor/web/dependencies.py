@@ -12,6 +12,7 @@ from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.job_repository import JobRepository
+from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import (
     PuzzleAttemptRepository,
 )
@@ -79,6 +80,7 @@ get_analysis_repository = _repo_dep(AnalysisRepository)
 get_trap_repository = _repo_dep(TrapRepository)
 get_starred_puzzle_repository = _repo_dep(StarredPuzzleRepository)
 get_data_management_repository = _repo_dep(DataManagementRepository)
+get_profile_repository = _repo_dep(SqliteProfileRepository)
 
 
 async def get_job_service(
@@ -164,6 +166,7 @@ StarredPuzzleRepoDep = Annotated[
 DataManagementRepoDep = Annotated[
     DataManagementRepository, Depends(get_data_management_repository)
 ]
+ProfileRepoDep = Annotated[SqliteProfileRepository, Depends(get_profile_repository)]
 
 
 async def check_engine_throttle(request: Request, response: Response) -> None:

@@ -137,6 +137,7 @@ DEMO_ALLOWED_MUTATIONS: tuple[tuple[str, re.Pattern], ...] = (
     (_HTTP_POST, re.compile(r"^/api/analyze$")),
     (_HTTP_POST, re.compile(r"^/api/settings/locale$")),
     (_HTTP_POST, re.compile(r"^/api/validate-username$")),
+    (_HTTP_POST, re.compile(r"^/api/profiles/validate$")),
 )
 
 

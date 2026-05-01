@@ -9,6 +9,8 @@ from blunder_tutor.constants import (
     JOB_STATUS_FAILED,
     JOB_STATUS_PENDING,
     JOB_STATUS_RUNNING,
+    JOB_TYPE_IMPORT,
+    JOB_TYPE_SYNC,
 )
 from blunder_tutor.repositories.base import BaseDbRepository
 
@@ -223,3 +225,28 @@ class JobRepository(BaseDbRepository):
                 (job_id,),
             )
             return cursor.rowcount > 0
+
+    async def get_last_completed_sync_at(
+        self, source: str, username: str
+    ) -> str | None:
+        """Most recent successful import/sync completion for `(source, username)`.
+
+        Used by the profiles API to populate the `last_game_sync_at` field.
+        Case-insensitive on `username` because the ProfileRepository
+        lowercases on write, but historical jobs may carry mixed casing.
+        """
+        conn = await self.get_connection()
+        async with conn.execute(
+            """
+            SELECT MAX(completed_at) FROM background_jobs
+            WHERE source = ?
+              AND LOWER(username) = LOWER(?)
+              AND status = ?
+              AND job_type IN (?, ?)
+            """,
+            (source, username, JOB_STATUS_COMPLETED, JOB_TYPE_IMPORT, JOB_TYPE_SYNC),
+        ) as cursor:
+            row = await cursor.fetchone()
+        if row is None or row[0] is None:
+            return None
+        return row[0]

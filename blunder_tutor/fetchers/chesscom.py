@@ -8,7 +8,7 @@ from http import HTTPStatus
 import httpx
 from tqdm import tqdm
 
-from blunder_tutor.fetchers import USER_AGENT, RateLimitError
+from blunder_tutor.fetchers import USER_AGENT, ExistenceCheck, RateLimitError
 from blunder_tutor.fetchers._modes import chesscom_to_canonical
 from blunder_tutor.fetchers._state import FetchState
 from blunder_tutor.fetchers.resilience import RetryableHTTPError, fetch_with_retry
@@ -22,6 +22,7 @@ from blunder_tutor.utils.pgn_utils import (
 CHESSCOM_BASE_URL = "https://api.chess.com"
 CHESSCOM_USER_URL = f"{CHESSCOM_BASE_URL}/pub/player/{{username}}"
 CHESSCOM_STATS_URL = f"{CHESSCOM_BASE_URL}/pub/player/{{username}}/stats"
+_USER_AGENT_HEADER_KEY = "User-Agent"
 ARCHIVE_URL_PATTERN = re.compile(r"/games/(\d{4})/(\d{2})$")
 
 type _FetchResult = tuple[list[dict[str, object]], set[str]]
@@ -65,7 +66,7 @@ async def fetch(
     async with httpx.AsyncClient(
         timeout=60,
         follow_redirects=True,
-        headers={"User-Agent": USER_AGENT},
+        headers={_USER_AGENT_HEADER_KEY: USER_AGENT},
     ) as client:
         archives = _filter_archives_since(
             (
@@ -155,7 +156,7 @@ async def validate_username(username: str) -> bool:
     async with httpx.AsyncClient(
         timeout=10,
         follow_redirects=True,
-        headers={"User-Agent": USER_AGENT},
+        headers={_USER_AGENT_HEADER_KEY: USER_AGENT},
     ) as client:
         try:
             response = await client.get(url)
@@ -175,7 +176,7 @@ async def fetch_user_stats(username: str) -> list[ProfileStatSnapshot]:
     async with httpx.AsyncClient(
         timeout=10,
         follow_redirects=True,
-        headers={"User-Agent": USER_AGENT},
+        headers={_USER_AGENT_HEADER_KEY: USER_AGENT},
     ) as client:
         try:
             response = await fetch_with_retry(client, url)
@@ -187,3 +188,28 @@ async def fetch_user_stats(username: str) -> list[ProfileStatSnapshot]:
     if not isinstance(payload, dict):
         return []
     return chesscom_to_canonical(payload)
+
+
+async def check_username_existence(username: str) -> ExistenceCheck:
+    """Check whether a Chess.com user exists, with rate-limit awareness.
+
+    Distinguishes 404 (`exists=False`) from persistent 429
+    (`rate_limited=True`). 5xx and other non-retryable errors propagate.
+    """
+    url = CHESSCOM_USER_URL.format(username=username.lower())
+    async with httpx.AsyncClient(
+        timeout=10,
+        follow_redirects=True,
+        headers={_USER_AGENT_HEADER_KEY: USER_AGENT},
+    ) as client:
+        try:
+            await fetch_with_retry(client, url)
+        except RetryableHTTPError as exc:
+            if exc.response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+                return ExistenceCheck(exists=False, rate_limited=True)
+            raise
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == HTTPStatus.NOT_FOUND:
+                return ExistenceCheck(exists=False, rate_limited=False)
+            raise
+    return ExistenceCheck(exists=True, rate_limited=False)
