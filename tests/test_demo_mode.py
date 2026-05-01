@@ -68,6 +68,14 @@ def test_demo_mode_allows_locale_change(demo_app: TestClient):
     assert response.status_code != HTTPStatus.FORBIDDEN
 
 
+def test_demo_mode_allows_setup_complete(demo_app: TestClient):
+    # The new SetupApp flow flips this flag after creating profiles in
+    # the in-memory demo repo. Blocking it would leave the demo trapped
+    # on /setup forever once a visitor "completes" setup.
+    response = demo_app.post("/api/setup/complete", json={})
+    assert response.status_code != HTTPStatus.FORBIDDEN
+
+
 def test_normal_mode_allows_mutations(app: TestClient):
     response = app.post("/api/settings", json={})
     # May return 422 (validation error) but NOT 403

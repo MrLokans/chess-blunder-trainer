@@ -1,21 +1,48 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/preact';
 import { SetupApp } from '../../src/setup/SetupApp';
+import { ApiError } from '../../src/shared/api';
 
-vi.mock('../../src/shared/api', () => ({
-  client: {
-    setup: {
-      validateUsername: vi.fn().mockResolvedValue({ valid: true }),
-      complete: vi.fn().mockResolvedValue({ import_job_ids: [] }),
+vi.mock('../../src/shared/api', async () => {
+  const actual = await vi.importActual<typeof import('../../src/shared/api')>('../../src/shared/api');
+  return {
+    ...actual,
+    client: {
+      profiles: {
+        validate: vi.fn().mockResolvedValue({
+          exists: true,
+          already_tracked: false,
+          profile_id: null,
+          rate_limited: false,
+        }),
+        create: vi.fn().mockImplementation(({ platform, username }: { platform: string; username: string }) =>
+          Promise.resolve({
+            id: platform === 'lichess' ? 1 : 2,
+            platform,
+            username,
+            is_primary: true,
+            created_at: '2026-05-01T00:00:00Z',
+            last_validated_at: null,
+            preferences: { auto_sync_enabled: true, sync_max_games: null },
+            stats: [],
+            last_game_sync_at: null,
+            last_stats_sync_at: null,
+          }),
+        ),
+        sync: vi.fn().mockResolvedValue({ job_id: 'job1' }),
+      },
+      setup: {
+        markComplete: vi.fn().mockResolvedValue({ success: true }),
+      },
+      analysis: {
+        status: vi.fn().mockResolvedValue({ status: 'idle' }),
+      },
+      jobs: {
+        getImportStatus: vi.fn().mockResolvedValue({ status: 'completed' }),
+      },
     },
-    analysis: {
-      status: vi.fn().mockResolvedValue({ status: 'idle' }),
-    },
-    jobs: {
-      getImportStatus: vi.fn().mockResolvedValue({ status: 'completed' }),
-    },
-  },
-}));
+  };
+});
 
 import { client } from '../../src/shared/api';
 
@@ -54,26 +81,32 @@ describe('SetupApp', () => {
     });
   });
 
-  test('calls validateUsername when lichess input changes', async () => {
+  test('calls profiles.validate when lichess input changes', async () => {
     vi.useFakeTimers();
     render(<SetupApp />);
     const lichessInput = screen.getByLabelText(t('setup.lichess_label'));
     fireEvent.input(lichessInput, { target: { value: 'testuser' } });
     vi.advanceTimersByTime(600);
     await waitFor(() => {
-      expect(client.setup.validateUsername).toHaveBeenCalledWith('lichess', 'testuser');
+      expect(client.profiles.validate).toHaveBeenCalledWith({
+        platform: 'lichess',
+        username: 'testuser',
+      });
     });
     vi.useRealTimers();
   });
 
-  test('calls validateUsername when chesscom input changes', async () => {
+  test('calls profiles.validate when chesscom input changes', async () => {
     vi.useFakeTimers();
     render(<SetupApp />);
     const chesscomInput = screen.getByLabelText(t('setup.chesscom_label'));
     fireEvent.input(chesscomInput, { target: { value: 'chessplayer' } });
     vi.advanceTimersByTime(600);
     await waitFor(() => {
-      expect(client.setup.validateUsername).toHaveBeenCalledWith('chesscom', 'chessplayer');
+      expect(client.profiles.validate).toHaveBeenCalledWith({
+        platform: 'chesscom',
+        username: 'chessplayer',
+      });
     });
     vi.useRealTimers();
   });
@@ -91,7 +124,12 @@ describe('SetupApp', () => {
   });
 
   test('shows invalid status when username fails validation', async () => {
-    vi.mocked(client.setup.validateUsername).mockResolvedValueOnce({ valid: false });
+    vi.mocked(client.profiles.validate).mockResolvedValueOnce({
+      exists: false,
+      already_tracked: false,
+      profile_id: null,
+      rate_limited: false,
+    });
     vi.useFakeTimers();
     render(<SetupApp />);
     const lichessInput = screen.getByLabelText(t('setup.lichess_label'));
@@ -103,33 +141,90 @@ describe('SetupApp', () => {
     vi.useRealTimers();
   });
 
-  test('calls setup.complete on valid form submission', async () => {
-    vi.mocked(client.setup.validateUsername).mockResolvedValue({ valid: true });
+  test('shows already-tracked status when profile already exists', async () => {
+    vi.mocked(client.profiles.validate).mockResolvedValueOnce({
+      exists: true,
+      already_tracked: true,
+      profile_id: 99,
+      rate_limited: false,
+    });
+    vi.useFakeTimers();
     render(<SetupApp />);
     const lichessInput = screen.getByLabelText(t('setup.lichess_label'));
-    fireEvent.input(lichessInput, { target: { value: 'myuser' } });
-    const submitBtn = screen.getByRole('button', { name: t('setup.submit') });
-    fireEvent.click(submitBtn);
+    fireEvent.input(lichessInput, { target: { value: 'reused' } });
+    vi.advanceTimersByTime(600);
     await waitFor(() => {
-      expect(client.setup.complete).toHaveBeenCalledWith({ lichess: 'myuser', chesscom: '' });
+      expect(screen.getByText(t('setup.already_tracked', { username: 'reused' }))).toBeDefined();
     });
+    vi.useRealTimers();
   });
 
-  test('redirects to home after successful setup', async () => {
-    vi.mocked(client.setup.validateUsername).mockResolvedValue({ valid: true });
-    vi.mocked(client.setup.complete).mockResolvedValue({ import_job_ids: [] });
+  test('shows rate-limited soft warning instead of hard error', async () => {
+    vi.mocked(client.profiles.validate).mockResolvedValueOnce({
+      exists: false,
+      already_tracked: false,
+      profile_id: null,
+      rate_limited: true,
+    });
+    vi.useFakeTimers();
+    render(<SetupApp />);
+    const lichessInput = screen.getByLabelText(t('setup.lichess_label'));
+    fireEvent.input(lichessInput, { target: { value: 'flaky' } });
+    vi.advanceTimersByTime(600);
+    await waitFor(() => {
+      expect(screen.getByText(t('setup.rate_limited', { username: 'flaky' }))).toBeDefined();
+    });
+    vi.useRealTimers();
+  });
+
+  test('creates one profile + dispatches one sync when only Lichess filled', async () => {
     render(<SetupApp />);
     const lichessInput = screen.getByLabelText(t('setup.lichess_label'));
     fireEvent.input(lichessInput, { target: { value: 'myuser' } });
     fireEvent.click(screen.getByRole('button', { name: t('setup.submit') }));
     await waitFor(() => {
-      expect(window.location.href).toBe('/');
+      expect(client.profiles.create).toHaveBeenCalledTimes(1);
+      expect(client.profiles.create).toHaveBeenCalledWith({
+        platform: 'lichess',
+        username: 'myuser',
+        make_primary: true,
+      });
+      expect(client.profiles.sync).toHaveBeenCalledTimes(1);
+      expect(client.profiles.sync).toHaveBeenCalledWith(1);
+      expect(client.setup.markComplete).toHaveBeenCalledTimes(1);
     });
   });
 
-  test('shows error when API call fails', async () => {
-    vi.mocked(client.setup.validateUsername).mockResolvedValue({ valid: true });
-    vi.mocked(client.setup.complete).mockRejectedValueOnce(new Error('Server error'));
+  test('creates two profiles + dispatches two syncs when both fields filled', async () => {
+    render(<SetupApp />);
+    fireEvent.input(screen.getByLabelText(t('setup.lichess_label')), { target: { value: 'lichuser' } });
+    fireEvent.input(screen.getByLabelText(t('setup.chesscom_label')), { target: { value: 'cdotcomuser' } });
+    fireEvent.click(screen.getByRole('button', { name: t('setup.submit') }));
+    await waitFor(() => {
+      expect(client.profiles.create).toHaveBeenCalledTimes(2);
+      expect(client.profiles.sync).toHaveBeenCalledTimes(2);
+      expect(client.setup.markComplete).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test('redirects to home after successful setup', async () => {
+    // Polling exits as soon as analysis.status returns 'completed' on the
+    // first tick, so the redirect should fire after the first poll interval.
+    vi.mocked(client.analysis.status).mockResolvedValue({ status: 'completed' });
+    vi.useFakeTimers();
+    render(<SetupApp />);
+    const lichessInput = screen.getByLabelText(t('setup.lichess_label'));
+    fireEvent.input(lichessInput, { target: { value: 'myuser' } });
+    fireEvent.click(screen.getByRole('button', { name: t('setup.submit') }));
+    await vi.advanceTimersByTimeAsync(2500);
+    await waitFor(() => {
+      expect(window.location.href).toBe('/');
+    });
+    vi.useRealTimers();
+  });
+
+  test('shows error when profile create fails with non-409 error', async () => {
+    vi.mocked(client.profiles.create).mockRejectedValueOnce(new Error('Server error'));
     render(<SetupApp />);
     const lichessInput = screen.getByLabelText(t('setup.lichess_label'));
     fireEvent.input(lichessInput, { target: { value: 'myuser' } });
@@ -140,8 +235,38 @@ describe('SetupApp', () => {
     });
   });
 
+  test('recovers from 409 conflict by recovering profile_id from validate', async () => {
+    vi.mocked(client.profiles.create).mockRejectedValueOnce(new ApiError(409, 'already_tracked'));
+    vi.mocked(client.profiles.validate).mockResolvedValueOnce({
+      exists: true,
+      already_tracked: false,
+      profile_id: null,
+      rate_limited: false,
+    }); // initial submit-time validation
+    vi.mocked(client.profiles.validate).mockResolvedValueOnce({
+      exists: true,
+      already_tracked: true,
+      profile_id: 42,
+      rate_limited: false,
+    }); // recovery validation after 409
+
+    render(<SetupApp />);
+    const lichessInput = screen.getByLabelText(t('setup.lichess_label'));
+    fireEvent.input(lichessInput, { target: { value: 'racy' } });
+    fireEvent.click(screen.getByRole('button', { name: t('setup.submit') }));
+    await waitFor(() => {
+      expect(client.profiles.sync).toHaveBeenCalledWith(42);
+      expect(client.setup.markComplete).toHaveBeenCalledTimes(1);
+    });
+  });
+
   test('shows error for invalid username on submission', async () => {
-    vi.mocked(client.setup.validateUsername).mockResolvedValue({ valid: false });
+    vi.mocked(client.profiles.validate).mockResolvedValue({
+      exists: false,
+      already_tracked: false,
+      profile_id: null,
+      rate_limited: false,
+    });
     render(<SetupApp />);
     const lichessInput = screen.getByLabelText(t('setup.lichess_label'));
     fireEvent.input(lichessInput, { target: { value: 'baduser' } });
@@ -150,11 +275,10 @@ describe('SetupApp', () => {
       expect(screen.getByRole('alert')).toBeDefined();
       expect(screen.getByText(t('setup.lichess_not_found', { username: 'baduser' }))).toBeDefined();
     });
+    expect(client.profiles.create).not.toHaveBeenCalled();
   });
 
   test('shows progress section while waiting for analysis', async () => {
-    vi.mocked(client.setup.validateUsername).mockResolvedValue({ valid: true });
-    vi.mocked(client.setup.complete).mockResolvedValue({ import_job_ids: ['job1'] });
     vi.mocked(client.analysis.status).mockResolvedValue({ status: 'completed' });
     vi.useFakeTimers();
     render(<SetupApp />);

@@ -136,6 +136,7 @@ async def _trigger_setup_imports(
     },
     summary="Complete initial setup",
     description="Configure usernames for Lichess and/or Chess.com accounts. Triggers background import.",
+    deprecated=True,
 )
 async def setup_submit(
     request: Request,
@@ -163,6 +164,25 @@ async def setup_submit(
         max_games,
     )
     return {"success": True, "import_job_ids": import_job_ids}
+
+
+@settings_router.post(
+    "/api/setup/complete",
+    response_model=SuccessResponse,
+    summary="Mark initial setup as complete",
+    description=(
+        "Idempotent flag flip. Called by the rewritten SetupApp once profiles "
+        "have been created and import jobs dispatched, so the SetupCheck "
+        "middleware stops redirecting to /setup."
+    ),
+)
+async def setup_complete(
+    request: Request,
+    settings_repo: SettingsRepoDep,
+) -> dict[str, bool]:
+    await settings_repo.mark_setup_completed()
+    request.app.state.setup_completed_cache.invalidate(_cache_key(request))
+    return {"success": True}
 
 
 @settings_router.get(

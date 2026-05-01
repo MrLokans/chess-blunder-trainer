@@ -238,6 +238,7 @@ export const client = {
 
   setup: {
     complete: (data: SetupPayload) => post<{ import_job_ids?: string[] }>('/api/setup', data),
+    markComplete: () => post<{ success: boolean }>('/api/setup/complete', {}),
     validateUsername: (platform: string, username: string) =>
       post<UsernameValidation>('/api/validate-username', { platform, username }),
   },
