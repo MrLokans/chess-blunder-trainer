@@ -24,6 +24,12 @@ build
 data/
 *.db
 *.sqlite
+landing/
+images/
+fixtures/benchmark/
+scripts/
+prof/
+profiling/
 
 # CI/CD
 .github
@@ -31,23 +37,32 @@ data/
 # Documentation (not needed in image)
 *.md
 !README.md
+docs/
 
 # Tests (not needed in runtime image)
 tests/
+e2e/
 pytest.ini
 .pytest_cache
 .coverage
 coverage.xml
 htmlcov/
+test-results/
+.playwright-mcp/
 
 # Docker
 Dockerfile
 docker-compose*.yml
 .dockerignore
 
+# Agent/editor metadata
+.agents/
+.claude/
+
 # Misc
 .DS_Store
 *.log
+*.png
 
 # Frontend development
 node_modules/

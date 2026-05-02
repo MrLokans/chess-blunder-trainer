@@ -103,34 +103,46 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
+# Create a non-root user up front so subsequent COPY --chown lands ownership
+# in a single layer instead of duplicating /app via a `chown -R` pass.
+# Running as root inside the container is dangerous: an RCE in any handler
+# would immediately write root-owned files to the bind mount, and any
+# future container-escape CVE would land as UID 0 on the host. UID 1000
+# is the typical default for host developer accounts so bind-mount
+# ownership lines up without chown gymnastics.
+RUN groupadd --system --gid 1000 appuser \
+    && useradd --system --uid 1000 --gid 1000 --home /app --no-create-home appuser \
+    && mkdir -p /app/data \
+    && chown appuser:appuser /app /app/data
+
+WORKDIR /app
+
 # Copy Stockfish binary from builder
 COPY --from=stockfish-builder /stockfish/src/stockfish /usr/local/bin/stockfish
 
 # Copy Python virtual environment
-COPY --from=python-builder /app/.venv /app/.venv
+COPY --from=python-builder --chown=appuser:appuser /app/.venv /app/.venv
 
-# Copy application code
-COPY . /app
-WORKDIR /app
+# Copy only the application files needed at runtime. Splitting these into
+# separate COPYs gives finer cache granularity — e.g. a translation-only
+# change won't bust the Python source layer.
+COPY --chown=appuser:appuser blunder_tutor /app/blunder_tutor
+COPY --chown=appuser:appuser templates /app/templates
+COPY --chown=appuser:appuser locales /app/locales
+COPY --chown=appuser:appuser fixtures /app/fixtures
+COPY --chown=appuser:appuser demo /app/demo
+COPY --chown=appuser:appuser alembic /app/alembic
+COPY --chown=appuser:appuser alembic.ini main.py /app/
 
-# Copy Vite build output (overwrite any stale dist from COPY . /app)
-COPY --from=frontend-builder /app/blunder_tutor/web/static/dist /app/blunder_tutor/web/static/dist
+# Copy Vite build output last so frontend-only changes invalidate the
+# fewest downstream layers.
+COPY --from=frontend-builder --chown=appuser:appuser /app/blunder_tutor/web/static/dist /app/blunder_tutor/web/static/dist
 
 # Set environment variables
 ENV PATH="/app/.venv/bin:$PATH"
 ENV STOCKFISH_BINARY=/usr/local/bin/stockfish
 ENV PYTHONUNBUFFERED=1
 
-# Create a non-root user and the data directory, then hand ownership
-# over. Running as root inside the container is dangerous: an RCE in
-# any handler would immediately write root-owned files to the bind
-# mount, and any future container-escape CVE would land as UID 0 on
-# the host. UID 1000 is the typical default for host developer
-# accounts so bind-mount ownership lines up without chown gymnastics.
-RUN groupadd --system --gid 1000 appuser \
-    && useradd --system --uid 1000 --gid 1000 --home /app --no-create-home appuser \
-    && mkdir -p /app/data \
-    && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
