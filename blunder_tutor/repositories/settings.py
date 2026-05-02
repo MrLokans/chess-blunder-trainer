@@ -17,9 +17,7 @@ class SettingsRepository(BaseDbRepository):
                     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
                 INSERT OR IGNORE INTO app_settings (key, value) VALUES
-                    ('setup_completed', 'false'),
-                    ('lichess_username', NULL),
-                    ('chesscom_username', NULL);
+                    ('setup_completed', 'false');
                 """
             )
 

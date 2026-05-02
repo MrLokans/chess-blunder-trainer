@@ -6,6 +6,7 @@ import { SettingsPage } from '../pages/settings.page';
 import { ImportPage } from '../pages/import.page';
 import { ManagementPage } from '../pages/management.page';
 import { GameReviewPage } from '../pages/game-review.page';
+import { ProfilesPage } from '../pages/profiles.page';
 
 type AppFixtures = {
   trainerPage: TrainerPage;
@@ -15,6 +16,7 @@ type AppFixtures = {
   importPage: ImportPage;
   managementPage: ManagementPage;
   gameReviewPage: GameReviewPage;
+  profilesPage: ProfilesPage;
 };
 
 export const test = base.extend<AppFixtures>({
@@ -38,6 +40,9 @@ export const test = base.extend<AppFixtures>({
   },
   gameReviewPage: async ({ page }, use) => {
     await use(new GameReviewPage(page));
+  },
+  profilesPage: async ({ page }, use) => {
+    await use(new ProfilesPage(page));
   },
 });
 

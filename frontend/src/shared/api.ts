@@ -3,8 +3,17 @@ import type {
   PuzzleData, SubmitMovePayload, SubmitMoveResponse,
   ReviewData, StarredItem,
   TrapCatalogEntry, TrapStatsResponse, TrapDetailData,
-  SetupPayload,
 } from '../types/api';
+import type {
+  ProfilesListResponse,
+  ProfileValidateRequest,
+  ProfileValidateResponse,
+  ProfileCreateRequest,
+  ProfileUpdateRequest,
+  ProfileSyncDispatchResponse,
+  ProfileStatsRefreshResponse,
+  Profile,
+} from '../types/profiles';
 import type {
   OverviewData,
   AnalysisStatus,
@@ -42,11 +51,28 @@ export class ApiError extends Error {
 
 type QueryParams = Record<string, string | number | boolean | null | undefined | string[]>;
 
+function extractErrorMessage(data: ApiErrorResponse): string {
+  // Some endpoints (notably /api/profiles) return structured `detail`
+  // objects like {error, profile_id}; bare `??` would surface them as
+  // "[object Object]" once Error stringifies them. Unwrap a string `error`
+  // field if present, otherwise fall back to a stable JSON dump.
+  const { detail, error } = data;
+  if (typeof detail === 'string') return detail;
+  if (detail && typeof detail === 'object') {
+    const inner = (detail as { error?: unknown; message?: unknown });
+    if (typeof inner.message === 'string') return inner.message;
+    if (typeof inner.error === 'string') return inner.error;
+    return JSON.stringify(detail);
+  }
+  if (typeof error === 'string') return error;
+  return 'Request failed';
+}
+
 async function request<T = unknown>(url: string, options: RequestInit = {}): Promise<T> {
   const resp = await fetch(url, options);
   if (!resp.ok) {
     const data = await resp.json().catch(() => ({})) as ApiErrorResponse;
-    throw new ApiError(resp.status, data.detail ?? data.error ?? 'Request failed');
+    throw new ApiError(resp.status, extractErrorMessage(data));
   }
   // 204 No Content and same-class responses have empty bodies; calling
   // .json() on them throws SyntaxError. Return `undefined` cast to T so
@@ -59,7 +85,7 @@ async function requestText(url: string, options: RequestInit = {}): Promise<stri
   const resp = await fetch(url, options);
   if (!resp.ok) {
     const data = await resp.json().catch(() => ({})) as ApiErrorResponse;
-    throw new ApiError(resp.status, data.detail ?? data.error ?? 'Request failed');
+    throw new ApiError(resp.status, extractErrorMessage(data));
   }
   return resp.text();
 }
@@ -89,6 +115,14 @@ function del<T = unknown>(url: string): Promise<T> {
   return request<T>(url, { method: 'DELETE' });
 }
 
+function patch<T = unknown>(url: string, body: unknown): Promise<T> {
+  return request<T>(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
 function withQuery(url: string, params?: QueryParams): string {
   if (!params) return url;
   const searchParams = new URLSearchParams();
@@ -110,10 +144,6 @@ export function requestWithSignal<T = unknown>(url: string, signal: AbortSignal)
 
 interface JobStarted {
   job_id: string;
-}
-
-interface UsernameValidation {
-  valid: boolean;
 }
 
 export const client = {
@@ -174,7 +204,6 @@ export const client = {
   settings: {
     get: () => request<SyncSettings>('/api/settings'),
     save: (data: SyncSettings & { theme: ThemeColors }) => post('/api/settings', data),
-    getUsernames: () => request<{ lichess_username?: string; chesscom_username?: string }>('/api/settings/usernames'),
     getTheme: () => request<ThemeColors>('/api/settings/theme'),
     getThemePresets: () => request<{ presets: ThemePreset[] }>('/api/settings/theme/presets'),
     getBoard: () => request<BoardSettings>('/api/settings/board'),
@@ -219,9 +248,7 @@ export const client = {
   },
 
   setup: {
-    complete: (data: SetupPayload) => post<{ import_job_ids?: string[] }>('/api/setup', data),
-    validateUsername: (platform: string, username: string) =>
-      post<UsernameValidation>('/api/validate-username', { platform, username }),
+    markComplete: () => post<{ success: boolean }>('/api/setup/complete', {}),
   },
 
   auth: {
@@ -230,6 +257,21 @@ export const client = {
     signup: (data: SignupPayload) => post<MeResponse>('/api/auth/signup', data),
     logout: (): Promise<void> => post('/api/auth/logout', {}),
     me: () => request<MeResponse>('/api/auth/me'),
+  },
+
+  profiles: {
+    list: () => request<ProfilesListResponse>('/api/profiles'),
+    create: (data: ProfileCreateRequest) => post<Profile>('/api/profiles', data),
+    update: (id: number, data: ProfileUpdateRequest) =>
+      patch<Profile>(`/api/profiles/${String(id)}`, data),
+    delete: (id: number, detachGames: boolean): Promise<void> =>
+      del(`/api/profiles/${String(id)}?detach_games=${String(detachGames)}`),
+    validate: (data: ProfileValidateRequest) =>
+      post<ProfileValidateResponse>('/api/profiles/validate', data),
+    sync: (id: number) =>
+      post<ProfileSyncDispatchResponse>(`/api/profiles/${String(id)}/sync`, {}),
+    refreshStats: (id: number) =>
+      post<ProfileStatsRefreshResponse>(`/api/profiles/${String(id)}/stats/refresh`, {}),
   },
 };
 

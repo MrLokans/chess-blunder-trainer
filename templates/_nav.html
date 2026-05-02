@@ -15,6 +15,9 @@
   {% if has_feature('starred.puzzles') %}
   <a href="/starred" class="trainer-nav-link{% if active_page == 'starred' %} active{% endif %}">{{ t('nav.starred') }}</a>
   {% endif %}
+  {% if has_feature('page.profiles') %}
+  <a href="/profiles" class="trainer-nav-link{% if active_page == 'profiles' %} active{% endif %}">{{ t('nav.profiles') }}</a>
+  {% endif %}
   {% if has_feature('page.management') %}
   <a href="/management" class="trainer-nav-link{% if active_page == 'management' %} active{% endif %}">{{ t('nav.management') }}</a>
   {% endif %}

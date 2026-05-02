@@ -1,0 +1,15 @@
+{
+  "id": "alice",
+  "username": "alice",
+  "perfs": {
+    "bullet": {"games": 1200, "rating": 2400, "rd": 50, "prog": 5},
+    "blitz": {"games": 850, "rating": 2300, "rd": 45, "prog": -10},
+    "rapid": {"games": 320, "rating": 2200, "rd": 60, "prog": 3},
+    "classical": {"games": 18, "rating": 2100, "rd": 110, "prog": 0},
+    "correspondence": {"games": 4, "rating": 2050, "rd": 200, "prog": 0},
+    "puzzle": {"games": 5000, "rating": 2700, "rd": 30, "prog": 12},
+    "racingKings": {"games": 2, "rating": 1500, "rd": 200, "prog": 0},
+    "atomic": {"games": 0, "rating": 1500, "rd": 200, "prog": 0},
+    "ultraBullet": {"games": 6, "rating": 1800, "rd": 150, "prog": 0}
+  }
+}

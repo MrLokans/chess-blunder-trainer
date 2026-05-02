@@ -7,15 +7,12 @@ vi.mock('../../src/shared/api', () => ({
     system: {
       engineStatus: vi.fn().mockResolvedValue({ available: true, name: 'Stockfish 16', path: '/usr/bin/stockfish' }),
     },
-    settings: {
-      getUsernames: vi.fn().mockResolvedValue({ lichess_username: 'testuser', chesscom_username: '' }),
-    },
     jobs: {
-      startImport: vi.fn().mockResolvedValue({ job_id: 'import-job-1' }),
       startSync: vi.fn().mockResolvedValue({}),
     },
-    setup: {
-      validateUsername: vi.fn().mockResolvedValue({ valid: true }),
+    profiles: {
+      list: vi.fn().mockResolvedValue({ profiles: [] }),
+      sync: vi.fn().mockResolvedValue({ job_id: 'sync-job-1' }),
     },
     analysis: {
       status: vi.fn().mockResolvedValue({ status: 'idle' }),
@@ -87,31 +84,42 @@ describe('ManagementApp', () => {
     });
   });
 
-  describe('Import section', () => {
-    test('renders import form when not in demo mode', async () => {
+  describe('Bulk Import section', () => {
+    test('shows empty state when there are no tracked profiles', async () => {
       render(<ManagementApp demoMode={false} />);
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: t('management.import.start') })).toBeDefined();
+        expect(screen.getByText(t('profiles.bulk_import.empty_title'))).toBeDefined();
       });
     });
 
-    test('hides import form in demo mode', async () => {
+    test('renders run-import button when profiles are loaded', async () => {
+      vi.mocked(client.profiles.list).mockResolvedValueOnce({
+        profiles: [
+          {
+            id: 1,
+            platform: 'lichess',
+            username: 'magnus',
+            is_primary: true,
+            created_at: '2026-04-01T00:00:00Z',
+            last_validated_at: null,
+            preferences: { auto_sync_enabled: true, sync_max_games: null },
+            stats: [],
+            last_game_sync_at: null,
+            last_stats_sync_at: null,
+          },
+        ],
+      });
+      render(<ManagementApp demoMode={false} />);
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: t('profiles.bulk_import.run_button') })).toBeDefined();
+      });
+    });
+
+    test('hides bulk import panel in demo mode', async () => {
       render(<ManagementApp demoMode={true} />);
       await waitFor(() => {
-        expect(screen.queryByRole('button', { name: t('management.import.start') })).toBeNull();
-      });
-    });
-
-    test('prefills lichess username from configured usernames', async () => {
-      render(<ManagementApp demoMode={false} />);
-      await waitFor(() => {
-        expect(screen.getByLabelText(t('management.import.source'))).toBeDefined();
-      });
-      const sourceSelect = screen.getByLabelText(t('management.import.source'));
-      fireEvent.change(sourceSelect, { target: { value: 'lichess' } });
-      await waitFor(() => {
-        const usernameInput = screen.getByLabelText(t('management.import.username'));
-        expect(usernameInput.value).toBe('testuser');
+        // The section heading still renders; the panel itself does not.
+        expect(screen.queryByRole('button', { name: t('profiles.bulk_import.run_button') })).toBeNull();
       });
     });
   });
@@ -218,11 +226,11 @@ describe('ManagementApp', () => {
     });
   });
 
-  describe('Usernames display', () => {
-    test('loads configured usernames on mount', async () => {
+  describe('Profile list for Bulk Import', () => {
+    test('loads the profile list on mount', async () => {
       render(<ManagementApp demoMode={false} />);
       await waitFor(() => {
-        expect(client.settings.getUsernames).toHaveBeenCalled();
+        expect(client.profiles.list).toHaveBeenCalled();
       });
     });
   });

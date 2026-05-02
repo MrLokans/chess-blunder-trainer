@@ -1,0 +1,295 @@
+/* ==========================================================================
+   /profiles page — list-detail layout
+   ========================================================================== */
+
+.profiles-app {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  gap: var(--s-lg);
+  align-items: start;
+}
+
+.profiles-app--empty {
+  display: block;
+}
+
+.profiles-app--loading {
+  padding: var(--s-2xl);
+  text-align: center;
+  color: var(--mid-gray);
+  font-family: var(--font-sans);
+}
+
+.profiles-app__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+}
+
+.profiles-app__sidebar-actions {
+  display: flex;
+}
+
+.profiles-app__detail {
+  min-height: 300px;
+}
+
+.profiles-app__hint {
+  font-family: var(--font-sans);
+  color: var(--mid-gray);
+  text-align: center;
+  padding: var(--s-xl);
+}
+
+/* --------------------------------------------------------------------------
+   Profile sidebar list
+   -------------------------------------------------------------------------- */
+
+.profile-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-sm);
+}
+
+.profile-list__item {
+  display: block;
+}
+
+.profile-list__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-sm);
+  margin-bottom: var(--s-xs);
+}
+
+.profile-list__platform {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--mid-gray);
+}
+
+.profile-list__username {
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--black);
+  word-break: break-word;
+  margin-bottom: var(--s-xs);
+}
+
+.profile-list__meta {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--mid-gray);
+}
+
+.profiles-add-placeholder {
+  font-family: var(--font-sans);
+  color: var(--dark-gray);
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Profile Overview tab
+   -------------------------------------------------------------------------- */
+
+.profile-overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-lg);
+}
+
+.profile-overview__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--s-md);
+  flex-wrap: wrap;
+}
+
+.profile-overview__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--s-md);
+  flex-wrap: wrap;
+}
+
+.profile-overview__username {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--black);
+  margin: 0;
+  word-break: break-word;
+}
+
+.profile-overview__primary {
+  display: flex;
+  align-items: center;
+}
+
+.profile-overview__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-xs);
+  margin: 0;
+}
+
+.profile-overview__meta-row {
+  display: flex;
+  gap: var(--s-sm);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+.profile-overview__meta-row dt {
+  color: var(--mid-gray);
+  margin: 0;
+  min-width: 140px;
+}
+
+.profile-overview__meta-row dd {
+  color: var(--black);
+  margin: 0;
+}
+
+.profile-overview__rating-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--s-sm);
+}
+
+.profile-overview__empty-stats {
+  font-family: var(--font-sans);
+  color: var(--mid-gray);
+  margin: 0;
+}
+
+.profile-overview__actions {
+  display: flex;
+  gap: var(--s-sm);
+  flex-wrap: wrap;
+}
+
+/* RatingCard inside the grid */
+
+.rating-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-xs);
+}
+
+.rating-card__mode {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--mid-gray);
+}
+
+.rating-card__rating {
+  font-family: var(--font-ui);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--black);
+  line-height: 1.1;
+}
+
+.rating-card__games {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--mid-gray);
+}
+
+.rating-card__synced {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  color: var(--mid-gray);
+}
+
+/* --------------------------------------------------------------------------
+   Profile Preferences tab
+   -------------------------------------------------------------------------- */
+
+.profile-preferences {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+}
+
+.profile-preferences__actions {
+  display: flex;
+  gap: var(--s-sm);
+}
+
+.profile-preferences__divider {
+  margin: var(--s-lg) 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.profile-preferences__danger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-sm);
+  padding: var(--s-md);
+  border: 2px solid var(--red);
+  background: var(--bg-error);
+}
+
+.profile-preferences__danger-heading {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--red);
+  margin: 0;
+}
+
+.profile-preferences__danger-body {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--dark-gray);
+  margin: 0;
+}
+
+.profile-preferences__deleting {
+  font-family: var(--font-sans);
+  color: var(--mid-gray);
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Add Profile modal
+   -------------------------------------------------------------------------- */
+
+.add-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+}
+
+.add-profile-form__actions {
+  display: flex;
+  gap: var(--s-sm);
+  justify-content: flex-end;
+}
+
+/* --------------------------------------------------------------------------
+   Mobile (single-column with the detail panel below the list)
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .profiles-app {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,38 +1,71 @@
 import { useState, useCallback, useRef } from 'preact/hooks';
-import { client } from '../shared/api';
+import { ApiError, client } from '../shared/api';
 import { debounce } from '../shared/debounce';
+import type { ProfilePlatform, ProfileValidateResponse } from '../types/profiles';
 
-type ValidationState = 'idle' | 'checking' | 'valid' | 'invalid';
+type ValidationState =
+  | 'idle'
+  | 'checking'
+  | 'valid'
+  | 'invalid'
+  | 'already_tracked'
+  | 'rate_limited';
 
 interface FieldState {
   value: string;
   validation: ValidationState;
+  // Populated when validation found this username already attached to a
+  // profile. Lets the submit path reuse the existing profile_id instead of
+  // attempting (and failing with 409) to create a duplicate — handles the
+  // partial-submit-then-reload edge case.
+  knownProfileId: number | null;
 }
 
 interface SetupPhase {
   type: 'form' | 'importing' | 'analyzing';
 }
 
-function FieldStatus({ state }: { state: ValidationState }) {
+function FieldStatus({ state, username }: { state: ValidationState; username: string }) {
   if (state === 'idle') return null;
+  // `already_tracked` is informational, not an error: the submit path
+  // recovers via `knownProfileId` and skips the create. Rendering it
+  // green-ish ('valid') keeps visual signal consistent with behavior.
+  // `rate_limited` is a soft warning that the submit path treats as
+  // blocking — yellow keeps it distinct from both red (invalid) and
+  // green (valid).
   const classMap: Record<ValidationState, string> = {
     idle: '',
     checking: 'field-validation checking',
     valid: 'field-validation valid',
     invalid: 'field-validation invalid',
+    already_tracked: 'field-validation valid',
+    rate_limited: 'field-validation warning',
   };
   const labelMap: Record<ValidationState, string> = {
     idle: '',
     checking: t('setup.validating'),
     valid: t('setup.username_valid'),
     invalid: t('setup.username_invalid'),
+    already_tracked: t('setup.already_tracked', { username }),
+    rate_limited: t('setup.rate_limited', { username }),
   };
-  return <span class={classMap[state]}>{labelMap[state]}</span>;
+  return (
+    <span class={classMap[state]} role="status" aria-live="polite">
+      {labelMap[state]}
+    </span>
+  );
+}
+
+function classifyValidation(result: ProfileValidateResponse): ValidationState {
+  if (result.rate_limited) return 'rate_limited';
+  if (result.already_tracked) return 'already_tracked';
+  return result.exists ? 'valid' : 'invalid';
 }
 
 export function SetupApp() {
-  const [lichess, setLichess] = useState<FieldState>({ value: '', validation: 'idle' });
-  const [chesscom, setChesscom] = useState<FieldState>({ value: '', validation: 'idle' });
+  const initialField: FieldState = { value: '', validation: 'idle', knownProfileId: null };
+  const [lichess, setLichess] = useState(initialField);
+  const [chesscom, setChesscom] = useState(initialField);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [phase, setPhase] = useState<SetupPhase>({ type: 'form' });
@@ -42,25 +75,29 @@ export function SetupApp() {
   const POLL_INTERVAL_MS = 2000;
 
   async function validateField(
-    platform: string,
+    platform: ProfilePlatform,
     username: string,
     setter: (updater: (prev: FieldState) => FieldState) => void,
     currentValueRef: { current: string },
   ): Promise<ValidationState> {
     if (!username) {
-      setter(prev => ({ ...prev, validation: 'idle' }));
+      setter(prev => ({ ...prev, validation: 'idle', knownProfileId: null }));
       return 'idle';
     }
     setter(prev => ({ ...prev, validation: 'checking' }));
     try {
-      const result = await client.setup.validateUsername(platform, username);
+      const result = await client.profiles.validate({ platform, username });
       if (currentValueRef.current.trim() !== username) return 'checking';
-      const state: ValidationState = result.valid ? 'valid' : 'invalid';
-      setter(prev => ({ ...prev, validation: state }));
+      const state = classifyValidation(result);
+      setter(prev => ({
+        ...prev,
+        validation: state,
+        knownProfileId: result.already_tracked ? result.profile_id : null,
+      }));
       return state;
     } catch {
       if (currentValueRef.current.trim() !== username) return 'checking';
-      setter(prev => ({ ...prev, validation: 'idle' }));
+      setter(prev => ({ ...prev, validation: 'idle', knownProfileId: null }));
       return 'idle';
     }
   }
@@ -86,7 +123,11 @@ export function SetupApp() {
     const value = (e.currentTarget as HTMLInputElement).value;
     lichessValueRef.current = value;
     const trimmed = value.trim();
-    setLichess({ value, validation: trimmed ? 'checking' : 'idle' });
+    setLichess({
+      value,
+      validation: trimmed ? 'checking' : 'idle',
+      knownProfileId: null,
+    });
     debouncedValidateLichess(trimmed);
   }
 
@@ -94,11 +135,18 @@ export function SetupApp() {
     const value = (e.currentTarget as HTMLInputElement).value;
     chesscomValueRef.current = value;
     const trimmed = value.trim();
-    setChesscom({ value, validation: trimmed ? 'checking' : 'idle' });
+    setChesscom({
+      value,
+      validation: trimmed ? 'checking' : 'idle',
+      knownProfileId: null,
+    });
     debouncedValidateChesscom(trimmed);
   }
 
-  async function validateAllFields(): Promise<{ lichessState: ValidationState; chesscomState: ValidationState }> {
+  async function validateAllFields(): Promise<{
+    lichessState: ValidationState;
+    chesscomState: ValidationState;
+  }> {
     const lichessUsername = lichess.value.trim();
     const chesscomUsername = chesscom.value.trim();
 
@@ -127,7 +175,46 @@ export function SetupApp() {
     if (chesscomUsername && chesscomState === 'invalid') {
       errors.push(t('setup.chesscom_not_found', { username: chesscomUsername }));
     }
+    // Block the submit when either upstream check came back rate-limited;
+    // letting it through means `client.profiles.create`'s own existence
+    // check would 503 with an unfriendly server message.
+    if (lichessUsername && lichessState === 'rate_limited') {
+      errors.push(t('setup.rate_limited', { username: lichessUsername }));
+    }
+    if (chesscomUsername && chesscomState === 'rate_limited') {
+      errors.push(t('setup.rate_limited', { username: chesscomUsername }));
+    }
     return errors;
+  }
+
+  async function dispatchProfileSubmission(
+    platform: ProfilePlatform,
+    username: string,
+    knownProfileId: number | null,
+  ): Promise<string> {
+    let profileId = knownProfileId;
+    if (profileId === null) {
+      try {
+        const profile = await client.profiles.create({
+          platform,
+          username,
+          make_primary: true,
+        });
+        profileId = profile.id;
+      } catch (err) {
+        // Race: another request just created the same (platform, username).
+        // Fall back to validate to recover the profile_id and continue.
+        if (err instanceof ApiError && err.status === 409) {
+          const recheck = await client.profiles.validate({ platform, username });
+          if (!recheck.already_tracked || recheck.profile_id === null) throw err;
+          profileId = recheck.profile_id;
+        } else {
+          throw err;
+        }
+      }
+    }
+    const { job_id } = await client.profiles.sync(profileId);
+    return job_id;
   }
 
   async function waitForAnalysis(jobIds: string[]): Promise<void> {
@@ -178,9 +265,36 @@ export function SetupApp() {
       return;
     }
 
+    const submissions: Array<{
+      platform: ProfilePlatform;
+      username: string;
+      knownProfileId: number | null;
+    }> = [];
+    if (lichessUsername) {
+      submissions.push({
+        platform: 'lichess',
+        username: lichessUsername,
+        knownProfileId: lichess.knownProfileId,
+      });
+    }
+    if (chesscomUsername) {
+      submissions.push({
+        platform: 'chesscom',
+        username: chesscomUsername,
+        knownProfileId: chesscom.knownProfileId,
+      });
+    }
+
     try {
-      const result = await client.setup.complete({ lichess: lichessUsername, chesscom: chesscomUsername });
-      const jobIds = result.import_job_ids ?? [];
+      const jobIds: string[] = [];
+      // Sequential, not Promise.all: a failed Lichess create should abort
+      // before we kick off Chess.com. Promise.all would force per-result
+      // error mapping and split-success semantics.
+      for (const { platform, username, knownProfileId } of submissions) {
+        const jobId = await dispatchProfileSubmission(platform, username, knownProfileId);
+        jobIds.push(jobId);
+      }
+      await client.setup.markComplete();
 
       if (jobIds.length > 0) {
         await waitForAnalysis(jobIds);
@@ -228,7 +342,7 @@ export function SetupApp() {
                 value={lichess.value}
                 onInput={handleLichessInput}
               />
-              <FieldStatus state={lichess.validation} />
+              <FieldStatus state={lichess.validation} username={lichess.value.trim()} />
               <div class="help-text">{t('setup.lichess_help')}</div>
             </div>
 
@@ -242,7 +356,7 @@ export function SetupApp() {
                 value={chesscom.value}
                 onInput={handleChesscomInput}
               />
-              <FieldStatus state={chesscom.validation} />
+              <FieldStatus state={chesscom.validation} username={chesscom.value.trim()} />
               <div class="help-text">{t('setup.chesscom_help')}</div>
             </div>
 

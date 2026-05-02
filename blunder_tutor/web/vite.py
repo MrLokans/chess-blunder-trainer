@@ -17,6 +17,7 @@ ENTRY_MAP = MappingProxyType(
         "starred": "src/starred/index.tsx",
         "game-review": "src/game-review/index.tsx",
         "traps": "src/traps/index.tsx",
+        "profiles": "src/profiles/index.tsx",
         "auth-login": "src/auth/login.tsx",
         "auth-signup": "src/auth/signup.tsx",
         "auth-first-setup": "src/auth/first-setup.tsx",

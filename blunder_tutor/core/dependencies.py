@@ -25,6 +25,7 @@ from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.job_repository import JobRepository
+from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.services.eco_backfill_service import ECOBackfillService
 from blunder_tutor.services.job_service import JobService
@@ -86,6 +87,7 @@ get_settings_repository = _repo_dep(SettingsRepository)
 get_game_repository = _repo_dep(GameRepository)
 get_analysis_repository = _repo_dep(AnalysisRepository)
 get_data_management_repository = _repo_dep(DataManagementRepository)
+get_profile_repository = _repo_dep(SqliteProfileRepository)
 
 
 # --- Service Dependencies ---

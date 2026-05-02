@@ -9,9 +9,11 @@ import chess.pgn
 import httpx
 from tqdm import tqdm
 
-from blunder_tutor.fetchers import USER_AGENT
+from blunder_tutor.fetchers import USER_AGENT, ExistenceCheck, RateLimitError
+from blunder_tutor.fetchers._modes import lichess_to_canonical
 from blunder_tutor.fetchers._state import FetchState
-from blunder_tutor.fetchers.resilience import fetch_with_retry
+from blunder_tutor.fetchers.resilience import RetryableHTTPError, fetch_with_retry
+from blunder_tutor.repositories.profile_types import ProfileStatSnapshot
 from blunder_tutor.utils.date_utils import parse_pgn_datetime_ms
 from blunder_tutor.utils.pgn_utils import (
     build_game_metadata,
@@ -21,6 +23,7 @@ from blunder_tutor.utils.pgn_utils import (
 
 LICHESS_BASE_URL = "https://lichess.org"
 LICHESS_USER_URL = f"{LICHESS_BASE_URL}/api/user/{{username}}"
+_USER_AGENT_HEADER_KEY = "User-Agent"
 
 type _FetchResult = tuple[list[dict[str, object]], set[str]]
 
@@ -65,7 +68,7 @@ async def fetch(
                             ),
                             headers={
                                 "Accept": "application/x-chess-pgn",
-                                "User-Agent": USER_AGENT,
+                                _USER_AGENT_HEADER_KEY: USER_AGENT,
                             },
                         )
                     ).text,
@@ -140,10 +143,62 @@ async def validate_username(username: str) -> bool:
     url = LICHESS_USER_URL.format(username=username)
     async with httpx.AsyncClient(
         timeout=10,
-        headers={"User-Agent": USER_AGENT},
+        headers={_USER_AGENT_HEADER_KEY: USER_AGENT},
     ) as client:
         try:
             response = await client.get(url)
             return response.status_code == HTTPStatus.OK
         except httpx.HTTPError:
             return False
+
+
+async def fetch_user_perfs(username: str) -> list[ProfileStatSnapshot]:
+    """Fetch per-mode rating + game count from Lichess `/api/user/{u}`.
+
+    Raises `RateLimitError` if Lichess persistently 429s the request after
+    the resilience layer's retry budget is exhausted. 404s and other
+    non-retryable status codes propagate as `httpx.HTTPStatusError`.
+    """
+    url = LICHESS_USER_URL.format(username=username)
+    async with httpx.AsyncClient(
+        timeout=10,
+        headers={
+            "Accept": "application/json",
+            _USER_AGENT_HEADER_KEY: USER_AGENT,
+        },
+    ) as client:
+        try:
+            response = await fetch_with_retry(client, url)
+        except RetryableHTTPError as exc:
+            if exc.response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+                raise RateLimitError("lichess") from exc
+            raise
+    payload = response.json()
+    perfs = payload.get("perfs", {}) if isinstance(payload, dict) else {}
+    if not isinstance(perfs, dict):
+        return []
+    return lichess_to_canonical(perfs)
+
+
+async def check_username_existence(username: str) -> ExistenceCheck:
+    """Check whether a Lichess user exists, with rate-limit awareness.
+
+    Distinguishes 404 (`exists=False`) from persistent 429
+    (`rate_limited=True`). 5xx and other non-retryable errors propagate.
+    """
+    url = LICHESS_USER_URL.format(username=username)
+    async with httpx.AsyncClient(
+        timeout=10,
+        headers={_USER_AGENT_HEADER_KEY: USER_AGENT},
+    ) as client:
+        try:
+            await fetch_with_retry(client, url)
+        except RetryableHTTPError as exc:
+            if exc.response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+                return ExistenceCheck(exists=False, rate_limited=True)
+            raise
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == HTTPStatus.NOT_FOUND:
+                return ExistenceCheck(exists=False, rate_limited=False)
+            raise
+    return ExistenceCheck(exists=True, rate_limited=False)

@@ -73,3 +73,16 @@ def test_post_features_toggle_back(app):
     )
     response = app.get("/api/settings/features")
     assert response.json()["features"]["dashboard.heatmap"] is True
+
+
+class TestSetupComplete:
+    def test_marks_setup_completed(self, app):
+        response = app.post("/api/setup/complete", json={})
+        assert response.status_code == HTTPStatus.OK
+        assert response.json() == {"success": True}
+
+    def test_idempotent_on_repeated_calls(self, app):
+        first = app.post("/api/setup/complete", json={})
+        second = app.post("/api/setup/complete", json={})
+        assert first.status_code == HTTPStatus.OK
+        assert second.status_code == HTTPStatus.OK

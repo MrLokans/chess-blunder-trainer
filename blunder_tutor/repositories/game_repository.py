@@ -29,7 +29,19 @@ class GameRepository(BaseDbRepository):
         pgn_content = await self.get_pgn_content(game_id)
         return load_game_from_string(pgn_content)
 
-    async def insert_games(self, games: list[dict[str, object]]) -> int:
+    async def insert_games(
+        self,
+        games: list[dict[str, object]],
+        *,
+        profile_id: int | None = None,
+    ) -> int:
+        """Insert games into ``game_index_cache``.
+
+        ``profile_id`` tags every inserted row with the owning tracked
+        profile. Callers using the legacy username-pair path pass ``None``;
+        rows then have ``profile_id IS NULL`` and stay reachable only by
+        ``(source, username)`` denormalization.
+        """
         timestamp = datetime.utcnow().isoformat()
         inserted = 0
 
@@ -42,8 +54,8 @@ class GameRepository(BaseDbRepository):
                     INSERT INTO game_index_cache (
                         game_id, source, username, white, black, result,
                         date, end_time_utc, time_control, pgn_content,
-                        analyzed, indexed_at, game_type
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+                        analyzed, indexed_at, game_type, profile_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)
                     ON CONFLICT(game_id) DO NOTHING
                     """,
                     (
@@ -59,6 +71,7 @@ class GameRepository(BaseDbRepository):
                         game.get("pgn_content"),
                         timestamp,
                         game_type,
+                        profile_id,
                     ),
                 )
                 if cursor.rowcount > 0:

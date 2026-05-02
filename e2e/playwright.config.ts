@@ -6,11 +6,11 @@ const PROJECT_ROOT = resolve(__dirname, '..');
 
 export default defineConfig({
   testDir: './tests',
-  // Auth e2e needs a different webServer (credentials mode, fresh DB,
-  // fake stockfish) and runs via `playwright.auth.config.ts`. Excluding
-  // it here keeps `npx playwright test` (no --config) from spawning it
-  // against the demo DB, where the auth endpoints don't exist.
-  testIgnore: 'auth.spec.ts',
+  // Suites that need a credentials-mode webServer (fresh DB, fake
+  // stockfish) run via dedicated config files. Excluding them here keeps
+  // `npx playwright test` (no --config) from spawning them against the
+  // demo DB, where signup endpoints don't apply.
+  testIgnore: ['auth.spec.ts', 'setup-and-import.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

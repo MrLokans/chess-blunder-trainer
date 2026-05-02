@@ -32,7 +32,6 @@ def demo_app(demo_config: AppConfig):
 
 
 BLOCKED_ENDPOINTS = [
-    ("POST", "/api/setup"),
     ("POST", "/api/import/start"),
     ("POST", "/api/sync/start"),
     ("POST", "/api/analysis/start"),
@@ -65,6 +64,14 @@ def test_demo_mode_allows_get_endpoints(demo_app: TestClient):
 
 def test_demo_mode_allows_locale_change(demo_app: TestClient):
     response = demo_app.post("/api/settings/locale", json={"locale": "ru"})
+    assert response.status_code != HTTPStatus.FORBIDDEN
+
+
+def test_demo_mode_allows_setup_complete(demo_app: TestClient):
+    # The new SetupApp flow flips this flag after creating profiles in
+    # the in-memory demo repo. Blocking it would leave the demo trapped
+    # on /setup forever once a visitor "completes" setup.
+    response = demo_app.post("/api/setup/complete", json={})
     assert response.status_code != HTTPStatus.FORBIDDEN
 
 

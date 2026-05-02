@@ -22,6 +22,7 @@ from blunder_tutor.background.jobs.backfill_traps import BackfillTrapsJob
 from blunder_tutor.background.jobs.delete_all_data import DeleteAllDataJob
 from blunder_tutor.background.jobs.import_games import ImportGamesJob
 from blunder_tutor.background.jobs.import_pgn import ImportPgnJob
+from blunder_tutor.background.jobs.stats_sync import StatsSyncJob
 from blunder_tutor.background.jobs.sync_games import SyncGamesJob
 from blunder_tutor.constants import (
     JOB_TYPE_ANALYZE,
@@ -32,6 +33,7 @@ from blunder_tutor.constants import (
     JOB_TYPE_DELETE_ALL_DATA,
     JOB_TYPE_IMPORT,
     JOB_TYPE_IMPORT_PGN,
+    JOB_TYPE_STATS_SYNC,
     JOB_TYPE_SYNC,
 )
 from blunder_tutor.core.dependencies import (
@@ -42,6 +44,7 @@ from blunder_tutor.core.dependencies import (
     get_game_analyzer,
     get_game_repository,
     get_job_service,
+    get_profile_repository,
     get_settings_repository,
     get_work_coordinator,
 )
@@ -50,6 +53,7 @@ from blunder_tutor.events.event_types import TrapsEvent
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
+from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.repositories.trap_repository import TrapRepository
 from blunder_tutor.services.job_service import JobService
@@ -68,33 +72,41 @@ GameAnalyzerDep = Annotated[GameAnalyzer, Depends(get_game_analyzer)]
 DataManagementRepoDep = Annotated[
     DataManagementRepository, Depends(get_data_management_repository)
 ]
+ProfileRepoDep = Annotated[SqliteProfileRepository, Depends(get_profile_repository)]
 
 
 @inject
 async def run_import_job(  # noqa: WPS211 — FastDepends @inject signature; each dependency is a parameter, the framework resolves them.
     job_id: str,
-    source: str,
-    username: str,
-    max_games: int,
     job_service: JobServiceDep,
     settings_repo: SettingsRepoDep,
     game_repo: GameRepoDep,
+    profile_repo: ProfileRepoDep,
     event_bus: EventBusDep,
+    source: str | None = None,
+    username: str | None = None,
+    max_games: int | None = None,
+    profile_id: int | None = None,
 ) -> dict[str, Any]:
     ctx = get_context()
     job = ImportGamesJob(
         job_service=job_service,
         settings_repo=settings_repo,
         game_repo=game_repo,
+        profile_repo=profile_repo,
         user_id=ctx.user_id,
         event_bus=event_bus,
     )
-    return await job.execute(
-        job_id=job_id,
-        source=source,
-        username=username,
-        max_games=max_games,
-    )
+    payload: dict[str, Any] = {}
+    if profile_id is not None:
+        payload["profile_id"] = profile_id
+    if source is not None:
+        payload["source"] = source
+    if username is not None:
+        payload["username"] = username
+    if max_games is not None:
+        payload["max_games"] = max_games
+    return await job.execute(job_id=job_id, **payload)
 
 
 @inject
@@ -103,17 +115,23 @@ async def run_sync_job(
     job_service: JobServiceDep,
     settings_repo: SettingsRepoDep,
     game_repo: GameRepoDep,
+    profile_repo: ProfileRepoDep,
     event_bus: EventBusDep,
+    profile_id: int | None = None,
 ) -> dict[str, Any]:
     ctx = get_context()
     job = SyncGamesJob(
         job_service=job_service,
         settings_repo=settings_repo,
         game_repo=game_repo,
+        profile_repo=profile_repo,
         user_id=ctx.user_id,
         event_bus=event_bus,
     )
-    return await job.execute(job_id=job_id)
+    payload: dict[str, Any] = {}
+    if profile_id is not None:
+        payload["profile_id"] = profile_id
+    return await job.execute(job_id=job_id, **payload)
 
 
 @inject
@@ -235,6 +253,16 @@ async def run_backfill_traps_job(
 
 
 @inject
+async def run_stats_sync_job(
+    job_id: str,
+    profile_id: int,
+    profile_repo: ProfileRepoDep,
+) -> dict[str, Any]:
+    job = StatsSyncJob(profile_repo=profile_repo)
+    return await job.execute(job_id=job_id, profile_id=profile_id)
+
+
+@inject
 async def run_import_pgn_job(
     job_id: str,
     game_id: str,
@@ -269,5 +297,6 @@ JOB_RUNNERS = MappingProxyType(
         JOB_TYPE_BACKFILL_TRAPS: run_backfill_traps_job,
         JOB_TYPE_DELETE_ALL_DATA: run_delete_all_data_job,
         JOB_TYPE_IMPORT_PGN: run_import_pgn_job,
+        JOB_TYPE_STATS_SYNC: run_stats_sync_job,
     }
 )

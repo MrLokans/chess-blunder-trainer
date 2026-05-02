@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_nav.html" import render_nav with context %}
+
+{% block title %}{{ t('profiles.title') }} - Blunder Tutor{% endblock %}
+
+{% block header_nav %}
+{{ render_nav('profiles') }}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/profiles.css">
+{% endblock %}
+
+{% block content %}
+{% include '_demo_banner.html' %}
+<div id="profiles-root" data-demo-mode="{{ demo_mode | tojson }}"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ vite_asset('profiles') }}
+{% endblock %}

@@ -132,11 +132,30 @@ def _extract_host(url: str) -> str | None:
     return after_scheme.split(":", 1)[0].lower()
 
 
+_HTTP_PATCH = "PATCH"
+_HTTP_DELETE = "DELETE"
+
+# Profile endpoints are demo-safe because the in-memory `ProfileRepository`
+# (selected by `get_profile_repository` when `demo_mode=True`) intercepts
+# every mutation — nothing touches the SQLite DB. The two upstream-hitting
+# endpoints (`/sync`, `/stats/refresh`) still issue a real Lichess/Chess.com
+# call, which is read-only and bounded by the upstream provider's own
+# rate-limiter; we accept that as the demo's exposure surface.
 DEMO_ALLOWED_MUTATIONS: tuple[tuple[str, re.Pattern], ...] = (
     (_HTTP_POST, re.compile(r"^/api/submit$")),
     (_HTTP_POST, re.compile(r"^/api/analyze$")),
     (_HTTP_POST, re.compile(r"^/api/settings/locale$")),
-    (_HTTP_POST, re.compile(r"^/api/validate-username$")),
+    # `/api/setup/complete` is allowed in demo mode for symmetry with the
+    # rewritten Setup flow; SetupCheckMiddleware short-circuits on
+    # `demo_mode`, so the persisted flag is never actually read in demo —
+    # the on-disk write is harmless.
+    (_HTTP_POST, re.compile(r"^/api/setup/complete$")),
+    (_HTTP_POST, re.compile(r"^/api/profiles/validate$")),
+    (_HTTP_POST, re.compile(r"^/api/profiles$")),
+    (_HTTP_PATCH, re.compile(r"^/api/profiles/\d+$")),
+    (_HTTP_DELETE, re.compile(r"^/api/profiles/\d+$")),
+    (_HTTP_POST, re.compile(r"^/api/profiles/\d+/sync$")),
+    (_HTTP_POST, re.compile(r"^/api/profiles/\d+/stats/refresh$")),
 )
 
 

@@ -81,6 +81,7 @@ JOB_TYPE_BACKFILL_TACTICS = "backfill_tactics"
 JOB_TYPE_BACKFILL_TRAPS = "backfill_traps"
 JOB_TYPE_DELETE_ALL_DATA = "delete_all_data"
 JOB_TYPE_IMPORT_PGN = "import_pgn"
+JOB_TYPE_STATS_SYNC = "stats_sync"
 
 # Background job lifecycle states (stored in `background_jobs.status`).
 JOB_STATUS_PENDING = "pending"

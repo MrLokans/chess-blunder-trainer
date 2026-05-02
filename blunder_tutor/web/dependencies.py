@@ -12,6 +12,11 @@ from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.job_repository import JobRepository
+from blunder_tutor.repositories.profile import (
+    SqliteProfileRepository,
+    get_demo_profile_repository,
+)
+from blunder_tutor.repositories.profile_types import ProfileRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import (
     PuzzleAttemptRepository,
 )
@@ -79,6 +84,21 @@ get_analysis_repository = _repo_dep(AnalysisRepository)
 get_trap_repository = _repo_dep(TrapRepository)
 get_starred_puzzle_repository = _repo_dep(StarredPuzzleRepository)
 get_data_management_repository = _repo_dep(DataManagementRepository)
+
+
+async def get_profile_repository(  # noqa: WPS463 — FastAPI DI factory, not a getter; yields the repo into the request scope.
+    request: Request,
+) -> AsyncGenerator[ProfileRepository]:
+    """Pick the in-memory repo in demo mode; otherwise the per-user
+    SQLite-backed implementation. Returns the protocol so handlers
+    depend on the contract instead of the concrete class.
+    """
+    if getattr(request.app.state, "demo_mode", False):
+        yield get_demo_profile_repository()
+        return
+    db_path = get_db_path(request)
+    async with SqliteProfileRepository(db_path=db_path) as repo:
+        yield repo
 
 
 async def get_job_service(
@@ -164,6 +184,7 @@ StarredPuzzleRepoDep = Annotated[
 DataManagementRepoDep = Annotated[
     DataManagementRepository, Depends(get_data_management_repository)
 ]
+ProfileRepoDep = Annotated[ProfileRepository, Depends(get_profile_repository)]
 
 
 async def check_engine_throttle(request: Request, response: Response) -> None:

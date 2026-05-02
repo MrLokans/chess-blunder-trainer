@@ -5,7 +5,7 @@ import { resolve } from 'path';
 
 const allPageModules = [
   'trainer', 'dashboard', 'settings', 'game-review', 'management',
-  'import', 'setup', 'starred', 'traps', 'heatmap', 'growth',
+  'import', 'setup', 'starred', 'traps', 'heatmap', 'growth', 'profiles',
 ];
 
 function crossPageRestrictions(): Array<Record<string, unknown>> {

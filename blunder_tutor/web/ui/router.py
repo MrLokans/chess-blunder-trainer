@@ -81,6 +81,10 @@ async def starred_page(request: Request) -> HTMLResponse:
     return _page(request, "starred.html", "Starred Puzzles")
 
 
+async def profiles_page(request: Request) -> HTMLResponse:
+    return _page(request, "profiles.html", "Profiles")
+
+
 _GET = frozenset(("GET",))
 
 ui_router = APIRouter()
@@ -103,4 +107,7 @@ ui_router.add_api_route(
 )
 ui_router.add_api_route(
     "/settings", settings, response_class=HTMLResponse, methods=_GET
+)
+ui_router.add_api_route(
+    "/profiles", profiles_page, response_class=HTMLResponse, methods=_GET
 )
