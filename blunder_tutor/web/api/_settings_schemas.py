@@ -56,8 +56,6 @@ class SettingsRequest(BaseModel):
 
 
 class SettingsResponse(BaseModel):
-    lichess_username: str | None = Field(None, description="Lichess username")
-    chesscom_username: str | None = Field(None, description="Chess.com username")
     auto_sync: bool = Field(default=False, description="Auto sync enabled")
     sync_interval: int = Field(default=24, description="Sync interval in hours")
     max_games: int = Field(default=100, description="Max games to sync")

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { ApiError, client } from '../shared/api';
+import { formatRelativeAgo } from '../shared/relative-time';
 import type { Profile } from '../types/profiles';
 import { Alert } from './Alert';
 import { Button } from './Button';
@@ -84,7 +85,9 @@ export function ImportLauncher({
   }
 
   const maxGames = profile.preferences.sync_max_games;
-  const lastSync = profile.last_game_sync_at;
+  const lastSyncDisplay = profile.last_game_sync_at
+    ? formatRelativeAgo(profile.last_game_sync_at)
+    : t('profiles.list.never_synced');
   const isRunning = currentJobIdRef.current !== null;
   const editPrefsHref = `/profiles?profile_id=${String(profile.id)}&tab=preferences`;
 
@@ -97,7 +100,7 @@ export function ImportLauncher({
         </div>
         <div class="import-launcher__prefs-row">
           <dt>{t('profiles.overview.last_game_sync')}</dt>
-          <dd>{lastSync ?? t('profiles.list.never_synced')}</dd>
+          <dd>{lastSyncDisplay}</dd>
         </div>
       </dl>
 

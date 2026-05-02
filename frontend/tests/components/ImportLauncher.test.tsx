@@ -55,6 +55,15 @@ describe('ImportLauncher', () => {
     expect(screen.getByText(t('profiles.list.never_synced'))).toBeDefined();
   });
 
+  test('renders last_game_sync_at as a relative-time string, not raw ISO', () => {
+    const recent = new Date(Date.now() - 60_000).toISOString();
+    const profile = makeProfile({ last_game_sync_at: recent });
+    render(<ImportLauncher profile={profile} onImportStarted={() => {}} />);
+    // Whatever formatRelativeAgo returns, it must NOT be the raw ISO.
+    expect(screen.queryByText(recent)).toBeNull();
+    expect(screen.queryByText(t('profiles.list.never_synced'))).toBeNull();
+  });
+
   test('dispatches sync and notifies parent on Run import click', async () => {
     const onImportStarted = vi.fn();
     const profile = makeProfile({ id: 7 });

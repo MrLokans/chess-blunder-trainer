@@ -425,3 +425,98 @@
 .tabs__panel {
   flex: 1;
 }
+
+/* --------------------------------------------------------------------------
+   ProfileSelector — shared dropdown for choosing among tracked profiles.
+   -------------------------------------------------------------------------- */
+
+.profile-selector {
+  width: 100%;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  padding: var(--s-sm) var(--s-md);
+  border: 2px solid var(--black);
+  border-radius: 0;
+  background: var(--white);
+  color: var(--black);
+}
+
+.profile-selector:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.profile-selector:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   BulkImportPanel — compose ProfileSelector + ImportLauncher on the
+   Management page (and any future surface that wants per-profile imports).
+   -------------------------------------------------------------------------- */
+
+.bulk-import-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-lg);
+}
+
+/* --------------------------------------------------------------------------
+   ImportLauncher — preferences readout + Run-import button + status.
+   -------------------------------------------------------------------------- */
+
+.import-launcher {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+}
+
+.import-launcher__prefs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-xs);
+  margin: 0;
+}
+
+.import-launcher__prefs-row {
+  display: flex;
+  gap: var(--s-md);
+  align-items: baseline;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+}
+
+.import-launcher__prefs-row dt {
+  color: var(--mid-gray);
+  margin: 0;
+  min-width: 200px;
+  font-weight: 600;
+}
+
+.import-launcher__prefs-row dd {
+  color: var(--black);
+  margin: 0;
+}
+
+.import-launcher__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-md);
+  flex-wrap: wrap;
+}
+
+.import-launcher__edit-link {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--mid-gray);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.import-launcher__edit-link:hover,
+.import-launcher__edit-link:focus-visible {
+  color: var(--black);
+  text-decoration-color: currentColor;
+}

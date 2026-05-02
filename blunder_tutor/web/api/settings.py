@@ -64,8 +64,6 @@ async def get_settings(settings_repo: SettingsRepoDep) -> dict[str, Any]:
     settings = await settings_repo.get_all_settings()
 
     return {
-        "lichess_username": settings.get("lichess_username"),
-        "chesscom_username": settings.get("chesscom_username"),
         "auto_sync": settings.get("auto_sync_enabled") == "true",
         "sync_interval": int(settings.get("sync_interval_hours", "24")),
         "max_games": int(settings.get("sync_max_games", "100")),
