@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0]
+
+### Added
+
+- **Multi-user authentication (opt-in)**: New `AUTH_MODE=credentials` mode turns Blunder Tutor into a multi-user instance. Adds sign-in, sign-up, and first-time-setup pages with invite-code bootstrapping, session cookies, and a per-user SQLite database so each account's games, settings, and progress stay fully isolated. Default `AUTH_MODE=none` preserves the existing single-user behaviour. All auth strings are localized across English, Russian, Ukrainian, Spanish, Polish, Belarusian, and Chinese.
+- **Auth admin CLI**: `uv run python main.py auth <command>` for operators running a multi-user instance — `list-users`, `reset-password`, `revoke-sessions`, `delete-user`, `regenerate-invite`, and `prune-orphans`.
+- **Tracked profiles**: New Profiles page lets you manage multiple Lichess and Chess.com accounts per user, mark a primary profile per platform, and view per-profile stats (games imported, ratings, last sync). Username validation hits the platform API live before saving, and deletion offers a choice between detaching the profile or removing its imported games.
+- **Per-profile bulk import**: The Management page's bulk-import flow now targets a selected profile instead of a single global username, so games from each tracked account land under the right profile.
+- **Periodic background sync**: New scheduler ticks every five minutes and pulls fresh games and rating snapshots for each tracked profile in the background — no manual import needed to stay up to date.
+
+### Changed
+
+- **Setup flow replaced by profiles**: The old single-username `/setup` onboarding step is gone. New users go straight to the Profiles page to add their first tracked account, and the legacy `username` field has been removed from settings.
+
+---
+
 ## [3.0.0]
 
 ### Changed
