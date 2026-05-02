@@ -71,6 +71,10 @@ jobs:
       - name: Start container
         run: |
           cp demo/demo.sqlite3 /tmp/e2e-test.sqlite3
+          # Container runs as appuser (uid 1000); GH-hosted runners are uid 1001.
+          # Without this, the bind-mounted DB is read-only to the container user
+          # and migrations fail with "attempt to write a readonly database".
+          sudo chown 1000:1000 /tmp/e2e-test.sqlite3
           docker run -d --name e2e-app \
             -p 8000:8000 \
             -v /tmp/e2e-test.sqlite3:/app/data/main.sqlite3 \
