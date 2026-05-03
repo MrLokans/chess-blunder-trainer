@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncGenerator
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -30,6 +30,7 @@ from blunder_tutor.repositories.profile import (
     SqliteProfileRepository,
 )
 from blunder_tutor.repositories.settings import SettingsRepository
+from blunder_tutor.utils.time import utcnow
 
 
 @pytest.fixture
@@ -122,16 +123,16 @@ async def _drain_dispatched_events(
 
 
 def _hours_ago_iso(hours: float) -> str:
-    return (datetime.utcnow() - timedelta(hours=hours)).isoformat()
+    return (utcnow() - timedelta(hours=hours)).isoformat()
 
 
 class TestSyncDuePredicateTimezoneTolerance:
     """`_is_sync_due` must compare correctly whether `last_sync_iso` is
-    tz-aware (production path: `profile.upsert_stats` writes via
-    `_now_iso()` which uses `datetime.now(UTC).isoformat()`) or tz-naive
-    (legacy `app_settings.last_sync_timestamp`, written via
-    `datetime.utcnow().isoformat()`). A naive `utcnow() - tz_aware_last`
-    raises TypeError and crashes the whole scheduler tick.
+    tz-aware (post-migration writes go through `now_iso()` →
+    ``...+00:00``) or tz-naive (legacy rows in user DBs were written
+    with ``datetime.utcnow().isoformat()`` and have no offset). The
+    routing through ``parse_dt`` is what keeps the subtraction from
+    raising TypeError and crashing the whole scheduler tick.
     """
 
     async def test_dispatch_does_not_crash_on_tz_aware_synced_at(
@@ -141,9 +142,9 @@ class TestSyncDuePredicateTimezoneTolerance:
         context: None,
     ):
         profile = await profile_repo.create("lichess", "alice")
-        # `upsert_stats` writes `synced_at = datetime.now(UTC).isoformat()`
-        # when the snapshot's `synced_at` field is None — exactly the
-        # production path the scheduler reads back later.
+        # `upsert_stats` writes `synced_at = now_iso()` when the
+        # snapshot's `synced_at` field is None — exactly the production
+        # path the scheduler reads back later.
         await profile_repo.upsert_stats(
             profile.id,
             [ProfileStatSnapshot(mode="bullet", rating=2400, games_count=100)],

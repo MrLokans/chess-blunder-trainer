@@ -7,7 +7,7 @@ def parse_pgn_datetime(date: str | None, time: str | None) -> datetime | None:
     if not date or not time:
         return None
     try:
-        parsed = datetime.strptime(f"{date} {time}", "%Y.%m.%d %H:%M:%S")
+        parsed = datetime.strptime(f"{date} {time}", "%Y.%m.%d %H:%M:%S")  # noqa: DTZ007 — PGN tags lack a timezone; the next line attaches UTC.
         return parsed.replace(tzinfo=UTC)
     except ValueError:
         return None

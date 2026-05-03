@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
 from fastapi import HTTPException, Path, Query, status
@@ -24,6 +23,7 @@ from blunder_tutor.constants import (
     JOB_TYPE_SYNC,
 )
 from blunder_tutor.events.event_types import JobExecutionRequestEvent
+from blunder_tutor.utils.time import parse_dt
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     AnalysisRepoDep,
@@ -48,7 +48,7 @@ def _attach_formatted_created_at(jobs: list[dict[str, Any]]) -> None:
             job["created_at_formatted"] = "-"
             continue
         try:
-            dt = datetime.fromisoformat(created_at)
+            dt = parse_dt(created_at)
             job["created_at_formatted"] = dt.strftime("%Y-%m-%d %H:%M")
         except (ValueError, TypeError):
             job["created_at_formatted"] = created_at

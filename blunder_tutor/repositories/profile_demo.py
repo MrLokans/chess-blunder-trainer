@@ -10,7 +10,6 @@ the design spec; revisit if abuse appears.
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
 
 from blunder_tutor.repositories.profile_types import (
     Profile,
@@ -19,11 +18,7 @@ from blunder_tutor.repositories.profile_types import (
     ProfileStatSnapshot,
     ProfileSyncCandidate,
 )
-
-
-def _now_iso() -> str:
-    return datetime.now(UTC).isoformat()
-
+from blunder_tutor.utils.time import now_iso
 
 _DEMO_SEED_LICHESS_STATS: tuple[ProfileStatSnapshot, ...] = (
     ProfileStatSnapshot(mode="bullet", rating=2400, games_count=3120, synced_at=None),  # noqa: WPS432 — fixture data, not a magic number.
@@ -94,7 +89,7 @@ class InMemoryProfileRepository:
             for existing in self._profiles.values():
                 if existing.platform == platform and existing.username == normalized:
                     raise ValueError(f"profile already exists: {platform}/{normalized}")
-            now = _now_iso()
+            now = now_iso()
             has_primary = any(
                 p.platform == platform and p.is_primary for p in self._profiles.values()
             )
@@ -140,7 +135,7 @@ class InMemoryProfileRepository:
                 username=new_username,
                 is_primary=new_is_primary,
                 created_at=current.created_at,
-                updated_at=_now_iso(),
+                updated_at=now_iso(),
                 last_validated_at=current.last_validated_at,
                 preferences=current.preferences,
             )
@@ -178,7 +173,7 @@ class InMemoryProfileRepository:
                 username=current.username,
                 is_primary=current.is_primary,
                 created_at=current.created_at,
-                updated_at=_now_iso(),
+                updated_at=now_iso(),
                 last_validated_at=current.last_validated_at,
                 preferences=ProfilePreferences(
                     auto_sync_enabled=new_auto, sync_max_games=new_max
@@ -223,8 +218,8 @@ class InMemoryProfileRepository:
                 username=current.username,
                 is_primary=current.is_primary,
                 created_at=current.created_at,
-                updated_at=_now_iso(),
-                last_validated_at=_now_iso(),
+                updated_at=now_iso(),
+                last_validated_at=now_iso(),
                 preferences=current.preferences,
             )
 
@@ -245,13 +240,13 @@ class InMemoryProfileRepository:
                 username=profile.username,
                 is_primary=False,
                 created_at=profile.created_at,
-                updated_at=_now_iso(),
+                updated_at=now_iso(),
                 last_validated_at=profile.last_validated_at,
                 preferences=profile.preferences,
             )
 
     def _seed(self) -> None:
-        now = _now_iso()
+        now = now_iso()
         lichess = Profile(
             id=self._allocate_id(),
             platform="lichess",

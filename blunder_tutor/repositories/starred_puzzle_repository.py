@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from blunder_tutor.repositories.base import BaseDbRepository
+from blunder_tutor.utils.time import now_iso
 
 
 class StarredPuzzleRepository(BaseDbRepository):
     async def star(self, game_id: str, ply: int, note: str | None = None) -> None:
-        starred_at = datetime.utcnow().isoformat()
+        starred_at = now_iso()
         async with self.write_transaction() as conn:
             await conn.execute(
                 """

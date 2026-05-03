@@ -4,7 +4,6 @@ from datetime import datetime
 
 import aiosqlite
 
-from blunder_tutor.auth.core._time import now_iso, parse_dt
 from blunder_tutor.auth.core.types import (
     Email,
     Identity,
@@ -18,6 +17,7 @@ from blunder_tutor.auth.core.types import (
     Username,
 )
 from blunder_tutor.auth.storage_sqlite.db import AuthDb
+from blunder_tutor.utils.time import now_iso, parse_dt
 
 
 def _row_to_user(row) -> User:  # type: ignore[no-untyped-def]

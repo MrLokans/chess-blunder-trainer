@@ -3,7 +3,7 @@ from __future__ import annotations
 import contextlib
 import logging
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Annotated
 
 from apscheduler.executors.asyncio import AsyncIOExecutor
@@ -30,6 +30,7 @@ from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.services.job_service import JobService
+from blunder_tutor.utils.time import parse_dt, utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -155,17 +156,11 @@ def _is_sync_due(last_sync_iso: str | None, interval_hours: int) -> bool:
     if not last_sync_iso:
         return True
     try:
-        last = datetime.fromisoformat(last_sync_iso)
+        last = parse_dt(last_sync_iso)
     except ValueError:
         # Corrupt timestamp — treat as overdue rather than blocking forever.
         return True
-    # `last` may be tz-aware (production: `profile_stats.synced_at` is
-    # written via `_now_iso()` → tz-aware UTC) or tz-naive (legacy:
-    # `app_settings.last_sync_timestamp` written via `utcnow().isoformat()`).
-    # The "now" side has to match or the subtraction raises TypeError and
-    # crashes the whole scheduler tick.
-    now = datetime.now(last.tzinfo) if last.tzinfo else datetime.utcnow()
-    return now - last >= timedelta(hours=interval_hours)
+    return utcnow() - last >= timedelta(hours=interval_hours)
 
 
 async def _dispatch_one_user(

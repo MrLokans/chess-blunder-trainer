@@ -10,10 +10,10 @@ Acceptance criteria:
 
 from __future__ import annotations
 
-from http import HTTPStatus
 import asyncio
 import shutil
 import sqlite3
+from http import HTTPStatus
 from pathlib import Path
 
 import httpx
@@ -35,6 +35,7 @@ from blunder_tutor.core.dependencies import (
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import EventType, JobExecutionRequestEvent
 from blunder_tutor.repositories.profile import SqliteProfileRepository
+from blunder_tutor.utils.time import now_iso
 from blunder_tutor.web.bypass_auth import LOCAL_USER_ID
 from tests.auth.conftest import (
     DEFAULT_PASSWORD,
@@ -291,9 +292,7 @@ class TestSyncDuePredicate:
         assert _is_sync_due(last, interval) is expected
 
     def test_not_due_when_recent(self):
-        from datetime import datetime
-
-        recent = datetime.utcnow().isoformat()
+        recent = now_iso()
         assert _is_sync_due(recent, 24) is False
 
 

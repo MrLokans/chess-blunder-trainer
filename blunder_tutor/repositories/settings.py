@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from blunder_tutor.features import DEFAULTS, Feature
 from blunder_tutor.repositories.base import BaseDbRepository
+from blunder_tutor.utils.time import now_iso
 
 
 class SettingsRepository(BaseDbRepository):
@@ -36,7 +35,7 @@ class SettingsRepository(BaseDbRepository):
                 INSERT OR REPLACE INTO app_settings (key, value, updated_at)
                 VALUES (?, ?, ?)
                 """,
-                (key, value, datetime.utcnow().isoformat()),
+                (key, value, now_iso()),
             )
 
     async def get_all_settings(self) -> dict[str, str]:

@@ -1,9 +1,9 @@
 from dataclasses import asdict, dataclass
-from datetime import datetime
 from enum import Enum
 from typing import Any
 
 from blunder_tutor.auth import UserId
+from blunder_tutor.utils.time import now_iso
 
 
 class EventType(str, Enum):
@@ -29,7 +29,7 @@ class Event:
 
     @classmethod
     def create(cls, event_type: EventType, data: dict[str, Any]) -> "Event":
-        return cls(type=event_type, data=data, timestamp=datetime.utcnow().isoformat())
+        return cls(type=event_type, data=data, timestamp=now_iso())
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -49,7 +49,7 @@ class JobEvent(Event):
                 "status": status,
                 "error_message": error_message,
             },
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=now_iso(),
         )
 
     @classmethod
@@ -66,7 +66,7 @@ class JobEvent(Event):
                 "total": total,
                 "percent": percent,
             },
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=now_iso(),
         )
 
 
@@ -82,7 +82,7 @@ class StatsEvent(Event):
         return cls(
             type=EventType.STATS_UPDATED,
             data={"trigger": "job_completed", "user_key": user_key},
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=now_iso(),
         )
 
 
@@ -93,7 +93,7 @@ class TrapsEvent(Event):
         return cls(
             type=EventType.TRAPS_UPDATED,
             data={"trigger": "trap_detection_completed", "user_key": user_key},
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=now_iso(),
         )
 
 
@@ -104,7 +104,7 @@ class TrainingEvent(Event):
         return cls(
             type=EventType.TRAINING_UPDATED,
             data={"trigger": "puzzle_attempt", "user_key": user_key},
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=now_iso(),
         )
 
 
@@ -115,7 +115,7 @@ class CacheEvent(Event):
         return cls(
             type=EventType.CACHE_INVALIDATED,
             data={"tags": tags},
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=now_iso(),
         )
 
 
@@ -137,5 +137,5 @@ class JobExecutionRequestEvent(Event):
                 "user_id": user_id,
                 "kwargs": kwargs,
             },
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=now_iso(),
         )

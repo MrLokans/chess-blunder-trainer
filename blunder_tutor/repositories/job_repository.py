@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime
 
 from blunder_tutor.constants import (
     JOB_STATUS_COMPLETED,
@@ -13,6 +12,7 @@ from blunder_tutor.constants import (
     JOB_TYPE_SYNC,
 )
 from blunder_tutor.repositories.base import BaseDbRepository
+from blunder_tutor.utils.time import now_iso
 
 
 class JobRepository(BaseDbRepository):
@@ -26,7 +26,7 @@ class JobRepository(BaseDbRepository):
         max_games: int | None = None,
     ) -> str:
         job_id = str(uuid.uuid4())
-        created_at = datetime.utcnow().isoformat()
+        created_at = now_iso()
 
         async with self.write_transaction() as conn:
             await conn.execute(
@@ -58,7 +58,7 @@ class JobRepository(BaseDbRepository):
         error_message: str | None = None,
     ) -> None:
         timestamp_field = None
-        timestamp_value = datetime.utcnow().isoformat()
+        timestamp_value = now_iso()
 
         if status == JOB_STATUS_RUNNING:
             timestamp_field = "started_at"
@@ -106,7 +106,7 @@ class JobRepository(BaseDbRepository):
         job_id: str,
         result: dict[str, object],
     ) -> None:
-        completed_at = datetime.utcnow().isoformat()
+        completed_at = now_iso()
         result_json = json.dumps(result)
 
         async with self.write_transaction() as conn:

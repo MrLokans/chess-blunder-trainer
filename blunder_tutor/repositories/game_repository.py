@@ -7,6 +7,7 @@ import chess.pgn
 
 from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.utils.pgn_utils import load_game_from_string
+from blunder_tutor.utils.time import now_iso, parse_dt
 from blunder_tutor.utils.time_control import classify_game_type
 
 GameRow = dict[str, object]
@@ -42,7 +43,7 @@ class GameRepository(BaseDbRepository):
         rows then have ``profile_id IS NULL`` and stay reachable only by
         ``(source, username)`` denormalization.
         """
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = now_iso()
         inserted = 0
 
         async with self.write_transaction() as conn:
@@ -303,5 +304,5 @@ class GameRepository(BaseDbRepository):
             row = await cursor.fetchone()
 
         if row and row["end_time_utc"]:
-            return datetime.fromisoformat(row["end_time_utc"])
+            return parse_dt(row["end_time_utc"])
         return None

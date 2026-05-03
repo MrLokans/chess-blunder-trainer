@@ -22,6 +22,7 @@ from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.repositories.profile_types import Profile
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.services.job_service import JobService, ProgressCallback
+from blunder_tutor.utils.time import now_iso
 
 logger = logging.getLogger(__name__)
 
@@ -228,9 +229,7 @@ class SyncGamesJob(BaseJob):
     # Delete this method and its two call sites with the legacy path
     # cleanup.
     async def _touch_last_sync_timestamp(self) -> None:
-        await self.settings_repo.write_setting(
-            "last_sync_timestamp", datetime.utcnow().isoformat()
-        )
+        await self.settings_repo.write_setting("last_sync_timestamp", now_iso())
 
     async def _fetch_and_store(  # noqa: WPS211 — explicit parameters keep the call-site readable.
         self,

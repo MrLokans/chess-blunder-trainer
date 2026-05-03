@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from blunder_tutor.repositories.base import BaseDbRepository
+from blunder_tutor.utils.time import now_iso, utcnow
 
 
 class PuzzleAttemptRepository(BaseDbRepository):
@@ -14,7 +15,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
         user_move_uci: str | None = None,
         best_move_uci: str | None = None,
     ) -> None:
-        attempted_at = datetime.utcnow().isoformat()
+        attempted_at = now_iso()
 
         async with self.write_transaction() as conn:
             await conn.execute(
@@ -58,7 +59,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
         return {**dict(row), "was_correct": bool(row["was_correct"])}
 
     async def get_recently_solved_puzzles(self, days: int = 30) -> set[tuple[str, int]]:
-        cutoff_date = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        cutoff_date = (utcnow() - timedelta(days=days)).isoformat()
 
         conn = await self.get_connection()
         async with conn.execute(
@@ -164,7 +165,7 @@ class PuzzleAttemptRepository(BaseDbRepository):
     async def get_daily_attempt_counts(
         self, days: int = 365
     ) -> dict[str, dict[str, int]]:
-        cutoff_date = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
+        cutoff_date = (utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
 
         conn = await self.get_connection()
         async with conn.execute(

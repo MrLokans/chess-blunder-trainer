@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
 import aiosqlite
 
 from blunder_tutor.repositories.base import BaseDbRepository
@@ -12,6 +10,7 @@ from blunder_tutor.repositories.profile_types import (
     ProfileStatSnapshot,
     ProfileSyncCandidate,
 )
+from blunder_tutor.utils.time import now_iso
 
 # Per-game tables that participate in the cascade-delete path. Children are
 # listed before parents so the IN-clause subqueries against game_index_cache
@@ -33,10 +32,6 @@ _PROFILE_SELECT = """
     FROM profile p
     LEFT JOIN profile_preferences pp ON pp.profile_id = p.id
 """
-
-
-def _now_iso() -> str:
-    return datetime.now(UTC).isoformat()
 
 
 def _row_to_profile(row: aiosqlite.Row) -> Profile:
@@ -142,7 +137,7 @@ class SqliteProfileRepository(BaseDbRepository):
                     "WHERE platform = ? AND is_primary = 1",
                     (platform,),
                 )
-            now = _now_iso()
+            now = now_iso()
             cursor = await conn.execute(
                 """
                 INSERT INTO profile
@@ -191,7 +186,7 @@ class SqliteProfileRepository(BaseDbRepository):
                 "UPDATE profile "
                 "SET username = ?, is_primary = ?, updated_at = ? "
                 "WHERE id = ?",
-                (new_username, int(new_is_primary), _now_iso(), profile_id),
+                (new_username, int(new_is_primary), now_iso(), profile_id),
             )
         return await self._require_profile(profile_id)
 
@@ -259,7 +254,7 @@ class SqliteProfileRepository(BaseDbRepository):
     ) -> None:
         if not snapshots:
             return
-        now = _now_iso()
+        now = now_iso()
         async with self.write_transaction() as conn:
             if await _fetch_profile(conn, profile_id) is None:
                 raise ProfileNotFoundError(profile_id)
@@ -334,7 +329,7 @@ class SqliteProfileRepository(BaseDbRepository):
         ]
 
     async def touch_validated_at(self, profile_id: int) -> None:
-        now = _now_iso()
+        now = now_iso()
         async with self.write_transaction() as conn:
             if await _fetch_profile(conn, profile_id) is None:
                 raise ProfileNotFoundError(profile_id)
