@@ -385,8 +385,9 @@ async def get_training_stats_html(
     stats = await attempt_repo.get_user_stats()
 
     return request.app.state.templates.TemplateResponse(
+        request,
         "_stats_partial.html",
-        {"request": request, **stats},
+        dict(stats),
     )
 
 

@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import shutil
 import sqlite3
+from contextlib import closing
 from http import HTTPStatus
 from pathlib import Path
 
@@ -82,7 +83,9 @@ async def _wait_for_job(
 def _assert_job_in_exactly_one_db(job_id: str, db_a: Path, db_b: Path) -> None:
     present = []
     for db in (db_a, db_b):
-        with sqlite3.connect(db) as conn:
+        # `with sqlite3.connect(...)` only commits/rollbacks — it does NOT
+        # close the connection; `closing()` is what actually releases it.
+        with closing(sqlite3.connect(db)) as conn:
             row = conn.execute(
                 "SELECT 1 FROM background_jobs WHERE job_id = ?", (job_id,)
             ).fetchone()

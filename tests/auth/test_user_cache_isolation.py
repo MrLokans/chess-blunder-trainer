@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from http import HTTPStatus
 from datetime import timedelta
 from functools import partial
+from http import HTTPStatus
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -31,6 +31,15 @@ from blunder_tutor.web.per_user_cache import PerUserCache
 from blunder_tutor.web.request_helpers import _cache_key, _db_path_for
 from blunder_tutor.web.resources import AuthResources
 from tests.helpers.auth import build_test_auth_service
+
+
+def _client(app: FastAPI, token: str) -> httpx.AsyncClient:
+    return httpx.AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+        follow_redirects=False,
+        cookies={"session_token": token},
+    )
 
 
 class TestCacheKey:
@@ -142,31 +151,26 @@ class TestSetupCacheIsolation:
     ):
         app, _user_a, token_a, _user_b, token_b, _ = two_user_app
 
-        async with httpx.AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-            follow_redirects=False,
-        ) as client:
-            # Warm the cache with user A (setup completed, no redirect).
-            r_a = await client.get("/some-page", cookies={"session_token": token_a})
+        # Two clients (one per user) rather than one client with per-request
+        # cookies — httpx deprecates the latter, and two clients model the
+        # "two browsers, two sessions" reality the test is asserting against.
+        async with _client(app, token_a) as client_a:
+            r_a = await client_a.get("/some-page")
             assert r_a.status_code == HTTPStatus.OK
 
-            # User B must still be redirected to /setup; they don't share
-            # user A's cache entry.
-            r_b = await client.get("/some-page", cookies={"session_token": token_b})
+        async with _client(app, token_b) as client_b:
+            r_b = await client_b.get("/some-page")
         assert r_b.status_code == HTTPStatus.SEE_OTHER
         assert r_b.headers["location"] == "/setup"
 
     async def test_cache_stores_per_user_keys(self, two_user_app):
         app, user_a, token_a, user_b, token_b, _ = two_user_app
 
-        async with httpx.AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://testserver",
-            follow_redirects=False,
-        ) as client:
-            await client.get("/some-page", cookies={"session_token": token_a})
-            await client.get("/some-page", cookies={"session_token": token_b})
+        async with _client(app, token_a) as client_a:
+            await client_a.get("/some-page")
+
+        async with _client(app, token_b) as client_b:
+            await client_b.get("/some-page")
 
         cache = app.state.setup_completed_cache
         assert cache.get(user_a.id) is True

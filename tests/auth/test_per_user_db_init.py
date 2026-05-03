@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+from contextlib import closing
 from datetime import timedelta
 from pathlib import Path
 
@@ -36,7 +37,9 @@ class TestPerUserDbInit:
             username=Username("alice"), password="password123"
         )
         path = resolve_user_db_path(tmp_path / "users", user.id)
-        with sqlite3.connect(path) as conn:
+        # `with sqlite3.connect(...)` commits/rollbacks but does NOT close;
+        # `closing()` is what actually releases the connection.
+        with closing(sqlite3.connect(path)) as conn:
             cur = conn.execute(
                 "SELECT name FROM sqlite_master WHERE type='table' AND "
                 "name='game_index_cache'"

@@ -95,7 +95,7 @@ async def ensure_upstream_username_exists(platform: str, username: str) -> None:
         )
     if not check.exists:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"{platform} user '{username}' not found",
         )
 

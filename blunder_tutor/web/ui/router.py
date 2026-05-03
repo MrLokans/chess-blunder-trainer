@@ -8,10 +8,10 @@ from blunder_tutor.web.template_context import LOCALE_DISPLAY_NAMES
 def _page(
     request: Request, template: str, title: str | None = None, **extra
 ) -> HTMLResponse:
-    context: dict[str, object] = {"request": request, **extra}
+    context: dict[str, object] = dict(extra)
     if title is not None:
         context["title"] = title
-    return request.app.state.templates.TemplateResponse(template, context)
+    return request.app.state.templates.TemplateResponse(request, template, context)
 
 
 async def home(request: Request) -> HTMLResponse:

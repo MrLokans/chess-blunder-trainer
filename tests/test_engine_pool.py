@@ -12,6 +12,9 @@ def _make_mock_engine(*, alive: bool = True) -> AsyncMock:
     engine = AsyncMock()
     engine.quit = AsyncMock()
     engine.configure = AsyncMock()
+    # `chess.engine.UciProtocol.kill()` is sync; AsyncMock would yield an
+    # unawaited coroutine that engine_pool's broad try/except swallows.
+    engine.kill = MagicMock()
     engine.options = {
         "Threads": MagicMock(default=1, min=1, max=512),
         "Hash": MagicMock(default=16, min=1, max=33554432),

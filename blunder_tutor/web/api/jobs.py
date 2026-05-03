@@ -217,8 +217,9 @@ async def get_jobs_html(
     _attach_formatted_created_at(jobs)
 
     return request.app.state.templates.TemplateResponse(
+        request,
         "_jobs_partial.html",
-        {"request": request, "jobs": jobs},
+        {"jobs": jobs},
     )
 
 
@@ -345,8 +346,9 @@ async def delete_job(
     _attach_formatted_created_at(jobs)
 
     return request.app.state.templates.TemplateResponse(
+        request,
         "_jobs_partial.html",
-        {"request": request, "jobs": jobs},
+        {"jobs": jobs},
     )
 
 

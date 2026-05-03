@@ -407,6 +407,23 @@ python_functions = ["test_*"]
 # shuffles test order per-session. Use `-p no:randomly` to disable for a
 # bisect; `--randomly-seed=<int>` to reproduce a specific shuffle.
 addopts = ["-n", "auto", "--dist", "loadfile"]
+# Warnings are errors. The suite is warning-clean as of TREK-129/132/133;
+# this gate prevents new deprecations (Python, Starlette, httpx, etc.) from
+# accumulating silently. Add a targeted `ignore::Category:source.module` line
+# below — with a rationale comment — when a third-party library emits an
+# unfixable warning we don't control.
+filterwarnings = [
+  "error",
+  # `PytestUnraisableExceptionWarning` flakes under `-n auto --dist loadfile`
+  # because GC-time `sqlite3.Connection.__del__` from aiosqlite's internal
+  # worker threads occasionally fires on a different test boundary than the
+  # one that allocated it. Source-level tracing (TREK-134 investigation)
+  # confirmed 0 real aiosqlite leaks after the `BaseDbRepository.get_connection`
+  # race fix; the residual is xdist+GC ordering, not a real resource leak. Keep
+  # these warnings visible (default action) without failing CI. Tracked in
+  # TREK-134 as a follow-up — drop this line once that lands.
+  "default::pytest.PytestUnraisableExceptionWarning",
+]
 markers = [
   "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
