@@ -5,22 +5,22 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-  "aiosqlite>=0.20.0",
-  "alembic>=1.13.0",
-  "apscheduler>=3.10.0",
-  "bcrypt>=4.1",
-  "fast-depends>=2.4.0",
-  "fastapi>=0.116.1",
-  "fastapi-throttle>=0.1.8",
+  "aiosqlite>=0.22.0",
+  "alembic>=1.18.0",
+  "apscheduler>=3.11.0",
+  "bcrypt>=5.0.0",
+  "fast-depends>=2.4.0",  # audit pending — see follow-up Trekker task
+  "fastapi>=0.136.0",
+  "fastapi-throttle>=0.1.8",  # niche, low-activity — audit pending
   "httpx>=0.28.1",
-  "hyx>=0.0.2",
-  "jinja2>=3.1.4",
-  "python-chess>=1.999",
-  "python-multipart>=0.0.21",
-  "sqlalchemy>=2.0.0",
-  "tqdm>=4.67.1",
-  "uvicorn>=0.35.0",
-  "websockets>=12.0",
+  "hyx>=0.0.2",  # abandoned upstream — replacement audit pending
+  "jinja2>=3.1.6",
+  "python-chess>=1.999",  # upstream sentinel pin
+  "python-multipart>=0.0.27",
+  "sqlalchemy>=2.0.49",
+  "tqdm>=4.67.3",
+  "uvicorn>=0.46.0",
+  "websockets>=16.0",
 ]
 
 [project.optional-dependencies]
