@@ -1,12 +1,12 @@
 from dataclasses import asdict, dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from blunder_tutor.auth import UserId
 from blunder_tutor.utils.time import now_iso
 
 
-class EventType(str, Enum):
+class EventType(StrEnum):
     """All event types in the system."""
 
     JOB_CREATED = "job.created"

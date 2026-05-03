@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from types import MappingProxyType
 
 from pydantic import BaseModel, Field
@@ -8,13 +8,13 @@ from pydantic import BaseModel, Field
 from blunder_tutor.analysis.tactics import TacticalPattern
 
 
-class GamePhaseEnum(str, Enum):
+class GamePhaseEnum(StrEnum):
     opening = "opening"
     middlegame = "middlegame"
     endgame = "endgame"
 
 
-class TacticalPatternEnum(str, Enum):
+class TacticalPatternEnum(StrEnum):
     fork = "fork"
     pin = "pin"
     skewer = "skewer"
@@ -26,7 +26,7 @@ class TacticalPatternEnum(str, Enum):
     none = "none"
 
 
-class GameTypeEnum(str, Enum):
+class GameTypeEnum(StrEnum):
     ultrabullet = "ultrabullet"
     bullet = "bullet"
     blitz = "blitz"
@@ -35,12 +35,12 @@ class GameTypeEnum(str, Enum):
     correspondence = "correspondence"
 
 
-class ColorEnum(str, Enum):
+class ColorEnum(StrEnum):
     white = "white"
     black = "black"
 
 
-class DifficultyEnum(str, Enum):
+class DifficultyEnum(StrEnum):
     easy = "easy"
     medium = "medium"
     hard = "hard"
