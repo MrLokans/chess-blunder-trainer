@@ -224,6 +224,36 @@ class TestEmptyEnvVarsFailLoudly:
             )
 
 
+class TestSecretKeyWhitespace:
+    """A quoted ``SECRET_KEY=' hex... '`` in .env files passes the length
+    check but HMACs with leading/trailing spaces — silently producing
+    different signatures than a trimmed copy of the same key. Strip on
+    parse so operators can't trip over invisible characters."""
+
+    def test_strips_surrounding_whitespace(self):
+        padded = f"  {_VALID_SECRET}  "
+        config = config_factory(
+            _args(),
+            _base_env(AUTH_MODE="credentials", SECRET_KEY=padded),
+        )
+        assert config.auth.secret_key == _VALID_SECRET
+
+    def test_whitespace_only_treated_as_missing(self):
+        with pytest.raises(ValueError, match="SECRET_KEY"):
+            config_factory(
+                _args(),
+                _base_env(AUTH_MODE="credentials", SECRET_KEY="     "),
+            )
+
+    def test_padding_does_not_help_short_key_pass_min_length(self):
+        short = "x" * (SECRET_KEY_MIN_LEN - 1)
+        with pytest.raises(ValueError, match="SECRET_KEY"):
+            config_factory(
+                _args(),
+                _base_env(AUTH_MODE="credentials", SECRET_KEY=f"  {short}  "),
+            )
+
+
 class TestReadOnlyMappingCompat:
     def test_accepts_mapping_proxy(self):
         env = MappingProxyType(_base_env())

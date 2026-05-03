@@ -222,7 +222,7 @@ def _build_auth_config(environ: Mapping) -> AuthConfig:
     """Extract auth-related env vars and let AuthConfig validate them."""
     return AuthConfig(
         mode=_parse_auth_mode(environ.get("AUTH_MODE")),
-        secret_key=environ.get("SECRET_KEY") or None,
+        secret_key=(environ.get("SECRET_KEY") or "").strip() or None,
         max_users=_parse_positive_int(environ, "MAX_USERS", 1),
         session_max_age_seconds=_parse_positive_int(
             environ, "SESSION_MAX_AGE_SECONDS", _SESSION_MAX_AGE_DEFAULT
