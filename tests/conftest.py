@@ -7,6 +7,7 @@ from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
 
 import pytest
+import sentry_sdk
 from fastapi.testclient import TestClient
 
 from blunder_tutor.migrations import run_migrations
@@ -16,6 +17,22 @@ from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRe
 from blunder_tutor.trainer import Trainer
 from blunder_tutor.web.config import AppConfig, DataConfig, EngineConfig
 from tests.helpers.engine import make_test_client
+
+
+@pytest.fixture(autouse=True)
+def _no_sentry_in_tests() -> None:
+    """Belt-and-braces: catch any test that inadvertently initializes Sentry.
+
+    `init_observability` short-circuits when its config is disabled (the
+    default in tests, since `SENTRY_ENABLED` is unset). If this assertion
+    ever trips, something is calling `sentry_sdk.init` that should not be —
+    fix the source, do not suppress the assert.
+    """
+    assert not sentry_sdk.get_client().is_active(), (
+        "Sentry client is active during a test — observability must stay "
+        "off in the test suite. Check that no fixture sets SENTRY_ENABLED "
+        "or SENTRY_DSN, and that init_observability is not invoked."
+    )
 
 
 @pytest.fixture
