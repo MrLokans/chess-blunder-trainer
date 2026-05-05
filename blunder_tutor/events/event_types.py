@@ -7,7 +7,15 @@ from blunder_tutor.utils.time import now_iso
 
 
 class EventType(StrEnum):
-    """All event types in the system."""
+    """All event types in the system.
+
+    Member values are part of the metrics-tag contract: the
+    ``ws.broadcast.sent`` counter tags broadcasts with ``event_type=<value>``.
+    Adding members is fine (bounded growth); introducing dynamically-built
+    values (e.g., ``f"job.{kind}"``) would break the cardinality guarantee
+    documented in `docs/conventions/observability.md` and must be remapped
+    onto a static set before merging.
+    """
 
     JOB_CREATED = "job.created"
     JOB_STATUS_CHANGED = "job.status_changed"

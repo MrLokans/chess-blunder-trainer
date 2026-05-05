@@ -4,6 +4,7 @@ import asyncio
 import logging
 import os
 from collections.abc import Awaitable, Callable
+from time import monotonic
 from typing import Any, TypeVar
 
 import chess.engine
@@ -13,6 +14,7 @@ from blunder_tutor.constants import (
     DEFAULT_ENGINE_HASH_MB,
     DEFAULT_ENGINE_TASK_TIMEOUT,
 )
+from blunder_tutor.observability import count, distribution, start_span
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,17 @@ def _is_alive(engine: chess.engine.UciProtocol) -> bool:
 
 
 _SENTINEL = object()
+
+
+def _emit_engine_telemetry(outcome: str, elapsed_ms: float) -> None:
+    """Bounded-cardinality contract for the engine chokepoint metrics.
+
+    Both the metric names and the tag schema are part of the operator's
+    dashboards (see `docs/conventions/observability.md`). Renaming
+    requires updating the conventions doc and any operator-side alerts.
+    """
+    count("engine.analyse.completed", tags={"outcome": outcome})
+    distribution("engine.analyse.duration_ms", elapsed_ms)
 
 
 class EnginePool:
@@ -150,12 +163,28 @@ class EnginePool:
         fn: Callable[[chess.engine.UciProtocol], Awaitable[Any]],
         future: asyncio.Future,
     ) -> tuple[chess.engine.UciProtocol, bool]:
+        # Exists solely to scope the `engine.analyse` span around
+        # `_dispatch_engine_task`. Do not inline — splitting was needed
+        # both for span boundary clarity and to keep WPS231 cognitive
+        # complexity under the project ceiling.
+        with start_span("engine.analyse", op="chess.engine"):
+            return await self._dispatch_engine_task(engine, fn, future)
+
+    async def _dispatch_engine_task(
+        self,
+        engine: chess.engine.UciProtocol,
+        fn: Callable[[chess.engine.UciProtocol], Awaitable[Any]],
+        future: asyncio.Future,
+    ) -> tuple[chess.engine.UciProtocol, bool]:
+        outcome = "ok"
+        t0 = monotonic()
         try:
             engine = await self._ensure_alive(engine)
             result = await self._run_with_optional_timeout(engine, fn)
             if not future.cancelled():
                 future.set_result(result)
         except TimeoutError:
+            outcome = "timeout"
             logger.error("Task timed out after %ss, killing engine", self._task_timeout)
             engine = await self._kill_and_respawn(engine)
             if not future.done():
@@ -163,14 +192,17 @@ class EnginePool:
                     TimeoutError(f"Engine task timed out after {self._task_timeout}s")
                 )
         except asyncio.CancelledError:
+            outcome = "cancelled"
             if not future.done():
                 future.cancel()
             return engine, False
         except Exception as exc:
+            outcome = "error"
             if not future.cancelled():
                 future.set_exception(exc)
         finally:
             self._queue.task_done()
+            _emit_engine_telemetry(outcome, (monotonic() - t0) * 1000.0)
         return engine, True
 
 

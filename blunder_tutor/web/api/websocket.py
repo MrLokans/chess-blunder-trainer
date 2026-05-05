@@ -29,7 +29,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_json({"type": "pong"})
 
     except WebSocketDisconnect:
-        await connection_manager.disconnect(connection_id)
+        await connection_manager.disconnect(connection_id, reason="client_close")
     except Exception:
         logger.exception("WebSocket error")
-        await connection_manager.disconnect(connection_id)
+        await connection_manager.disconnect(connection_id, reason="error")

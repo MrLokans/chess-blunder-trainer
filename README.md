@@ -60,6 +60,23 @@ docker run -p 8000:8000 -v $(pwd)/data:/app/data \
 
 First signup uses a one-time invite code printed to the server log on boot. Each account gets an isolated SQLite database under `data/users/`. See [Authentication](docs/AUTH.md) for the full setup, CLI admin commands, and gotchas.
 
+## Observability (optional)
+
+Off by default. Enable Sentry to get HTTP transactions, exception capture, custom metrics for engine / jobs / WebSockets, and a Sentry Crons monitor on the scheduler tick:
+
+```bash
+docker run -p 8000:8000 -v $(pwd)/data:/app/data \
+  -e SENTRY_ENABLED=true \
+  -e SENTRY_DSN="https://<key>@<org>.ingest.sentry.io/<project>" \
+  ghcr.io/mrlokans/blunder-tutor:latest
+```
+
+For tuning knobs, the Sentry-side Crons monitor setup, and data-handling notes see the **Observability** section of [`docs/environment.md`](docs/environment.md).
+
+## Configuration
+
+All environment variables — auth, data, demo, engine, cache, analytics, observability, debugging — are documented in [`docs/environment.md`](docs/environment.md).
+
 ## Features
 
 - **Multi-platform import** — Lichess, Chess.com, or paste your own PGN

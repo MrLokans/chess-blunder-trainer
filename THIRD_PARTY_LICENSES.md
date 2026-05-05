@@ -172,17 +172,25 @@ Installed at runtime via `uv`/pip. Not vendored in this repository.
 | hyx              | MIT          | [https://github.com/roma-glushko/hyx](https://github.com/roma-glushko/hyx)                         |
 | fast-depends     | MIT          | [https://github.com/Lancetnik/FastDepends](https://github.com/Lancetnik/FastDepends)               |
 | fastapi-throttle | MIT          | [https://github.com/AliYmn/fastapi-throttle](https://github.com/AliYmn/fastapi-throttle)           |
+| bcrypt           | Apache-2.0   | [https://github.com/pyca/bcrypt](https://github.com/pyca/bcrypt)                                   |
+| sentry-sdk       | MIT          | [https://github.com/getsentry/sentry-python](https://github.com/getsentry/sentry-python)           |
 
 
 ### Dev-only
 
 
-| Package        | License    | Source                                                                                       |
-| -------------- | ---------- | -------------------------------------------------------------------------------------------- |
-| pytest         | MIT        | [https://github.com/pytest-dev/pytest](https://github.com/pytest-dev/pytest)                 |
-| pytest-asyncio | Apache-2.0 | [https://github.com/pytest-dev/pytest-asyncio](https://github.com/pytest-dev/pytest-asyncio) |
-| pytest-cov     | MIT        | [https://github.com/pytest-dev/pytest-cov](https://github.com/pytest-dev/pytest-cov)         |
-| Ruff           | MIT        | [https://github.com/astral-sh/ruff](https://github.com/astral-sh/ruff)                       |
+| Package                   | License    | Source                                                                                                       |
+| ------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
+| pytest                    | MIT        | [https://github.com/pytest-dev/pytest](https://github.com/pytest-dev/pytest)                                 |
+| pytest-asyncio            | Apache-2.0 | [https://github.com/pytest-dev/pytest-asyncio](https://github.com/pytest-dev/pytest-asyncio)                 |
+| pytest-cov                | MIT        | [https://github.com/pytest-dev/pytest-cov](https://github.com/pytest-dev/pytest-cov)                         |
+| pytest-profiling          | MIT        | [https://github.com/man-group/pytest-plugins](https://github.com/man-group/pytest-plugins)                   |
+| pytest-randomly           | MIT        | [https://github.com/pytest-dev/pytest-randomly](https://github.com/pytest-dev/pytest-randomly)               |
+| pytest-xdist              | MIT        | [https://github.com/pytest-dev/pytest-xdist](https://github.com/pytest-dev/pytest-xdist)                     |
+| Ruff                      | MIT        | [https://github.com/astral-sh/ruff](https://github.com/astral-sh/ruff)                                       |
+| flake8                    | MIT        | [https://github.com/pycqa/flake8](https://github.com/pycqa/flake8)                                           |
+| flake8-pyproject          | MIT        | [https://github.com/john-hen/Flake8-pyproject](https://github.com/john-hen/Flake8-pyproject)                 |
+| wemake-python-styleguide  | MIT        | [https://github.com/wemake-services/wemake-python-styleguide](https://github.com/wemake-services/wemake-python-styleguide) |
 
 
 ---

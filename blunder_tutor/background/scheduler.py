@@ -6,6 +6,7 @@ from collections.abc import Awaitable, Callable
 from datetime import timedelta
 from typing import Annotated
 
+import sentry_sdk
 from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.jobstores.memory import MemoryJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -202,6 +203,7 @@ async def _dispatch_one_user(
         clear_context()
 
 
+@sentry_sdk.monitor(monitor_slug="bt-scheduler-tick")
 async def _fanout_tick(
     event_bus: EventBus,
     engine_path: str,
@@ -217,6 +219,11 @@ async def _fanout_tick(
     pass is microseconds-fast even at thousands of users; cross-user
     failure isolation comes from the inner try/except, not from
     parallelism.
+
+    Decorated with ``@sentry_sdk.monitor`` so Sentry alerts the operator
+    when the expected check-in fails to arrive. Decorator no-ops cleanly
+    when Sentry is not initialized; the monitor *configuration* (interval,
+    grace period) is created by the operator in the Sentry UI.
     """
     try:
         user_ids = await list_users()

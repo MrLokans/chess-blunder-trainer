@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import logging
 from collections.abc import Callable
 from pathlib import Path
+from time import monotonic
 from typing import TYPE_CHECKING, Any
 
 from blunder_tutor.auth import UserId
@@ -15,6 +17,7 @@ from blunder_tutor.core.dependencies import (
 )
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import EventType, JobExecutionRequestEvent
+from blunder_tutor.observability import count, distribution, start_span
 
 if TYPE_CHECKING:
     from blunder_tutor.analysis.engine_pool import WorkCoordinator
@@ -23,6 +26,17 @@ logger = logging.getLogger(__name__)
 
 
 DbPathResolver = Callable[[UserId], Path]
+
+
+def _emit_job_completion(job_kind: str, status: str, elapsed_ms: float) -> None:
+    """Bounded-cardinality contract for the job chokepoint metrics.
+
+    Tags are restricted to the small static set ``{kind, status}`` —
+    high-cardinality identifiers (``user_id``, ``job_id``) live on the
+    span, not on metrics. See `docs/conventions/observability.md`.
+    """
+    count("job.completed", tags={"kind": job_kind, "status": status})
+    distribution("job.duration_ms", elapsed_ms, tags={"kind": job_kind})
 
 
 class JobExecutor:
@@ -114,7 +128,26 @@ class JobExecutor:
             name=f"job-{job_id}",
         )
         self._running_tasks[job_id] = task
-        task.add_done_callback(lambda t: self._running_tasks.pop(job_id, None))
+        task.add_done_callback(
+            functools.partial(self._on_task_done, job_id=job_id, job_type=job_type)
+        )
+
+    def _on_task_done(self, task: asyncio.Task, *, job_id: str, job_type: str) -> None:
+        # Retrieve .exception() so asyncio does not log "Task exception
+        # was never retrieved". When Sentry is active, AsyncioIntegration
+        # has already captured the traceback parented by the job span;
+        # the stdout `logger.error` below is *intentional duplication*
+        # to give operators visibility without requiring Sentry. Do not
+        # remove it as a "deduplication" pass.
+        self._running_tasks.pop(job_id, None)
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is not None:
+            logger.error(
+                f"Job {job_id} ({job_type}) failed",
+                exc_info=(type(exc), exc, exc.__traceback__),
+            )
 
     async def _execute_job(
         self,
@@ -162,14 +195,31 @@ class JobExecutor:
         )
         set_context(context)
 
-        try:
-            logger.info(f"Starting execution of job {job_id} ({job_type})")
-            # FastDepends @inject handles all dependency resolution and cleanup
-            result = await runner(job_id=job_id, **kwargs)
-            logger.info(f"Job {job_id} completed with result: {result}")
-
-        except Exception as e:
-            logger.exception(f"Job {job_id} failed: {e}")
-
-        finally:
-            clear_context()
+        # Top-level `start_span` becomes a transaction implicitly under
+        # sentry-sdk 2.x; the facade keeps this site SDK-agnostic. If
+        # the SDK churns this contract in 3.x, switch to an explicit
+        # transaction primitive on the facade rather than importing
+        # `sentry_sdk` here.
+        with start_span(job_type, op="job") as span:
+            span.set_tag("user_id", str(user_id))
+            span.set_data("job_id", job_id)
+            count("job.started", tags={"kind": job_type})
+            t0 = monotonic()
+            status = "ok"
+            try:
+                logger.info(f"Starting execution of job {job_id} ({job_type})")
+                # FastDepends @inject handles all dependency resolution
+                # and cleanup. Exceptions propagate so AsyncioIntegration
+                # captures them parented by this span.
+                result = await runner(job_id=job_id, **kwargs)
+                logger.info(f"Job {job_id} completed with result: {result}")
+            except BaseException:
+                # Widen to BaseException so `asyncio.CancelledError` (which
+                # is BaseException since 3.8) flips status to "error".
+                # `Exception` alone would let cancellation propagate with
+                # status still "ok" — silently miscounting the metric.
+                status = "error"
+                raise
+            finally:
+                clear_context()
+                _emit_job_completion(job_type, status, (monotonic() - t0) * 1000.0)
