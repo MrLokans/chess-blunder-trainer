@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from contextlib import closing
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from pathlib import Path
 
@@ -9,6 +10,10 @@ from fastapi.testclient import TestClient
 
 from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.utils.time_control import GameType
+
+
+def _days_ago(n: int) -> str:
+    return (datetime.now(UTC) - timedelta(days=n)).isoformat()
 
 
 def _make_pgn(
@@ -71,7 +76,7 @@ class TestRatingHistoryEndpoint:
             black="bob",
             white_elo=1500,
             black_elo=1480,
-            end_time_utc="2026-01-01T00:00:00",
+            end_time_utc=_days_ago(10),
         )
         _insert_game(
             db_path,
@@ -82,7 +87,7 @@ class TestRatingHistoryEndpoint:
             black="alice",
             white_elo=1520,
             black_elo=1510,
-            end_time_utc="2026-02-01T00:00:00",
+            end_time_utc=_days_ago(2),
         )
 
         response = app.get(f"/api/profiles/{profile.id}/rating-history")
@@ -91,19 +96,12 @@ class TestRatingHistoryEndpoint:
         body = response.json()
         points = body["points"]
         assert len(points) == 2
-        assert [p["end_time_utc"] for p in points] == [
-            "2026-01-01T00:00:00",
-            "2026-02-01T00:00:00",
-        ]
-        assert points[0] == {
-            "end_time_utc": "2026-01-01T00:00:00",
-            "rating": 1500,
-            "game_type": "blitz",
-            "color": "white",
-            "opponent_rating": 1480,
-        }
-        assert points[1]["color"] == "black"
+        assert points[0]["rating"] == 1500
+        assert points[0]["color"] == "white"
+        assert points[0]["opponent_rating"] == 1480
+        assert points[0]["game_type"] == "blitz"
         assert points[1]["rating"] == 1510
+        assert points[1]["color"] == "black"
 
     def test_unknown_profile_returns_404(self, app: TestClient) -> None:
         response = app.get("/api/profiles/9999/rating-history")
@@ -133,6 +131,7 @@ class TestRatingHistoryEndpoint:
             black="x",
             white_elo=1500,
             black_elo=1500,
+            end_time_utc=_days_ago(3),
             game_type=int(GameType.BLITZ),
         )
         _insert_game(
@@ -144,6 +143,7 @@ class TestRatingHistoryEndpoint:
             black="x",
             white_elo=1600,
             black_elo=1600,
+            end_time_utc=_days_ago(3),
             game_type=int(GameType.RAPID),
         )
 
@@ -154,36 +154,69 @@ class TestRatingHistoryEndpoint:
         assert body["points"][0]["rating"] == 1600
         assert body["points"][0]["game_type"] == "rapid"
 
-    async def test_since_filter(self, app: TestClient, db_path: Path) -> None:
+    async def test_excludes_games_older_than_30_days(
+        self, app: TestClient, db_path: Path
+    ) -> None:
         async with SqliteProfileRepository(db_path) as repo:
             profile = await repo.create("lichess", "alice")
 
+        # Two days old → in window. 35 days old → excluded.
         _insert_game(
             db_path,
-            game_id="old",
-            profile_id=profile.id,
-            username="alice",
-            white="alice",
-            black="x",
-            white_elo=1400,
-            black_elo=1400,
-            end_time_utc="2026-01-01T00:00:00",
-        )
-        _insert_game(
-            db_path,
-            game_id="new",
+            game_id="recent",
             profile_id=profile.id,
             username="alice",
             white="alice",
             black="x",
             white_elo=1500,
             black_elo=1500,
-            end_time_utc="2026-03-01T00:00:00",
+            end_time_utc=_days_ago(2),
+        )
+        _insert_game(
+            db_path,
+            game_id="ancient",
+            profile_id=profile.id,
+            username="alice",
+            white="alice",
+            black="x",
+            white_elo=1100,
+            black_elo=1100,
+            end_time_utc=_days_ago(35),
         )
 
-        response = app.get(
-            f"/api/profiles/{profile.id}/rating-history?since=2026-02-01T00:00:00"
-        )
+        response = app.get(f"/api/profiles/{profile.id}/rating-history")
         body = response.json()
-        assert len(body["points"]) == 1
-        assert body["points"][0]["rating"] == 1500
+        ratings = [p["rating"] for p in body["points"]]
+        assert ratings == [1500]
+
+    async def test_buckets_to_one_point_per_day(
+        self, app: TestClient, db_path: Path
+    ) -> None:
+        async with SqliteProfileRepository(db_path) as repo:
+            profile = await repo.create("lichess", "alice")
+
+        # Three games on the same day; only the latest survives.
+        same_day = datetime.now(UTC) - timedelta(days=1)
+        for game_id, hours, white_elo in (
+            ("morning", 8, 1510),
+            ("noon", 12, 1520),
+            ("evening", 20, 1530),
+        ):
+            _insert_game(
+                db_path,
+                game_id=game_id,
+                profile_id=profile.id,
+                username="alice",
+                white="alice",
+                black="x",
+                white_elo=white_elo,
+                black_elo=1500,
+                end_time_utc=same_day.replace(
+                    hour=hours, minute=0, second=0, microsecond=0
+                ).isoformat(),
+            )
+
+        response = app.get(f"/api/profiles/{profile.id}/rating-history")
+        body = response.json()
+        ratings = [p["rating"] for p in body["points"]]
+        assert ratings == [1530]

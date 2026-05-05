@@ -130,7 +130,7 @@ export function ProfileOverviewTab({
         ) : (
           <div class="profile-overview__rating-grid">
             {profile.stats.map((stat) => (
-              <RatingCard key={stat.mode} stat={stat} />
+              <RatingCard key={stat.mode} stat={stat} profileId={profile.id} />
             ))}
           </div>
         )}

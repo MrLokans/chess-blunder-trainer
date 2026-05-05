@@ -13,6 +13,7 @@ import type {
   ProfileSyncDispatchResponse,
   ProfileStatsRefreshResponse,
   Profile,
+  RatingHistoryResponse,
 } from '../types/profiles';
 import type {
   OverviewData,
@@ -271,6 +272,10 @@ export const client = {
       post<ProfileSyncDispatchResponse>(`/api/profiles/${String(id)}/sync`, {}),
     refreshStats: (id: number) =>
       post<ProfileStatsRefreshResponse>(`/api/profiles/${String(id)}/stats/refresh`, {}),
+    ratingHistory: (id: number, mode: string) =>
+      request<RatingHistoryResponse>(
+        `/api/profiles/${String(id)}/rating-history?mode=${encodeURIComponent(mode)}`,
+      ),
   },
 };
 

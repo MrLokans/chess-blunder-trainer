@@ -375,3 +375,50 @@ class TestRatingHistoryService:
         profile = await profile_repo.create("lichess", "alice")
         with pytest.raises(ValueError):
             await service.get(profile_id=profile.id, mode="bogus")
+
+    async def test_keeps_only_last_game_of_each_day(
+        self,
+        db_path: Path,
+        profile_repo: SqliteProfileRepository,
+        service: RatingHistoryService,
+    ) -> None:
+        # Three games on the same day with a rating climb. Daily bucket
+        # should keep only the latest game (1530), not the earlier 1510 / 1520.
+        profile = await profile_repo.create("lichess", "alice")
+        for game_id, end_time, white_elo in (
+            ("g_morning", "2026-04-15T08:00:00", 1510),
+            ("g_noon", "2026-04-15T12:00:00", 1520),
+            ("g_evening", "2026-04-15T20:00:00", 1530),
+        ):
+            _insert_game(
+                db_path,
+                game_id=game_id,
+                profile_id=profile.id,
+                username="alice",
+                white="alice",
+                black="bob",
+                white_elo=white_elo,
+                black_elo=1500,
+                end_time_utc=end_time,
+            )
+        # And one game on a different day.
+        _insert_game(
+            db_path,
+            game_id="next_day",
+            profile_id=profile.id,
+            username="alice",
+            white="alice",
+            black="bob",
+            white_elo=1540,
+            black_elo=1500,
+            end_time_utc="2026-04-16T10:00:00",
+        )
+
+        points = await service.get(profile_id=profile.id)
+        ratings = [p.rating for p in points]
+        end_times = [p.end_time_utc for p in points]
+        assert ratings == [1530, 1540]
+        assert end_times == [
+            "2026-04-15T20:00:00",
+            "2026-04-16T10:00:00",
+        ]

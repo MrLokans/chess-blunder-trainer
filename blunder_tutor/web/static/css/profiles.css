@@ -75,13 +75,32 @@
   color: var(--mid-gray);
 }
 
+.profile-list__username-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-xs);
+  margin-bottom: var(--s-xs);
+}
+
 .profile-list__username {
   font-family: var(--font-ui);
   font-size: var(--text-lg);
   font-weight: 700;
   color: var(--black);
   word-break: break-word;
-  margin-bottom: var(--s-xs);
+}
+
+.profile-list__platform-link {
+  font-size: var(--text-sm);
+  text-decoration: none;
+  color: var(--mid-gray);
+  padding: 0 var(--s-xs);
+  transition: var(--transition);
+}
+
+.profile-list__platform-link:hover,
+.profile-list__platform-link:focus-visible {
+  color: var(--primary);
 }
 
 .profile-list__meta {
@@ -201,6 +220,34 @@
   font-weight: 700;
   color: var(--black);
   line-height: 1.1;
+}
+
+.rating-card__trend {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.rating-card__trend-empty {
+  font-family: var(--font-sans);
+  color: var(--mid-gray-light);
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+.sparkline {
+  display: block;
+  width: 100%;
+  max-width: 180px;
+}
+
+.sparkline--up {
+  color: var(--success);
+}
+
+.sparkline--down {
+  color: var(--error);
 }
 
 .rating-card__games {

@@ -5,6 +5,13 @@ export const PLATFORM_LABEL: Record<ProfilePlatform, string> = {
   chesscom: 'Chess.com',
 };
 
+export function platformProfileUrl(platform: ProfilePlatform, username: string): string {
+  const handle = encodeURIComponent(username);
+  return platform === 'lichess'
+    ? `https://lichess.org/@/${handle}`
+    : `https://www.chess.com/member/${handle}`;
+}
+
 export interface ProfilePreferences {
   auto_sync_enabled: boolean;
   sync_max_games: number | null;
@@ -32,6 +39,18 @@ export interface Profile {
 
 export interface ProfilesListResponse {
   profiles: Profile[];
+}
+
+export interface RatingPoint {
+  end_time_utc: string;
+  rating: number;
+  game_type: string;
+  color: 'white' | 'black';
+  opponent_rating: number | null;
+}
+
+export interface RatingHistoryResponse {
+  points: RatingPoint[];
 }
 
 export interface ProfileValidateRequest {
