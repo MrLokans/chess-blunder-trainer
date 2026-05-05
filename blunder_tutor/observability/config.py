@@ -40,7 +40,7 @@ def build_observability_config(environ: Mapping) -> ObservabilityConfig:
     return ObservabilityConfig(
         sentry_enabled=parse_bool(environ.get("SENTRY_ENABLED"), default=False),
         sentry_dsn=(environ.get("SENTRY_DSN") or "").strip() or None,
-        sentry_environment=environ.get("SENTRY_ENVIRONMENT", "production"),
+        sentry_environment=environ.get("SENTRY_ENVIRONMENT", "dev"),
         sentry_release=(environ.get("SENTRY_RELEASE") or "").strip() or None,
         traces_sample_rate=_parse_rate(
             environ.get("SENTRY_TRACES_SAMPLE_RATE"), default=1.0
