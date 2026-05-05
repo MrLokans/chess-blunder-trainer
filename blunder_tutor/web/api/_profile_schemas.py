@@ -91,6 +91,18 @@ class PreferencesPatch(BaseModel):
         return self
 
 
+class RatingPointShape(BaseModel):
+    end_time_utc: str
+    rating: int
+    game_type: str
+    color: Literal["white", "black"]
+    opponent_rating: int | None
+
+
+class RatingHistoryResponse(BaseModel):
+    points: list[RatingPointShape]
+
+
 class ProfileUpdateRequest(BaseModel):
     username: str | None = Field(
         default=None, min_length=1, max_length=USERNAME_MAX_LEN

@@ -10,9 +10,13 @@ from blunder_tutor.constants import (
     JOB_STATUS_FAILED,
     JOB_STATUS_PENDING,
     JOB_STATUS_RUNNING,
+    JOB_TYPE_DELETE_ALL_DATA,
+    JOB_TYPE_IMPORT,
+    JOB_TYPE_IMPORT_PGN,
+    JOB_TYPE_SYNC,
 )
 from blunder_tutor.events.event_bus import EventBus
-from blunder_tutor.events.event_types import JobEvent, StatsEvent
+from blunder_tutor.events.event_types import EloRatingEvent, JobEvent, StatsEvent
 from blunder_tutor.repositories.job_repository import JobRepository
 
 type ProgressCallback = Callable[[int], Awaitable[None]]
@@ -25,6 +29,21 @@ PROGRESS_FLUSH_INTERVAL = 2.0
 # Fallback user_key when a job has no associated username — keeps the
 # stats-updated event addressable in single-user mode.
 _DEFAULT_USER_KEY = "default"
+
+# Job types whose completion changes `game_index_cache` rows (and therefore
+# the rating-history derivation). Gating ELO emission to these avoids
+# spurious cache churn on analyze/backfill/stats-sync jobs that don't
+# touch game rows.
+_GAME_DATASET_JOB_TYPES: frozenset[str] = frozenset(
+    (
+        JOB_TYPE_IMPORT,
+        JOB_TYPE_SYNC,
+        JOB_TYPE_IMPORT_PGN,
+        JOB_TYPE_DELETE_ALL_DATA,
+    )
+)
+
+_JOB_TYPE_KEY = "job_type"
 
 
 @dataclass
@@ -77,17 +96,14 @@ class JobService:
         if job:
             event = JobEvent.create_status_changed(
                 job_id=job_id,
-                job_type=job["job_type"],
+                job_type=job[_JOB_TYPE_KEY],
                 status=status,
                 error_message=error_message,
             )
             await self.event_bus.publish(event)
 
             if status == JOB_STATUS_COMPLETED:
-                stats_event = StatsEvent.create_stats_updated(
-                    user_key=job.get("username", _DEFAULT_USER_KEY) or _DEFAULT_USER_KEY
-                )
-                await self.event_bus.publish(stats_event)
+                await self._publish_completion_fanout(job)
 
     async def update_job_progress(
         self,
@@ -98,7 +114,7 @@ class JobService:
         state = self._progress.get(job_id)
         if state is None:
             job = await self.job_repository.get_job(job_id)
-            job_type = job["job_type"] if job else "unknown"
+            job_type = job[_JOB_TYPE_KEY] if job else "unknown"
             state = _ProgressState(job_type=job_type)
             self._progress[job_id] = state
 
@@ -142,14 +158,10 @@ class JobService:
         job = await self.job_repository.get_job(job_id)
         if job:
             event = JobEvent.create_status_changed(
-                job_id=job_id, job_type=job["job_type"], status=JOB_STATUS_COMPLETED
+                job_id=job_id, job_type=job[_JOB_TYPE_KEY], status=JOB_STATUS_COMPLETED
             )
             await self.event_bus.publish(event)
-
-            stats_event = StatsEvent.create_stats_updated(
-                user_key=job.get("username", _DEFAULT_USER_KEY) or _DEFAULT_USER_KEY
-            )
-            await self.event_bus.publish(stats_event)
+            await self._publish_completion_fanout(job)
 
     async def get_job(self, job_id: str) -> dict[str, object] | None:
         return await self.job_repository.get_job(job_id)
@@ -196,3 +208,13 @@ class JobService:
 
     async def delete_job(self, job_id: str) -> bool:
         return await self.job_repository.delete_job(job_id)
+
+    async def _publish_completion_fanout(self, job: dict[str, object]) -> None:
+        user_key = job.get("username", _DEFAULT_USER_KEY) or _DEFAULT_USER_KEY
+        await self.event_bus.publish(StatsEvent.create_stats_updated(user_key=user_key))
+        if job.get(_JOB_TYPE_KEY) in _GAME_DATASET_JOB_TYPES:
+            await self.event_bus.publish(
+                EloRatingEvent.create_elo_rating_updated(
+                    user_key=user_key, trigger="game_sync_completed"
+                )
+            )

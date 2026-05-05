@@ -5,6 +5,12 @@ from typing import Any
 from blunder_tutor.auth import UserId
 from blunder_tutor.utils.time import now_iso
 
+# Event-data dict keys are part of the on-the-wire contract (downstream
+# subscribers like CacheInvalidator depend on them). Centralised here so
+# adding a new event-factory doesn't drift the spelling.
+_TRIGGER_KEY = "trigger"
+_USER_KEY = "user_key"
+
 
 class EventType(StrEnum):
     """All event types in the system.
@@ -26,6 +32,7 @@ class EventType(StrEnum):
     STATS_UPDATED = "stats.updated"
     TRAPS_UPDATED = "traps.updated"
     TRAINING_UPDATED = "training.updated"
+    ELO_RATING_UPDATED = "elo_rating.updated"
     CACHE_INVALIDATED = "cache.invalidated"
 
 
@@ -89,7 +96,7 @@ class StatsEvent(Event):
     def create_stats_updated(cls, user_key: str = "default") -> "StatsEvent":
         return cls(
             type=EventType.STATS_UPDATED,
-            data={"trigger": "job_completed", "user_key": user_key},
+            data={_TRIGGER_KEY: "job_completed", _USER_KEY: user_key},
             timestamp=now_iso(),
         )
 
@@ -100,7 +107,7 @@ class TrapsEvent(Event):
     def create_traps_updated(cls, user_key: str) -> "TrapsEvent":
         return cls(
             type=EventType.TRAPS_UPDATED,
-            data={"trigger": "trap_detection_completed", "user_key": user_key},
+            data={_TRIGGER_KEY: "trap_detection_completed", _USER_KEY: user_key},
             timestamp=now_iso(),
         )
 
@@ -111,7 +118,23 @@ class TrainingEvent(Event):
     def create_training_updated(cls, user_key: str) -> "TrainingEvent":
         return cls(
             type=EventType.TRAINING_UPDATED,
-            data={"trigger": "puzzle_attempt", "user_key": user_key},
+            data={_TRIGGER_KEY: "puzzle_attempt", _USER_KEY: user_key},
+            timestamp=now_iso(),
+        )
+
+
+@dataclass
+class EloRatingEvent(Event):
+    # `trigger` is bounded for metric-tag cardinality (per
+    # docs/conventions/observability.md) — extend the literal set, do not
+    # build values dynamically.
+    @classmethod
+    def create_elo_rating_updated(
+        cls, *, user_key: str, trigger: str
+    ) -> "EloRatingEvent":
+        return cls(
+            type=EventType.ELO_RATING_UPDATED,
+            data={_TRIGGER_KEY: trigger, _USER_KEY: user_key},
             timestamp=now_iso(),
         )
 

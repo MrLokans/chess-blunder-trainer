@@ -29,6 +29,7 @@ from blunder_tutor.repositories.trap_repository import TrapRepository
 from blunder_tutor.services.analysis_service import AnalysisService
 from blunder_tutor.services.job_service import JobService
 from blunder_tutor.services.puzzle_service import PuzzleService
+from blunder_tutor.services.rating_history import RatingHistoryService
 from blunder_tutor.trainer import Trainer
 from blunder_tutor.web.config import AppConfig
 
@@ -137,6 +138,13 @@ async def get_trainer(
     )
 
 
+async def get_rating_history_service(
+    profiles: Annotated[ProfileRepository, Depends(get_profile_repository)],
+    games: Annotated[GameRepository, Depends(get_game_repository)],
+) -> RatingHistoryService:
+    return RatingHistoryService(profiles=profiles, games=games)
+
+
 async def get_puzzle_service(
     trainer: Annotated[Trainer, Depends(get_trainer)],
     analysis_service: Annotated[AnalysisService, Depends(get_analysis_service)],
@@ -144,20 +152,28 @@ async def get_puzzle_service(
     return PuzzleService(trainer=trainer, analysis_service=analysis_service)
 
 
+def resolve_user_key(request: Request, config: AppConfig) -> str:
+    """Resolve the per-user cache key from the auth context.
+
+    In credentials mode the key is the signed-in user's id; in none mode
+    the legacy `config.username` is preserved. The fallback `"default"`
+    only applies when neither is set, which only happens for unauthenticated
+    flows that should not be hitting cached endpoints anyway.
+    """
+    ctx = getattr(request.state, "user_ctx", None)
+    if ctx is not None:
+        return ctx.user_id
+    return config.username or "default"
+
+
 async def set_request_username(
     request: Request,
     config: Annotated[AppConfig, Depends(get_config)],
 ) -> None:
-    """Set `request.state.username` as the per-user cache key for
-    `@cached` decorators. In credentials mode the key is the signed-in
-    user's id so cached results never cross accounts; in none mode the
-    legacy `config.username` (or `"default"`) is preserved.
+    """FastAPI dependency: stash the resolved user_key on `request.state`
+    so the `@cached` decorator can read it via `resolve_user_key(request)`.
     """
-    ctx = getattr(request.state, "user_ctx", None)
-    if ctx is not None:
-        request.state.username = ctx.user_id
-        return
-    request.state.username = config.username or "default"
+    request.state.username = resolve_user_key(request, config)
 
 
 # Type annotations for dependency injection in route handlers
@@ -177,6 +193,9 @@ LimitDep = Annotated[chess.engine.Limit, Depends(get_engine_limit)]
 AnalysisServiceDep = Annotated[AnalysisService, Depends(get_analysis_service)]
 TrainerDep = Annotated[Trainer, Depends(get_trainer)]
 PuzzleServiceDep = Annotated[PuzzleService, Depends(get_puzzle_service)]
+RatingHistoryServiceDep = Annotated[
+    RatingHistoryService, Depends(get_rating_history_service)
+]
 TrapRepoDep = Annotated[TrapRepository, Depends(get_trap_repository)]
 StarredPuzzleRepoDep = Annotated[
     StarredPuzzleRepository, Depends(get_starred_puzzle_repository)

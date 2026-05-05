@@ -15,6 +15,7 @@ EVENT_TAG_MAPPING: MappingProxyType[EventType, str] = MappingProxyType(
         EventType.STATS_UPDATED: "stats",
         EventType.TRAPS_UPDATED: "traps",
         EventType.TRAINING_UPDATED: "training",
+        EventType.ELO_RATING_UPDATED: "elo_rating",
     }
 )
 
