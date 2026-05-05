@@ -33,7 +33,6 @@ def demo_app(demo_config: AppConfig):
 
 BLOCKED_ENDPOINTS = [
     ("POST", "/api/import/start"),
-    ("POST", "/api/sync/start"),
     ("POST", "/api/analysis/start"),
     ("POST", "/api/analysis/stop/123"),
     ("DELETE", "/api/jobs/123"),

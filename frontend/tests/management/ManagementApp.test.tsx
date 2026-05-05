@@ -7,9 +7,6 @@ vi.mock('../../src/shared/api', () => ({
     system: {
       engineStatus: vi.fn().mockResolvedValue({ available: true, name: 'Stockfish 16', path: '/usr/bin/stockfish' }),
     },
-    jobs: {
-      startSync: vi.fn().mockResolvedValue({}),
-    },
     profiles: {
       list: vi.fn().mockResolvedValue({ profiles: [] }),
       sync: vi.fn().mockResolvedValue({ job_id: 'sync-job-1' }),
@@ -84,15 +81,15 @@ describe('ManagementApp', () => {
     });
   });
 
-  describe('Bulk Import section', () => {
+  describe('Update games section', () => {
     test('shows empty state when there are no tracked profiles', async () => {
       render(<ManagementApp demoMode={false} />);
       await waitFor(() => {
-        expect(screen.getByText(t('profiles.bulk_import.empty_title'))).toBeDefined();
+        expect(screen.getByText(t('management.update.empty_title'))).toBeDefined();
       });
     });
 
-    test('renders run-import button when profiles are loaded', async () => {
+    test('renders the Update games button when profiles are loaded', async () => {
       vi.mocked(client.profiles.list).mockResolvedValueOnce({
         profiles: [
           {
@@ -111,43 +108,69 @@ describe('ManagementApp', () => {
       });
       render(<ManagementApp demoMode={false} />);
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: t('profiles.bulk_import.run_button') })).toBeDefined();
+        expect(screen.getByRole('button', { name: t('management.update.button') })).toBeDefined();
       });
     });
 
-    test('hides bulk import panel in demo mode', async () => {
+    test('disables Update games button in demo mode', async () => {
+      vi.mocked(client.profiles.list).mockResolvedValueOnce({
+        profiles: [
+          {
+            id: 1,
+            platform: 'lichess',
+            username: 'magnus',
+            is_primary: true,
+            created_at: '2026-04-01T00:00:00Z',
+            last_validated_at: null,
+            preferences: { auto_sync_enabled: true, sync_max_games: null },
+            stats: [],
+            last_game_sync_at: null,
+            last_stats_sync_at: null,
+          },
+        ],
+      });
       render(<ManagementApp demoMode={true} />);
-      await waitFor(() => {
-        // The section heading still renders; the panel itself does not.
-        expect(screen.queryByRole('button', { name: t('profiles.bulk_import.run_button') })).toBeNull();
-      });
+      const button = await screen.findByRole('button', { name: t('management.update.button') });
+      expect((button as HTMLButtonElement).disabled).toBe(true);
     });
-  });
 
-  describe('Sync section', () => {
-    test('renders sync button when not in demo mode', async () => {
+    test('fans out one sync request per profile on click', async () => {
+      vi.mocked(client.profiles.list).mockResolvedValueOnce({
+        profiles: [
+          {
+            id: 1,
+            platform: 'lichess',
+            username: 'alice',
+            is_primary: true,
+            created_at: '2026-04-01T00:00:00Z',
+            last_validated_at: null,
+            preferences: { auto_sync_enabled: true, sync_max_games: null },
+            stats: [],
+            last_game_sync_at: null,
+            last_stats_sync_at: null,
+          },
+          {
+            id: 2,
+            platform: 'chesscom',
+            username: 'alice',
+            is_primary: false,
+            created_at: '2026-04-01T00:00:00Z',
+            last_validated_at: null,
+            preferences: { auto_sync_enabled: true, sync_max_games: null },
+            stats: [],
+            last_game_sync_at: null,
+            last_stats_sync_at: null,
+          },
+        ],
+      });
       render(<ManagementApp demoMode={false} />);
+      const button = await screen.findByRole('button', { name: t('management.update.button') });
+      fireEvent.click(button);
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: t('management.sync.button') })).toBeDefined();
+        expect(client.profiles.sync).toHaveBeenCalledTimes(2);
       });
-    });
-
-    test('hides sync button in demo mode', async () => {
-      render(<ManagementApp demoMode={true} />);
-      await waitFor(() => {
-        expect(screen.queryByRole('button', { name: t('management.sync.button') })).toBeNull();
-      });
-    });
-
-    test('shows success message after sync', async () => {
-      render(<ManagementApp demoMode={false} />);
-      await waitFor(() => {
-        expect(screen.getByRole('button', { name: t('management.sync.button') })).toBeDefined();
-      });
-      fireEvent.click(screen.getByRole('button', { name: t('management.sync.button') }));
-      await waitFor(() => {
-        expect(screen.getByText(t('management.sync.started'))).toBeDefined();
-      });
+      expect(client.profiles.sync).toHaveBeenCalledWith(1);
+      expect(client.profiles.sync).toHaveBeenCalledWith(2);
     });
   });
 
@@ -226,7 +249,7 @@ describe('ManagementApp', () => {
     });
   });
 
-  describe('Profile list for Bulk Import', () => {
+  describe('Profile list for Update games panel', () => {
     test('loads the profile list on mount', async () => {
       render(<ManagementApp demoMode={false} />);
       await waitFor(() => {

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.3]
+
+### Added
+
+- **Opt-in Sentry observability**: New `SENTRY_ENABLED=true` + `SENTRY_DSN=...` config wires the app to Sentry for error capture, request traces, and lightweight metrics covering background jobs, the chess engine pool, the WebSocket layer, and the periodic scheduler. Off by default, zero overhead when disabled. See `docs/environment.md` for the full env-var surface and metric/tag contract.
+
+### Changed
+
+- **Stricter `SECRET_KEY` validation**: The auth secret is now checked at startup with explicit failure on missing or trivially-weak values, replacing the previous silent fallback. `.env.example` documents the expected entropy.
+
+---
+
 ## [3.1.0]
 
 ### Added

@@ -168,18 +168,21 @@ test.describe('Setup → Bulk Import (post-rewrite, profile-aware)', () => {
     await page.goto('/setup');
     await expect(page).not.toHaveURL(/\/setup$/);
 
-    // 6. Navigate to /management. BulkImportPanel should render with both
-    //    profiles, primary one selected by default, "Run import" visible.
+    // 6. Navigate to /management. The Update games panel should list both
+    //    profiles and expose a single "Update games" button (no per-profile
+    //    selector — fan-out happens on click).
     await page.goto('/management');
-    await expect(page.locator('#bulk-import-profile')).toBeVisible({ timeout: 10_000 });
-    const options = await page.locator('#bulk-import-profile option').allTextContents();
-    expect(options).toHaveLength(2);
-    expect(options.some((o) => o.includes('magnus_lichess'))).toBe(true);
-    expect(options.some((o) => o.includes('magnus_chesscom'))).toBe(true);
+    const updateButton = page.getByRole('button', { name: /Update games/i });
+    await expect(updateButton).toBeVisible({ timeout: 10_000 });
+    const profileItems = page.locator('.update-games-panel__profile');
+    await expect(profileItems).toHaveCount(2);
+    const profileText = await profileItems.allTextContents();
+    expect(profileText.some((line) => line.includes('magnus_lichess'))).toBe(true);
+    expect(profileText.some((line) => line.includes('magnus_chesscom'))).toBe(true);
 
-    // 7. Click "Run import" → another sync dispatch.
+    // 7. Click "Update games" → fan-out dispatches one sync per profile.
     const syncCountBefore = counters.sync;
-    await page.getByRole('button', { name: /Run import/i }).click();
-    await expect.poll(() => counters.sync, { timeout: 5_000 }).toBe(syncCountBefore + 1);
+    await updateButton.click();
+    await expect.poll(() => counters.sync, { timeout: 5_000 }).toBe(syncCountBefore + 2);
   });
 });

@@ -10,7 +10,6 @@ from blunder_tutor.background.registry import register_job
 from blunder_tutor.constants import (
     JOB_STATUS_FAILED,
     JOB_TYPE_ANALYZE,
-    JOB_TYPE_SYNC,
     PLATFORM_CHESSCOM,
     PLATFORM_LICHESS,
 )
@@ -22,12 +21,10 @@ from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.repositories.profile_types import Profile
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.services.job_service import JobService, ProgressCallback
-from blunder_tutor.utils.time import now_iso
 
 logger = logging.getLogger(__name__)
 
 _DEFAULT_MAX_GAMES = 1000
-_VALID_SOURCES: frozenset[str] = frozenset((PLATFORM_LICHESS, PLATFORM_CHESSCOM))
 
 GameRow = dict[str, object]
 FetchResult = tuple[list[GameRow], Any]
@@ -85,82 +82,35 @@ class SyncGamesJob(BaseJob):
 
     async def execute(self, job_id: str, **kwargs: Any) -> dict[str, Any]:
         profile_id = kwargs.get("profile_id")
-        if profile_id is not None:
-            return await self._execute_for_profile(int(profile_id))
-        # /api/setup has been removed. The legacy branch below now serves
-        # only scheduler dispatches that haven't been migrated to per-profile
-        # fan-out (TREK-108) and any remaining /api/sync/start callers.
-        # One log per parent dispatch — child sync jobs iterating over
-        # (source, username) do not log again. `info` because the legacy
-        # path is the expected state during the transition window.
-        logger.info(
-            f"sync {job_id}: legacy payload without profile_id — "
-            f"rows inserted with profile_id=NULL"
-        )
-        return await self._execute_legacy()
+        if profile_id is None:
+            # All live dispatchers (scheduler, /api/profiles/{id}/sync) pass
+            # profile_id. An event arriving without one is either a stale
+            # in-flight event from before deploy or a misconfigured caller —
+            # flip the parent to FAILED before raising so it cannot orphan
+            # at PENDING.
+            await self.job_service.update_job_status(
+                job_id, JOB_STATUS_FAILED, "sync requires profile_id"
+            )
+            raise ValueError(f"sync {job_id} dispatched without profile_id")
+        return await self._execute_for_profile(job_id, int(profile_id))
 
-    async def _execute_for_profile(self, profile_id: int) -> dict[str, Any]:
+    async def _execute_for_profile(
+        self, job_id: str, profile_id: int
+    ) -> dict[str, Any]:
         profile = await self.profile_repo.get(profile_id)
         if profile is None:
-            logger.warning(f"sync: profile {profile_id} not found, skipping")
-            return _sync_result(stored=0, skipped=0)
-
-        source_job_id = await self.job_service.create_job(
-            job_type=JOB_TYPE_SYNC,
-            username=profile.username,
-            source=profile.platform,
-        )
-        try:
-            result = await self._sync_for_profile(source_job_id, profile)
-        except Exception as exc:
-            logger.error(f"Sync job {source_job_id} failed: {exc}")
-            await self.job_service.update_job_status(
-                source_job_id, JOB_STATUS_FAILED, str(exc)
-            )
-            raise
-
-        await self._touch_last_sync_timestamp()
-        return result
-
-    # TREK-7.X (Epic 3 setup rewrite): _execute_legacy and its
-    # _sync_legacy_source helper are the legacy username-pair entry-point.
-    # Delete both when the scheduler fan-out (TREK-108) always provides a
-    # profile_id and `settings_repo.get_configured_usernames` no longer
-    # has callers. Rows inserted by this branch get profile_id=NULL; the
-    # Epic 3 cleanup migration backfills them by (source, username) match.
-    async def _execute_legacy(self) -> dict[str, Any]:
-        usernames = await self.settings_repo.get_configured_usernames()
-
-        if not usernames:
-            logger.info("No usernames configured for sync")
-            return _sync_result(stored=0, skipped=0)
-
-        total_stored = 0
-        total_skipped = 0
-
-        for source, username in usernames.items():
-            source_job_id = await self.job_service.create_job(
-                job_type=JOB_TYPE_SYNC,
-                username=username,
-                source=source,
-            )
-
-            try:
-                result = await self._sync_legacy_source(source_job_id, source, username)
-                total_stored += result.get("stored", 0)
-                total_skipped += result.get("skipped", 0)
-            except Exception as exc:
-                logger.error(f"Sync job {source_job_id} failed: {exc}")
-                await self.job_service.update_job_status(
-                    source_job_id, JOB_STATUS_FAILED, str(exc)
-                )
-
-        await self._touch_last_sync_timestamp()
-        return _sync_result(stored=total_stored, skipped=total_skipped)
+            logger.warning(f"sync {job_id}: profile {profile_id} not found, skipping")
+            result = _sync_result(stored=0, skipped=0)
+            await self.job_service.complete_job(job_id, result)
+            return result
+        return await self._sync_for_profile(job_id, profile)
 
     async def _sync_for_profile(self, job_id: str, profile: Profile) -> dict[str, Any]:
-        if profile.platform not in _VALID_SOURCES:
-            raise ValueError(f"Unknown source: {profile.platform}")
+        # Platform validation lives inside `_fetch_games` (called via the
+        # lambda below) so a bad platform raises *inside* the lifecycle and
+        # `run_with_lifecycle` flips the parent job to FAILED. A pre-flight
+        # check here would orphan the parent at PENDING — same shape as the
+        # bug fixed alongside this method.
         max_games = await self._resolve_max_games_for_profile(profile)
         since = await self.game_repo.get_latest_game_time(
             profile.platform, profile.username
@@ -189,47 +139,12 @@ class SyncGamesJob(BaseJob):
         )
         return sync_result
 
-    async def _sync_legacy_source(
-        self, job_id: str, source: str, username: str
-    ) -> dict[str, Any]:
-        if source not in _VALID_SOURCES:
-            raise ValueError(f"Unknown source: {source}")
-
-        max_games = await self._resolve_global_max_games()
-        since = await self.game_repo.get_latest_game_time(source, username)
-        if since:
-            logger.info(f"Incremental sync for {source}/{username} since {since}")
-
-        sync_result = await self.job_service.run_with_lifecycle(
-            job_id,
-            max_games,
-            lambda progress: self._fetch_and_store(
-                source, username, max_games, since, progress
-            ),
-        )
-        await self._maybe_trigger_auto_analysis(
-            source, username, int(sync_result["stored"])
-        )
-        return sync_result
-
-    async def _resolve_global_max_games(self) -> int:
-        max_games_str = await self.settings_repo.read_setting("sync_max_games")
-        return int(max_games_str) if max_games_str else _DEFAULT_MAX_GAMES
-
     async def _resolve_max_games_for_profile(self, profile: Profile) -> int:
         per_profile = profile.preferences.sync_max_games
         if per_profile is not None:
             return per_profile
-        return await self._resolve_global_max_games()
-
-    # TREK-7.X (Epic 3 setup rewrite): post-TREK-108 the scheduler reads
-    # per-profile timestamps from `background_jobs.completed_at`, not this
-    # setting. No production reader remains (verified via grep before
-    # marking; `/api/sync/status` queries `JOB_TYPE_SYNC` rows directly).
-    # Delete this method and its two call sites with the legacy path
-    # cleanup.
-    async def _touch_last_sync_timestamp(self) -> None:
-        await self.settings_repo.write_setting("last_sync_timestamp", now_iso())
+        max_games_str = await self.settings_repo.read_setting("sync_max_games")
+        return int(max_games_str) if max_games_str else _DEFAULT_MAX_GAMES
 
     async def _fetch_and_store(  # noqa: WPS211 — explicit parameters keep the call-site readable.
         self,

@@ -20,7 +20,6 @@ from blunder_tutor.constants import (
     JOB_TYPE_BACKFILL_TACTICS,
     JOB_TYPE_BACKFILL_TRAPS,
     JOB_TYPE_IMPORT,
-    JOB_TYPE_SYNC,
 )
 from blunder_tutor.events.event_types import JobExecutionRequestEvent
 from blunder_tutor.utils.time import parse_dt
@@ -74,10 +73,6 @@ class JobStatusResponse(BaseModel):
     message: str | None = Field(None, description="Status message")
     error_message: str | None = Field(None, description="Error message if job failed")
     result: dict[str, Any] | None = Field(None, description="Job result data")
-
-
-class SyncStatusResponse(BaseModel):
-    status: str = Field(description="Sync status message")
 
 
 jobs_router = APIRouter()
@@ -135,41 +130,6 @@ async def get_import_status(
         )
 
     return job
-
-
-@jobs_router.post(
-    "/api/sync/start",
-    response_model=SyncStatusResponse,
-    summary="Start sync job",
-    description="Trigger a manual game synchronization.",
-)
-async def start_sync_job(
-    job_service: JobServiceDep,
-    event_bus: EventBusDep,
-    user_ctx: UserContextDep,
-) -> dict[str, str]:
-    job_id = await job_service.create_job(job_type=JOB_TYPE_SYNC)
-
-    event = JobExecutionRequestEvent.create(
-        job_id=job_id, job_type=JOB_TYPE_SYNC, user_id=user_ctx.user_id
-    )
-    await event_bus.publish(event)
-
-    return {"status": "sync started"}  # noqa: WPS226 — response field name; the API contract for status responses.
-
-
-@jobs_router.get(
-    "/api/sync/status",
-    summary="Get sync status",
-    description="Get the status of the most recent sync job.",
-)
-async def get_sync_status(job_service: JobServiceDep) -> dict[str, Any]:
-    jobs = await job_service.list_jobs(job_type=JOB_TYPE_SYNC, limit=1)
-
-    if not jobs:
-        return {"status": "no sync jobs"}
-
-    return jobs[0]
 
 
 @jobs_router.get(

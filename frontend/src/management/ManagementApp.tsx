@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { client } from '../shared/api';
-import { BulkImportPanel } from '../components/BulkImportPanel';
 import { JobCard } from '../components/JobCard';
+import { UpdateGamesPanel } from '../components/UpdateGamesPanel';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { debounce } from '../shared/debounce';
 import type { ExternalJobStatus } from '../components/JobCard';
@@ -84,41 +84,6 @@ function EngineStatusSection() {
   );
 }
 
-interface SyncSectionProps {
-  demoMode: boolean;
-}
-
-function SyncSection({ demoMode }: SyncSectionProps) {
-  const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
-
-  const handleSync = async () => {
-    try {
-      await client.jobs.startSync();
-      setMessage({ type: 'success', text: t('management.sync.started') });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : t('common.error');
-      setMessage({ type: 'error', text: t('management.sync.failed', { error: msg }) });
-    }
-  };
-
-  return (
-    <section>
-      <h2>{t('management.sync.title')}</h2>
-      <p class="section-description mb-4">{t('management.sync.description')}</p>
-      {demoMode ? (
-        <p class="section-description">{t('demo.disabled_action')}</p>
-      ) : (
-        <button class="btn" type="button" onClick={() => { void handleSync(); }}>
-          {t('management.sync.button')}
-        </button>
-      )}
-      {message && (
-        <div class={`message ${message.type} mt-4`}>{message.text}</div>
-      )}
-    </section>
-  );
-}
-
 interface JobsSectionProps {
   jobsRefreshKey: number;
 }
@@ -174,7 +139,6 @@ function JobsSection({ jobsRefreshKey }: JobsSectionProps) {
 export function ManagementApp({ demoMode }: ManagementInit) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profilesLoading, setProfilesLoading] = useState(true);
-  const [importJobId, setImportJobId] = useState<string | null>(null);
   const [jobsRefreshKey, setJobsRefreshKey] = useState(0);
 
   const [analysisStatus, setAnalysisStatus] = useState<ExternalJobStatus | undefined>(undefined);
@@ -182,7 +146,6 @@ export function ManagementApp({ demoMode }: ManagementInit) {
   const [ecoBackfillStatus, setEcoBackfillStatus] = useState<ExternalJobStatus | undefined>(undefined);
   const [trapsBackfillStatus, setTrapsBackfillStatus] = useState<ExternalJobStatus | undefined>(undefined);
   const [deleteAllStatus, setDeleteAllStatus] = useState<ExternalJobStatus | undefined>(undefined);
-  const [importStatus, setImportStatus] = useState<ExternalJobStatus | undefined>(undefined);
 
   useEffect(() => {
     async function load() {
@@ -222,9 +185,6 @@ export function ManagementApp({ demoMode }: ManagementInit) {
         percent: data.percent,
       };
 
-      if (data.job_id === importJobId) {
-        setImportStatus(ext);
-      }
       setAnalysisStatus(prev => prev?.job_id === data.job_id ? ext : prev);
       setBackfillStatus(prev => prev?.job_id === data.job_id ? ext : prev);
       setEcoBackfillStatus(prev => prev?.job_id === data.job_id ? ext : prev);
@@ -242,9 +202,6 @@ export function ManagementApp({ demoMode }: ManagementInit) {
         error_message: data.error_message,
       };
 
-      if (data.job_id === importJobId) {
-        setImportStatus(ext);
-      }
       setAnalysisStatus(prev => prev?.job_id === data.job_id ? ext : prev);
       setBackfillStatus(prev => prev?.job_id === data.job_id ? ext : prev);
       setEcoBackfillStatus(prev => prev?.job_id === data.job_id ? ext : prev);
@@ -263,12 +220,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
       unsubStatus();
       unsubCreated();
     };
-  }, [on, importJobId, debouncedRefresh]);
-
-  const handleImportStarted = useCallback((jobId: string) => {
-    setImportJobId(jobId);
-    setImportStatus({ job_id: jobId, status: 'running' });
-  }, []);
+  }, [on, debouncedRefresh]);
 
   return (
     <div>
@@ -280,23 +232,14 @@ export function ManagementApp({ demoMode }: ManagementInit) {
       <hr class="section-divider" />
 
       <section>
-        <h2>{t('management.import.title')}</h2>
-        {demoMode ? (
-          <p class="section-description">{t('demo.disabled_action')}</p>
-        ) : (
-          <BulkImportPanel
-            profiles={profiles}
-            loading={profilesLoading}
-            demoMode={demoMode}
-            externalStatus={importStatus}
-            onImportStarted={handleImportStarted}
-          />
-        )}
+        <h2>{t('management.update.title')}</h2>
+        <p class="section-description mb-4">{t('management.update.description')}</p>
+        <UpdateGamesPanel
+          profiles={profiles}
+          loading={profilesLoading}
+          demoMode={demoMode}
+        />
       </section>
-
-      <hr class="section-divider" />
-
-      <SyncSection demoMode={demoMode} />
 
       <hr class="section-divider" />
 

@@ -10,6 +10,11 @@ import pytest
 
 from blunder_tutor.background.jobs.import_games import ImportGamesJob
 from blunder_tutor.background.jobs.sync_games import SyncGamesJob
+from blunder_tutor.constants import (
+    JOB_STATUS_COMPLETED,
+    JOB_STATUS_FAILED,
+    JOB_TYPE_SYNC,
+)
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.job_repository import JobRepository
@@ -230,7 +235,6 @@ class TestSyncPerProfile:
         db_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        # Two profiles; sync should fetch only for the requested one.
         target = await profile_repo.create("lichess", "alice", make_primary=True)
         await profile_repo.create("chesscom", "alice")
         captured: dict[str, Any] = {}
@@ -248,6 +252,11 @@ class TestSyncPerProfile:
             _chesscom_should_not_be_called,
         )
 
+        job_id = await job_service.create_job(
+            job_type=JOB_TYPE_SYNC,
+            username=target.username,
+            source=target.platform,
+        )
         job = SyncGamesJob(
             job_service=job_service,
             settings_repo=settings_repo,
@@ -255,11 +264,103 @@ class TestSyncPerProfile:
             profile_repo=profile_repo,
             user_id="testuser",
         )
-        result = await job.execute(job_id="job-1", profile_id=target.id)
+        result = await job.execute(job_id=job_id, profile_id=target.id)
 
         assert result["stored"] == 1
         rows = _read_game_rows(db_path)
         assert rows == [("g-sync", "lichess", "alice", target.id)]
+
+    async def test_parent_job_lifecycled_to_completed(
+        self,
+        profile_repo: SqliteProfileRepository,
+        settings_repo: SettingsRepository,
+        game_repo: GameRepository,
+        job_service: JobService,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        # Regression for the orphan-PENDING parent: prior to TREK-XX the
+        # per-profile sync created a *child* job and lifecycled that, leaving
+        # the caller-visible parent stuck at "pending" forever.
+        profile = await profile_repo.create("lichess", "alice")
+        monkeypatch.setattr(
+            "blunder_tutor.background.jobs.sync_games.lichess.fetch",
+            _stub_fetcher({}, []),
+        )
+
+        parent_job_id = await job_service.create_job(
+            job_type=JOB_TYPE_SYNC,
+            username=profile.username,
+            source=profile.platform,
+        )
+        job = SyncGamesJob(
+            job_service=job_service,
+            settings_repo=settings_repo,
+            game_repo=game_repo,
+            profile_repo=profile_repo,
+            user_id="testuser",
+        )
+        await job.execute(job_id=parent_job_id, profile_id=profile.id)
+
+        parent = await job_service.get_job(parent_job_id)
+        assert parent is not None
+        assert parent["status"] == JOB_STATUS_COMPLETED
+
+        # No phantom child row should be created — the parent IS the sync job.
+        sync_jobs = await job_service.list_jobs(job_type=JOB_TYPE_SYNC)
+        assert [row["job_id"] for row in sync_jobs] == [parent_job_id]
+
+    async def test_dispatch_without_profile_id_marks_parent_failed_and_raises(
+        self,
+        profile_repo: SqliteProfileRepository,
+        settings_repo: SettingsRepository,
+        game_repo: GameRepository,
+        job_service: JobService,
+    ):
+        # The legacy fan-out path (`/api/sync/start`) was removed; any sync
+        # event reaching the runner without `profile_id` is a misconfigured
+        # caller. The parent must be flipped to FAILED before raising so
+        # the orphan-PENDING regression cannot recur.
+        parent_job_id = await job_service.create_job(job_type=JOB_TYPE_SYNC)
+        job = SyncGamesJob(
+            job_service=job_service,
+            settings_repo=settings_repo,
+            game_repo=game_repo,
+            profile_repo=profile_repo,
+            user_id="testuser",
+        )
+
+        with pytest.raises(ValueError, match="profile_id"):
+            await job.execute(job_id=parent_job_id)
+
+        parent = await job_service.get_job(parent_job_id)
+        assert parent is not None
+        assert parent["status"] == JOB_STATUS_FAILED
+        assert parent["error_message"] == "sync requires profile_id"
+
+    async def test_missing_profile_completes_parent_with_zero_result(
+        self,
+        profile_repo: SqliteProfileRepository,
+        settings_repo: SettingsRepository,
+        game_repo: GameRepository,
+        job_service: JobService,
+    ):
+        # Delete-race / stale dispatch: a profile may be removed between
+        # event publish and runner pickup. The parent must still complete
+        # so the UI's job list doesn't accumulate orphan PENDING rows.
+        parent_job_id = await job_service.create_job(job_type=JOB_TYPE_SYNC)
+        job = SyncGamesJob(
+            job_service=job_service,
+            settings_repo=settings_repo,
+            game_repo=game_repo,
+            profile_repo=profile_repo,
+            user_id="testuser",
+        )
+        result = await job.execute(job_id=parent_job_id, profile_id=999)
+
+        assert result == {"stored": 0, "skipped": 0}
+        parent = await job_service.get_job(parent_job_id)
+        assert parent is not None
+        assert parent["status"] == JOB_STATUS_COMPLETED
 
     async def test_per_profile_max_games_override(
         self,
@@ -278,6 +379,11 @@ class TestSyncPerProfile:
             _stub_fetcher(captured, []),
         )
 
+        job_id = await job_service.create_job(
+            job_type=JOB_TYPE_SYNC,
+            username=profile.username,
+            source=profile.platform,
+        )
         job = SyncGamesJob(
             job_service=job_service,
             settings_repo=settings_repo,
@@ -285,36 +391,6 @@ class TestSyncPerProfile:
             profile_repo=profile_repo,
             user_id="testuser",
         )
-        await job.execute(job_id="job-1", profile_id=profile.id)
+        await job.execute(job_id=job_id, profile_id=profile.id)
 
         assert captured["max_games"] == 25
-
-    async def test_legacy_path_without_profile_id_still_works(
-        self,
-        profile_repo: SqliteProfileRepository,
-        settings_repo: SettingsRepository,
-        game_repo: GameRepository,
-        job_service: JobService,
-        db_path: Path,
-        monkeypatch: pytest.MonkeyPatch,
-    ):
-        # Legacy path reads usernames from settings (none configured here),
-        # so it should no-op gracefully without invoking any fetcher.
-        async def _should_not_be_called(*_args, **_kwargs):
-            raise AssertionError("fetcher called when no usernames configured")
-
-        monkeypatch.setattr(
-            "blunder_tutor.background.jobs.sync_games.lichess.fetch",
-            _should_not_be_called,
-        )
-
-        job = SyncGamesJob(
-            job_service=job_service,
-            settings_repo=settings_repo,
-            game_repo=game_repo,
-            profile_repo=profile_repo,
-            user_id="testuser",
-        )
-        result = await job.execute(job_id="job-1")
-        assert result == {"stored": 0, "skipped": 0}
-        assert _read_game_rows(db_path) == []

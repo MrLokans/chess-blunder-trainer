@@ -177,7 +177,6 @@ export const client = {
   jobs: {
     startImport: (source: string, username: string, maxGames: number) =>
       post<JobStarted>('/api/import/start', { source, username, max_games: maxGames }),
-    startSync: () => post('/api/sync/start', {}),
     list: (params?: QueryParams) => request(withQuery('/api/jobs', params)),
     getImportStatus: (jobId: string) => request<JobStatusResponse>(`/api/import/status/${jobId}`),
   },
