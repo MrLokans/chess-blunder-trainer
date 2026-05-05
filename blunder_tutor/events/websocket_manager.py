@@ -8,6 +8,7 @@ from fastapi import WebSocket
 
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import Event, EventType
+from blunder_tutor.observability import count, gauge
 
 
 class ConnectionManager:
@@ -22,11 +23,17 @@ class ConnectionManager:
         connection_id = str(uuid.uuid4())
         self.active_connections[connection_id] = websocket
         self.connection_subscriptions[connection_id] = set()
+        count("ws.connection.opened")
+        gauge("ws.connections.active", len(self.active_connections))
         return connection_id
 
-    async def disconnect(self, connection_id: str) -> None:
+    async def disconnect(
+        self, connection_id: str, reason: str = "client_close"
+    ) -> None:
         self.active_connections.pop(connection_id, None)
         self.connection_subscriptions.pop(connection_id, None)
+        count("ws.connection.closed", tags={"reason": reason})
+        gauge("ws.connections.active", len(self.active_connections))
 
     async def subscribe(self, connection_id: str, event_types: list[str]) -> None:
         subscriptions = self.connection_subscriptions.get(connection_id)
@@ -39,6 +46,7 @@ class ConnectionManager:
 
     async def broadcast_event(self, event: Event) -> None:
         message = event.to_dict()
+        count("ws.broadcast.sent", tags={"event_type": event.type.value})
 
         # Find connections subscribed to this event type
         disconnected = []
@@ -55,7 +63,7 @@ class ConnectionManager:
 
         # Clean up dead connections
         for conn_id in disconnected:
-            await self.disconnect(conn_id)
+            await self.disconnect(conn_id, reason="send_failed")
 
     async def start_broadcasting(self) -> None:
         queue = await self.event_bus.subscribe(event_type=None)

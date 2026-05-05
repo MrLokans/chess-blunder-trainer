@@ -17,6 +17,7 @@ dependencies = [
   "jinja2>=3.1.6",
   "python-chess>=1.999",  # upstream sentinel pin
   "python-multipart>=0.0.27",
+  "sentry-sdk[fastapi]>=2.44.0",
   "sqlalchemy>=2.0.49",
   "tqdm>=4.67.3",
   "uvicorn>=0.46.0",
@@ -382,6 +383,13 @@ per-file-ignores = [
   "blunder_tutor/auth/fastapi/protocols.py: WPS410",
   "blunder_tutor/auth/providers/__init__.py: WPS410",
   "blunder_tutor/auth/providers/base.py: WPS410",
+  # observability/__init__.py: WPS410 — same shape as auth/fastapi
+  # __init__.py. The package is a public-API aggregator; `__all__` is
+  # the single import contract for `count`/`gauge`/`distribution`/
+  # `start_span`/`Span` plus the lifecycle functions. Ruff's F401 +
+  # I001 force `__all__` here, so WPS410 is the only path that lets
+  # the rules coexist without sprinkling redundant `X as X` aliases.
+  "blunder_tutor/observability/__init__.py: WPS410",
 ]
 
 extend-exclude = [

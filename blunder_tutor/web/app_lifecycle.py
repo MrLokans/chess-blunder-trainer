@@ -27,6 +27,7 @@ from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.websocket_manager import ConnectionManager
 from blunder_tutor.i18n.manager import TranslationManager
 from blunder_tutor.migrations import run_migrations
+from blunder_tutor.observability import init_observability, shutdown_observability
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web import routes
 from blunder_tutor.web.auth_hooks import (
@@ -237,6 +238,12 @@ async def _seed_locale_cache(app: FastAPI) -> None:
 
 
 async def _run_startup(app: FastAPI) -> None:
+    # `init_observability` runs first so any subsequent startup
+    # exception (engine boot, auth bootstrap, background wiring) is
+    # captured by Sentry. No-op when observability is disabled.
+    config: AppConfig = app.state.config
+    init_observability(config.observability)
+
     coordinator: WorkCoordinator = app.state.work_coordinator
     await coordinator.start()
 
@@ -259,7 +266,7 @@ async def _run_startup(app: FastAPI) -> None:
     asyncio.create_task(app.state.cache_invalidator.start())
 
 
-async def _run_shutdown(app: FastAPI) -> None:
+async def _run_cleanup(app: FastAPI) -> None:
     await app.state.cache_invalidator.stop()
     await app.state.job_executor.shutdown()
     app.state.scheduler.shutdown()
@@ -275,6 +282,17 @@ async def _run_shutdown(app: FastAPI) -> None:
     if app.state.auth is not None:
         auth_db = app.state.auth.storage.auth_db
         await auth_db.close()
+
+
+async def _run_shutdown(app: FastAPI) -> None:
+    try:  # noqa: WPS501 — bare try/finally is intentional: re-raise the original cleanup failure but still flush Sentry.
+        await _run_cleanup(app)
+    finally:
+        # In `finally` so a failure in any earlier cleanup step still
+        # gets a chance to flush buffered events (including the failure
+        # itself, captured via the LoggingIntegration). The flush has
+        # its own 2s timeout to keep shutdown bounded.
+        shutdown_observability()
 
 
 @asynccontextmanager

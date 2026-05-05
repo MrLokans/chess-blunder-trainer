@@ -16,6 +16,11 @@ from blunder_tutor.constants import (
     DEFAULT_ENGINE_TIME_LIMIT,
     TEMPLATES_PATH,
 )
+from blunder_tutor.observability.config import (
+    ObservabilityConfig,
+    build_observability_config,
+)
+from blunder_tutor.utils.env import parse_bool, parse_optional_bool
 
 AuthMode = Literal["none", "credentials"]
 
@@ -36,20 +41,6 @@ _SESSION_IDLE_DEFAULT = _SECONDS_PER_DAY * _SESSION_IDLE_DAYS
 # bcrypt cost ceiling per spec (4 is the floor; 31 is the ceiling, though
 # in practice anything past ~14 is too slow for a login path).
 _BCRYPT_COST_MAX = 31
-
-_TRUTHY = frozenset(("true", "1", "yes"))
-_FALSY = frozenset(("false", "0", "no"))
-
-
-def _parse_bool(raw: str | None, *, default: bool) -> bool:
-    if raw is None or raw == "":
-        return default
-    low = raw.lower()
-    if low in _TRUTHY:
-        return True
-    if low in _FALSY:
-        return False
-    raise ValueError(f"expected boolean-like value, got {raw!r}")
 
 
 class DataConfig(BaseModel):
@@ -166,6 +157,7 @@ class AppConfig(BaseModel):
     analytics: AnalyticsConfig = AnalyticsConfig()
     cache: CacheConfig = CacheConfig()
     auth: AuthConfig = AuthConfig()
+    observability: ObservabilityConfig = ObservabilityConfig()
     # Host header allowlist passed to Starlette TrustedHostMiddleware.
     # Default `["*"]` accepts any Host header — appropriate for single-
     # tenant self-hosted instances. Shared-vhost or multi-tenant
@@ -207,17 +199,6 @@ def _parse_auth_mode(raw: str | None) -> AuthMode:
     raise ValueError(f"AUTH_MODE must be 'none' or 'credentials', got {mode_raw!r}")
 
 
-def _parse_optional_bool(raw: str | None) -> bool | None:
-    if raw is None or raw == "":
-        return None
-    low = raw.lower()
-    if low in _TRUTHY:
-        return True
-    if low in _FALSY:
-        return False
-    raise ValueError(f"expected boolean-like value, got {raw!r}")
-
-
 def _build_auth_config(environ: Mapping) -> AuthConfig:
     """Extract auth-related env vars and let AuthConfig validate them."""
     return AuthConfig(
@@ -230,7 +211,7 @@ def _build_auth_config(environ: Mapping) -> AuthConfig:
         session_idle_seconds=_parse_positive_int(
             environ, "SESSION_IDLE_SECONDS", _SESSION_IDLE_DEFAULT
         ),
-        cookie_secure=_parse_optional_bool(environ.get("AUTH_COOKIE_SECURE")),
+        cookie_secure=parse_optional_bool(environ.get("AUTH_COOKIE_SECURE")),
         login_rate_limit=_parse_positive_int(environ, "AUTH_LOGIN_RATE_LIMIT", 5),
         login_rate_window_seconds=_parse_positive_int(
             environ, "AUTH_LOGIN_RATE_WINDOW_SECONDS", 60
@@ -239,7 +220,7 @@ def _build_auth_config(environ: Mapping) -> AuthConfig:
         signup_rate_window_seconds=_parse_positive_int(
             environ, "AUTH_SIGNUP_RATE_WINDOW_SECONDS", 60 * 60
         ),
-        trust_proxy=_parse_bool(environ.get("AUTH_TRUST_PROXY"), default=False),
+        trust_proxy=parse_bool(environ.get("AUTH_TRUST_PROXY"), default=False),
         bcrypt_cost=_parse_optional_positive_int(environ.get("AUTH_BCRYPT_COST")),
     )
 
@@ -295,7 +276,7 @@ def config_factory(parsed_args: argparse.Namespace, environ: Mapping) -> AppConf
         allowed_hosts = ("*",)
 
     cache = CacheConfig(
-        enabled=_parse_bool(environ.get("CACHE_ENABLED"), default=True),
+        enabled=parse_bool(environ.get("CACHE_ENABLED"), default=True),
         default_ttl=int(environ.get("CACHE_DEFAULT_TTL", "300")),
     )
 
@@ -306,8 +287,8 @@ def config_factory(parsed_args: argparse.Namespace, environ: Mapping) -> AppConf
         engine=EngineConfig(
             path=final_engine_path,
         ),
-        demo_mode=_parse_bool(environ.get("DEMO_MODE"), default=False),
-        vite_dev=_parse_bool(environ.get("VITE_DEV"), default=False),
+        demo_mode=parse_bool(environ.get("DEMO_MODE"), default=False),
+        vite_dev=parse_bool(environ.get("VITE_DEV"), default=False),
         throttle=throttle,
         analytics=AnalyticsConfig(
             plausible_domain=environ.get("PLAUSIBLE_DOMAIN"),
@@ -317,4 +298,5 @@ def config_factory(parsed_args: argparse.Namespace, environ: Mapping) -> AppConf
         ),
         cache=cache,
         auth=_build_auth_config(environ),
+        observability=build_observability_config(environ),
     )
