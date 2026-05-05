@@ -10,7 +10,12 @@ from blunder_tutor.cache.backend import InMemoryCacheBackend
 from blunder_tutor.cache.decorator import cached, set_cache_backend
 from blunder_tutor.cache.invalidation import CacheInvalidator
 from blunder_tutor.events.event_bus import EventBus
-from blunder_tutor.events.event_types import StatsEvent, TrainingEvent, TrapsEvent
+from blunder_tutor.events.event_types import (
+    EloRatingEvent,
+    StatsEvent,
+    TrainingEvent,
+    TrapsEvent,
+)
 
 
 def _make_request(username: str = "testuser") -> Request:
@@ -150,6 +155,33 @@ class TestCacheEndToEnd:
         )
 
         await get_training(request=request)
+        assert call_count == 2
+
+    async def test_elo_rating_event_invalidates_elo_rating_cache(
+        self, event_bus, cache
+    ):
+        call_count = 0
+
+        @cached(tag="elo_rating", ttl=300, version=1, key_params=["profile_id"])
+        async def get_history(request: Request, profile_id: int) -> dict:
+            nonlocal call_count
+            call_count += 1
+            return {"call": call_count}
+
+        request = _make_request("alice")
+        await get_history(request=request, profile_id=1)
+        await get_history(request=request, profile_id=1)
+        assert call_count == 1
+
+        await self._run_with_invalidator(
+            event_bus,
+            cache,
+            EloRatingEvent.create_elo_rating_updated(
+                user_key="alice", trigger="game_sync_completed"
+            ),
+        )
+
+        await get_history(request=request, profile_id=1)
         assert call_count == 2
 
     async def test_traps_event_invalidates_traps_cache(self, event_bus, cache):

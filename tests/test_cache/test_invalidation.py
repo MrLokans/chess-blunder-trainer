@@ -8,6 +8,7 @@ from blunder_tutor.cache.backend import InMemoryCacheBackend
 from blunder_tutor.cache.invalidation import EVENT_TAG_MAPPING, CacheInvalidator
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import (
+    EloRatingEvent,
     EventType,
     JobEvent,
     StatsEvent,
@@ -69,6 +70,18 @@ class TestCacheInvalidator:
         await cache.set("k1", "v1", tags={"training:alice"})
         await cache.set("k2", "v2", tags={"stats:alice"})
         event = TrainingEvent.create_training_updated(user_key="alice")
+        await self._start_and_publish(invalidator, event_bus, event)
+        assert await cache.get("k1") is None
+        assert await cache.get("k2") == "v2"
+
+    async def test_elo_rating_updated_invalidates_elo_rating_tag(
+        self, invalidator, event_bus, cache
+    ):
+        await cache.set("k1", "v1", tags={"elo_rating:alice"})
+        await cache.set("k2", "v2", tags={"stats:alice"})
+        event = EloRatingEvent.create_elo_rating_updated(
+            user_key="alice", trigger="game_sync_completed"
+        )
         await self._start_and_publish(invalidator, event_bus, event)
         assert await cache.get("k1") is None
         assert await cache.get("k2") == "v2"

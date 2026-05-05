@@ -287,6 +287,58 @@ class GameRepository(BaseDbRepository):
 
         return [row["game_id"] for row in rows]
 
+    async def list_rating_history_rows(
+        self,
+        profile_id: int,
+        *,
+        game_type: int | None = None,
+        since: str | None = None,
+    ) -> list[dict[str, object]]:
+        """Project the latest game per calendar day for the profile.
+
+        Uses a window function to keep only the row with the largest
+        `end_time_utc` for each ``YYYY-MM-DD`` partition, minimizing rows
+        the service has to PGN-parse and ship. PGN parsing stays in the
+        service layer so this remains a pure SQL projection — trivial to
+        swap for a column-based query once `white_rating` / `black_rating`
+        are denormalized.
+        """
+        params: list[object] = [profile_id]
+        game_type_clause = ""
+        if game_type is not None:
+            game_type_clause = "AND game_type = ?"
+            params.append(game_type)
+
+        since_clause = ""
+        if since is not None:
+            since_clause = "AND end_time_utc >= ?"
+            params.append(since)
+
+        query = f"""
+            WITH ranked AS (
+                SELECT game_id, white, black, end_time_utc,
+                       game_type, pgn_content,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY substr(end_time_utc, 1, 10)
+                           ORDER BY end_time_utc DESC
+                       ) AS rn
+                FROM game_index_cache
+                WHERE profile_id = ?
+                  {game_type_clause}
+                  {since_clause}
+            )
+            SELECT game_id, white, black, end_time_utc, game_type, pgn_content
+            FROM ranked
+            WHERE rn = 1
+            ORDER BY end_time_utc ASC
+        """
+
+        conn = await self.get_connection()
+        async with conn.execute(query, params) as cursor:
+            rows = await cursor.fetchall()
+
+        return [dict(row) for row in rows]
+
     async def get_latest_game_time(
         self,
         source: str,

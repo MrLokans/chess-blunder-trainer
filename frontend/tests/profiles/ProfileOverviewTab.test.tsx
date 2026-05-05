@@ -28,6 +28,18 @@ let fetchSpy: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
   fetchSpy = vi.spyOn(globalThis, 'fetch');
+  // Default stub for the per-RatingCard rating-history fetches that fire on
+  // mount. Per-test `mockResolvedValueOnce` calls take precedence over this
+  // default for the URL the test actually asserts against.
+  fetchSpy.mockImplementation((input: RequestInfo | URL) => {
+    const url = typeof input === 'string'
+      ? input
+      : input instanceof URL ? input.href : input.url;
+    if (url.includes('/rating-history')) {
+      return Promise.resolve(new Response(JSON.stringify({ points: [] }), { status: 200 }));
+    }
+    return Promise.resolve(new Response('{}', { status: 200 }));
+  });
 });
 
 afterEach(() => {
@@ -56,9 +68,15 @@ describe('ProfileOverviewTab', () => {
   test('shows Make Primary button when not primary; click PATCHes is_primary=true', async () => {
     const onProfileChange = vi.fn();
     const updated = makeProfile({ is_primary: true });
-    fetchSpy.mockResolvedValueOnce(
-      new Response(JSON.stringify(updated), { status: 200 }),
-    );
+    fetchSpy.mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string'
+      ? input
+      : input instanceof URL ? input.href : input.url;
+      if (url.includes('/rating-history')) {
+        return Promise.resolve(new Response(JSON.stringify({ points: [] }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify(updated), { status: 200 }));
+    });
     const user = userEvent.setup();
     render(
       <ProfileOverviewTab
@@ -118,12 +136,20 @@ describe('ProfileOverviewTab', () => {
     const newStats = [
       { mode: 'bullet', rating: 3250, games_count: 5100, synced_at: '2026-05-01T13:00:00Z' },
     ];
-    fetchSpy.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({ stats: newStats, last_validated_at: '2026-05-01T13:00:00Z' }),
-        { status: 200 },
-      ),
-    );
+    fetchSpy.mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string'
+      ? input
+      : input instanceof URL ? input.href : input.url;
+      if (url.includes('/rating-history')) {
+        return Promise.resolve(new Response(JSON.stringify({ points: [] }), { status: 200 }));
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ stats: newStats, last_validated_at: '2026-05-01T13:00:00Z' }),
+          { status: 200 },
+        ),
+      );
+    });
     const user = userEvent.setup();
     render(<ProfileOverviewTab profile={makeProfile()} onProfileChange={onProfileChange} onSyncToast={() => {}} />);
     await user.click(screen.getByRole('button', { name: 'profiles.overview.refresh_stats' }));

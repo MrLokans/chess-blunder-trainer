@@ -3,12 +3,12 @@ from __future__ import annotations
 import sqlite3
 
 import aiosqlite
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 
 from blunder_tutor.auth.fastapi import UserContextDep
 from blunder_tutor.background.jobs.stats_sync import fetch_stats_for_profile
 from blunder_tutor.constants import JOB_TYPE_IMPORT
-from blunder_tutor.events.event_types import JobExecutionRequestEvent
+from blunder_tutor.events.event_types import EloRatingEvent, JobExecutionRequestEvent
 from blunder_tutor.fetchers import RateLimitError
 from blunder_tutor.repositories.profile import (
     ProfileNotFoundError,
@@ -36,10 +36,12 @@ from blunder_tutor.web.api._profile_schemas import (
     StatsSnapshotShape,
 )
 from blunder_tutor.web.dependencies import (
+    ConfigDep,
     EventBusDep,
     JobRepoDep,
     JobServiceDep,
     ProfileRepoDep,
+    resolve_user_key,
 )
 
 profiles_router = APIRouter()
@@ -323,7 +325,10 @@ async def _build_stats_refresh_response(
 )
 async def delete_profile(
     profile_id: int,
+    request: Request,
     repo: ProfileRepoDep,
+    event_bus: EventBusDep,
+    config: ConfigDep,
     detach_games: str | None = None,
 ) -> Response:
     if detach_games not in {"true", "false"}:
@@ -341,4 +346,16 @@ async def delete_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="profile not found",
         ) from exc
+
+    # Both `detach=True` and `detach=False` change the games dataset visible
+    # to the rating-history endpoint (rows reassigned to profile_id=NULL or
+    # hard-deleted). Either way, cached rating-history responses for this
+    # user are now stale. Resolve user_key the same way the cache decorator
+    # does so the invalidation tag matches the cached entry.
+    await event_bus.publish(
+        EloRatingEvent.create_elo_rating_updated(
+            user_key=resolve_user_key(request, config),
+            trigger="profile_deleted",
+        )
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

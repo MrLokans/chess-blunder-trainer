@@ -392,7 +392,23 @@ tr:hover td {
    Alerts & Messages
    ========================================================================== */
 
-.alert,
+/* `.alert` is the React/Preact transient-status component (post-action
+   toasts, form errors). Inline-block + fit-content so it hugs the
+   message instead of stretching the panel; keeps the brutalist
+   left-border accent but at a lighter weight. `.message` (below) is
+   kept on the original chunky path for legacy HTMX templates. */
+.alert {
+  display: none;
+  width: fit-content;
+  max-width: 100%;
+  padding: var(--s-sm) var(--s-md);
+  margin-bottom: var(--s-sm);
+  border-radius: 0;
+  border-left: 3px solid;
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+}
+
 .message {
   padding: var(--s-md);
   border-radius: 0;

@@ -1,5 +1,5 @@
 import type { Profile } from '../types/profiles';
-import { PLATFORM_LABEL } from '../types/profiles';
+import { PLATFORM_LABEL, platformProfileUrl } from '../types/profiles';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
 import { formatRelativeAgo } from '../shared/relative-time';
@@ -34,7 +34,26 @@ export function ProfileList({ profiles, selectedId, onSelect }: ProfileListProps
                   </Badge>
                 )}
               </div>
-              <div class="profile-list__username">{p.username}</div>
+              <div class="profile-list__username-row">
+                <span class="profile-list__username">{p.username}</span>
+                <a
+                  class="profile-list__platform-link"
+                  href={platformProfileUrl(p.platform, p.username)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => { e.stopPropagation(); }}
+                  aria-label={t('profiles.list.open_on_platform', {
+                    platform: PLATFORM_LABEL[p.platform],
+                    username: p.username,
+                  })}
+                  title={t('profiles.list.open_on_platform', {
+                    platform: PLATFORM_LABEL[p.platform],
+                    username: p.username,
+                  })}
+                >
+                  ↗
+                </a>
+              </div>
               <div class="profile-list__meta">{lastGameSyncLabel(p)}</div>
             </Card>
           </li>
