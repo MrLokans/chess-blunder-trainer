@@ -16,6 +16,8 @@ export interface BlunderPuzzle {
   tactical_pattern: string | null;
   explanation_blunder: string | null;
   explanation_best: string | null;
+  punishment_line: string[];
+  deep_explanation: string | null;
   game_url: string | null;
   difficulty: string;
 }
@@ -89,6 +91,8 @@ export interface PuzzleData {
   tactical_squares: string[] | null;
   explanation_blunder: string | null;
   explanation_best: string | null;
+  punishment_line: string[];
+  deep_explanation: string | null;
   game_url: string | null;
   difficulty: string;
   pre_move_uci: string | null;

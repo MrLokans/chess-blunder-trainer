@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from blunder_tutor.services.analysis_service import AnalysisService, PositionAnalysis
+from blunder_tutor.services.analysis_service import (
+    AnalysisService,
+    PositionAnalysis,
+    PunishmentAnalysis,
+)
 from blunder_tutor.trainer import BlunderFilter, BlunderPuzzle, Trainer
 from blunder_tutor.utils.chess_utils import format_eval
 
@@ -11,6 +15,7 @@ from blunder_tutor.utils.chess_utils import format_eval
 class PuzzleWithAnalysis:
     puzzle: BlunderPuzzle
     analysis: PositionAnalysis
+    punishment: PunishmentAnalysis | None = None
 
 
 class PuzzleService:
@@ -38,7 +43,8 @@ class PuzzleService:
                 fen=puzzle.fen, player_color=puzzle.player_color
             )
 
-        return PuzzleWithAnalysis(puzzle=puzzle, analysis=analysis)
+        punishment = await self._get_punishment_analysis(puzzle, analysis)
+        return PuzzleWithAnalysis(puzzle=puzzle, analysis=analysis, punishment=punishment)
 
     async def get_specific_puzzle(self, game_id: str, ply: int) -> PuzzleWithAnalysis:
         puzzle = await self.trainer.get_specific_blunder(game_id, ply)
@@ -57,7 +63,22 @@ class PuzzleService:
                 fen=puzzle.fen, player_color=puzzle.player_color
             )
 
-        return PuzzleWithAnalysis(puzzle=puzzle, analysis=analysis)
+        punishment = await self._get_punishment_analysis(puzzle, analysis)
+        return PuzzleWithAnalysis(puzzle=puzzle, analysis=analysis, punishment=punishment)
+
+    async def _get_punishment_analysis(
+        self, puzzle: BlunderPuzzle, analysis: PositionAnalysis
+    ) -> PunishmentAnalysis | None:
+        try:
+            return await self.analysis_service.analyze_punishment_line(
+                fen=puzzle.fen,
+                blunder_uci=puzzle.blunder_uci,
+                player_color=puzzle.player_color,
+                best_move_san=analysis.best_move_san,
+                cp_loss=puzzle.cp_loss,
+            )
+        except (ValueError, RuntimeError):
+            return None
 
     def _format_eval(self, eval_cp: int, player_color: str) -> str:
         return format_eval(eval_cp, player_color)

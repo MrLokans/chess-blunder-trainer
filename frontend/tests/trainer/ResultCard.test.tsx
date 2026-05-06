@@ -44,8 +44,9 @@ describe('ResultCard', () => {
 
   it('shows best move when revealed', () => {
     render(<ResultCard {...defaults} />);
-    expect(screen.getByText('d4')).not.toBeNull();
-    expect(screen.getByText('Nf6 c4')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'd4' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Nf6' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'c4' })).not.toBeNull();
   });
 
   it('shows tactical details', () => {
