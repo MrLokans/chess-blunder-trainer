@@ -151,6 +151,14 @@ class PuzzleResponse(BaseModel):
         default=None,
         description="Beginner-friendly explanation of what the best move achieves",
     )
+    punishment_line: list[str] = Field(
+        default_factory=list,
+        description="Continuation showing how the original blunder can be punished",
+    )
+    deep_explanation: str | None = Field(
+        default=None,
+        description="Detailed explanation of why the original move was a blunder",
+    )
     pre_move_uci: str | None = Field(
         default=None,
         description="Opponent's preceding move in UCI notation (e.g., 'e7e5'), null for ply 1",

@@ -7,9 +7,50 @@ export function useLinePlayer(
 ): {
   playBestMove: () => void;
   navigateLine: (direction: 'forward' | 'back') => void;
+  goToLinePly: (ply: number) => void;
+  goToPunishmentLinePly: (ply: number) => void;
 } {
   const { state, dispatch } = useContext(TrainerContext);
   const animGenRef = useRef(0);
+
+  const goToCustomLinePly = useCallback((moves: string[], ply: number) => {
+    if (state.animating) return;
+
+    const puzzle = state.puzzle;
+    if (!puzzle || moves.length === 0) return;
+
+    const lineGame = new Chess(puzzle.fen);
+    const positions: Array<{ fen: string; moveHistory: string[] }> = [
+      { fen: puzzle.fen, moveHistory: [] },
+    ];
+    const history: string[] = [];
+
+    for (const san of moves) {
+      const result = lineGame.move(san);
+      if (!result) break;
+
+      history.push(result.san);
+      positions.push({
+        fen: lineGame.fen(),
+        moveHistory: [...history],
+      });
+    }
+
+    const targetIndex = Math.max(0, Math.min(ply, positions.length - 1));
+    const target = positions[targetIndex];
+    if (!target) return;
+
+    dispatch({ type: 'CLEAR_LINE_NAVIGATION' });
+
+    for (const position of positions) {
+      dispatch({ type: 'PUSH_LINE_POSITION', position });
+    }
+
+    dispatch({ type: 'SET_LINE_VIEW_INDEX', index: targetIndex });
+    dispatch({ type: 'SET_FEN', fen: target.fen });
+
+    gameRef.current = new Chess(target.fen);
+  }, [state.animating, state.puzzle, dispatch, gameRef]);
 
   const playBestMove = useCallback(() => {
     if (state.animating) return;
@@ -62,8 +103,35 @@ export function useLinePlayer(
 
   const navigateLine = useCallback((direction: 'forward' | 'back') => {
     if (state.animating) return;
-    const positions = state.linePositions;
-    if (positions.length === 0) return;
+
+    const puzzle = state.puzzle;
+    if (!puzzle || puzzle.best_line.length === 0) return;
+
+    let positions = state.linePositions;
+
+    if (positions.length === 0) {
+      const lineGame = new Chess(puzzle.fen);
+      const builtPositions: Array<{ fen: string; moveHistory: string[] }> = [
+        { fen: puzzle.fen, moveHistory: [] },
+      ];
+      const history: string[] = [];
+
+      for (const san of puzzle.best_line) {
+        const result = lineGame.move(san);
+        if (!result) break;
+
+        history.push(result.san);
+        builtPositions.push({
+          fen: lineGame.fen(),
+          moveHistory: [...history],
+        });
+      }
+
+      positions = builtPositions;
+      for (const position of positions) {
+        dispatch({ type: 'PUSH_LINE_POSITION', position });
+      }
+    }
 
     const currentIndex = state.lineViewIndex;
     let newIndex: number;
@@ -84,7 +152,19 @@ export function useLinePlayer(
 
     const game = new Chess(pos.fen);
     gameRef.current = game;
-  }, [state.animating, state.linePositions, state.lineViewIndex, dispatch, gameRef]);
+  }, [state.animating, state.puzzle, state.linePositions, state.lineViewIndex, dispatch, gameRef]);
 
-  return { playBestMove, navigateLine };
+  const goToLinePly = useCallback((ply: number) => {
+    const puzzle = state.puzzle;
+    if (!puzzle) return;
+    goToCustomLinePly(puzzle.best_line, ply);
+  }, [state.puzzle, goToCustomLinePly]);
+
+  const goToPunishmentLinePly = useCallback((ply: number) => {
+    const puzzle = state.puzzle;
+    if (!puzzle) return;
+    goToCustomLinePly(puzzle.punishment_line, ply);
+  }, [state.puzzle, goToCustomLinePly]);
+
+  return { playBestMove, navigateLine, goToLinePly, goToPunishmentLinePly };
 }

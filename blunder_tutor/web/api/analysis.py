@@ -177,6 +177,16 @@ def _build_puzzle_response(
         "game_url": puzzle_data.game_url,
         "explanation_blunder": explanation.blunder_text or None,
         "explanation_best": explanation.best_move_text or None,
+        "punishment_line": (
+            puzzle_with_analysis.punishment.line
+            if puzzle_with_analysis.punishment
+            else []
+        ),
+        "deep_explanation": (
+            puzzle_with_analysis.punishment.summary
+            if puzzle_with_analysis.punishment
+            else None
+        ),
         "pre_move_uci": puzzle_data.pre_move_uci,
         "pre_move_fen": puzzle_data.pre_move_fen,
     }

@@ -65,7 +65,7 @@ function TrainerCore(): preact.JSX.Element {
   filtersRef.current = filtersApi;
 
   // Line player
-  const { playBestMove, navigateLine } = useLinePlayer(gameRef, filtersApi.state.playFullLine);
+  const { playBestMove, navigateLine, goToLinePly, goToPunishmentLinePly } = useLinePlayer(gameRef, filtersApi.state.playFullLine);
 
   // WebSocket for stats updates
   const ws = useWebSocket(['stats.updated']);
@@ -366,6 +366,10 @@ function TrainerCore(): preact.JSX.Element {
             bestRevealed={state.bestRevealed}
             moveHistory={state.moveHistory}
             onPlayBest={playBestMove}
+            onLineMoveClick={goToLinePly}
+            onLineBack={() => { navigateLine('back'); }}
+            onLineForward={() => { navigateLine('forward'); }}
+            onPunishmentLineMoveClick={goToPunishmentLinePly}
             onNext={handleNext}
             onClose={() => { dispatch({ type: 'SET_RESULT_VISIBLE', visible: false }); }}
           />
