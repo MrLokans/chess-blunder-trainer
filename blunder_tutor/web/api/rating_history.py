@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from datetime import timedelta
-
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from blunder_tutor.cache.decorator import cached
 from blunder_tutor.repositories.profile_types import ProfileNotFoundError
-from blunder_tutor.utils.time import utcnow
 from blunder_tutor.web.api._profile_schemas import (
     RatingHistoryResponse,
     RatingPointShape,
@@ -20,11 +17,6 @@ from blunder_tutor.web.dependencies import (
 # invalidation, so the TTL just caps how long stale data can survive in the
 # unlikely event of a missed event.
 _ELO_RATING_CACHE_TTL_SECONDS = 300
-
-# Sliding window applied at the route boundary. Daily bucketing happens in
-# the service, so this caps the response at ≤30 points per mode regardless
-# of how busy the profile is.
-_RATING_HISTORY_WINDOW_DAYS = 30
 
 rating_history_router = APIRouter(dependencies=[Depends(set_request_username)])
 
@@ -51,13 +43,8 @@ async def get_rating_history(
     service: RatingHistoryServiceDep,
     mode: str | None = None,
 ) -> RatingHistoryResponse:
-    cutoff = utcnow() - timedelta(days=_RATING_HISTORY_WINDOW_DAYS)
     try:
-        points = await service.get(
-            profile_id,
-            mode=mode,
-            since=cutoff.isoformat(),
-        )
+        points = await service.get(profile_id, mode=mode)
     except ProfileNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

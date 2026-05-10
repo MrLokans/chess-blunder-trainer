@@ -1,3 +1,6 @@
+from blunder_tutor.events.event_types import StatsEvent
+
+
 def test_websocket_connection(app):
     with app.websocket_connect("/ws") as websocket:
         # Subscribe to job events
@@ -50,3 +53,22 @@ def test_websocket_invalid_event_type(app):
         # Should still receive confirmation (invalid types are skipped)
         response = websocket.receive_json()
         assert response["type"] == "subscribed"
+
+
+def test_none_mode_delivers_user_keyed_event_regardless_of_user(app):
+    # Back-compat lock for AUTH_MODE=none: connections without a user_id
+    # see every event, even ones tagged with a user_key. Single-user
+    # instance, no cross-user leak possible by construction.
+    with app.websocket_connect("/ws") as websocket:
+        websocket.send_json({"action": "subscribe", "events": ["stats.updated"]})
+        assert websocket.receive_json()["type"] == "subscribed"
+
+        connection_manager = app.app.state.connection_manager
+        app.portal.call(
+            connection_manager.broadcast_event,
+            StatsEvent.create_stats_updated(user_key="some-user-id"),
+        )
+        message = websocket.receive_json()
+
+    assert message["type"] == "stats.updated"
+    assert message["data"]["user_key"] == "some-user-id"
