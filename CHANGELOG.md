@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.6]
+
+### Fixed
+
+- **Trainer keyboard shortcuts no longer break after toggling Show Threats**: Clicking a checkbox in Board Settings (Show Threats, Show Arrows, etc.) used to leave focus on the input, which silently swallowed every trainer shortcut — `B` for Show Best Move, `N` for Next, `R` for Reset, and so on — until you clicked elsewhere. Shortcuts now stay active when focus is on a checkbox or radio.
+
+### Changed
+
+- **"Play Full Engine Line" is now always on**: Removed the toggle from Board Settings. Revealing the best move always replays the full engine line so you can see the follow-up plan, not just the single best reply.
+
+---
+
 ## [3.1.3]
 
 ### Added
