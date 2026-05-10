@@ -10,6 +10,7 @@ import pytest
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.repositories.profile_types import ProfileNotFoundError
+from blunder_tutor.services import rating_history as rating_history_module
 from blunder_tutor.services.rating_history import RatingHistoryService
 from blunder_tutor.utils.time_control import GameType
 
@@ -60,6 +61,14 @@ def _insert_game(
             ),
         )
         conn.commit()
+
+
+@pytest.fixture(autouse=True)
+def _disable_window(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The 30-day window is exercised at the route layer
+    # (`test_excludes_games_older_than_30_days`). Service tests use fixed
+    # historical dates and would otherwise be filtered out as "now" advances.
+    monkeypatch.setattr(rating_history_module, "_WINDOW_DAYS", 100_000)
 
 
 @pytest.fixture
@@ -332,40 +341,6 @@ class TestRatingHistoryService:
         rapid = await service.get(profile_id=profile.id, mode="rapid")
         assert len(rapid) == 1
         assert rapid[0].rating == 1550
-
-    async def test_filters_by_since_inclusive(
-        self,
-        db_path: Path,
-        profile_repo: SqliteProfileRepository,
-        service: RatingHistoryService,
-    ) -> None:
-        profile = await profile_repo.create("lichess", "alice")
-        _insert_game(
-            db_path,
-            game_id="old",
-            profile_id=profile.id,
-            username="alice",
-            white="alice",
-            black="x",
-            white_elo=1400,
-            black_elo=1400,
-            end_time_utc="2026-01-01T00:00:00",
-        )
-        _insert_game(
-            db_path,
-            game_id="new",
-            profile_id=profile.id,
-            username="alice",
-            white="alice",
-            black="x",
-            white_elo=1500,
-            black_elo=1500,
-            end_time_utc="2026-03-01T00:00:00",
-        )
-
-        points = await service.get(profile_id=profile.id, since="2026-02-01T00:00:00")
-        assert len(points) == 1
-        assert points[0].rating == 1500
 
     async def test_unknown_mode_raises_value_error(
         self,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Literal
 
 from blunder_tutor.repositories.game_repository import GameRepository
@@ -9,11 +10,14 @@ from blunder_tutor.repositories.profile_types import (
     ProfileRepository,
 )
 from blunder_tutor.utils.pgn_headers import extract_player_elos
+from blunder_tutor.utils.time import utcnow
 from blunder_tutor.utils.time_control import (
     GAME_TYPE_FROM_STRING,
     GameType,
     get_game_type_label,
 )
+
+_WINDOW_DAYS = 30
 
 Color = Literal["white", "black"]
 
@@ -102,14 +106,14 @@ class RatingHistoryService:
         profile_id: int,
         *,
         mode: str | None = None,
-        since: str | None = None,
     ) -> list[RatingPoint]:
         profile = await self._profiles.get(profile_id)
         if profile is None:
             raise ProfileNotFoundError(f"profile not found: {profile_id}")
 
+        cutoff = (utcnow() - timedelta(days=_WINDOW_DAYS)).isoformat()
         rows = await self._games.list_rating_history_rows(
-            profile_id, game_type=_resolve_mode(mode), since=since
+            profile_id, game_type=_resolve_mode(mode), since=cutoff
         )
         return [
             point
