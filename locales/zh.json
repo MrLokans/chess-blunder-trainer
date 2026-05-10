@@ -644,7 +644,6 @@
   "trainer.stats.accuracy": "准确率",
   "trainer.stats.correct": "正确",
   "trainer.stats.incorrect": "错误",
-  "trainer.toggle.play_full_line": "播放引擎完整变化线",
   "trainer.toggle.show_arrows": "显示走法箭头",
   "trainer.toggle.show_coordinates": "显示棋盘坐标",
   "trainer.toggle.show_tactics": "高亮战术模式（揭示后）",

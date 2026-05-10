@@ -3,7 +3,6 @@ import { TrainerContext } from '../context';
 
 export function useLinePlayer(
   gameRef: preact.RefObject<ChessInstance | null>,
-  playFullLine: boolean,
 ): {
   playBestMove: () => void;
   navigateLine: (direction: 'forward' | 'back') => void;
@@ -24,7 +23,7 @@ export function useLinePlayer(
 
     dispatch({ type: 'PUSH_LINE_POSITION', position: { fen: puzzle.fen, moveHistory: [] } });
 
-    if (playFullLine && puzzle.best_line.length > 0) {
+    if (puzzle.best_line.length > 0) {
       const gen = ++animGenRef.current;
       dispatch({ type: 'SET_ANIMATING', animating: true });
 
@@ -58,7 +57,7 @@ export function useLinePlayer(
         dispatch({ type: 'PUSH_LINE_POSITION', position: { fen: resetGame.fen(), moveHistory: [result.san] } });
       }
     }
-  }, [state.animating, state.puzzle, gameRef, playFullLine, dispatch]);
+  }, [state.animating, state.puzzle, gameRef, dispatch]);
 
   const navigateLine = useCallback((direction: 'forward' | 'back') => {
     if (state.animating) return;

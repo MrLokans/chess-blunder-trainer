@@ -644,7 +644,6 @@
   "trainer.stats.accuracy": "Precisión",
   "trainer.stats.correct": "Correctos",
   "trainer.stats.incorrect": "Incorrectos",
-  "trainer.toggle.play_full_line": "Reproducir línea completa del motor",
   "trainer.toggle.show_arrows": "Mostrar flechas de jugadas",
   "trainer.toggle.show_coordinates": "Mostrar coordenadas del tablero",
   "trainer.toggle.show_tactics": "Resaltar patrón táctico (tras revelar)",

@@ -11,7 +11,6 @@ interface FilterState {
   difficulties: string[];
   tacticalPattern: string | null;
   color: string;
-  playFullLine: boolean;
   showCoordinates: boolean;
   showArrows: boolean;
   showThreats: boolean;
@@ -27,7 +26,6 @@ const SK = {
   tactical: STORAGE_KEYS.trainerTactical,
   color: STORAGE_KEYS.trainerColor,
   filtersCollapsed: STORAGE_KEYS.trainerFiltersCollapsed,
-  playFullLine: STORAGE_KEYS.trainerPlayFullLine,
   boardSettingsCollapsed: STORAGE_KEYS.trainerBoardSettingsCollapsed,
   showCoordinates: STORAGE_KEYS.trainerShowCoordinates,
   showArrows: STORAGE_KEYS.trainerShowArrows,
@@ -60,7 +58,6 @@ export interface FiltersAPI {
   setDifficulties: (diffs: string[]) => void;
   setTacticalPattern: (pattern: string | null) => void;
   setColor: (color: string) => void;
-  setPlayFullLine: (enabled: boolean) => void;
   setShowCoordinates: (enabled: boolean) => void;
   setShowArrows: (enabled: boolean) => void;
   setShowThreats: (enabled: boolean) => void;
@@ -76,7 +73,6 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
     difficulties: loadFromStorage(SK.difficulties, DEFAULT_DIFFICULTIES),
     tacticalPattern: loadString(SK.tactical, '') || null,
     color: loadString(SK.color, 'both'),
-    playFullLine: loadBool(SK.playFullLine, false),
     showCoordinates: loadBool(SK.showCoordinates, true),
     showArrows: loadBool(SK.showArrows, true),
     showThreats: loadBool(SK.showThreats, false),
@@ -122,11 +118,6 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
     persist(SK.color, color);
     onFilterChange();
   }, [persist, onFilterChange]);
-
-  const setPlayFullLine = useCallback((enabled: boolean) => {
-    setState(s => ({ ...s, playFullLine: enabled }));
-    persist(SK.playFullLine, enabled);
-  }, [persist]);
 
   const setShowCoordinates = useCallback((enabled: boolean) => {
     setState(s => ({ ...s, showCoordinates: enabled }));
@@ -216,7 +207,7 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
   return {
     state, getFilterParams, hasActiveFilters, activeFilterCount, clearAllFilters,
     setPhases, setGameTypes, setDifficulties, setTacticalPattern, setColor,
-    setPlayFullLine, setShowCoordinates, setShowArrows, setShowThreats, setShowTactics,
+    setShowCoordinates, setShowArrows, setShowThreats, setShowTactics,
     toggleFiltersCollapsed, toggleBoardSettingsCollapsed,
   };
 }

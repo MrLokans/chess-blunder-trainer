@@ -644,7 +644,6 @@
   "trainer.stats.accuracy": "Точність",
   "trainer.stats.correct": "Правильні",
   "trainer.stats.incorrect": "Неправильні",
-  "trainer.toggle.play_full_line": "Відтворити всю лінію рушія",
   "trainer.toggle.show_arrows": "Показати стрілки ходів",
   "trainer.toggle.show_coordinates": "Показувати координати на дошці",
   "trainer.toggle.show_tactics": "Підсвітити тактичний мотив (після розкриття)",

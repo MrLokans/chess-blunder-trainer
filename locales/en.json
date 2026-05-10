@@ -644,7 +644,6 @@
   "trainer.stats.accuracy": "Accuracy",
   "trainer.stats.correct": "Correct",
   "trainer.stats.incorrect": "Incorrect",
-  "trainer.toggle.play_full_line": "Play full engine line",
   "trainer.toggle.show_arrows": "Show move arrows",
   "trainer.toggle.show_coordinates": "Show board coordinates",
   "trainer.toggle.show_tactics": "Highlight tactical pattern (after reveal)",

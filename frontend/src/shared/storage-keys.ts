@@ -9,7 +9,6 @@ export const STORAGE_KEYS = {
   trainerTactical: 'blunder-tutor-tactical-filter',
   trainerColor: 'blunder-tutor-color-filter',
   trainerFiltersCollapsed: 'blunder-tutor-filters-collapsed',
-  trainerPlayFullLine: 'blunder-tutor-play-full-line',
   trainerBoardSettingsCollapsed: 'boardSettingsCollapsed',
   trainerShowCoordinates: 'blunder-tutor-show-coordinates',
   trainerShowArrows: 'blunder-tutor-show-arrows',

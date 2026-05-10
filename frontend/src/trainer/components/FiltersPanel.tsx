@@ -185,10 +185,6 @@ export function FiltersPanel({ filters }: FiltersPanelProps): preact.JSX.Element
                   </div>
                 )}
                 <div class="arrow-toggle">
-                  <input type="checkbox" id="playFullLine" checked={state.playFullLine} onChange={(e) => { filters.setPlayFullLine(e.currentTarget.checked); }} />
-                  <label for="playFullLine">{t('trainer.toggle.play_full_line')}</label>
-                </div>
-                <div class="arrow-toggle">
                   <input type="checkbox" id="showCoordinates" checked={state.showCoordinates} onChange={(e) => { filters.setShowCoordinates(e.currentTarget.checked); }} />
                   <label for="showCoordinates">{t('trainer.toggle.show_coordinates')}</label>
                 </div>

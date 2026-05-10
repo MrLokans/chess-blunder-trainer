@@ -644,7 +644,6 @@
   "trainer.stats.accuracy": "Дакладнасць",
   "trainer.stats.correct": "Правільныя",
   "trainer.stats.incorrect": "Няправільныя",
-  "trainer.toggle.play_full_line": "Прайграць усю лінію рухавіка",
   "trainer.toggle.show_arrows": "Паказаць стрэлкі хадоў",
   "trainer.toggle.show_coordinates": "Паказваць каардынаты на дошцы",
   "trainer.toggle.show_tactics": "Падсвяціць тактычны матыў (пасля раскрыцця)",

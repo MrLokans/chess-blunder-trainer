@@ -65,7 +65,7 @@ function TrainerCore(): preact.JSX.Element {
   filtersRef.current = filtersApi;
 
   // Line player
-  const { playBestMove, navigateLine } = useLinePlayer(gameRef, filtersApi.state.playFullLine);
+  const { playBestMove, navigateLine } = useLinePlayer(gameRef);
 
   // WebSocket for stats updates
   const ws = useWebSocket(['stats.updated']);

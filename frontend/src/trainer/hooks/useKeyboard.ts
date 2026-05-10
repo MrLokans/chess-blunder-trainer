@@ -28,7 +28,11 @@ export function useKeyboard(actions: KeyboardActions): void {
 
       const target = e.target as HTMLElement;
       const tag = target.tagName.toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (tag === 'textarea' || tag === 'select') return;
+      if (tag === 'input') {
+        const inputType = (target as HTMLInputElement).type;
+        if (inputType !== 'checkbox' && inputType !== 'radio') return;
+      }
 
       if (actions.isAnimating) return;
 

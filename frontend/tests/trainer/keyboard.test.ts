@@ -12,13 +12,13 @@ describe('Keyboard shortcuts', () => {
     });
   });
 
-  function fireKeydown(key: string, opts: { ctrlKey?: boolean; metaKey?: boolean; targetTag?: string } = {}): KeyboardEvent {
+  function fireKeydown(key: string, opts: { ctrlKey?: boolean; metaKey?: boolean; targetTag?: string; inputType?: string } = {}): KeyboardEvent {
     const event = {
       type: 'keydown',
       key,
       ctrlKey: opts.ctrlKey || false,
       metaKey: opts.metaKey || false,
-      target: { tagName: opts.targetTag || 'BODY' },
+      target: { tagName: opts.targetTag || 'BODY', type: opts.inputType },
       preventDefault: vi.fn(),
       stopPropagation: vi.fn(),
     } as unknown as KeyboardEvent;
@@ -28,15 +28,20 @@ describe('Keyboard shortcuts', () => {
     return event;
   }
 
-  it('skips shortcuts when focused on input elements', () => {
+  it('skips shortcuts when focused on text-typing inputs but not on checkboxes/radios', () => {
     let called = false;
     document.addEventListener('keydown', ((e: KeyboardEvent) => {
-      const tag = ((e.target as HTMLElement).tagName || '').toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      const target = e.target as HTMLElement;
+      const tag = (target.tagName || '').toLowerCase();
+      if (tag === 'textarea' || tag === 'select') return;
+      if (tag === 'input') {
+        const inputType = (target as HTMLInputElement).type;
+        if (inputType !== 'checkbox' && inputType !== 'radio') return;
+      }
       called = true;
     }) as EventListener);
 
-    fireKeydown('n', { targetTag: 'INPUT' });
+    fireKeydown('n', { targetTag: 'INPUT', inputType: 'text' });
     expect(called).toBe(false);
 
     fireKeydown('n', { targetTag: 'TEXTAREA' });
@@ -45,6 +50,14 @@ describe('Keyboard shortcuts', () => {
     fireKeydown('n', { targetTag: 'SELECT' });
     expect(called).toBe(false);
 
+    fireKeydown('n', { targetTag: 'INPUT', inputType: 'checkbox' });
+    expect(called).toBe(true);
+
+    called = false;
+    fireKeydown('n', { targetTag: 'INPUT', inputType: 'radio' });
+    expect(called).toBe(true);
+
+    called = false;
     fireKeydown('n', { targetTag: 'BODY' });
     expect(called).toBe(true);
   });

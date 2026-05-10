@@ -644,7 +644,6 @@
   "trainer.stats.accuracy": "Dokładność",
   "trainer.stats.correct": "Poprawne",
   "trainer.stats.incorrect": "Niepoprawne",
-  "trainer.toggle.play_full_line": "Odtwórz pełną linię silnika",
   "trainer.toggle.show_arrows": "Pokaż strzałki ruchów",
   "trainer.toggle.show_coordinates": "Pokaż współrzędne szachownicy",
   "trainer.toggle.show_tactics": "Podświetl motyw taktyczny (po odsłonięciu)",

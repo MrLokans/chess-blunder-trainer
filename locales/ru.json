@@ -644,7 +644,6 @@
   "trainer.stats.accuracy": "Точность",
   "trainer.stats.correct": "Верно",
   "trainer.stats.incorrect": "Неверно",
-  "trainer.toggle.play_full_line": "Воспроизвести всю линию движка",
   "trainer.toggle.show_arrows": "Показать стрелки ходов",
   "trainer.toggle.show_coordinates": "Показывать координаты на доске",
   "trainer.toggle.show_tactics": "Выделить тактический приём (после раскрытия)",
