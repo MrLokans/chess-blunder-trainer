@@ -6,6 +6,7 @@ import chess.engine
 from fastapi import Depends, HTTPException, Request, Response, status
 
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
+from blunder_tutor.cache.scope import user_scope
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.base import BaseDbRepository
@@ -152,28 +153,13 @@ async def get_puzzle_service(
     return PuzzleService(trainer=trainer, analysis_service=analysis_service)
 
 
-def resolve_user_key(request: Request, config: AppConfig) -> str:
-    """Resolve the per-user cache key from the auth context.
-
-    In credentials mode the key is the signed-in user's id; in none mode
-    the legacy `config.username` is preserved. The fallback `"default"`
-    only applies when neither is set, which only happens for unauthenticated
-    flows that should not be hitting cached endpoints anyway.
+async def set_request_scope(request: Request) -> None:
+    """FastAPI dependency: stash the canonical cache scope on
+    `request.state.user_scope` so the `@cached` decorator reads one
+    value it never re-derives. `user_ctx` is always populated upstream
+    (BypassAuthMiddleware in none mode, AuthMiddleware in credentials).
     """
-    ctx = getattr(request.state, "user_ctx", None)
-    if ctx is not None:
-        return ctx.user_id
-    return config.username or "default"
-
-
-async def set_request_username(
-    request: Request,
-    config: Annotated[AppConfig, Depends(get_config)],
-) -> None:
-    """FastAPI dependency: stash the resolved user_key on `request.state`
-    so the `@cached` decorator can read it via `resolve_user_key(request)`.
-    """
-    request.state.username = resolve_user_key(request, config)
+    request.state.user_scope = user_scope(request.state.user_ctx)
 
 
 # Type annotations for dependency injection in route handlers

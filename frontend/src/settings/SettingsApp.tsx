@@ -6,6 +6,7 @@ import { FeatureToggles } from './FeatureToggles';
 import { SyncSettings } from './SyncSettings';
 import { ThemeEditor } from './ThemeEditor';
 import { BoardEditor } from './BoardEditor';
+import { CacheManagement } from './CacheManagement';
 import type {
   SettingsInit, SyncSettings as SyncSettingsData,
   ThemeColors, ThemePreset, PieceSet, BoardColorPreset,
@@ -185,6 +186,8 @@ export function SettingsApp({ init }: SettingsAppProps) {
           )}
         </div>
       </form>
+
+      {!init.demoMode && <CacheManagement />}
     </div>
   );
 }

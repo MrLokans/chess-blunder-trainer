@@ -26,23 +26,6 @@ class _CacheWrapper:
 # while keeping keys short for storage backends.
 _CACHE_KEY_HEX_LEN = 32
 
-cache_backend: CacheBackend | None = None
-default_ttl: int = 300
-
-
-def set_cache_backend(backend: CacheBackend | None, *, ttl: int = 300) -> None:
-    global cache_backend, default_ttl  # noqa: PLW0603 — intentional module-level singleton: cache backend + default TTL are configured once at app boot from `cache/__init__.py`.
-    cache_backend = backend
-    default_ttl = ttl
-
-
-def get_cache_backend() -> CacheBackend | None:
-    return cache_backend
-
-
-def resolve_user_key(request: Request) -> str:
-    return getattr(request.state, "username", "default")
-
 
 def _serialize_collection(value: Any) -> str | None:
     if isinstance(value, (str, int, float, bool)):
@@ -71,14 +54,14 @@ def _serialize_param(value: Any) -> str:
 def _build_cache_key(
     func: Callable,
     version: int,
-    user_key: str,
+    scope: str,
     key_params: list[str],
     kwargs: dict[str, Any],
 ) -> str:
     parts = [
         f"v{version}",
         f"{func.__module__}.{func.__qualname__}",
-        user_key,
+        scope,
     ]
     for name in sorted(key_params):
         value = kwargs.get(name)
@@ -96,6 +79,29 @@ def _resolve_request(args: tuple[Any, ...], kwargs: dict[str, Any]) -> Request |
         if isinstance(arg, Request):
             return arg
     return None
+
+
+def _resolve_request_scope(
+    func: Callable, args: tuple[Any, ...], kwargs: dict[str, Any]
+) -> tuple[Request, str]:
+    """Fail closed: a `@cached` route without a Request or without a
+    `request.state.user_scope` (set by `set_request_scope`) is a
+    misconfiguration. Raise loudly — naming the route — instead of
+    serving a guessed bucket that would leak one user's data to another.
+    """
+    where = func.__qualname__
+    request = _resolve_request(args, kwargs)
+    if request is None:
+        msg = f"@cached {where} requires a Request argument to resolve the scope"
+        raise RuntimeError(msg)
+    scope = getattr(request.state, "user_scope", None)
+    if scope is None:
+        msg = (
+            f"@cached {where}: request.state.user_scope is unset; the route "
+            "must depend on set_request_scope"
+        )
+        raise RuntimeError(msg)
+    return request, scope
 
 
 async def _get_or_compute(
@@ -124,14 +130,12 @@ def cached(
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
-            backend = get_cache_backend()
-            if backend is None:
-                return await func(*args, **kwargs)
-
-            request = _resolve_request(args, kwargs)
-            user_key = resolve_user_key(request) if request else "default"
-            cache_key = _build_cache_key(func, version, user_key, key_params, kwargs)
-            scoped_tag = f"{tag}:{user_key}"
+            request, scope = _resolve_request_scope(func, args, kwargs)
+            app_state = request.app.state
+            backend: CacheBackend = app_state.cache
+            cache_key = _build_cache_key(func, version, scope, key_params, kwargs)
+            scoped_tag = f"{tag}:{scope}"
+            default_ttl = app_state.config.cache.default_ttl
             effective_ttl = ttl if ttl is not None else default_ttl
 
             return await _get_or_compute(

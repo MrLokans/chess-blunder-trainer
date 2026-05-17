@@ -7,8 +7,9 @@ import pytest
 from fastapi import Request
 
 from blunder_tutor.cache.backend import InMemoryCacheBackend
-from blunder_tutor.cache.decorator import cached, set_cache_backend
+from blunder_tutor.cache.decorator import cached
 from blunder_tutor.cache.invalidation import CacheInvalidator
+from blunder_tutor.cache.scope import user_scope
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import (
     EloRatingEvent,
@@ -16,13 +17,15 @@ from blunder_tutor.events.event_types import (
     TrainingEvent,
     TrapsEvent,
 )
+from tests.helpers.cache import make_user_ctx, scoped_request
 
-
-def _make_request(username: str = "testuser") -> Request:
-    scope = {"type": "http", "method": "GET", "path": "/test", "headers": []}
-    request = Request(scope)
-    request.state.username = username
-    return request
+# Real resolved contexts, not literal scope strings: the write side
+# resolves the scope via the production `set_request_scope`, the
+# invalidate side via `user_scope(ctx)` — the same derivation a
+# publisher uses. Hard-coding the same literal on both ends would mask
+# exactly the divergence this suite exists to catch.
+_ALICE = make_user_ctx("11111111-1111-1111-1111-111111111111", "alice")
+_BOB = make_user_ctx("22222222-2222-2222-2222-222222222222", "bob")
 
 
 @dataclass
@@ -40,22 +43,12 @@ class TestCacheEndToEnd:
     def cache(self) -> InMemoryCacheBackend:
         return InMemoryCacheBackend()
 
-    @pytest.fixture(autouse=True)
-    def _setup_backend(self, cache: InMemoryCacheBackend):
-        set_cache_backend(cache)
-        yield
-        set_cache_backend(None)
-
     async def _run_with_invalidator(self, event_bus, cache, event):
         invalidator = CacheInvalidator(cache=cache, event_bus=event_bus)
-        task = asyncio.create_task(invalidator.start())
-        await asyncio.sleep(0.01)
+        await invalidator.start()
         await event_bus.publish(event)
         await asyncio.sleep(0.05)
         await invalidator.stop()
-        task.cancel()
-        with pytest.raises(asyncio.CancelledError):
-            await task
 
     async def test_cached_endpoint_invalidated_by_event(self, event_bus, cache):
         call_count = 0
@@ -66,7 +59,7 @@ class TestCacheEndToEnd:
             call_count += 1
             return {"total": 42, "call": call_count}
 
-        request = _make_request("alice")
+        request = await scoped_request(_ALICE, cache)
         filters = MockFilter(start_date="2024-01-01")
 
         result1 = await get_stats(request=request, filters=filters)
@@ -76,7 +69,7 @@ class TestCacheEndToEnd:
         assert call_count == 1
 
         await self._run_with_invalidator(
-            event_bus, cache, StatsEvent.create_stats_updated(user_key="alice")
+            event_bus, cache, StatsEvent.create_stats_updated(scope=user_scope(_ALICE))
         )
 
         result3 = await get_stats(request=request, filters=filters)
@@ -92,15 +85,15 @@ class TestCacheEndToEnd:
             call_count += 1
             return {"call": call_count}
 
-        alice_req = _make_request("alice")
-        bob_req = _make_request("bob")
+        alice_req = await scoped_request(_ALICE, cache)
+        bob_req = await scoped_request(_BOB, cache)
 
         await get_stats(request=alice_req)
         await get_stats(request=bob_req)
         assert call_count == 2
 
         await self._run_with_invalidator(
-            event_bus, cache, StatsEvent.create_stats_updated(user_key="alice")
+            event_bus, cache, StatsEvent.create_stats_updated(scope=user_scope(_ALICE))
         )
 
         result_alice = await get_stats(request=alice_req)
@@ -124,12 +117,12 @@ class TestCacheEndToEnd:
             traps_calls += 1
             return {"traps": traps_calls}
 
-        request = _make_request("alice")
+        request = await scoped_request(_ALICE, cache)
         await get_stats(request=request)
         await get_traps(request=request)
 
         await self._run_with_invalidator(
-            event_bus, cache, StatsEvent.create_stats_updated(user_key="alice")
+            event_bus, cache, StatsEvent.create_stats_updated(scope=user_scope(_ALICE))
         )
 
         await get_stats(request=request)
@@ -146,12 +139,14 @@ class TestCacheEndToEnd:
             call_count += 1
             return {"call": call_count}
 
-        request = _make_request("alice")
+        request = await scoped_request(_ALICE, cache)
         await get_training(request=request)
         assert call_count == 1
 
         await self._run_with_invalidator(
-            event_bus, cache, TrainingEvent.create_training_updated(user_key="alice")
+            event_bus,
+            cache,
+            TrainingEvent.create_training_updated(scope=user_scope(_ALICE)),
         )
 
         await get_training(request=request)
@@ -168,7 +163,7 @@ class TestCacheEndToEnd:
             call_count += 1
             return {"call": call_count}
 
-        request = _make_request("alice")
+        request = await scoped_request(_ALICE, cache)
         await get_history(request=request, profile_id=1)
         await get_history(request=request, profile_id=1)
         assert call_count == 1
@@ -177,7 +172,7 @@ class TestCacheEndToEnd:
             event_bus,
             cache,
             EloRatingEvent.create_elo_rating_updated(
-                user_key="alice", trigger="game_sync_completed"
+                scope=user_scope(_ALICE), trigger="game_sync_completed"
             ),
         )
 
@@ -193,12 +188,12 @@ class TestCacheEndToEnd:
             call_count += 1
             return {"call": call_count}
 
-        request = _make_request("alice")
+        request = await scoped_request(_ALICE, cache)
         await get_traps(request=request)
         assert call_count == 1
 
         await self._run_with_invalidator(
-            event_bus, cache, TrapsEvent.create_traps_updated(user_key="alice")
+            event_bus, cache, TrapsEvent.create_traps_updated(scope=user_scope(_ALICE))
         )
 
         await get_traps(request=request)

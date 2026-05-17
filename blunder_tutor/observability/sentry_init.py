@@ -28,8 +28,7 @@ _FLUSH_TIMEOUT_SECONDS = 2.0
 
 # Single activation flag for the whole observability surface. Read by
 # `metrics` and `tracing` to gate dispatch; flipped exactly once by
-# `init_observability` and again by `shutdown_observability`. Mirrors
-# the `cache.decorator.set_cache_backend` module-singleton precedent.
+# `init_observability` and again by `shutdown_observability`.
 active: bool = False
 
 

@@ -9,16 +9,24 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from blunder_tutor.auth import UserId
 from blunder_tutor.constants import (
     JOB_STATUS_COMPLETED,
     JOB_STATUS_PENDING,
     JOB_STATUS_RUNNING,
+)
+from blunder_tutor.core.dependencies import (
+    DependencyContext,
+    clear_context,
+    set_context,
 )
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import EventType
 from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.services.job_service import JobService
+
+_CTX_USER_ID = UserId("user-zoe")
 
 
 def _drain_until_match(queue: asyncio.Queue, *, expected: int, timeout: float = 1.0):
@@ -50,6 +58,23 @@ class TestJobServiceEmitsEloRating:
     async def service(self, job_repo: JobRepository, event_bus: EventBus) -> JobService:
         return JobService(job_repository=job_repo, event_bus=event_bus)
 
+    @pytest.fixture(autouse=True)
+    async def _context(self, db_path: Path, event_bus: EventBus):
+        # The fanout must scope events on the ambient DependencyContext's
+        # user_id (the canonical cache scope), NOT the job's chess
+        # username. The job below is created with username="alice" while
+        # the context user is "user-zoe" precisely to prove that.
+        set_context(
+            DependencyContext(
+                db_path=db_path,
+                event_bus=event_bus,
+                engine_path="/fake/engine",
+                user_id=_CTX_USER_ID,
+            )
+        )
+        yield
+        clear_context()
+
     async def test_complete_job_publishes_elo_rating_updated(
         self,
         service: JobService,
@@ -63,7 +88,8 @@ class TestJobServiceEmitsEloRating:
         events = await asyncio.wait_for(
             _drain_until_match(observer, expected=1), timeout=1.0
         )
-        assert events[0].data["user_key"] == "alice"
+        assert events[0].data["scope"] == _CTX_USER_ID
+        assert "user_key" not in events[0].data
         assert events[0].data["trigger"] == "game_sync_completed"
 
     async def test_status_completed_publishes_elo_rating_updated(
@@ -81,7 +107,21 @@ class TestJobServiceEmitsEloRating:
         events = await asyncio.wait_for(
             _drain_until_match(observer, expected=1), timeout=1.0
         )
-        assert events[0].data["user_key"] == "bob"
+        assert events[0].data["scope"] == _CTX_USER_ID
+
+    async def test_stats_event_also_scoped_on_context_user(
+        self,
+        service: JobService,
+        event_bus: EventBus,
+    ) -> None:
+        observer = await event_bus.subscribe(EventType.STATS_UPDATED)
+        job_id = await service.create_job(job_type="import", username="alice")
+
+        await service.complete_job(job_id, result={"games": 0})
+
+        event = await asyncio.wait_for(observer.get(), timeout=1.0)
+        assert event.data["scope"] == _CTX_USER_ID
+        assert "user_key" not in event.data
 
     async def test_pending_status_does_not_publish(
         self,

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from blunder_tutor.analysis.tactics import PATTERN_LABELS
+from blunder_tutor.cache.scope import user_scope
 from blunder_tutor.constants import PHASE_FROM_STRING, PHASE_LABELS
 from blunder_tutor.events.event_types import TrainingEvent
 from blunder_tutor.trainer import BlunderFilter
@@ -23,7 +24,6 @@ from blunder_tutor.web.api import _analysis_schemas as schemas
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     AnalysisServiceDep,
-    ConfigDep,
     EngineThrottleDep,
     EventBusDep,
     PuzzleAttemptRepoDep,
@@ -280,7 +280,6 @@ async def submit(
     attempt_repo: PuzzleAttemptRepoDep,
     analysis_service: AnalysisServiceDep,
     event_bus: EventBusDep,
-    config: ConfigDep,
     _throttle: EngineThrottleDep,
 ) -> dict[str, Any]:
     try:
@@ -305,7 +304,7 @@ async def submit(
     )
 
     training_event = TrainingEvent.create_training_updated(
-        user_key=config.username or "default"
+        scope=user_scope(request.state.user_ctx)
     )
     await event_bus.publish(training_event)
 

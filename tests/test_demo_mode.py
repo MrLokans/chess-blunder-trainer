@@ -45,6 +45,7 @@ BLOCKED_ENDPOINTS = [
     ("POST", "/api/settings/theme/reset"),
     ("POST", "/api/settings/features"),
     ("DELETE", "/api/data/all"),
+    ("POST", "/api/cache/clear"),
 ]
 
 
