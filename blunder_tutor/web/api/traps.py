@@ -12,9 +12,9 @@ from blunder_tutor.analysis.traps import (
 )
 from blunder_tutor.cache.decorator import cached
 from blunder_tutor.utils.pgn_utils import extract_game_url_from_string
-from blunder_tutor.web.dependencies import TrapRepoDep, set_request_username
+from blunder_tutor.web.dependencies import TrapRepoDep, set_request_scope
 
-traps_router = APIRouter(dependencies=[Depends(set_request_username)])
+traps_router = APIRouter(dependencies=[Depends(set_request_scope)])
 
 # Cache TTL for trap catalog/stats endpoints. 5 minutes balances trap-DB
 # refresh cadence (rarely changes) with the cost of full-table scans.

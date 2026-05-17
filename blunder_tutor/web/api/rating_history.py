@@ -10,7 +10,7 @@ from blunder_tutor.web.api._profile_schemas import (
 )
 from blunder_tutor.web.dependencies import (
     RatingHistoryServiceDep,
-    set_request_username,
+    set_request_scope,
 )
 
 # 5 minutes — same default as the stats/traps caches; bounded by event-driven
@@ -18,7 +18,7 @@ from blunder_tutor.web.dependencies import (
 # unlikely event of a missed event.
 _ELO_RATING_CACHE_TTL_SECONDS = 300
 
-rating_history_router = APIRouter(dependencies=[Depends(set_request_username)])
+rating_history_router = APIRouter(dependencies=[Depends(set_request_scope)])
 
 
 @rating_history_router.get(

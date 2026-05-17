@@ -40,10 +40,6 @@ def get_cache_backend() -> CacheBackend | None:
     return cache_backend
 
 
-def resolve_user_key(request: Request) -> str:
-    return getattr(request.state, "username", "default")
-
-
 def _serialize_collection(value: Any) -> str | None:
     if isinstance(value, (str, int, float, bool)):
         return json.dumps(value)
@@ -129,7 +125,11 @@ def cached(
                 return await func(*args, **kwargs)
 
             request = _resolve_request(args, kwargs)
-            user_key = resolve_user_key(request) if request else "default"
+            user_key = (
+                getattr(request.state, "user_scope", "default")
+                if request
+                else "default"
+            )
             cache_key = _build_cache_key(func, version, user_key, key_params, kwargs)
             scoped_tag = f"{tag}:{user_key}"
             effective_ttl = ttl if ttl is not None else default_ttl

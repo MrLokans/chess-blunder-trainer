@@ -9,20 +9,19 @@ from blunder_tutor.cache.backend import InMemoryCacheBackend, NullCacheBackend
 from blunder_tutor.cache.decorator import (
     cached,
     get_cache_backend,
-    resolve_user_key,
     set_cache_backend,
 )
 
 
-def _make_request(username: str = "testuser") -> Request:
-    scope = {
+def _make_request(scope: str = "testuser") -> Request:
+    asgi_scope = {
         "type": "http",
         "method": "GET",
         "path": "/api/stats",
         "headers": [],
     }
-    request = Request(scope)
-    request.state.username = username
+    request = Request(asgi_scope)
+    request.state.user_scope = scope
     return request
 
 
@@ -39,15 +38,34 @@ class TestSetGetCacheBackend:
         assert get_cache_backend() is backend
 
 
-class TestResolveUserKey:
-    def test_returns_username_from_request_state(self):
-        request = _make_request("alice")
-        assert resolve_user_key(request) == "alice"
+class TestScopeFallback:
+    @pytest.fixture(autouse=True)
+    def _setup_cache(self):
+        self.backend = InMemoryCacheBackend()
+        set_cache_backend(self.backend)
+        yield
+        set_cache_backend(None)
 
-    def test_returns_default_when_no_username(self):
-        scope = {"type": "http", "method": "GET", "path": "/", "headers": []}
-        request = Request(scope)
-        assert resolve_user_key(request) == "default"
+    async def test_missing_scope_falls_back_to_default_bucket(self):
+        call_count = 0
+
+        @cached(tag="stats", ttl=300, version=1, key_params=[])
+        async def my_endpoint(request: Request) -> dict:
+            nonlocal call_count
+            call_count += 1
+            return {"ok": True}
+
+        asgi_scope = {"type": "http", "method": "GET", "path": "/", "headers": []}
+        request = Request(asgi_scope)
+
+        await my_endpoint(request=request)
+        await my_endpoint(request=request)
+        assert call_count == 1
+
+        await self.backend.invalidate_tag("stats:default")
+
+        await my_endpoint(request=request)
+        assert call_count == 2
 
 
 class TestCachedDecorator:

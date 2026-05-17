@@ -21,7 +21,7 @@ from blunder_tutor.events.event_types import (
 def _make_request(username: str = "testuser") -> Request:
     scope = {"type": "http", "method": "GET", "path": "/test", "headers": []}
     request = Request(scope)
-    request.state.username = username
+    request.state.user_scope = username
     return request
 
 

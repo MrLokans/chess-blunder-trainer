@@ -15,7 +15,7 @@ from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
 from blunder_tutor.web.dependencies import (
     PuzzleAttemptRepoDep,
     StatsRepoDep,
-    set_request_username,
+    set_request_scope,
 )
 
 # Cache TTL applied to dashboard stats endpoints. 5 minutes balances
@@ -294,7 +294,7 @@ def _compute_trend(windows: list[GrowthWindow]) -> GrowthTrend | None:
     )
 
 
-stats_router = APIRouter(dependencies=[Depends(set_request_username)])
+stats_router = APIRouter(dependencies=[Depends(set_request_scope)])
 
 
 @stats_router.get(
