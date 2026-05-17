@@ -15,6 +15,11 @@ from blunder_tutor.constants import (
     JOB_STATUS_FAILED,
     JOB_TYPE_SYNC,
 )
+from blunder_tutor.core.dependencies import (
+    DependencyContext,
+    clear_context,
+    set_context,
+)
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.job_repository import JobRepository
@@ -77,6 +82,25 @@ async def job_service(db_path: Path, event_bus: EventBus) -> AsyncGenerator[JobS
     job_repo = JobRepository(db_path)
     yield JobService(job_repository=job_repo, event_bus=event_bus)
     await job_repo.close()
+
+
+@pytest.fixture(autouse=True)
+async def _job_context(db_path: Path, event_bus: EventBus) -> AsyncGenerator[None]:
+    # Production always runs job bodies inside the executor's
+    # DependencyContext (executor.set_context); the completion fanout
+    # scopes its events on that context's user_id. These tests call
+    # job.execute() directly, so establish the same context — matching
+    # the user_id the jobs are constructed with.
+    set_context(
+        DependencyContext(
+            db_path=db_path,
+            event_bus=event_bus,
+            engine_path="/fake/engine",
+            user_id="testuser",
+        )
+    )
+    yield
+    clear_context()
 
 
 GameRow = dict[str, object]

@@ -5,6 +5,7 @@ import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
+from blunder_tutor.cache.scope import user_scope
 from blunder_tutor.constants import (
     JOB_STATUS_COMPLETED,
     JOB_STATUS_FAILED,
@@ -25,10 +26,6 @@ type JobBody[T] = Callable[[ProgressCallback], Awaitable[T]]
 logger = logging.getLogger(__name__)
 
 PROGRESS_FLUSH_INTERVAL = 2.0
-
-# Fallback user_key when a job has no associated username — keeps the
-# stats-updated event addressable in single-user mode.
-_DEFAULT_USER_KEY = "default"
 
 # Job types whose completion changes `game_index_cache` rows (and therefore
 # the rating-history derivation). Gating ELO emission to these avoids
@@ -210,11 +207,15 @@ class JobService:
         return await self.job_repository.delete_job(job_id)
 
     async def _publish_completion_fanout(self, job: dict[str, object]) -> None:
-        user_key = job.get("username", _DEFAULT_USER_KEY) or _DEFAULT_USER_KEY
-        await self.event_bus.publish(StatsEvent.create_stats_updated(user_key=user_key))
+        # Imported in-function, not at module top: core.dependencies
+        # imports JobService, so a top-level import would be circular.
+        from blunder_tutor.core.dependencies import get_context
+
+        scope = user_scope(get_context())
+        await self.event_bus.publish(StatsEvent.create_stats_updated(scope=scope))
         if job.get(_JOB_TYPE_KEY) in _GAME_DATASET_JOB_TYPES:
             await self.event_bus.publish(
                 EloRatingEvent.create_elo_rating_updated(
-                    user_key=user_key, trigger="game_sync_completed"
+                    scope=scope, trigger="game_sync_completed"
                 )
             )

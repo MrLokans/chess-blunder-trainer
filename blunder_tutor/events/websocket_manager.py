@@ -8,12 +8,12 @@ from fastapi import WebSocket
 
 from blunder_tutor.auth import UserId
 from blunder_tutor.events.event_bus import EventBus
-from blunder_tutor.events.event_types import Event, EventType
+from blunder_tutor.events.event_types import SCOPE_KEY, Event, EventType
 from blunder_tutor.observability import count, gauge
 
 
 def _event_target_user(event: Event) -> str | None:
-    return event.data.get("user_key") if isinstance(event.data, dict) else None
+    return event.data.get(SCOPE_KEY) if isinstance(event.data, dict) else None
 
 
 class ConnectionManager:
@@ -78,7 +78,7 @@ class ConnectionManager:
     def _should_deliver(
         self, conn_id: str, event_type: EventType, target_user: str | None
     ) -> bool:
-        # When an event carries a user_key, deliver only to connections
+        # When an event carries a scope, deliver only to connections
         # authenticated as that user. Events without one (job/cache today)
         # broadcast to all subscribers; per-user plumbing for those is
         # TREK-130. Connections without a user_id (AUTH_MODE=none) see

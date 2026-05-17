@@ -6,9 +6,9 @@ Covers two invariants:
    blast radius is small — but any per-user broadcast channel added on
    top of an open socket leaks cross-user.
 2. Once authenticated, a connection only receives events scoped to its
-   own ``user_id`` (matched against ``event.data["user_key"]``). Events
-   without a ``user_key`` (job/cache events) are out of scope here and
-   handled by TREK-130's plumbing.
+   own ``user_id`` (matched against ``event.data["scope"]``) — including
+   ``cache.invalidated`` (T5: carries the owner's scope, only the logical
+   tag). Job events without a ``scope`` still broadcast per TREK-130.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ import pytest
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
-from blunder_tutor.events.event_types import StatsEvent
+from blunder_tutor.events.event_types import CacheEvent, StatsEvent
 from blunder_tutor.web.app import create_app
 from blunder_tutor.web.config import config_factory
 from tests.helpers.auth import TEST_BCRYPT_COST
@@ -179,13 +179,51 @@ class TestWebSocketUserScoping:
             # Bob's event must be filtered out; Alice's must arrive.
             client.portal.call(
                 connection_manager.broadcast_event,
-                StatsEvent.create_stats_updated(user_key=bob_id),
+                StatsEvent.create_stats_updated(scope=bob_id),
             )
             client.portal.call(
                 connection_manager.broadcast_event,
-                StatsEvent.create_stats_updated(user_key=alice_id),
+                StatsEvent.create_stats_updated(scope=alice_id),
             )
             message = ws.receive_json()
 
         assert message["type"] == "stats.updated"
-        assert message["data"]["user_key"] == alice_id
+        assert message["data"]["scope"] == alice_id
+
+    def test_cache_invalidated_event_is_user_scoped(self, credentials_client_multi):
+        client = credentials_client_multi
+        invite = _read_invite(client)
+        alice_user, alice_pw = ALICE
+        bob_user, bob_pw = BOB
+
+        alice_id = _signup(
+            client, username=alice_user, password=alice_pw, invite=invite
+        )
+        _logout(client)
+        bob_id = _signup(client, username=bob_user, password=bob_pw)
+        _logout(client)
+        _login(client, username=alice_user, password=alice_pw)
+
+        connection_manager = client.app.state.connection_manager
+
+        with client.websocket_connect("/ws") as ws:
+            ws.send_json({"action": "subscribe", "events": ["cache.invalidated"]})
+            assert ws.receive_json()["type"] == "subscribed"
+
+            # Bob's cache invalidation must be filtered out (no cross-tenant
+            # disclosure of his scope); Alice's must arrive.
+            client.portal.call(
+                connection_manager.broadcast_event,
+                CacheEvent.create_cache_invalidated(scope=bob_id, tags=["stats"]),
+            )
+            client.portal.call(
+                connection_manager.broadcast_event,
+                CacheEvent.create_cache_invalidated(scope=alice_id, tags=["stats"]),
+            )
+            message = ws.receive_json()
+
+        assert message["type"] == "cache.invalidated"
+        assert message["data"]["scope"] == alice_id
+        # Only the logical tag — never another tenant's scoped key.
+        assert message["data"]["tags"] == ["stats"]
+        assert bob_id not in str(message["data"])

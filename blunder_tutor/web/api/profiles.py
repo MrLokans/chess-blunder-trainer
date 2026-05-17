@@ -352,7 +352,7 @@ async def delete_profile(
     # invalidation tag matches the cached entry.
     await event_bus.publish(
         EloRatingEvent.create_elo_rating_updated(
-            user_key=user_scope(request.state.user_ctx),
+            scope=user_scope(request.state.user_ctx),
             trigger="profile_deleted",
         )
     )

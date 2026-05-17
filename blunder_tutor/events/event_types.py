@@ -5,11 +5,12 @@ from typing import Any
 from blunder_tutor.auth import UserId
 from blunder_tutor.utils.time import now_iso
 
-# Event-data dict keys are part of the on-the-wire contract (downstream
-# subscribers like CacheInvalidator depend on them). Centralised here so
-# adding a new event-factory doesn't drift the spelling.
+# Event-data dict keys are part of the on-the-wire contract. `SCOPE_KEY`
+# is public: downstream readers (CacheInvalidator, ConnectionManager)
+# import it instead of re-spelling the literal, so the wire key lives in
+# exactly one place.
 _TRIGGER_KEY = "trigger"
-_USER_KEY = "user_key"
+SCOPE_KEY = "scope"
 
 
 class EventType(StrEnum):
@@ -93,10 +94,10 @@ class ProgressEvent(Event):
 @dataclass
 class StatsEvent(Event):
     @classmethod
-    def create_stats_updated(cls, user_key: str = "default") -> "StatsEvent":
+    def create_stats_updated(cls, scope: str) -> "StatsEvent":
         return cls(
             type=EventType.STATS_UPDATED,
-            data={_TRIGGER_KEY: "job_completed", _USER_KEY: user_key},
+            data={_TRIGGER_KEY: "job_completed", SCOPE_KEY: scope},
             timestamp=now_iso(),
         )
 
@@ -104,10 +105,10 @@ class StatsEvent(Event):
 @dataclass
 class TrapsEvent(Event):
     @classmethod
-    def create_traps_updated(cls, user_key: str) -> "TrapsEvent":
+    def create_traps_updated(cls, scope: str) -> "TrapsEvent":
         return cls(
             type=EventType.TRAPS_UPDATED,
-            data={_TRIGGER_KEY: "trap_detection_completed", _USER_KEY: user_key},
+            data={_TRIGGER_KEY: "trap_detection_completed", SCOPE_KEY: scope},
             timestamp=now_iso(),
         )
 
@@ -115,10 +116,10 @@ class TrapsEvent(Event):
 @dataclass
 class TrainingEvent(Event):
     @classmethod
-    def create_training_updated(cls, user_key: str) -> "TrainingEvent":
+    def create_training_updated(cls, scope: str) -> "TrainingEvent":
         return cls(
             type=EventType.TRAINING_UPDATED,
-            data={_TRIGGER_KEY: "puzzle_attempt", _USER_KEY: user_key},
+            data={_TRIGGER_KEY: "puzzle_attempt", SCOPE_KEY: scope},
             timestamp=now_iso(),
         )
 
@@ -129,12 +130,10 @@ class EloRatingEvent(Event):
     # docs/conventions/observability.md) — extend the literal set, do not
     # build values dynamically.
     @classmethod
-    def create_elo_rating_updated(
-        cls, *, user_key: str, trigger: str
-    ) -> "EloRatingEvent":
+    def create_elo_rating_updated(cls, *, scope: str, trigger: str) -> "EloRatingEvent":
         return cls(
             type=EventType.ELO_RATING_UPDATED,
-            data={_TRIGGER_KEY: trigger, _USER_KEY: user_key},
+            data={_TRIGGER_KEY: trigger, SCOPE_KEY: scope},
             timestamp=now_iso(),
         )
 
@@ -142,10 +141,13 @@ class EloRatingEvent(Event):
 @dataclass
 class CacheEvent(Event):
     @classmethod
-    def create_cache_invalidated(cls, tags: list[str]) -> "CacheEvent":
+    def create_cache_invalidated(cls, *, scope: str, tags: list[str]) -> "CacheEvent":
+        # `tags` are LOGICAL ("stats"), never scoped ("stats:<uid>"):
+        # the scope rides in its own field so the WS layer delivers only
+        # to that user and no tenant's id leaks to other connections.
         return cls(
             type=EventType.CACHE_INVALIDATED,
-            data={"tags": tags},
+            data={SCOPE_KEY: scope, "tags": tags},
             timestamp=now_iso(),
         )
 

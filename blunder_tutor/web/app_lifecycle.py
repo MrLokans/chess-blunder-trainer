@@ -20,7 +20,6 @@ from blunder_tutor.auth.fastapi import SESSION_COOKIE_NAME
 from blunder_tutor.background.executor import DbPathResolver, JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
 from blunder_tutor.cache.backend import InMemoryCacheBackend, NullCacheBackend
-from blunder_tutor.cache.decorator import set_cache_backend
 from blunder_tutor.cache.invalidation import CacheInvalidator
 from blunder_tutor.constants import AUTH_MODE_CREDENTIALS, AUTH_MODE_NONE
 from blunder_tutor.events.event_bus import EventBus
@@ -263,7 +262,9 @@ async def _run_startup(app: FastAPI) -> None:
 
     asyncio.create_task(app.state.connection_manager.start_broadcasting())
     asyncio.create_task(app.state.job_executor.run())
-    asyncio.create_task(app.state.cache_invalidator.start())
+    # start() subscribes (awaited, before yield → no publish race) then
+    # spawns and owns its consume task; stop() terminates it.
+    await app.state.cache_invalidator.start()
 
 
 async def _run_cleanup(app: FastAPI) -> None:
@@ -340,7 +341,6 @@ def _init_caches(app: FastAPI, config: AppConfig) -> None:
         InMemoryCacheBackend() if config.cache.enabled else NullCacheBackend()
     )
     app.state.cache = cache_backend
-    set_cache_backend(cache_backend, ttl=config.cache.default_ttl)
     app.state.cache_invalidator = CacheInvalidator(
         cache=cache_backend, event_bus=app.state.event_bus
     )

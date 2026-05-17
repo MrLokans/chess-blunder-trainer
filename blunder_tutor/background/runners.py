@@ -24,6 +24,7 @@ from blunder_tutor.background.jobs.import_games import ImportGamesJob
 from blunder_tutor.background.jobs.import_pgn import ImportPgnJob
 from blunder_tutor.background.jobs.stats_sync import StatsSyncJob
 from blunder_tutor.background.jobs.sync_games import SyncGamesJob
+from blunder_tutor.cache.scope import user_scope
 from blunder_tutor.constants import (
     JOB_TYPE_ANALYZE,
     JOB_TYPE_BACKFILL_ECO,
@@ -244,9 +245,7 @@ async def run_backfill_traps_job(
         )
         result = await job.execute(job_id=job_id)
 
-        job_record = await job_service.get_job(job_id)
-        user_key = (job_record.get("username") if job_record else None) or "default"  # noqa: WPS509 — single parenthesized ternary, `or` short-circuits to default.
-        traps_event = TrapsEvent.create_traps_updated(user_key=user_key)
+        traps_event = TrapsEvent.create_traps_updated(scope=user_scope(ctx))
         await event_bus.publish(traps_event)
 
         return result
