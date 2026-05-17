@@ -16,14 +16,43 @@ from blunder_tutor.events.event_types import (
 
 logger = logging.getLogger(__name__)
 
+# One spelling per tag so the registry and the event mapping below
+# cannot drift; both are built from these constants.
+_TAG_STATS = "stats"
+_TAG_TRAPS = "traps"
+_TAG_TRAINING = "training"
+_TAG_ELO_RATING = "elo_rating"
+
+# Canonical registry of every cache tag base. The clear control and the
+# structural `@cached` membership test (sibling task) both check against
+# this, so a new cached aggregate cannot silently escape invalidation.
+CACHE_TAGS: frozenset[str] = frozenset(
+    (_TAG_STATS, _TAG_TRAPS, _TAG_TRAINING, _TAG_ELO_RATING)
+)
+
 EVENT_TAG_MAPPING: MappingProxyType[EventType, str] = MappingProxyType(
     {
-        EventType.STATS_UPDATED: "stats",
-        EventType.TRAPS_UPDATED: "traps",
-        EventType.TRAINING_UPDATED: "training",
-        EventType.ELO_RATING_UPDATED: "elo_rating",
+        EventType.STATS_UPDATED: _TAG_STATS,
+        EventType.TRAPS_UPDATED: _TAG_TRAPS,
+        EventType.TRAINING_UPDATED: _TAG_TRAINING,
+        EventType.ELO_RATING_UPDATED: _TAG_ELO_RATING,
     }
 )
+
+
+async def clear_user_cache(backend: CacheBackend, scope: str) -> list[str]:
+    """Invalidate only `scope`'s entries for every registered tag.
+
+    Never `backend.clear()`: that wipes every tenant's entries in the
+    shared in-memory backend. Uses the same scoped `invalidate_tag`
+    primitive the event path uses, so a manual clear is indistinguishable
+    from an automatic invalidation.
+    """
+    cleared: list[str] = []
+    for tag in CACHE_TAGS:
+        await backend.invalidate_tag(f"{tag}:{scope}")
+        cleared.append(tag)
+    return cleared
 
 
 class CacheInvalidator:
