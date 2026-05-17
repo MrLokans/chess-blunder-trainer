@@ -201,6 +201,10 @@ export const client = {
     deleteStatus: () => request<JobStatus>('/api/data/delete-status'),
   },
 
+  cache: {
+    clear: () => post<{ cleared: string[] }>('/api/cache/clear', {}),
+  },
+
   settings: {
     get: () => request<SyncSettings>('/api/settings'),
     save: (data: SyncSettings & { theme: ThemeColors }) => post('/api/settings', data),

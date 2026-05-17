@@ -44,6 +44,9 @@ vi.mock('../../src/shared/api', () => ({
       saveFeatures: vi.fn().mockResolvedValue({}),
       setLocale: vi.fn().mockResolvedValue({}),
     },
+    cache: {
+      clear: vi.fn().mockResolvedValue({ cleared: [] }),
+    },
   },
 }));
 
@@ -88,5 +91,20 @@ describe('SettingsApp', () => {
     await waitFor(() => {
       expect(screen.getByText(t('settings.save'))).toBeDefined();
     });
+  });
+
+  test('renders the cache management section when not in demo mode', async () => {
+    render(<SettingsApp init={INIT} />);
+    await waitFor(() => {
+      expect(screen.getByText(t('settings.cache.title'))).toBeDefined();
+    });
+  });
+
+  test('hides the cache management section in demo mode', async () => {
+    render(<SettingsApp init={{ ...INIT, demoMode: true }} />);
+    await waitFor(() => {
+      expect(screen.getByText(t('settings.title'))).toBeDefined();
+    });
+    expect(screen.queryByText(t('settings.cache.title'))).toBeNull();
   });
 });

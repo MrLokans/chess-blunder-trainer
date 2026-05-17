@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import logging
 import os
 from collections import defaultdict
@@ -55,9 +54,12 @@ class EventBus:
             queues.extend(self._all_subscribers.copy())
 
         for queue in queues:
-            # If queue is full, skip this subscriber (they're not consuming fast enough)
-            with contextlib.suppress(asyncio.QueueFull):
-                queue.put_nowait(event)
+            # Subscriber queues are unbounded (asyncio.Queue() with no
+            # maxsize), so put_nowait never raises QueueFull or blocks.
+            # There is deliberately no backpressure — accepted/deferred,
+            # see docs/quality/gaps.md "Unbounded event-bus subscriber
+            # queues (no backpressure)".
+            queue.put_nowait(event)
 
     async def unsubscribe(
         self, queue: asyncio.Queue, event_type: EventType | None = None

@@ -9,6 +9,8 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 
 from blunder_tutor.auth.fastapi import UserContextDep
+from blunder_tutor.cache.invalidation import clear_user_cache
+from blunder_tutor.cache.scope import user_scope
 from blunder_tutor.constants import (
     JOB_STATUS_NO_JOBS,
     JOB_STATUS_RUNNING,
@@ -331,11 +333,16 @@ async def set_locale(
     description="Start a background job to delete all imported games, analysis results, puzzle attempts, and job history. Settings are preserved.",
 )
 async def delete_all_data(
+    request: Request,
     job_service: JobServiceDep,
     event_bus: EventBusDep,
     user_ctx: UserContextDep,
 ) -> dict[str, Any]:
     job_id = await job_service.create_job(job_type=JOB_TYPE_DELETE_ALL_DATA)
+
+    # Wiped data must drop the now-stale cached aggregates; the TTL is
+    # only a backstop. Same scoped invalidation the clear endpoint uses.
+    await clear_user_cache(request.app.state.cache, user_scope(user_ctx))
 
     event = JobExecutionRequestEvent.create(
         job_id=job_id,
