@@ -130,3 +130,4 @@ See [`docs/architecture/decisions/003-opt-in-sentry-observability.md`](architect
 | Var | Default | Purpose |
 |---|---|---|
 | `BLUNDER_TUTOR_DEBUG_EVENTS` | `false` | When `true`, the in-process `EventBus` logs every published / consumed event. Useful when chasing event-routing issues; noisy otherwise. |
+| `EVENT_COALESCE_WINDOW_MS` | `500` | Server-side coalescing window for high-frequency WS broadcast events (`stats.updated`, `job.progress_updated`, `traps.updated`, `training.updated`): within the window only the latest per `(scope, type)` is sent. Terminal events (`job.status_changed`/`completed`, `cache.invalidated`) always pass through immediately. `0` disables coalescing (strict 1:1 pass-through). |

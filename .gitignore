@@ -16,6 +16,9 @@ wheels/
 *.db
 *.jsonl
 
+coverage/
+coverage.xml
+
 
 # Node
 node_modules/
@@ -32,3 +35,7 @@ blunder_tutor/web/static/dist/
 
 # Git worktrees
 .worktrees/
+
+# Profiling data
+*cprofile.txt
+*.prof

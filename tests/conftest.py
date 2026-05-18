@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import tempfile
 from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
@@ -33,6 +34,22 @@ def _no_sentry_in_tests() -> None:
         "off in the test suite. Check that no fixture sets SENTRY_ENABLED "
         "or SENTRY_DSN, and that init_observability is not invoked."
     )
+
+
+@pytest.fixture(autouse=True)
+def _disable_event_coalescing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Run the suite un-coalesced unless a test opts in.
+
+    The WS broadcast path defaults to a 500ms coalescing window in
+    production; under that window any app-fixture test that publishes a
+    coalesced event (stats/traps/training/job.progress) and expects
+    same-tick WS delivery would flake. `EVENT_COALESCE_WINDOW_MS=0`
+    makes coalescing a strict pass-through — the regression-safety mode
+    asserted by TREK-130. Coalescing tests inject an explicit
+    `coalesce_window_ms` into `ConnectionManager` and ignore this.
+    """
+    if "EVENT_COALESCE_WINDOW_MS" not in os.environ:
+        monkeypatch.setenv("EVENT_COALESCE_WINDOW_MS", "0")
 
 
 @pytest.fixture
