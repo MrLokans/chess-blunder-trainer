@@ -2,6 +2,7 @@ import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { TextInput } from '../../src/components/TextInput';
+import { FormField } from '../../src/components/FormField';
 
 describe('TextInput', () => {
   test('renders with current value', () => {
@@ -49,5 +50,22 @@ describe('TextInput', () => {
     render(<TextInput value="" onChange={() => {}} placeholder="Type here" />);
     const input = screen.getByRole('textbox');
     expect((input as HTMLInputElement).placeholder).toBe('Type here');
+  });
+
+  test('forwards required and minLength to the input', () => {
+    render(<TextInput value="" onChange={() => {}} required minLength={8} />);
+    const input = screen.getByRole('textbox');
+    expect((input as HTMLInputElement).required).toBe(true);
+    expect((input as HTMLInputElement).minLength).toBe(8);
+  });
+
+  test('forwards aria props injected by FormField onto the input', () => {
+    const { container } = render(
+      <FormField label="Password" required>
+        <TextInput value="" onChange={() => {}} type="password" />
+      </FormField>,
+    );
+    const input = container.querySelector('input');
+    expect(input?.getAttribute('aria-required')).toBe('true');
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { client, ApiError } from '../src/shared/api';
+import { client, ApiError, isNetworkError } from '../src/shared/api';
 
 describe('ApiError', () => {
   it('carries status and message', () => {
@@ -7,6 +7,18 @@ describe('ApiError', () => {
     expect(err.status).toBe(404);
     expect(err.message).toBe('Not found');
     expect(err).toBeInstanceOf(Error);
+  });
+});
+
+describe('isNetworkError', () => {
+  it('true for a TypeError (fetch network failure)', () => {
+    expect(isNetworkError(new TypeError('Failed to fetch'))).toBe(true);
+  });
+  it('false for ApiError (a real non-2xx response)', () => {
+    expect(isNetworkError(new ApiError(500, 'boom'))).toBe(false);
+  });
+  it('false for an AbortError', () => {
+    expect(isNetworkError(new DOMException('aborted', 'AbortError'))).toBe(false);
   });
 });
 

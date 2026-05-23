@@ -112,6 +112,13 @@ export function isAbortError(err: unknown): boolean {
   return err instanceof DOMException && err.name === 'AbortError';
 }
 
+export function isNetworkError(err: unknown): boolean {
+  // fetch() rejects with a TypeError on a transport failure (offline, DNS,
+  // connection refused, CORS). ApiError is a real response; AbortError is a
+  // deliberate cancel — neither is a network failure.
+  return err instanceof TypeError;
+}
+
 function del<T = unknown>(url: string): Promise<T> {
   return request<T>(url, { method: 'DELETE' });
 }

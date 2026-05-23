@@ -38,6 +38,13 @@
   font-size: var(--text-sm, 0.875rem);
 }
 
+/* Programmatic-only focus target that routes keyboard focus to the error
+   banner it wraps; it has no accessible name, so suppress its focus ring
+   (the visible alert below it is the affordance). */
+.auth-alert-region:focus {
+  outline: none;
+}
+
 .auth-form .form-group {
   margin-bottom: var(--s-md, 16px);
 }
@@ -91,4 +98,3 @@
 .auth-footer a:hover {
   text-decoration: underline;
 }
-

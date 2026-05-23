@@ -43,4 +43,14 @@ describe('Alert', () => {
     rerender(<Alert type="error" message={null} />);
     expect(container.innerHTML).toBe('');
   });
+
+  test('omits aria-live by default so role=alert keeps its implicit behavior', () => {
+    render(<Alert type="error" message="x" />);
+    expect(screen.getByRole('alert').getAttribute('aria-live')).toBeNull();
+  });
+
+  test('live prop softens the live region to polite', () => {
+    render(<Alert type="error" message="x" live="polite" />);
+    expect(screen.getByRole('alert').getAttribute('aria-live')).toBe('polite');
+  });
 });
