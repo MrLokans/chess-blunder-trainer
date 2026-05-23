@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from contextlib import asynccontextmanager
+from collections.abc import Coroutine
+from contextlib import asynccontextmanager, suppress
 from datetime import timedelta
 from functools import partial
 from pathlib import Path
+from typing import Any
 
 import chess.engine
 from fastapi import FastAPI
@@ -236,6 +238,31 @@ async def _seed_locale_cache(app: FastAPI) -> None:
         app.state.locale_cache.set(LOCAL_USER_ID, saved_locale)
 
 
+def _on_supervised_exit(name: str, task: asyncio.Task) -> None:
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc is not None:
+        log.error("Supervised task %r crashed", name, exc_info=exc)
+    else:
+        log.error(
+            "Supervised task %r exited unexpectedly; it must run for the "
+            "process lifetime",
+            name,
+        )
+
+
+def _supervise(name: str, coro: Coroutine[Any, Any, None]) -> asyncio.Task:
+    # Fire-and-forget create_task makes a long-lived task's crash invisible:
+    # asyncio only surfaces the exception when the task is GC'd while
+    # pending, which a process-lifetime task never is. The done-callback
+    # turns a silent exit into a logged one. The sibling job_executor.run()
+    # spawn shares this anti-pattern; converting it is a separate ticket.
+    task = asyncio.create_task(coro, name=name)
+    task.add_done_callback(partial(_on_supervised_exit, name))
+    return task
+
+
 async def _run_startup(app: FastAPI) -> None:
     # `init_observability` runs first so any subsequent startup
     # exception (engine boot, auth bootstrap, background wiring) is
@@ -260,19 +287,16 @@ async def _run_startup(app: FastAPI) -> None:
     # request handling never race the executor's queue subscription.
     await app.state.job_executor.subscribe()
 
-    asyncio.create_task(app.state.connection_manager.start_broadcasting())
+    app.state.broadcast_task = _supervise(
+        "ws-broadcast", app.state.connection_manager.start_broadcasting()
+    )
     asyncio.create_task(app.state.job_executor.run())
     # start() subscribes (awaited, before yield → no publish race) then
     # spawns and owns its consume task; stop() terminates it.
     await app.state.cache_invalidator.start()
 
 
-async def _run_cleanup(app: FastAPI) -> None:
-    await app.state.cache_invalidator.stop()
-    await app.state.job_executor.shutdown()
-    app.state.scheduler.shutdown()
-    coordinator: WorkCoordinator = app.state.work_coordinator
-    await coordinator.shutdown()
+async def _close_storage(app: FastAPI) -> None:
     settings_repo = app.state.settings_repo
     if settings_repo is not None:
         await settings_repo.close()
@@ -283,6 +307,21 @@ async def _run_cleanup(app: FastAPI) -> None:
     if app.state.auth is not None:
         auth_db = app.state.auth.storage.auth_db
         await auth_db.close()
+
+
+async def _run_cleanup(app: FastAPI) -> None:
+    # The broadcaster loops forever; cancelling it runs its finally, which
+    # closes the coalescer. _on_supervised_exit stays silent on cancel.
+    broadcast_task = app.state.broadcast_task
+    broadcast_task.cancel()
+    with suppress(asyncio.CancelledError):
+        await broadcast_task
+    await app.state.cache_invalidator.stop()
+    await app.state.job_executor.shutdown()
+    app.state.scheduler.shutdown()
+    coordinator: WorkCoordinator = app.state.work_coordinator
+    await coordinator.shutdown()
+    await _close_storage(app)
 
 
 async def _run_shutdown(app: FastAPI) -> None:

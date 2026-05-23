@@ -10,6 +10,7 @@ inspected.
 
 from __future__ import annotations
 
+import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -114,6 +115,7 @@ def _stub_started_app() -> SimpleNamespace:
     """
     return SimpleNamespace(
         state=SimpleNamespace(
+            broadcast_task=asyncio.ensure_future(asyncio.sleep(0)),
             cache_invalidator=MagicMock(stop=AsyncMock()),
             job_executor=MagicMock(shutdown=AsyncMock()),
             scheduler=MagicMock(shutdown=MagicMock()),

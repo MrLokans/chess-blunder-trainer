@@ -1,9 +1,12 @@
 import asyncio
 import contextlib
+from unittest.mock import AsyncMock, MagicMock
 
+from blunder_tutor.events import websocket_manager as ws_module
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import Event, EventType, StatsEvent
 from blunder_tutor.events.websocket_manager import ConnectionManager
+from tests.helpers.observability import patch_facade
 
 
 def test_websocket_connection(app):
@@ -137,3 +140,111 @@ class TestCoalescingIntegration:
         await self._stop(task)
 
         assert [e.data["n"] for e in sent] == [0, 1, 2, 3, 4]
+
+
+def _make_ws() -> AsyncMock:
+    ws = AsyncMock()
+    ws.accept = AsyncMock()
+    ws.send_json = AsyncMock()
+    return ws
+
+
+class _PoisonToDictEvent(Event):
+    def to_dict(self) -> dict:
+        raise RuntimeError("poison: event is not serializable")
+
+
+class TestBroadcastResilience:
+    """A single poison event (or one misbehaving connection) must never
+    take down the broadcaster — that is a silent, process-lifetime outage
+    of all WS delivery (TREK-159).
+    """
+
+    async def _drain(self, predicate, tries: int = 20) -> None:
+        for _ in range(tries):
+            await asyncio.sleep(0)
+            if predicate():
+                return
+
+    async def _stop(self, task: asyncio.Task[None]) -> None:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+    async def test_poison_event_does_not_kill_subsequent_delivery(
+        self, monkeypatch
+    ) -> None:
+        recorder = patch_facade(monkeypatch, ws_module)
+        bus = EventBus()
+        cm = ConnectionManager(bus, coalesce_window_ms=0)
+        ws = _make_ws()
+        conn_id = await cm.connect(ws)
+        await cm.subscribe(conn_id, [EventType.JOB_COMPLETED.value])
+
+        task = asyncio.create_task(cm.start_broadcasting())
+        await asyncio.sleep(0)
+
+        await bus.publish(
+            _PoisonToDictEvent(type=EventType.JOB_COMPLETED, data={}, timestamp="t")
+        )
+        await bus.publish(Event.create(EventType.JOB_COMPLETED, {"ok": True}))
+        await self._drain(lambda: ws.send_json.await_count >= 1)
+        await self._stop(task)
+
+        ws.send_json.assert_awaited_once()
+        assert ws.send_json.await_args.args[0]["data"] == {"ok": True}
+        assert any(c["name"] == "ws.broadcast.error" for c in recorder.counts)
+
+    async def test_loop_survives_a_flush_that_raises(self, monkeypatch) -> None:
+        recorder = patch_facade(monkeypatch, ws_module)
+        bus = EventBus()
+        cm = ConnectionManager(bus, coalesce_window_ms=0)
+        delivered: list[Event] = []
+        calls = {"n": 0}
+
+        async def flaky(event: Event) -> None:
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise RuntimeError("flush boom")
+            delivered.append(event)
+
+        cm.broadcast_event = flaky  # type: ignore[method-assign]
+        task = asyncio.create_task(cm.start_broadcasting())
+        await asyncio.sleep(0)
+
+        await bus.publish(Event.create(EventType.JOB_COMPLETED, {"n": 1}))
+        await bus.publish(Event.create(EventType.JOB_COMPLETED, {"n": 2}))
+        await self._drain(lambda: bool(delivered))
+        await self._stop(task)
+
+        assert [e.data["n"] for e in delivered] == [2]
+        assert any(c["name"] == "ws.broadcast.error" for c in recorder.counts)
+
+    async def test_should_deliver_failure_isolated_per_connection(
+        self, monkeypatch
+    ) -> None:
+        recorder = patch_facade(monkeypatch, ws_module)
+        cm = ConnectionManager(event_bus=MagicMock())
+        bad_ws = _make_ws()
+        good_ws = _make_ws()
+        bad_id = await cm.connect(bad_ws)
+        good_id = await cm.connect(good_ws)
+        await cm.subscribe(bad_id, [EventType.JOB_COMPLETED.value])
+        await cm.subscribe(good_id, [EventType.JOB_COMPLETED.value])
+
+        real_should_deliver = cm._should_deliver
+
+        def flaky_should_deliver(conn_id, event_type, target_user):
+            if conn_id == bad_id:
+                raise RuntimeError("delivery check boom")
+            return real_should_deliver(conn_id, event_type, target_user)
+
+        cm._should_deliver = flaky_should_deliver  # type: ignore[method-assign]
+
+        await cm.broadcast_event(
+            Event(type=EventType.JOB_COMPLETED, data={}, timestamp="t")
+        )
+
+        bad_ws.send_json.assert_not_awaited()
+        good_ws.send_json.assert_awaited_once()
+        assert any(c["name"] == "ws.broadcast.error" for c in recorder.counts)

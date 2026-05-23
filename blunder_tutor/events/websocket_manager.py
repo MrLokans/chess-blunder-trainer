@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 import os
 import uuid
 
@@ -12,6 +13,8 @@ from blunder_tutor.events.coalescing import CoalescingBroadcaster
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import SCOPE_KEY, Event, EventType
 from blunder_tutor.observability import count, gauge
+
+log = logging.getLogger(__name__)
 
 _DEFAULT_COALESCE_WINDOW_MS = 500
 
@@ -36,7 +39,6 @@ class ConnectionManager:
         self.active_connections: dict[str, WebSocket] = {}
         self.connection_subscriptions: dict[str, set[EventType]] = {}
         self.connection_user_ids: dict[str, UserId | None] = {}
-        self._broadcast_task: asyncio.Task | None = None
         self._coalesce_window_ms = (
             _default_coalesce_window_ms()
             if coalesce_window_ms is None
@@ -74,12 +76,28 @@ class ConnectionManager:
                 subscriptions.add(EventType(event_type_str))
 
     async def broadcast_event(self, event: Event) -> None:
-        message = event.to_dict()
+        try:
+            message = event.to_dict()
+            target_user = _event_target_user(event)
+        except Exception:
+            # A single un-serializable event must be dropped, not allowed
+            # to propagate: it would kill the broadcast loop and stop all
+            # WS delivery for the process lifetime.
+            log.exception("Dropping un-broadcastable event type=%s", event.type)
+            count("ws.broadcast.error", tags={"stage": "prepare"})
+            return
         count("ws.broadcast.sent", tags={"event_type": event.type.value})
-        target_user = _event_target_user(event)
         disconnected: list[str] = []
         for conn_id, ws in list(self.active_connections.items()):
-            if not self._should_deliver(conn_id, event.type, target_user):
+            try:
+                deliver = self._should_deliver(conn_id, event.type, target_user)
+            except Exception:
+                # A delivery-check failure for one connection must not
+                # starve the others, so isolate it per connection.
+                log.exception("Delivery check failed for connection %s", conn_id)
+                count("ws.broadcast.error", tags={"stage": "should_deliver"})
+                continue
+            if not deliver:
                 continue
             try:
                 await ws.send_json(message)
@@ -94,14 +112,28 @@ class ConnectionManager:
             flush=self.broadcast_event, window_ms=self._coalesce_window_ms
         )
         try:  # noqa: WPS501 — bare try/finally is intentional: the loop never returns normally; cleanup runs only on cancellation.
-            while True:
-                event = await queue.get()
-                await coalescer.submit(event)
+            await self._consume(queue, coalescer)
         finally:
             # Drop any pending coalesced events (a reconnecting client
             # refetches anyway) but cancel the in-flight flush timer so it
             # is not GC'd as an orphaned pending task.
             await coalescer.aclose()
+
+    async def _consume(
+        self, queue: asyncio.Queue, coalescer: CoalescingBroadcaster
+    ) -> None:
+        while True:
+            event = await queue.get()
+            try:
+                await coalescer.submit(event)
+            except Exception:
+                # Backstop the per-event guards in broadcast_event: any leak
+                # from the submit/flush path must drop one event, never end
+                # the loop (a silent total-outage SPOF). CancelledError is a
+                # BaseException and still propagates to start_broadcasting's
+                # finally so the coalescer is closed on shutdown.
+                log.exception("Broadcast submit failed; dropping event")
+                count("ws.broadcast.error", tags={"stage": "submit"})
 
     def _should_deliver(
         self, conn_id: str, event_type: EventType, target_user: str | None
