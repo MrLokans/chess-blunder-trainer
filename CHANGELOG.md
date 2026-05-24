@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.7]
+
+### Added
+
+- **Replay the engine line after finding the best move**: When you play the best move, the result card now offers a "Play the line" button (and the `P` shortcut) to watch the full engine continuation play out on the board. Previously this replay was only available after a wrong move or via Show Best.
+- **Clear cache from the UI**: New button to clear the application cache without dropping to the command line. In multi-user mode the cache is scoped and cleared per user.
+
+### Changed
+
+- **Fewer redundant UI refreshes from background work**: WebSocket events broadcast by the backend are now debounced, so background jobs like imports and analysis no longer trigger multiple rapid UI updates. The event-broadcasting layer was also hardened for reliability.
+
+### Fixed
+
+- **Consistent caching and stricter data isolation across auth modes**: Unified the cache-key derivation so single-user (`AUTH_MODE=none`) and multi-user (`credentials`) modes behave the same, and tightened user-scoping across web requests and background jobs so each account only ever sees its own games and data.
+
+---
+
 ## [3.1.6]
 
 ### Fixed
