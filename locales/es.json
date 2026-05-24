@@ -578,6 +578,7 @@
   "time.minutes_ago": "{count, plural, one {hace # minuto} other {hace # minutos}}",
   "trainer.board_settings.title": "Ajustes del tablero",
   "trainer.button.play_best": "Jugar mejor jugada",
+  "trainer.button.play_line": "Reproducir la línea",
   "trainer.color.playing_as_black": "Jugando con negras",
   "trainer.color.playing_as_white": "Jugando con blancas",
   "trainer.debug.copied": "¡Copiado!",

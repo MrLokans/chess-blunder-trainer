@@ -60,9 +60,16 @@ describe('ResultCard', () => {
     expect(defaults.onNext).toHaveBeenCalled();
   });
 
-  it('hides play best button for correct feedback', () => {
+  it('shows play line button for correct feedback', () => {
     render(<ResultCard {...defaults} feedbackType="correct" />);
-    expect(screen.queryByText('trainer.button.play_best', { exact: false })).toBeNull();
+    expect(screen.getByText('trainer.button.play_line', { exact: false })).not.toBeNull();
+  });
+
+  it('calls onPlayBest when the play line button is clicked', () => {
+    const onPlayBest = vi.fn();
+    render(<ResultCard {...defaults} feedbackType="correct" onPlayBest={onPlayBest} />);
+    fireEvent.click(screen.getByText('trainer.button.play_line', { exact: false }));
+    expect(onPlayBest).toHaveBeenCalled();
   });
 
   it('shows play best button for non-correct feedback', () => {

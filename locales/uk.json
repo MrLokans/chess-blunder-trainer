@@ -578,6 +578,7 @@
   "time.minutes_ago": "{count, plural, one {# хвилину тому} few {# хвилини тому} many {# хвилин тому} other {# хвилин тому}}",
   "trainer.board_settings.title": "Налаштування дошки",
   "trainer.button.play_best": "Зіграти найкращий хід",
+  "trainer.button.play_line": "Зіграти варіант",
   "trainer.color.playing_as_black": "Граєте чорними",
   "trainer.color.playing_as_white": "Граєте білими",
   "trainer.debug.copied": "Скопійовано!",

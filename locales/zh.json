@@ -578,6 +578,7 @@
   "time.minutes_ago": "{count, plural, other {# 分钟前}}",
   "trainer.board_settings.title": "棋盘设置",
   "trainer.button.play_best": "走出最佳走法",
+  "trainer.button.play_line": "演示该变化",
   "trainer.color.playing_as_black": "执黑",
   "trainer.color.playing_as_white": "执白",
   "trainer.debug.copied": "已复制！",

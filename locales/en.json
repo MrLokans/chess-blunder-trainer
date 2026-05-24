@@ -578,6 +578,7 @@
   "time.minutes_ago": "{count, plural, one {# minute ago} other {# minutes ago}}",
   "trainer.board_settings.title": "Board Settings",
   "trainer.button.play_best": "Play Best Move",
+  "trainer.button.play_line": "Play the line",
   "trainer.color.playing_as_black": "Playing as Black",
   "trainer.color.playing_as_white": "Playing as White",
   "trainer.debug.copied": "Copied!",

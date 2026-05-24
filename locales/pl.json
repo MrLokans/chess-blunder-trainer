@@ -578,6 +578,7 @@
   "time.minutes_ago": "{count, plural, one {# minutę temu} few {# minuty temu} many {# minut temu} other {# minut temu}}",
   "trainer.board_settings.title": "Ustawienia szachownicy",
   "trainer.button.play_best": "Zagraj najlepszy ruch",
+  "trainer.button.play_line": "Odtwórz wariant",
   "trainer.color.playing_as_black": "Grasz czarnymi",
   "trainer.color.playing_as_white": "Grasz białymi",
   "trainer.debug.copied": "Skopiowano!",

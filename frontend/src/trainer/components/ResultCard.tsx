@@ -43,7 +43,6 @@ export function ResultCard({
   if (!visible) return null;
 
   const accentClass = feedbackType ? ACCENT_MAP[feedbackType] ?? 'accent-revealed' : 'accent-revealed';
-  const showTryBest = feedbackType !== 'correct';
 
   return (
     <div
@@ -69,13 +68,11 @@ export function ResultCard({
                 </span>
               </div>
 
-              {showTryBest && (
-                <div class="board-result-action">
-                  <button class="btn btn-success" id="tryBestBtn" onClick={onPlayBest}>
-                    {t('trainer.button.play_best')}<kbd>P</kbd>
-                  </button>
-                </div>
-              )}
+              <div class="board-result-action">
+                <button class="btn btn-success" id="tryBestBtn" onClick={onPlayBest}>
+                  {feedbackType === 'correct' ? t('trainer.button.play_line') : t('trainer.button.play_best')}<kbd>P</kbd>
+                </button>
+              </div>
 
               {puzzle.tactical_pattern && puzzle.tactical_pattern !== 'None' && puzzle.tactical_reason && (
                 <details class="board-result-details" id="tacticalDetails">
