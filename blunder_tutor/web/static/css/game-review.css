@@ -70,6 +70,16 @@
   max-width: min(620px, calc(100vh - 280px));
 }
 
+/* The eval bar (28px) sits left of the board, which would push the board
+   right of the column centre. Balance it with an equal-width right gutter so
+   the board itself centres under the context tags and eval chart. Scoped with
+   :has() so it only applies when the eval bar is actually rendered. */
+.review-board-area .board-eval-wrapper:has(.eval-bar-container)::after {
+  content: "";
+  width: 28px;
+  flex-shrink: 0;
+}
+
 .review-board {
   flex: 1;
   max-width: min(580px, calc(100vh - 320px));
