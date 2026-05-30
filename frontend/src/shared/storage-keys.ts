@@ -28,6 +28,7 @@ export const STORAGE_KEYS = {
 
   // Game review engine
   reviewMultiPv: 'blunder-tutor-review-multipv',
+  reviewMaxDepth: 'blunder-tutor-review-max-depth',
   reviewShowArrows: 'blunder-tutor-review-show-arrows',
   reviewShowThreats: 'blunder-tutor-review-show-threats',
   reviewAnalysisMode: 'blunder-tutor-review-analysis-mode',

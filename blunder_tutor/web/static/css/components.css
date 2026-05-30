@@ -471,3 +471,111 @@
   gap: var(--s-md);
   flex-wrap: wrap;
 }
+
+/* --------------------------------------------------------------------------
+   Range Slider — Bauhaus (sharp corners, 2px black track, square thumb).
+   Style-guide §6.12. Filled portion + thumb use --blue (interaction).
+   -------------------------------------------------------------------------- */
+
+.range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.range:focus-visible {
+  outline: none;
+}
+
+.range:focus-visible::-webkit-slider-runnable-track {
+  box-shadow: var(--focus-ring);
+}
+
+.range:focus-visible::-moz-range-track {
+  box-shadow: var(--focus-ring);
+}
+
+/* WebKit */
+.range::-webkit-slider-runnable-track {
+  height: 6px;
+  background: var(--warm-gray);
+  border: 2px solid var(--black);
+}
+
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -7px;
+  background: var(--blue);
+  border: 2px solid var(--black);
+  border-radius: 0;
+}
+
+/* Firefox */
+.range::-moz-range-track {
+  height: 6px;
+  background: var(--warm-gray);
+  border: 2px solid var(--black);
+}
+
+.range::-moz-range-progress {
+  height: 6px;
+  background: var(--blue);
+}
+
+.range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--blue);
+  border: 2px solid var(--black);
+  border-radius: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Segmented Control — Bauhaus filter-chip pattern as a button group.
+   Inactive 2px --mid-gray; hover --black; active inverts to --black/--white.
+   -------------------------------------------------------------------------- */
+
+.segmented {
+  display: inline-flex;
+}
+
+.segmented__btn {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-normal);
+  color: var(--dark-gray);
+  background: transparent;
+  border: 2px solid var(--mid-gray);
+  border-right-width: 0;
+  padding: var(--s-xs) var(--s-md);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.segmented__btn:last-child {
+  border-right-width: 2px;
+}
+
+.segmented__btn:hover {
+  border-color: var(--black);
+  color: var(--black);
+}
+
+.segmented__btn--active {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+}
+
+.segmented__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

@@ -32,7 +32,7 @@ describe('StockfishEngine', () => {
     expect(posted).toContain('isready');
   });
 
-  it('sets multipv, position and go infinite on analyze', () => {
+  it('sets multipv, position and go depth on analyze', () => {
     const { w, posted, emit } = fakeWorker();
     const eng = new StockfishEngine(w, { schedule: immediate });
     emit('uciok'); emit('readyok');
@@ -40,7 +40,25 @@ describe('StockfishEngine', () => {
     eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
     expect(posted).toContain('setoption name MultiPV value 3');
     expect(posted).toContain('position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
-    expect(posted).toContain('go infinite');
+    expect(posted).toContain('go depth 20');
+  });
+
+  it('emits `go depth 20` by default on analyze', () => {
+    const { w, posted, emit } = fakeWorker();
+    const eng = new StockfishEngine(w, { schedule: immediate });
+    emit('uciok'); emit('readyok');
+    eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    expect(posted).toContain('go depth 20');
+    expect(posted).not.toContain('go infinite');
+  });
+
+  it('emits the configured max depth on analyze', () => {
+    const { w, posted, emit } = fakeWorker();
+    const eng = new StockfishEngine(w, { schedule: immediate });
+    emit('uciok'); emit('readyok');
+    eng.setMaxDepth(12);
+    eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    expect(posted).toContain('go depth 12');
   });
 
   it('emits folded lines to subscribers on info', () => {

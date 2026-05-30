@@ -14,6 +14,7 @@ function makeFakeEngine() {
   const fake = {
     init,
     setMultiPV: vi.fn(),
+    setMaxDepth: vi.fn(),
     analyze: vi.fn(),
     stop: vi.fn(),
     dispose: vi.fn(),
@@ -152,6 +153,30 @@ describe('useAnalysisMode', () => {
     expect(result.current.multipv).toBe(3);
     expect(result.current.showArrows).toBe(false);
     expect(result.current.showThreats).toBe(true);
+  });
+
+  it('defaults maxDepth to 20 when unset', () => {
+    localStorage.removeItem(STORAGE_KEYS.reviewMaxDepth);
+    const engine = makeFakeEngine();
+    const { result } = renderAnalysis(engine.create);
+    expect(result.current.maxDepth).toBe(20);
+  });
+
+  it('loads and clamps maxDepth from storage (5–30)', () => {
+    localStorage.setItem(STORAGE_KEYS.reviewMaxDepth, '99');
+    const { result } = renderAnalysis(makeFakeEngine().create);
+    expect(result.current.maxDepth).toBe(30);
+    localStorage.setItem(STORAGE_KEYS.reviewMaxDepth, '1');
+    const { result: r2 } = renderAnalysis(makeFakeEngine().create);
+    expect(r2.current.maxDepth).toBe(5);
+  });
+
+  it('persists maxDepth on setMaxDepth', () => {
+    localStorage.removeItem(STORAGE_KEYS.reviewMaxDepth);
+    const { result } = renderAnalysis(makeFakeEngine().create);
+    void act(() => { result.current.setMaxDepth(15); });
+    expect(result.current.maxDepth).toBe(15);
+    expect(localStorage.getItem(STORAGE_KEYS.reviewMaxDepth)).toBe('15');
   });
 
   it('reports the feature as disabled when the flag is off', async () => {

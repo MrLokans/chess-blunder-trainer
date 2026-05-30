@@ -8,6 +8,7 @@ function makeFakeEngine(initImpl: () => Promise<void>) {
   const fake = {
     init: vi.fn(initImpl),
     setMultiPV: vi.fn(),
+    setMaxDepth: vi.fn(),
     analyze: vi.fn(),
     stop: vi.fn(),
     dispose: vi.fn(),
@@ -69,6 +70,20 @@ describe('useEngine', () => {
     rerender({ ...initialProps, fen: 'fen2' });
     await act(async () => { await Promise.resolve(); });
     expect(fakeRaw.analyze).toHaveBeenLastCalledWith('fen2');
+  });
+
+  it('applies maxDepth and re-analyzes when it changes', async () => {
+    const { fake, fakeRaw } = makeFakeEngine(() => Promise.resolve());
+    const create = () => fake as unknown as StockfishEngine;
+    const initialProps = { fen: TEST_FEN, multipv: 1, maxDepth: 20, enabled: true, createEngine: create };
+    const { rerender } = renderHook((p: typeof initialProps) => useEngine(p), { initialProps });
+    await act(async () => { await Promise.resolve(); });
+    expect(fakeRaw.setMaxDepth).toHaveBeenLastCalledWith(20);
+
+    rerender({ ...initialProps, maxDepth: 10 });
+    await act(async () => { await Promise.resolve(); });
+    expect(fakeRaw.setMaxDepth).toHaveBeenLastCalledWith(10);
+    expect(fakeRaw.analyze).toHaveBeenLastCalledWith(TEST_FEN);
   });
 
   it('exposes subscriber updates as lines and depth', async () => {

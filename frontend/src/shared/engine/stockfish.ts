@@ -59,6 +59,7 @@ export class StockfishEngine {
   private _depth = 0;
   private _blackToMove = false;
   private _multipv = 1;
+  private _maxDepth = 20;
   private _searching = false;
   private _pendingFen: string | null = null;
   // True between sending `stop` and receiving `bestmove`: any `info` lines
@@ -88,6 +89,10 @@ export class StockfishEngine {
 
   setMultiPV(n: number): void {
     this._multipv = n;
+  }
+
+  setMaxDepth(n: number): void {
+    this._maxDepth = n;
   }
 
   // Sending `position` / `go` while the engine is still searching the previous
@@ -134,7 +139,12 @@ export class StockfishEngine {
     this._discardInfo = false;
     this._worker.postMessage(`setoption name MultiPV value ${String(this._multipv)}`);
     this._worker.postMessage(`position fen ${fen}`);
-    this._worker.postMessage('go infinite');
+    // `go depth N` terminates the search at the cap (vs. `go infinite`), so the
+    // engine stops on its own and emits `bestmove`. The final `info depth N`
+    // before `bestmove` still schedules a coalesced flush, so the terminal
+    // readout is delivered — this relies on every `_infos` mutation calling
+    // `_notify()` (see `_onMessage`).
+    this._worker.postMessage(`go depth ${String(this._maxDepth)}`);
   }
 
   private _onMessage(data: string): void {

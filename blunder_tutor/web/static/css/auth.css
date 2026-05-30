@@ -18,7 +18,7 @@
 
 .auth-card {
   background: var(--surface, var(--white));
-  border: 1px solid var(--border, var(--light-gray));
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg, 8px);
   padding: var(--s-xl, 32px);
   box-shadow: var(--shadow-card, 0 2px 12px rgba(0, 0, 0, 0.06));
@@ -60,7 +60,7 @@
 .auth-form input {
   width: 100%;
   padding: var(--s-sm, 8px) var(--s-md, 12px);
-  border: 1px solid var(--border, var(--light-gray));
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm, 4px);
   background: var(--input-bg, var(--white));
   color: var(--text, inherit);

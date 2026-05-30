@@ -96,7 +96,7 @@
   max-width: min(620px, calc(100vh - 280px));
   height: 80px;
   margin-top: var(--s-lg);
-  border: 2px solid var(--light-gray);
+  border: 2px solid var(--mid-gray-light);
   cursor: pointer;
   position: relative;
 }
@@ -121,7 +121,7 @@
 
 .review-not-analyzed {
   padding: var(--s-md);
-  background: var(--bg-muted);
+  background: var(--warm-gray);
   color: var(--dark-gray);
   font-size: var(--text-sm);
   text-align: center;
@@ -142,7 +142,7 @@
 }
 
 .review-move-row:hover {
-  background: var(--bg-muted);
+  background: var(--warm-gray);
 }
 
 .review-move-num {
@@ -163,7 +163,7 @@
 }
 
 .review-move-cell:hover {
-  background: var(--light-gray);
+  background: var(--mid-gray-light);
 }
 
 .review-move-cell.active {
@@ -201,7 +201,7 @@
 
 .review-controls {
   display: flex;
-  border-top: 2px solid var(--light-gray);
+  border-top: 2px solid var(--mid-gray-light);
   padding: var(--s-sm);
   gap: var(--s-xs);
   justify-content: center;
@@ -210,7 +210,7 @@
 
 .review-nav-btn {
   background: none;
-  border: 2px solid var(--light-gray);
+  border: 2px solid var(--mid-gray-light);
   cursor: pointer;
   padding: var(--s-xs) var(--s-sm);
   font-size: var(--text-base);
@@ -223,7 +223,7 @@
 }
 
 .review-nav-btn:hover {
-  background: var(--bg-muted);
+  background: var(--warm-gray);
   border-color: var(--dark-gray);
 }
 
@@ -234,7 +234,7 @@
 
 .review-nav-btn:disabled:hover {
   background: none;
-  border-color: var(--light-gray);
+  border-color: var(--mid-gray-light);
 }
 
 /* ==========================================================================
@@ -274,44 +274,112 @@
    ========================================================================== */
 
 .review-engine {
-  padding: var(--space-3, 12px);
+  padding: var(--s-md);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
+/* Engine controls — grouped card */
 .engine-controls {
+  padding: var(--s-md);
+  border-bottom: 3px solid var(--black);
+  flex-shrink: 0;
+}
+
+.engine-controls__header {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--s-md);
+}
+
+.engine-controls__title {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--dark-gray);
+}
+
+.engine-controls__group {
+  margin-bottom: var(--s-md);
+}
+
+.engine-controls__group:last-child {
+  margin-bottom: 0;
+}
+
+.engine-controls__group-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--mid-gray);
+  margin-bottom: var(--s-sm);
+}
+
+.engine-controls__row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+  margin-bottom: var(--s-sm);
+}
+
+.engine-controls__row--display {
+  gap: var(--s-md);
   flex-wrap: wrap;
-  gap: var(--space-3, 12px);
-  align-items: center;
-  margin-bottom: var(--space-3, 12px);
 }
 
-.engine-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+/* Lines control fills the row with equal-width segments so all options fit
+   the fixed panel width (mirrors the max-depth slider's full-width layout). */
+.engine-controls__row .segmented {
+  flex: 1;
+  min-width: 0;
+}
+
+.engine-controls__row .segmented__btn {
+  flex: 1 1 0;
+  padding: var(--s-xs) var(--s-sm);
+  text-align: center;
+}
+
+.engine-controls__label {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
   color: var(--text-muted);
-  font-size: var(--text-sm, 0.8125rem);
-  cursor: pointer;
+  min-width: 72px;
 }
 
-.engine-multipv {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--text-muted);
-  font-size: var(--text-sm, 0.8125rem);
-}
-
-.engine-multipv select {
-  background: var(--bg);
+.engine-controls__value {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
   color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm, 0);
-  padding: 0.15rem 0.4rem;
-  font-family: inherit;
-  font-size: var(--text-sm, 0.8125rem);
+  min-width: 2ch;
+  text-align: right;
+}
+
+/* Live depth/max progress readout (informational — no border, no hover) */
+.engine-depth-progress {
+  margin-top: var(--s-xs);
+}
+
+.engine-depth-progress__label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--mid-gray);
+}
+
+.engine-depth-progress__track {
+  height: 4px;
+  background: var(--warm-gray);
+  margin-top: var(--s-xs);
+}
+
+.engine-depth-progress__fill {
+  height: 100%;
+  background: var(--blue);
+  transition: width var(--transition);
 }
 
 .engine-back {
@@ -322,7 +390,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-bottom: var(--space-3, 12px);
+  margin-bottom: var(--s-md);
 }
 
 .engine-lines-header {

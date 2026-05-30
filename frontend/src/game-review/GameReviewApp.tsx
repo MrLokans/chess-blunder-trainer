@@ -517,11 +517,14 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
               <EngineControls
                 analysisMode={analysis.analysisMode}
                 multipv={analysis.multipv}
+                maxDepth={analysis.maxDepth}
+                depth={analysis.depth}
                 showArrows={analysis.showArrows}
                 showThreats={analysis.showThreats}
                 exploring={analysis.exploring}
                 onToggleAnalysis={analysis.onToggleAnalysis}
                 onMultiPv={analysis.setMultiPv}
+                onMaxDepth={analysis.setMaxDepth}
                 onToggleArrows={analysis.onToggleArrows}
                 onToggleThreats={analysis.onToggleThreats}
                 onBackToGame={analysis.backToGame}

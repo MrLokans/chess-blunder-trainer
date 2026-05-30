@@ -28,6 +28,7 @@ export interface UseAnalysisModeResult {
   enabled: boolean;
   analysisMode: boolean;
   multipv: number;
+  maxDepth: number;
   showArrows: boolean;
   showThreats: boolean;
   exploring: boolean;
@@ -38,6 +39,7 @@ export interface UseAnalysisModeResult {
   evalCp: number | null;
   onToggleAnalysis: () => void;
   setMultiPv: (n: number) => void;
+  setMaxDepth: (n: number) => void;
   onToggleArrows: () => void;
   onToggleThreats: () => void;
   handleExploreMove: () => void;
@@ -61,6 +63,14 @@ function loadMultiPv(): number {
   return Math.trunc(n);
 }
 
+function loadMaxDepth(): number {
+  const raw = localStorage.getItem(STORAGE_KEYS.reviewMaxDepth);
+  if (raw === null) return 20;
+  const n = Number(raw);
+  if (Number.isNaN(n)) return 20;
+  return Math.min(30, Math.max(5, Math.trunc(n)));
+}
+
 function lineEvalCp(line: EngineLine | undefined): number | null {
   if (!line) return null;
   if (line.mate !== null) return line.mate > 0 ? MATE_CP : -MATE_CP;
@@ -73,6 +83,7 @@ export function useAnalysisMode(params: UseAnalysisModeParams): UseAnalysisModeR
 
   const [analysisMode, setAnalysisMode] = useState(() => enabled && loadBool(STORAGE_KEYS.reviewAnalysisMode, false));
   const [multipv, setMultipvState] = useState(loadMultiPv);
+  const [maxDepth, setMaxDepthState] = useState(loadMaxDepth);
   const [showArrows, setShowArrows] = useState(() => loadBool(STORAGE_KEYS.reviewShowArrows, true));
   const [showThreats, setShowThreats] = useState(() => loadBool(STORAGE_KEYS.reviewShowThreats, false));
   const [exploration, setExploration] = useState(IDLE);
@@ -83,6 +94,7 @@ export function useAnalysisMode(params: UseAnalysisModeParams): UseAnalysisModeR
   const { lines, depth, status } = useEngine({
     fen,
     multipv,
+    maxDepth,
     enabled: enabled && analysisMode && fen !== '',
     createEngine,
   });
@@ -108,6 +120,11 @@ export function useAnalysisMode(params: UseAnalysisModeParams): UseAnalysisModeR
   const setMultiPv = useCallback((n: number) => {
     setMultipvState(n);
     localStorage.setItem(STORAGE_KEYS.reviewMultiPv, String(n));
+  }, []);
+
+  const setMaxDepth = useCallback((n: number) => {
+    setMaxDepthState(n);
+    localStorage.setItem(STORAGE_KEYS.reviewMaxDepth, String(n));
   }, []);
 
   const onToggleArrows = useCallback(() => {
@@ -206,6 +223,7 @@ export function useAnalysisMode(params: UseAnalysisModeParams): UseAnalysisModeR
     enabled,
     analysisMode,
     multipv,
+    maxDepth,
     showArrows,
     showThreats,
     exploring,
@@ -216,6 +234,7 @@ export function useAnalysisMode(params: UseAnalysisModeParams): UseAnalysisModeR
     evalCp,
     onToggleAnalysis,
     setMultiPv,
+    setMaxDepth,
     onToggleArrows,
     onToggleThreats,
     handleExploreMove,

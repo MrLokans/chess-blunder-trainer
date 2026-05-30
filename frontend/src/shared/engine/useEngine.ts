@@ -7,6 +7,7 @@ export type EngineStatus = 'loading' | 'ready' | 'error';
 export interface UseEngineProps {
   fen: string;
   multipv: number;
+  maxDepth: number;
   enabled: boolean;
   createEngine?: () => StockfishEngine;
 }
@@ -21,7 +22,7 @@ function defaultEngine(): StockfishEngine {
   return new StockfishEngine(spawnStockfishWorker());
 }
 
-export function useEngine({ fen, multipv, enabled, createEngine }: UseEngineProps): UseEngineResult {
+export function useEngine({ fen, multipv, maxDepth, enabled, createEngine }: UseEngineProps): UseEngineResult {
   const engineRef = useRef<StockfishEngine | null>(null);
   // Keep a stable ref to the factory so changing the prop doesn't restart the engine
   // on every render. The factory is only read when enabled transitions true.
@@ -55,8 +56,9 @@ export function useEngine({ fen, multipv, enabled, createEngine }: UseEngineProp
     const engine = engineRef.current;
     if (!engine || status !== 'ready') return;
     engine.setMultiPV(multipv);
+    engine.setMaxDepth(maxDepth);
     engine.analyze(fen);
-  }, [fen, multipv, status]);
+  }, [fen, multipv, maxDepth, status]);
 
   return { lines: update.lines, depth: update.depth, status };
 }

@@ -5,6 +5,8 @@
    ========================================================================== */
 
 cg-board {
+  /* --board-bg is injected at runtime from JS (analysis-board.ts / sequence-player.ts). */
+  /* stylelint-disable-next-line csstools/value-no-unknown-custom-properties */
   background-image: var(--board-bg);
 }
 
