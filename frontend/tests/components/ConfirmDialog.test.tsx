@@ -54,7 +54,7 @@ describe('ConfirmDialog', () => {
         onConfirm={() => {}}
       />,
     );
-    expect(screen.getByRole('button', { name: 'Delete' }).className).toContain('btn--danger');
+    expect(screen.getByRole('button', { name: 'Delete' }).className).toContain('btn-danger');
   });
 
   test('secondaryAction renders a third button + fires its handler', async () => {

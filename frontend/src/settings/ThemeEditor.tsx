@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'preact/hooks';
+import { Button } from '../components/Button';
 import { ColorInput } from '../components/ColorInput';
 import { THEME_COLOR_KEYS } from './types';
 import type { ThemeColorKey, ThemeColors, ThemePreset } from './types';
@@ -116,9 +117,11 @@ export function ThemeEditor({ theme, presets, onChange }: ThemeEditorProps) {
       ))}
 
       <ThemePreview />
-      <button type="button" class="btn btn-secondary mt-3" onClick={handleReset}>
-        {t('settings.theme.reset')}
-      </button>
+      <div class="mt-3">
+        <Button variant="secondary" onClick={handleReset}>
+          {t('settings.theme.reset')}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -128,8 +131,11 @@ function ThemePreview() {
     <div class="theme-preview">
       <div class="preview-label">{t('settings.theme.preview')}</div>
       <div class="preview-buttons">
+        {/* eslint-disable-next-line no-restricted-syntax -- theme swatch: needs the .preview-* hook class; not a real CTA */}
         <button type="button" class="btn preview-primary">{t('settings.theme.primary')}</button>
+        {/* eslint-disable-next-line no-restricted-syntax -- theme swatch: needs the .preview-* hook class; not a real CTA */}
         <button type="button" class="btn btn-success preview-success">{t('settings.theme.success')}</button>
+        {/* eslint-disable-next-line no-restricted-syntax -- theme swatch: needs the .preview-* hook class; not a real CTA */}
         <button type="button" class="btn btn-danger preview-error">{t('settings.theme.error_label')}</button>
         <span class="status preview-warning">{t('settings.theme.warning')}</span>
       </div>

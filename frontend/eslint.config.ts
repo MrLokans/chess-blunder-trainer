@@ -66,6 +66,22 @@ export default tseslint.config(
     },
   },
   {
+    files: ['**/*.tsx'],
+    ignores: ['**/components/Button.tsx'],
+    rules: {
+      'no-restricted-syntax': ['error',
+        {
+          selector: 'JSXAttribute[name.name=/^(class|className)$/] Literal[value=/btn-(primary|secondary|danger|ghost)|(^|\\s)btn /]',
+          message: 'Do not hand-roll button classes (btn / btn-primary / btn-secondary / btn-danger / btn-ghost). Use the <Button> component from components/Button. For a genuine styled <a> or a variant Button lacks, add an eslint-disable-next-line no-restricted-syntax with a reason.',
+        },
+        {
+          selector: 'JSXAttribute[name.name=/^(class|className)$/] TemplateElement[value.raw=/btn-(primary|secondary|danger|ghost)|(^|\\s)btn /]',
+          message: 'Do not hand-roll button classes (btn / btn-primary / btn-secondary / btn-danger / btn-ghost). Use the <Button> component from components/Button. For a genuine styled <a> or a variant Button lacks, add an eslint-disable-next-line no-restricted-syntax with a reason.',
+        },
+      ],
+    },
+  },
+  {
     files: ['tests/**/*.test.{ts,tsx}'],
     plugins: { vitest },
     rules: {

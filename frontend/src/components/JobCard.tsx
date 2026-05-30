@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { ProgressBar } from './ProgressBar';
 import { Alert } from './Alert';
+import { Button } from './Button';
 import type { JobState, JobStatus } from '../types/api';
 
 export type { JobState, JobStatus };
@@ -118,15 +119,15 @@ export function JobCard({
         <>
           <ProgressBar current={current} total={total} textFormat={textFormat} />
           {stopJob && (
-            <button type="button" class="btn btn-danger" onClick={() => { void handleStop(); }}>
+            <Button variant="danger" onClick={() => { void handleStop(); }}>
               {stopLabel}
-            </button>
+            </Button>
           )}
         </>
       ) : (
-        <button type="button" class="btn btn-primary" onClick={() => { void handleStart(); }}>
+        <Button variant="primary" onClick={() => { void handleStart(); }}>
           {startLabel}
-        </button>
+        </Button>
       )}
     </div>
   );

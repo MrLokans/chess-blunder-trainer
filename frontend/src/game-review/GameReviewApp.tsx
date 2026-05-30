@@ -3,6 +3,7 @@ import { client } from '../shared/api';
 import { MoveSequence, ReadOnlyBoard, PlaybackController } from '../shared/sequence-player';
 import { AnalysisBoard } from '../shared/analysis-board';
 import { applyBoardBackground, applyPieceSet } from '../shared/board-theme';
+import { Button } from '../components/Button';
 import { updateEvalBar } from '../shared/eval-bar';
 import { EvalChart, evalFromWhite } from './eval-chart';
 import { EngineControls } from './EngineControls';
@@ -428,6 +429,7 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
       <div class="review-page" id="reviewPage">
         <div class="review-error" id="reviewError">
           <p id="reviewErrorMessage">{error}</p>
+          {/* eslint-disable-next-line no-restricted-syntax -- navigational anchor, not a <button>; <Button> renders only <button> */}
           <a href="/" class="btn btn-primary">{t('common.back_to_trainer')}</a>
         </div>
       </div>
@@ -548,14 +550,11 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
                   />
                 )}
                 {analysis.exploring && (
-                  <button
-                    type="button"
-                    class="btn btn-secondary engine-takeback"
-                    id="reviewTakeback"
-                    onClick={analysis.takeback}
-                  >
-                    {t('game_review.engine.takeback')}
-                  </button>
+                  <div class="engine-takeback" id="reviewTakeback">
+                    <Button variant="secondary" onClick={analysis.takeback}>
+                      {t('game_review.engine.takeback')}
+                    </Button>
+                  </div>
                 )}
               </div>
             )}

@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'preact/hooks';
 import { ApiError, client } from '../shared/api';
+import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { debounce } from '../shared/debounce';
 import type { ProfilePlatform, ProfileValidateResponse } from '../types/profiles';
@@ -361,9 +362,9 @@ export function SetupApp() {
               <div class="help-text">{t('setup.chesscom_help')}</div>
             </div>
 
-            <button type="submit" class="btn btn-primary" id="submitBtn" disabled={submitting}>
+            <Button type="submit" variant="primary" disabled={submitting}>
               {submitting ? t('setup.submitting') : t('setup.submit')}
-            </button>
+            </Button>
           </form>
         )}
 

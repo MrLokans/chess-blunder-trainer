@@ -379,20 +379,7 @@ export function DashboardApp() {
 
       <div class="chart-container">
         <div class="chart-title">{t('dashboard.chart.game_breakdown')}</div>
-        <table id="gameBreakdownTable">
-          <thead>
-            <tr>
-              <th>{t('dashboard.chart.source')}</th>
-              <th>{t('dashboard.chart.username')}</th>
-              <th>{t('dashboard.chart.total_games')}</th>
-              <th>{t('dashboard.chart.analyzed')}</th>
-              <th>{t('dashboard.chart.pending')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <GameBreakdownTable items={state.gameBreakdown ?? []} />
-          </tbody>
-        </table>
+        <GameBreakdownTable items={state.gameBreakdown ?? []} />
       </div>
 
       <div class="mt-4">

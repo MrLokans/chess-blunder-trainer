@@ -1,3 +1,4 @@
+import { Button } from '../components/Button';
 import { Toggle } from '../components/Toggle';
 import { Segmented } from '../components/Segmented';
 import { RangeSlider } from '../components/RangeSlider';
@@ -84,9 +85,11 @@ export function EngineControls(props: EngineControlsProps) {
           </div>
 
           {props.exploring && (
-            <button type="button" class="btn btn-secondary engine-back" onClick={props.onBackToGame}>
-              {t('game_review.engine.back_to_game')}
-            </button>
+            <div class="engine-back">
+              <Button variant="secondary" onClick={props.onBackToGame}>
+                {t('game_review.engine.back_to_game')}
+              </Button>
+            </div>
           )}
         </>
       )}

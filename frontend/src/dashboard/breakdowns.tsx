@@ -1,5 +1,7 @@
 import { useState } from 'preact/hooks';
 import { groupOpeningsByBase, openingNameSlug } from '../shared/opening-group';
+import { DataTable } from '../components/DataTable';
+import type { Column } from '../components/DataTable';
 import type { OpeningItem } from '../shared/opening-group';
 import type {
   PhaseData,
@@ -190,25 +192,23 @@ export function GameTypeBreakdown({ data }: { data: GameTypeData }) {
   );
 }
 
-interface OpeningRowProps {
-  item: OpeningItem;
-  isChild?: boolean;
-  hidden?: boolean;
-}
-
-function OpeningRow({ item, isChild, hidden }: OpeningRowProps) {
-  return (
-    <tr class={isChild ? 'eco-group-child' : ''} style={hidden ? { display: 'none' } : undefined}>
-      <td class={isChild ? 'eco-child-indent' : ''}>{renderOpeningName(item.eco_code, item.eco_name)}</td>
-      <td>{String(item.count)} <span class="eco-percent">({String(item.percentage)}%)</span></td>
-      <td>{(item.avg_cp_loss / 100).toFixed(2)} pawns</td>
-      <td>{String(item.game_count)}</td>
-    </tr>
-  );
-}
+type EcoRow =
+  | { kind: 'single'; id: string; item: OpeningItem }
+  | { kind: 'child'; id: string; item: OpeningItem }
+  | {
+      kind: 'header';
+      id: string;
+      groupId: string;
+      baseName: string;
+      variationsLabel: string;
+      totalCount: number;
+      avgCpLoss: number;
+      totalGames: number;
+      isExpanded: boolean;
+    };
 
 export function EcoBreakdown({ data }: { data: EcoData }) {
-  const [expandedGroups, setExpandedGroups] = useState(new Set());
+  const [expandedGroups, setExpandedGroups] = useState(new Set<string>());
 
   if (data.total_blunders <= 0 || data.by_opening.length === 0) {
     return <div class="no-data-message">{t('dashboard.chart.no_opening_data')}</div>;
@@ -228,58 +228,93 @@ export function EcoBreakdown({ data }: { data: EcoData }) {
     });
   };
 
-  return (
-    <table class="eco-table">
-      <thead>
-        <tr>
-          <th>{t('dashboard.chart.eco_opening')}</th>
-          <th>{t('dashboard.chart.eco_blunders')}</th>
-          <th>{t('dashboard.chart.eco_avg_loss')}</th>
-          <th>{t('dashboard.chart.eco_games')}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {grouped.map(group => {
-          if (group.variations.length === 1) {
-            const item = group.variations[0];
-            if (!item) return null;
-            return <OpeningRow key={item.eco_code} item={item} />;
-          }
+  const rows: EcoRow[] = [];
+  for (const group of grouped) {
+    if (group.variations.length === 1) {
+      const item = group.variations[0];
+      if (!item) continue;
+      rows.push({ kind: 'single', id: item.eco_code, item });
+      continue;
+    }
 
-          const groupId = `eco-group-${openingNameSlug(group.baseName)}`;
-          const isExpanded = expandedGroups.has(groupId);
-          const variationsLabel = t('dashboard.opening.variations_count', { count: group.variations.length });
+    const groupId = `eco-group-${openingNameSlug(group.baseName)}`;
+    const isExpanded = expandedGroups.has(groupId);
+    rows.push({
+      kind: 'header',
+      id: groupId,
+      groupId,
+      baseName: group.baseName,
+      variationsLabel: t('dashboard.opening.variations_count', { count: group.variations.length }),
+      totalCount: group.totalCount,
+      avgCpLoss: group.avgCpLoss,
+      totalGames: group.totalGames,
+      isExpanded,
+    });
+    if (isExpanded) {
+      for (const item of group.variations) {
+        rows.push({ kind: 'child', id: item.eco_code, item });
+      }
+    }
+  }
 
+  const columns: Column<EcoRow>[] = [
+    {
+      key: 'opening',
+      header: t('dashboard.chart.eco_opening'),
+      render: row => {
+        if (row.kind === 'header') {
           return (
-            <>
-              <tr
-                key={groupId}
-                class="eco-group-header"
-                data-group={groupId}
-                onClick={() => { toggleGroup(groupId); }}
-              >
-                <td>
-                  <span class="eco-group-toggle">{isExpanded ? '▼' : '▶'}</span>
-                  <span class="eco-name-base">{group.baseName}</span>
-                  <span class="eco-variations-badge">{variationsLabel}</span>
-                </td>
-                <td>{String(group.totalCount)}</td>
-                <td>{(group.avgCpLoss / 100).toFixed(2)} pawns</td>
-                <td>{String(group.totalGames)}</td>
-              </tr>
-              {group.variations.map(item => (
-                <OpeningRow
-                  key={item.eco_code}
-                  item={item}
-                  isChild
-                  hidden={!isExpanded}
-                />
-              ))}
-            </>
+            <span
+              class="eco-group-header"
+              data-group={row.groupId}
+              role="button"
+              tabIndex={0}
+              onClick={() => { toggleGroup(row.groupId); }}
+              onKeyDown={(e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleGroup(row.groupId);
+                }
+              }}
+            >
+              <span class="eco-group-toggle">{row.isExpanded ? '▼' : '▶'}</span>
+              <span class="eco-name-base">{row.baseName}</span>
+              <span class="eco-variations-badge">{row.variationsLabel}</span>
+            </span>
           );
-        })}
-      </tbody>
-    </table>
+        }
+        const name = renderOpeningName(row.item.eco_code, row.item.eco_name);
+        return row.kind === 'child' ? <span class="eco-child-indent">{name}</span> : name;
+      },
+    },
+    {
+      key: 'blunders',
+      header: t('dashboard.chart.eco_blunders'),
+      render: row =>
+        row.kind === 'header'
+          ? String(row.totalCount)
+          : <>{String(row.item.count)} <span class="eco-percent">({String(row.item.percentage)}%)</span></>,
+    },
+    {
+      key: 'avg_loss',
+      header: t('dashboard.chart.eco_avg_loss'),
+      render: row =>
+        `${(row.kind === 'header' ? row.avgCpLoss / 100 : row.item.avg_cp_loss / 100).toFixed(2)} pawns`,
+    },
+    {
+      key: 'games',
+      header: t('dashboard.chart.eco_games'),
+      render: row => String(row.kind === 'header' ? row.totalGames : row.item.game_count),
+    },
+  ];
+
+  return (
+    <DataTable
+      className="eco-table"
+      columns={columns}
+      rows={rows}
+      rowKey={row => row.id}
+    />
   );
 }
 
@@ -533,20 +568,22 @@ export function TrapsSummary({ data }: { data: TrapStatsResponse }) {
 
 export function GameBreakdownTable({ items }: { items: GameBreakdownItem[] }) {
   if (items.length === 0) {
-    return <>{t('dashboard.no_data')}</>;
+    return <div class="no-data-message">{t('dashboard.no_data')}</div>;
   }
 
+  const columns: Column<GameBreakdownItem>[] = [
+    { key: 'source', header: t('dashboard.chart.source') },
+    { key: 'username', header: t('dashboard.chart.username') },
+    { key: 'total_games', header: t('dashboard.chart.total_games'), render: row => String(row.total_games) },
+    { key: 'analyzed_games', header: t('dashboard.chart.analyzed'), render: row => String(row.analyzed_games) },
+    { key: 'pending_games', header: t('dashboard.chart.pending'), render: row => String(row.pending_games) },
+  ];
+
   return (
-    <>
-      {items.map((row, i) => (
-        <tr key={i}>
-          <td>{row.source}</td>
-          <td>{row.username}</td>
-          <td>{String(row.total_games)}</td>
-          <td>{String(row.analyzed_games)}</td>
-          <td>{String(row.pending_games)}</td>
-        </tr>
-      ))}
-    </>
+    <DataTable
+      columns={columns}
+      rows={items}
+      rowKey={row => `${row.source}-${row.username}`}
+    />
   );
 }

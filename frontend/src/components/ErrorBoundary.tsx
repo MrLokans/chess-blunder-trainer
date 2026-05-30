@@ -1,5 +1,6 @@
 import { Component } from 'preact';
 import type { ComponentChildren } from 'preact';
+import { Button } from './Button';
 
 interface Props {
   children: ComponentChildren;
@@ -26,9 +27,9 @@ export class ErrorBoundary extends Component<Props, State> {
         <div class="error-boundary" role="alert">
           <h2>{t('common.error')}</h2>
           <p>{t('common.error_boundary_message')}</p>
-          <button type="button" class="btn btn-primary" onClick={() => { window.location.reload(); }}>
+          <Button variant="primary" onClick={() => { window.location.reload(); }}>
             {t('common.reload')}
-          </button>
+          </Button>
         </div>
       );
     }

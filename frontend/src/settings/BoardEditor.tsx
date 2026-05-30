@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'preact/hooks';
+import { Button } from '../components/Button';
 import { ColorInput } from '../components/ColorInput';
 import type { PieceSet, BoardColorPreset, BoardSettings } from './types';
 
@@ -121,9 +122,11 @@ export function BoardEditor({ pieceSets, colorPresets, settings, onChange }: Boa
             </div>
           </div>
 
-          <button type="button" class="btn btn-secondary mt-3" onClick={handleReset}>
-            {t('settings.board.reset')}
-          </button>
+          <div class="mt-3">
+            <Button variant="secondary" onClick={handleReset}>
+              {t('settings.board.reset')}
+            </Button>
+          </div>
         </div>
       </div>
     </>

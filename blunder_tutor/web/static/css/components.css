@@ -5,76 +5,24 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   Button — BEM modifiers layered on top of base .btn (defined in base.css).
+   Button — single-dash modifiers. The variant/size colors live in base.css
+   (.btn-primary / .btn-secondary / .btn-danger / .btn-ghost / .btn-sm); the
+   <Button> component emits the same single-dash class names so hand-rolled
+   markup and the component render identically. Only the sizes/state base.css
+   lacks (md, lg, loading) plus the component's spinner/label live here.
    -------------------------------------------------------------------------- */
 
-.btn--primary {
-  background: var(--yellow);
-  border: 2px solid var(--yellow);
-  color: var(--black);
-}
-
-.btn--primary:hover:not(:disabled) {
-  background: var(--yellow-hover);
-  border-color: var(--yellow-hover);
-  color: var(--black);
-}
-
-.btn--secondary {
-  background: transparent;
-  color: var(--black);
-  border: 2px solid var(--black);
-}
-
-.btn--secondary:hover:not(:disabled) {
-  background: var(--black);
-  color: var(--white);
-}
-
-.btn--danger {
-  background: var(--red);
-  border: 2px solid var(--red);
-  color: var(--white);
-}
-
-.btn--danger:hover:not(:disabled) {
-  background: var(--red-hover);
-  border-color: var(--red-hover);
-}
-
-.btn--ghost {
-  background: transparent;
-  color: var(--mid-gray);
-  border: none;
-  font-family: var(--font-sans);
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: var(--ls-tight);
-}
-
-.btn--ghost:hover:not(:disabled) {
-  background: transparent;
-  color: var(--dark-gray);
-}
-
-/* Sizes */
-.btn--sm {
-  padding: var(--s-xs) var(--s-sm);
-  font-size: var(--text-xs);
-}
-
-.btn--md {
+.btn-md {
   padding: var(--s-sm) var(--s-md);
   font-size: var(--text-xs);
 }
 
-.btn--lg {
+.btn-lg {
   padding: var(--s-md) var(--s-lg);
   font-size: var(--text-sm);
 }
 
-/* Loading state */
-.btn--loading {
+.btn-loading {
   cursor: progress;
 }
 

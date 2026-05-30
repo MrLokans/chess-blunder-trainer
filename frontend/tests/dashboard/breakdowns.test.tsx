@@ -186,8 +186,8 @@ describe('EcoBreakdown', () => {
         }}
       />
     );
-    expect(container.querySelector('.eco-group-header')).toBeDefined();
-    expect(container.querySelectorAll('.eco-group-child').length).toBe(2);
+    expect(container.querySelector('.eco-group-header')).not.toBeNull();
+    expect(container.querySelector('.eco-child-indent')).toBeNull();
   });
 
   test('toggles expand/collapse on group header click', () => {
@@ -203,43 +203,32 @@ describe('EcoBreakdown', () => {
       />
     );
 
-    const childRows = container.querySelectorAll<HTMLElement>('.eco-group-child');
-    const firstChild = childRows[0] as HTMLElement;
-    expect(firstChild.style.display).toBe('none');
+    expect(container.querySelectorAll('.eco-child-indent').length).toBe(0);
 
     const header = container.querySelector('.eco-group-header') as HTMLElement;
     fireEvent.click(header);
-
-    const childRowsAfter = container.querySelectorAll<HTMLElement>('.eco-group-child');
-    const firstChildAfter = childRowsAfter[0] as HTMLElement;
-    expect(firstChildAfter.style.display).not.toBe('none');
+    expect(container.querySelectorAll('.eco-child-indent').length).toBe(2);
 
     fireEvent.click(header);
-    const childRowsCollapsed = container.querySelectorAll<HTMLElement>('.eco-group-child');
-    const firstChildCollapsed = childRowsCollapsed[0] as HTMLElement;
-    expect(firstChildCollapsed.style.display).toBe('none');
+    expect(container.querySelectorAll('.eco-child-indent').length).toBe(0);
   });
 });
 
 describe('GameBreakdownTable', () => {
   test('renders table rows with correct data', () => {
     const { container } = render(
-      <table>
-        <tbody>
-          <GameBreakdownTable
-            items={[
-              { source: 'lichess', username: 'user1', total_games: 100, analyzed_games: 80, pending_games: 20 },
-            ]}
-          />
-        </tbody>
-      </table>
+      <GameBreakdownTable
+        items={[
+          { source: 'lichess', username: 'user1', total_games: 100, analyzed_games: 80, pending_games: 20 },
+        ]}
+      />
     );
     expect(screen.getByText('lichess')).toBeDefined();
     expect(screen.getByText('user1')).toBeDefined();
     expect(screen.getByText('100')).toBeDefined();
     expect(screen.getByText('80')).toBeDefined();
     expect(screen.getByText('20')).toBeDefined();
-    expect(container.querySelectorAll('tr').length).toBe(1);
+    expect(container.querySelectorAll('tbody tr').length).toBe(1);
   });
 
   test('renders no_data message for empty items', () => {
@@ -249,18 +238,14 @@ describe('GameBreakdownTable', () => {
 
   test('renders multiple rows', () => {
     const { container } = render(
-      <table>
-        <tbody>
-          <GameBreakdownTable
-            items={[
-              { source: 'lichess', username: 'user1', total_games: 50, analyzed_games: 40, pending_games: 10 },
-              { source: 'chess.com', username: 'user2', total_games: 30, analyzed_games: 25, pending_games: 5 },
-            ]}
-          />
-        </tbody>
-      </table>
+      <GameBreakdownTable
+        items={[
+          { source: 'lichess', username: 'user1', total_games: 50, analyzed_games: 40, pending_games: 10 },
+          { source: 'chess.com', username: 'user2', total_games: 30, analyzed_games: 25, pending_games: 5 },
+        ]}
+      />
     );
-    expect(container.querySelectorAll('tr').length).toBe(2);
+    expect(container.querySelectorAll('tbody tr').length).toBe(2);
   });
 });
 

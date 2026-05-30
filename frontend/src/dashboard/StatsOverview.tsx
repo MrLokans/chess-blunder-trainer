@@ -1,3 +1,4 @@
+import { Button } from '../components/Button';
 import { StatCard } from '../components/StatCard';
 import type { AnalysisStatus } from './types';
 
@@ -38,9 +39,11 @@ function AnalysisStatusDisplay({ status, onRetry }: AnalysisStatusDisplayProps) 
     return (
       <div data-testid="analysis-status" class="text-sm text-muted mt-2 text-error">
         {t('dashboard.analysis.failed')}
-        <button type="button" class="btn btn-sm" style="margin-left: 8px; padding: 4px 10px; font-size: 0.75rem;" onClick={onRetry}>
-          {t('dashboard.analysis.retry')}
-        </button>
+        <span style="margin-left: var(--s-sm);">
+          <Button variant="secondary" size="sm" onClick={onRetry}>
+            {t('dashboard.analysis.retry')}
+          </Button>
+        </span>
       </div>
     );
   }

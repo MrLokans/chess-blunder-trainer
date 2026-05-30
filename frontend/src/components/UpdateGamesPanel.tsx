@@ -36,7 +36,8 @@ export function UpdateGamesPanel({
         title={t('management.update.empty_title')}
         message={t('management.update.empty_message')}
         action={
-          <a class="btn btn--primary btn--md" href="/profiles">
+          // eslint-disable-next-line no-restricted-syntax -- styled navigational <a>; Button renders a <button>, not a link
+          <a class="btn btn-primary btn-md" href="/profiles">
             {t('management.update.empty_cta')}
           </a>
         }

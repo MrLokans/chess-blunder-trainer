@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { Button } from '../components/Button';
 import type { DatePreset } from './types';
 import { GAME_TYPES, GAME_PHASES } from '../shared/constants';
 
@@ -149,12 +150,12 @@ export function DashboardFilters({
             />
           </div>
           <div class="filter-group">
-            <button type="button" class="btn btn-primary btn-sm" onClick={handleApplyDate}>
+            <Button variant="primary" size="sm" onClick={handleApplyDate}>
               {t('common.apply')}
-            </button>
-            <button type="button" class="btn btn-sm" onClick={handleClearDate}>
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleClearDate}>
               {t('common.clear')}
-            </button>
+            </Button>
           </div>
         </div>
 

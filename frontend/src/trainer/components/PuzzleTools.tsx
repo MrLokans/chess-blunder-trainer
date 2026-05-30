@@ -50,18 +50,21 @@ export function PuzzleTools({ puzzle, starred, onStarredChange }: PuzzleToolsPro
   return (
     <div class="panel-section puzzle-tools" id="blunderSection">
       {hasStarred && (
+        // eslint-disable-next-line no-restricted-syntax -- needs a visible title tooltip; <Button> exposes no title prop
         <button class="btn btn-ghost" id="starPuzzleBtn" onClick={() => { void handleStar(); }} title={starred ? t('trainer.star.remove') : t('trainer.star.add')}>
           {starred ? '\u2605' : '\u2606'} {starred ? t('trainer.star.remove') : t('trainer.star.add')}
         </button>
       )}
 
       {hasDebug && (
+        // eslint-disable-next-line no-restricted-syntax -- needs a visible title tooltip; <Button> exposes no title prop
         <button class="btn btn-ghost" id="copyDebugBtn" onClick={() => { void handleCopyDebug(); }} title={t('trainer.debug.copy_title')}>
           {copyLabel ? `\u2705 ${copyLabel}` : `\ud83d\udccb ${t('trainer.debug.copy')}`}
         </button>
       )}
 
       {hasGameReview && (
+        // eslint-disable-next-line no-restricted-syntax -- navigational anchor, not a <button>; <Button> renders only <button>
         <a href={reviewUrl} class="btn btn-ghost" id="reviewGameLink">
           {t('game_review.link.review_game')}
         </a>

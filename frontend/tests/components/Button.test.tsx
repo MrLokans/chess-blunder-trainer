@@ -12,18 +12,18 @@ describe('Button', () => {
   test('default variant and size are primary/md', () => {
     render(<Button>X</Button>);
     const cls = screen.getByRole('button').className;
-    expect(cls).toContain('btn--primary');
-    expect(cls).toContain('btn--md');
+    expect(cls).toContain('btn-primary');
+    expect(cls).toContain('btn-md');
   });
 
   test('applies variant class', () => {
     render(<Button variant="danger">X</Button>);
-    expect(screen.getByRole('button').className).toContain('btn--danger');
+    expect(screen.getByRole('button').className).toContain('btn-danger');
   });
 
   test('applies size class', () => {
     render(<Button size="sm">X</Button>);
-    expect(screen.getByRole('button').className).toContain('btn--sm');
+    expect(screen.getByRole('button').className).toContain('btn-sm');
   });
 
   test('forwards onClick when enabled', async () => {

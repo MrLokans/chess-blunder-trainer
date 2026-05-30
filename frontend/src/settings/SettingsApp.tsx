@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
 import { STORAGE_KEYS } from '../shared/storage-keys';
 import { Alert } from '../components/Alert';
+import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { FeatureToggles } from './FeatureToggles';
 import { SyncSettings } from './SyncSettings';
@@ -179,11 +180,12 @@ export function SettingsApp({ init }: SettingsAppProps) {
         />
 
         <div class="btn-row mt-8">
+          {/* eslint-disable-next-line no-restricted-syntax -- navigational anchor, not a <button>; <Button> renders only <button> */}
           <a class="btn btn-secondary" href="/">{t('common.cancel')}</a>
           {!init.demoMode && (
-            <button type="submit" class="btn btn-primary" disabled={saving}>
+            <Button type="submit" variant="primary" disabled={saving}>
               {saving ? t('settings.saving') : t('settings.save')}
-            </button>
+            </Button>
           )}
         </div>
       </form>

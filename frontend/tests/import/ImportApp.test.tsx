@@ -162,8 +162,8 @@ describe('ImportApp', () => {
 
   test('submit button disabled when textarea is empty', () => {
     render(<ImportApp demoMode={false} />);
-    const btn = screen.getByText(t('import.submit'));
-    expect(btn.disabled).toBe(true);
+    const btn = screen.getByRole('button', { name: t('import.submit') });
+    expect(btn.hasAttribute('disabled')).toBe(true);
   });
 
   test('go to trainer link shown after success', async () => {
