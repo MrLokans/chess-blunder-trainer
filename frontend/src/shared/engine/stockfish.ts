@@ -49,6 +49,13 @@ export class StockfishEngine {
   private _infos = new Map<number, ParsedInfo>();
   private _depth = 0;
   private _blackToMove = false;
+  private _multipv = 1;
+  private _searching = false;
+  private _pendingFen: string | null = null;
+  // True between sending `stop` and receiving `bestmove`: any `info` lines
+  // emitted during this window belong to the previous (now-aborted) search
+  // and must not be folded into the new search's results.
+  private _discardInfo = false;
   private _resolveReady: (() => void) | null = null;
   private _rejectReady: ((reason: Error) => void) | null = null;
 
@@ -67,17 +74,28 @@ export class StockfishEngine {
   }
 
   setMultiPV(n: number): void {
-    this._worker.postMessage(`setoption name MultiPV value ${String(n)}`);
+    this._multipv = n;
   }
 
+  // Sending `position` / `go` while the engine is still searching the previous
+  // position races the worker and traps the WASM build with
+  // `RuntimeError: unreachable` / `function signature mismatch`. UCI requires
+  // waiting for `bestmove` after `stop` before starting a new search — so we
+  // queue the request and drain on `bestmove`.
   analyze(fen: string): void {
-    this._worker.postMessage('stop');
     this._infos.clear();
     this._depth = 0;
-    // UCI scores are side-to-move-relative; normalize to White POV on ingestion.
     this._blackToMove = fen.split(' ')[1] === 'b';
-    this._worker.postMessage(`position fen ${fen}`);
-    this._worker.postMessage('go infinite');
+    this._pendingFen = fen;
+    this._notify();
+    if (this._searching) {
+      if (!this._discardInfo) {
+        this._discardInfo = true;
+        this._worker.postMessage('stop');
+      }
+      return;
+    }
+    this._beginPendingSearch();
   }
 
   stop(): void {
@@ -94,6 +112,17 @@ export class StockfishEngine {
     this._worker.terminate();
   }
 
+  private _beginPendingSearch(): void {
+    if (this._pendingFen === null) return;
+    const fen = this._pendingFen;
+    this._pendingFen = null;
+    this._searching = true;
+    this._discardInfo = false;
+    this._worker.postMessage(`setoption name MultiPV value ${String(this._multipv)}`);
+    this._worker.postMessage(`position fen ${fen}`);
+    this._worker.postMessage('go infinite');
+  }
+
   private _onMessage(data: string): void {
     if (data === 'uciok') { this._worker.postMessage('isready'); return; }
     if (data === 'readyok') {
@@ -102,12 +131,22 @@ export class StockfishEngine {
       this._rejectReady = null;
       return;
     }
-
+    if (data.startsWith('bestmove')) {
+      this._searching = false;
+      this._beginPendingSearch();
+      return;
+    }
+    if (this._discardInfo) return;
     const info = parseInfoLine(data);
     if (!info) return;
     this._depth = info.depth;
     this._infos.set(info.multipv, info);
+    this._notify();
+  }
+
+  private _notify(): void {
     const rawLines = foldLines(Array.from(this._infos.values()));
+    // UCI scores are side-to-move-relative; normalize to White POV.
     const lines = this._blackToMove
       ? rawLines.map(l => ({
           ...l,

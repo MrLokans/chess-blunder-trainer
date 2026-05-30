@@ -129,6 +129,56 @@ describe('StockfishEngine', () => {
     expect(last.lines[0]?.mate).toBe(-2);
   });
 
+  it('defers a second analyze() until bestmove drains the previous search', () => {
+    const { w, posted, emit } = fakeWorker();
+    const eng = new StockfishEngine(w);
+    emit('uciok'); emit('readyok');
+
+    eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    const goCountAfterFirst = posted.filter(m => m.startsWith('go')).length;
+    expect(goCountAfterFirst).toBe(1);
+
+    // Second analyze while the first is still in flight: must NOT send a new
+    // position/go (would race the worker and trap WASM). Should send `stop`
+    // and wait.
+    eng.analyze('8/8/8/8/8/8/8/8 w - - 0 1');
+    expect(posted).toContain('stop');
+    expect(posted).not.toContain('position fen 8/8/8/8/8/8/8/8 w - - 0 1');
+    expect(posted.filter(m => m.startsWith('go')).length).toBe(1);
+
+    // Engine acknowledges stop — the deferred search begins now.
+    emit('bestmove e2e4');
+    expect(posted).toContain('position fen 8/8/8/8/8/8/8/8 w - - 0 1');
+    expect(posted.filter(m => m.startsWith('go')).length).toBe(2);
+  });
+
+  it('discards info lines that arrive between stop and bestmove', () => {
+    const { w, emit } = fakeWorker();
+    const eng = new StockfishEngine(w);
+    emit('uciok'); emit('readyok');
+    const updates: EngineUpdate[] = [];
+    eng.subscribe(u => updates.push(u));
+
+    eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    emit('info depth 10 multipv 1 score cp 5 pv e2e4');
+
+    // Switch positions; the following info is from the now-aborted search
+    // and must be ignored. The cleared state from analyze() is the last
+    // legitimate update until the engine catches up.
+    eng.analyze('8/8/8/8/8/8/8/8 w - - 0 1');
+    const updatesBeforeStaleInfo = updates.length;
+    emit('info depth 11 multipv 1 score cp 99 pv h2h4');
+    expect(updates).toHaveLength(updatesBeforeStaleInfo);
+
+    // After bestmove, the new search starts; subsequent info is folded in.
+    emit('bestmove e2e4');
+    emit('info depth 5 multipv 1 score cp -20 pv c2c4');
+    const last = updates.at(-1);
+    expect(last?.lines).toEqual([
+      { multipv: 1, scoreCp: -20, mate: null, pv: ['c2c4'] },
+    ]);
+  });
+
   it('does not flip scores for white-to-move positions', () => {
     const { w, emit } = fakeWorker();
     const eng = new StockfishEngine(w);
