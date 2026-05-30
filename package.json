@@ -7,6 +7,8 @@
     "typecheck": "tsc --noEmit --project frontend/tsconfig.json",
     "lint": "eslint --config frontend/eslint.config.ts frontend/src/ frontend/tests/",
     "lint:fix": "eslint --config frontend/eslint.config.ts frontend/src/ frontend/tests/ --fix",
+    "lint:css": "stylelint \"blunder_tutor/web/static/css/**/*.css\"",
+    "lint:css:fix": "stylelint \"blunder_tutor/web/static/css/**/*.css\" --fix",
     "test": "vitest run --config frontend/vitest.config.ts",
     "test:watch": "vitest --config frontend/vitest.config.ts",
     "test:coverage": "vitest run --config frontend/vitest.config.ts --coverage"
@@ -23,6 +25,8 @@
     "globals": "^16.0.0",
     "jiti": "^2.6.1",
     "jsdom": "^25.0.0",
+    "stylelint": "^17.12.0",
+    "stylelint-value-no-unknown-custom-properties": "^6.1.1",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.0.0",
     "vite": "^6.0.0",

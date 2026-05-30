@@ -121,8 +121,9 @@ lint/be: ## Lint Python with ruff
 lint/be-wps: ## Lint Python with wemake-python-styleguide
 	$(UV) run flake8 --select=WPS blunder_tutor/ main.py tests/
 
-lint/fe: ## Lint TypeScript with ESLint
+lint/fe: ## Lint TypeScript with ESLint + CSS with stylelint
 	npm run lint
+	npm run lint:css
 
 lint/e2e: ## Lint E2E tests with ESLint
 	cd e2e && npm run lint
@@ -137,6 +138,7 @@ fix: ## Auto-fix linting issues
 	$(UV) run ruff format
 	$(UV) run ruff check --fix --unsafe-fixes blunder_tutor/ main.py
 	npm run lint:fix
+	npm run lint:css:fix
 	cd e2e && npm run lint:fix
 
 test: test/be test/fe ## Run all tests

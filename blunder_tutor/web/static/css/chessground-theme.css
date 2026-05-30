@@ -5,6 +5,8 @@
    ========================================================================== */
 
 cg-board {
+  /* --board-bg is injected at runtime from JS (analysis-board.ts / sequence-player.ts). */
+  /* stylelint-disable-next-line csstools/value-no-unknown-custom-properties */
   background-image: var(--board-bg);
 }
 
@@ -77,7 +79,7 @@ cg-board square.highlight-tactic-secondary {
    Coordinate Labels — inside-board positioning
    ========================================================================== */
 
-#board.cg-wrap coords {
+.cg-wrap coords {
   font-family: var(--font-ui, sans-serif);
   font-size: 11px;
   font-weight: 700;
@@ -86,8 +88,8 @@ cg-board square.highlight-tactic-secondary {
   z-index: 2;
 }
 
-#board.cg-wrap coords.ranks,
-#board.cg-wrap coords.ranks.left {
+.cg-wrap coords.ranks,
+.cg-wrap coords.ranks.left {
   left: 2px;
   top: 0;
   height: 100%;
@@ -95,7 +97,7 @@ cg-board square.highlight-tactic-secondary {
   align-items: flex-start;
 }
 
-#board.cg-wrap coords.ranks coord {
+.cg-wrap coords.ranks coord {
   transform: none;
   display: flex;
   align-items: flex-start;
@@ -103,15 +105,15 @@ cg-board square.highlight-tactic-secondary {
   line-height: 1;
 }
 
-#board.cg-wrap coords.files,
-#board.cg-wrap coords.files.black {
+.cg-wrap coords.files,
+.cg-wrap coords.files.black {
   bottom: 0;
   left: 0;
   width: 100%;
   height: 12.5%;
 }
 
-#board.cg-wrap coords.files coord {
+.cg-wrap coords.files coord {
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
@@ -119,15 +121,15 @@ cg-board square.highlight-tactic-secondary {
   padding-bottom: 5px;
 }
 
-#board.cg-wrap.hide-coords coords {
+.cg-wrap.hide-coords coords {
   display: none;
 }
 
-#board.cg-wrap coords coord.coord-light {
+.cg-wrap coords coord.coord-light {
   color: var(--board-dark, #8B7355);
 }
 
-#board.cg-wrap coords coord.coord-dark {
+.cg-wrap coords coord.coord-dark {
   color: var(--board-light, #D4C4A0);
 }
 

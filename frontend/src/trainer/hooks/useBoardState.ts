@@ -2,10 +2,11 @@ import { useMemo, useContext } from 'preact/hooks';
 import { TrainerContext } from '../context';
 import {
   buildBlunderHighlight, buildBestMoveHighlight, buildUserMoveHighlight,
-  buildTacticalHighlights, mergeHighlights,
+  buildTacticalHighlights,
 } from '../highlights';
-import type { HighlightMap } from '../highlights';
-import { buildThreatHighlights } from '../threats';
+import type { HighlightMap } from '../../shared/highlights';
+import { mergeHighlights } from '../../shared/highlights';
+import { buildThreatHighlights } from '../../shared/threats';
 
 export interface Arrow {
   from: string;

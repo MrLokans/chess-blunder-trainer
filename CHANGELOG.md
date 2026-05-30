@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.8]
+
+### Added
+
+- **Interactive engine analysis on the game review page**: The `/game/{id}` review page now runs multi-threaded Stockfish directly in the browser (WASM via Web Worker). Features a live eval bar (White-POV), best-move arrows, threat highlights, and a user-adjustable multi-PV lines panel. Snap-back exploration lets you try alternative moves without leaving the game — the move list always reflects the real game, and one click restores it. Gated by the new `review.engine` feature flag (off by default, toggle in Settings → Pages). The review route is now cross-origin isolated (required for `SharedArrayBuffer` / multi-threading); fonts are self-hosted as a result.
+
+---
+
 ## [3.1.7]
 
 ### Added

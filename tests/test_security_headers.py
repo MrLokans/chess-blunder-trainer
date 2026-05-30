@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from http import HTTPStatus
 import argparse as _ap
 import os as _os
+from http import HTTPStatus
 from pathlib import Path
 
 import httpx

@@ -25,6 +25,13 @@ export const STORAGE_KEYS = {
   importSource: 'blunder_import_source',
   importUsername: 'blunder_import_username',
   importMaxGames: 'blunder_import_maxGames',
+
+  // Game review engine
+  reviewMultiPv: 'blunder-tutor-review-multipv',
+  reviewMaxDepth: 'blunder-tutor-review-max-depth',
+  reviewShowArrows: 'blunder-tutor-review-show-arrows',
+  reviewShowThreats: 'blunder-tutor-review-show-threats',
+  reviewAnalysisMode: 'blunder-tutor-review-analysis-mode',
 } as const;
 
 export const ALL_STORAGE_KEYS = Object.values(STORAGE_KEYS);

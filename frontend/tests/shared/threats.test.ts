@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { loadChessGlobal } from '../helpers/chess';
-import { buildThreatHighlights } from '../../src/trainer/threats';
+import { buildThreatHighlights } from '../../src/shared/threats';
 
 loadChessGlobal();
 

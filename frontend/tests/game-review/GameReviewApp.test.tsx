@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { GameReviewApp } from '../../src/game-review/GameReviewApp';
@@ -102,6 +102,10 @@ describe('GameReviewApp', () => {
 
     mockGetReview.mockResolvedValue(REVIEW_DATA);
     mockGetBoard.mockResolvedValue({ board_light: '#fff', board_dark: '#aaa', piece_set: 'gioco' });
+  });
+
+  afterEach(() => {
+    delete window.__features;
   });
 
   test('shows loading state initially', () => {
@@ -296,5 +300,15 @@ describe('GameReviewApp', () => {
 
     await user.click(screen.getByText('e4'));
     expect(mockSequence.goTo).toHaveBeenCalledWith(0);
+  });
+
+  test('does not render engine controls when review.engine feature is off', async () => {
+    window.__features = { 'review.engine': false };
+    const { container } = render(<GameReviewApp gameId="test-game-id" />);
+    await waitFor(() => {
+      expect(screen.getByText('e4')).toBeDefined();
+    });
+    expect(container.querySelector('#engineControls')).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: t('game_review.engine.enable') })).toBeNull();
   });
 });
