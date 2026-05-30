@@ -1,3 +1,15 @@
+/* Self-hosted fonts (replaces cross-origin Google Fonts so the review
+   route can be cross-origin isolated for multi-threaded WASM). */
+@font-face { font-family: 'Jost'; font-style: normal; font-weight: 300; font-display: swap; src: url('/static/fonts/jost-300.woff2') format('woff2'); }
+@font-face { font-family: 'Jost'; font-style: normal; font-weight: 400; font-display: swap; src: url('/static/fonts/jost-400.woff2') format('woff2'); }
+@font-face { font-family: 'Jost'; font-style: normal; font-weight: 500; font-display: swap; src: url('/static/fonts/jost-500.woff2') format('woff2'); }
+@font-face { font-family: 'Jost'; font-style: normal; font-weight: 600; font-display: swap; src: url('/static/fonts/jost-600.woff2') format('woff2'); }
+@font-face { font-family: 'Jost'; font-style: normal; font-weight: 700; font-display: swap; src: url('/static/fonts/jost-700.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 300; font-display: swap; src: url('/static/fonts/dm-sans-300.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400; font-display: swap; src: url('/static/fonts/dm-sans-400.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 500; font-display: swap; src: url('/static/fonts/dm-sans-500.woff2') format('woff2'); }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 700; font-display: swap; src: url('/static/fonts/dm-sans-700.woff2') format('woff2'); }
+
 /* ==========================================================================
    Bauhaus Design System — Design Tokens
    ========================================================================== */

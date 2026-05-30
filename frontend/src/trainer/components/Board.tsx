@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Chessground } from '@vendor/chessground';
-import type { HighlightMap } from '../highlights';
+import type { HighlightMap } from '../../shared/highlights';
 import type { Arrow } from '../hooks/useBoardState';
 
 interface ChessgroundShape {

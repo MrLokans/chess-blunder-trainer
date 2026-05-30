@@ -268,3 +268,110 @@
     max-height: 300px;
   }
 }
+
+/* ==========================================================================
+   Analysis Panel — Engine Controls & Lines
+   ========================================================================== */
+
+.review-engine {
+  padding: var(--space-3, 12px);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.engine-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 12px);
+  align-items: center;
+  margin-bottom: var(--space-3, 12px);
+}
+
+.engine-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-size: var(--text-sm, 0.8125rem);
+  cursor: pointer;
+}
+
+.engine-multipv {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-size: var(--text-sm, 0.8125rem);
+}
+
+.engine-multipv select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 0);
+  padding: 0.15rem 0.4rem;
+  font-family: inherit;
+  font-size: var(--text-sm, 0.8125rem);
+}
+
+.engine-back {
+  margin-left: auto;
+}
+
+.engine-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: var(--space-3, 12px);
+}
+
+.engine-lines-header {
+  color: var(--text-muted);
+  font-size: var(--text-xs, 0.6875rem);
+  margin-bottom: 0.25rem;
+}
+
+.engine-line-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 0);
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm, 0.8125rem);
+}
+
+.engine-line-row:hover {
+  background: var(--warm-gray);
+  border-color: var(--primary);
+}
+
+.engine-line-eval {
+  font-weight: 600;
+  min-width: 3.2em;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.engine-line-pv {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.engine-status {
+  color: var(--text-muted);
+  font-size: var(--text-sm, 0.8125rem);
+  padding: 0.25rem 0;
+}
+
+.engine-status-error {
+  color: var(--error);
+}

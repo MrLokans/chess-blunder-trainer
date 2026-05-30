@@ -103,6 +103,20 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
+### Stockfish 18 (lite single-threaded WASM)
+
+- **Author:** Stockfish contributors; WASM build by Nathan Rugg (`nmrugg`)
+- **License:** GPL-3.0-or-later
+- **Source:** [https://github.com/nmrugg/stockfish.js](https://github.com/nmrugg/stockfish.js)
+  (built from [https://github.com/official-stockfish/Stockfish](https://github.com/official-stockfish/Stockfish))
+- **Files:** `stockfish/stockfish-18-lite-single.js`, `stockfish/stockfish-18-lite-single.wasm`
+
+Browser-side single-threaded WASM build, fetched as version 18.0.7 from the
+`stockfish` npm package. Used by the game-review page for live engine
+analysis in the user's browser. This is a separate distribution from the
+native Stockfish binary listed under *External Services* below, which the
+Python backend invokes server-side.
+
 ---
 
 ## Vendored Data Files

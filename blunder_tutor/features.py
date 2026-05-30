@@ -36,6 +36,7 @@ class Feature(StrEnum):
     STARRED_PUZZLES = "starred.puzzles"
 
     PAGE_GAME_REVIEW = "page.game_review"
+    REVIEW_ENGINE = "review.engine"
 
     DEBUG_COPY = "debug.copy"
 
@@ -51,6 +52,7 @@ DEFAULTS: MappingProxyType[Feature, bool] = MappingProxyType(
         Feature.PAGE_IMPORT: False,
         Feature.STARRED_PUZZLES: False,
         Feature.PAGE_GAME_REVIEW: False,
+        Feature.REVIEW_ENGINE: False,
         Feature.DEBUG_COPY: False,
     }
 )
@@ -66,6 +68,7 @@ FEATURE_GROUPS: tuple[FeatureGroup, ...] = (
             Feature.PAGE_PROFILES,
             Feature.PAGE_IMPORT,
             Feature.PAGE_GAME_REVIEW,
+            Feature.REVIEW_ENGINE,
         ),
     ),
     (
@@ -134,6 +137,7 @@ FEATURE_LABELS: MappingProxyType[Feature, str] = MappingProxyType(
         Feature.AUTO_ANALYZE: "settings.features.auto_analyze",
         Feature.STARRED_PUZZLES: "settings.features.starred_puzzles",
         Feature.PAGE_GAME_REVIEW: "settings.features.page_game_review",
+        Feature.REVIEW_ENGINE: "settings.features.review_engine",
         Feature.DEBUG_COPY: "settings.features.debug_copy",
     }
 )

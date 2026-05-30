@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
 import { MoveSequence, ReadOnlyBoard, PlaybackController } from '../shared/sequence-player';
+import { AnalysisBoard } from '../shared/analysis-board';
 import { applyBoardBackground, applyPieceSet } from '../shared/board-theme';
 import { updateEvalBar } from '../shared/eval-bar';
 import { EvalChart, evalFromWhite } from './eval-chart';
+import { EngineControls } from './EngineControls';
+import { EngineLinesPanel } from './EngineLinesPanel';
+import { useAnalysisMode } from './useAnalysisMode';
 import type { ReviewMove, ReviewData } from '../types/api';
 
 interface MovePair {
@@ -123,14 +127,19 @@ function EvalChartCanvas({ moves, activeIndex, onSelect }: EvalChartProps) {
 interface EvalBarProps {
   moves: ReviewMove[];
   activeIndex: number;
+  liveCp?: number | null;
 }
 
-function EvalBar({ moves, activeIndex }: EvalBarProps) {
+function EvalBar({ moves, activeIndex, liveCp }: EvalBarProps) {
   const fillRef = useRef<HTMLDivElement>(null);
   const valueRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!fillRef.current || !valueRef.current) return;
+    if (liveCp != null) {
+      updateEvalBar(liveCp, 'white', fillRef.current, valueRef.current);
+      return;
+    }
     if (moves.length > 0 && activeIndex >= 0 && activeIndex < moves.length) {
       const move = moves[activeIndex];
       if (!move) return;
@@ -138,7 +147,7 @@ function EvalBar({ moves, activeIndex }: EvalBarProps) {
     } else {
       updateEvalBar(0, 'white', fillRef.current, valueRef.current);
     }
-  }, [moves, activeIndex]);
+  }, [moves, activeIndex, liveCp]);
 
   return (
     <div class="eval-bar-container" id="reviewEvalBarContainer">
@@ -161,90 +170,112 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
   const [orientation, setOrientation] = useState<'white' | 'black'>('white');
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentFen, setCurrentFen] = useState('');
 
   const sequenceRef = useRef<MoveSequence | null>(null);
   const boardRef = useRef<ReadOnlyBoard | null>(null);
+  const analysisBoardRef = useRef<AnalysisBoard | null>(null);
+  const exploreGameRef = useRef<ChessInstance | null>(null);
   const playbackRef = useRef<PlaybackController | null>(null);
   const initializedRef = useRef(false);
+  const orientationRef = useRef(orientation);
+  orientationRef.current = orientation;
+
+  const analysis = useAnalysisMode({
+    currentFen,
+    boardRef: analysisBoardRef,
+    exploreGameRef,
+  });
+  const { analysisMode, resetExploration } = analysis;
+
+  const handleExploreMoveRef = useRef<() => void>(() => {});
+  handleExploreMoveRef.current = analysis.handleExploreMove;
+
+  const positionBoard = useCallback((fen: string, lastMove: { from: string; to: string } | null) => {
+    boardRef.current?.setPosition(fen, lastMove);
+    const ab = analysisBoardRef.current;
+    if (ab) {
+      const game = exploreGameRef.current;
+      if (game) game.load(fen);
+      ab.setPosition(game ?? new Chess(fen), lastMove ? [lastMove.from, lastMove.to] : null);
+    }
+    setCurrentFen(fen);
+    resetExploration(fen);
+  }, [resetExploration]);
 
   const goToIndex = useCallback((index: number) => {
     const seq = sequenceRef.current;
-    const board = boardRef.current;
     const pb = playbackRef.current;
-    if (!seq || !board || !pb) return;
+    if (!seq || !pb) return;
     pb.pause();
     setIsPlaying(false);
     seq.goTo(index);
-    board.setPosition(seq.fen, seq.lastMove);
+    positionBoard(seq.fen, seq.lastMove);
     setActiveIndex(seq.currentIndex);
-  }, []);
+  }, [positionBoard]);
 
   const goFirst = useCallback(() => {
     const seq = sequenceRef.current;
-    const board = boardRef.current;
     const pb = playbackRef.current;
-    if (!seq || !board || !pb) return;
+    if (!seq || !pb) return;
     pb.pause();
     setIsPlaying(false);
     seq.goToStart();
-    board.setPosition(seq.fen, null);
+    positionBoard(seq.fen, null);
     setActiveIndex(seq.currentIndex);
-  }, []);
+  }, [positionBoard]);
 
   const goPrev = useCallback(() => {
     const seq = sequenceRef.current;
-    const board = boardRef.current;
     const pb = playbackRef.current;
-    if (!seq || !board || !pb) return;
+    if (!seq || !pb) return;
     pb.pause();
     setIsPlaying(false);
     const result = seq.stepBack();
-    if (result) board.setPosition(seq.fen, result.lastMove);
+    if (result) positionBoard(seq.fen, result.lastMove);
     setActiveIndex(seq.currentIndex);
-  }, []);
+  }, [positionBoard]);
 
   const goNext = useCallback(() => {
     const seq = sequenceRef.current;
-    const board = boardRef.current;
     const pb = playbackRef.current;
-    if (!seq || !board || !pb) return;
+    if (!seq || !pb) return;
     pb.pause();
     setIsPlaying(false);
     const result = seq.stepForward();
-    if (result) board.setPosition(result.fen, result.lastMove);
+    if (result) positionBoard(result.fen, result.lastMove);
     setActiveIndex(seq.currentIndex);
-  }, []);
+  }, [positionBoard]);
 
   const goLast = useCallback(() => {
     const seq = sequenceRef.current;
-    const board = boardRef.current;
     const pb = playbackRef.current;
-    if (!seq || !board || !pb) return;
+    if (!seq || !pb) return;
     pb.pause();
     setIsPlaying(false);
     seq.goToEnd();
-    board.setPosition(seq.fen, seq.lastMove);
+    positionBoard(seq.fen, seq.lastMove);
     setActiveIndex(seq.currentIndex);
-  }, []);
+  }, [positionBoard]);
 
   const togglePlayPause = useCallback(() => {
     const seq = sequenceRef.current;
-    const board = boardRef.current;
     const pb = playbackRef.current;
-    if (!seq || !board || !pb) return;
+    if (!seq || !pb) return;
     if (seq.isAtEnd) {
       seq.goToStart();
-      board.setPosition(seq.fen, null);
+      positionBoard(seq.fen, null);
       setActiveIndex(seq.currentIndex);
     }
     pb.toggle();
     setIsPlaying(pb.isPlaying);
-  }, []);
+  }, [positionBoard]);
 
   const flipBoard = useCallback(() => {
     setOrientation(prev => {
       const next = prev === 'white' ? 'black' : 'white';
       boardRef.current?.setOrientation(next);
+      analysisBoardRef.current?.setOrientation(next);
       return next;
     });
   }, []);
@@ -288,34 +319,32 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
     });
   }, [gameId]);
 
+  const tickRef = useRef<() => void>(() => {});
+  tickRef.current = () => {
+    const seq = sequenceRef.current;
+    const pb = playbackRef.current;
+    if (!seq || !pb) return;
+    if (seq.isAtEnd) {
+      pb.pause();
+      setIsPlaying(false);
+      return;
+    }
+    const result = seq.stepForward();
+    if (result) positionBoard(result.fen, result.lastMove);
+    setActiveIndex(seq.currentIndex);
+  };
+
   useEffect(() => {
     if (!data || initializedRef.current) return;
-    const boardEl = document.getElementById('reviewBoard');
-    if (!boardEl) return;
     initializedRef.current = true;
 
     const sanMoves = data.moves.map(m => m.san);
     const seq = new MoveSequence(sanMoves);
     sequenceRef.current = seq;
 
-    const board = new ReadOnlyBoard(boardEl, {
-      orientation,
-      fen: seq.fen,
-    });
-    boardRef.current = board;
-
     const pb = new PlaybackController({
       speed: 1000,
-      onTick: () => {
-        if (seq.isAtEnd) {
-          pb.pause();
-          setIsPlaying(false);
-          return;
-        }
-        const result = seq.stepForward();
-        if (result) board.setPosition(result.fen, result.lastMove);
-        setActiveIndex(seq.currentIndex);
-      },
+      onTick: () => { tickRef.current(); },
     });
     playbackRef.current = pb;
 
@@ -323,23 +352,57 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
       const moveIndex = data.moves.findIndex(m => m.ply === startPly);
       if (moveIndex >= 0) {
         seq.goTo(moveIndex);
-        board.setPosition(seq.fen, seq.lastMove);
-        setActiveIndex(seq.currentIndex);
-        return;
       }
     }
 
     setActiveIndex(seq.currentIndex);
+    setCurrentFen(seq.fen);
 
     return () => {
       pb.destroy();
-      board.destroy();
       sequenceRef.current = null;
-      boardRef.current = null;
       playbackRef.current = null;
       initializedRef.current = false;
     };
   }, [data]);
+
+  useEffect(() => {
+    const seq = sequenceRef.current;
+    if (!data || !seq) return;
+    const boardEl = document.getElementById('reviewBoard');
+    if (!boardEl) return;
+
+    let analysisBoard: AnalysisBoard | null = null;
+    let readOnlyBoard: ReadOnlyBoard | null = null;
+
+    if (analysisMode) {
+      const game = new Chess(seq.fen);
+      exploreGameRef.current = game;
+      analysisBoard = new AnalysisBoard(boardEl, {
+        orientation: orientationRef.current,
+        gameRef: () => exploreGameRef.current ?? game,
+        onMove: () => { handleExploreMoveRef.current(); },
+      });
+      const lm = seq.lastMove;
+      analysisBoard.setPosition(game, lm ? [lm.from, lm.to] : null);
+      analysisBoardRef.current = analysisBoard;
+    } else {
+      readOnlyBoard = new ReadOnlyBoard(boardEl, {
+        orientation: orientationRef.current,
+        fen: seq.fen,
+      });
+      readOnlyBoard.setPosition(seq.fen, seq.lastMove);
+      boardRef.current = readOnlyBoard;
+    }
+
+    return () => {
+      analysisBoard?.destroy();
+      readOnlyBoard?.destroy();
+      analysisBoardRef.current = null;
+      boardRef.current = null;
+      exploreGameRef.current = null;
+    };
+  }, [data, analysisMode]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -426,7 +489,9 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
             </div>
 
             <div class="board-eval-wrapper">
-              {analyzed && <EvalBar moves={moves} activeIndex={activeIndex} />}
+              {(analyzed || analysisMode) && (
+                <EvalBar moves={moves} activeIndex={activeIndex} liveCp={analysis.evalCp} />
+              )}
               <div class="review-board" id="reviewBoardWrapper">
                 <div class="cg-wrap-board" id="reviewBoard" />
               </div>
@@ -443,6 +508,50 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
             {!analyzed && (
               <div class="review-not-analyzed" id="reviewNotAnalyzed">
                 {t('game_review.no_analysis')}
+              </div>
+            )}
+
+            {analysis.enabled && (
+              <EngineControls
+                analysisMode={analysis.analysisMode}
+                multipv={analysis.multipv}
+                showArrows={analysis.showArrows}
+                showThreats={analysis.showThreats}
+                exploring={analysis.exploring}
+                onToggleAnalysis={analysis.onToggleAnalysis}
+                onMultiPv={analysis.setMultiPv}
+                onToggleArrows={analysis.onToggleArrows}
+                onToggleThreats={analysis.onToggleThreats}
+                onBackToGame={analysis.backToGame}
+              />
+            )}
+
+            {analysisMode && (
+              <div class="review-engine" id="reviewEngine">
+                {analysis.status === 'loading' && (
+                  <div class="engine-status" id="engineStatusLoading">{t('game_review.engine.loading')}</div>
+                )}
+                {analysis.status === 'error' && (
+                  <div class="engine-status engine-status-error" id="engineStatusError">{t('game_review.engine.error')}</div>
+                )}
+                {analysis.status === 'ready' && (
+                  <EngineLinesPanel
+                    fen={analysis.fen}
+                    lines={analysis.lines}
+                    depth={analysis.depth}
+                    onPlayLine={analysis.playLine}
+                  />
+                )}
+                {analysis.exploring && (
+                  <button
+                    type="button"
+                    class="btn btn-secondary engine-takeback"
+                    id="reviewTakeback"
+                    onClick={analysis.takeback}
+                  >
+                    {t('game_review.engine.takeback')}
+                  </button>
+                )}
               </div>
             )}
 

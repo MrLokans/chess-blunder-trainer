@@ -5,7 +5,7 @@ repo = "builtin"
 hooks = [
     { id = "trailing-whitespace" },
     { id = "end-of-file-fixer" },
-    { id = "check-added-large-files", args = ["--maxkb=500"] },
+    { id = "check-added-large-files", args = ["--maxkb=500"], exclude = '^blunder_tutor/web/static/vendor/stockfish/stockfish-18-lite-single\.wasm$' },
     { id = "check-merge-conflict" },
 ]
 

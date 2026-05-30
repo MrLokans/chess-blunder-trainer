@@ -4,8 +4,8 @@ import {
   buildBestMoveHighlight,
   buildUserMoveHighlight,
   buildTacticalHighlights,
-  mergeHighlights,
 } from '../../src/trainer/highlights';
+import { mergeHighlights } from '../../src/shared/highlights';
 import type { PuzzleData } from '../../src/trainer/context';
 
 function makePuzzle(overrides: Partial<PuzzleData> = {}): PuzzleData {

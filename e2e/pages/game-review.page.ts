@@ -16,4 +16,8 @@ export class GameReviewPage extends BasePage {
   async expectLoaded(): Promise<void> {
     await expect(this.root).toBeVisible();
   }
+
+  async enableAnalysis(): Promise<void> {
+    await this.page.getByRole('checkbox', { name: /engine analysis/i }).check();
+  }
 }
