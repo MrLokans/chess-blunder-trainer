@@ -465,11 +465,11 @@
   }
 
   .heatmap-cell.level-0 { background: var(--heatmap-empty, var(--warm-gray)); }
-  .heatmap-cell.level-0.future { background: var(--heatmap-empty-future, #d5d0c5); }
-  .heatmap-cell.level-1 { background: var(--heatmap-l1, #9be9a8); }
-  .heatmap-cell.level-2 { background: var(--heatmap-l2, #40c463); }
-  .heatmap-cell.level-3 { background: var(--heatmap-l3, #30a14e); }
-  .heatmap-cell.level-4 { background: var(--heatmap-l4, #216e39); }
+  .heatmap-cell.level-0.future { background: var(--heatmap-empty-future); }
+  .heatmap-cell.level-1 { background: var(--heatmap-l1); }
+  .heatmap-cell.level-2 { background: var(--heatmap-l2); }
+  .heatmap-cell.level-3 { background: var(--heatmap-l3); }
+  .heatmap-cell.level-4 { background: var(--heatmap-l4); }
 
   .heatmap-legend {
     display: flex;

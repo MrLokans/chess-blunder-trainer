@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'preact/hooks';
 import { client } from '../shared/api';
 import { useFeature } from '../hooks/useFeature';
+import { useAsyncData } from '../hooks/useAsyncData';
+import { AsyncBoundary } from '../components/AsyncBoundary';
+import { EmptyState } from '../components/EmptyState';
 import type { StarredItem } from '../types/api';
 
 const PHASE_KEYS: Record<number, string> = {
@@ -10,21 +13,19 @@ const PHASE_KEYS: Record<number, string> = {
 };
 
 export function StarredApp() {
-  const [items, setItems] = useState<StarredItem[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const hasGameReview = useFeature('page.game_review');
+  const state = useAsyncData<StarredItem[]>(
+    async () => (await client.starred.list({ limit: 200 })).items,
+    [],
+  );
+  // useAsyncData owns the fetch; unstar is a local mutation, so we mirror the
+  // fetched list into state the handler can splice. Empty detection then
+  // follows the live list (unstarring the last item shows the empty slot).
+  const [items, setItems] = useState<StarredItem[] | null>(null);
 
   useEffect(() => {
-    void (async () => {
-      try {
-        const data = await client.starred.list({ limit: 200 });
-        setItems(data.items);
-      } catch (err) {
-        console.error('Failed to load starred puzzles:', err);
-        setError(err instanceof Error ? err.message : String(err));
-      }
-    })();
-  }, []);
+    setItems(state.data);
+  }, [state.data]);
 
   const handleUnstar = async (item: StarredItem) => {
     try {
@@ -35,22 +36,21 @@ export function StarredApp() {
     }
   };
 
-  if (error) {
-    return <div class="error-message">{t('common.error')}: {error}</div>;
-  }
+  return (
+    <AsyncBoundary
+      state={{ loading: state.loading, error: state.error, data: items }}
+      empty={<EmptyState title={t('starred.title')} message={t('starred.empty')} />}
+    >
+      {(rows) => renderTable(rows, hasGameReview, handleUnstar)}
+    </AsyncBoundary>
+  );
+}
 
-  if (items === null) {
-    return <p class="loading">{t('common.loading')}</p>;
-  }
-
-  if (items.length === 0) {
-    return (
-      <div class="empty-state">
-        <p>{t('starred.empty')}</p>
-      </div>
-    );
-  }
-
+function renderTable(
+  items: StarredItem[],
+  hasGameReview: boolean,
+  handleUnstar: (item: StarredItem) => Promise<void>,
+) {
   return (
     <div class="starred-list">
       <table class="starred-table">

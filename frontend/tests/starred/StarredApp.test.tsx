@@ -3,14 +3,18 @@ import { render, screen, waitFor } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { StarredApp } from '../../src/starred/StarredApp';
 
-vi.mock('../../src/shared/api', () => ({
-  client: {
-    starred: {
-      list: vi.fn(),
-      unstar: vi.fn(),
+vi.mock('../../src/shared/api', async (importActual) => {
+  const actual = await importActual<typeof import('../../src/shared/api')>();
+  return {
+    ApiError: actual.ApiError,
+    client: {
+      starred: {
+        list: vi.fn(),
+        unstar: vi.fn(),
+      },
     },
-  },
-}));
+  };
+});
 
 vi.mock('../../src/shared/features', () => ({
   hasFeature: vi.fn().mockReturnValue(false),

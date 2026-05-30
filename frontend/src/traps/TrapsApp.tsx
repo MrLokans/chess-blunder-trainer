@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
 import { Dropdown } from '../components/Dropdown';
+import { Tabs, type TabDescriptor } from '../components/Tabs';
 import SequencePlayer from '../shared/sequence-player';
 import type {
   TrapStat, TrapSummary, TrapCatalogEntry,
@@ -8,6 +9,11 @@ import type {
 } from '../types/api';
 
 type TabKey = 'trap' | 'refutation';
+
+const LINE_TABS: TabDescriptor<TabKey>[] = [
+  { key: 'trap', label: 'traps.tab.trap_line' },
+  { key: 'refutation', label: 'traps.tab.refutation_line' },
+];
 
 interface BoardPlayerProps {
   trap: TrapDetail;
@@ -94,21 +100,13 @@ function DetailPanel({ trapId, catalog, onClose }: DetailPanelProps) {
       {trap && (
         <div class="trap-detail-grid">
           <div class="trap-detail-section trap-board-section">
-            <div class="sequence-player-tabs">
-              <button
-                class={`tab-btn${activeTab === 'trap' ? ' active' : ''}`}
-                onClick={() => { setActiveTab('trap'); }}
-              >
-                {t('traps.tab.trap_line')}
-              </button>
-              <button
-                class={`tab-btn${activeTab === 'refutation' ? ' active' : ''}`}
-                onClick={() => { setActiveTab('refutation'); }}
-              >
-                {t('traps.tab.refutation_line')}
-              </button>
-            </div>
-            <BoardPlayer trap={trap} activeTab={activeTab} />
+            <Tabs<TabKey>
+              tabs={LINE_TABS.map(tab => ({ ...tab, label: t(tab.label) }))}
+              value={activeTab}
+              onChange={setActiveTab}
+            >
+              <BoardPlayer trap={trap} activeTab={activeTab} />
+            </Tabs>
           </div>
 
           <div class="trap-detail-info">

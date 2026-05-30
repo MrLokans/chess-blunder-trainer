@@ -158,6 +158,19 @@
   padding: var(--s-lg);
 }
 
+/* Top-border-only variant for stacked-list layouts: matches the visual of
+   the legacy .card (single top border, vertical-only padding so content
+   aligns flush with the surrounding container's horizontal edges). */
+.card-surface--border-top {
+  border: none;
+  border-top: 2px solid var(--black);
+  padding: var(--s-lg) 0;
+}
+
+.card-surface--border-top:last-child {
+  border-bottom: 2px solid var(--black);
+}
+
 .card-surface--interactive {
   cursor: pointer;
   transition: background var(--transition), color var(--transition);

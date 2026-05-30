@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
 import { STORAGE_KEYS } from '../shared/storage-keys';
 import { Alert } from '../components/Alert';
+import { Card } from '../components/Card';
 import { FeatureToggles } from './FeatureToggles';
 import { SyncSettings } from './SyncSettings';
 import { ThemeEditor } from './ThemeEditor';
@@ -118,7 +119,7 @@ export function SettingsApp({ init }: SettingsAppProps) {
   if (loading || !theme) return null;
 
   return (
-    <div class="card">
+    <Card border="top">
       <h2>{t('settings.title')}</h2>
       <p class="subtitle">{t('settings.subtitle')}</p>
 
@@ -188,6 +189,6 @@ export function SettingsApp({ init }: SettingsAppProps) {
       </form>
 
       {!init.demoMode && <CacheManagement />}
-    </div>
+    </Card>
   );
 }

@@ -73,6 +73,7 @@
   "common.day.wed": "Śr",
   "common.error": "Błąd",
   "common.error_boundary_message": "Coś poszło nie tak. Spróbuj ponownie załadować stronę.",
+  "common.error_unknown": "Coś poszło nie tak. Spróbuj ponownie.",
   "common.less": "Mniej",
   "common.loading": "Ładowanie...",
   "common.month.apr": "Kwi",

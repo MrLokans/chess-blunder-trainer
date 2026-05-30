@@ -221,10 +221,10 @@
   }
 
   .preview-heatmap-cell.level-0 { background: var(--heatmap-empty, var(--warm-gray)); }
-  .preview-heatmap-cell.level-1 { background: var(--heatmap-l1, #9be9a8); }
-  .preview-heatmap-cell.level-2 { background: var(--heatmap-l2, #40c463); }
-  .preview-heatmap-cell.level-3 { background: var(--heatmap-l3, #30a14e); }
-  .preview-heatmap-cell.level-4 { background: var(--heatmap-l4, #216e39); }
+  .preview-heatmap-cell.level-1 { background: var(--heatmap-l1); }
+  .preview-heatmap-cell.level-2 { background: var(--heatmap-l2); }
+  .preview-heatmap-cell.level-3 { background: var(--heatmap-l3); }
+  .preview-heatmap-cell.level-4 { background: var(--heatmap-l4); }
 
   .phase-pill.opening {
     background: var(--color-phase-opening);
@@ -285,11 +285,11 @@
   }
 
   .board-preview .square.light {
-    background: var(--preview-board-light, #f0d9b5);
+    background: var(--preview-board-light);
   }
 
   .board-preview .square.dark {
-    background: var(--preview-board-dark, #b58863);
+    background: var(--preview-board-dark);
   }
 
   .board-settings-controls {

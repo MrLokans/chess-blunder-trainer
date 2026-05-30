@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ApiError } from '../../src/shared/api';
-import { translateSignupError, translateLoginError, translateSlug } from '../../src/shared/translate-api-error';
+import { translateSignupError, translateLoginError, translateSlug, translateApiErrorToMessage } from '../../src/shared/translate-api-error';
 
 // Global `t` is stubbed in tests/helpers/setup.ts as identity (key → key).
 
@@ -37,5 +37,21 @@ describe('translateLoginError', () => {
   });
   it('falls back to generic for non-401 unknown', () => {
     expect(translateLoginError(new ApiError(500, 'boom'))).toBe('auth.login.error_generic');
+  });
+});
+
+describe('translateApiErrorToMessage', () => {
+  it('surfaces an ApiError message', () => {
+    expect(translateApiErrorToMessage(new ApiError(500, 'server fell over'))).toBe('server fell over');
+  });
+  it('surfaces a plain Error message', () => {
+    expect(translateApiErrorToMessage(new Error('Network error'))).toBe('Network error');
+  });
+  it('falls back to a generic key for an empty ApiError message', () => {
+    expect(translateApiErrorToMessage(new ApiError(500, ''))).toBe('common.error_unknown');
+  });
+  it('falls back to a generic key for a non-error value', () => {
+    expect(translateApiErrorToMessage('weird')).toBe('common.error_unknown');
+    expect(translateApiErrorToMessage(undefined)).toBe('common.error_unknown');
   });
 });

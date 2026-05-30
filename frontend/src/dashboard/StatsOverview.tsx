@@ -1,3 +1,4 @@
+import { StatCard } from '../components/StatCard';
 import type { AnalysisStatus } from './types';
 
 export interface StatsOverviewProps {
@@ -58,26 +59,18 @@ export function StatsOverview({
 
   return (
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">{t('dashboard.stat.total_games')}</div>
-        <div class="stat-value">{String(totalGames)}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">{t('dashboard.stat.analyzed_games')}</div>
-        <div class="stat-value">{String(analyzedGames)}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">{t('dashboard.stat.total_blunders')}</div>
-        <div class="stat-value">{String(totalBlunders)}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">{t('dashboard.stat.analysis_progress')}</div>
-        <div class="stat-value">{`${String(progressPercent)}%`}</div>
+      <StatCard label={t('dashboard.stat.total_games')} value={totalGames} />
+      <StatCard label={t('dashboard.stat.analyzed_games')} value={analyzedGames} />
+      <StatCard label={t('dashboard.stat.total_blunders')} value={totalBlunders} />
+      <StatCard
+        label={t('dashboard.stat.analysis_progress')}
+        value={`${String(progressPercent)}%`}
+      >
         <div class="progress-bar">
           <div class="progress-fill" style={{ width: `${String(progressPercent)}%` }} />
         </div>
         <AnalysisStatusDisplay status={analysisStatus} onRetry={onRetryAnalysis} />
-      </div>
+      </StatCard>
     </div>
   );
 }

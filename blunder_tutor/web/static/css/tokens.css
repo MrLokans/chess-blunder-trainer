@@ -40,6 +40,8 @@
   /* Hover/state shades — derived from primary triad */
   --yellow-hover: #E0B020;
   --red-hover: #B81E1E;
+  --success-hover: #247A33;
+  --danger-hover: #B81E1E;
   --red-focus-ring: rgba(212, 40, 40, 0.25);
 
   /* Legacy aliases for compatibility */
@@ -172,4 +174,24 @@
   /* Board colors */
   --board-light: #E0E0E0;
   --board-dark: #A0A0A0;
+
+  /* Board preview colors (classic wood theme) */
+  --preview-board-light: #f0d9b5;
+  --preview-board-dark: #b58863;
+
+  /* Activity heatmap (GitHub-style green ramp) */
+  --heatmap-empty-future: #d5d0c5;
+  --heatmap-l1: #9be9a8;
+  --heatmap-l2: #40c463;
+  --heatmap-l3: #30a14e;
+  --heatmap-l4: #216e39;
+
+  /* Vim-input overlay (dark terminal palette) */
+  --vim-prefix: #888;
+  --vim-text: #e8e8e8;
+  --vim-caret: #7ec8e3;
+  --vim-placeholder: #555;
+  --vim-suggestion: #999;
+  --vim-suggestion-hover: #ccc;
+  --vim-error: #e74c3c;
 }

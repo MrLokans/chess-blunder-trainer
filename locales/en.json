@@ -73,6 +73,7 @@
   "common.day.wed": "Wed",
   "common.error": "Error",
   "common.error_boundary_message": "Something went wrong. Please try reloading the page.",
+  "common.error_unknown": "Something went wrong. Please try again.",
   "common.less": "Less",
   "common.loading": "Loading...",
   "common.month.apr": "Apr",

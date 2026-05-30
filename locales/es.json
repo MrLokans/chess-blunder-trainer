@@ -73,6 +73,7 @@
   "common.day.wed": "Mié",
   "common.error": "Error",
   "common.error_boundary_message": "Algo salió mal. Por favor, intente recargar la página.",
+  "common.error_unknown": "Algo salió mal. Por favor, inténtelo de nuevo.",
   "common.less": "Menos",
   "common.loading": "Cargando...",
   "common.month.apr": "Abr",

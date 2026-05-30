@@ -73,6 +73,7 @@
   "common.day.wed": "Ср",
   "common.error": "Помилка",
   "common.error_boundary_message": "Щось пішло не так. Будь ласка, спробуйте перезавантажити сторінку.",
+  "common.error_unknown": "Щось пішло не так. Будь ласка, спробуйте ще раз.",
   "common.less": "Менше",
   "common.loading": "Завантаження...",
   "common.month.apr": "Кві",

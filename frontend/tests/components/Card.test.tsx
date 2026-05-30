@@ -55,4 +55,38 @@ describe('Card', () => {
     await user.click(container.firstElementChild as Element);
     expect(onClick).not.toHaveBeenCalled();
   });
+
+  describe('border variant', () => {
+    test('defaults to full border: card-surface only, symmetric padding (no top modifier)', () => {
+      const { container } = render(<Card>x</Card>);
+      const card = container.firstElementChild;
+      expect(card?.className).toContain('card-surface');
+      expect(card?.className).not.toContain('card-surface--border-top');
+    });
+
+    test('border="full" is equivalent to the default', () => {
+      const { container } = render(<Card border="full">x</Card>);
+      const card = container.firstElementChild;
+      expect(card?.className).toContain('card-surface');
+      expect(card?.className).not.toContain('card-surface--border-top');
+    });
+
+    test('border="top" applies the top-border-only modifier (vertical-only padding)', () => {
+      const { container } = render(<Card border="top">x</Card>);
+      const card = container.firstElementChild;
+      expect(card?.className).toContain('card-surface');
+      expect(card?.className).toContain('card-surface--border-top');
+    });
+
+    test('border="top" composes with interactive and selected modifiers', () => {
+      const { container } = render(
+        <Card border="top" interactive selected onClick={() => {}}>x</Card>,
+      );
+      const className = container.firstElementChild?.className ?? '';
+      expect(className).toContain('card-surface');
+      expect(className).toContain('card-surface--border-top');
+      expect(className).toContain('card-surface--interactive');
+      expect(className).toContain('card-surface--selected');
+    });
+  });
 });

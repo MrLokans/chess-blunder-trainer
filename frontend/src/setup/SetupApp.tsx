@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'preact/hooks';
 import { ApiError, client } from '../shared/api';
+import { Card } from '../components/Card';
 import { debounce } from '../shared/debounce';
 import type { ProfilePlatform, ProfileValidateResponse } from '../types/profiles';
 
@@ -316,7 +317,7 @@ export function SetupApp() {
 
   return (
     <div class="container">
-      <div class="card">
+      <Card border="top">
         <h1>{t('setup.title')}</h1>
         <p class="subtitle">{t('setup.subtitle')}</p>
 
@@ -380,7 +381,7 @@ export function SetupApp() {
             }}
           />
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
