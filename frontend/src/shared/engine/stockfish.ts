@@ -12,7 +12,16 @@ export interface EngineUpdate {
   lines: EngineLine[];
 }
 
+// Defers a flush; called at most once per pending batch. Default batches to the
+// next animation frame so an `info`-line burst collapses into a single render.
+export type FlushScheduler = (flush: () => void) => void;
+
 const ENGINE_URL = '/static/vendor/stockfish/stockfish-18-lite-single.js';
+
+const rafScheduler: FlushScheduler = (flush) => {
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(flush);
+  else setTimeout(flush, 16);
+};
 
 // Bridges the loosely-typed browser Worker to our narrow WorkerLike contract.
 class WorkerBridge implements WorkerLike {
@@ -58,9 +67,13 @@ export class StockfishEngine {
   private _discardInfo = false;
   private _resolveReady: (() => void) | null = null;
   private _rejectReady: ((reason: Error) => void) | null = null;
+  private _schedule: FlushScheduler;
+  private _flushQueued = false;
+  private _disposed = false;
 
-  constructor(worker: WorkerLike) {
+  constructor(worker: WorkerLike, opts: { schedule?: FlushScheduler } = {}) {
     this._worker = worker;
+    this._schedule = opts.schedule ?? rafScheduler;
     this._worker.onmessage = (e) => { this._onMessage(e.data); };
     this._worker.onerror = (e) => { this._onError(e.message); };
   }
@@ -108,6 +121,7 @@ export class StockfishEngine {
   }
 
   dispose(): void {
+    this._disposed = true;
     this._subs.clear();
     this._worker.terminate();
   }
@@ -144,7 +158,19 @@ export class StockfishEngine {
     this._notify();
   }
 
+  // The worker streams `info` lines hundreds of times a second; notifying
+  // subscribers (and thus re-rendering) on each one floods the main thread and
+  // starves the compositor. Coalesce to one flush per scheduled frame, reading
+  // the latest accumulated state when it runs.
   private _notify(): void {
+    if (this._flushQueued || this._disposed) return;
+    this._flushQueued = true;
+    this._schedule(() => { this._flush(); });
+  }
+
+  private _flush(): void {
+    this._flushQueued = false;
+    if (this._disposed) return;
     const rawLines = foldLines(Array.from(this._infos.values()));
     // UCI scores are side-to-move-relative; normalize to White POV.
     const lines = this._blackToMove

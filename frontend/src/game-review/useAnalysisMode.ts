@@ -175,13 +175,18 @@ export function useAnalysisMode(params: UseAnalysisModeParams): UseAnalysisModeR
     boardRef.current?.setPosition(game, lastMove ? [lastMove.from, lastMove.to] : null);
   }, [currentFen, boardRef, exploreGameRef]);
 
+  // Depend on the best-move string, not the whole `lines` array: `lines` gets a
+  // new identity on every engine tick (depth/score changes), but the arrow and
+  // threat shapes only change when the best move or position changes. Keying on
+  // the primitive avoids re-running `new Chess(fen)` + buildThreatHighlights on
+  // every tick.
+  const bestMove = lines[0]?.pv[0] ?? null;
   const shapes = useMemo((): ChessgroundShape[] => {
     if (!analysisMode) return [];
     const out: ChessgroundShape[] = [];
-    const best = lines[0]?.pv[0];
-    if (showArrows && best) {
+    if (showArrows && bestMove) {
       const turn = fen.split(' ')[1] === 'b' ? 'black' : 'white';
-      const arrow = uciToArrow(best, turn);
+      const arrow = uciToArrow(bestMove, turn);
       out.push({ orig: arrow.from, dest: arrow.to, brush: 'green' });
     }
     if (showThreats) {
@@ -190,7 +195,7 @@ export function useAnalysisMode(params: UseAnalysisModeParams): UseAnalysisModeR
       for (const [square, brush] of highlights) out.push({ orig: square, brush });
     }
     return out;
-  }, [analysisMode, lines, showArrows, showThreats, fen]);
+  }, [analysisMode, bestMove, showArrows, showThreats, fen]);
 
   useEffect(() => {
     if (!analysisMode) return;

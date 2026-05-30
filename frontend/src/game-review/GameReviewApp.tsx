@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'preact/hooks';
 import { client } from '../shared/api';
 import { MoveSequence, ReadOnlyBoard, PlaybackController } from '../shared/sequence-player';
 import { AnalysisBoard } from '../shared/analysis-board';
@@ -76,7 +76,9 @@ interface MoveListProps {
 
 function MoveList({ moves, activeIndex, onSelect }: MoveListProps) {
   const activeRef = useRef<HTMLSpanElement>(null);
-  const pairs = buildMovePairs(moves);
+  // `moves` is stable for the game's lifetime, but the parent re-renders on every
+  // engine tick — memoize so the pairs aren't rebuilt over all moves each time.
+  const pairs = useMemo(() => buildMovePairs(moves), [moves]);
 
   useEffect(() => {
     if (activeRef.current) {

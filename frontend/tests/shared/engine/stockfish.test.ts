@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import { StockfishEngine, type WorkerLike, type EngineUpdate } from '../../../src/shared/engine/stockfish';
+import { StockfishEngine, type WorkerLike, type EngineUpdate, type FlushScheduler } from '../../../src/shared/engine/stockfish';
+
+// Run the flush synchronously so these tests can assert update delivery inline.
+// Production uses the default rAF scheduler; coalescing timing is covered by its
+// own test below with a manual scheduler.
+const immediate: FlushScheduler = (flush) => { flush(); };
 
 function fakeWorker() {
   const posted: string[] = [];
@@ -18,7 +23,7 @@ function fakeWorker() {
 describe('StockfishEngine', () => {
   it('handshakes on init (uci -> uciok -> isready -> readyok)', async () => {
     const { w, posted, emit } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     const ready = eng.init();
     expect(posted).toContain('uci');
     emit('uciok');
@@ -29,7 +34,7 @@ describe('StockfishEngine', () => {
 
   it('sets multipv, position and go infinite on analyze', () => {
     const { w, posted, emit } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     emit('uciok'); emit('readyok');
     eng.setMultiPV(3);
     eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
@@ -40,7 +45,7 @@ describe('StockfishEngine', () => {
 
   it('emits folded lines to subscribers on info', () => {
     const { w, emit } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     const updates: unknown[] = [];
     eng.subscribe(u => updates.push(u));
     emit('info depth 12 multipv 1 score cp 30 pv e2e4 e7e5');
@@ -52,7 +57,7 @@ describe('StockfishEngine', () => {
 
   it('stop sends stop; dispose terminates', () => {
     const { w, posted, terminate } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     eng.stop();
     expect(posted).toContain('stop');
     eng.dispose();
@@ -61,7 +66,7 @@ describe('StockfishEngine', () => {
 
   it('unsubscribe stops further delivery', () => {
     const { w, emit } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     const updates: EngineUpdate[] = [];
     const unsub = eng.subscribe(u => updates.push(u));
     emit('info depth 10 multipv 1 score cp 5 pv e2e4');
@@ -72,7 +77,7 @@ describe('StockfishEngine', () => {
 
   it('folds multiple multipv lines sorted by index regardless of emission order', () => {
     const { w, emit } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     const updates: EngineUpdate[] = [];
     eng.subscribe(u => updates.push(u));
     emit('info depth 10 multipv 2 score cp 3 pv d2d4');
@@ -85,7 +90,7 @@ describe('StockfishEngine', () => {
 
   it('clears stale lines when analyze starts a new position', () => {
     const { w, emit } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     const updates: EngineUpdate[] = [];
     eng.subscribe(u => updates.push(u));
     emit('info depth 10 multipv 1 score cp 5 pv e2e4');
@@ -99,7 +104,7 @@ describe('StockfishEngine', () => {
 
   it('init rejects if the worker errors before readyok', async () => {
     const { w, emitError } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     const ready = eng.init();
     emitError('failed to load engine');
     await expect(ready).rejects.toThrow('failed to load engine');
@@ -107,7 +112,7 @@ describe('StockfishEngine', () => {
 
   it('normalizes black-to-move scores to White POV', () => {
     const { w, emit } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     const updates: EngineUpdate[] = [];
     eng.subscribe(u => updates.push(u));
     eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1');
@@ -119,7 +124,7 @@ describe('StockfishEngine', () => {
 
   it('normalizes black-to-move mate scores to White POV', () => {
     const { w, emit } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     const updates: EngineUpdate[] = [];
     eng.subscribe(u => updates.push(u));
     eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1');
@@ -131,7 +136,7 @@ describe('StockfishEngine', () => {
 
   it('defers a second analyze() until bestmove drains the previous search', () => {
     const { w, posted, emit } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     emit('uciok'); emit('readyok');
 
     eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
@@ -154,7 +159,7 @@ describe('StockfishEngine', () => {
 
   it('discards info lines that arrive between stop and bestmove', () => {
     const { w, emit } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     emit('uciok'); emit('readyok');
     const updates: EngineUpdate[] = [];
     eng.subscribe(u => updates.push(u));
@@ -181,7 +186,7 @@ describe('StockfishEngine', () => {
 
   it('does not flip scores for white-to-move positions', () => {
     const { w, emit } = fakeWorker();
-    const eng = new StockfishEngine(w);
+    const eng = new StockfishEngine(w, { schedule: immediate });
     const updates: EngineUpdate[] = [];
     eng.subscribe(u => updates.push(u));
     eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
@@ -189,5 +194,48 @@ describe('StockfishEngine', () => {
     const last = updates.at(-1);
     if (!last) throw new Error('expected an update');
     expect(last.lines[0]?.scoreCp).toBe(25);
+  });
+
+  it('coalesces a burst of info lines into a single flush per scheduled frame', () => {
+    const { w, emit } = fakeWorker();
+    let pending: (() => void) | null = null;
+    const schedule: FlushScheduler = (flush) => { pending = flush; };
+    const eng = new StockfishEngine(w, { schedule });
+    emit('uciok'); emit('readyok');
+    const updates: EngineUpdate[] = [];
+    eng.subscribe(u => updates.push(u));
+
+    eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    emit('info depth 1 multipv 1 score cp 10 pv e2e4');
+    emit('info depth 2 multipv 1 score cp 20 pv e2e4');
+    emit('info depth 3 multipv 1 score cp 30 pv e2e4');
+
+    // Nothing is delivered until the scheduled frame runs.
+    expect(updates).toHaveLength(0);
+
+    pending?.();
+
+    // The whole burst collapses into one flush carrying the latest state.
+    expect(updates).toHaveLength(1);
+    expect(updates[0]?.depth).toBe(3);
+    expect(updates[0]?.lines[0]?.scoreCp).toBe(30);
+  });
+
+  it('does not flush after dispose', () => {
+    const { w, emit, terminate } = fakeWorker();
+    let pending: (() => void) | null = null;
+    const schedule: FlushScheduler = (flush) => { pending = flush; };
+    const eng = new StockfishEngine(w, { schedule });
+    emit('uciok'); emit('readyok');
+    const updates: EngineUpdate[] = [];
+    eng.subscribe(u => updates.push(u));
+
+    eng.analyze('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    emit('info depth 5 multipv 1 score cp 10 pv e2e4');
+    eng.dispose();
+    pending?.();
+
+    expect(terminate).toHaveBeenCalled();
+    expect(updates).toHaveLength(0);
   });
 });
