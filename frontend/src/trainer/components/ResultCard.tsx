@@ -69,6 +69,7 @@ export function ResultCard({
               </div>
 
               <div class="board-result-action">
+                {/* eslint-disable-next-line no-restricted-syntax -- btn-success has no <Button> variant; keep until a success variant exists */}
                 <button class="btn btn-success" id="tryBestBtn" onClick={onPlayBest}>
                   {feedbackType === 'correct' ? t('trainer.button.play_line') : t('trainer.button.play_best')}<kbd>P</kbd>
                 </button>
@@ -103,6 +104,7 @@ export function ResultCard({
           )}
         </div>
         <div class="board-result-next">
+          {/* eslint-disable-next-line no-restricted-syntax -- needs the .board-result-next-btn width:100% hook on the button itself; <Button> takes no className */}
           <button class="btn btn-primary board-result-next-btn" id="overlayNextBtn" onClick={onNext}>
             {t('trainer.shortcuts.next')}<kbd>N</kbd>
           </button>

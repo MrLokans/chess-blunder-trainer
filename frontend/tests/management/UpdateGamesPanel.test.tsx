@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/preact';
-import { UpdateGamesPanel } from '../../src/components/UpdateGamesPanel';
+import { UpdateGamesPanel } from '../../src/management/UpdateGamesPanel';
 import type { Profile } from '../../src/types/profiles';
 
 vi.mock('../../src/shared/api', () => ({

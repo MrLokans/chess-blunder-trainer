@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/preact';
-import { Segmented } from '../../src/components/Segmented';
+import { Segmented } from '../../src/components/primitives/Segmented';
 
 const OPTS = [
   { label: '1', value: 1 },

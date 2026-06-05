@@ -16,7 +16,7 @@ export interface ButtonProps {
 }
 
 export function buttonClassName(variant: ButtonVariant, size: ButtonSize, loading = false): string {
-  return `btn btn--${variant} btn--${size}${loading ? ' btn--loading' : ''}`;
+  return `btn btn-${variant} btn-${size}${loading ? ' btn-loading' : ''}`;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(

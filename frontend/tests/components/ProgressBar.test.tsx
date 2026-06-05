@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { render, screen } from '@testing-library/preact';
-import { ProgressBar } from '../../src/components/ProgressBar';
+import { ProgressBar } from '../../src/components/feedback/ProgressBar';
 
 describe('ProgressBar', () => {
   test('displays progress text', () => {

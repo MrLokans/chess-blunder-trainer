@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
-import { Alert } from '../components/Alert';
-import { Button } from '../components/Button';
+import { Alert } from '../components/feedback/Alert';
+import { Button } from '../components/primitives/Button';
 
 export function CacheManagement() {
   const [clearing, setClearing] = useState(false);

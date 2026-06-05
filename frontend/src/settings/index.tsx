@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { ErrorBoundary } from '../components/ErrorBoundary';
+import { ErrorBoundary } from '../components/feedback/ErrorBoundary';
 import { SettingsApp } from './SettingsApp';
 
 const init = window.__settingsInit;

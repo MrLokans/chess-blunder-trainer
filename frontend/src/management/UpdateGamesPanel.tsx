@@ -3,9 +3,9 @@ import { client } from '../shared/api';
 import { formatRelativeAgo } from '../shared/relative-time';
 import type { Profile } from '../types/profiles';
 import { PLATFORM_LABEL } from '../types/profiles';
-import { Alert } from './Alert';
-import { Button } from './Button';
-import { EmptyState } from './EmptyState';
+import { Alert } from '../components/feedback/Alert';
+import { Button } from '../components/primitives/Button';
+import { EmptyState } from '../components/layout/EmptyState';
 
 export interface UpdateGamesPanelProps {
   profiles: Profile[];
@@ -36,7 +36,8 @@ export function UpdateGamesPanel({
         title={t('management.update.empty_title')}
         message={t('management.update.empty_message')}
         action={
-          <a class="btn btn--primary btn--md" href="/profiles">
+          // eslint-disable-next-line no-restricted-syntax -- styled navigational <a>; Button renders a <button>, not a link
+          <a class="btn btn-primary btn-md" href="/profiles">
             {t('management.update.empty_cta')}
           </a>
         }

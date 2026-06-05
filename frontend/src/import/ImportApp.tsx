@@ -1,4 +1,6 @@
 import { useState } from 'preact/hooks';
+import { Button } from '../components/primitives/Button';
+import { PageHeader } from '../components/layout/PageHeader';
 import { client, ApiError } from '../shared/api';
 import type { ImportResult } from '../types/api';
 
@@ -87,13 +89,13 @@ export function ImportApp({ demoMode }: Props) {
         )}
 
         {!demoMode && (
-          <button
-            class="btn btn-primary"
+          <Button
+            variant="primary"
             onClick={() => { void handleSubmit(); }}
             disabled={analyzing || !pgn.trim()}
           >
             {t('import.submit')}
-          </button>
+          </Button>
         )}
 
         {analyzing && (
@@ -106,7 +108,7 @@ export function ImportApp({ demoMode }: Props) {
 
       {result && (
         <div class="import-results">
-          <h2>{t('import.success')}</h2>
+          <PageHeader title={t('import.success')} />
           <div class="results-grid">
             <div class="result-item">
               <span class="result-label">{t('import.results.eco')}</span>
@@ -129,6 +131,7 @@ export function ImportApp({ demoMode }: Props) {
               <span class="result-value">{result.inaccuracies ?? 0}</span>
             </div>
           </div>
+          {/* eslint-disable-next-line no-restricted-syntax -- navigational anchor, not a <button>; <Button> renders only <button> */}
           <a href="/" class="btn btn-secondary">{t('import.results.go_to_trainer')}</a>
         </div>
       )}

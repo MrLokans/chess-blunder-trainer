@@ -12,7 +12,7 @@ export default defineConfig({
   test: {
     root: resolve(__dirname),
     environment: 'jsdom',
-    include: ['tests/**/*.test.{ts,tsx}'],
+    include: ['tests/**/*.test.{ts,tsx}', 'src/**/__tests__/**/*.test.{ts,tsx}'],
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],

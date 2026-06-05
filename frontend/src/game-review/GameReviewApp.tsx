@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'preact/hooks';
-import { client } from '../shared/api';
+import { client, ApiError } from '../shared/api';
 import { MoveSequence, ReadOnlyBoard, PlaybackController } from '../shared/sequence-player';
 import { AnalysisBoard } from '../shared/analysis-board';
 import { applyBoardBackground, applyPieceSet } from '../shared/board-theme';
+import { Button } from '../components/primitives/Button';
+import { Alert } from '../components/feedback/Alert';
 import { updateEvalBar } from '../shared/eval-bar';
+import { useAsyncData } from '../hooks/useAsyncData';
+import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
 import { EvalChart, evalFromWhite } from './eval-chart';
 import { EngineControls } from './EngineControls';
 import { EngineLinesPanel } from './EngineLinesPanel';
@@ -161,15 +165,81 @@ function EvalBar({ moves, activeIndex, liveCp }: EvalBarProps) {
   );
 }
 
+function deriveOrientation(game: ReviewData['game']): 'white' | 'black' {
+  if (game.username && game.black.toLowerCase() === game.username.toLowerCase()) {
+    return 'black';
+  }
+  return 'white';
+}
+
+// useAsyncData normalizes any thrown error to its `.message`; rethrowing a
+// translated Error keeps the App's "not found vs generic" distinction without
+// leaking the raw API message into the UI.
+async function fetchReview(gameId: string, signal: AbortSignal): Promise<ReviewData> {
+  let review: ReviewData;
+  try {
+    review = await client.gameReview.getReview(gameId);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      throw new Error(t('game_review.not_found'));
+    }
+    if (signal.aborted || (err instanceof DOMException && err.name === 'AbortError')) throw err;
+    console.error('Failed to load game review:', err);
+    throw new Error(t('common.error'));
+  }
+
+  const boardSettings = await client.settings.getBoard().catch(() => null);
+  if (boardSettings) {
+    const root = document.documentElement;
+    root.style.setProperty('--board-light', boardSettings.board_light);
+    root.style.setProperty('--board-dark', boardSettings.board_dark);
+    applyBoardBackground(boardSettings.board_light, boardSettings.board_dark);
+    applyPieceSet(boardSettings.piece_set || 'gioco');
+  }
+
+  return review;
+}
+
 interface GameReviewAppProps {
   gameId: string | null;
   startPly?: number | null;
 }
 
 export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
-  const [data, setData] = useState<ReviewData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [orientation, setOrientation] = useState<'white' | 'black'>('white');
+  const state = useAsyncData<ReviewData>(
+    (signal) => {
+      if (!gameId) return Promise.reject(new Error(t('game_review.not_found')));
+      return fetchReview(gameId, signal);
+    },
+    [gameId],
+  );
+
+  if (state.error !== null) {
+    return (
+      <div class="review-page" id="reviewPage">
+        <div class="review-error" id="reviewError">
+          <Alert type="error" message={state.error} />
+          {/* eslint-disable-next-line no-restricted-syntax -- navigational anchor, not a <button>; <Button> renders only <button> */}
+          <a href="/" class="btn btn-primary">{t('common.back_to_trainer')}</a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <AsyncBoundary state={state} isEmpty={() => false}>
+      {(data) => <ReviewView data={data} startPly={startPly} />}
+    </AsyncBoundary>
+  );
+}
+
+interface ReviewViewProps {
+  data: ReviewData;
+  startPly?: number | null;
+}
+
+function ReviewView({ data, startPly }: ReviewViewProps) {
+  const [orientation, setOrientation] = useState<'white' | 'black'>(() => deriveOrientation(data.game));
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentFen, setCurrentFen] = useState('');
@@ -282,45 +352,6 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
     });
   }, []);
 
-  useEffect(() => {
-    if (!gameId) {
-      setError(t('game_review.not_found'));
-      return;
-    }
-
-    Promise.all([
-      client.gameReview.getReview(gameId),
-      client.settings.getBoard().catch(() => null),
-    ]).then(([reviewData, boardSettings]) => {
-      let orient: 'white' | 'black' = 'white';
-      if (reviewData.game.username) {
-        const uname = reviewData.game.username.toLowerCase();
-        if (reviewData.game.black.toLowerCase() === uname) {
-          orient = 'black';
-        }
-      }
-      setOrientation(orient);
-
-      if (boardSettings) {
-        const root = document.documentElement;
-        root.style.setProperty('--board-light', boardSettings.board_light);
-        root.style.setProperty('--board-dark', boardSettings.board_dark);
-        applyBoardBackground(boardSettings.board_light, boardSettings.board_dark);
-        applyPieceSet(boardSettings.piece_set || 'gioco');
-      }
-
-      setData(reviewData);
-    }).catch((err: unknown) => {
-      const isNotFound = typeof err === 'object' && err !== null && 'status' in err && (err as { status: unknown }).status === 404;
-      if (isNotFound) {
-        setError(t('game_review.not_found'));
-      } else {
-        setError(t('common.error'));
-        console.error('Failed to load game review:', err);
-      }
-    });
-  }, [gameId]);
-
   const tickRef = useRef<() => void>(() => {});
   tickRef.current = () => {
     const seq = sequenceRef.current;
@@ -337,7 +368,7 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
   };
 
   useEffect(() => {
-    if (!data || initializedRef.current) return;
+    if (initializedRef.current) return;
     initializedRef.current = true;
 
     const sanMoves = data.moves.map(m => m.san);
@@ -366,11 +397,11 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
       playbackRef.current = null;
       initializedRef.current = false;
     };
-  }, [data]);
+  }, [data, startPly]);
 
   useEffect(() => {
     const seq = sequenceRef.current;
-    if (!data || !seq) return;
+    if (!seq) return;
     const boardEl = document.getElementById('reviewBoard');
     if (!boardEl) return;
 
@@ -422,27 +453,6 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
     document.addEventListener('keydown', handler);
     return () => { document.removeEventListener('keydown', handler); };
   }, [goPrev, goNext, goFirst, goLast, flipBoard, togglePlayPause]);
-
-  if (error) {
-    return (
-      <div class="review-page" id="reviewPage">
-        <div class="review-error" id="reviewError">
-          <p id="reviewErrorMessage">{error}</p>
-          <a href="/" class="btn btn-primary">{t('common.back_to_trainer')}</a>
-        </div>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div class="review-page" id="reviewPage">
-        <div class="review-loading" id="reviewLoading">
-          <p>{t('common.loading')}</p>
-        </div>
-      </div>
-    );
-  }
 
   const { game, moves, analyzed } = data;
   const playerColor = orientation;
@@ -548,14 +558,11 @@ export function GameReviewApp({ gameId, startPly }: GameReviewAppProps) {
                   />
                 )}
                 {analysis.exploring && (
-                  <button
-                    type="button"
-                    class="btn btn-secondary engine-takeback"
-                    id="reviewTakeback"
-                    onClick={analysis.takeback}
-                  >
-                    {t('game_review.engine.takeback')}
-                  </button>
+                  <div class="engine-takeback" id="reviewTakeback">
+                    <Button variant="secondary" onClick={analysis.takeback}>
+                      {t('game_review.engine.takeback')}
+                    </Button>
+                  </div>
                 )}
               </div>
             )}

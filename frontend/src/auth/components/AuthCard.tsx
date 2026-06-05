@@ -1,6 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
-import { Alert } from '../../components/Alert';
+import { Alert } from '../../components/feedback/Alert';
 
 export interface AuthCardProps {
   title: string;

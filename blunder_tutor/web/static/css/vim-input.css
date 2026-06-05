@@ -20,7 +20,7 @@
 .vim-input-prefix {
   font-family: monospace;
   font-size: 1rem;
-  color: #888;
+  color: var(--vim-prefix);
   user-select: none;
   line-height: 36px;
 }
@@ -32,20 +32,20 @@
   outline: none;
   font-family: monospace;
   font-size: 1rem;
-  color: #e8e8e8;
-  caret-color: #7ec8e3;
+  color: var(--vim-text);
+  caret-color: var(--vim-caret);
   line-height: 36px;
   padding: 0;
 }
 
 .vim-input-field::placeholder {
-  color: #555;
+  color: var(--vim-placeholder);
 }
 
 .vim-input-error {
   font-family: monospace;
   font-size: 0.8rem;
-  color: var(--error, #e74c3c);
+  color: var(--error, var(--vim-error));
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.2s;
@@ -89,7 +89,7 @@
 .vim-suggestion {
   font-family: monospace;
   font-size: 0.85rem;
-  color: #999;
+  color: var(--vim-suggestion);
   padding: 2px 8px;
   border-radius: 3px;
   cursor: pointer;
@@ -98,22 +98,22 @@
 }
 
 .vim-suggestion b {
-  color: #7ec8e3;
+  color: var(--vim-caret);
   font-weight: 600;
 }
 
 .vim-suggestion:hover {
   background: rgba(126, 200, 227, 0.15);
-  color: #ccc;
+  color: var(--vim-suggestion-hover);
 }
 
 .vim-suggestion.selected {
   background: rgba(126, 200, 227, 0.25);
-  color: #e8e8e8;
+  color: var(--vim-text);
 }
 
 .vim-suggestion.more {
-  color: #555;
+  color: var(--vim-placeholder);
   cursor: default;
   font-style: italic;
 }

@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
-import { Alert } from '../components/Alert';
+import { Alert } from '../components/feedback/Alert';
+import { Button } from '../components/primitives/Button';
 import { ALL_STORAGE_KEYS } from '../shared/storage-keys';
-import type { ExternalJobStatus } from '../components/JobCard';
+import type { ExternalJobStatus } from '../components/data/JobCard';
 
 function clearAppLocalStorage(): void {
   ALL_STORAGE_KEYS.forEach(key => { localStorage.removeItem(key); });
@@ -78,9 +79,9 @@ export function DangerSection({ externalStatus }: DangerSectionProps) {
         <strong>{t('management.danger.warning')}</strong> {t('management.danger.settings_preserved')}
       </p>
       {!jobId && (
-        <button class="btn btn-danger" type="button" onClick={() => { void handleDeleteAll(); }}>
+        <Button variant="danger" onClick={() => { void handleDeleteAll(); }}>
           {t('management.danger.button')}
-        </button>
+        </Button>
       )}
       {jobId && (
         <div class="progress-section">

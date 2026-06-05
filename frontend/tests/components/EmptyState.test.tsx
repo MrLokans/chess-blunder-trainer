@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { render, screen } from '@testing-library/preact';
-import { EmptyState } from '../../src/components/EmptyState';
+import { EmptyState } from '../../src/components/layout/EmptyState';
 
 describe('EmptyState', () => {
   test('renders title and message', () => {

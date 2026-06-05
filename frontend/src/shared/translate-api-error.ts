@@ -28,3 +28,13 @@ export function translateLoginError(err: ApiError): string {
   if (err.status === 401) return t('auth.login.error_invalid');
   return translateSlug('auth.login', err, LOGIN_ERROR_SLUGS);
 }
+
+export function translateApiErrorToMessage(err: unknown): string {
+  if (err instanceof ApiError && typeof err.message === 'string' && err.message.length > 0) {
+    return err.message;
+  }
+  if (err instanceof Error && err.message.length > 0) {
+    return err.message;
+  }
+  return t('common.error_unknown');
+}

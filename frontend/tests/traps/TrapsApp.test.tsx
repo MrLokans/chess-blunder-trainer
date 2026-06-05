@@ -3,15 +3,19 @@ import { render, screen, waitFor } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { TrapsApp } from '../../src/traps/TrapsApp';
 
-vi.mock('../../src/shared/api', () => ({
-  client: {
-    traps: {
-      stats: vi.fn(),
-      catalog: vi.fn(),
-      detail: vi.fn(),
+vi.mock('../../src/shared/api', async (importActual) => {
+  const actual = await importActual<typeof import('../../src/shared/api')>();
+  return {
+    ApiError: actual.ApiError,
+    client: {
+      traps: {
+        stats: vi.fn(),
+        catalog: vi.fn(),
+        detail: vi.fn(),
+      },
     },
-  },
-}));
+  };
+});
 
 vi.mock('../../src/shared/dropdown', () => ({
   initDropdowns: vi.fn(),
@@ -90,8 +94,9 @@ describe('TrapsApp', () => {
     mockStats.mockReturnValue(new Promise(() => {}));
     mockCatalog.mockReturnValue(new Promise(() => {}));
     render(<TrapsApp />);
-    const loadingEls = screen.getAllByText(t('common.loading'));
-    expect(loadingEls.length).toBeGreaterThan(0);
+    const loadingEl = document.querySelector('.loading');
+    expect(loadingEl).not.toBeNull();
+    expect(loadingEl?.textContent).toBe(t('common.loading'));
   });
 
   test('loads and displays summary stats', async () => {
@@ -283,7 +288,9 @@ describe('TrapsApp', () => {
     render(<TrapsApp />);
 
     await waitFor(() => {
-      expect(screen.getByText(t('common.error'))).toBeDefined();
+      const alert = document.querySelector('.alert.alert-error');
+      expect(alert).not.toBeNull();
+      expect(alert?.textContent).toContain('Network error');
     });
   });
 

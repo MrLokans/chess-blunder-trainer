@@ -1,7 +1,12 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useState, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
 import { STORAGE_KEYS } from '../shared/storage-keys';
-import { Alert } from '../components/Alert';
+import { useAsyncData } from '../hooks/useAsyncData';
+import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
+import { Alert } from '../components/feedback/Alert';
+import { Button } from '../components/primitives/Button';
+import { Card } from '../components/layout/Card';
+import { PageHeader } from '../components/layout/PageHeader';
 import { FeatureToggles } from './FeatureToggles';
 import { SyncSettings } from './SyncSettings';
 import { ThemeEditor } from './ThemeEditor';
@@ -10,10 +15,20 @@ import { CacheManagement } from './CacheManagement';
 import type {
   SettingsInit, SyncSettings as SyncSettingsData,
   ThemeColors, ThemePreset, PieceSet, BoardColorPreset,
+  BoardSettings as BoardSettingsData,
 } from './types';
 
 interface SettingsAppProps {
   init: SettingsInit;
+}
+
+interface SettingsBundle {
+  syncSettings: SyncSettingsData;
+  theme: ThemeColors;
+  themePresets: ThemePreset[];
+  boardSettings: BoardSettingsData;
+  pieceSets: PieceSet[];
+  boardColorPresets: BoardColorPreset[];
 }
 
 const FEATURE_SECTION_MAP: Record<string, string> = {
@@ -22,21 +37,46 @@ const FEATURE_SECTION_MAP: Record<string, string> = {
 };
 
 export function SettingsApp({ init }: SettingsAppProps) {
-  const [loading, setLoading] = useState(true);
+  const state = useAsyncData<SettingsBundle>(async () => {
+    const [settings, themeData, presetsData, boardData, pieceSetsData, colorPresetsData] =
+      await Promise.all([
+        client.settings.get(),
+        client.settings.getTheme(),
+        client.settings.getThemePresets(),
+        client.settings.getBoard(),
+        client.settings.getPieceSets(),
+        client.settings.getBoardColorPresets(),
+      ]);
+    return {
+      syncSettings: settings,
+      theme: themeData,
+      themePresets: presetsData.presets,
+      boardSettings: boardData,
+      pieceSets: pieceSetsData.piece_sets,
+      boardColorPresets: colorPresetsData.presets,
+    };
+  }, []);
+
+  return (
+    <AsyncBoundary state={state}>
+      {(bundle) => <SettingsForm init={init} bundle={bundle} />}
+    </AsyncBoundary>
+  );
+}
+
+interface SettingsFormProps {
+  init: SettingsInit;
+  bundle: SettingsBundle;
+}
+
+function SettingsForm({ init, bundle }: SettingsFormProps) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
 
-  const [syncSettings, setSyncSettings] = useState<SyncSettingsData>({
-    auto_sync: false, sync_interval: 24, max_games: 1000,
-    auto_analyze: true, spaced_repetition_days: 30,
-  });
-  const [theme, setTheme] = useState<ThemeColors | null>(null);
-  const [themePresets, setThemePresets] = useState<ThemePreset[]>([]);
-  const [boardSettings, setBoardSettings] = useState({
-    piece_set: 'gioco', board_light: '#f0d9b5', board_dark: '#b58863',
-  });
-  const [pieceSets, setPieceSets] = useState<PieceSet[]>([]);
-  const [boardColorPresets, setBoardColorPresets] = useState<BoardColorPreset[]>([]);
+  const [syncSettings, setSyncSettings] = useState(bundle.syncSettings);
+  const [theme, setTheme] = useState(bundle.theme);
+  const [boardSettings, setBoardSettings] = useState(bundle.boardSettings);
+  const { themePresets, pieceSets, boardColorPresets } = bundle;
 
   const [sectionVisibility, setSectionVisibility] = useState<Record<string, boolean>>(() => {
     const vis: Record<string, boolean> = {};
@@ -48,35 +88,6 @@ export function SettingsApp({ init }: SettingsAppProps) {
     }
     return vis;
   });
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const [settings, themeData, presetsData, boardData, pieceSetsData, colorPresetsData] =
-          await Promise.all([
-            client.settings.get(),
-            client.settings.getTheme(),
-            client.settings.getThemePresets(),
-            client.settings.getBoard(),
-            client.settings.getPieceSets(),
-            client.settings.getBoardColorPresets(),
-          ]);
-
-        setSyncSettings(settings);
-        setTheme(themeData);
-        setThemePresets(presetsData.presets);
-        setBoardSettings(boardData);
-        setPieceSets(pieceSetsData.piece_sets);
-        setBoardColorPresets(colorPresetsData.presets);
-      } catch (err) {
-        console.error('Failed to load settings:', err);
-        setMessage({ type: 'error', text: t('settings.load_error') });
-      } finally {
-        setLoading(false);
-      }
-    }
-    void load();
-  }, []);
 
   const handleFeatureChanged = useCallback((featureId: string, enabled: boolean) => {
     const section = FEATURE_SECTION_MAP[featureId];
@@ -95,7 +106,6 @@ export function SettingsApp({ init }: SettingsAppProps) {
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (!theme) return;
     setMessage(null);
     setSaving(true);
 
@@ -115,12 +125,9 @@ export function SettingsApp({ init }: SettingsAppProps) {
     }
   }, [syncSettings, theme, boardSettings]);
 
-  if (loading || !theme) return null;
-
   return (
-    <div class="card">
-      <h2>{t('settings.title')}</h2>
-      <p class="subtitle">{t('settings.subtitle')}</p>
+    <Card border="top">
+      <PageHeader title={t('settings.title')} subtitle={t('settings.subtitle')} />
 
       <Alert type={message?.type ?? 'success'} message={message?.text ?? null} />
 
@@ -178,16 +185,17 @@ export function SettingsApp({ init }: SettingsAppProps) {
         />
 
         <div class="btn-row mt-8">
+          {/* eslint-disable-next-line no-restricted-syntax -- navigational anchor, not a <button>; <Button> renders only <button> */}
           <a class="btn btn-secondary" href="/">{t('common.cancel')}</a>
           {!init.demoMode && (
-            <button type="submit" class="btn btn-primary" disabled={saving}>
+            <Button type="submit" variant="primary" disabled={saving}>
               {saving ? t('settings.saving') : t('settings.save')}
-            </button>
+            </Button>
           )}
         </div>
       </form>
 
       {!init.demoMode && <CacheManagement />}
-    </div>
+    </Card>
   );
 }

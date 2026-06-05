@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
-import { ColorInput } from '../../src/components/ColorInput';
+import { ColorInput } from '../../src/components/primitives/ColorInput';
 
 describe('ColorInput', () => {
   test('renders color picker and hex input with initial value', () => {

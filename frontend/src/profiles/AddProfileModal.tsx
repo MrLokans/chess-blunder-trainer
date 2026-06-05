@@ -1,13 +1,13 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'preact/hooks';
 import { client, ApiError } from '../shared/api';
 import type { Profile, ProfilePlatform, ProfileValidateResponse } from '../types/profiles';
-import { Modal } from '../components/Modal';
-import { Button } from '../components/Button';
-import { FormField } from '../components/FormField';
-import { TextInput } from '../components/TextInput';
-import { Toggle } from '../components/Toggle';
-import { Dropdown } from '../components/Dropdown';
-import { Alert } from '../components/Alert';
+import { Modal } from '../components/feedback/Modal';
+import { Button } from '../components/primitives/Button';
+import { FormField } from '../components/form/FormField';
+import { TextInput } from '../components/primitives/TextInput';
+import { Toggle } from '../components/primitives/Toggle';
+import { Dropdown } from '../components/primitives/Dropdown';
+import { Alert } from '../components/feedback/Alert';
 import { debounce } from '../shared/debounce';
 
 const VALIDATE_DEBOUNCE_MS = 500;

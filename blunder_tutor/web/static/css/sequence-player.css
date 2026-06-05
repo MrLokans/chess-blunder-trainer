@@ -58,6 +58,9 @@
   padding-bottom: var(--s-xs);
 }
 
+/* DEPRECATED: use the Tabs component (.tabs / .tabs__tab in components.css)
+   instead — it has a11y/keyboard support. Retained for any remaining
+   server-rendered sequence-player call-sites; remove once those migrate. */
 .sequence-player-tabs {
   display: flex;
   gap: var(--s-xs);

@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
-import { client, isAbortError } from '../shared/api';
+import { useState, useEffect, useCallback, useMemo } from 'preact/hooks';
+import { client } from '../shared/api';
 import { useFeature } from '../hooks/useFeature';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useAsyncData } from '../hooks/useAsyncData';
+import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
 import { debounce } from '../shared/debounce';
 import { useDashboardFilters } from './useDashboardFilters';
 import { DashboardFilters } from './DashboardFilters';
@@ -42,9 +44,9 @@ import type {
 } from './types';
 import type { TrapStatsResponse } from '../types/api';
 
-interface DashboardState {
-  overview: OverviewData | null;
-  analysisStatus: AnalysisStatus | null;
+interface DashboardData {
+  overview: OverviewData;
+  analysisStatus: AnalysisStatus;
   dateItems: DateChartItem[] | null;
   hourItems: HourChartItem[] | null;
   phaseData: PhaseData | null;
@@ -57,26 +59,20 @@ interface DashboardState {
   conversionData: ConversionResilienceData | null;
   trapsData: TrapStatsResponse | null;
   gameBreakdown: GameBreakdownItem[] | null;
-  error: string | null;
 }
 
-const INITIAL_STATE: DashboardState = {
-  overview: null,
-  analysisStatus: null,
-  dateItems: null,
-  hourItems: null,
-  phaseData: null,
-  colorData: null,
-  gameTypeData: null,
-  ecoData: null,
-  tacticalData: null,
-  difficultyData: null,
-  collapseData: null,
-  conversionData: null,
-  trapsData: null,
-  gameBreakdown: null,
-  error: null,
-};
+interface DashboardFeatures {
+  hasAccuracy: boolean;
+  hasPhase: boolean;
+  hasOpening: boolean;
+  hasDifficulty: boolean;
+  hasTactical: boolean;
+  hasCollapse: boolean;
+  hasConversion: boolean;
+  hasTraps: boolean;
+  hasGrowth: boolean;
+  hasHeatmap: boolean;
+}
 
 function toQueryParams(params: DateFilterParams): Record<string, string | string[] | undefined> {
   return { ...params };
@@ -92,32 +88,29 @@ function fillHours(items: HourChartItem[]): HourChartItem[] {
 }
 
 export function DashboardApp() {
-  const [state, setState] = useState(INITIAL_STATE);
   const [difficultyHelpOpen, setDifficultyHelpOpen] = useState(false);
 
   const filters = useDashboardFilters();
-  const hasAccuracy = useFeature('dashboard.accuracy');
-  const hasPhase = useFeature('dashboard.phase_breakdown');
-  const hasOpening = useFeature('dashboard.opening_breakdown');
-  const hasDifficulty = useFeature('dashboard.difficulty_breakdown');
-  const hasTactical = useFeature('dashboard.tactical_breakdown');
-  const hasCollapse = useFeature('dashboard.collapse_point');
-  const hasConversion = useFeature('dashboard.conversion_resilience');
-  const hasTraps = useFeature('dashboard.traps');
-  const hasGrowth = useFeature('dashboard.growth');
-  const hasHeatmap = useFeature('dashboard.heatmap');
+  const features: DashboardFeatures = {
+    hasAccuracy: useFeature('dashboard.accuracy'),
+    hasPhase: useFeature('dashboard.phase_breakdown'),
+    hasOpening: useFeature('dashboard.opening_breakdown'),
+    hasDifficulty: useFeature('dashboard.difficulty_breakdown'),
+    hasTactical: useFeature('dashboard.tactical_breakdown'),
+    hasCollapse: useFeature('dashboard.collapse_point'),
+    hasConversion: useFeature('dashboard.conversion_resilience'),
+    hasTraps: useFeature('dashboard.traps'),
+    hasGrowth: useFeature('dashboard.growth'),
+    hasHeatmap: useFeature('dashboard.heatmap'),
+  };
 
   const ws = useWebSocket(['stats.updated', 'job.completed', 'job.progress_updated', 'job.status_changed']);
-  const abortRef = useRef<AbortController | null>(null);
 
   const getParams = filters.getParams;
+  const { hasAccuracy, hasPhase, hasOpening, hasDifficulty, hasTactical, hasCollapse, hasConversion, hasTraps } = features;
 
-  const loadData = useCallback(async () => {
-    if (abortRef.current) abortRef.current.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    try {
+  const state = useAsyncData<DashboardData>(
+    async (): Promise<DashboardData> => {
       const qp = toQueryParams(getParams());
 
       const [overview, analysisStatus, gameBreakdownResp] = await Promise.all([
@@ -152,9 +145,7 @@ export function DashboardApp() {
         hasTraps ? client.traps.stats() : Promise.resolve(null),
       ] as const);
 
-      if (controller.signal.aborted) return;
-
-      setState({
+      return {
         overview,
         analysisStatus,
         dateItems: dateResp?.items ?? null,
@@ -169,49 +160,71 @@ export function DashboardApp() {
         conversionData: conversionData ?? null,
         trapsData: trapsResp ?? null,
         gameBreakdown: gameBreakdownResp.items,
-        error: null,
-      });
-    } catch (err) {
-      if (isAbortError(err)) return;
-      console.error('Failed to load dashboard data:', err);
-      setState(prev => ({
-        ...prev,
-        error: err instanceof Error ? err.message : String(err),
-      }));
-    }
-  }, [getParams, hasAccuracy, hasPhase, hasOpening, hasDifficulty, hasTactical, hasCollapse, hasConversion, hasTraps]);
+      };
+    },
+    [getParams, hasAccuracy, hasPhase, hasOpening, hasDifficulty, hasTactical, hasCollapse, hasConversion, hasTraps],
+  );
 
-  const debouncedLoadData = useCallback(debounce(() => { void loadData(); }, 2000), [loadData]);
+  const reload = state.reload;
+  const debouncedReload = useMemo(() => debounce(reload, 2000), [reload]);
 
   useEffect(() => {
-    void loadData();
-    return () => { if (abortRef.current) abortRef.current.abort(); };
-  }, [loadData]);
-
-  useEffect(() => {
-    const unsub1 = ws.on('stats.updated', () => { void loadData(); });
-    const unsub2 = ws.on('job.completed', () => { void loadData(); });
-    const unsub3 = ws.on('job.progress_updated', () => { debouncedLoadData(); });
-    const unsub4 = ws.on('job.status_changed', () => { void loadData(); });
+    const unsub1 = ws.on('stats.updated', () => { reload(); });
+    const unsub2 = ws.on('job.completed', () => { reload(); });
+    const unsub3 = ws.on('job.progress_updated', () => { debouncedReload(); });
+    const unsub4 = ws.on('job.status_changed', () => { reload(); });
     return () => { unsub1(); unsub2(); unsub3(); unsub4(); };
-  }, [ws, loadData, debouncedLoadData]);
+  }, [ws, reload, debouncedReload]);
 
   const handleRetryAnalysis = useCallback(async () => {
     try {
       await client.analysis.start();
-      void loadData();
+      reload();
     } catch (err) {
       console.error('Failed to retry analysis:', err);
     }
-  }, [loadData]);
+  }, [reload]);
 
-  if (state.error && !state.overview) {
-    return <div class="error-message">{t('common.error')}: {state.error}</div>;
-  }
+  return (
+    <AsyncBoundary state={state} isEmpty={() => false}>
+      {(data) => (
+        <DashboardBody
+          data={data}
+          features={features}
+          filters={filters}
+          getParams={getParams}
+          difficultyHelpOpen={difficultyHelpOpen}
+          setDifficultyHelpOpen={setDifficultyHelpOpen}
+          onRetryAnalysis={() => { void handleRetryAnalysis(); }}
+        />
+      )}
+    </AsyncBoundary>
+  );
+}
 
-  if (!state.overview || !state.analysisStatus) {
-    return <div class="loading-placeholder">{t('common.loading')}</div>;
-  }
+interface DashboardBodyProps {
+  data: DashboardData;
+  features: DashboardFeatures;
+  filters: ReturnType<typeof useDashboardFilters>;
+  getParams: () => DateFilterParams;
+  difficultyHelpOpen: boolean;
+  setDifficultyHelpOpen: (open: boolean) => void;
+  onRetryAnalysis: () => void;
+}
+
+function DashboardBody({
+  data: state,
+  features,
+  filters,
+  getParams,
+  difficultyHelpOpen,
+  setDifficultyHelpOpen,
+  onRetryAnalysis,
+}: DashboardBodyProps) {
+  const {
+    hasAccuracy, hasPhase, hasOpening, hasDifficulty, hasTactical,
+    hasCollapse, hasConversion, hasTraps, hasGrowth, hasHeatmap,
+  } = features;
 
   const dateChartData = state.dateItems && state.dateItems.length > 0 ? {
     labels: state.dateItems.map(d => d.date),
@@ -246,7 +259,7 @@ export function DashboardApp() {
         analyzedGames={state.overview.analyzed_games}
         totalBlunders={state.overview.total_blunders}
         analysisStatus={state.analysisStatus}
-        onRetryAnalysis={() => { void handleRetryAnalysis(); }}
+        onRetryAnalysis={onRetryAnalysis}
       />
 
       {hasGrowth && (
@@ -379,20 +392,7 @@ export function DashboardApp() {
 
       <div class="chart-container">
         <div class="chart-title">{t('dashboard.chart.game_breakdown')}</div>
-        <table id="gameBreakdownTable">
-          <thead>
-            <tr>
-              <th>{t('dashboard.chart.source')}</th>
-              <th>{t('dashboard.chart.username')}</th>
-              <th>{t('dashboard.chart.total_games')}</th>
-              <th>{t('dashboard.chart.analyzed')}</th>
-              <th>{t('dashboard.chart.pending')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <GameBreakdownTable items={state.gameBreakdown ?? []} />
-          </tbody>
-        </table>
+        <GameBreakdownTable items={state.gameBreakdown ?? []} />
       </div>
 
       <div class="mt-4">

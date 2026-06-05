@@ -41,10 +41,12 @@ afterEach(() => {
 });
 
 describe('ProfilesApp', () => {
-  test('shows loading state then renders the profile list', async () => {
+  test('renders the canonical AsyncBoundary loading state then the profile list', async () => {
     fetchSpy.mockResolvedValueOnce(mockListResponse([makeProfile()]));
-    render(<ProfilesApp />);
-    expect(screen.getByText('common.loading')).toBeDefined();
+    const { container } = render(<ProfilesApp />);
+    const loading = container.querySelector('.loading');
+    expect(loading).not.toBeNull();
+    expect(loading?.textContent).toBe('common.loading');
     await waitFor(() => {
       expect(screen.getByText('magnuscarlsen')).toBeDefined();
     });
@@ -57,6 +59,7 @@ describe('ProfilesApp', () => {
     await waitFor(() => {
       expect(screen.getByText('profiles.empty_state.title')).toBeDefined();
     });
+    expect(screen.getByText('profiles.empty_state.message')).toBeDefined();
     await user.click(screen.getByRole('button', { name: 'profiles.empty_state.cta' }));
     expect(screen.getByRole('dialog')).toBeDefined();
   });

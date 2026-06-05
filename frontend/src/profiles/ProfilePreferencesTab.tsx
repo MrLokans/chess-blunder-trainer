@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'preact/hooks';
 import { client, ApiError } from '../shared/api';
 import type { Profile } from '../types/profiles';
-import { Button } from '../components/Button';
-import { FormField } from '../components/FormField';
-import { TextInput } from '../components/TextInput';
-import { Toggle } from '../components/Toggle';
-import { Alert } from '../components/Alert';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { Button } from '../components/primitives/Button';
+import { FormField } from '../components/form/FormField';
+import { TextInput } from '../components/primitives/TextInput';
+import { Toggle } from '../components/primitives/Toggle';
+import { Alert } from '../components/feedback/Alert';
+import { ConfirmDialog } from '../components/feedback/ConfirmDialog';
 
 export interface ProfilePreferencesTabProps {
   profile: Profile;

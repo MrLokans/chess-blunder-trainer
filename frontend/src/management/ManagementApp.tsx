@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { client } from '../shared/api';
-import { JobCard } from '../components/JobCard';
-import { UpdateGamesPanel } from '../components/UpdateGamesPanel';
+import { JobCard } from '../components/data/JobCard';
+import { Section } from '../components/layout/Section';
+import { UpdateGamesPanel } from './UpdateGamesPanel';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useAsyncData } from '../hooks/useAsyncData';
+import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
 import { debounce } from '../shared/debounce';
-import type { ExternalJobStatus } from '../components/JobCard';
+import type { ExternalJobStatus } from '../components/data/JobCard';
 import type { Profile } from '../types/profiles';
 import { DangerSection } from './DangerSection';
 
@@ -19,35 +22,19 @@ interface EngineStatus {
 }
 
 function EngineStatusSection() {
-  const [status, setStatus] = useState<EngineStatus | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const state = useAsyncData<EngineStatus>(
+    () => client.system.engineStatus(),
+    [],
+  );
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await client.system.engineStatus();
-        setStatus(data);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : t('common.error');
-        setError(t('management.engine.load_failed', { error: msg }));
-      }
-    }
-    void load();
-  }, []);
+  return (
+    <AsyncBoundary state={state}>
+      {(status) => renderEngineStatus(status)}
+    </AsyncBoundary>
+  );
+}
 
-  if (error) {
-    return (
-      <div class="engine-status-row">
-        <span class="status-dot status-dot--error" />
-        <span class="text-error">{error}</span>
-      </div>
-    );
-  }
-
-  if (!status) {
-    return <p class="section-description">{t('management.engine.loading')}</p>;
-  }
-
+function renderEngineStatus(status: EngineStatus) {
   if (status.available) {
     return (
       <div>
@@ -104,8 +91,7 @@ function JobsSection({ jobsRefreshKey }: JobsSectionProps) {
   }, [jobsRefreshKey]);
 
   return (
-    <section>
-      <h2>{t('management.jobs.title')}</h2>
+    <Section title={t('management.jobs.title')}>
       <div class="table-scroll">
         <table id="jobsTable">
           <thead>
@@ -132,7 +118,7 @@ function JobsSection({ jobsRefreshKey }: JobsSectionProps) {
           </tbody>
         </table>
       </div>
-    </section>
+    </Section>
   );
 }
 
@@ -224,10 +210,9 @@ export function ManagementApp({ demoMode }: ManagementInit) {
 
   return (
     <div>
-      <section>
-        <h2>{t('management.engine.title')}</h2>
+      <Section title={t('management.engine.title')}>
         <EngineStatusSection />
-      </section>
+      </Section>
 
       <hr class="section-divider" />
 
@@ -243,8 +228,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
 
       <hr class="section-divider" />
 
-      <section>
-        <h2>{t('management.analysis.title')}</h2>
+      <Section title={t('management.analysis.title')}>
         <p class="section-description mb-4">{t('management.analysis.pending_desc')}</p>
         {!demoMode && (
           <JobCard
@@ -259,7 +243,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
             stopLabel={t('management.analysis.stop')}
           />
         )}
-      </section>
+      </Section>
 
       <hr class="section-divider" />
 

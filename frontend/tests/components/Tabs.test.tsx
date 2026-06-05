@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
-import { Tabs, type TabDescriptor } from '../../src/components/Tabs';
+import { Tabs, type TabDescriptor } from '../../src/components/layout/Tabs';
 
 type TabKey = 'overview' | 'preferences' | 'history';
 

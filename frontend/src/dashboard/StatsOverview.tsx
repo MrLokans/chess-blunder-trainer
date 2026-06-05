@@ -1,3 +1,5 @@
+import { Button } from '../components/primitives/Button';
+import { StatCard } from '../components/data/StatCard';
 import type { AnalysisStatus } from './types';
 
 export interface StatsOverviewProps {
@@ -37,9 +39,11 @@ function AnalysisStatusDisplay({ status, onRetry }: AnalysisStatusDisplayProps) 
     return (
       <div data-testid="analysis-status" class="text-sm text-muted mt-2 text-error">
         {t('dashboard.analysis.failed')}
-        <button type="button" class="btn btn-sm" style="margin-left: 8px; padding: 4px 10px; font-size: 0.75rem;" onClick={onRetry}>
-          {t('dashboard.analysis.retry')}
-        </button>
+        <span style="margin-left: var(--s-sm);">
+          <Button variant="secondary" size="sm" onClick={onRetry}>
+            {t('dashboard.analysis.retry')}
+          </Button>
+        </span>
       </div>
     );
   }
@@ -58,26 +62,18 @@ export function StatsOverview({
 
   return (
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">{t('dashboard.stat.total_games')}</div>
-        <div class="stat-value">{String(totalGames)}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">{t('dashboard.stat.analyzed_games')}</div>
-        <div class="stat-value">{String(analyzedGames)}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">{t('dashboard.stat.total_blunders')}</div>
-        <div class="stat-value">{String(totalBlunders)}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">{t('dashboard.stat.analysis_progress')}</div>
-        <div class="stat-value">{`${String(progressPercent)}%`}</div>
+      <StatCard label={t('dashboard.stat.total_games')} value={totalGames} />
+      <StatCard label={t('dashboard.stat.analyzed_games')} value={analyzedGames} />
+      <StatCard label={t('dashboard.stat.total_blunders')} value={totalBlunders} />
+      <StatCard
+        label={t('dashboard.stat.analysis_progress')}
+        value={`${String(progressPercent)}%`}
+      >
         <div class="progress-bar">
           <div class="progress-fill" style={{ width: `${String(progressPercent)}%` }} />
         </div>
         <AnalysisStatusDisplay status={analysisStatus} onRetry={onRetryAnalysis} />
-      </div>
+      </StatCard>
     </div>
   );
 }

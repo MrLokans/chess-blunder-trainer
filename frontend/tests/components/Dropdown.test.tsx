@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
-import { Dropdown } from '../../src/components/Dropdown';
+import { Dropdown } from '../../src/components/primitives/Dropdown';
 
 const OPTIONS = [
   { value: 'bullet', label: 'Bullet' },
