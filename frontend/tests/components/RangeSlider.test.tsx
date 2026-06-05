@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/preact';
-import { RangeSlider } from '../../src/components/RangeSlider';
+import { RangeSlider } from '../../src/components/primitives/RangeSlider';
 
 describe('RangeSlider', () => {
   it('renders an input[type=range] with min/max/value', () => {

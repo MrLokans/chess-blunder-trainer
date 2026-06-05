@@ -58,7 +58,7 @@ export default tseslint.config(
   },
   ...crossPageRestrictions(),
   {
-    files: ['src/**/*.tsx'],
+    files: ['**/*.tsx'],
     plugins: { 'react-hooks': reactHooks },
     rules: {
       'react-hooks/rules-of-hooks': 'error',

@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
-import { Button } from '../components/Button';
+import { Button } from '../components/primitives/Button';
+import { PageHeader } from '../components/layout/PageHeader';
 import { client, ApiError } from '../shared/api';
 import type { ImportResult } from '../types/api';
 
@@ -107,7 +108,7 @@ export function ImportApp({ demoMode }: Props) {
 
       {result && (
         <div class="import-results">
-          <h2>{t('import.success')}</h2>
+          <PageHeader title={t('import.success')} />
           <div class="results-grid">
             <div class="result-item">
               <span class="result-label">{t('import.results.eco')}</span>

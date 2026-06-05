@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { groupOpeningsByBase, openingNameSlug } from '../shared/opening-group';
-import { DataTable } from '../components/DataTable';
-import type { Column } from '../components/DataTable';
+import { DataTable } from '../components/data/DataTable';
+import type { Column } from '../components/data/DataTable';
 import type { OpeningItem } from '../shared/opening-group';
 import type {
   PhaseData,

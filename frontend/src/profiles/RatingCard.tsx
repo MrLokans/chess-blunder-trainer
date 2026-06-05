@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { ProfileStatSnapshot } from '../types/profiles';
-import { Card } from '../components/Card';
-import { Sparkline } from '../components/Sparkline';
+import { Card } from '../components/layout/Card';
+import { Sparkline } from '../components/data/Sparkline';
 import { client, ApiError } from '../shared/api';
 import { formatRelativeAgo } from '../shared/relative-time';
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'preact/hooks';
-import { Button } from '../components/Button';
-import { ColorInput } from '../components/ColorInput';
+import { Button } from '../components/primitives/Button';
+import { ColorInput } from '../components/primitives/ColorInput';
 import type { PieceSet, BoardColorPreset, BoardSettings } from './types';
 
 interface BoardEditorProps {

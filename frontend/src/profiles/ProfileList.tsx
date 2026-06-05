@@ -1,7 +1,7 @@
 import type { Profile } from '../types/profiles';
 import { PLATFORM_LABEL, platformProfileUrl } from '../types/profiles';
-import { Card } from '../components/Card';
-import { Badge } from '../components/Badge';
+import { Card } from '../components/layout/Card';
+import { Badge } from '../components/primitives/Badge';
 import { formatRelativeAgo } from '../shared/relative-time';
 
 export interface ProfileListProps {

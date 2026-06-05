@@ -2,10 +2,10 @@ import { useState, useEffect } from 'preact/hooks';
 import { client } from '../shared/api';
 import { useFeature } from '../hooks/useFeature';
 import { useAsyncData } from '../hooks/useAsyncData';
-import { AsyncBoundary } from '../components/AsyncBoundary';
-import { EmptyState } from '../components/EmptyState';
-import { DataTable } from '../components/DataTable';
-import type { Column } from '../components/DataTable';
+import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
+import { EmptyState } from '../components/layout/EmptyState';
+import { DataTable } from '../components/data/DataTable';
+import type { Column } from '../components/data/DataTable';
 import type { StarredItem } from '../types/api';
 
 const PHASE_KEYS: Record<number, string> = {

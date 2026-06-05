@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { ErrorBoundary } from '../components/ErrorBoundary';
+import { ErrorBoundary } from '../components/feedback/ErrorBoundary';
 import { SetupApp } from './SetupApp';
 import { ALL_STORAGE_KEYS } from '../shared/storage-keys';
 

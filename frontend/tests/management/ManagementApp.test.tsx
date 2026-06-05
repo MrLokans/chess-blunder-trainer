@@ -2,7 +2,10 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/preact';
 import { ManagementApp } from '../../src/management/ManagementApp';
 
-vi.mock('../../src/shared/api', () => ({
+vi.mock('../../src/shared/api', async (importActual) => {
+  const actual = await importActual<typeof import('../../src/shared/api')>();
+  return {
+  ApiError: actual.ApiError,
   client: {
     system: {
       engineStatus: vi.fn().mockResolvedValue({ available: true, name: 'Stockfish 16', path: '/usr/bin/stockfish' }),
@@ -29,7 +32,8 @@ vi.mock('../../src/shared/api', () => ({
       deleteStatus: vi.fn().mockResolvedValue({ status: 'idle' }),
     },
   },
-}));
+  };
+});
 
 vi.mock('../../src/hooks/useWebSocket', () => ({
   useWebSocket: vi.fn().mockReturnValue({ on: vi.fn().mockReturnValue(() => {}) }),
@@ -72,11 +76,13 @@ describe('ManagementApp', () => {
       });
     });
 
-    test('renders error when engine status fails to load', async () => {
+    test('renders error in an Alert when engine status fails to load', async () => {
       vi.mocked(client.system.engineStatus).mockRejectedValueOnce(new Error('connection refused'));
-      render(<ManagementApp demoMode={false} />);
+      const { container } = render(<ManagementApp demoMode={false} />);
       await waitFor(() => {
-        expect(screen.getByText(t('management.engine.load_failed', { error: 'connection refused' }))).toBeDefined();
+        const alert = container.querySelector('.alert.alert-error');
+        expect(alert).not.toBeNull();
+        expect(alert?.textContent).toContain('connection refused');
       });
     });
   });

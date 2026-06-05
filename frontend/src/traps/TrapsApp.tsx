@@ -1,7 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { client } from '../shared/api';
-import { Dropdown } from '../components/Dropdown';
-import { Tabs, type TabDescriptor } from '../components/Tabs';
+import { useAsyncData } from '../hooks/useAsyncData';
+import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
+import { EmptyState } from '../components/layout/EmptyState';
+import { Dropdown } from '../components/primitives/Dropdown';
+import { PageHeader } from '../components/layout/PageHeader';
+import { Tabs, type TabDescriptor } from '../components/layout/Tabs';
 import SequencePlayer from '../shared/sequence-player';
 import type {
   TrapStat, TrapSummary, TrapCatalogEntry,
@@ -14,6 +18,12 @@ const LINE_TABS: TabDescriptor<TabKey>[] = [
   { key: 'trap', label: 'traps.tab.trap_line' },
   { key: 'refutation', label: 'traps.tab.refutation_line' },
 ];
+
+interface TrapsData {
+  stats: TrapStat[];
+  summary: TrapSummary;
+  catalog: Record<string, TrapCatalogEntry>;
+}
 
 interface BoardPlayerProps {
   trap: TrapDetail;
@@ -57,25 +67,15 @@ interface DetailPanelProps {
 }
 
 function DetailPanel({ trapId, catalog, onClose }: DetailPanelProps) {
-  const [detail, setDetail] = useState<TrapDetailData | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('trap');
-  const [error, setError] = useState<string | null>(null);
 
-  const name = catalog[trapId]?.name ?? trapId;
+  const state = useAsyncData<TrapDetailData>(
+    () => client.traps.detail(trapId),
+    [trapId],
+  );
 
   useEffect(() => {
-    setDetail(null);
-    setError(null);
     setActiveTab('trap');
-
-    client.traps.detail(trapId)
-      .then(resp => {
-        setDetail({ trap: resp.trap, history: resp.history });
-      })
-      .catch((err: unknown) => {
-        console.error('Failed to load trap detail:', err);
-        setError(t('common.error'));
-      });
   }, [trapId]);
 
   useEffect(() => {
@@ -85,71 +85,87 @@ function DetailPanel({ trapId, catalog, onClose }: DetailPanelProps) {
     }
   }, [trapId]);
 
-  const trap = detail?.trap ?? null;
-  const history = detail?.history ?? [];
+  const name = catalog[trapId]?.name ?? trapId;
+  const headerTitle = state.data?.trap?.name ?? name;
 
   return (
     <div class="trap-detail-panel" id="trapDetailPanel">
       <button class="trap-detail-close" onClick={onClose}>&times;</button>
-      <h2>{trap ? trap.name : name}</h2>
+      <PageHeader title={headerTitle} />
 
-      {error && <p class="error">{error}</p>}
+      <AsyncBoundary
+        state={state}
+        isEmpty={(data) => data.trap === null}
+        empty={<EmptyState title={name} message={t('traps.no_data')} />}
+      >
+        {(data) => <TrapDetailView data={data} activeTab={activeTab} onChangeTab={setActiveTab} />}
+      </AsyncBoundary>
+    </div>
+  );
+}
 
-      {!detail && !error && <p class="loading">{t('common.loading')}</p>}
+interface TrapDetailViewProps {
+  data: TrapDetailData;
+  activeTab: TabKey;
+  onChangeTab: (tab: TabKey) => void;
+}
 
-      {trap && (
-        <div class="trap-detail-grid">
-          <div class="trap-detail-section trap-board-section">
-            <Tabs<TabKey>
-              tabs={LINE_TABS.map(tab => ({ ...tab, label: t(tab.label) }))}
-              value={activeTab}
-              onChange={setActiveTab}
-            >
-              <BoardPlayer trap={trap} activeTab={activeTab} />
-            </Tabs>
-          </div>
+function TrapDetailView({ data, activeTab, onChangeTab }: TrapDetailViewProps) {
+  const trap = data.trap;
+  if (trap === null) return null;
+  const history = data.history;
 
-          <div class="trap-detail-info">
-            <div class="trap-detail-section">
-              <h3>{t('traps.the_mistake')}</h3>
-              <p>{trap.mistake_san ? `${t('traps.mistake')}: ${trap.mistake_san}` : ''}</p>
-            </div>
-            <div class="trap-detail-section">
-              <h3>{t('traps.refutation')}</h3>
-              <p>{trap.refutation_note ?? ''}</p>
-              <p class="trap-refutation-move">
-                {trap.refutation_move ? `${t('traps.refutation')}: ${trap.refutation_move}` : ''}
-              </p>
-            </div>
-            <div class="trap-detail-section">
-              <h3>{t('traps.recognition_tip')}</h3>
-              <p>{trap.recognition_tip ?? ''}</p>
-            </div>
-            <div class="trap-detail-section">
-              <h3>{t('traps.your_games')}</h3>
-              <div class="trap-games-list">
-                {history.length === 0 ? (
-                  <p>{t('traps.no_games')}</p>
-                ) : (
-                  history.map((g, i) => {
-                    const label = `${g.white} vs ${g.black} (${g.result}) \u2014 ${g.date ?? ''}`;
-                    return (
-                      <div key={i} class="trap-game-item">
-                        <span class={`match-type-${g.match_type}`}>{g.match_type}</span>
-                        {g.game_url ? (
-                          <a href={g.game_url} target="_blank" rel="noopener noreferrer">{label}</a>
-                        ) : (
-                          label
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
+  return (
+    <div class="trap-detail-grid">
+      <div class="trap-detail-section trap-board-section">
+        <Tabs<TabKey>
+          tabs={LINE_TABS.map(tab => ({ ...tab, label: t(tab.label) }))}
+          value={activeTab}
+          onChange={onChangeTab}
+        >
+          <BoardPlayer trap={trap} activeTab={activeTab} />
+        </Tabs>
+      </div>
+
+      <div class="trap-detail-info">
+        <div class="trap-detail-section">
+          <h3>{t('traps.the_mistake')}</h3>
+          <p>{trap.mistake_san ? `${t('traps.mistake')}: ${trap.mistake_san}` : ''}</p>
+        </div>
+        <div class="trap-detail-section">
+          <h3>{t('traps.refutation')}</h3>
+          <p>{trap.refutation_note ?? ''}</p>
+          <p class="trap-refutation-move">
+            {trap.refutation_move ? `${t('traps.refutation')}: ${trap.refutation_move}` : ''}
+          </p>
+        </div>
+        <div class="trap-detail-section">
+          <h3>{t('traps.recognition_tip')}</h3>
+          <p>{trap.recognition_tip ?? ''}</p>
+        </div>
+        <div class="trap-detail-section">
+          <h3>{t('traps.your_games')}</h3>
+          <div class="trap-games-list">
+            {history.length === 0 ? (
+              <p>{t('traps.no_games')}</p>
+            ) : (
+              history.map((g, i) => {
+                const label = `${g.white} vs ${g.black} (${g.result}) — ${g.date ?? ''}`;
+                return (
+                  <div key={i} class="trap-game-item">
+                    <span class={`match-type-${g.match_type}`}>{g.match_type}</span>
+                    {g.game_url ? (
+                      <a href={g.game_url} target="_blank" rel="noopener noreferrer">{label}</a>
+                    ) : (
+                      label
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -205,63 +221,27 @@ function Summary({ summary, catalog }: SummaryProps) {
 
 const CATEGORIES = ['all', 'checkmate', 'attack', 'gambit_trap', 'piece_trap', 'pin_fork_trick'];
 
-export function TrapsApp() {
-  const [stats, setStats] = useState<TrapStat[] | null>(null);
-  const [summary, setSummary] = useState<TrapSummary | null>(null);
-  const [catalog, setCatalog] = useState<Record<string, TrapCatalogEntry>>({});
+interface TrapsViewProps {
+  data: TrapsData;
+}
+
+function TrapsView({ data }: TrapsViewProps) {
+  const { stats, summary, catalog } = data;
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedTrapId, setSelectedTrapId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadData = useCallback(async () => {
-    try {
-      const [statsResp, catalogResp] = await Promise.all([
-        client.traps.stats(),
-        client.traps.catalog(),
-      ]);
-
-      const catalogMap: Record<string, TrapCatalogEntry> = {};
-      catalogResp.forEach(c => { catalogMap[c.id] = c; });
-
-      setStats(statsResp.stats);
-      setSummary(statsResp.summary);
-      setCatalog(catalogMap);
-    } catch (err) {
-      console.error('Failed to load trap data:', err);
-      setError(t('common.error'));
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
 
   const categoryOptions = CATEGORIES.map(cat => ({
     value: cat,
     label: t(`traps.category.${cat}`),
   }));
 
-  const filteredStats = stats
-    ? (categoryFilter === 'all' ? stats : stats.filter(s => s.category === categoryFilter))
-    : [];
+  const filteredStats = categoryFilter === 'all'
+    ? stats
+    : stats.filter(s => s.category === categoryFilter);
 
   return (
     <>
-      {error && !stats && (
-        <div class="traps-summary">
-          <p class="error">{error}</p>
-        </div>
-      )}
-
-      {!stats && !error && (
-        <div class="traps-summary">
-          <p class="loading">{t('common.loading')}</p>
-        </div>
-      )}
-
-      {summary && stats && (
-        <Summary summary={summary} catalog={catalog} />
-      )}
+      <Summary summary={summary} catalog={catalog} />
 
       <div class="traps-filter">
         <label>{t('traps.filter_category')}</label>
@@ -285,9 +265,7 @@ export function TrapsApp() {
             </tr>
           </thead>
           <tbody>
-            {!stats ? (
-              <tr><td colspan={6} class="loading">{t('common.loading')}</td></tr>
-            ) : filteredStats.length === 0 ? (
+            {filteredStats.length === 0 ? (
               <tr><td colspan={6} class="no-data">{t('traps.no_data')}</td></tr>
             ) : (
               filteredStats.map(s => (
@@ -318,5 +296,32 @@ export function TrapsApp() {
         />
       )}
     </>
+  );
+}
+
+export function TrapsApp() {
+  const state = useAsyncData<TrapsData>(
+    async () => {
+      const [statsResp, catalogResp] = await Promise.all([
+        client.traps.stats(),
+        client.traps.catalog(),
+      ]);
+
+      const catalogMap: Record<string, TrapCatalogEntry> = {};
+      catalogResp.forEach(c => { catalogMap[c.id] = c; });
+
+      return { stats: statsResp.stats, summary: statsResp.summary, catalog: catalogMap };
+    },
+    [],
+  );
+
+  return (
+    <AsyncBoundary
+      state={state}
+      isEmpty={(data) => data.stats.length === 0}
+      empty={<EmptyState title={t('traps.title')} message={t('traps.no_data')} />}
+    >
+      {(data) => <TrapsView data={data} />}
+    </AsyncBoundary>
   );
 }

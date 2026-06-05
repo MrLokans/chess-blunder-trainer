@@ -1,5 +1,5 @@
-import { Button } from '../components/Button';
-import { StatCard } from '../components/StatCard';
+import { Button } from '../components/primitives/Button';
+import { StatCard } from '../components/data/StatCard';
 import type { AnalysisStatus } from './types';
 
 export interface StatsOverviewProps {

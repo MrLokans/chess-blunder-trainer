@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { render, screen } from '@testing-library/preact';
-import { Alert } from '../../src/components/Alert';
+import { Alert } from '../../src/components/feedback/Alert';
 
 describe('Alert', () => {
   test('renders nothing when message is null', () => {

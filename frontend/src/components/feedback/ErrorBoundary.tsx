@@ -1,6 +1,6 @@
 import { Component } from 'preact';
 import type { ComponentChildren } from 'preact';
-import { Button } from './Button';
+import { Button } from '../primitives/Button';
 
 interface Props {
   children: ComponentChildren;

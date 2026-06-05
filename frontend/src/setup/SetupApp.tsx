@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'preact/hooks';
 import { ApiError, client } from '../shared/api';
-import { Button } from '../components/Button';
-import { Card } from '../components/Card';
+import { Button } from '../components/primitives/Button';
+import { Card } from '../components/layout/Card';
 import { debounce } from '../shared/debounce';
 import type { ProfilePlatform, ProfileValidateResponse } from '../types/profiles';
 

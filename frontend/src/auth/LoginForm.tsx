@@ -3,9 +3,9 @@ import { ApiError, client, isNetworkError } from '../shared/api';
 import { safeNext } from '../shared/safe-redirect';
 import { translateLoginError } from '../shared/translate-api-error';
 import { AuthCard } from './components/AuthCard';
-import { FormField } from '../components/FormField';
-import { TextInput } from '../components/TextInput';
-import { Button } from '../components/Button';
+import { FormField } from '../components/form/FormField';
+import { TextInput } from '../components/primitives/TextInput';
+import { Button } from '../components/primitives/Button';
 
 export function LoginForm() {
   const [username, setUsername] = useState('');

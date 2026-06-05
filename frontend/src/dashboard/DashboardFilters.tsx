@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Button } from '../components/Button';
+import { Button } from '../components/primitives/Button';
 import type { DatePreset } from './types';
 import { GAME_TYPES, GAME_PHASES } from '../shared/constants';
 

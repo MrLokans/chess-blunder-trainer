@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
-import { Button } from '../../src/components/Button';
+import { Button } from '../../src/components/primitives/Button';
 
 describe('Button', () => {
   test('renders children', () => {

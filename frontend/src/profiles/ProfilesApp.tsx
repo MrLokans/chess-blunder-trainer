@@ -1,15 +1,17 @@
 import { useEffect, useState, useCallback } from 'preact/hooks';
 import { client, ApiError } from '../shared/api';
+import { useAsyncData } from '../hooks/useAsyncData';
+import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
 import type { Profile } from '../types/profiles';
 import { ProfileList } from './ProfileList';
 import { ProfileOverviewTab, type OverviewToast } from './ProfileOverviewTab';
 import { ProfilePreferencesTab } from './ProfilePreferencesTab';
 import { AddProfileModal } from './AddProfileModal';
-import { Button } from '../components/Button';
-import { EmptyState } from '../components/EmptyState';
-import { Tabs, type TabDescriptor } from '../components/Tabs';
-import { Modal } from '../components/Modal';
-import { Alert } from '../components/Alert';
+import { Button } from '../components/primitives/Button';
+import { EmptyState } from '../components/layout/EmptyState';
+import { Tabs, type TabDescriptor } from '../components/layout/Tabs';
+import { Modal } from '../components/feedback/Modal';
+import { Alert } from '../components/feedback/Alert';
 
 type DetailTab = 'overview' | 'preferences';
 
@@ -41,8 +43,43 @@ export interface ProfilesAppProps {
 }
 
 export function ProfilesApp({ demoMode = false }: ProfilesAppProps) {
-  const [profiles, setProfiles] = useState<Profile[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // useAsyncData owns the fetch + loading/error/empty rendering via
+  // AsyncBoundary. The loaded list still needs to be locally mutable
+  // (create/delete/primary-flag edits splice it without a refetch), so the
+  // fetch result is mirrored into ProfilesView's own state below.
+  const state = useAsyncData<Profile[]>(
+    async () => {
+      try {
+        return (await client.profiles.list()).profiles;
+      } catch (err) {
+        const msg =
+          err instanceof ApiError || err instanceof Error ? err.message : t('common.error');
+        throw new Error(t('profiles.load_failed', { error: msg }));
+      }
+    },
+    [],
+  );
+
+  // The empty case is interactive (it can create the first profile and then
+  // transition into the populated view sharing the same local list state), so
+  // ProfilesView owns its own empty rendering. Suppress AsyncBoundary's empty
+  // slot — it only handles loading + error here.
+  return (
+    <AsyncBoundary state={state} isEmpty={() => false}>
+      {(profiles) => (
+        <ProfilesView initialProfiles={profiles} demoMode={demoMode} />
+      )}
+    </AsyncBoundary>
+  );
+}
+
+interface ProfilesViewProps {
+  initialProfiles: Profile[];
+  demoMode: boolean;
+}
+
+function ProfilesView({ initialProfiles, demoMode }: ProfilesViewProps) {
+  const [profiles, setProfiles] = useState(initialProfiles);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<DetailTab>('overview');
   const [addOpen, setAddOpen] = useState(false);
@@ -51,24 +88,9 @@ export function ProfilesApp({ demoMode = false }: ProfilesAppProps) {
   // drop the local state and lose the only signal that sync was kicked off.
   const [syncToast, setSyncToast] = useState<OverviewToast | null>(null);
 
-  const loadProfiles = useCallback(async () => {
-    try {
-      const resp = await client.profiles.list();
-      setProfiles(resp.profiles);
-    } catch (err) {
-      const msg = err instanceof ApiError || err instanceof Error ? err.message : t('common.error');
-      setError(t('profiles.load_failed', { error: msg }));
-      setProfiles([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadProfiles();
-  }, [loadProfiles]);
-
   // Apply URL params once profiles are loaded.
   useEffect(() => {
-    if (!profiles || profiles.length === 0) return;
+    if (profiles.length === 0) return;
     const { profileId, tab } = readUrlParams();
     const requestedExists = profileId !== null && profiles.some(p => p.id === profileId);
     const target = requestedExists ? profileId : profiles[0]?.id ?? null;
@@ -89,14 +111,13 @@ export function ProfilesApp({ demoMode = false }: ProfilesAppProps) {
   }, []);
 
   const handleProfileDeleted = useCallback((deletedId: number) => {
-    setProfiles((prev) => prev?.filter((p) => p.id !== deletedId) ?? prev);
+    setProfiles((prev) => prev.filter((p) => p.id !== deletedId));
     setSelectedId((prev) => (prev === deletedId ? null : prev));
     setActiveTab('overview');
   }, []);
 
   const handleProfileChange = useCallback((next: Profile) => {
     setProfiles((prev) => {
-      if (!prev) return prev;
       // PATCH `is_primary=true` clears the flag on every other profile of the
       // same platform (server-side invariant). Mirror that on the client so
       // we don't have to refetch.
@@ -120,7 +141,6 @@ export function ProfilesApp({ demoMode = false }: ProfilesAppProps) {
 
   const handleProfileCreated = useCallback((created: Profile) => {
     setProfiles((prev) => {
-      if (!prev) return [created];
       // Mirror the server-side primary-flag invariant: a newly-created
       // primary profile clears the flag on every other profile of the same
       // platform.
@@ -132,14 +152,11 @@ export function ProfilesApp({ demoMode = false }: ProfilesAppProps) {
     setSelectedId(created.id);
   }, []);
 
-  if (profiles === null) {
-    return <div class="profiles-app profiles-app--loading">{t('common.loading')}</div>;
-  }
-
+  // Deleting the last profile empties the locally-mirrored list. AsyncBoundary
+  // only gates on the original fetch, so render the empty surface here.
   if (profiles.length === 0) {
     return (
       <div class="profiles-app profiles-app--empty">
-        <Alert type="error" message={error} />
         <EmptyState
           title={t('profiles.empty_state.title')}
           message={t('profiles.empty_state.message')}
@@ -167,7 +184,6 @@ export function ProfilesApp({ demoMode = false }: ProfilesAppProps) {
 
   return (
     <div class="profiles-app">
-      <Alert type="error" message={error} />
       {syncToast && <Alert type={syncToast.type} message={syncToast.text} />}
       <aside class="profiles-app__sidebar">
         <ProfileList

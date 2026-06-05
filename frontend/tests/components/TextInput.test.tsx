@@ -1,8 +1,8 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
-import { TextInput } from '../../src/components/TextInput';
-import { FormField } from '../../src/components/FormField';
+import { TextInput } from '../../src/components/primitives/TextInput';
+import { FormField } from '../../src/components/form/FormField';
 
 describe('TextInput', () => {
   test('renders with current value', () => {

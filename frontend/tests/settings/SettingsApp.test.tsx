@@ -21,7 +21,10 @@ const INIT: SettingsInit = {
   demoMode: false,
 };
 
-vi.mock('../../src/shared/api', () => ({
+vi.mock('../../src/shared/api', async (importActual) => {
+  const actual = await importActual<typeof import('../../src/shared/api')>();
+  return {
+  ApiError: actual.ApiError,
   client: {
     settings: {
       get: vi.fn().mockResolvedValue({
@@ -48,7 +51,8 @@ vi.mock('../../src/shared/api', () => ({
       clear: vi.fn().mockResolvedValue({ cleared: [] }),
     },
   },
-}));
+  };
+});
 
 describe('SettingsApp', () => {
   beforeEach(() => {
@@ -98,6 +102,22 @@ describe('SettingsApp', () => {
     await waitFor(() => {
       expect(screen.getByText(t('settings.cache.title'))).toBeDefined();
     });
+  });
+
+  test('shows the canonical loading state before data resolves', () => {
+    const { container } = render(<SettingsApp init={INIT} />);
+    expect(container.querySelector('.loading')).not.toBeNull();
+    expect(screen.getByText(t('common.loading'))).toBeDefined();
+  });
+
+  test('renders an error alert when the settings fetch fails', async () => {
+    const { client } = await import('../../src/shared/api');
+    vi.mocked(client.settings.get).mockRejectedValueOnce(new Error('boom'));
+    const { container } = render(<SettingsApp init={INIT} />);
+    await waitFor(() => {
+      expect(container.querySelector('.alert-error')).not.toBeNull();
+    });
+    expect(screen.queryByText(t('settings.title'))).toBeNull();
   });
 
   test('hides the cache management section in demo mode', async () => {

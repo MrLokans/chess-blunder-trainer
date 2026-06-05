@@ -3,9 +3,9 @@ import { client } from '../shared/api';
 import { formatRelativeAgo } from '../shared/relative-time';
 import type { Profile } from '../types/profiles';
 import { PLATFORM_LABEL } from '../types/profiles';
-import { Alert } from './Alert';
-import { Button } from './Button';
-import { EmptyState } from './EmptyState';
+import { Alert } from '../components/feedback/Alert';
+import { Button } from '../components/primitives/Button';
+import { EmptyState } from '../components/layout/EmptyState';
 
 export interface UpdateGamesPanelProps {
   profiles: Profile[];

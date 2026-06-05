@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'preact/hooks';
-import { Button } from '../components/Button';
-import { ColorInput } from '../components/ColorInput';
+import { Button } from '../components/primitives/Button';
+import { ColorInput } from '../components/primitives/ColorInput';
 import { THEME_COLOR_KEYS } from './types';
 import type { ThemeColorKey, ThemeColors, ThemePreset } from './types';
 

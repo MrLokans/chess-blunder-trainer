@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { render, screen } from '@testing-library/preact';
-import { FormField } from '../../src/components/FormField';
+import { FormField } from '../../src/components/form/FormField';
 
 describe('FormField', () => {
   test('renders label and child', () => {

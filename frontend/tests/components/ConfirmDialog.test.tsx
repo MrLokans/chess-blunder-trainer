@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
-import { ConfirmDialog } from '../../src/components/ConfirmDialog';
+import { ConfirmDialog } from '../../src/components/feedback/ConfirmDialog';
 
 afterEach(() => {
   cleanup();

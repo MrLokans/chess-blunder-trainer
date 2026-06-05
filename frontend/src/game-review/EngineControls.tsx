@@ -1,7 +1,7 @@
-import { Button } from '../components/Button';
-import { Toggle } from '../components/Toggle';
-import { Segmented } from '../components/Segmented';
-import { RangeSlider } from '../components/RangeSlider';
+import { Button } from '../components/primitives/Button';
+import { Toggle } from '../components/primitives/Toggle';
+import { Segmented } from '../components/primitives/Segmented';
+import { RangeSlider } from '../components/primitives/RangeSlider';
 
 interface EngineControlsProps {
   analysisMode: boolean;

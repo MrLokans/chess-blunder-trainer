@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { render, screen } from '@testing-library/preact';
-import { Badge } from '../../src/components/Badge';
+import { Badge } from '../../src/components/primitives/Badge';
 
 describe('Badge', () => {
   test('renders children', () => {

@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { client } from '../shared/api';
-import { Alert } from '../components/Alert';
-import { Button } from '../components/Button';
+import { Alert } from '../components/feedback/Alert';
+import { Button } from '../components/primitives/Button';
 import { ALL_STORAGE_KEYS } from '../shared/storage-keys';
-import type { ExternalJobStatus } from '../components/JobCard';
+import type { ExternalJobStatus } from '../components/data/JobCard';
 
 function clearAppLocalStorage(): void {
   ALL_STORAGE_KEYS.forEach(key => { localStorage.removeItem(key); });

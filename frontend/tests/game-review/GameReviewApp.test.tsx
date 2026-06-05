@@ -2,6 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { GameReviewApp } from '../../src/game-review/GameReviewApp';
+import { ApiError } from '../../src/shared/api';
 
 const { mockSequence, mockBoard, mockPlayback } = vi.hoisted(() => {
   const mockSequence = {
@@ -35,16 +36,20 @@ const { mockSequence, mockBoard, mockPlayback } = vi.hoisted(() => {
   return { mockSequence, mockBoard, mockPlayback };
 });
 
-vi.mock('../../src/shared/api', () => ({
-  client: {
-    gameReview: {
-      getReview: vi.fn(),
+vi.mock('../../src/shared/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/shared/api')>();
+  return {
+    ApiError: actual.ApiError,
+    client: {
+      gameReview: {
+        getReview: vi.fn(),
+      },
+      settings: {
+        getBoard: vi.fn(),
+      },
     },
-    settings: {
-      getBoard: vi.fn(),
-    },
-  },
-}));
+  };
+});
 
 vi.mock('../../src/shared/sequence-player', () => ({
   MoveSequence: vi.fn().mockImplementation(() => mockSequence),
@@ -122,7 +127,7 @@ describe('GameReviewApp', () => {
   });
 
   test('shows error on 404 response', async () => {
-    mockGetReview.mockRejectedValue({ status: 404 });
+    mockGetReview.mockRejectedValue(new ApiError(404, 'not found'));
     render(<GameReviewApp gameId="missing-game" />);
     await waitFor(() => {
       expect(screen.getByText(t('game_review.not_found'))).toBeDefined();

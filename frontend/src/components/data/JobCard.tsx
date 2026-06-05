@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
-import { ProgressBar } from './ProgressBar';
-import { Alert } from './Alert';
-import { Button } from './Button';
-import type { JobState, JobStatus } from '../types/api';
+import { ProgressBar } from '../feedback/ProgressBar';
+import { Alert } from '../feedback/Alert';
+import { Button } from '../primitives/Button';
+import type { JobState, JobStatus } from '../../types/api';
 
 export type { JobState, JobStatus };
 

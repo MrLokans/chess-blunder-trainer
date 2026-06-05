@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { render, screen } from '@testing-library/preact';
-import { AsyncBoundary } from '../AsyncBoundary';
+import { AsyncBoundary } from '../../src/components/feedback/AsyncBoundary';
 
 describe('AsyncBoundary', () => {
   test('renders canonical loading markup while loading', () => {

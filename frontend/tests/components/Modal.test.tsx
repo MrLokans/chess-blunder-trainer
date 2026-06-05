@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'preact/hooks';
-import { Modal } from '../../src/components/Modal';
+import { Modal } from '../../src/components/feedback/Modal';
 
 describe('Modal', () => {
   beforeEach(() => {

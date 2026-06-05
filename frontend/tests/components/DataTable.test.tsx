@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { render } from '@testing-library/preact';
-import { DataTable } from '../../src/components/DataTable';
-import type { Column } from '../../src/components/DataTable';
+import { DataTable } from '../../src/components/data/DataTable';
+import type { Column } from '../../src/components/data/DataTable';
 
 interface Item {
   id: string;

@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
-import { Card } from '../../src/components/Card';
+import { Card } from '../../src/components/layout/Card';
 
 describe('Card', () => {
   test('renders children inside a div by default', () => {

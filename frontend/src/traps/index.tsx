@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { ErrorBoundary } from '../components/ErrorBoundary';
+import { ErrorBoundary } from '../components/feedback/ErrorBoundary';
 import { TrapsApp } from './TrapsApp';
 
 const root = document.getElementById('traps-root');

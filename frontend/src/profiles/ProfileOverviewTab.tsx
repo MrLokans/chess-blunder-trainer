@@ -2,9 +2,9 @@ import { useState, useCallback } from 'preact/hooks';
 import { client, ApiError } from '../shared/api';
 import type { Profile } from '../types/profiles';
 import { PLATFORM_LABEL } from '../types/profiles';
-import { Button } from '../components/Button';
-import { Badge } from '../components/Badge';
-import { Alert } from '../components/Alert';
+import { Button } from '../components/primitives/Button';
+import { Badge } from '../components/primitives/Badge';
+import { Alert } from '../components/feedback/Alert';
 import { RatingCard } from './RatingCard';
 import { formatRelativeAgo } from '../shared/relative-time';
 

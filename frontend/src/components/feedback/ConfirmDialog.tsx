@@ -1,6 +1,6 @@
 import { useRef } from 'preact/hooks';
 import { Modal } from './Modal';
-import { Button } from './Button';
+import { Button } from '../primitives/Button';
 
 export interface ConfirmDialogAction {
   label: string;

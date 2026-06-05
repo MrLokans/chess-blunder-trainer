@@ -1,6 +1,6 @@
 import type { ComponentChildren, VNode } from 'preact';
 import { Alert } from './Alert';
-import type { AsyncDataState } from '../hooks/useAsyncData';
+import type { AsyncDataState } from '../../hooks/useAsyncData';
 
 export interface AsyncBoundaryProps<T> {
   state: Pick<AsyncDataState<T>, 'loading' | 'error' | 'data'>;

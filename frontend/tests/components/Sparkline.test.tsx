@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { render } from '@testing-library/preact';
-import { Sparkline } from '../../src/components/Sparkline';
+import { Sparkline } from '../../src/components/data/Sparkline';
 
 describe('Sparkline', () => {
   test('renders nothing for fewer than two points', () => {

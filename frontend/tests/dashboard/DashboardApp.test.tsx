@@ -2,7 +2,11 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/preact';
 import { DashboardApp } from '../../src/dashboard/DashboardApp';
 
-vi.mock('../../src/shared/api', () => ({
+vi.mock('../../src/shared/api', async (importActual) => {
+  const actual = await importActual<typeof import('../../src/shared/api')>();
+  return {
+  ApiError: actual.ApiError,
+  isAbortError: actual.isAbortError,
   client: {
     stats: {
       overview: vi.fn().mockResolvedValue({ total_games: 100, analyzed_games: 80, total_blunders: 25 }),
@@ -26,7 +30,8 @@ vi.mock('../../src/shared/api', () => ({
       stats: vi.fn().mockResolvedValue({ summary: { total_sprung: 0, total_entered: 0 }, stats: [] }),
     },
   },
-}));
+  };
+});
 
 vi.mock('../../src/hooks/useWebSocket', () => ({
   useWebSocket: () => ({
@@ -97,8 +102,23 @@ describe('DashboardApp', () => {
     expect(screen.queryByText(t('dashboard.chart.growth'))).toBeNull();
   });
 
-  test('shows loading state initially', () => {
-    render(<DashboardApp />);
-    expect(screen.getByText(t('common.loading'))).toBeDefined();
+  test('shows canonical loading state initially', () => {
+    const { container } = render(<DashboardApp />);
+    const loading = container.querySelector('div.loading');
+    expect(loading).not.toBeNull();
+    expect(loading?.textContent).toBe(t('common.loading'));
+  });
+
+  test('shows Alert error on load failure', async () => {
+    const { client } = await import('../../src/shared/api');
+    vi.mocked(client.stats.overview).mockRejectedValueOnce(new Error('Network down'));
+
+    const { container } = render(<DashboardApp />);
+
+    await waitFor(() => {
+      const alert = container.querySelector('.alert.alert-error');
+      expect(alert).not.toBeNull();
+      expect(alert?.textContent).toContain('Network down');
+    });
   });
 });

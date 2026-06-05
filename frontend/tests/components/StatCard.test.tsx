@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { render, screen } from '@testing-library/preact';
-import { StatCard } from '../../src/components/StatCard';
+import { StatCard } from '../../src/components/data/StatCard';
 
 describe('StatCard', () => {
   test('renders label and value', () => {

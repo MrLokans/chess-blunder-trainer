@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
-import { Toggle } from '../../src/components/Toggle';
+import { Toggle } from '../../src/components/primitives/Toggle';
 
 describe('Toggle', () => {
   test('renders as a switch with the right aria-checked', () => {

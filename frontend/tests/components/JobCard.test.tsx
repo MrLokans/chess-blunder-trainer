@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
-import { JobCard } from '../../src/components/JobCard';
+import { JobCard } from '../../src/components/data/JobCard';
 
 describe('JobCard', () => {
   const defaultProps = {
