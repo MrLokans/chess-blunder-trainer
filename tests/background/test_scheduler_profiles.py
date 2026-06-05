@@ -33,32 +33,6 @@ from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.utils.time import utcnow
 
 
-@pytest.fixture
-async def event_bus() -> EventBus:
-    return EventBus()
-
-
-@pytest.fixture
-async def settings_repo(db_path: Path) -> AsyncGenerator[SettingsRepository]:
-    repo = SettingsRepository(db_path)
-    yield repo
-    await repo.close()
-
-
-@pytest.fixture
-async def profile_repo(db_path: Path) -> AsyncGenerator[SqliteProfileRepository]:
-    repo = SqliteProfileRepository(db_path)
-    yield repo
-    await repo.close()
-
-
-@pytest.fixture
-async def job_repo(db_path: Path) -> AsyncGenerator[JobRepository]:
-    repo = JobRepository(db_path)
-    yield repo
-    await repo.close()
-
-
 async def _seed_completed_sync_job(
     job_repo: JobRepository,
     *,

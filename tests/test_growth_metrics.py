@@ -1,22 +1,13 @@
 from __future__ import annotations
 
 from http import HTTPStatus
-import pytest
 
-from blunder_tutor.repositories.stats_repository import StatsRepository
 from blunder_tutor.web.api.stats import (
     GrowthWindow,
     _compute_growth_windows,
     _compute_trend,
 )
 from tests.helpers.stats_db import insert_test_game, insert_test_move
-
-
-@pytest.fixture
-async def stats_repo(db_path):
-    repo = StatsRepository(db_path)
-    yield repo
-    await repo.close()
 
 
 def _make_game_data(

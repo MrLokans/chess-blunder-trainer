@@ -14,7 +14,12 @@ from fastapi.testclient import TestClient
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
+from blunder_tutor.repositories.job_repository import JobRepository
+from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
+from blunder_tutor.repositories.settings import SettingsRepository
+from blunder_tutor.repositories.starred_puzzle_repository import StarredPuzzleRepository
+from blunder_tutor.repositories.stats_repository import StatsRepository
 from blunder_tutor.trainer import Trainer
 from blunder_tutor.web.config import AppConfig, DataConfig, EngineConfig
 from tests.helpers.engine import make_test_client
@@ -105,6 +110,41 @@ async def game_repo(db_path: Path) -> AsyncGenerator[GameRepository]:
 @pytest.fixture
 async def puzzle_attempt_repo(db_path: Path) -> AsyncGenerator[PuzzleAttemptRepository]:
     repo = PuzzleAttemptRepository(db_path)
+    yield repo
+    await repo.close()
+
+
+@pytest.fixture
+async def stats_repo(db_path: Path) -> AsyncGenerator[StatsRepository]:
+    repo = StatsRepository(db_path)
+    yield repo
+    await repo.close()
+
+
+@pytest.fixture
+async def job_repo(db_path: Path) -> AsyncGenerator[JobRepository]:
+    repo = JobRepository(db_path)
+    yield repo
+    await repo.close()
+
+
+@pytest.fixture
+async def profile_repo(db_path: Path) -> AsyncGenerator[SqliteProfileRepository]:
+    repo = SqliteProfileRepository(db_path)
+    yield repo
+    await repo.close()
+
+
+@pytest.fixture
+async def settings_repo(db_path: Path) -> AsyncGenerator[SettingsRepository]:
+    repo = SettingsRepository(db_path)
+    yield repo
+    await repo.close()
+
+
+@pytest.fixture
+async def starred_repo(db_path: Path) -> AsyncGenerator[StarredPuzzleRepository]:
+    repo = StarredPuzzleRepository(db_path)
     yield repo
     await repo.close()
 

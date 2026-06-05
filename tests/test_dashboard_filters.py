@@ -1,11 +1,9 @@
 """Tests for dashboard filter API endpoints (time control + game phase)."""
 
 from http import HTTPStatus
-from pathlib import Path
 
 import pytest
 
-from blunder_tutor.repositories.stats_repository import StatsRepository
 from tests.helpers.stats_db import insert_test_game, insert_test_move
 
 SMOKE_ENDPOINTS = [
@@ -58,13 +56,6 @@ def test_filter_endpoint_returns_200_with_expected_keys(app, url, expected_keys)
     data = response.json()
     for key in expected_keys:
         assert key in data
-
-
-@pytest.fixture
-async def stats_repo(db_path: Path):
-    repo = StatsRepository(db_path)
-    yield repo
-    await repo.close()
 
 
 @pytest.fixture

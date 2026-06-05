@@ -4,23 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from blunder_tutor.repositories.job_repository import JobRepository
-from blunder_tutor.repositories.stats_repository import StatsRepository
 from tests.helpers.stats_db import insert_test_game, insert_test_move
-
-
-@pytest.fixture
-async def stats_repo(db_path):
-    repo = StatsRepository(db_path)
-    yield repo
-    await repo.close()
-
-
-@pytest.fixture
-async def job_repo(db_path):
-    repo = JobRepository(db_path)
-    yield repo
-    await repo.close()
 
 
 async def _seed_blunder_game(

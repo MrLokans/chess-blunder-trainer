@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import sqlite3
-from contextlib import closing
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
 from pathlib import Path
@@ -10,20 +8,11 @@ from fastapi.testclient import TestClient
 
 from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.utils.time_control import GameType
+from tests.helpers.seeding import insert_game_index_row, make_pgn
 
 
 def _days_ago(n: int) -> str:
     return (datetime.now(UTC) - timedelta(days=n)).isoformat()
-
-
-def _make_pgn(
-    *, white: str, black: str, white_elo: int | str, black_elo: int | str
-) -> str:
-    return (
-        f'[White "{white}"]\n[Black "{black}"]\n'
-        f'[WhiteElo "{white_elo}"]\n[BlackElo "{black_elo}"]\n'
-        f'[Result "*"]\n\n*\n'
-    )
 
 
 def _insert_game(
@@ -39,27 +28,19 @@ def _insert_game(
     end_time_utc: str = "2026-01-01T00:00:00",
     game_type: int = int(GameType.BLITZ),
 ) -> None:
-    pgn = _make_pgn(white=white, black=black, white_elo=white_elo, black_elo=black_elo)
-    with closing(sqlite3.connect(str(db))) as conn:
-        conn.execute(
-            "INSERT INTO game_index_cache "
-            "(game_id, source, username, white, black, "
-            " result, date, end_time_utc, time_control, "
-            " pgn_content, indexed_at, game_type, profile_id) "
-            "VALUES (?, 'lichess', ?, ?, ?, '*', '2026-01-01', "
-            "        ?, '300', ?, '2026-01-01', ?, ?)",
-            (
-                game_id,
-                username,
-                white,
-                black,
-                end_time_utc,
-                pgn,
-                game_type,
-                profile_id,
-            ),
-        )
-        conn.commit()
+    insert_game_index_row(
+        db,
+        game_id=game_id,
+        profile_id=profile_id,
+        username=username,
+        white=white,
+        black=black,
+        end_time_utc=end_time_utc,
+        game_type=game_type,
+        pgn_content=make_pgn(
+            white=white, black=black, white_elo=white_elo, black_elo=black_elo
+        ),
+    )
 
 
 class TestRatingHistoryEndpoint:

@@ -52,36 +52,8 @@ def _make_game(game_id: str, *, source: str, username: str) -> dict[str, object]
 
 
 @pytest.fixture
-async def profile_repo(db_path: Path) -> AsyncGenerator[SqliteProfileRepository]:
-    repository = SqliteProfileRepository(db_path)
-    yield repository
-    await repository.close()
-
-
-@pytest.fixture
-async def settings_repo(db_path: Path) -> AsyncGenerator[SettingsRepository]:
-    repository = SettingsRepository(db_path)
-    yield repository
-    await repository.close()
-
-
-@pytest.fixture
-async def game_repo(db_path: Path) -> AsyncGenerator[GameRepository]:
-    repository = GameRepository(db_path)
-    yield repository
-    await repository.close()
-
-
-@pytest.fixture
-async def event_bus() -> EventBus:
-    return EventBus()
-
-
-@pytest.fixture
-async def job_service(db_path: Path, event_bus: EventBus) -> AsyncGenerator[JobService]:
-    job_repo = JobRepository(db_path)
-    yield JobService(job_repository=job_repo, event_bus=event_bus)
-    await job_repo.close()
+async def job_service(job_repo: JobRepository, event_bus: EventBus) -> JobService:
+    return JobService(job_repository=job_repo, event_bus=event_bus)
 
 
 @pytest.fixture(autouse=True)

@@ -1,65 +1,33 @@
 from __future__ import annotations
 
-import aiosqlite
 import pytest
 
 from blunder_tutor.repositories.trap_repository import TrapRepository
-
-
-async def _create_test_db(db_path):
-    async with aiosqlite.connect(str(db_path)) as conn:
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS trap_matches (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                game_id TEXT NOT NULL,
-                trap_id TEXT NOT NULL,
-                match_type TEXT NOT NULL,
-                victim_side TEXT NOT NULL,
-                user_was_victim INTEGER NOT NULL,
-                mistake_ply INTEGER,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(game_id, trap_id)
-            )
-            """
-        )
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS game_index_cache (
-                game_id TEXT PRIMARY KEY,
-                source TEXT,
-                username TEXT,
-                white TEXT,
-                black TEXT,
-                result TEXT,
-                date TEXT,
-                end_time_utc TEXT,
-                time_control TEXT,
-                pgn_content TEXT,
-                analyzed INTEGER DEFAULT 0,
-                indexed_at TEXT
-            )
-            """
-        )
-        await conn.execute(
-            """
-            INSERT INTO game_index_cache (game_id, source, username, white, black, result, date, analyzed)
-            VALUES ('game1', 'lichess', 'player1', 'player1', 'opponent1', '0-1', '2025-01-01', 1)
-            """
-        )
-        await conn.execute(
-            """
-            INSERT INTO game_index_cache (game_id, source, username, white, black, result, date, analyzed)
-            VALUES ('game2', 'lichess', 'player1', 'opponent2', 'player1', '1-0', '2025-01-02', 1)
-            """
-        )
-        await conn.commit()
+from tests.helpers.seeding import insert_game_index_row
 
 
 @pytest.fixture
-async def trap_repo(tmp_path):
-    db_path = tmp_path / "test.db"
-    await _create_test_db(db_path)
+async def trap_repo(db_path):
+    insert_game_index_row(
+        db_path,
+        game_id="game1",
+        username="player1",
+        white="player1",
+        black="opponent1",
+        result="0-1",
+        date="2025-01-01",
+        analyzed=1,
+    )
+    insert_game_index_row(
+        db_path,
+        game_id="game2",
+        username="player1",
+        white="opponent2",
+        black="player1",
+        result="1-0",
+        date="2025-01-02",
+        analyzed=1,
+    )
     repo = TrapRepository(db_path=db_path)
     try:
         yield repo

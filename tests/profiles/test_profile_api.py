@@ -19,6 +19,7 @@ from blunder_tutor.repositories.profile import (
     ProfileStatSnapshot,
     SqliteProfileRepository,
 )
+from tests.helpers.seeding import insert_game_index_row
 
 
 def _patch_existence_raising(
@@ -469,14 +470,7 @@ class TestDeleteProfile:
         return profile.id
 
     def _insert_game_for(self, db_path: Path, *, game_id: str, profile_id: int) -> None:
-        with closing(sqlite3.connect(str(db_path))) as conn:
-            conn.execute(
-                "INSERT INTO game_index_cache "
-                "(game_id, source, username, pgn_content, indexed_at, profile_id) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (game_id, "lichess", "alice", "1.e4 e5", "2026-04-30", profile_id),
-            )
-            conn.commit()
+        insert_game_index_row(db_path, game_id=game_id, profile_id=profile_id)
 
     async def test_missing_detach_games_returns_400(
         self, app: TestClient, db_path: Path

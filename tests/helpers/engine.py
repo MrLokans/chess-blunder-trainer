@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from contextlib import contextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -41,7 +42,7 @@ def mock_engine_context():
         yield mock_transport, mock_engine
 
 
-def make_test_client(config: AppConfig) -> TestClient:
+def make_test_client(config: AppConfig) -> Generator[TestClient]:
     with mock_engine_context():
         fastapi_app = create_app(config)
         with TestClient(fastapi_app) as client:

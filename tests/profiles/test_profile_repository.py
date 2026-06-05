@@ -12,6 +12,7 @@ from blunder_tutor.repositories.profile import (
     ProfileStatSnapshot,
     SqliteProfileRepository,
 )
+from tests.helpers.seeding import insert_game_index_row
 
 
 @pytest.fixture
@@ -22,14 +23,7 @@ async def repo(db_path: Path) -> AsyncGenerator[SqliteProfileRepository]:
 
 
 def _insert_game(db: Path, *, game_id: str, profile_id: int | None) -> None:
-    with closing(sqlite3.connect(str(db))) as conn:
-        conn.execute(
-            "INSERT INTO game_index_cache "
-            "(game_id, source, username, pgn_content, indexed_at, profile_id) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (game_id, "lichess", "alice", "1.e4 e5", "2026-04-30", profile_id),
-        )
-        conn.commit()
+    insert_game_index_row(db, game_id=game_id, profile_id=profile_id)
 
 
 _GAME_CASCADE_INSERTS: tuple[tuple[str, str], ...] = (

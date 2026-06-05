@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sqlite3
-from collections.abc import AsyncGenerator
 from contextlib import closing
 from pathlib import Path
 from typing import Any
@@ -14,13 +13,6 @@ from blunder_tutor.repositories.profile import (
     ProfileStatSnapshot,
     SqliteProfileRepository,
 )
-
-
-@pytest.fixture
-async def repo(db_path: Path) -> AsyncGenerator[SqliteProfileRepository]:
-    repository = SqliteProfileRepository(db_path)
-    yield repository
-    await repository.close()
 
 
 def _read_stats_rows(db: Path, profile_id: int) -> list[tuple]:
@@ -57,11 +49,11 @@ def _stub_rate_limit(platform: str):
 class TestStatsSyncJobLichess:
     async def test_happy_path_upserts_stats_and_touches_last_validated(
         self,
-        repo: SqliteProfileRepository,
+        profile_repo: SqliteProfileRepository,
         db_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        profile = await repo.create("lichess", "alice", make_primary=True)
+        profile = await profile_repo.create("lichess", "alice", make_primary=True)
         snapshots = [
             ProfileStatSnapshot(mode="bullet", rating=2400, games_count=5000),
             ProfileStatSnapshot(mode="blitz", rating=2300, games_count=12000),
@@ -71,7 +63,7 @@ class TestStatsSyncJobLichess:
             _stub_fetch(snapshots),
         )
 
-        job = StatsSyncJob(profile_repo=repo)
+        job = StatsSyncJob(profile_repo=profile_repo)
         result = await job.execute(job_id="job-1", profile_id=profile.id)
 
         assert result == {"deferred": False, "stored": 2}
@@ -81,12 +73,12 @@ class TestStatsSyncJobLichess:
 
     async def test_upsert_overwrites_existing_snapshot(
         self,
-        repo: SqliteProfileRepository,
+        profile_repo: SqliteProfileRepository,
         db_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        profile = await repo.create("lichess", "alice")
-        await repo.upsert_stats(
+        profile = await profile_repo.create("lichess", "alice")
+        await profile_repo.upsert_stats(
             profile.id,
             [ProfileStatSnapshot(mode="bullet", rating=2000, games_count=100)],
         )
@@ -97,7 +89,7 @@ class TestStatsSyncJobLichess:
             ),
         )
 
-        job = StatsSyncJob(profile_repo=repo)
+        job = StatsSyncJob(profile_repo=profile_repo)
         await job.execute(job_id="job-1", profile_id=profile.id)
 
         rows = _read_stats_rows(db_path, profile.id)
@@ -107,11 +99,11 @@ class TestStatsSyncJobLichess:
 class TestStatsSyncJobChessCom:
     async def test_happy_path_routes_to_chesscom_fetcher(
         self,
-        repo: SqliteProfileRepository,
+        profile_repo: SqliteProfileRepository,
         db_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        profile = await repo.create("chesscom", "alice")
+        profile = await profile_repo.create("chesscom", "alice")
         snapshots = [
             ProfileStatSnapshot(mode="rapid", rating=1900, games_count=300),
         ]
@@ -129,7 +121,7 @@ class TestStatsSyncJobChessCom:
             _stub_fetch(snapshots),
         )
 
-        job = StatsSyncJob(profile_repo=repo)
+        job = StatsSyncJob(profile_repo=profile_repo)
         result = await job.execute(job_id="job-1", profile_id=profile.id)
 
         assert result == {"deferred": False, "stored": 1}
@@ -139,17 +131,17 @@ class TestStatsSyncJobChessCom:
 class TestStatsSyncJobRateLimit:
     async def test_rate_limit_caught_no_rows_written_no_validation_touch(
         self,
-        repo: SqliteProfileRepository,
+        profile_repo: SqliteProfileRepository,
         db_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ):
-        profile = await repo.create("lichess", "alice")
+        profile = await profile_repo.create("lichess", "alice")
         monkeypatch.setattr(
             "blunder_tutor.background.jobs.stats_sync.lichess.fetch_user_perfs",
             _stub_rate_limit("lichess"),
         )
 
-        job = StatsSyncJob(profile_repo=repo)
+        job = StatsSyncJob(profile_repo=profile_repo)
         result = await job.execute(job_id="job-1", profile_id=profile.id)
 
         assert result == {"deferred": True, "stored": 0}
@@ -160,7 +152,7 @@ class TestStatsSyncJobRateLimit:
 class TestStatsSyncJobMissingProfile:
     async def test_missing_profile_is_graceful_noop(
         self,
-        repo: SqliteProfileRepository,
+        profile_repo: SqliteProfileRepository,
         db_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ):
@@ -177,7 +169,7 @@ class TestStatsSyncJobMissingProfile:
             _should_not_be_called,
         )
 
-        job = StatsSyncJob(profile_repo=repo)
+        job = StatsSyncJob(profile_repo=profile_repo)
         result = await job.execute(job_id="job-1", profile_id=999)
 
         assert result == {"deferred": False, "stored": 0, "missing": True}

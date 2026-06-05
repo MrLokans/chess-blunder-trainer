@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import sqlite3
-from collections.abc import AsyncGenerator
-from contextlib import closing
 from pathlib import Path
 
 import pytest
@@ -13,16 +10,7 @@ from blunder_tutor.repositories.profile_types import ProfileNotFoundError
 from blunder_tutor.services import rating_history as rating_history_module
 from blunder_tutor.services.rating_history import RatingHistoryService
 from blunder_tutor.utils.time_control import GameType
-
-
-def _make_pgn(
-    *, white: str, black: str, white_elo: int | str, black_elo: int | str
-) -> str:
-    return (
-        f'[White "{white}"]\n[Black "{black}"]\n'
-        f'[WhiteElo "{white_elo}"]\n[BlackElo "{black_elo}"]\n'
-        f'[Result "*"]\n\n*\n'
-    )
+from tests.helpers.seeding import insert_game_index_row, make_pgn
 
 
 def _insert_game(
@@ -39,28 +27,20 @@ def _insert_game(
     game_type: int = int(GameType.BLITZ),
     time_control: str = "300",
 ) -> None:
-    pgn = _make_pgn(white=white, black=black, white_elo=white_elo, black_elo=black_elo)
-    with closing(sqlite3.connect(str(db))) as conn:
-        conn.execute(
-            "INSERT INTO game_index_cache "
-            "(game_id, source, username, white, black, "
-            " result, date, end_time_utc, time_control, "
-            " pgn_content, indexed_at, game_type, profile_id) "
-            "VALUES (?, 'lichess', ?, ?, ?, '*', '2026-01-01', "
-            "        ?, ?, ?, '2026-01-01', ?, ?)",
-            (
-                game_id,
-                username,
-                white,
-                black,
-                end_time_utc,
-                time_control,
-                pgn,
-                game_type,
-                profile_id,
-            ),
-        )
-        conn.commit()
+    insert_game_index_row(
+        db,
+        game_id=game_id,
+        profile_id=profile_id,
+        username=username,
+        white=white,
+        black=black,
+        end_time_utc=end_time_utc,
+        time_control=time_control,
+        game_type=game_type,
+        pgn_content=make_pgn(
+            white=white, black=black, white_elo=white_elo, black_elo=black_elo
+        ),
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -69,20 +49,6 @@ def _disable_window(monkeypatch: pytest.MonkeyPatch) -> None:
     # (`test_excludes_games_older_than_30_days`). Service tests use fixed
     # historical dates and would otherwise be filtered out as "now" advances.
     monkeypatch.setattr(rating_history_module, "_WINDOW_DAYS", 100_000)
-
-
-@pytest.fixture
-async def profile_repo(db_path: Path) -> AsyncGenerator[SqliteProfileRepository]:
-    repo = SqliteProfileRepository(db_path)
-    yield repo
-    await repo.close()
-
-
-@pytest.fixture
-async def game_repo(db_path: Path) -> AsyncGenerator[GameRepository]:
-    repo = GameRepository(db_path)
-    yield repo
-    await repo.close()
 
 
 @pytest.fixture

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from http import HTTPStatus
-from collections.abc import AsyncGenerator
 from pathlib import Path
 
 import pytest
@@ -9,13 +8,6 @@ import pytest
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.starred_puzzle_repository import StarredPuzzleRepository
 from tests.helpers.engine import make_test_client
-
-
-@pytest.fixture
-async def starred_repo(db_path: Path) -> AsyncGenerator[StarredPuzzleRepository]:
-    repo = StarredPuzzleRepository(db_path)
-    yield repo
-    await repo.close()
 
 
 class TestStarredPuzzleRepository:

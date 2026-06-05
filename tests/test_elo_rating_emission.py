@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import sqlite3
-from contextlib import closing
 from http import HTTPStatus
 from pathlib import Path
 
@@ -25,6 +23,7 @@ from blunder_tutor.events.event_types import EventType
 from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.services.job_service import JobService
+from tests.helpers.seeding import insert_game_index_row
 
 _CTX_USER_ID = UserId("user-zoe")
 
@@ -154,15 +153,9 @@ class TestJobServiceEmitsEloRating:
 
 class TestProfileDeleteEmitsEloRating:
     def _insert_game_for(self, db_path: Path, *, profile_id: int) -> None:
-        with closing(sqlite3.connect(str(db_path))) as conn:
-            conn.execute(
-                "INSERT INTO game_index_cache "
-                "(game_id, source, username, pgn_content, "
-                " indexed_at, profile_id) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                ("g1", "lichess", "alice", "1.e4 e5", "2026-04-30", profile_id),
-            )
-            conn.commit()
+        insert_game_index_row(
+            db_path, game_id="g1", username="alice", profile_id=profile_id
+        )
 
     async def _capture_elo_event(
         self, app: TestClient, *, profile_id: int, detach: str

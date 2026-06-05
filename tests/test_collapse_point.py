@@ -3,18 +3,10 @@
 from __future__ import annotations
 
 from http import HTTPStatus
-import pytest
 
-from blunder_tutor.repositories.stats_repository import StatsFilter, StatsRepository
+from blunder_tutor.repositories.stats_repository import StatsFilter
 from blunder_tutor.utils.time_control import GAME_TYPE_FROM_STRING
 from tests.helpers.stats_db import insert_test_game, insert_test_move
-
-
-@pytest.fixture
-async def stats_repo(db_path):
-    repo = StatsRepository(db_path)
-    yield repo
-    await repo.close()
 
 
 async def test_no_username_returns_empty(stats_repo):
