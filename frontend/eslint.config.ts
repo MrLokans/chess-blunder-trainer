@@ -8,15 +8,29 @@ const allPageModules = [
   'import', 'setup', 'starred', 'traps', 'heatmap', 'growth', 'profiles',
 ];
 
+const restrictedImportPaths = [
+  { name: 'chart.js', message: 'Chart is a global from vendor. Use window.Chart.' },
+];
+const restrictedImportPatterns = [
+  { group: ['node:*'], message: 'Node.js APIs not available in browser.' },
+];
+
+// Flat config replaces (not merges) a rule's options when configs overlap, so the
+// per-page-module config must re-state the base path/pattern bans or page modules
+// would silently lose them.
 function crossPageRestrictions(): Array<Record<string, unknown>> {
   return allPageModules.map(mod => ({
-    files: [`src/${mod}/**/*.{ts,tsx}`],
+    files: [`**/src/${mod}/**/*.{ts,tsx}`],
     rules: {
       'no-restricted-imports': ['error', {
-        patterns: [{
-          group: allPageModules.filter(m => m !== mod).map(m => `../${m}/*`),
-          message: 'Page modules cannot import from other page modules. Move shared code to shared/.',
-        }],
+        paths: restrictedImportPaths,
+        patterns: [
+          ...restrictedImportPatterns,
+          {
+            group: allPageModules.filter(m => m !== mod).map(m => `../${m}/*`),
+            message: 'Page modules cannot import from other page modules. Move shared code to shared/.',
+          },
+        ],
       }],
     },
   }));
@@ -42,12 +56,8 @@ export default tseslint.config(
         { name: 'process', message: 'Use import.meta.env for env vars.' },
       ],
       'no-restricted-imports': ['error', {
-        paths: [
-          { name: 'chart.js', message: 'Chart is a global from vendor. Use window.Chart.' },
-        ],
-        patterns: [
-          { group: ['node:*'], message: 'Node.js APIs not available in browser.' },
-        ],
+        paths: restrictedImportPaths,
+        patterns: restrictedImportPatterns,
       }],
       'prefer-const': ['error', { destructuring: 'all' }],
       'eqeqeq': ['error', 'always', { null: 'ignore' }],
