@@ -30,7 +30,7 @@ function makeFakeEngine() {
 function makeBoardStub() {
   const stub = {
     setPosition: vi.fn(),
-    setShapes: vi.fn(),
+    setVisuals: vi.fn(),
     setOrientation: vi.fn(),
     destroy: vi.fn(),
   };

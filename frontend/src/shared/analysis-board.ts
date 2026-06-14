@@ -1,28 +1,16 @@
 import { Chessground } from '@vendor/chessground';
 import { buildBoardSvgDataUrl } from './board-theme';
+import { applyBoardVisuals, buildDests, type BoardArrow, type ChessgroundVisualApi } from './board-visuals';
+import type { HighlightMap } from './highlights';
 
-interface ChessgroundShape { orig: string; dest?: string; brush?: string; }
-
-interface ChessgroundApi {
-  set(config: Record<string, unknown>): void;
-  setAutoShapes(shapes: ChessgroundShape[]): void;
+interface ChessgroundApi extends ChessgroundVisualApi {
   destroy(): void;
 }
 
 export type MoveHandler = (orig: string, dest: string, promotion: string) => void;
 
-export function buildDests(game: ChessInstance): Map<string, string[]> {
-  const dests = new Map<string, string[]>();
-  const files = 'abcdefgh';
-  for (let f = 0; f < 8; f++) {
-    for (let r = 1; r <= 8; r++) {
-      const sq = (files[f] ?? '') + String(r);
-      const moves = game.moves({ square: sq, verbose: true });
-      if (moves.length > 0) dests.set(sq, moves.map(m => m.to));
-    }
-  }
-  return dests;
-}
+// Re-exported for callers that build move destinations off the analysis board.
+export { buildDests };
 
 export class AnalysisBoard {
   private _el: HTMLElement;
@@ -91,7 +79,11 @@ export class AnalysisBoard {
 
   setOrientation(color: string): void { this._cg?.set({ orientation: color }); }
 
-  setShapes(shapes: ChessgroundShape[]): void { this._cg?.setAutoShapes(shapes); }
+  // Square highlights go through Chessground's highlight.custom map (CSS classes);
+  // arrows go through autoShapes with registered brushes. See applyBoardVisuals.
+  setVisuals(highlights: HighlightMap, arrows: BoardArrow[]): void {
+    if (this._cg) applyBoardVisuals(this._cg, highlights, arrows);
+  }
 
   private _applyBoardBackground(): void {
     const style = getComputedStyle(document.documentElement);

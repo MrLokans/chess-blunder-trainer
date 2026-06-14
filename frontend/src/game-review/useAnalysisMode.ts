@@ -7,15 +7,11 @@ import { buildThreatHighlights } from '../shared/threats';
 import { STORAGE_KEYS } from '../shared/storage-keys';
 import { hasFeature } from '../shared/features';
 import type { AnalysisBoard } from '../shared/analysis-board';
+import type { BoardArrow } from '../shared/board-visuals';
+import type { HighlightMap } from '../shared/highlights';
 import { IDLE, begin, push, pop } from './exploration';
 
 const MATE_CP = 10000;
-
-interface ChessgroundShape {
-  orig: string;
-  dest?: string;
-  brush?: string;
-}
 
 export interface UseAnalysisModeParams {
   currentFen: string;
@@ -198,26 +194,24 @@ export function useAnalysisMode(params: UseAnalysisModeParams): UseAnalysisModeR
   // the primitive avoids re-running `new Chess(fen)` + buildThreatHighlights on
   // every tick.
   const bestMove = lines[0]?.pv[0] ?? null;
-  const shapes = useMemo((): ChessgroundShape[] => {
-    if (!analysisMode) return [];
-    const out: ChessgroundShape[] = [];
+  const visuals = useMemo((): { highlights: HighlightMap; arrows: BoardArrow[] } => {
+    if (!analysisMode) return { highlights: new Map<string, string>(), arrows: [] };
+    const arrows: BoardArrow[] = [];
     if (showArrows && bestMove) {
       const turn = fen.split(' ')[1] === 'b' ? 'black' : 'white';
       const arrow = uciToArrow(bestMove, turn);
-      out.push({ orig: arrow.from, dest: arrow.to, brush: 'green' });
+      arrows.push({ from: arrow.from, to: arrow.to, color: 'green' });
     }
-    if (showThreats) {
-      const game = new Chess(fen);
-      const highlights = buildThreatHighlights(game, true);
-      for (const [square, brush] of highlights) out.push({ orig: square, brush });
-    }
-    return out;
+    const highlights: HighlightMap = showThreats
+      ? buildThreatHighlights(new Chess(fen), true)
+      : new Map<string, string>();
+    return { highlights, arrows };
   }, [analysisMode, bestMove, showArrows, showThreats, fen]);
 
   useEffect(() => {
     if (!analysisMode) return;
-    boardRef.current?.setShapes(shapes);
-  }, [analysisMode, shapes, boardRef]);
+    boardRef.current?.setVisuals(visuals.highlights, visuals.arrows);
+  }, [analysisMode, visuals, boardRef]);
 
   return {
     enabled,

@@ -2,16 +2,9 @@ import { useEffect, useRef } from 'preact/hooks';
 import { Chessground } from '@vendor/chessground';
 import type { HighlightMap } from '../../shared/highlights';
 import type { Arrow } from '../hooks/useBoardState';
+import { applyBoardVisuals, buildDests, type ChessgroundVisualApi } from '../../shared/board-visuals';
 
-interface ChessgroundShape {
-  orig: string;
-  dest?: string;
-  brush?: string;
-}
-
-interface ChessgroundApi {
-  set(config: Record<string, unknown>): void;
-  setAutoShapes(shapes: ChessgroundShape[]): void;
+interface ChessgroundApi extends ChessgroundVisualApi {
   destroy(): void;
 }
 
@@ -25,21 +18,6 @@ interface BoardProps {
   gameRef: preact.RefObject<ChessInstance | null>;
   onMove: (orig: string, dest: string, move: { san: string; from: string; to: string; promotion?: string }) => void;
   animateFrom?: { fen: string; from: string; to: string; onComplete: () => void } | null;
-}
-
-function buildDests(game: ChessInstance): Map<string, string[]> {
-  const dests = new Map<string, string[]>();
-  const files = 'abcdefgh';
-  for (let f = 0; f < 8; f++) {
-    for (let r = 1; r <= 8; r++) {
-      const sq = (files[f] ?? '') + String(r);
-      const moves = game.moves({ square: sq, verbose: true });
-      if (moves.length > 0) {
-        dests.set(sq, moves.map(m => m.to));
-      }
-    }
-  }
-  return dests;
 }
 
 export function Board({
@@ -139,20 +117,12 @@ export function Board({
     el.classList.toggle('hide-coords', !coordinates);
   }, [coordinates]);
 
-  // Sync highlights + arrows
+  // Sync highlights + arrows. Highlights are square CSS classes applied via
+  // Chessground's highlight.custom map; arrows are autoShapes keyed by real brushes.
   useEffect(() => {
     const cg = cgRef.current;
     if (!cg) return;
-    const highlightShapes: ChessgroundShape[] = Array.from(highlights.entries()).map(([square, brush]) => ({
-      orig: square,
-      brush,
-    }));
-    const arrowShapes: ChessgroundShape[] = arrows.map(a => ({
-      orig: a.from,
-      dest: a.to,
-      brush: a.color === 'red' ? 'red' : a.color === 'orange' ? 'yellow' : 'green',
-    }));
-    cg.setAutoShapes([...arrowShapes, ...highlightShapes]);
+    applyBoardVisuals(cg, highlights, arrows);
   }, [highlights, arrows]);
 
   // Pre-move animation
