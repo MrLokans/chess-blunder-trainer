@@ -93,6 +93,10 @@ COLOR_FROM_STRING = MappingProxyType(
 )
 
 
+class SrsInfo(BaseModel):
+    remaining: int = Field(description="Reviews still due, including this one")
+
+
 class SubmitMoveRequest(BaseModel):
     move: str = Field(description="Move in UCI notation (e.g., 'e2e4')")
     fen: str = Field(description="Position FEN before the move")
@@ -159,6 +163,10 @@ class PuzzleResponse(BaseModel):
         default=None,
         description="Position FEN before the opponent's preceding move, null for ply 1",
     )
+    srs: SrsInfo | None = Field(
+        default=None,
+        description="Review-queue context, present only on /api/srs/next",
+    )
 
 
 class SubmitMoveResponse(BaseModel):
@@ -172,6 +180,10 @@ class SubmitMoveResponse(BaseModel):
     is_best: bool = Field(description="Whether user's move was the best move")
     is_blunder: bool = Field(description="Whether user repeated the original blunder")
     blunder_san: str = Field(description="Original blunder move in SAN notation")
+    srs_suspended: bool = Field(
+        default=False,
+        description="Whether this attempt suspended the SRS card as a leech",
+    )
 
 
 class AnalyzeMoveResponse(BaseModel):

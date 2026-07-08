@@ -22,6 +22,7 @@ from blunder_tutor.repositories.puzzle_attempt_repository import (
     PuzzleAttemptRepository,
 )
 from blunder_tutor.repositories.settings import SettingsRepository
+from blunder_tutor.repositories.srs_repository import SrsRepository
 from blunder_tutor.repositories.starred_puzzle_repository import (
     StarredPuzzleRepository,
 )
@@ -31,6 +32,7 @@ from blunder_tutor.services.analysis_service import AnalysisService
 from blunder_tutor.services.job_service import JobService
 from blunder_tutor.services.puzzle_service import PuzzleService
 from blunder_tutor.services.rating_history import RatingHistoryService
+from blunder_tutor.services.srs_service import SrsService
 from blunder_tutor.trainer import Trainer
 from blunder_tutor.web.config import AppConfig
 
@@ -85,6 +87,7 @@ get_game_repository = _repo_dep(GameRepository)
 get_analysis_repository = _repo_dep(AnalysisRepository)
 get_trap_repository = _repo_dep(TrapRepository)
 get_starred_puzzle_repository = _repo_dep(StarredPuzzleRepository)
+get_srs_repository = _repo_dep(SrsRepository)
 get_data_management_repository = _repo_dep(DataManagementRepository)
 
 
@@ -131,12 +134,20 @@ async def get_trainer(
         PuzzleAttemptRepository, Depends(get_puzzle_attempt_repository)
     ],
     analysis: Annotated[AnalysisRepository, Depends(get_analysis_repository)],
+    srs: Annotated[SrsRepository, Depends(get_srs_repository)],
 ) -> Trainer:
     return Trainer(
         games=games,
         attempts=attempts,
         analysis=analysis,
+        srs=srs,
     )
+
+
+async def get_srs_service(
+    srs_repo: Annotated[SrsRepository, Depends(get_srs_repository)],
+) -> SrsService:
+    return SrsService(srs_repo=srs_repo)
 
 
 async def get_rating_history_service(
@@ -186,6 +197,8 @@ TrapRepoDep = Annotated[TrapRepository, Depends(get_trap_repository)]
 StarredPuzzleRepoDep = Annotated[
     StarredPuzzleRepository, Depends(get_starred_puzzle_repository)
 ]
+SrsRepoDep = Annotated[SrsRepository, Depends(get_srs_repository)]
+SrsServiceDep = Annotated[SrsService, Depends(get_srs_service)]
 DataManagementRepoDep = Annotated[
     DataManagementRepository, Depends(get_data_management_repository)
 ]

@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 TABLE_ORDER = (
+    "srs_cards",
     "puzzle_attempts",
     "analysis_step_status",
     "analysis_moves",

@@ -18,6 +18,7 @@ from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.profile import SqliteProfileRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
 from blunder_tutor.repositories.settings import SettingsRepository
+from blunder_tutor.repositories.srs_repository import SrsRepository
 from blunder_tutor.repositories.starred_puzzle_repository import StarredPuzzleRepository
 from blunder_tutor.repositories.stats_repository import StatsRepository
 from blunder_tutor.trainer import Trainer
@@ -145,6 +146,13 @@ async def settings_repo(db_path: Path) -> AsyncGenerator[SettingsRepository]:
 @pytest.fixture
 async def starred_repo(db_path: Path) -> AsyncGenerator[StarredPuzzleRepository]:
     repo = StarredPuzzleRepository(db_path)
+    yield repo
+    await repo.close()
+
+
+@pytest.fixture
+async def srs_repo(db_path: Path) -> AsyncGenerator[SrsRepository]:
+    repo = SrsRepository(db_path)
     yield repo
     await repo.close()
 

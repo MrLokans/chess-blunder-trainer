@@ -14,6 +14,7 @@ class Feature(StrEnum):
     TRAINER_FILTER_PHASE = "trainer.filter.phase"
     TRAINER_FILTER_TACTICAL = "trainer.filter.tactical"
     TRAINER_PRE_MOVE = "trainer.pre_move"
+    TRAINER_SRS = "trainer.srs"
 
     DASHBOARD_HEATMAP = "dashboard.heatmap"
     DASHBOARD_PHASE_BREAKDOWN = "dashboard.phase_breakdown"
@@ -54,6 +55,7 @@ DEFAULTS: MappingProxyType[Feature, bool] = MappingProxyType(
         Feature.PAGE_GAME_REVIEW: False,
         Feature.REVIEW_ENGINE: False,
         Feature.DEBUG_COPY: False,
+        Feature.TRAINER_SRS: False,
     }
 )
 
@@ -81,6 +83,7 @@ FEATURE_GROUPS: tuple[FeatureGroup, ...] = (
             Feature.TRAINER_PRE_MOVE,
             Feature.TRAINER_FILTER_DIFFICULTY,
             Feature.STARRED_PUZZLES,
+            Feature.TRAINER_SRS,
         ),
     ),
     (
@@ -121,6 +124,7 @@ FEATURE_LABELS: MappingProxyType[Feature, str] = MappingProxyType(
         Feature.TRAINER_FILTER_PHASE: "settings.features.trainer_filter_phase",
         Feature.TRAINER_FILTER_TACTICAL: "settings.features.trainer_filter_tactical",
         Feature.TRAINER_PRE_MOVE: "settings.features.trainer_pre_move",
+        Feature.TRAINER_SRS: "settings.features.trainer_srs",
         Feature.DASHBOARD_HEATMAP: "settings.features.dashboard_heatmap",
         Feature.DASHBOARD_PHASE_BREAKDOWN: "settings.features.dashboard_phase_breakdown",
         Feature.DASHBOARD_OPENING_BREAKDOWN: "settings.features.dashboard_opening_breakdown",

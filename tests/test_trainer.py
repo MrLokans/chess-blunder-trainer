@@ -86,6 +86,49 @@ class TestPickRandomBlunder:
         assert puzzle.blunder_uci == "d2d4"
 
 
+class TestSrsExclusion:
+    def _seed_single_blunder(self, trainer) -> None:
+        trainer.games.get_all_game_side_map = AsyncMock(return_value={"game1": 0})
+        trainer.attempts.get_recently_solved_puzzles = AsyncMock(return_value=set())
+        trainer.analysis.fetch_blunders_with_tactics = AsyncMock(
+            return_value=[
+                make_blunder(
+                    game_id="game1",
+                    eval_before=50,
+                    eval_after=-100,
+                    cp_loss=150,
+                    game_phase=None,
+                )
+            ]
+        )
+        trainer.games.load_game = AsyncMock(return_value=make_mock_game())
+
+    async def test_active_srs_card_excluded_from_discovery(self, trainer):
+        self._seed_single_blunder(trainer)
+        trainer.srs = AsyncMock()
+        trainer.srs.active_keys = AsyncMock(return_value={("game1", 10)})
+
+        with pytest.raises(ValueError, match="No blunders found"):
+            await trainer.pick_random_blunder()
+
+    async def test_empty_srs_queue_leaves_candidates_unchanged(self, trainer):
+        self._seed_single_blunder(trainer)
+        trainer.srs = AsyncMock()
+        trainer.srs.active_keys = AsyncMock(return_value=set())
+
+        puzzle = await trainer.pick_random_blunder()
+
+        assert puzzle.game_id == "game1"
+
+    async def test_without_srs_repo_unchanged(self, trainer):
+        self._seed_single_blunder(trainer)
+        trainer.srs = None
+
+        puzzle = await trainer.pick_random_blunder()
+
+        assert puzzle.game_id == "game1"
+
+
 class TestPreMoveFields:
     async def test_pre_move_fields_present(self, trainer):
         trainer.games.get_all_game_side_map = AsyncMock(return_value={"game1": 0})
