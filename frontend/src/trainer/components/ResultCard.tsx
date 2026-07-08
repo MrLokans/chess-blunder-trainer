@@ -10,6 +10,7 @@ interface ResultCardProps {
   puzzle: PuzzleData | null;
   bestRevealed: boolean;
   moveHistory: string[];
+  srsSuspended?: boolean;
   onPlayBest: () => void;
   onNext: () => void;
   onClose: () => void;
@@ -24,7 +25,7 @@ const ACCENT_MAP: Record<string, string> = {
 
 export function ResultCard({
   visible, feedbackType, feedbackTitle, feedbackDetail, puzzle,
-  bestRevealed, moveHistory, onPlayBest, onNext, onClose: _onClose,
+  bestRevealed, moveHistory, srsSuspended, onPlayBest, onNext, onClose: _onClose,
 }: ResultCardProps): preact.JSX.Element | null {
   const cardRef = useRef<HTMLDivElement>(null);
   const { handleRef, restorePosition } = useDrag(cardRef);
@@ -95,6 +96,14 @@ export function ResultCard({
                 </details>
               )}
             </>
+          )}
+
+          {srsSuspended && puzzle && (
+            <div class="board-result-leech" data-testid="srs-leech-hint">
+              <a href={`/game/${encodeURIComponent(puzzle.game_id)}`}>
+                {t('trainer.srs.leech_hint')}
+              </a>
+            </div>
           )}
 
           {moveHistory.length > 0 && (

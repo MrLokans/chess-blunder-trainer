@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
+import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
 import { client } from '../shared/api';
 import { JobCard } from '../components/data/JobCard';
 import { Section } from '../components/layout/Section';
@@ -147,8 +147,8 @@ export function ManagementApp({ demoMode }: ManagementInit) {
     void load();
   }, []);
 
-  const debouncedRefresh = useCallback(
-    debounce(() => { setJobsRefreshKey(k => k + 1); }, 1000),
+  const debouncedRefresh = useMemo(
+    () => debounce(() => { setJobsRefreshKey(k => k + 1); }, 1000),
     [],
   );
 

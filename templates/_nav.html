@@ -5,7 +5,7 @@
     <span></span><span></span><span></span>
   </button>
   <div class="nav-links" id="navLinks">
-  <a href="/" class="trainer-nav-link{% if active_page == 'trainer' %} active{% endif %}">{{ t('nav.trainer') }}</a>
+  <a href="/" class="trainer-nav-link{% if active_page == 'trainer' %} active{% endif %}">{{ t('nav.trainer') }}{% if has_feature('trainer.srs') %}<span id="srsNavBadge" class="nav-badge" hidden></span>{% endif %}</a>
   {% if has_feature('page.dashboard') %}
   <a href="/dashboard" class="trainer-nav-link{% if active_page == 'dashboard' %} active{% endif %}">{{ t('nav.dashboard') }}</a>
   {% endif %}

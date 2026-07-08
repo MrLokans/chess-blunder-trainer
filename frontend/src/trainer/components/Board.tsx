@@ -87,7 +87,8 @@ export function Board({
       cg.destroy();
       cgRef.current = null;
     };
-  }, []); // mount-only: Chessground initializes once
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: Chessground initializes once with initial values; the sync effects below own every subsequent update, and adding deps would destroy/recreate the board
+  }, []);
 
   // Sync fen + movable when position changes
   useEffect(() => {

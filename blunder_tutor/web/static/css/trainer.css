@@ -1258,3 +1258,83 @@
   border: 2px solid var(--blue);
   border-radius: 0;
 }
+
+/* ==========================================================================
+   SRS review queue (Blunder Inbox)
+   ========================================================================== */
+
+.review-banner {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-sm);
+  margin-bottom: var(--s-md);
+  padding: var(--s-sm) var(--s-md);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.review-banner-text {
+  font-family: var(--font-ui);
+  color: var(--text-muted);
+}
+
+.review-banner-btn {
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.review-banner-btn:hover {
+  text-decoration: underline;
+}
+
+.srs-session-progress {
+  align-self: flex-start;
+  margin-bottom: var(--s-sm);
+  padding: 2px var(--s-sm);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--white);
+  background: var(--accent);
+  border: 2px solid var(--border-strong);
+}
+
+.inbox-zero-card {
+  max-width: 480px;
+  margin: var(--s-2xl) auto;
+  padding: var(--s-2xl);
+  text-align: center;
+  background: var(--card-bg);
+  border: 3px solid var(--border-strong);
+  border-left: 6px solid var(--success);
+}
+
+.inbox-zero-card p {
+  margin: var(--s-md) 0 var(--s-lg);
+  color: var(--text-muted);
+}
+
+.board-result-leech {
+  margin-top: var(--s-md);
+  padding: var(--s-sm) var(--s-md);
+  background: var(--bg-pending);
+  border-left: 3px solid var(--warning);
+}
+
+.board-result-leech a {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.empty-state-srs-hint {
+  margin-top: var(--s-md);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}

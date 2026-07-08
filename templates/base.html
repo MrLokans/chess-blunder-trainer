@@ -22,6 +22,7 @@
 
   <!-- Feature flags for client-side visibility -->
   <script>window.__features = {{ features_json|default('{}')|safe }};</script>
+  <script defer src="/static/js/srs-badge.js"></script>
 
   <!-- HTMX for reactive components -->
   <script src="/static/vendor/htmx-1.9.10.min.js"></script>
