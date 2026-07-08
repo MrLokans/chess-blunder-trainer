@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0]
+
+### Added
+
+- **Blunder Inbox — spaced repetition for the puzzles you get wrong**: Failing a puzzle now enrolls it into a review queue scheduled on expanding intervals (1, 3, 7, 16, then 35 days). The trainer shows how many reviews are due — a badge on the nav and a quiet row in the tools panel — and "Start reviewing" walks you through the due queue with a progress counter, ending on an inbox-zero screen.
+---
+
+## [3.2.2]
+
+### Fixed
+
+- **Show Threats actually shows threats again**: Toggling "Show Threats" highlighted nothing, in both the trainer and the game-review analysis board — square highlights were being routed through the board library's arrow-drawing API, which silently dropped them. Threat highlights (hanging pieces, checks) now render correctly, along with the square tints for blunder/best moves and tactic hints that were broken the same way but masked by the arrows still working.
+
+---
+
 ## [3.1.8]
 
 ### Added
