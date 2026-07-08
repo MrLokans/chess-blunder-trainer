@@ -17,6 +17,7 @@ async def _count_then_delete(conn: aiosqlite.Connection, table: str) -> int:
 # missing-table errors are swallowed to keep the wipe idempotent across
 # schema versions. Order is preserved from the original implementation.
 _WIPE_TABLES: tuple[tuple[str, bool], ...] = (
+    ("srs_cards", True),
     ("trap_matches", True),
     ("puzzle_attempts", False),
     ("analysis_step_status", False),

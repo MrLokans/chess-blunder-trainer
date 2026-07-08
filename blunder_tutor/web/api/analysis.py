@@ -29,6 +29,7 @@ from blunder_tutor.web.dependencies import (
     PuzzleAttemptRepoDep,
     PuzzleServiceDep,
     SettingsRepoDep,
+    SrsServiceDep,
 )
 
 
@@ -279,6 +280,7 @@ async def submit(
     payload: schemas.SubmitMoveRequest,
     attempt_repo: PuzzleAttemptRepoDep,
     analysis_service: AnalysisServiceDep,
+    srs_service: SrsServiceDep,
     event_bus: EventBusDep,
     _throttle: EngineThrottleDep,
 ) -> dict[str, Any]:
@@ -302,6 +304,11 @@ async def submit(
         user_move_uci=payload.move,
         best_move_uci=payload.best_move_uci,
     )
+    srs_suspended = await srs_service.on_attempt(
+        game_id=payload.game_id,
+        ply=payload.ply,
+        was_correct=is_best,
+    )
 
     training_event = TrainingEvent.create_training_updated(
         scope=user_scope(request.state.user_ctx)
@@ -319,6 +326,7 @@ async def submit(
         "is_best": is_best,
         "is_blunder": is_blunder,
         "blunder_san": payload.blunder_san,
+        "srs_suspended": srs_suspended,
     }
 
 

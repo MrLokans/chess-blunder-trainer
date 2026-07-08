@@ -94,6 +94,13 @@ export interface PuzzleData {
   pre_move_uci: string | null;
   pre_move_fen: string | null;
   best_move_eval: number | null;
+  srs?: { remaining: number } | null;
+}
+
+export interface SrsStatusResponse {
+  due: number;
+  active: number;
+  next_due_at: string | null;
 }
 
 export interface SubmitMovePayload {
@@ -118,6 +125,7 @@ export interface SubmitMoveResponse {
   user_eval: number;
   user_eval_display: string;
   user_uci: string;
+  srs_suspended?: boolean;
 }
 
 // Game review types

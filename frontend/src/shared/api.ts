@@ -1,6 +1,6 @@
 import type {
   ApiErrorResponse, ImportStartResponse, JobStatusResponse, JobStatus,
-  PuzzleData, SubmitMovePayload, SubmitMoveResponse,
+  PuzzleData, SubmitMovePayload, SubmitMoveResponse, SrsStatusResponse,
   ReviewData, StarredItem,
   TrapCatalogEntry, TrapStatsResponse, TrapDetailData,
 } from '../types/api';
@@ -237,6 +237,11 @@ export const client = {
     getSpecificPuzzle: (gameId: string, ply: number) =>
       request<PuzzleData>(withQuery('/api/puzzle/specific', { game_id: gameId, ply })),
     submitMove: (payload: SubmitMovePayload) => post<SubmitMoveResponse>('/api/submit', payload),
+  },
+
+  srs: {
+    status: () => request<SrsStatusResponse>('/api/srs/status'),
+    next: () => request<PuzzleData>('/api/srs/next'),
   },
 
   starred: {

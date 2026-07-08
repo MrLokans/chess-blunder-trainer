@@ -34,13 +34,12 @@ function BoardPlayer({ trap, activeTab }: BoardPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<SequencePlayer | null>(null);
 
-  const trapMoves = trap.trap_san?.[0] ?? [];
-  const refutationMoves = trap.refutation_san ?? [];
-  const orientation = trap.victim_side === 'black' ? 'black' : 'white';
-
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const trapMoves = trap.trap_san?.[0] ?? [];
+    const refutationMoves = trap.refutation_san ?? [];
+    const orientation = trap.victim_side === 'black' ? 'black' : 'white';
     const moves = activeTab === 'trap' ? trapMoves : refutationMoves;
 
     if (playerRef.current) {

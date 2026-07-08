@@ -15,6 +15,7 @@ from blunder_tutor.web.api.jobs import jobs_router
 from blunder_tutor.web.api.profiles import profiles_router
 from blunder_tutor.web.api.rating_history import rating_history_router
 from blunder_tutor.web.api.settings import settings_router
+from blunder_tutor.web.api.srs import srs_router
 from blunder_tutor.web.api.starred import starred_router
 from blunder_tutor.web.api.stats import stats_router
 from blunder_tutor.web.api.system import system_router
@@ -50,6 +51,7 @@ def configure_router(app: FastAPI) -> FastAPI:
     app.include_router(game_review_router)
     app.include_router(import_router)
     app.include_router(starred_router)
+    app.include_router(srs_router)
     app.include_router(profiles_router)
     app.include_router(rating_history_router)
     app.include_router(websocket.router)

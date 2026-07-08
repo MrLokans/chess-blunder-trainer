@@ -10,6 +10,10 @@ from blunder_tutor.constants import (
 )
 
 
+def puzzle_key(record: dict[str, object]) -> tuple[str, int]:
+    return str(record["game_id"]), int(record["ply"])
+
+
 def is_valid_blunder(blunder: dict[str, object]) -> bool:
     eval_before = int(blunder.get("eval_before", 0))
     eval_after = int(blunder.get("eval_after", 0))

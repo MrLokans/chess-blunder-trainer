@@ -6,11 +6,12 @@ from dataclasses import dataclass
 
 import chess
 
-from blunder_tutor.analysis.filtering import filter_blunders
+from blunder_tutor.analysis.filtering import filter_blunders, puzzle_key
 from blunder_tutor.analysis.tactics import classify_blunder_tactics
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
+from blunder_tutor.repositories.srs_repository import SrsRepository
 from blunder_tutor.utils.pgn_utils import (
     board_before_ply,
     extract_game_url,
@@ -83,10 +84,12 @@ class Trainer:
         games: GameRepository,
         attempts: PuzzleAttemptRepository,
         analysis: AnalysisRepository,
+        srs: SrsRepository | None = None,
     ):
         self.games = games
         self.attempts = attempts
         self.analysis = analysis
+        self.srs = srs
 
     async def pick_random_blunder(
         self,
@@ -99,11 +102,8 @@ class Trainer:
 
         weights = await self._compute_weights(candidates)
         blunder = random.choices(candidates, weights=weights, k=1)[0]
-        return await self._build_puzzle(
-            blunder,
-            str(blunder["game_id"]),
-            int(blunder["ply"]),
-        )
+        game_id, ply = puzzle_key(blunder)
+        return await self._build_puzzle(blunder, game_id, ply)
 
     async def get_specific_blunder(self, game_id: str, ply: int) -> BlunderPuzzle:
         blunder = await self.analysis.get_move_analysis(game_id, ply)
@@ -132,11 +132,23 @@ class Trainer:
             criteria.start_date,
             criteria.end_date,
         )
-        return await self._filter_recently_solved(
+        candidates = await self._filter_recently_solved(
             candidates,
             criteria.exclude_recently_solved,
             criteria.spaced_repetition_days,
         )
+        return await self._filter_srs_enrolled(candidates)
+
+    async def _filter_srs_enrolled(
+        self,
+        candidates: list[dict[str, object]],
+    ) -> list[dict[str, object]]:
+        if self.srs is None or not candidates:
+            return candidates
+        enrolled = await self.srs.active_keys()
+        if not enrolled:
+            return candidates
+        return [b for b in candidates if puzzle_key(b) not in enrolled]
 
     async def _filter_by_date(
         self,
@@ -169,11 +181,7 @@ class Trainer:
         if not recently_solved:
             return candidates
 
-        return [
-            b
-            for b in candidates
-            if (b["game_id"], int(b["ply"])) not in recently_solved
-        ]
+        return [b for b in candidates if puzzle_key(b) not in recently_solved]
 
     async def _compute_weights(
         self,

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'preact/hooks';
+import { useState, useMemo, useRef } from 'preact/hooks';
 import { ApiError, client } from '../shared/api';
 import { Button } from '../components/primitives/Button';
 import { Card } from '../components/layout/Card';
@@ -107,15 +107,15 @@ export function SetupApp() {
   const lichessValueRef = useRef('');
   const chesscomValueRef = useRef('');
 
-  const debouncedValidateLichess = useCallback(
-    debounce((username: string) => {
+  const debouncedValidateLichess = useMemo(
+    () => debounce((username: string) => {
       void validateField('lichess', username, setLichess, lichessValueRef);
     }, 500),
     [],
   );
 
-  const debouncedValidateChesscom = useCallback(
-    debounce((username: string) => {
+  const debouncedValidateChesscom = useMemo(
+    () => debounce((username: string) => {
       void validateField('chesscom', username, setChesscom, chesscomValueRef);
     }, 500),
     [],

@@ -1280,3 +1280,21 @@ body:has(.demo-banner) {
 .engine-details td:first-child {
   color: var(--text-muted);
 }
+
+/* Nav review-queue badge */
+.nav-badge {
+  display: inline-block;
+  margin-left: var(--s-xs);
+  padding: 0 6px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--white);
+  background: var(--red);
+  border: 2px solid var(--border-strong);
+  vertical-align: middle;
+}
+
+.nav-badge[hidden] {
+  display: none;
+}

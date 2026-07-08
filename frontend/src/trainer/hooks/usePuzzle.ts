@@ -7,6 +7,7 @@ import type { QueryParams } from './useFilters';
 export interface PuzzleAPI {
   loadPuzzle: (filterParams?: QueryParams) => Promise<void>;
   loadSpecificPuzzle: (gameId: string, ply: string) => Promise<void>;
+  loadReviewPuzzle: () => Promise<boolean>;
   submitMove: (uci: string) => Promise<SubmitMoveResponse | null>;
 }
 
@@ -80,6 +81,22 @@ export function usePuzzle(): PuzzleAPI {
     }
   }, [dispatch]);
 
+  const loadReviewPuzzle = useCallback(async (): Promise<boolean> => {
+    dispatch({ type: 'RESET_FOR_NEW_PUZZLE' });
+    dispatch({ type: 'SET_LOADING', loading: true });
+
+    try {
+      const data = await client.srs.next();
+      dispatch({ type: 'SET_PUZZLE', puzzle: data });
+      dispatch({ type: 'SET_FEN', fen: data.fen });
+      dispatch({ type: 'SET_ORIENTATION', orientation: data.player_color === 'black' ? 'black' : 'white' });
+      return true;
+    } catch {
+      dispatch({ type: 'SET_LOADING', loading: false });
+      return false;
+    }
+  }, [dispatch]);
+
   const submitMove = useCallback(async (uci: string): Promise<SubmitMoveResponse | null> => {
     const puzzle = state.puzzle;
     if (!puzzle) return null;
@@ -114,5 +131,5 @@ export function usePuzzle(): PuzzleAPI {
     }
   }, [state.puzzle, dispatch]);
 
-  return { loadPuzzle, loadSpecificPuzzle, submitMove };
+  return { loadPuzzle, loadSpecificPuzzle, loadReviewPuzzle, submitMove };
 }

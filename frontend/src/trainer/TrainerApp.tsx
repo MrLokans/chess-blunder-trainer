@@ -4,6 +4,7 @@ import { useWebSocket } from '../hooks/useWebSocket';
 import { useFeature } from '../hooks/useFeature';
 import { useFilters, type FiltersAPI } from './hooks/useFilters';
 import { usePuzzle } from './hooks/usePuzzle';
+import { useReviewQueue } from './hooks/useReviewQueue';
 import { useBoardState } from './hooks/useBoardState';
 import { useBoardSettings } from './hooks/useBoardSettings';
 import { useLinePlayer } from './hooks/useLinePlayer';
@@ -18,6 +19,8 @@ import { FiltersPanel } from './components/FiltersPanel';
 import { MoveActions } from './components/MoveActions';
 import { PuzzleTools } from './components/PuzzleTools';
 import { ShortcutsOverlay } from './components/ShortcutsOverlay';
+import { ReviewBanner } from './components/ReviewBanner';
+import { InboxZeroCard } from './components/InboxZeroCard';
 
 export function TrainerApp(): preact.JSX.Element {
   const [state, dispatch] = useReducer(trainerReducer, initialState);
@@ -42,6 +45,12 @@ function TrainerCore(): preact.JSX.Element {
   const lastPuzzleIdRef = useRef<string | null>(null);
 
   const hasPreMove = useFeature('trainer.pre_move');
+  const srsEnabled = useFeature('trainer.srs');
+  const reviewQueue = useReviewQueue(srsEnabled);
+  const inReview = reviewQueue.session !== null;
+  const [showInboxZero, setShowInboxZero] = useState(false);
+  const [srsSuspended, setSrsSuspended] = useState(false);
+  const countedReviewRef = useRef<string | null>(null);
 
   // Sync game from puzzle — synchronous, not in effect
   if (state.puzzle && state.puzzle.game_id !== lastPuzzleIdRef.current) {
@@ -119,6 +128,15 @@ function TrainerCore(): preact.JSX.Element {
       return;
     }
 
+    setSrsSuspended(Boolean(data.srs_suspended));
+    if (inReview && state.puzzle) {
+      const reviewKey = `${state.puzzle.game_id}:${String(state.puzzle.ply)}`;
+      if (countedReviewRef.current !== reviewKey) {
+        countedReviewRef.current = reviewKey;
+        reviewQueue.recordResult();
+      }
+    }
+
     if (data.is_best) {
       setFeedbackTitle(t('trainer.feedback.excellent'));
       setFeedbackDetail(t('trainer.feedback.found_best'));
@@ -147,7 +165,7 @@ function TrainerCore(): preact.JSX.Element {
     if (typeof htmx !== 'undefined') {
       htmx.trigger(document.body, 'statsUpdate');
     }
-  }, [puzzleApi, state.puzzle, dispatch]);
+  }, [puzzleApi, state.puzzle, dispatch, inReview, reviewQueue]);
 
   // Board move handler
   const handleSubmitRef = useRef(handleSubmit);
@@ -231,18 +249,46 @@ function TrainerCore(): preact.JSX.Element {
     window.open(`https://lichess.org/analysis/${fen}?color=${puzzle.player_color}${hash}`, '_blank');
   }, [state.puzzle]);
 
+  // Review session
+  const loadNextReview = useCallback(async () => {
+    setUserMoveUci(null);
+    setSrsSuspended(false);
+    const loaded = await puzzleApi.loadReviewPuzzle();
+    if (!loaded) setShowInboxZero(true);
+  }, [puzzleApi]);
+
+  const handleStartReview = useCallback(() => {
+    reviewQueue.startSession();
+    void loadNextReview();
+  }, [reviewQueue, loadNextReview]);
+
+  const handleInboxZeroContinue = useCallback(() => {
+    setShowInboxZero(false);
+    reviewQueue.endSession();
+    void puzzleApi.loadPuzzle(filtersApi.getFilterParams());
+  }, [reviewQueue, puzzleApi, filtersApi]);
+
   // Next puzzle
   const handleNext = useCallback(() => {
     trackEvent('Puzzle Next');
     setUserMoveUci(null);
+    setSrsSuspended(false);
+    if (inReview) {
+      const session = reviewQueue.session;
+      if (session && session.done >= session.total) {
+        setShowInboxZero(true);
+      } else {
+        void loadNextReview();
+      }
+      return;
+    }
     void puzzleApi.loadPuzzle(filtersApi.getFilterParams());
-  }, [puzzleApi, filtersApi]);
+  }, [puzzleApi, filtersApi, inReview, reviewQueue.session, loadNextReview]);
 
-  // Has move check
-  const hasMove = useMemo(() => {
-    const game = gameRef.current;
-    return !!game && game.history().length > 0;
-  }, [state.fen]);
+  // Derived per render: gameRef mutates outside React's model, so a memo
+  // keyed on state.fen only approximates freshness — recomputing is cheap.
+  const game = gameRef.current;
+  const hasMove = !!game && game.history().length > 0;
 
   // Keyboard shortcuts
   useKeyboard({
@@ -280,7 +326,8 @@ function TrainerCore(): preact.JSX.Element {
     } else {
       void puzzleApi.loadPuzzle(filtersApi.getFilterParams());
     }
-  }, []); // mount-only: deep-link check runs once
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: deep-link check runs once; puzzleApi/filtersApi change identity every render and would re-trigger loads
+  }, []);
 
   // Retry for analyzing state
   useEffect(() => {
@@ -294,13 +341,32 @@ function TrainerCore(): preact.JSX.Element {
     }
   }, [state.emptyState, puzzleApi, filtersApi]);
 
+  // Review session cleared — inbox zero
+  if (showInboxZero) {
+    return (
+      <div class="trainer-page">
+        <InboxZeroCard onContinue={handleInboxZeroContinue} />
+      </div>
+    );
+  }
+
   // Empty state / error
   if (state.emptyState || state.error) {
+    const srsQueueStatus = reviewQueue.status;
     return (
       <div class="trainer-page">
         <div class="empty-state" id="emptyState">
           <h2>{state.error || t(`trainer.empty.${state.emptyState ?? 'default'}_title`)}</h2>
           <p>{t(`trainer.empty.${state.emptyState ?? 'default'}_message`)}</p>
+          {srsEnabled && state.emptyState === 'no_blunders'
+            && srsQueueStatus && srsQueueStatus.active > 0 && srsQueueStatus.next_due_at && (
+            <p class="empty-state-srs-hint">
+              {t('trainer.srs.empty_hint', {
+                count: srsQueueStatus.active,
+                date: new Date(srsQueueStatus.next_due_at).toLocaleDateString(),
+              })}
+            </p>
+          )}
           {state.emptyState === 'no_blunders_filtered' ? (
             <button onClick={filtersApi.clearAllFilters}>
               {t('trainer.empty.no_matching_action')}
@@ -324,6 +390,11 @@ function TrainerCore(): preact.JSX.Element {
     <div class="trainer-page">
       <div class="trainer-main" id="trainerLayout">
         <div class="trainer-board-area">
+          {reviewQueue.session && (
+            <span class="srs-session-progress" data-testid="srs-session-progress">
+              {reviewQueue.session.done} / {reviewQueue.session.total}
+            </span>
+          )}
           <ContextTags puzzle={state.puzzle} />
           <div class="board-eval-wrapper">
             <EvalBar cp={state.puzzle.eval_before} playerColor={state.puzzle.player_color} />
@@ -365,6 +436,7 @@ function TrainerCore(): preact.JSX.Element {
             puzzle={state.puzzle}
             bestRevealed={state.bestRevealed}
             moveHistory={state.moveHistory}
+            srsSuspended={srsSuspended}
             onPlayBest={playBestMove}
             onNext={handleNext}
             onClose={() => { dispatch({ type: 'SET_RESULT_VISIBLE', visible: false }); }}
@@ -372,6 +444,9 @@ function TrainerCore(): preact.JSX.Element {
         </div>
 
         <div class="trainer-panel">
+          {srsEnabled && !inReview && (
+            <ReviewBanner dueCount={reviewQueue.dueCount} onStart={handleStartReview} />
+          )}
           <PuzzleTools
             puzzle={state.puzzle}
             starred={state.currentStarred}
@@ -390,7 +465,7 @@ function TrainerCore(): preact.JSX.Element {
             onUndo={handleUndo}
             onShowShortcuts={() => { dispatch({ type: 'TOGGLE_SHORTCUTS' }); }}
           />
-          <FiltersPanel filters={filtersApi} />
+          {!inReview && <FiltersPanel filters={filtersApi} />}
         </div>
       </div>
 
