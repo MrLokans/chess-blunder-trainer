@@ -1,10 +1,17 @@
 import { DatabaseSync } from 'node:sqlite';
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { test, expect } from '../fixtures/app.fixture';
 import { PUZZLES } from '../fixtures/known-puzzles';
 import { enableFeatureFlags, resetFeatureFlags } from '../helpers/api';
 
+// Two topologies: locally the app runs on the host and its DB is directly
+// writable via node:sqlite; in the Docker workflow the app (and the only
+// consistent view of its WAL journal) lives inside a container, so SQL must
+// run there via `docker exec` + the image's own Python.
 const DB_PATH = resolve(__dirname, '../.tmp/test.sqlite3');
+const DOCKER_CONTAINER = process.env.E2E_DOCKER_CONTAINER;
+const DOCKER_DB_PATH = process.env.E2E_DOCKER_DB_PATH ?? '/app/data/main.sqlite3';
 
 interface PuzzleDetail {
   fen: string;
@@ -27,6 +34,17 @@ interface SrsStatus {
 }
 
 function runSql(sql: string): void {
+  if (DOCKER_CONTAINER) {
+    const script = [
+      'import sqlite3',
+      `conn = sqlite3.connect(${JSON.stringify(DOCKER_DB_PATH)})`,
+      `conn.execute(${JSON.stringify(sql)})`,
+      'conn.commit()',
+      'conn.close()',
+    ].join('; ');
+    execFileSync('docker', ['exec', DOCKER_CONTAINER, 'python3', '-c', script]);
+    return;
+  }
   const db = new DatabaseSync(DB_PATH);
   try {
     db.exec(sql);

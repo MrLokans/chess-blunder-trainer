@@ -106,6 +106,10 @@ jobs:
         run: npx playwright test
         env:
           E2E_BASE_URL: http://localhost:8000
+          # Specs that manipulate the app DB directly (srs.spec.ts) must run
+          # their SQL inside the container — the host cannot safely write a
+          # file-level bind mount whose WAL lives in the container.
+          E2E_DOCKER_CONTAINER: e2e-app
 
       - name: Stop container
         if: always()
