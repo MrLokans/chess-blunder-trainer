@@ -3,7 +3,8 @@ from __future__ import annotations
 import asyncio
 import json
 from dataclasses import dataclass
-from typing import Protocol
+from datetime import UTC, datetime
+from typing import Any, Protocol
 
 import stripe
 
@@ -26,6 +27,60 @@ class WebhookEvent:
     data: dict
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SubscriptionState:
+    """Live subscription state retrieved from Stripe.
+
+    Webhook payload shapes follow the endpoint's pinned API version and
+    have moved fields across major releases (`current_period_end` left
+    the subscription top level in 2025's "basil"). Retrieved objects
+    follow the SDK's own pinned version instead, so projecting from a
+    retrieve keeps the parser stable regardless of webhook endpoint
+    configuration.
+    """
+
+    subscription_id: str
+    customer_id: str
+    status: str
+    price_id: str | None
+    current_period_end: datetime | None
+
+
+def _field(source: Any, key: str, default: Any = None) -> Any:
+    """Read a key from a dict OR a StripeObject (both support [] with
+    KeyError on miss; StripeObject is not a dict subclass in stripe>=15)."""
+    try:
+        return source[key]
+    except (KeyError, TypeError):
+        return default
+
+
+_ID_KEY = "id"
+
+
+def subscription_state_from_api(sub: Any) -> SubscriptionState:
+    items = _field(_field(sub, "items") or {}, "data") or []
+    first_item = items[0] if items else None
+    period_end_ts = _field(sub, "current_period_end")
+    if period_end_ts is None and first_item is not None:
+        period_end_ts = _field(first_item, "current_period_end")
+    price_id = None
+    if first_item is not None:
+        price_id = _field(_field(first_item, "price") or {}, _ID_KEY)
+    customer = _field(sub, "customer")
+    if not isinstance(customer, str):
+        customer = _field(customer or {}, _ID_KEY)
+    return SubscriptionState(
+        subscription_id=_field(sub, _ID_KEY),
+        customer_id=customer,
+        status=_field(sub, "status") or "",
+        price_id=price_id,
+        current_period_end=(
+            datetime.fromtimestamp(period_end_ts, tz=UTC) if period_end_ts else None
+        ),
+    )
+
+
 class StripeGateway(Protocol):
     async def create_checkout_session(
         self,
@@ -42,6 +97,8 @@ class StripeGateway(Protocol):
     ) -> str: ...
 
     async def cancel_subscription(self, subscription_id: str) -> None: ...
+
+    async def get_subscription(self, subscription_id: str) -> SubscriptionState: ...
 
     def verify_webhook(self, payload: bytes, sig_header: str) -> WebhookEvent: ...
 
@@ -84,6 +141,10 @@ class HttpStripeGateway:
 
     async def cancel_subscription(self, subscription_id: str) -> None:
         await asyncio.to_thread(self._subscriptions.cancel, subscription_id)
+
+    async def get_subscription(self, subscription_id: str) -> SubscriptionState:
+        sub = await asyncio.to_thread(self._subscriptions.retrieve, subscription_id)
+        return subscription_state_from_api(sub)
 
     def verify_webhook(self, payload: bytes, sig_header: str) -> WebhookEvent:
         try:

@@ -5,11 +5,13 @@ import pytest
 
 from blunder_tutor.auth import UserId
 from blunder_tutor.billing.service import BillingService, NoStripeCustomerError
+from blunder_tutor.billing.stripe_gateway import SubscriptionState
 from blunder_tutor.billing.types import BillingPlan, SubscriptionStatus
 from blunder_tutor.web.config import BillingConfig
 from tests.billing.fakes import FakeStripeGateway
 
 ALICE = UserId("a" * 32)
+PERIOD_END = datetime.fromtimestamp(1790000000, tz=UTC)
 
 CONFIG = BillingConfig(
     cloud_mode=True,
@@ -35,9 +37,22 @@ def _checkout_completed(user_id: str) -> bytes:
     )
 
 
+def _live_state(**overrides) -> SubscriptionState:
+    base = {
+        "subscription_id": "sub_1",
+        "customer_id": "cus_1",
+        "status": "active",
+        "price_id": "price_m",
+        "current_period_end": PERIOD_END,
+    }
+    return SubscriptionState(**{**base, **overrides})
+
+
 @pytest.fixture
 def gateway() -> FakeStripeGateway:
-    return FakeStripeGateway()
+    fake = FakeStripeGateway()
+    fake.subscriptions["sub_1"] = _live_state()
+    return fake
 
 
 @pytest.fixture
@@ -90,33 +105,31 @@ class TestWebhooks:
         assert sub.status is SubscriptionStatus.ACTIVE
         assert sub.stripe_customer_id == "cus_1"
 
-    async def test_subscription_updated_sets_plan_and_period(self, service, repo):
+    async def test_subscription_updated_projects_live_plan_and_period(
+        self, service, repo, gateway
+    ):
         await service.get_entitlements(ALICE)
         await service.handle_webhook(_checkout_completed(ALICE), "sig")
+        gateway.subscriptions["sub_1"] = _live_state(status="past_due")
         payload = _webhook(
             "evt_2",
             "customer.subscription.updated",
-            {
-                "id": "sub_1",
-                "customer": "cus_1",
-                "status": "past_due",
-                "current_period_end": 1790000000,
-                "items": {"data": [{"price": {"id": "price_m"}}]},
-            },
+            {"id": "sub_1", "customer": "cus_1"},
         )
         await service.handle_webhook(payload, "sig")
         sub = await repo.get(ALICE)
         assert sub.status is SubscriptionStatus.PAST_DUE
         assert sub.plan is BillingPlan.MONTHLY
-        assert sub.current_period_end == datetime.fromtimestamp(1790000000, tz=UTC)
+        assert sub.current_period_end == PERIOD_END
 
-    async def test_subscription_deleted_cancels(self, service, repo):
+    async def test_subscription_deleted_cancels(self, service, repo, gateway):
         await service.get_entitlements(ALICE)
         await service.handle_webhook(_checkout_completed(ALICE), "sig")
+        gateway.subscriptions["sub_1"] = _live_state(status="canceled")
         payload = _webhook(
             "evt_3",
             "customer.subscription.deleted",
-            {"id": "sub_1", "customer": "cus_1", "status": "canceled"},
+            {"id": "sub_1", "customer": "cus_1"},
         )
         await service.handle_webhook(payload, "sig")
         assert (await repo.get(ALICE)).status is SubscriptionStatus.CANCELED

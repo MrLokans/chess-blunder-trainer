@@ -6,7 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 
 from blunder_tutor.auth.fastapi.dependencies import UserContextDep
-from blunder_tutor.billing.service import BillingService, NoStripeCustomerError
+from blunder_tutor.billing.service import (
+    BillingService,
+    NoStripeCustomerError,
+    WebhookPayloadError,
+)
 from blunder_tutor.billing.stripe_gateway import WebhookVerificationError
 from blunder_tutor.billing.types import BillingPlan
 
@@ -98,5 +102,9 @@ async def stripe_webhook(request: Request, service: BillingServiceDep) -> Webhoo
     except WebhookVerificationError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_signature"
+        ) from exc
+    except WebhookPayloadError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="invalid_payload"
         ) from exc
     return WebhookAck(received=True)

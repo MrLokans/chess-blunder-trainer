@@ -28,11 +28,14 @@ CLOUD_ENV = {
 async def cloud_app(tmp_path, monkeypatch):
     for key, env_value in CLOUD_ENV.items():
         monkeypatch.setenv(key, env_value)
+    fake_gateway = FakeStripeGateway()
     monkeypatch.setattr(
         "blunder_tutor.web.app_lifecycle.build_stripe_gateway",
-        lambda config: FakeStripeGateway(),
+        lambda config: fake_gateway,
     )
     async with _booted_credentials_app(tmp_path, monkeypatch, max_users="2") as app:
+        # Test-only handle so HTTP tests can seed/inspect fake Stripe state.
+        app.state.fake_stripe = fake_gateway
         yield app
 
 

@@ -39,11 +39,19 @@ class NoStripeCustomerError(Exception):
     """Portal requested before the user ever completed a checkout."""
 
 
-def _plan_from_items(data: dict, config: BillingConfig) -> BillingPlan | None:
-    items = data.get("items", {}).get("data", [])
-    if not items:
-        return None
-    price_id = items[0].get("price", {}).get("id")
+class WebhookPayloadError(Exception):
+    """Required field missing/invalid — respond 400 before recording the
+    event, so a corrected redelivery is not swallowed by dedup."""
+
+
+def _require(data: dict, key: str) -> str:
+    field_value = data.get(key)
+    if not isinstance(field_value, str) or not field_value:
+        raise WebhookPayloadError(f"missing or invalid field: {key}")
+    return field_value
+
+
+def _plan_from_price(price_id: str | None, config: BillingConfig) -> BillingPlan | None:
     if price_id == config.stripe_price_monthly:
         return BillingPlan.MONTHLY
     if price_id == config.stripe_price_annual:
@@ -63,10 +71,6 @@ class BillingService:
         self._gateway = gateway
         self._config = config
         self._cache: dict[str, tuple[Entitlements, float]] = {}
-
-    @property
-    def gateway(self) -> StripeGateway:
-        return self._gateway
 
     async def start_trial(self, user_id: UserId) -> None:
         trial_ends = datetime.now(UTC) + timedelta(days=self._config.trial_days)
@@ -122,8 +126,17 @@ class BillingService:
         )
 
     async def handle_webhook(self, payload: bytes, sig_header: str) -> None:
+        """Verify, dedup, apply, THEN record.
+
+        Recording only after a successful apply means any failure
+        (Stripe outage during refetch, DB error) leaves the event
+        unconsumed, so Stripe's redelivery of the same event id still
+        applies — the inverse order permanently loses events. Handlers
+        are idempotent projections of live state, so the benign race of
+        two concurrent deliveries both passing the dedup check is safe.
+        """
         event = self._gateway.verify_webhook(payload, sig_header)
-        if not await self._repo.record_event(event.event_id):
+        if await self._repo.event_processed(event.event_id):
             return
         if event.event_type == "checkout.session.completed":
             await self._on_checkout_completed(event.data)
@@ -131,6 +144,7 @@ class BillingService:
             await self._on_subscription_event(event.data)
         else:
             log.debug("billing.webhook.ignored type=%s", event.event_type)
+        await self._repo.record_event(event.event_id)
 
     async def delete_user(self, user_id: UserId) -> None:
         sub = await self._repo.get(user_id)
@@ -143,39 +157,42 @@ class BillingService:
         self.invalidate(user_id)
 
     async def _on_checkout_completed(self, data: dict) -> None:
-        user_id = UserId(data["client_reference_id"])
-        existing = await self._repo.get(user_id)
-        if existing is None:
+        user_id = UserId(_require(data, "client_reference_id"))
+        customer_id = _require(data, _CUSTOMER_KEY)
+        subscription_id = _require(data, "subscription")
+        row = await self._repo.get(user_id)
+        if row is None:
             log.warning("billing.webhook.unknown_user user=%s", user_id)
             return
-        await self._repo.apply_stripe_update(
-            user_id=user_id,
-            customer_id=data[_CUSTOMER_KEY],
-            subscription_id=data["subscription"],
-            status=SubscriptionStatus.ACTIVE,
-            plan=existing.plan,
-            current_period_end=existing.current_period_end,
-        )
-        self.invalidate(user_id)
+        await self._project_subscription(customer_id, subscription_id, row)
 
     async def _on_subscription_event(self, data: dict) -> None:
-        sub = await self._repo.find_by_customer(data[_CUSTOMER_KEY])
-        if sub is None:
-            log.warning(
-                "billing.webhook.unknown_customer customer=%s", data[_CUSTOMER_KEY]
-            )
+        customer_id = _require(data, _CUSTOMER_KEY)
+        subscription_id = _require(data, "id")
+        row = await self._repo.find_by_customer(customer_id)
+        if row is None:
+            # Likely out-of-order arrival before checkout.session.completed.
+            # Safe to absorb: the checkout handler projects live state, so
+            # nothing carried by this event is actually lost.
+            log.warning("billing.webhook.unknown_customer customer=%s", customer_id)
             return
-        status = _STRIPE_STATUS_MAP.get(data.get("status", ""), sub.status)
-        period_end_ts = data.get("current_period_end")
-        period_end = (
-            datetime.fromtimestamp(period_end_ts, tz=UTC) if period_end_ts else None
-        )
+        await self._project_subscription(customer_id, subscription_id, row)
+
+    async def _project_subscription(
+        self, customer_id: str, subscription_id: str, row: Subscription
+    ) -> None:
+        """Refetch-and-project: webhook events are treated as nudges and
+        the live subscription is the source of truth. Delivery order and
+        stale embedded snapshots then stop mattering, and the parser only
+        has to understand the SDK-pinned retrieve shape — not whatever
+        API version the webhook endpoint is pinned to."""
+        live = await self._gateway.get_subscription(subscription_id)
         await self._repo.apply_stripe_update(
-            user_id=sub.user_id,
-            customer_id=data[_CUSTOMER_KEY],
-            subscription_id=data["id"],
-            status=status,
-            plan=_plan_from_items(data, self._config) or sub.plan,
-            current_period_end=period_end or sub.current_period_end,
+            user_id=row.user_id,
+            customer_id=customer_id,
+            subscription_id=subscription_id,
+            status=_STRIPE_STATUS_MAP.get(live.status, row.status),
+            plan=_plan_from_price(live.price_id, self._config) or row.plan,
+            current_period_end=live.current_period_end or row.current_period_end,
         )
-        self.invalidate(sub.user_id)
+        self.invalidate(row.user_id)

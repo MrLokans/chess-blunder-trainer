@@ -1,5 +1,6 @@
 import json
 
+from blunder_tutor.billing.stripe_gateway import SubscriptionState
 from tests.billing.conftest import signup_first_user
 
 
@@ -64,6 +65,13 @@ class TestPortal:
 class TestWebhook:
     async def test_unauthenticated_post_accepted(self, cloud_app, cloud_client):
         user_id = await signup_first_user(cloud_app, cloud_client)
+        cloud_app.state.fake_stripe.subscriptions["sub_1"] = SubscriptionState(
+            subscription_id="sub_1",
+            customer_id="cus_1",
+            status="active",
+            price_id="price_m",
+            current_period_end=None,
+        )
         payload = _webhook(
             "evt_1",
             "checkout.session.completed",
@@ -83,8 +91,7 @@ class TestWebhook:
         assert status.json()["status"] == "active"
 
     async def test_bad_signature_400(self, cloud_app, cloud_client):
-        gateway = cloud_app.state.billing.service.gateway
-        gateway.reject_webhooks = True
+        cloud_app.state.fake_stripe.reject_webhooks = True
         resp = await cloud_client.post(
             "/api/billing/webhook",
             content=b"{}",

@@ -98,6 +98,13 @@ class SubscriptionRepository:
                 ),
             )
 
+    async def event_processed(self, event_id: str) -> bool:
+        conn = await self._db.conn()
+        async with conn.execute(
+            "SELECT 1 FROM webhook_events WHERE event_id = ?", (event_id,)
+        ) as cur:
+            return await cur.fetchone() is not None
+
     async def record_event(self, event_id: str) -> bool:
         async with self._db.write() as conn:
             cursor = await conn.execute(
