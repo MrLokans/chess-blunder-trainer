@@ -42,6 +42,9 @@ _SESSION_IDLE_DEFAULT = _SECONDS_PER_DAY * _SESSION_IDLE_DAYS
 # in practice anything past ~14 is too slow for a login path).
 _BCRYPT_COST_MAX = 31
 
+# Free-trial length in days; overridable via TRIAL_DAYS.
+_TRIAL_DAYS_DEFAULT = 14
+
 
 class DataConfig(BaseModel):
     db_path: Path = DEFAULT_DB_PATH
@@ -126,6 +129,33 @@ class AuthConfig(BaseModel):
             )
 
 
+class BillingConfig(BaseModel):
+    cloud_mode: bool = False
+    stripe_secret_key: str | None = None
+    stripe_webhook_secret: str | None = None
+    stripe_price_monthly: str | None = None
+    stripe_price_annual: str | None = None
+    trial_days: int = _TRIAL_DAYS_DEFAULT
+    public_base_url: str | None = None
+    node_id: str = "node-1"
+
+    @model_validator(mode="after")
+    def _check_invariants(self) -> Self:
+        if not self.cloud_mode:
+            return self
+        required = {
+            "STRIPE_SECRET_KEY": self.stripe_secret_key,
+            "STRIPE_WEBHOOK_SECRET": self.stripe_webhook_secret,
+            "STRIPE_PRICE_MONTHLY": self.stripe_price_monthly,
+            "STRIPE_PRICE_ANNUAL": self.stripe_price_annual,
+            "PUBLIC_BASE_URL": self.public_base_url,
+        }
+        missing = [name for name, value in required.items() if not value]
+        if missing:
+            raise ValueError(f"CLOUD_MODE=true requires: {', '.join(missing)}")
+        return self
+
+
 class EngineConfig(BaseModel):
     path: str
     depth: int = DEFAULT_ENGINE_DEPTH
@@ -157,6 +187,7 @@ class AppConfig(BaseModel):
     analytics: AnalyticsConfig = AnalyticsConfig()
     cache: CacheConfig = CacheConfig()
     auth: AuthConfig = AuthConfig()
+    billing: BillingConfig = BillingConfig()
     observability: ObservabilityConfig = ObservabilityConfig()
     # Host header allowlist passed to Starlette TrustedHostMiddleware.
     # Default `["*"]` accepts any Host header — appropriate for single-
@@ -170,6 +201,11 @@ class AppConfig(BaseModel):
     def _check_mode_compatibility(self) -> Self:
         if self.demo_mode and self.auth.mode == AUTH_MODE_CREDENTIALS:
             raise ValueError("DEMO_MODE cannot be combined with AUTH_MODE=credentials")
+        if self.billing.cloud_mode:
+            if self.auth.mode != AUTH_MODE_CREDENTIALS:
+                raise ValueError("CLOUD_MODE=true requires AUTH_MODE=credentials")
+            if self.demo_mode:
+                raise ValueError("CLOUD_MODE=true is incompatible with DEMO_MODE=true")
         return self
 
 
@@ -222,6 +258,21 @@ def _build_auth_config(environ: Mapping) -> AuthConfig:
         ),
         trust_proxy=parse_bool(environ.get("AUTH_TRUST_PROXY"), default=False),
         bcrypt_cost=_parse_optional_positive_int(environ.get("AUTH_BCRYPT_COST")),
+    )
+
+
+def _build_billing_config(environ: Mapping) -> BillingConfig:
+    return BillingConfig(
+        cloud_mode=parse_bool(environ.get("CLOUD_MODE"), default=False),
+        stripe_secret_key=(environ.get("STRIPE_SECRET_KEY") or "").strip() or None,
+        stripe_webhook_secret=(environ.get("STRIPE_WEBHOOK_SECRET") or "").strip()
+        or None,
+        stripe_price_monthly=(environ.get("STRIPE_PRICE_MONTHLY") or "").strip()
+        or None,
+        stripe_price_annual=(environ.get("STRIPE_PRICE_ANNUAL") or "").strip() or None,
+        trial_days=_parse_positive_int(environ, "TRIAL_DAYS", _TRIAL_DAYS_DEFAULT),
+        public_base_url=(environ.get("PUBLIC_BASE_URL") or "").strip() or None,
+        node_id=(environ.get("NODE_ID") or "").strip() or "node-1",
     )
 
 
@@ -298,5 +349,6 @@ def config_factory(parsed_args: argparse.Namespace, environ: Mapping) -> AppConf
         ),
         cache=cache,
         auth=_build_auth_config(environ),
+        billing=_build_billing_config(environ),
         observability=build_observability_config(environ),
     )

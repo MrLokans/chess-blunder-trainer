@@ -1298,3 +1298,25 @@ body:has(.demo-banner) {
 .nav-badge[hidden] {
   display: none;
 }
+
+/* Billing banner (cloud mode: trial countdown / lapsed notice) */
+.billing-banner {
+  padding: 0.5rem 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--white);
+}
+
+.billing-banner--trial {
+  background: var(--primary);
+}
+
+.billing-banner--lapsed {
+  background: var(--error);
+}
+
+.billing-banner a {
+  color: inherit;
+  text-decoration: underline;
+  margin-left: 0.5rem;
+}

@@ -1,0 +1,11 @@
+{% if entitlements and entitlements.plan_status == 'trialing' %}
+<div class="billing-banner billing-banner--trial">
+  {{ t('billing.banner.trial', days=entitlements.trial_days_left) }}
+  <a href="/settings#billing">{{ t('billing.banner.upgrade') }}</a>
+</div>
+{% elif entitlements and entitlements.read_only %}
+<div class="billing-banner billing-banner--lapsed">
+  {{ t('billing.banner.lapsed') }}
+  <a href="/settings#billing">{{ t('billing.banner.subscribe') }}</a>
+</div>
+{% endif %}

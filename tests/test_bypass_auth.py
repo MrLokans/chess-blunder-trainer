@@ -10,6 +10,7 @@ core no longer carries any awareness of single-user mode.
 from __future__ import annotations
 
 from http import HTTPStatus
+
 import httpx
 from fastapi import FastAPI, Request
 from httpx import ASGITransport

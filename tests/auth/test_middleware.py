@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from http import HTTPStatus
 from datetime import timedelta
 from functools import partial
+from http import HTTPStatus
 from pathlib import Path
 
 import httpx

@@ -275,6 +275,13 @@ export const client = {
     me: () => request<MeResponse>('/api/auth/me'),
   },
 
+  billing: {
+    status: () => request<BillingStatusResponse>('/api/billing/status'),
+    checkout: (plan: 'monthly' | 'annual') =>
+      post<UrlResponse>('/api/billing/checkout', { plan }),
+    portal: () => post<UrlResponse>('/api/billing/portal', {}),
+  },
+
   profiles: {
     list: () => request<ProfilesListResponse>('/api/profiles'),
     create: (data: ProfileCreateRequest) => post<Profile>('/api/profiles', data),
@@ -294,6 +301,19 @@ export const client = {
       ),
   },
 };
+
+export interface BillingStatusResponse {
+  status: string;
+  plan: string | null;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  read_only: boolean;
+  grants: string[];
+}
+
+export interface UrlResponse {
+  url: string;
+}
 
 export interface MeResponse {
   id: string;

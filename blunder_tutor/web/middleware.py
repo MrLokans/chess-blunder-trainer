@@ -8,7 +8,11 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from blunder_tutor.features import DEFAULTS
-from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
+from blunder_tutor.web.paths import (
+    AUTH_API_PREFIX,
+    AUTH_UI_PATHS,
+    BILLING_WEBHOOK_PATH,
+)
 from blunder_tutor.web.request_helpers import _cache_key
 from blunder_tutor.web.settings_snapshot import get_settings_snapshot
 from blunder_tutor.web.tls import is_https_request
@@ -49,10 +53,9 @@ MUTATION_METHODS = frozenset((_HTTP_POST, "PUT", "PATCH", "DELETE"))
 
 
 # Paths that accept mutations from cross-origin contexts by design.
-# Empty today — every state-changing endpoint is intended for same-origin
-# UI use only. Keep the hook so adding e.g. a public webhook later
-# doesn't require gutting the CSRF middleware.
-CSRF_EXEMPT_PREFIXES: tuple[str, ...] = ()
+# The Stripe webhook authenticates via signature verification instead
+# of a session cookie, so the Origin check does not apply to it.
+CSRF_EXEMPT_PREFIXES: tuple[str, ...] = (BILLING_WEBHOOK_PATH,)
 
 
 class CsrfOriginMiddleware(BaseHTTPMiddleware):
@@ -297,6 +300,12 @@ class LocaleMiddleware(BaseHTTPMiddleware):
             features = await self._load_features(request)
         else:
             features = {f.value: v for f, v in DEFAULTS.items()}
+        # Cloud entitlement grants (set by BillingGateMiddleware, which
+        # executes before this one) ride the same feature dict so
+        # templates and `window.__features` need no second mechanism.
+        grants = getattr(request.state, "entitlement_grants", None)
+        if grants:
+            features = {**features, **grants}
         request.state.features = features
         request.state.features_json = json.dumps(features)
 

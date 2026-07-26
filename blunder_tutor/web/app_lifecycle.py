@@ -21,6 +21,10 @@ from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.auth.fastapi import SESSION_COOKIE_NAME
 from blunder_tutor.background.executor import DbPathResolver, JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
+from blunder_tutor.billing.repository import SubscriptionRepository
+from blunder_tutor.billing.schema import initialize_billing_schema
+from blunder_tutor.billing.service import BillingService
+from blunder_tutor.billing.stripe_gateway import build_stripe_gateway
 from blunder_tutor.cache.backend import InMemoryCacheBackend, NullCacheBackend
 from blunder_tutor.cache.invalidation import CacheInvalidator
 from blunder_tutor.constants import AUTH_MODE_CREDENTIALS, AUTH_MODE_NONE
@@ -37,6 +41,7 @@ from blunder_tutor.web.auth_hooks import (
     materialize_user_dir,
     resolve_user_db_path,
 )
+from blunder_tutor.web.billing_gate import BillingGateMiddleware
 from blunder_tutor.web.bypass_auth import LOCAL_USER_ID, BypassAuthMiddleware
 from blunder_tutor.web.config import AppConfig
 from blunder_tutor.web.middleware import (
@@ -47,9 +52,13 @@ from blunder_tutor.web.middleware import (
     SetupCheckMiddleware,
     UserDbPathMiddleware,
 )
-from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
+from blunder_tutor.web.paths import (
+    AUTH_API_PREFIX,
+    AUTH_UI_PATHS,
+    BILLING_WEBHOOK_PATH,
+)
 from blunder_tutor.web.per_user_cache import PerUserCache
-from blunder_tutor.web.resources import AuthResources
+from blunder_tutor.web.resources import AuthResources, BillingResources
 from blunder_tutor.web.template_context import i18n_context
 from blunder_tutor.web.throttle import create_engine_throttle
 from blunder_tutor.web.vite import vite_asset
@@ -63,6 +72,37 @@ async def _list_users_none_mode() -> list[auth_pkg.UserId]:
 
 async def _list_users_credentials_mode(users_repo) -> list[auth_pkg.UserId]:  # type: ignore[no-untyped-def]
     return [u.id for u in await users_repo.list_all()]
+
+
+def _compose_after_register(users_dir: Path, app: FastAPI):
+    materialize = partial(materialize_user_dir, users_dir)
+
+    async def hook(user) -> None:  # type: ignore[no-untyped-def]  # noqa: WPS430 — factory returns this closure; captures `app` for late binding.
+        await materialize(user)
+        # Late-bound: billing bootstraps after the auth service is built,
+        # and the hook fires long after both.
+        billing = app.state.billing
+        if billing is not None:
+            await billing.service.start_trial(user.id)
+
+    return hook
+
+
+def _compose_after_delete(users_dir: Path, app: FastAPI):
+    base = make_after_delete_hook(
+        users_dir,
+        app.state.setup_completed_cache,
+        app.state.locale_cache,
+        app.state.features_cache,
+    )
+
+    async def hook(user_id: auth_pkg.UserId) -> None:  # noqa: WPS430 — factory returns this closure; captures `app` for late binding.
+        await base(user_id)
+        billing = app.state.billing
+        if billing is not None:
+            await billing.service.delete_user(user_id)
+
+    return hook
 
 
 def _build_auth_service(
@@ -87,13 +127,8 @@ def _build_auth_service(
             max_age=timedelta(seconds=auth_config.session_max_age_seconds),
             idle=timedelta(seconds=auth_config.session_idle_seconds),
         ),
-        on_after_register=partial(materialize_user_dir, users_dir),
-        on_after_delete=make_after_delete_hook(
-            users_dir,
-            app.state.setup_completed_cache,
-            app.state.locale_cache,
-            app.state.features_cache,
-        ),
+        on_after_register=_compose_after_register(users_dir, app),
+        on_after_delete=_compose_after_delete(users_dir, app),
     )
 
 
@@ -170,6 +205,29 @@ async def _bootstrap_auth(app: FastAPI) -> None:
         await _handle_first_user_invite(storage, auth_config.secret_key)
 
     await scan_orphans(storage.users, users_dir)
+
+
+async def _bootstrap_billing(app: FastAPI) -> None:
+    config: AppConfig = app.state.config
+    billing_db_path = config.data.db_path.parent / "billing.sqlite3"
+    await initialize_billing_schema(billing_db_path)
+    billing_db = auth_pkg.AuthDb(billing_db_path)
+    await billing_db.connect()
+    service = BillingService(
+        repo=SubscriptionRepository(billing_db),
+        gateway=build_stripe_gateway(config.billing),
+        config=config.billing,
+    )
+    app.state.billing = BillingResources(
+        service=service, db=billing_db, db_path=billing_db_path
+    )
+
+
+async def _bootstrap_modes(app: FastAPI) -> None:
+    if app.state.auth_mode == AUTH_MODE_CREDENTIALS:
+        await _bootstrap_auth(app)
+    if app.state.config.billing.cloud_mode:
+        await _bootstrap_billing(app)
 
 
 def _wire_background(app: FastAPI) -> None:
@@ -275,8 +333,7 @@ async def _run_startup(app: FastAPI) -> None:
 
     # Auth bootstrap MUST run before the executor/scheduler start so the
     # AuthDb is available to the multi-user UserLister callback.
-    if app.state.auth_mode == AUTH_MODE_CREDENTIALS:
-        await _bootstrap_auth(app)
+    await _bootstrap_modes(app)
 
     await _seed_locale_cache(app)
 
@@ -307,6 +364,8 @@ async def _close_storage(app: FastAPI) -> None:
     if app.state.auth is not None:
         auth_db = app.state.auth.storage.auth_db
         await auth_db.close()
+    if app.state.billing is not None:
+        await app.state.billing.db.close()
 
 
 async def _run_cleanup(app: FastAPI) -> None:
@@ -448,6 +507,9 @@ def _init_state(app: FastAPI, config: AppConfig) -> None:
     app.state.auth_mode = config.auth.mode
     app.state.auth_config = config.auth
     app.state.auth = None
+    # Cloud-mode billing bundle; stays None unless CLOUD_MODE=true
+    # (materialized in `_bootstrap_billing`).
+    app.state.billing = None
 
     if config.auth.mode == AUTH_MODE_NONE:
         app.state.none_mode_db_path = config.data.db_path
@@ -479,6 +541,10 @@ def _register_middleware(app: FastAPI, config: AppConfig) -> None:
     app.add_middleware(SetupCheckMiddleware)
     app.add_middleware(DemoModeMiddleware)
     app.add_middleware(LocaleMiddleware)
+    # `BillingGateMiddleware` executes AFTER UserDbPath (needs
+    # `user_ctx`) and BEFORE Locale (which merges its entitlement
+    # grants into the feature dict).
+    app.add_middleware(BillingGateMiddleware)
     # `UserDbPathMiddleware` must run AFTER `AuthMiddleware` (which sets
     # `request.state.user_ctx`) and BEFORE the middleware that opens
     # per-user DBs. Add order is reverse of execution: added BEFORE Auth
@@ -494,7 +560,8 @@ def _register_middleware(app: FastAPI, config: AppConfig) -> None:
             auth_pkg.AuthMiddleware,
             config=auth_pkg.MiddlewareConfig(
                 cookie_name=SESSION_COOKIE_NAME,
-                exempt_paths=AUTH_UI_PATHS | {"/health", "/favicon.ico"},
+                exempt_paths=AUTH_UI_PATHS
+                | {"/health", "/favicon.ico", BILLING_WEBHOOK_PATH},
                 exempt_prefixes=("/static", AUTH_API_PREFIX),
             ),
         )
