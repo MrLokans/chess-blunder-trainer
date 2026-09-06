@@ -15,6 +15,11 @@ class WebhookVerificationError(Exception):
     """Signature or payload rejected — respond 400, never process."""
 
 
+class SubscriptionNotFoundError(Exception):
+    """No subscription with that id — normalized across implementations
+    so callers and the contract suite never depend on SDK error types."""
+
+
 @dataclass(frozen=True, slots=True, kw_only=True)
 class CheckoutSession:
     url: str
@@ -143,7 +148,10 @@ class HttpStripeGateway:
         await asyncio.to_thread(self._subscriptions.cancel, subscription_id)
 
     async def get_subscription(self, subscription_id: str) -> SubscriptionState:
-        sub = await asyncio.to_thread(self._subscriptions.retrieve, subscription_id)
+        try:
+            sub = await asyncio.to_thread(self._subscriptions.retrieve, subscription_id)
+        except stripe.InvalidRequestError as exc:
+            raise SubscriptionNotFoundError(subscription_id) from exc
         return subscription_state_from_api(sub)
 
     def verify_webhook(self, payload: bytes, sig_header: str) -> WebhookEvent:

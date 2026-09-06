@@ -1,5 +1,5 @@
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -8,7 +8,7 @@ from blunder_tutor.billing.service import BillingService, NoStripeCustomerError
 from blunder_tutor.billing.stripe_gateway import SubscriptionState
 from blunder_tutor.billing.types import BillingPlan, SubscriptionStatus
 from blunder_tutor.web.config import BillingConfig
-from tests.billing.fakes import FakeStripeGateway
+from tests.billing.fakes import ControlledClock, FakeStripeGateway
 
 ALICE = UserId("a" * 32)
 PERIOD_END = datetime.fromtimestamp(1790000000, tz=UTC)
@@ -161,3 +161,38 @@ class TestDeleteUser:
         await service.delete_user(ALICE)
         assert gateway.canceled == ["sub_1"]
         assert await repo.get(ALICE) is None
+
+
+class TestInjectedClock:
+    async def test_trial_expiry_crossed_via_clock(self, repo, gateway):
+        clock = ControlledClock(datetime(2026, 7, 1, tzinfo=UTC))
+        service = BillingService(repo=repo, gateway=gateway, config=CONFIG, clock=clock)
+        ent = await service.get_entitlements(ALICE)
+        assert ent.plan_status == "trialing"
+        assert ent.trial_days_left == CONFIG.trial_days
+
+    async def test_trial_lapses_after_trial_days(self, repo, gateway):
+        clock = ControlledClock(datetime(2026, 7, 1, tzinfo=UTC))
+        service = BillingService(repo=repo, gateway=gateway, config=CONFIG, clock=clock)
+        await service.get_entitlements(ALICE)
+        clock.advance(timedelta(days=CONFIG.trial_days + 1))
+        service.invalidate(ALICE)
+        ent = await service.get_entitlements(ALICE)
+        assert ent.plan_status == "lapsed"
+        assert ent.read_only is True
+
+    async def test_canceled_grace_expires_with_clock(self, repo, gateway):
+        clock = ControlledClock(datetime(2026, 7, 1, tzinfo=UTC))
+        service = BillingService(repo=repo, gateway=gateway, config=CONFIG, clock=clock)
+        await service.get_entitlements(ALICE)
+        gateway.subscriptions["sub_1"] = _live_state(
+            status="canceled",
+            current_period_end=clock.now + timedelta(days=10),
+        )
+        await service.handle_webhook(_checkout_completed(ALICE), "sig")
+        assert (await service.get_entitlements(ALICE)).plan_status == "active"
+        clock.advance(timedelta(days=11))
+        service.invalidate(ALICE)
+        ent = await service.get_entitlements(ALICE)
+        assert ent.plan_status == "lapsed"
+        assert ent.read_only is True

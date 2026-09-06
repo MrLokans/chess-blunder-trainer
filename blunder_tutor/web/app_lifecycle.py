@@ -21,10 +21,10 @@ from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.auth.fastapi import SESSION_COOKIE_NAME
 from blunder_tutor.background.executor import DbPathResolver, JobExecutor
 from blunder_tutor.background.scheduler import BackgroundScheduler
+from blunder_tutor.billing.gateway_factory import create_gateway
 from blunder_tutor.billing.repository import SubscriptionRepository
 from blunder_tutor.billing.schema import initialize_billing_schema
 from blunder_tutor.billing.service import BillingService
-from blunder_tutor.billing.stripe_gateway import build_stripe_gateway
 from blunder_tutor.cache.backend import InMemoryCacheBackend, NullCacheBackend
 from blunder_tutor.cache.invalidation import CacheInvalidator
 from blunder_tutor.constants import AUTH_MODE_CREDENTIALS, AUTH_MODE_NONE
@@ -215,7 +215,7 @@ async def _bootstrap_billing(app: FastAPI) -> None:
     await billing_db.connect()
     service = BillingService(
         repo=SubscriptionRepository(billing_db),
-        gateway=build_stripe_gateway(config.billing),
+        gateway=create_gateway(config.billing),
         config=config.billing,
     )
     app.state.billing = BillingResources(

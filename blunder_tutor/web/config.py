@@ -138,6 +138,9 @@ class BillingConfig(BaseModel):
     trial_days: int = _TRIAL_DAYS_DEFAULT
     public_base_url: str | None = None
     node_id: str = "node-1"
+    # Test/demo-only: swap the real Stripe gateway for the network-free
+    # stub (blunder_tutor/billing/stub_gateway.py). Never in production.
+    stripe_stub: bool = False
 
     @model_validator(mode="after")
     def _check_invariants(self) -> Self:
@@ -153,6 +156,8 @@ class BillingConfig(BaseModel):
         missing = [name for name, value in required.items() if not value]
         if missing:
             raise ValueError(f"CLOUD_MODE=true requires: {', '.join(missing)}")
+        if self.stripe_stub and (self.stripe_secret_key or "").startswith("sk_live"):
+            raise ValueError("STRIPE_STUB cannot be combined with a live Stripe key")
         return self
 
 
@@ -273,6 +278,7 @@ def _build_billing_config(environ: Mapping) -> BillingConfig:
         trial_days=_parse_positive_int(environ, "TRIAL_DAYS", _TRIAL_DAYS_DEFAULT),
         public_base_url=(environ.get("PUBLIC_BASE_URL") or "").strip() or None,
         node_id=(environ.get("NODE_ID") or "").strip() or "node-1",
+        stripe_stub=parse_bool(environ.get("STRIPE_STUB"), default=False),
     )
 
 

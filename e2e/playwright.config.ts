@@ -10,7 +10,7 @@ export default defineConfig({
   // stockfish) run via dedicated config files. Excluding them here keeps
   // `npx playwright test` (no --config) from spawning them against the
   // demo DB, where signup endpoints don't apply.
-  testIgnore: ['auth.spec.ts', 'setup-and-import.spec.ts'],
+  testIgnore: ['auth.spec.ts', 'setup-and-import.spec.ts', 'billing.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

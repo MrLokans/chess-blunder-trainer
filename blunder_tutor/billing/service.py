@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import UTC, datetime, timedelta
+from collections.abc import Callable
+from datetime import datetime, timedelta
 from types import MappingProxyType
 
 from blunder_tutor.auth import UserId
@@ -10,6 +11,7 @@ from blunder_tutor.billing.entitlements import Entitlements, resolve_entitlement
 from blunder_tutor.billing.repository import SubscriptionRepository
 from blunder_tutor.billing.stripe_gateway import StripeGateway
 from blunder_tutor.billing.types import BillingPlan, Subscription, SubscriptionStatus
+from blunder_tutor.utils.time import utcnow
 from blunder_tutor.web.config import BillingConfig
 
 log = logging.getLogger(__name__)
@@ -66,14 +68,20 @@ class BillingService:
         repo: SubscriptionRepository,
         gateway: StripeGateway,
         config: BillingConfig,
+        clock: Callable[[], datetime] = utcnow,
     ) -> None:
         self._repo = repo
         self._gateway = gateway
         self._config = config
+        # Domain clock: trial/period boundaries resolve against this, so
+        # tests drive expiry by advancing an injected clock instead of
+        # mutating rows. The entitlements cache TTL below deliberately
+        # stays on time.monotonic — it is a real-time concern.
+        self._clock = clock
         self._cache: dict[str, tuple[Entitlements, float]] = {}
 
     async def start_trial(self, user_id: UserId) -> None:
-        trial_ends = datetime.now(UTC) + timedelta(days=self._config.trial_days)
+        trial_ends = self._clock() + timedelta(days=self._config.trial_days)
         await self._repo.start_trial(
             user_id=user_id,
             trial_ends_at=trial_ends,
@@ -89,7 +97,7 @@ class BillingService:
             # Users created before cloud mode was enabled have no row yet.
             await self.start_trial(user_id)
             sub = await self._repo.get(user_id)
-        entitlements = resolve_entitlements(sub, datetime.now(UTC))
+        entitlements = resolve_entitlements(sub, self._clock())
         self._cache[user_id] = (entitlements, time.monotonic())
         return entitlements
 

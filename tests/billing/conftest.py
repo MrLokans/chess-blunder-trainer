@@ -30,7 +30,7 @@ async def cloud_app(tmp_path, monkeypatch):
         monkeypatch.setenv(key, env_value)
     fake_gateway = FakeStripeGateway()
     monkeypatch.setattr(
-        "blunder_tutor.web.app_lifecycle.build_stripe_gateway",
+        "blunder_tutor.web.app_lifecycle.create_gateway",
         lambda config: fake_gateway,
     )
     async with _booted_credentials_app(tmp_path, monkeypatch, max_users="2") as app:

@@ -160,3 +160,44 @@ class TestDuplicateDelivery:
         fetches_after_first = gateway.get_subscription_calls
         await service.handle_webhook(payload, "sig")
         assert gateway.get_subscription_calls == fetches_after_first
+
+
+class TestDunningLadder:
+    """Full payment-failure cascade, asserting the user-facing entitlement
+    after every step — the sequence Stripe walks a failing card through."""
+
+    async def test_active_to_past_due_to_canceled(self, service, repo, gateway):
+        await service.get_entitlements(ALICE)
+        await service.handle_webhook(_checkout_completed(), "sig")
+        assert (await service.get_entitlements(ALICE)).plan_status == "active"
+
+        # First failed renewal: Stripe flips the subscription to past_due.
+        # Access must be retained (Stripe is still retrying the card).
+        gateway.subscriptions["sub_1"] = _live_state(status="past_due")
+        await service.handle_webhook(_sub_updated("evt_dun_1"), "sig")
+        ent = await service.get_entitlements(ALICE)
+        assert ent.plan_status == "past_due"
+        assert ent.read_only is False
+
+        # Retries keep failing; another update arrives, still past_due.
+        await service.handle_webhook(_sub_updated("evt_dun_2"), "sig")
+        assert (await service.get_entitlements(ALICE)).plan_status == "past_due"
+
+        # Stripe gives up: subscription deleted. By dunning exhaustion the
+        # paid-through period is already behind us — a canceled sub with a
+        # FUTURE period end would (correctly) retain paid-through access.
+        gateway.subscriptions["sub_1"] = _live_state(
+            status="canceled",
+            current_period_end=datetime(2026, 7, 1, tzinfo=UTC),
+        )
+        await service.handle_webhook(
+            _webhook(
+                "evt_dun_3",
+                "customer.subscription.deleted",
+                {"id": "sub_1", "customer": "cus_1"},
+            ),
+            "sig",
+        )
+        ent = await service.get_entitlements(ALICE)
+        assert ent.plan_status == "lapsed"
+        assert ent.read_only is True
