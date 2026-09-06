@@ -44,6 +44,8 @@
   --border: var(--mid-gray-light);
   --border-subtle: var(--warm-gray);
   --border-strong: var(--black);
+  --border-control: var(--mid-gray);
+  --control-accent: var(--black);
   --accent: var(--blue);
   --accent-hover: #223FA8;
   --success: var(--correct);
@@ -64,6 +66,9 @@
   --focus-ring-color: rgba(26, 58, 143, 0.25);
   --modal-backdrop: rgba(0, 0, 0, 0.5);
   --elevation-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  --demo-accent: var(--yellow);
+  --brand-mark: var(--red);
+  --notification: var(--red);
   --piece-white: var(--white);
   --piece-black: var(--black);
 
