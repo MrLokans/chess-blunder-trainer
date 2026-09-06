@@ -1,5 +1,9 @@
 from http import HTTPStatus
 
+import pytest
+
+from blunder_tutor.web.api._settings_schemas import DEFAULT_THEME
+
 """Tests for settings and stats API endpoints."""
 
 
@@ -46,6 +50,21 @@ def test_get_features_returns_all_defaults_true(app):
     assert "features" in data
     assert data["features"]["page.dashboard"] is True
     assert data["features"]["trainer.tactics"] is True
+
+
+class TestThemeSettings:
+    def test_defaults_match_theme(self, app):
+        response = app.get("/api/settings/theme")
+        assert response.status_code == HTTPStatus.OK
+        assert response.json() == dict(DEFAULT_THEME)
+
+    @pytest.mark.parametrize("color", ["blue", "#123", "#gg0000", "#12345678"])
+    def test_rejects_invalid_color(self, app, color):
+        response = app.post(
+            "/api/settings",
+            json={"theme": {"primary": color}},
+        )
+        assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 def test_post_features_persists(app):

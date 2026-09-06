@@ -32,14 +32,14 @@
   --correct: #2D8F3E;
 
   /* Themeable semantic tokens */
-  --surface: var(--white);
-  --surface-raised: var(--white);
+  --surface: var(--user-surface, var(--white));
+  --surface-raised: var(--user-surface-raised, var(--white));
   --surface-sunken: var(--warm-gray);
   --surface-hover: var(--mid-gray-light);
   --surface-inverse: var(--black);
-  --text: var(--black);
+  --text: var(--user-text, var(--black));
   --text-secondary: var(--dark-gray);
-  --text-muted: var(--mid-gray);
+  --text-muted: var(--user-text-muted, var(--mid-gray));
   --text-disabled: var(--mid-gray-light);
   --text-inverse: var(--white);
   --text-on-accent: var(--white);
@@ -50,22 +50,22 @@
   --border-hover: var(--dark-gray);
   --border-swatch: rgba(0, 0, 0, 0.1);
   --control-accent: var(--black);
-  --accent: var(--blue);
-  --accent-hover: #223FA8;
-  --success: var(--correct);
+  --accent: var(--user-accent, var(--blue));
+  --accent-hover: var(--user-accent-hover, #223FA8);
+  --success: var(--user-success, var(--correct));
   --success-hover: #247A33;
-  --warning: var(--yellow);
+  --warning: var(--user-warning, var(--yellow));
   --warning-hover: var(--yellow-hover);
   --badge-primary: var(--yellow);
-  --error: var(--red);
+  --error: var(--user-error, var(--red));
   --error-hover: var(--red-hover);
   --info: var(--blue);
-  --success-bg: var(--bg-correct);
-  --success-border: var(--correct);
-  --warning-bg: var(--bg-pending);
-  --warning-border: var(--yellow);
-  --error-bg: var(--bg-error);
-  --error-border: var(--red);
+  --success-bg: var(--user-success-bg, var(--bg-correct));
+  --success-border: var(--user-success-border, var(--correct));
+  --warning-bg: var(--user-warning-bg, var(--bg-pending));
+  --warning-border: var(--user-warning-border, var(--yellow));
+  --error-bg: var(--user-error-bg, var(--bg-error));
+  --error-border: var(--user-error-border, var(--red));
   --info-bg: rgba(26, 58, 143, 0.08);
   --info-border: var(--blue);
   --focus-ring-color: rgba(26, 58, 143, 0.25);
@@ -126,9 +126,9 @@
   --color-slate-900: var(--black);
 
   /* Phase Colors */
-  --color-phase-opening: var(--blue);
-  --color-phase-middlegame: var(--yellow);
-  --color-phase-endgame: var(--dark-gray);
+  --color-phase-opening: var(--user-phase-opening, var(--blue));
+  --color-phase-middlegame: var(--user-phase-middlegame, var(--yellow));
+  --color-phase-endgame: var(--user-phase-endgame, var(--dark-gray));
   --color-phase-unknown: var(--mid-gray);
 
   /* Tactical Pattern Colors */
@@ -220,11 +220,11 @@
 
   /* Activity heatmap (GitHub-style green ramp) */
   --heatmap-empty-future: #d5d0c5;
-  --heatmap-empty: var(--heatmap-empty-future);
-  --heatmap-l1: #9be9a8;
-  --heatmap-l2: #40c463;
-  --heatmap-l3: #30a14e;
-  --heatmap-l4: #216e39;
+  --heatmap-empty: var(--user-heatmap-empty, var(--heatmap-empty-future));
+  --heatmap-l1: var(--user-heatmap-l1, #9be9a8);
+  --heatmap-l2: var(--user-heatmap-l2, #40c463);
+  --heatmap-l3: var(--user-heatmap-l3, #30a14e);
+  --heatmap-l4: var(--user-heatmap-l4, #216e39);
 
   /* Vim-input overlay (dark terminal palette) */
   --vim-prefix: #888;

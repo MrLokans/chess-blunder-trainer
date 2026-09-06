@@ -161,32 +161,5 @@ function ThemePreview() {
 }
 
 function applyThemePreview(theme: ThemeColors): void {
-  const root = document.documentElement;
-  const cssMap: Record<string, string> = {
-    '--color-primary': theme.primary, '--color-success': theme.success,
-    '--color-error': theme.error, '--color-warning': theme.warning,
-    '--color-phase-opening': theme.phase_opening,
-    '--color-phase-middlegame': theme.phase_middlegame,
-    '--color-phase-endgame': theme.phase_endgame,
-    '--bg': theme.bg, '--bg-elevated': theme.bg_card,
-    '--text': theme.text, '--text-muted': theme.text_muted,
-    '--heatmap-empty': theme.heatmap_empty, '--heatmap-l1': theme.heatmap_l1,
-    '--heatmap-l2': theme.heatmap_l2, '--heatmap-l3': theme.heatmap_l3,
-    '--heatmap-l4': theme.heatmap_l4,
-  };
-
-  for (const [prop, value] of Object.entries(cssMap)) {
-    root.style.setProperty(prop, value);
-  }
-
-  if (window.adjustColor) {
-    root.style.setProperty('--color-primary-hover', window.adjustColor(theme.primary, -15));
-    root.style.setProperty('--color-primary-muted', window.adjustColor(theme.primary, 20));
-    root.style.setProperty('--color-success-bg', window.adjustColor(theme.success, 85, 0.15));
-    root.style.setProperty('--color-success-border', window.adjustColor(theme.success, 50, 0.4));
-    root.style.setProperty('--color-error-bg', window.adjustColor(theme.error, 85, 0.15));
-    root.style.setProperty('--color-error-border', window.adjustColor(theme.error, 50, 0.4));
-    root.style.setProperty('--color-warning-bg', window.adjustColor(theme.warning, 85, 0.15));
-    root.style.setProperty('--color-warning-border', window.adjustColor(theme.warning, 50, 0.4));
-  }
+  window.applyTheme?.(theme);
 }

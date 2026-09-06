@@ -770,7 +770,7 @@ kbd {
    ========================================================================== */
 
 .text-muted { color: var(--text-muted); }
-.text-primary { color: var(--primary); }
+.text-primary { color: var(--accent); }
 
 .section-description {
   color: var(--text-muted);

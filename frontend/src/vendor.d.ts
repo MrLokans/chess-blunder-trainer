@@ -105,4 +105,5 @@ interface Window {
   __settingsInit?: import('./settings/types').SettingsInit;
   adjustColor?: (hex: string, lightness: number | null, saturation?: number) => string;
   applyTheme?: (theme: Record<string, string | undefined>) => void;
+  removeTheme?: () => void;
 }

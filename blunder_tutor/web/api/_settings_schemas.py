@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from types import MappingProxyType
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 
@@ -9,27 +10,36 @@ SYNC_INTERVAL_MAX_HOURS = 168  # 1 week
 MAX_GAMES_CEILING = 10_000  # safety cap on sync size
 SPACED_REPETITION_DAYS_DEFAULT = 30
 SPACED_REPETITION_DAYS_MAX = 365
+HexColor = Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]
 
 
 class ThemeColors(BaseModel):
-    primary: str = Field(default="#4f6d7a", description="Primary accent color")
-    success: str = Field(default="#3d8b6e", description="Success/positive color")
-    error: str = Field(default="#c25450", description="Error/danger color")
-    warning: str = Field(default="#b8860b", description="Warning color")
-    phase_opening: str = Field(default="#5b8a9a", description="Opening phase color")
-    phase_middlegame: str = Field(
-        default="#9a7b5b", description="Middlegame phase color"
+    primary: HexColor = Field(default="#1A3A8F", description="Primary accent color")
+    success: HexColor = Field(default="#2D8F3E", description="Success/positive color")
+    error: HexColor = Field(default="#D42828", description="Error/danger color")
+    warning: HexColor = Field(default="#F2C12E", description="Warning color")
+    phase_opening: HexColor = Field(
+        default="#1A3A8F", description="Opening phase color"
     )
-    phase_endgame: str = Field(default="#7a5b9a", description="Endgame phase color")
-    bg: str = Field(default="#f1f5f9", description="Page background color")
-    bg_card: str = Field(default="#ffffff", description="Card background color")
-    text: str = Field(default="#1e293b", description="Primary text color")
-    text_muted: str = Field(default="#64748b", description="Muted/secondary text color")
-    heatmap_empty: str = Field(default="#ebedf0", description="Heatmap empty cell")
-    heatmap_l1: str = Field(default="#9be9a8", description="Heatmap level 1 (low)")
-    heatmap_l2: str = Field(default="#40c463", description="Heatmap level 2")
-    heatmap_l3: str = Field(default="#30a14e", description="Heatmap level 3")
-    heatmap_l4: str = Field(default="#216e39", description="Heatmap level 4 (high)")
+    phase_middlegame: HexColor = Field(
+        default="#F2C12E", description="Middlegame phase color"
+    )
+    phase_endgame: HexColor = Field(
+        default="#3A3A3A", description="Endgame phase color"
+    )
+    bg: HexColor = Field(default="#F5F2EB", description="Page background color")
+    bg_card: HexColor = Field(default="#F5F2EB", description="Card background color")
+    text: HexColor = Field(default="#1A1A1A", description="Primary text color")
+    text_muted: HexColor = Field(
+        default="#3A3A3A", description="Muted/secondary text color"
+    )
+    heatmap_empty: HexColor = Field(default="#E8E4DB", description="Heatmap empty cell")
+    heatmap_l1: HexColor = Field(default="#B8D9CA", description="Heatmap level 1 (low)")
+    heatmap_l2: HexColor = Field(default="#5BAA7D", description="Heatmap level 2")
+    heatmap_l3: HexColor = Field(default="#2D8F3E", description="Heatmap level 3")
+    heatmap_l4: HexColor = Field(
+        default="#1A6B2A", description="Heatmap level 4 (high)"
+    )
 
 
 class SettingsRequest(BaseModel):

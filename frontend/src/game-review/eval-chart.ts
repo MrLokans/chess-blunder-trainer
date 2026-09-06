@@ -61,11 +61,11 @@ export class EvalChart {
     const style = getComputedStyle(document.documentElement);
     const read = (name: string, fallback: string): string => style.getPropertyValue(name).trim() || fallback;
     return {
-      line: read('--black', '#1A1A1A'),
-      midline: read('--mid-gray-light', '#B8B4AB'),
-      active: read('--blue', '#1A3A8F'),
-      blunder: read('--red', '#D42828'),
-      mistake: read('--yellow', '#F2C12E'),
+      line: read('--text', '#1A1A1A'),
+      midline: read('--border', '#B8B4AB'),
+      active: read('--accent', '#1A3A8F'),
+      blunder: read('--error', '#D42828'),
+      mistake: read('--warning', '#F2C12E'),
     };
   }
 

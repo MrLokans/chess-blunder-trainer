@@ -12,6 +12,10 @@ describe('adjustColor', () => {
     expect(result).toBe('#000000');
   });
 
+  it('treats negative lightness as a relative adjustment', () => {
+    expect(adjustColor('#1a3a8f', -15)).not.toBe('#000000');
+  });
+
   it('lightness=100 returns white', () => {
     const result = adjustColor('#ff0000', 100);
     expect(result).toBe('#ffffff');
