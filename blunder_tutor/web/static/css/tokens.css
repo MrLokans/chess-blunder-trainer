@@ -48,6 +48,7 @@
   --border-strong: var(--black);
   --border-control: var(--mid-gray);
   --border-hover: var(--dark-gray);
+  --border-swatch: rgba(0, 0, 0, 0.1);
   --control-accent: var(--black);
   --accent: var(--blue);
   --accent-hover: #223FA8;
@@ -219,6 +220,7 @@
 
   /* Activity heatmap (GitHub-style green ramp) */
   --heatmap-empty-future: #d5d0c5;
+  --heatmap-empty: var(--heatmap-empty-future);
   --heatmap-l1: #9be9a8;
   --heatmap-l2: #40c463;
   --heatmap-l3: #30a14e;
