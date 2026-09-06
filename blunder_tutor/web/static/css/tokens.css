@@ -35,6 +35,7 @@
   --surface: var(--white);
   --surface-raised: var(--white);
   --surface-sunken: var(--warm-gray);
+  --surface-hover: var(--mid-gray-light);
   --surface-inverse: var(--black);
   --text: var(--black);
   --text-secondary: var(--dark-gray);
@@ -46,6 +47,7 @@
   --border-subtle: var(--warm-gray);
   --border-strong: var(--black);
   --border-control: var(--mid-gray);
+  --border-hover: var(--dark-gray);
   --control-accent: var(--black);
   --accent: var(--blue);
   --accent-hover: #223FA8;
