@@ -33,9 +33,9 @@ select::-ms-expand {
   padding-right: 40px;
   font-family: var(--font-ui);
   font-size: var(--text-base);
-  color: var(--black);
-  background: var(--white);
-  border: 2px solid var(--black);
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 2px solid var(--border-strong);
   border-radius: 0;
   cursor: pointer;
   text-align: left;
@@ -44,7 +44,7 @@ select::-ms-expand {
 
 .custom-dropdown__trigger:focus {
   outline: none;
-  border-color: var(--blue);
+  border-color: var(--accent);
 }
 
 .custom-dropdown__label {
@@ -78,8 +78,8 @@ select::-ms-expand {
   margin: 0;
   padding: 0;
   list-style: none;
-  background: var(--white);
-  border: 2px solid var(--black);
+  background: var(--surface-raised);
+  border: 2px solid var(--border-strong);
   border-top: none;
   max-height: 240px;
   overflow-y: auto;
@@ -93,16 +93,16 @@ select::-ms-expand {
   padding: var(--s-sm) var(--s-sm);
   font-family: var(--font-ui);
   font-size: var(--text-base);
-  color: var(--black);
+  color: var(--text);
   cursor: pointer;
   transition: background-color 0.1s ease;
 }
 
 .custom-dropdown__option:hover {
-  background: var(--warm-gray);
+  background: var(--surface-sunken);
 }
 
 .custom-dropdown__option--selected {
-  background: var(--warm-gray);
+  background: var(--surface-sunken);
   font-weight: 700;
 }
