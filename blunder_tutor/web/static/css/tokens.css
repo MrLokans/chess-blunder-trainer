@@ -39,6 +39,7 @@
   --text: var(--black);
   --text-secondary: var(--dark-gray);
   --text-muted: var(--mid-gray);
+  --text-disabled: var(--mid-gray-light);
   --text-inverse: var(--white);
   --text-on-accent: var(--white);
   --border: var(--mid-gray-light);
