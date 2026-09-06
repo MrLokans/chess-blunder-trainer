@@ -52,6 +52,7 @@
   --success-hover: #247A33;
   --warning: var(--yellow);
   --warning-hover: var(--yellow-hover);
+  --badge-primary: var(--yellow);
   --error: var(--red);
   --error-hover: var(--red-hover);
   --info: var(--blue);
@@ -64,6 +65,7 @@
   --info-bg: rgba(26, 58, 143, 0.08);
   --info-border: var(--blue);
   --focus-ring-color: rgba(26, 58, 143, 0.25);
+  --focus-ring-error: 0 0 0 2px var(--red-focus-ring);
   --modal-backdrop: rgba(0, 0, 0, 0.5);
   --elevation-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   --demo-accent: var(--yellow);
