@@ -1,5 +1,5 @@
 .traps-summary {
-  background: var(--white);
+  background: var(--surface-raised);
   border-radius: 0;
   padding: var(--s-md);
   margin-bottom: var(--s-md);
@@ -18,11 +18,11 @@
 .traps-summary .stat-value {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--blue);
+  color: var(--accent);
 }
 
 .traps-summary .stat-label {
-  color: var(--mid-gray);
+  color: var(--text-muted);
   font-size: var(--text-base);
 }
 
@@ -32,8 +32,8 @@
 
 .traps-summary .top-traps .trap-tag {
   display: inline-block;
-  background: var(--blue);
-  color: var(--white);
+  background: var(--accent);
+  color: var(--text-on-accent);
   padding: var(--s-xs) var(--s-sm);
   border-radius: 0;
   font-size: var(--text-sm);
@@ -51,9 +51,9 @@
 .traps-filter select {
   padding: var(--s-xs) var(--s-sm);
   border-radius: 0;
-  border: 2px solid var(--black);
-  background: var(--white);
-  color: var(--black);
+  border: 2px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text);
 }
 
 .traps-table-container {
@@ -70,7 +70,7 @@
 .traps-table td {
   padding: var(--s-sm) var(--s-md);
   text-align: left;
-  border-bottom: 1px solid var(--warm-gray);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .traps-table th {
@@ -79,7 +79,7 @@
   font-size: var(--text-xs);
   letter-spacing: var(--ls-wide);
   text-transform: uppercase;
-  color: var(--mid-gray);
+  color: var(--text-muted);
 }
 
 .traps-table tbody tr {
@@ -88,20 +88,20 @@
 }
 
 .traps-table tbody tr:hover {
-  background: var(--warm-gray);
+  background: var(--surface-sunken);
 }
 
 .traps-table .count-sprung {
-  color: var(--red);
+  color: var(--error);
   font-weight: 600;
 }
 
 .traps-table .count-entered {
-  color: var(--yellow);
+  color: var(--warning);
 }
 
 .traps-table .count-executed {
-  color: var(--correct);
+  color: var(--success);
 }
 
 .traps-table .category-badge {
@@ -109,14 +109,14 @@
   padding: 2px 8px;
   border-radius: 0;
   font-size: var(--text-sm);
-  background: var(--warm-gray);
-  border: 1px solid var(--mid-gray);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-control);
 }
 
 .trap-detail-panel {
-  background: var(--white);
+  background: var(--surface-raised);
   border-radius: 0;
-  border: 2px solid var(--black);
+  border: 2px solid var(--border-strong);
   padding: var(--s-md);
   margin-top: var(--s-md);
   position: relative;
@@ -130,13 +130,13 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: var(--mid-gray);
+  color: var(--text-muted);
   padding: var(--s-xs);
   line-height: 1;
 }
 
 .trap-detail-close:hover {
-  color: var(--black);
+  color: var(--text);
 }
 
 .trap-detail-grid {
@@ -167,7 +167,7 @@
 }
 
 .trap-detail-section h3 {
-  color: var(--blue);
+  color: var(--accent);
   margin-bottom: var(--s-sm);
   font-size: var(--text-base);
 }
@@ -175,7 +175,7 @@
 .trap-refutation-move {
   font-weight: 700;
   font-size: var(--text-lg);
-  color: var(--correct);
+  color: var(--success);
 }
 
 .trap-games-list {
@@ -185,24 +185,24 @@
 
 .trap-game-item {
   padding: var(--s-xs) 0;
-  border-bottom: 1px solid var(--warm-gray);
+  border-bottom: 1px solid var(--border-subtle);
   font-size: var(--text-sm);
 }
 
 .trap-game-item .match-type-sprung {
-  color: var(--red);
+  color: var(--error);
 }
 
 .trap-game-item .match-type-entered {
-  color: var(--yellow);
+  color: var(--warning);
 }
 
 .trap-game-item .match-type-executed {
-  color: var(--correct);
+  color: var(--success);
 }
 
 .traps-table .no-data {
   text-align: center;
-  color: var(--mid-gray);
+  color: var(--text-muted);
   padding: var(--s-lg);
 }
