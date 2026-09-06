@@ -1,5 +1,5 @@
 .import-description {
-  color: var(--mid-gray);
+  color: var(--text-muted);
   margin-bottom: var(--s-lg);
 }
 
@@ -12,23 +12,23 @@
   font-family: var(--font-ui);
   font-size: var(--text-base);
   padding: var(--s-sm);
-  border: 2px solid var(--black);
+  border: 2px solid var(--border-strong);
   border-radius: 0;
-  background: var(--white);
-  color: var(--black);
+  background: var(--surface-raised);
+  color: var(--text);
   resize: vertical;
   margin-bottom: var(--s-md);
 }
 
 .pgn-textarea:focus {
   outline: none;
-  border-color: var(--blue);
+  border-color: var(--accent);
 }
 
 .import-errors {
   background: var(--bg-error);
-  color: var(--red);
-  border: 2px solid var(--red);
+  color: var(--error);
+  border: 2px solid var(--error-border);
   border-radius: 0;
   padding: var(--s-sm) var(--s-md);
   margin-bottom: var(--s-md);
@@ -43,28 +43,28 @@
   display: flex;
   align-items: center;
   gap: var(--s-sm);
-  color: var(--mid-gray);
+  color: var(--text-muted);
   margin-top: var(--s-md);
 }
 
 .spinner {
   width: 1.2rem;
   height: 1.2rem;
-  border: 2px solid var(--mid-gray-light);
-  border-top-color: var(--blue);
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
 }
 
 .import-results {
-  border: 2px solid var(--black);
+  border: 2px solid var(--border-strong);
   border-radius: 0;
   padding: var(--s-lg);
-  background: var(--white);
+  background: var(--surface-raised);
 }
 
 .import-results h2 {
-  color: var(--correct);
+  color: var(--success);
   margin-top: 0;
   margin-bottom: var(--s-md);
 }
@@ -84,7 +84,7 @@
 
 .result-label {
   font-size: var(--text-sm);
-  color: var(--mid-gray);
+  color: var(--text-muted);
 }
 
 .result-value {
@@ -93,13 +93,13 @@
 }
 
 .result-blunders .result-value {
-  color: var(--red);
+  color: var(--error);
 }
 
 .result-mistakes .result-value {
-  color: var(--yellow);
+  color: var(--warning);
 }
 
 .result-inaccuracies .result-value {
-  color: var(--mid-gray);
+  color: var(--text-muted);
 }
