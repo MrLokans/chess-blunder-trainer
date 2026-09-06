@@ -8,7 +8,7 @@
 .starred-table td {
   padding: var(--s-sm);
   text-align: left;
-  border-bottom: 1px solid var(--warm-gray);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .starred-table th {
@@ -17,7 +17,7 @@
   font-size: var(--text-xs);
   letter-spacing: var(--ls-wide);
   text-transform: uppercase;
-  color: var(--mid-gray);
+  color: var(--text-muted);
 }
 
 .starred-table tbody tr {
@@ -25,26 +25,26 @@
 }
 
 .starred-table tbody tr:hover {
-  background: var(--warm-gray);
+  background: var(--surface-sunken);
 }
 
 .starred-table .puzzle-link {
-  color: var(--blue);
+  color: var(--accent);
   text-decoration: none;
   font-weight: 500;
 }
 
 .starred-table .puzzle-link:hover {
-  border-bottom: 1px solid var(--blue);
+  border-bottom: 1px solid var(--accent);
 }
 
 .starred-table .eval-swing {
   font-family: var(--font-ui);
-  color: var(--red);
+  color: var(--error);
 }
 
 .starred-table .note-text {
-  color: var(--mid-gray);
+  color: var(--text-muted);
   font-size: var(--text-sm);
   max-width: 200px;
   overflow: hidden;
@@ -58,12 +58,12 @@
   cursor: pointer;
   font-size: 1.1rem;
   padding: var(--s-xs);
-  color: var(--mid-gray);
+  color: var(--text-muted);
   transition: color 0.15s ease;
 }
 
 .starred-table .unstar-btn:hover {
-  color: var(--red);
+  color: var(--error);
 }
 
 /* Empty state is in base.css */
