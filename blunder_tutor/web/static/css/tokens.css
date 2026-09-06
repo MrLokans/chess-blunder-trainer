@@ -235,3 +235,120 @@
   --vim-suggestion-hover: #ccc;
   --vim-error: #e74c3c;
 }
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #16150F;
+  --surface-raised: #201E16;
+  --surface-sunken: #100F0B;
+  --surface-hover: #2B291F;
+  --surface-inverse: #F5F2EB;
+  --text: #F5F2EB;
+  --text-secondary: #D5D0C5;
+  --text-muted: #B8B4AB;
+  --text-disabled: #706E68;
+  --text-inverse: #16150F;
+  --text-on-accent: #16150F;
+  --border: #706E68;
+  --border-subtle: #3A3A3A;
+  --border-strong: #F5F2EB;
+  --border-control: #B8B4AB;
+  --border-hover: #F5F2EB;
+  --border-swatch: rgba(245, 242, 235, 0.25);
+  --control-accent: #F5F2EB;
+  --accent: #617DC8;
+  --accent-hover: #7894DF;
+  --success: #2E913F;
+  --success-hover: #3BAE50;
+  --warning: #F2C12E;
+  --warning-hover: #FFD451;
+  --badge-primary: #F2C12E;
+  --error: #C65F5F;
+  --error-hover: #E67878;
+  --info: #617DC8;
+  --success-bg: #19351F;
+  --success-border: #2E913F;
+  --warning-bg: #3A3014;
+  --warning-border: #F2C12E;
+  --error-bg: #3A1C1C;
+  --error-border: #C65F5F;
+  --info-bg: #1C2945;
+  --info-border: #617DC8;
+  --bg-phase: rgba(242, 193, 46, 0.25);
+  --focus-ring-color: rgba(120, 148, 223, 0.6);
+  --focus-ring-error: 0 0 0 2px rgba(230, 120, 120, 0.6);
+  --modal-backdrop: rgba(0, 0, 0, 0.7);
+  --elevation-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --color-phase-opening: #617DC8;
+  --color-phase-middlegame: #F2C12E;
+  --color-phase-endgame: #B8B4AB;
+  --color-phase-unknown: #706E68;
+  --heatmap-empty: #2B291F;
+  --heatmap-l1: #1D5728;
+  --heatmap-l2: #28773A;
+  --heatmap-l3: #2E913F;
+  --heatmap-l4: #43B556;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --surface: #16150F;
+    --surface-raised: #201E16;
+    --surface-sunken: #100F0B;
+    --surface-hover: #2B291F;
+    --surface-inverse: #F5F2EB;
+    --text: #F5F2EB;
+    --text-secondary: #D5D0C5;
+    --text-muted: #B8B4AB;
+    --text-disabled: #706E68;
+    --text-inverse: #16150F;
+    --text-on-accent: #16150F;
+    --border: #706E68;
+    --border-subtle: #3A3A3A;
+    --border-strong: #F5F2EB;
+    --border-control: #B8B4AB;
+    --border-hover: #F5F2EB;
+    --border-swatch: rgba(245, 242, 235, 0.25);
+    --control-accent: #F5F2EB;
+    --accent: #617DC8;
+    --accent-hover: #7894DF;
+    --success: #2E913F;
+    --success-hover: #3BAE50;
+    --warning: #F2C12E;
+    --warning-hover: #FFD451;
+    --badge-primary: #F2C12E;
+    --error: #C65F5F;
+    --error-hover: #E67878;
+    --info: #617DC8;
+    --success-bg: #19351F;
+    --success-border: #2E913F;
+    --warning-bg: #3A3014;
+    --warning-border: #F2C12E;
+    --error-bg: #3A1C1C;
+    --error-border: #C65F5F;
+    --info-bg: #1C2945;
+    --info-border: #617DC8;
+    --bg-phase: rgba(242, 193, 46, 0.25);
+    --focus-ring-color: rgba(120, 148, 223, 0.6);
+    --focus-ring-error: 0 0 0 2px rgba(230, 120, 120, 0.6);
+    --modal-backdrop: rgba(0, 0, 0, 0.7);
+    --elevation-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
+    --color-phase-opening: #617DC8;
+    --color-phase-middlegame: #F2C12E;
+    --color-phase-endgame: #B8B4AB;
+    --color-phase-unknown: #706E68;
+    --heatmap-empty: #2B291F;
+    --heatmap-l1: #1D5728;
+    --heatmap-l2: #28773A;
+    --heatmap-l3: #2E913F;
+    --heatmap-l4: #43B556;
+  }
+}
