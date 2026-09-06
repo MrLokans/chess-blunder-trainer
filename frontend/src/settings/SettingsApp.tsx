@@ -1,6 +1,8 @@
-import { useState, useCallback } from 'preact/hooks';
+import { useState, useCallback, useEffect } from 'preact/hooks';
 import { client } from '../shared/api';
 import { STORAGE_KEYS } from '../shared/storage-keys';
+import { getThemeMode, migrateLegacyDarkTheme, setThemeMode } from '../shared/theme-mode';
+import type { ThemeMode } from '../shared/theme-mode';
 import { useAsyncData } from '../hooks/useAsyncData';
 import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
 import { Alert } from '../components/feedback/Alert';
@@ -34,6 +36,12 @@ interface SettingsBundle {
 const FEATURE_SECTION_MAP: Record<string, string> = {
   'auto.sync': 'sync',
   'auto.analyze': 'analyze',
+};
+
+const THEME_MODE_LABELS: Record<ThemeMode, string> = {
+  system: 'settings.theme.mode_system',
+  light: 'settings.theme.mode_light',
+  dark: 'settings.theme.mode_dark',
 };
 
 export function SettingsApp({ init }: SettingsAppProps) {
@@ -75,6 +83,7 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
 
   const [syncSettings, setSyncSettings] = useState(bundle.syncSettings);
   const [theme, setTheme] = useState(bundle.theme);
+  const [themeMode, setThemeModeState] = useState<ThemeMode>(getThemeMode);
   const [boardSettings, setBoardSettings] = useState(bundle.boardSettings);
   const { themePresets, pieceSets, boardColorPresets } = bundle;
 
@@ -88,6 +97,11 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
     }
     return vis;
   });
+
+  useEffect(() => {
+    migrateLegacyDarkTheme(theme);
+    setThemeModeState(getThemeMode());
+  }, [theme]);
 
   const handleFeatureChanged = useCallback((featureId: string, enabled: boolean) => {
     const section = FEATURE_SECTION_MAP[featureId];
@@ -177,6 +191,14 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
 
         <h2 class="settings-section-title">{t('settings.theme.title')}</h2>
         <p class="help-text mb-4">{t('settings.theme.description')}</p>
+        <ThemeModeControl
+          mode={themeMode}
+          onChange={(mode) => {
+            setThemeMode(mode);
+            setThemeModeState(mode);
+          }}
+        />
+        <p class="help-text mb-4">{t('settings.theme.light_only')}</p>
 
         <ThemeEditor
           theme={theme}
@@ -197,5 +219,25 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
 
       {!init.demoMode && <CacheManagement />}
     </Card>
+  );
+}
+
+function ThemeModeControl({ mode, onChange }: { mode: ThemeMode; onChange: (mode: ThemeMode) => void }) {
+  return (
+    <fieldset class="form-group">
+      <legend>{t('settings.theme.mode')}</legend>
+      {(['system', 'light', 'dark'] as const).map(value => (
+        <label class="checkbox-label" key={value}>
+          <input
+            type="radio"
+            name="theme-mode"
+            value={value}
+            checked={mode === value}
+            onChange={() => { onChange(value); }}
+          />
+          {t(THEME_MODE_LABELS[value])}
+        </label>
+      ))}
+    </fieldset>
   );
 }

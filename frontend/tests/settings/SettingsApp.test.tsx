@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/preact';
+import userEvent from '@testing-library/user-event';
 import { SettingsApp } from '../../src/settings/SettingsApp';
 import type { SettingsInit } from '../../src/settings/types';
 
@@ -57,6 +58,7 @@ vi.mock('../../src/shared/api', async (importActual) => {
 describe('SettingsApp', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     window.__features = { 'auto.sync': true, 'auto.analyze': true };
   });
 
@@ -95,6 +97,27 @@ describe('SettingsApp', () => {
     await waitFor(() => {
       expect(screen.getByText(t('settings.save'))).toBeDefined();
     });
+  });
+
+  test('renders an accessible theme mode selector', async () => {
+    render(<SettingsApp init={INIT} />);
+    await waitFor(() => {
+      expect(screen.getByRole('radio', { name: t('settings.theme.mode_system') })).toBeDefined();
+    });
+    expect(screen.getByRole('radio', { name: t('settings.theme.mode_light') })).toBeDefined();
+    expect(screen.getByRole('radio', { name: t('settings.theme.mode_dark') })).toBeDefined();
+  });
+
+  test('persists theme mode selection locally', async () => {
+    const user = userEvent.setup();
+    render(<SettingsApp init={INIT} />);
+    const dark = await screen.findByRole('radio', { name: t('settings.theme.mode_dark') });
+
+    await user.click(dark);
+    expect(localStorage.getItem('theme-mode')).toBe('dark');
+
+    await user.click(screen.getByRole('radio', { name: t('settings.theme.mode_system') }));
+    expect(localStorage.getItem('theme-mode')).toBeNull();
   });
 
   test('renders the cache management section when not in demo mode', async () => {

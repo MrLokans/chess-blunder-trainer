@@ -53,6 +53,11 @@ def test_get_features_returns_all_defaults_true(app):
 
 
 class TestThemeSettings:
+    def test_omits_legacy_dark_preset(self, app):
+        response = app.get("/api/settings/theme/presets")
+        assert response.status_code == HTTPStatus.OK
+        assert "dark" not in {preset["id"] for preset in response.json()["presets"]}
+
     def test_defaults_match_theme(self, app):
         response = app.get("/api/settings/theme")
         assert response.status_code == HTTPStatus.OK
