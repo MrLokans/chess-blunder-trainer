@@ -38,4 +38,11 @@ export default [
       sourceType: 'script',
     },
   },
+  {
+    files: ['blunder_tutor/web/static/js/theme-loader.js'],
+    rules: {
+      'no-unused-vars': 'off',
+      'no-var': 'off',
+    },
+  },
 ];

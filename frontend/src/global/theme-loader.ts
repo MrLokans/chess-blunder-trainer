@@ -1,4 +1,4 @@
-interface ThemeColors {
+export interface ThemeColors {
   primary?: string;
   success?: string;
   error?: string;
@@ -63,7 +63,7 @@ export function adjustColor(hex: string, lightness: number | null, saturation?: 
   return `#${toHex(r2)}${toHex(g2)}${toHex(b2)}`;
 }
 
-function applyTheme(theme: ThemeColors): void {
+export function applyTheme(theme: ThemeColors): void {
   const root = document.documentElement;
 
   if (theme.primary) {
@@ -110,10 +110,27 @@ function applyTheme(theme: ThemeColors): void {
   if (theme.warning) root.style.setProperty('--warning', theme.warning);
 }
 
-const cached = localStorage.getItem('theme');
-if (cached) {
-  try { applyTheme(JSON.parse(cached) as ThemeColors); } catch { /* ignore */ }
+function syncTheme(): void {
+  fetch('/api/settings/theme')
+    .then(response => response.json() as Promise<ThemeColors>)
+    .then(theme => {
+      localStorage.setItem('theme', JSON.stringify(theme));
+      applyTheme(theme);
+    })
+    .catch(() => {});
 }
 
-window.adjustColor = adjustColor;
-window.applyTheme = applyTheme;
+(function () {
+  const cached = localStorage.getItem('theme');
+  if (cached) {
+    try { applyTheme(JSON.parse(cached) as ThemeColors); } catch {}
+  }
+
+  window.adjustColor = adjustColor;
+  window.applyTheme = applyTheme;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncTheme, { once: true });
+  } else {
+    syncTheme();
+  }
+})();

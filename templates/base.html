@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/static/css/components.css">
   <link rel="stylesheet" href="/static/css/dropdown.css">
 
-  <!-- Theme loader - applies cached colors before page renders -->
+  <!-- Built from frontend/src/global/theme-loader.ts; applies cached colors before render. -->
   <script src="/static/js/theme-loader.js"></script>
 
   <!-- i18n: inject translations for client-side JS -->
@@ -92,8 +92,6 @@
     })();
   </script>
 
-  <!-- Theme sync - fetch from server and update cache -->
-  <script src="/static/js/theme-sync.js"></script>
 
   <!-- Page-specific JavaScript -->
   {% block extra_scripts %}{% endblock %}
