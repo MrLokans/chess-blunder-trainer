@@ -31,6 +31,42 @@
   /* Semantic */
   --correct: #2D8F3E;
 
+  /* Themeable semantic tokens */
+  --surface: var(--white);
+  --surface-raised: var(--white);
+  --surface-sunken: var(--warm-gray);
+  --surface-inverse: var(--black);
+  --text: var(--black);
+  --text-secondary: var(--dark-gray);
+  --text-muted: var(--mid-gray);
+  --text-inverse: var(--white);
+  --text-on-accent: var(--white);
+  --border: var(--mid-gray-light);
+  --border-subtle: var(--warm-gray);
+  --border-strong: var(--black);
+  --accent: var(--blue);
+  --accent-hover: #223FA8;
+  --success: var(--correct);
+  --success-hover: #247A33;
+  --warning: var(--yellow);
+  --warning-hover: var(--yellow-hover);
+  --error: var(--red);
+  --error-hover: var(--red-hover);
+  --info: var(--blue);
+  --success-bg: var(--bg-correct);
+  --success-border: var(--correct);
+  --warning-bg: var(--bg-pending);
+  --warning-border: var(--yellow);
+  --error-bg: var(--bg-error);
+  --error-border: var(--red);
+  --info-bg: rgba(26, 58, 143, 0.08);
+  --info-border: var(--blue);
+  --focus-ring-color: rgba(26, 58, 143, 0.25);
+  --modal-backdrop: rgba(0, 0, 0, 0.5);
+  --elevation-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  --piece-white: var(--white);
+  --piece-black: var(--black);
+
   /* Tinted backgrounds */
   --bg-error: #FEF0F0;
   --bg-correct: #F0F7F1;
@@ -40,40 +76,31 @@
   /* Hover/state shades — derived from primary triad */
   --yellow-hover: #E0B020;
   --red-hover: #B81E1E;
-  --success-hover: #247A33;
-  --danger-hover: #B81E1E;
+  --danger-hover: var(--error-hover);
   --red-focus-ring: rgba(212, 40, 40, 0.25);
 
   /* Legacy aliases for compatibility */
-  --bg: var(--white);
-  --bg-elevated: var(--white);
-  --text: var(--black);
-  --text-muted: var(--mid-gray);
-  --text-faint: var(--mid-gray);
-  --border: var(--mid-gray-light);
-  --border-strong: var(--black);
-  --card-bg: var(--white);
-  --accent: var(--blue);
-  --success: var(--correct);
-  --warning: var(--yellow);
-  --error: var(--red);
-  --primary: var(--blue);
+  --bg: var(--surface);
+  --bg-elevated: var(--surface-raised);
+  --text-faint: var(--text-muted);
+  --card-bg: var(--surface-raised);
+  --primary: var(--accent);
 
   /* Semantic colors (legacy compat) */
-  --color-primary: var(--blue);
-  --color-primary-hover: #223FA8;
-  --color-success: var(--correct);
-  --color-success-bg: var(--bg-correct);
-  --color-success-border: var(--correct);
-  --color-warning: var(--yellow);
-  --color-warning-bg: var(--bg-pending);
-  --color-warning-border: var(--yellow);
-  --color-error: var(--red);
-  --color-error-bg: var(--bg-error);
-  --color-error-border: var(--red);
-  --color-info: var(--blue);
-  --color-info-bg: rgba(26, 58, 143, 0.08);
-  --color-info-border: var(--blue);
+  --color-primary: var(--accent);
+  --color-primary-hover: var(--accent-hover);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-border: var(--warning-border);
+  --color-error: var(--error);
+  --color-error-bg: var(--error-bg);
+  --color-error-border: var(--error-border);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-info-border: var(--info-border);
 
   --color-slate-50: var(--warm-gray);
   --color-slate-100: var(--white);
@@ -116,7 +143,7 @@
   --color-gametype-correspondence: var(--mid-gray-light);
 
   /* Focus ring */
-  --focus-ring: 0 0 0 2px rgba(26, 58, 143, 0.25);
+  --focus-ring: 0 0 0 2px var(--focus-ring-color);
 
   /* No shadows in Bauhaus */
   --shadow-sm: none;
