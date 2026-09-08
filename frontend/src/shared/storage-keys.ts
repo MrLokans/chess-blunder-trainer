@@ -1,6 +1,8 @@
 export const STORAGE_KEYS = {
   // Theme
   theme: 'theme',
+  themeMode: 'theme-mode',
+  themeModeMigration: 'theme-mode-migrated',
 
   // Trainer filters
   trainerPhases: 'blunder-tutor-phase-filters',

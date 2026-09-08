@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import re
 from types import MappingProxyType
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 
@@ -9,27 +11,42 @@ SYNC_INTERVAL_MAX_HOURS = 168  # 1 week
 MAX_GAMES_CEILING = 10_000  # safety cap on sync size
 SPACED_REPETITION_DAYS_DEFAULT = 30
 SPACED_REPETITION_DAYS_MAX = 365
+HEX_COLOR_PATTERN = r"^#[0-9A-Fa-f]{6}$"
+HexColor = Annotated[str, Field(pattern=HEX_COLOR_PATTERN)]
+_HEX_COLOR = re.compile(HEX_COLOR_PATTERN)
+
+
+def is_hex_color(value: str) -> bool:
+    return _HEX_COLOR.match(value) is not None
 
 
 class ThemeColors(BaseModel):
-    primary: str = Field(default="#4f6d7a", description="Primary accent color")
-    success: str = Field(default="#3d8b6e", description="Success/positive color")
-    error: str = Field(default="#c25450", description="Error/danger color")
-    warning: str = Field(default="#b8860b", description="Warning color")
-    phase_opening: str = Field(default="#5b8a9a", description="Opening phase color")
-    phase_middlegame: str = Field(
-        default="#9a7b5b", description="Middlegame phase color"
+    primary: HexColor = Field(default="#1A3A8F", description="Primary accent color")
+    success: HexColor = Field(default="#2D8F3E", description="Success/positive color")
+    error: HexColor = Field(default="#D42828", description="Error/danger color")
+    warning: HexColor = Field(default="#F2C12E", description="Warning color")
+    phase_opening: HexColor = Field(
+        default="#1A3A8F", description="Opening phase color"
     )
-    phase_endgame: str = Field(default="#7a5b9a", description="Endgame phase color")
-    bg: str = Field(default="#f1f5f9", description="Page background color")
-    bg_card: str = Field(default="#ffffff", description="Card background color")
-    text: str = Field(default="#1e293b", description="Primary text color")
-    text_muted: str = Field(default="#64748b", description="Muted/secondary text color")
-    heatmap_empty: str = Field(default="#ebedf0", description="Heatmap empty cell")
-    heatmap_l1: str = Field(default="#9be9a8", description="Heatmap level 1 (low)")
-    heatmap_l2: str = Field(default="#40c463", description="Heatmap level 2")
-    heatmap_l3: str = Field(default="#30a14e", description="Heatmap level 3")
-    heatmap_l4: str = Field(default="#216e39", description="Heatmap level 4 (high)")
+    phase_middlegame: HexColor = Field(
+        default="#F2C12E", description="Middlegame phase color"
+    )
+    phase_endgame: HexColor = Field(
+        default="#3A3A3A", description="Endgame phase color"
+    )
+    bg: HexColor = Field(default="#F5F2EB", description="Page background color")
+    bg_card: HexColor = Field(default="#F5F2EB", description="Card background color")
+    text: HexColor = Field(default="#1A1A1A", description="Primary text color")
+    text_muted: HexColor = Field(
+        default="#3A3A3A", description="Muted/secondary text color"
+    )
+    heatmap_empty: HexColor = Field(default="#E8E4DB", description="Heatmap empty cell")
+    heatmap_l1: HexColor = Field(default="#B8D9CA", description="Heatmap level 1 (low)")
+    heatmap_l2: HexColor = Field(default="#5BAA7D", description="Heatmap level 2")
+    heatmap_l3: HexColor = Field(default="#2D8F3E", description="Heatmap level 3")
+    heatmap_l4: HexColor = Field(
+        default="#1A6B2A", description="Heatmap level 4 (high)"
+    )
 
 
 class SettingsRequest(BaseModel):
@@ -91,8 +108,15 @@ class BoardColorPreset(BaseModel):
 
 class BoardSettingsResponse(BaseModel):
     piece_set: str = Field(description="Current piece set ID")
-    board_light: str = Field(description="Light square color")
-    board_dark: str = Field(description="Dark square color")
+    board_light: str | None = Field(
+        default=None,
+        description="Light square color; null when the user has never customised it, "
+        "in which case the client uses the mode-aware default from tokens.css",
+    )
+    board_dark: str | None = Field(
+        default=None,
+        description="Dark square color; null when the user has never customised it",
+    )
 
 
 class BoardSettingsRequest(BaseModel):
@@ -263,28 +287,6 @@ THEME_PRESETS = MappingProxyType(
                 "heatmap_l4": "#1A1A1A",
             },
         },
-        "dark": {
-            "name": "Dark",
-            "description": "Inverted Bauhaus for low light",
-            "colors": {
-                "primary": "#5B8FD4",
-                "success": "#4AAF6A",
-                "error": "#E05050",
-                "warning": "#F2C12E",
-                "phase_opening": "#5B8FD4",
-                "phase_middlegame": "#F2C12E",
-                "phase_endgame": "#8A8A8A",
-                "bg": "#1A1A1A",
-                "bg_card": "#2A2A2A",
-                "text": "#F0EDE6",
-                "text_muted": "#8A8A80",
-                "heatmap_empty": "#2A2A2A",
-                "heatmap_l1": "#1A4A2A",
-                "heatmap_l2": "#2A6A3A",
-                "heatmap_l3": "#3A8A4A",
-                "heatmap_l4": "#4AAF6A",
-            },
-        },
         "high_contrast": {
             "name": "High Contrast",
             "description": "Maximum readability with Bauhaus colors",
@@ -333,8 +335,6 @@ PIECE_SETS = (
 )
 
 DEFAULT_PIECE_SET = "gioco"
-DEFAULT_BOARD_LIGHT = "#E0E0E0"
-DEFAULT_BOARD_DARK = "#A0A0A0"
 
 BOARD_COLOR_PRESETS = MappingProxyType(
     {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { client } from '../../shared/api';
-import { applyBoardBackground, applyPieceSet } from '../../shared/board-theme';
+import { applyBoardTheme, applyPieceSet } from '../../shared/board-theme';
 import type { BoardSettings } from '../../types/settings';
 
 export function useBoardSettings(): BoardSettings | null {
@@ -11,7 +11,7 @@ export function useBoardSettings(): BoardSettings | null {
       try {
         const data = await client.settings.getBoard();
         setSettings(data);
-        applyBoardBackground(data.board_light, data.board_dark);
+        applyBoardTheme(data.board_light, data.board_dark);
         applyPieceSet(data.piece_set);
       } catch (err) {
         console.error('Failed to load board settings:', err);

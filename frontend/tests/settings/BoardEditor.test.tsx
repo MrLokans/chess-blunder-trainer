@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { BoardEditor } from '../../src/settings/BoardEditor';
@@ -65,7 +65,7 @@ describe('BoardEditor', () => {
     expect(squares.length).toBe(16);
   });
 
-  test('resets to defaults on reset button click', async () => {
+  test('reset clears the colours so the board follows the mode-aware default', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
     render(
@@ -80,8 +80,50 @@ describe('BoardEditor', () => {
     await user.click(screen.getByText(t('settings.board.reset')));
     expect(onChange).toHaveBeenCalledWith({
       piece_set: 'gioco',
-      board_light: '#E0E0E0',
-      board_dark: '#A0A0A0',
+      board_light: null,
+      board_dark: null,
+    });
+  });
+
+  describe('uncustomised colours', () => {
+    const UNSET: BoardSettings = { piece_set: 'gioco', board_light: null, board_dark: null };
+
+    beforeEach(() => {
+      // Stands in for the mode-aware default that tokens.css supplies in a real
+      // browser; jsdom does not resolve light-dark() from a stylesheet.
+      document.documentElement.style.setProperty('--board-light', '#A9A297');
+      document.documentElement.style.setProperty('--board-dark', '#6E675C');
+    });
+
+    afterEach(() => {
+      document.documentElement.style.removeProperty('--board-light');
+      document.documentElement.style.removeProperty('--board-dark');
+    });
+
+    test('shows the resolved default in the colour inputs', () => {
+      const { container } = render(
+        <BoardEditor pieceSets={PIECE_SETS} colorPresets={COLOR_PRESETS} settings={UNSET} onChange={() => {}} />
+      );
+      const values = Array.from(container.querySelectorAll('input')).map(i => i.value.toLowerCase());
+      expect(values).toContain('#a9a297');
+      expect(values).toContain('#6e675c');
+    });
+
+    test('editing one square colour pins the other so the stored pair is never half-set', async () => {
+      const onChange = vi.fn();
+      const user = userEvent.setup();
+      const { container } = render(
+        <BoardEditor pieceSets={PIECE_SETS} colorPresets={COLOR_PRESETS} settings={UNSET} onChange={onChange} />
+      );
+
+      const hexInput = Array.from(container.querySelectorAll('input')).find(
+        i => i.type === 'text' && i.value.toLowerCase() === '#a9a297',
+      );
+      await user.clear(hexInput as HTMLInputElement);
+      await user.type(hexInput as HTMLInputElement, '#ABCDEF');
+
+      const last = onChange.mock.calls.at(-1)?.[0] as BoardSettings;
+      expect(last.board_dark).toBe('#6E675C');
     });
   });
 });

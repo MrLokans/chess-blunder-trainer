@@ -16,7 +16,7 @@
 .profiles-app--loading {
   padding: var(--s-2xl);
   text-align: center;
-  color: var(--mid-gray);
+  color: var(--text-muted);
   font-family: var(--font-sans);
 }
 
@@ -36,7 +36,7 @@
 
 .profiles-app__hint {
   font-family: var(--font-sans);
-  color: var(--mid-gray);
+  color: var(--text-muted);
   text-align: center;
   padding: var(--s-xl);
 }
@@ -72,7 +72,7 @@
   font-weight: 700;
   letter-spacing: var(--ls-wide);
   text-transform: uppercase;
-  color: var(--mid-gray);
+  color: var(--text-muted);
 }
 
 .profile-list__username-row {
@@ -86,32 +86,32 @@
   font-family: var(--font-ui);
   font-size: var(--text-lg);
   font-weight: 700;
-  color: var(--black);
+  color: var(--text);
   word-break: break-word;
 }
 
 .profile-list__platform-link {
   font-size: var(--text-sm);
   text-decoration: none;
-  color: var(--mid-gray);
+  color: var(--text-muted);
   padding: 0 var(--s-xs);
   transition: var(--transition);
 }
 
 .profile-list__platform-link:hover,
 .profile-list__platform-link:focus-visible {
-  color: var(--primary);
+  color: var(--accent);
 }
 
 .profile-list__meta {
   font-family: var(--font-sans);
   font-size: var(--text-xs);
-  color: var(--mid-gray);
+  color: var(--text-muted);
 }
 
 .profiles-add-placeholder {
   font-family: var(--font-sans);
-  color: var(--dark-gray);
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -144,7 +144,7 @@
   font-family: var(--font-ui);
   font-size: var(--text-2xl);
   font-weight: 700;
-  color: var(--black);
+  color: var(--text);
   margin: 0;
   word-break: break-word;
 }
@@ -169,13 +169,13 @@
 }
 
 .profile-overview__meta-row dt {
-  color: var(--mid-gray);
+  color: var(--text-muted);
   margin: 0;
   min-width: 140px;
 }
 
 .profile-overview__meta-row dd {
-  color: var(--black);
+  color: var(--text);
   margin: 0;
 }
 
@@ -187,7 +187,7 @@
 
 .profile-overview__empty-stats {
   font-family: var(--font-sans);
-  color: var(--mid-gray);
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -211,14 +211,14 @@
   font-weight: 700;
   letter-spacing: var(--ls-wide);
   text-transform: uppercase;
-  color: var(--mid-gray);
+  color: var(--text-muted);
 }
 
 .rating-card__rating {
   font-family: var(--font-ui);
   font-size: var(--text-2xl);
   font-weight: 700;
-  color: var(--black);
+  color: var(--text);
   line-height: 1.1;
 }
 
@@ -231,7 +231,7 @@
 
 .rating-card__trend-empty {
   font-family: var(--font-sans);
-  color: var(--mid-gray-light);
+  color: var(--text-disabled);
   font-size: var(--text-lg);
   line-height: 1;
 }
@@ -253,13 +253,13 @@
 .rating-card__games {
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  color: var(--mid-gray);
+  color: var(--text-muted);
 }
 
 .rating-card__synced {
   font-family: var(--font-sans);
   font-size: var(--text-xs);
-  color: var(--mid-gray);
+  color: var(--text-muted);
 }
 
 /* --------------------------------------------------------------------------
@@ -288,8 +288,8 @@
   flex-direction: column;
   gap: var(--s-sm);
   padding: var(--s-md);
-  border: 2px solid var(--red);
-  background: var(--bg-error);
+  border: 2px solid var(--error-border);
+  background: var(--error-bg);
 }
 
 .profile-preferences__danger-heading {
@@ -298,20 +298,20 @@
   font-weight: 700;
   letter-spacing: var(--ls-wide);
   text-transform: uppercase;
-  color: var(--red);
+  color: var(--error);
   margin: 0;
 }
 
 .profile-preferences__danger-body {
   font-family: var(--font-sans);
   font-size: var(--text-sm);
-  color: var(--dark-gray);
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .profile-preferences__deleting {
   font-family: var(--font-sans);
-  color: var(--mid-gray);
+  color: var(--text-muted);
   margin: 0;
 }
 

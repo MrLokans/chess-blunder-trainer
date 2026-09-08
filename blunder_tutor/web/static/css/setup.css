@@ -12,24 +12,24 @@ body {
   margin-top: var(--s-lg);
   text-align: center;
   font-size: var(--text-sm);
-  color: var(--mid-gray);
+  color: var(--text-muted);
 }
 
 .footer a {
-  color: var(--blue);
+  color: var(--accent);
   text-decoration: none;
 }
 
 .footer a:hover {
-  border-bottom: 1px solid var(--blue);
+  border-bottom: 1px solid var(--accent);
 }
 
 /* Setup progress */
 .setup-progress-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--text-muted, var(--mid-gray));
-  border-top-color: var(--primary, var(--blue));
+  border: 3px solid var(--text-muted);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: field-validation-spin 0.8s linear infinite;
   margin: 24px auto 16px;
@@ -37,6 +37,6 @@ body {
 
 .setup-progress-message {
   text-align: center;
-  color: var(--text-muted, var(--mid-gray));
+  color: var(--text-muted);
   font-size: var(--text-sm);
 }

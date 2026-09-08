@@ -1,3 +1,5 @@
+import { readColorToken } from '../shared/css-color';
+
 const MAX_CP = 500;
 
 interface ReviewMove {
@@ -25,12 +27,13 @@ export class EvalChart {
   private _moves: ReviewMove[] = [];
   private _activePly = -1;
   private _onClick: ((index: number) => void) | null = null;
+  private _clickHandler: (e: MouseEvent) => void;
 
   constructor(canvasEl: HTMLCanvasElement) {
     this._canvas = canvasEl;
     this._ctx = canvasEl.getContext('2d') ?? (() => { throw new Error('2d context unavailable'); })();
 
-    this._canvas.addEventListener('click', (e) => {
+    this._clickHandler = (e: MouseEvent) => {
       if (!this._onClick || this._moves.length === 0) return;
       const rect = this._canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -40,7 +43,13 @@ export class EvalChart {
       const index = Math.round(px / step);
       const clamped = Math.max(0, Math.min(this._moves.length - 1, index));
       this._onClick(clamped);
-    });
+    };
+    this._canvas.addEventListener('click', this._clickHandler);
+  }
+
+  destroy(): void {
+    this._canvas.removeEventListener('click', this._clickHandler);
+    this._onClick = null;
   }
 
   render(moves: ReviewMove[]): void {
@@ -57,15 +66,23 @@ export class EvalChart {
     this._onClick = callback;
   }
 
-  private _palette(): { line: string; midline: string; active: string; blunder: string; mistake: string } {
-    const style = getComputedStyle(document.documentElement);
-    const read = (name: string, fallback: string): string => style.getPropertyValue(name).trim() || fallback;
+  private _palette(): {
+    line: string;
+    midline: string;
+    active: string;
+    blunder: string;
+    mistake: string;
+    whiteFill: string;
+    blackFill: string;
+  } {
     return {
-      line: read('--black', '#1A1A1A'),
-      midline: read('--mid-gray-light', '#B8B4AB'),
-      active: read('--blue', '#1A3A8F'),
-      blunder: read('--red', '#D42828'),
-      mistake: read('--yellow', '#F2C12E'),
+      line: readColorToken('--text', '#1A1A1A'),
+      midline: readColorToken('--border', '#B8B4AB'),
+      active: readColorToken('--accent', '#1A3A8F'),
+      blunder: readColorToken('--error', '#D42828'),
+      mistake: readColorToken('--warning', '#F2C12E'),
+      whiteFill: readColorToken('--eval-white-advantage-fill', 'rgba(255, 255, 255, 0.55)'),
+      blackFill: readColorToken('--eval-black-advantage-fill', 'rgba(26, 26, 26, 0.10)'),
     };
   }
 
@@ -98,7 +115,7 @@ export class EvalChart {
     for (let i = 0; i < moves.length; i++) ctx.lineTo(i * step, Math.min(yAt(i), zeroY));
     ctx.lineTo((moves.length - 1) * step, zeroY);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.fillStyle = colors.whiteFill;
     ctx.fill();
 
     // Black-advantage area (below the midline)
@@ -107,7 +124,7 @@ export class EvalChart {
     for (let i = 0; i < moves.length; i++) ctx.lineTo(i * step, Math.max(yAt(i), zeroY));
     ctx.lineTo((moves.length - 1) * step, zeroY);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(26, 26, 26, 0.10)';
+    ctx.fillStyle = colors.blackFill;
     ctx.fill();
 
     ctx.beginPath();

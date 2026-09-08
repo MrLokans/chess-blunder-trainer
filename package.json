@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config frontend/vite.config.ts",
-    "build": "tsc --noEmit --project frontend/tsconfig.json && vite build --config frontend/vite.config.ts",
+    "build": "tsc --noEmit --project frontend/tsconfig.json && vite build --config frontend/vite.config.ts && vite build --config frontend/vite.global.config.ts",
     "typecheck": "tsc --noEmit --project frontend/tsconfig.json",
     "lint": "eslint --config frontend/eslint.config.ts frontend/src/ frontend/tests/",
     "lint:fix": "eslint --config frontend/eslint.config.ts frontend/src/ frontend/tests/ --fix",

@@ -17,11 +17,11 @@
 }
 
 .auth-card {
-  background: var(--surface, var(--white));
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg, 8px);
   padding: var(--s-xl, 32px);
-  box-shadow: var(--shadow-card, 0 2px 12px rgba(0, 0, 0, 0.06));
+  box-shadow: var(--shadow-card);
   max-width: 440px;
   width: 100%;
 }
@@ -29,12 +29,12 @@
 .auth-card h1 {
   margin: 0 0 var(--s-md, 16px);
   font-size: var(--text-xl, 1.5rem);
-  color: var(--text, inherit);
+  color: var(--text);
 }
 
 .auth-card .subtitle {
   margin: 0 0 var(--s-lg, 24px);
-  color: var(--text-muted, var(--mid-gray));
+  color: var(--text-muted);
   font-size: var(--text-sm, 0.875rem);
 }
 
@@ -53,7 +53,7 @@
   display: block;
   margin-bottom: var(--s-xs, 4px);
   font-size: var(--text-sm, 0.875rem);
-  color: var(--text, inherit);
+  color: var(--text);
   font-weight: 500;
 }
 
@@ -62,15 +62,15 @@
   padding: var(--s-sm, 8px) var(--s-md, 12px);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 4px);
-  background: var(--input-bg, var(--white));
-  color: var(--text, inherit);
+  background: var(--surface-raised);
+  color: var(--text);
   font-size: var(--text-md, 1rem);
   box-sizing: border-box;
 }
 
 .auth-form input:focus {
   outline: none;
-  border-color: var(--primary, var(--blue));
+  border-color: var(--accent);
 }
 
 .auth-form .btn {
@@ -87,11 +87,11 @@
   margin-top: var(--s-lg, 24px);
   text-align: center;
   font-size: var(--text-sm, 0.875rem);
-  color: var(--text-muted, var(--mid-gray));
+  color: var(--text-muted);
 }
 
 .auth-footer a {
-  color: var(--primary, var(--blue));
+  color: var(--accent);
   text-decoration: none;
 }
 

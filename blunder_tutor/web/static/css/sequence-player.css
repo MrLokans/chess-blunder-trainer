@@ -23,8 +23,8 @@
 
 .sequence-player-controls button {
   background: none;
-  border: 2px solid var(--black);
-  color: var(--black);
+  border: 2px solid var(--border-strong);
+  color: var(--text);
   width: 36px;
   height: 36px;
   font-size: 1rem;
@@ -37,8 +37,8 @@
 }
 
 .sequence-player-controls button:hover {
-  background: var(--black);
-  color: var(--white);
+  background: var(--surface-inverse);
+  color: var(--text-inverse);
 }
 
 .sequence-player-controls button:disabled {
@@ -48,13 +48,13 @@
 
 .sequence-player-controls button:disabled:hover {
   background: none;
-  color: var(--black);
+  color: var(--text);
 }
 
 .sequence-player-status {
   text-align: center;
   font-size: var(--text-sm);
-  color: var(--mid-gray);
+  color: var(--text-muted);
   padding-bottom: var(--s-xs);
 }
 
@@ -69,9 +69,9 @@
 
 .sequence-player-tabs .tab-btn {
   padding: var(--s-xs) var(--s-md);
-  border: 2px solid var(--black);
+  border: 2px solid var(--border-strong);
   background: none;
-  color: var(--black);
+  color: var(--text);
   cursor: pointer;
   font-size: var(--text-sm);
   font-family: var(--font-ui);
@@ -79,10 +79,10 @@
 }
 
 .sequence-player-tabs .tab-btn.active {
-  background: var(--black);
-  color: var(--white);
+  background: var(--surface-inverse);
+  color: var(--text-inverse);
 }
 
 .sequence-player-tabs .tab-btn:hover:not(.active) {
-  background: var(--warm-gray);
+  background: var(--surface-sunken);
 }

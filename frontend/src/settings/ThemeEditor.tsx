@@ -8,6 +8,7 @@ interface ThemeEditorProps {
   theme: ThemeColors;
   presets: ThemePreset[];
   onChange: (theme: ThemeColors) => void;
+  disabled?: boolean;
 }
 
 const SECTIONS: Array<{ titleKey: string; keys: readonly ThemeColorKey[] }> = [
@@ -44,7 +45,7 @@ const HEATMAP_GRID = [
   [0, 1, 0, 2, 1, 0, 0],
 ];
 
-export function ThemeEditor({ theme, presets, onChange }: ThemeEditorProps) {
+export function ThemeEditor({ theme, presets, onChange, disabled = false }: ThemeEditorProps) {
   const activePresetId = useMemo(() => {
     for (const preset of presets) {
       const matches = THEME_COLOR_KEYS.every(
@@ -60,21 +61,23 @@ export function ThemeEditor({ theme, presets, onChange }: ThemeEditorProps) {
   }, [theme]);
 
   const handleColorChange = useCallback((key: ThemeColorKey, value: string) => {
-    onChange({ ...theme, [key]: value });
-  }, [theme, onChange]);
+    if (!disabled) onChange({ ...theme, [key]: value });
+  }, [disabled, theme, onChange]);
 
   const handlePresetClick = useCallback((presetId: string) => {
+    if (disabled) return;
     const preset = presets.find(p => p.id === presetId);
     if (!preset) return;
     onChange({ ...preset.colors });
-  }, [presets, onChange]);
+  }, [disabled, presets, onChange]);
 
   const handleReset = useCallback(() => {
     handlePresetClick('default');
   }, [handlePresetClick]);
 
   return (
-    <div class="theme-colors">
+    <fieldset class="theme-colors" disabled={disabled} aria-disabled={disabled}>
+      {disabled && <p class="help-text">{t('settings.theme.light_only')}</p>}
       <div class="preset-selector">
         <label class="theme-section-title">{t('settings.theme.presets')}</label>
         <div class="preset-grid">
@@ -122,7 +125,7 @@ export function ThemeEditor({ theme, presets, onChange }: ThemeEditorProps) {
           {t('settings.theme.reset')}
         </Button>
       </div>
-    </div>
+    </fieldset>
   );
 }
 
@@ -161,32 +164,5 @@ function ThemePreview() {
 }
 
 function applyThemePreview(theme: ThemeColors): void {
-  const root = document.documentElement;
-  const cssMap: Record<string, string> = {
-    '--color-primary': theme.primary, '--color-success': theme.success,
-    '--color-error': theme.error, '--color-warning': theme.warning,
-    '--color-phase-opening': theme.phase_opening,
-    '--color-phase-middlegame': theme.phase_middlegame,
-    '--color-phase-endgame': theme.phase_endgame,
-    '--bg': theme.bg, '--bg-elevated': theme.bg_card,
-    '--text': theme.text, '--text-muted': theme.text_muted,
-    '--heatmap-empty': theme.heatmap_empty, '--heatmap-l1': theme.heatmap_l1,
-    '--heatmap-l2': theme.heatmap_l2, '--heatmap-l3': theme.heatmap_l3,
-    '--heatmap-l4': theme.heatmap_l4,
-  };
-
-  for (const [prop, value] of Object.entries(cssMap)) {
-    root.style.setProperty(prop, value);
-  }
-
-  if (window.adjustColor) {
-    root.style.setProperty('--color-primary-hover', window.adjustColor(theme.primary, -15));
-    root.style.setProperty('--color-primary-muted', window.adjustColor(theme.primary, 20));
-    root.style.setProperty('--color-success-bg', window.adjustColor(theme.success, 85, 0.15));
-    root.style.setProperty('--color-success-border', window.adjustColor(theme.success, 50, 0.4));
-    root.style.setProperty('--color-error-bg', window.adjustColor(theme.error, 85, 0.15));
-    root.style.setProperty('--color-error-border', window.adjustColor(theme.error, 50, 0.4));
-    root.style.setProperty('--color-warning-bg', window.adjustColor(theme.warning, 85, 0.15));
-    root.style.setProperty('--color-warning-border', window.adjustColor(theme.warning, 50, 0.4));
-  }
+  window.applyTheme?.(theme);
 }

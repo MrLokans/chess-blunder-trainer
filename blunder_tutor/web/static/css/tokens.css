@@ -31,81 +31,95 @@
   /* Semantic */
   --correct: #2D8F3E;
 
+  /* Themeable semantic tokens */
+  --surface: light-dark(var(--user-surface, var(--white)), #16150F);
+  --surface-raised: light-dark(var(--user-surface-raised, var(--white)), #26241B);
+  --surface-overlay: light-dark(var(--white), #302D22);
+  --surface-sunken: light-dark(var(--warm-gray), #100F0B);
+  --surface-hover: light-dark(var(--mid-gray-light), #353226);
+  --surface-inverse: light-dark(var(--black), #F5F2EB);
+  --selection-surface: light-dark(var(--black), var(--surface-hover));
+  --selection-text: light-dark(var(--white), var(--text));
+  --selection-border: light-dark(var(--black), var(--accent));
+  --text: light-dark(var(--user-text, var(--black)), #F5F2EB);
+  --text-secondary: light-dark(var(--dark-gray), #D5D0C5);
+  --text-muted: light-dark(var(--user-text-muted, var(--mid-gray)), #B8B4AB);
+  --text-disabled: light-dark(var(--mid-gray-light), #706E68);
+  --text-inverse: light-dark(var(--white), #16150F);
+  --text-on-accent: light-dark(var(--white), #16150F);
+  --text-on-eval-fill: var(--white);
+  --border: light-dark(var(--mid-gray-light), #706E68);
+  --border-subtle: light-dark(var(--warm-gray), #35322A);
+  --border-card: light-dark(var(--black), #4A4639);
+  --border-strong: light-dark(var(--black), #837E70);
+  --border-control: light-dark(var(--mid-gray), #B8B4AB);
+  --border-hover: light-dark(var(--dark-gray), #F5F2EB);
+  --border-swatch: light-dark(rgba(0, 0, 0, 0.1), rgba(245, 242, 235, 0.25));
+  --control-accent: light-dark(var(--black), var(--accent));
+  --accent: light-dark(var(--user-accent, var(--blue)), #8AA1E0);
+  --accent-hover: light-dark(var(--user-accent-hover, #223FA8), #A1B4ED);
+  --success: light-dark(var(--user-success, var(--correct)), #4FB05F);
+  --success-hover: light-dark(#247A33, #65C874);
+  --warning: light-dark(var(--user-warning, var(--yellow)), #F2C12E);
+  --warning-hover: light-dark(var(--yellow-hover), #FFD451);
+  --badge-primary: var(--yellow);
+  --error: light-dark(var(--user-error, var(--red)), #E38585);
+  --error-hover: light-dark(var(--red-hover), #F09B9B);
+  --info: light-dark(var(--blue), #8AA1E0);
+  --success-bg: light-dark(var(--user-success-bg, var(--bg-correct)), #19351F);
+  --success-border: light-dark(var(--user-success-border, var(--correct)), #4FB05F);
+  --warning-bg: light-dark(var(--user-warning-bg, var(--bg-pending)), #3A3014);
+  --warning-border: light-dark(var(--user-warning-border, var(--yellow)), #F2C12E);
+  --error-bg: light-dark(var(--user-error-bg, var(--bg-error)), #3A1C1C);
+  --error-border: light-dark(var(--user-error-border, var(--red)), #E38585);
+  --info-bg: light-dark(rgba(26, 58, 143, 0.08), #1C2945);
+  --info-border: light-dark(var(--blue), #8AA1E0);
+  --focus-ring-color: light-dark(rgba(26, 58, 143, 0.25), rgba(138, 161, 224, 0.6));
+  --focus-ring-error: 0 0 0 2px light-dark(var(--red-focus-ring), rgba(227, 133, 133, 0.6));
+  --modal-backdrop: light-dark(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7));
+  --elevation-shadow: 0 4px 20px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.5));
+  --shadow-card: 0 2px 12px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.35));
+  --eval-white-advantage-fill: light-dark(rgba(255, 255, 255, 0.55), rgba(245, 242, 235, 0.30));
+  --eval-black-fill: light-dark(var(--black), #3A362B);
+  --eval-black-advantage-fill: light-dark(rgba(26, 26, 26, 0.10), #3A362B);
+  --demo-accent: var(--yellow);
+  --brand-mark: light-dark(var(--red), #E05C5C);
+  --notification: light-dark(var(--red), #E05C5C);
+  --piece-white: light-dark(var(--white), #C9C4B8);
+  --piece-black: var(--black);
+
   /* Tinted backgrounds */
   --bg-error: #FEF0F0;
   --bg-correct: #F0F7F1;
   --bg-pending: #FFFFF0;
-  --bg-phase: rgba(242, 193, 46, 0.2);
+  --bg-phase: light-dark(rgba(242, 193, 46, 0.2), rgba(242, 193, 46, 0.25));
 
   /* Hover/state shades — derived from primary triad */
   --yellow-hover: #E0B020;
   --red-hover: #B81E1E;
-  --success-hover: #247A33;
-  --danger-hover: #B81E1E;
+  --danger-hover: var(--error-hover);
   --red-focus-ring: rgba(212, 40, 40, 0.25);
 
-  /* Legacy aliases for compatibility */
-  --bg: var(--white);
-  --bg-elevated: var(--white);
-  --text: var(--black);
-  --text-muted: var(--mid-gray);
-  --text-faint: var(--mid-gray);
-  --border: var(--mid-gray-light);
-  --border-strong: var(--black);
-  --card-bg: var(--white);
-  --accent: var(--blue);
-  --success: var(--correct);
-  --warning: var(--yellow);
-  --error: var(--red);
-  --primary: var(--blue);
-
-  /* Semantic colors (legacy compat) */
-  --color-primary: var(--blue);
-  --color-primary-hover: #223FA8;
-  --color-success: var(--correct);
-  --color-success-bg: var(--bg-correct);
-  --color-success-border: var(--correct);
-  --color-warning: var(--yellow);
-  --color-warning-bg: var(--bg-pending);
-  --color-warning-border: var(--yellow);
-  --color-error: var(--red);
-  --color-error-bg: var(--bg-error);
-  --color-error-border: var(--red);
-  --color-info: var(--blue);
-  --color-info-bg: rgba(26, 58, 143, 0.08);
-  --color-info-border: var(--blue);
-
-  --color-slate-50: var(--warm-gray);
-  --color-slate-100: var(--white);
-  --color-slate-200: var(--warm-gray);
-  --color-slate-300: var(--mid-gray-light);
-  --color-slate-400: var(--mid-gray-light);
-  --color-slate-500: var(--mid-gray);
-  --color-slate-600: var(--dark-gray);
-  --color-slate-700: var(--dark-gray);
-  --color-slate-800: var(--black);
-  --color-slate-900: var(--black);
-
   /* Phase Colors */
-  --color-phase-opening: var(--blue);
-  --color-phase-middlegame: var(--yellow);
-  --color-phase-endgame: var(--dark-gray);
+  --color-phase-opening: light-dark(var(--user-phase-opening, var(--blue)), #8AA1E0);
+  --color-phase-middlegame: light-dark(var(--user-phase-middlegame, var(--yellow)), #F2C12E);
+  --color-phase-endgame: light-dark(var(--user-phase-endgame, var(--dark-gray)), #B8B4AB);
   --color-phase-unknown: var(--mid-gray);
 
   /* Tactical Pattern Colors */
-  --color-tactic-fork: #ef4444;
-  --color-tactic-pin: var(--mid-gray-light);
-  --color-tactic-skewer: #06b6d4;
-  --color-tactic-discovered: #f59e0b;
-  --color-tactic-hanging: #ec4899;
-  --color-tactic-back-rank: #10b981;
-  --color-tactic-other: #6b7280;
+  --color-tactic-fork: light-dark(#ef4444, #EF6E6E);
+  --color-tactic-pin: light-dark(var(--mid-gray-light), #8C8778);
+  --color-tactic-skewer: light-dark(#06b6d4, #4FC3D9);
+  --color-tactic-discovered: light-dark(#f59e0b, #EFB457);
+  --color-tactic-hanging: light-dark(#ec4899, #E877B0);
+  --color-tactic-back-rank: light-dark(#10b981, #45C492);
+  --color-tactic-other: light-dark(#6b7280, #959BAA);
 
   /* Difficulty Colors */
-  --color-diff-easy: var(--blue);
-  --color-diff-medium: #f59e0b;
-  --color-diff-hard: #ef4444;
-  --color-diff-unscored: #6b7280;
+  --color-diff-easy: light-dark(var(--blue), #8AA1E0);
+  --color-diff-medium: light-dark(#f59e0b, #EFB457);
+  --color-diff-hard: light-dark(#ef4444, #EF6E6E);
+  --color-diff-unscored: light-dark(#6b7280, #959BAA);
 
   /* Game Type Colors */
   --color-gametype-ultrabullet: var(--dark-gray);
@@ -116,7 +130,7 @@
   --color-gametype-correspondence: var(--mid-gray-light);
 
   /* Focus ring */
-  --focus-ring: 0 0 0 2px rgba(26, 58, 143, 0.25);
+  --focus-ring: 0 0 0 2px var(--focus-ring-color);
 
   /* No shadows in Bauhaus */
   --shadow-sm: none;
@@ -171,20 +185,52 @@
   --transition: 0.15s ease;
   --transition-slow: 0.25s ease;
 
-  /* Board colors */
-  --board-light: #E0E0E0;
-  --board-dark: #A0A0A0;
+  /* Board colors — the dark default is dimmed so the board stops being a
+     lightbox on a near-black page (7.23:1 / 3.27:1 vs --surface, square
+     separation 2.21:1 — better than the light pair's 1.98:1). Explicit user
+     board colours are written as inline custom properties at runtime and win
+     in both modes; see shared/board-theme.ts. */
+  --board-light: light-dark(#E0E0E0, #A9A297);
+  --board-dark: light-dark(#A0A0A0, #6E675C);
+
+  /* Board square highlights. Alphas are calibrated per mode: a tint that reads
+     on #E0E0E0/#A0A0A0 washes out on the dimmer dark squares, so the dark
+     values use the lightened semantic hues at higher alpha. Deliberately not
+     derived from --accent/--error/--success: those carry the user's custom
+     light-mode theme, and the board is its own subsystem. */
+  --board-hl-move: light-dark(rgba(26, 58, 143, 0.12), rgba(138, 161, 224, 0.22));
+  --board-hl-selected: light-dark(rgba(26, 58, 143, 0.15), rgba(138, 161, 224, 0.26));
+  --board-hl-dest: light-dark(rgba(26, 58, 143, 0.4), rgba(138, 161, 224, 0.5));
+  --board-hl-dest-occupied: light-dark(rgba(26, 58, 143, 0.25), rgba(138, 161, 224, 0.4));
+  --board-hl-check: light-dark(rgba(212, 40, 40, 0.5), rgba(227, 133, 133, 0.5));
+  --board-hl-blunder: light-dark(rgba(212, 40, 40, 0.25), rgba(227, 133, 133, 0.35));
+  --board-hl-best: light-dark(rgba(45, 143, 62, 0.25), rgba(79, 176, 95, 0.35));
+  --board-hl-user: light-dark(rgba(242, 193, 46, 0.25), rgba(242, 193, 46, 0.32));
+  --board-hl-hanging: light-dark(rgba(212, 40, 40, 0.12), rgba(227, 133, 133, 0.22));
+  --board-hl-hanging-ring: light-dark(rgba(212, 40, 40, 0.4), rgba(227, 133, 133, 0.6));
+  --board-hl-king-danger: light-dark(rgba(242, 193, 46, 0.1), rgba(242, 193, 46, 0.18));
+  --board-hl-king-danger-ring: light-dark(rgba(242, 193, 46, 0.4), rgba(242, 193, 46, 0.6));
+  --board-hl-tactic: light-dark(rgba(26, 58, 143, 0.25), rgba(138, 161, 224, 0.35));
+  --board-hl-tactic-secondary: light-dark(rgba(26, 58, 143, 0.2), rgba(138, 161, 224, 0.3));
+
+  /* Highlight ring strokes — fixed primitives in light, lightened in dark so
+     they read against the dimmed squares. */
+  --board-ring-error: light-dark(#D42828, #E38585);
+  --board-ring-success: light-dark(#2D8F3E, #4FB05F);
+  --board-ring-warning: light-dark(#F2C12E, #F2C12E);
+  --board-ring-accent: light-dark(#1A3A8F, #8AA1E0);
 
   /* Board preview colors (classic wood theme) */
   --preview-board-light: #f0d9b5;
   --preview-board-dark: #b58863;
 
   /* Activity heatmap (GitHub-style green ramp) */
-  --heatmap-empty-future: #d5d0c5;
-  --heatmap-l1: #9be9a8;
-  --heatmap-l2: #40c463;
-  --heatmap-l3: #30a14e;
-  --heatmap-l4: #216e39;
+  --heatmap-empty-future: light-dark(#d5d0c5, #211F18);
+  --heatmap-empty: light-dark(var(--user-heatmap-empty, #d5d0c5), #2B291F);
+  --heatmap-l1: light-dark(var(--user-heatmap-l1, #9be9a8), #1D5728);
+  --heatmap-l2: light-dark(var(--user-heatmap-l2, #40c463), #28773A);
+  --heatmap-l3: light-dark(var(--user-heatmap-l3, #30a14e), #2E913F);
+  --heatmap-l4: light-dark(var(--user-heatmap-l4, #216e39), #43B556);
 
   /* Vim-input overlay (dark terminal palette) */
   --vim-prefix: #888;
@@ -194,4 +240,12 @@
   --vim-suggestion: #999;
   --vim-suggestion-hover: #ccc;
   --vim-error: #e74c3c;
+}
+
+:root,
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) { color-scheme: dark; }
 }

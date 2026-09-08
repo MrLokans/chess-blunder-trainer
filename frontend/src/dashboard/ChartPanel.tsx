@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'preact/hooks';
+import { useRef, useEffect, useState } from 'preact/hooks';
 
 interface ChartPanelProps {
   title: string;
@@ -11,6 +11,13 @@ interface ChartPanelProps {
 export function ChartPanel({ title, description, emptyMessage, data, createChart }: ChartPanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<ChartInstance | null>(null);
+  const [themeVersion, setThemeVersion] = useState(0);
+
+  useEffect(() => {
+    const onThemeChange = () => { setThemeVersion(version => version + 1); };
+    window.addEventListener('themechange', onThemeChange);
+    return () => { window.removeEventListener('themechange', onThemeChange); };
+  }, []);
 
   useEffect(() => {
     if (!data || data.labels.length === 0) {
@@ -34,7 +41,7 @@ export function ChartPanel({ title, description, emptyMessage, data, createChart
         chartRef.current = null;
       }
     };
-  }, [data, createChart]);
+  }, [data, createChart, themeVersion]);
 
   const isEmpty = !data || data.labels.length === 0;
 

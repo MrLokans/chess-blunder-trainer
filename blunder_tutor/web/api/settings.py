@@ -124,15 +124,17 @@ async def get_board_color_presets() -> dict[str, Any]:
     summary="Get board settings",
     description="Retrieve current board styling settings.",
 )
-async def get_board_settings(settings_repo: SettingsRepoDep) -> dict[str, str]:
+async def get_board_settings(settings_repo: SettingsRepoDep) -> dict[str, str | None]:
     piece_set = await settings_repo.read_setting("board_piece_set")
     board_light = await settings_repo.read_setting("board_light_color")
     board_dark = await settings_repo.read_setting("board_dark_color")
 
+    colours = (board_light, board_dark)
+    valid_colours = all(colour and schemas.is_hex_color(colour) for colour in colours)
     return {
         "piece_set": piece_set or schemas.DEFAULT_PIECE_SET,
-        "board_light": board_light or schemas.DEFAULT_BOARD_LIGHT,
-        "board_dark": board_dark or schemas.DEFAULT_BOARD_DARK,
+        "board_light": board_light if valid_colours else None,
+        "board_dark": board_dark if valid_colours else None,
     }
 
 
@@ -146,7 +148,7 @@ def _validate_piece_set(value: str) -> None:
 
 
 def _validate_hex_color(field: str, value: str) -> None:
-    if not value.startswith("#") or len(value) != 7:
+    if not schemas.is_hex_color(value):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"{field} must be a valid hex color (#RRGGBB)",
@@ -181,12 +183,29 @@ _BOARD_FIELDS: Mapping[str, _BoardFieldSpec] = MappingProxyType(
 async def update_board_settings(
     payload: schemas.BoardSettingsRequest, settings_repo: SettingsRepoDep
 ) -> dict[str, bool]:
+    # An omitted field leaves the stored value alone; null clears both colours.
+    colour_fields = {"board_light", "board_dark"}
+    if (
+        payload.model_fields_set & colour_fields
+        and not colour_fields <= payload.model_fields_set
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="board_light and board_dark must be updated together",
+        )
+    if (payload.board_light is None) != (payload.board_dark is None):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="board_light and board_dark must both be colors or null",
+        )
+
     payload_dict = payload.model_dump()
     for field, (validate, db_key) in _BOARD_FIELDS.items():
-        value = payload_dict.get(field)
-        if value is None:
+        if field not in payload.model_fields_set:
             continue
-        validate(value)
+        value = payload_dict.get(field)
+        if value is not None:
+            validate(value)
         await settings_repo.write_setting(db_key, value)
     return {"success": True}
 
@@ -211,10 +230,13 @@ async def reset_board_settings(settings_repo: SettingsRepoDep) -> dict[str, bool
     description="Retrieve the current theme color settings.",
 )
 async def get_theme(settings_repo: SettingsRepoDep) -> dict[str, str]:
+    # Values stored before write-time hex validation may not match the response
+    # model; fall back rather than 500 the head script on every page load.
     result: dict[str, str] = {}
     for key in schemas.THEME_KEYS:
         value = await settings_repo.read_setting(f"theme_{key}")
-        result[key] = value or schemas.DEFAULT_THEME[key]
+        usable = value if value and schemas.is_hex_color(value) else None
+        result[key] = usable or schemas.DEFAULT_THEME[key]
     return result
 
 

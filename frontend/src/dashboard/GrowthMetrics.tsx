@@ -45,7 +45,7 @@ function Sparkline({ values }: SparklineProps) {
 
   return (
     <svg class="growth-sparkline" viewBox={`0 0 ${String(width)} ${String(height)}`} preserveAspectRatio="none">
-      <polyline points={points} fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <polyline points={points} fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   );
 }

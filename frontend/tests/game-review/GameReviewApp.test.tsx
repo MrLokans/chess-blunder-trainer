@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { GameReviewApp } from '../../src/game-review/GameReviewApp';
 import { ApiError } from '../../src/shared/api';
+import { EvalChart } from '../../src/game-review/eval-chart';
 
 const { mockSequence, mockBoard, mockPlayback } = vi.hoisted(() => {
   const mockSequence = {
@@ -195,6 +196,16 @@ describe('GameReviewApp', () => {
     await waitFor(() => {
       expect(document.getElementById('reviewEvalChartContainer')).not.toBeNull();
     });
+  });
+
+  test('redraws the evaluation chart when the theme changes', async () => {
+    render(<GameReviewApp gameId="test-game-id" />);
+    await waitFor(() => { expect(vi.mocked(EvalChart)).toHaveBeenCalled(); });
+    const chart = vi.mocked(EvalChart).mock.results.at(-1)?.value as { render: ReturnType<typeof vi.fn> };
+
+    window.dispatchEvent(new Event('themechange'));
+
+    await waitFor(() => { expect(chart.render).toHaveBeenCalledTimes(2); });
   });
 
   test('does not render eval chart when game is not analyzed', async () => {

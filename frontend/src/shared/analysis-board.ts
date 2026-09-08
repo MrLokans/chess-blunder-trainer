@@ -1,5 +1,4 @@
 import { Chessground } from '@vendor/chessground';
-import { buildBoardSvgDataUrl } from './board-theme';
 import { applyBoardVisuals, buildDests, type BoardArrow, type ChessgroundVisualApi } from './board-visuals';
 import type { HighlightMap } from './highlights';
 
@@ -17,8 +16,6 @@ export class AnalysisBoard {
   private _cg: ChessgroundApi | null = null;
   private _gameRef: () => ChessInstance;
   private _onMove: MoveHandler;
-  private _observer: MutationObserver | null = null;
-  private _boardBgUrl = '';
 
   constructor(
     containerEl: HTMLElement,
@@ -47,9 +44,6 @@ export class AnalysisBoard {
       // User free-draw disabled; engine arrows use setShapes -> setAutoShapes, which is unaffected.
       drawable: { enabled: false },
     });
-    this._applyBoardBackground();
-    this._observer = new MutationObserver(() => { this._setBoardInline(); });
-    this._observer.observe(this._el, { childList: true });
   }
 
   private _afterMove(orig: string, dest: string): void {
@@ -85,24 +79,8 @@ export class AnalysisBoard {
     if (this._cg) applyBoardVisuals(this._cg, highlights, arrows);
   }
 
-  private _applyBoardBackground(): void {
-    const style = getComputedStyle(document.documentElement);
-    const light = style.getPropertyValue('--board-light').trim() || '#E0E0E0';
-    const dark = style.getPropertyValue('--board-dark').trim() || '#A0A0A0';
-    this._boardBgUrl = `url("${buildBoardSvgDataUrl(light, dark)}")`;
-    this._el.style.setProperty('--board-bg', this._boardBgUrl);
-    this._setBoardInline();
-  }
-
-  private _setBoardInline(): void {
-    const board = this._el.querySelector('cg-board');
-    if (board instanceof HTMLElement) board.style.backgroundImage = this._boardBgUrl;
-  }
-
   destroy(): void {
-    this._observer?.disconnect();
     this._cg?.destroy();
     this._cg = null;
-    this._observer = null;
   }
 }

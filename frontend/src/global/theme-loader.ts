@@ -1,4 +1,7 @@
-interface ThemeColors {
+import { getThemeMode } from '../shared/theme-mode';
+import type { ThemeMode } from '../shared/theme-mode';
+
+export interface ThemeColors {
   primary?: string;
   success?: string;
   error?: string;
@@ -36,8 +39,10 @@ export function adjustColor(hex: string, lightness: number | null, saturation?: 
     }
   }
 
-  if (typeof lightness === 'number') l = lightness / 100;
-  if (typeof saturation === 'number') s = saturation;
+  if (typeof lightness === 'number') {
+    l = Math.min(1, Math.max(0, lightness < 0 ? l + lightness / 100 : lightness / 100));
+  }
+  if (typeof saturation === 'number') s = Math.min(1, Math.max(0, saturation));
 
   function hue2rgb(p: number, q: number, t: number): number {
     if (t < 0) t += 1;
@@ -63,57 +68,146 @@ export function adjustColor(hex: string, lightness: number | null, saturation?: 
   return `#${toHex(r2)}${toHex(g2)}${toHex(b2)}`;
 }
 
-function applyTheme(theme: ThemeColors): void {
+const USER_PROPERTIES: Record<keyof ThemeColors, string> = {
+  primary: '--user-accent', success: '--user-success', error: '--user-error',
+  warning: '--user-warning', phase_opening: '--user-phase-opening',
+  phase_middlegame: '--user-phase-middlegame', phase_endgame: '--user-phase-endgame',
+  heatmap_empty: '--user-heatmap-empty', heatmap_l1: '--user-heatmap-l1',
+  heatmap_l2: '--user-heatmap-l2', heatmap_l3: '--user-heatmap-l3',
+  heatmap_l4: '--user-heatmap-l4', bg: '--user-surface',
+  bg_card: '--user-surface-raised', text: '--user-text', text_muted: '--user-text-muted',
+};
+
+export function removeTheme(): void {
   const root = document.documentElement;
-
-  if (theme.primary) {
-    root.style.setProperty('--color-primary', theme.primary);
-    root.style.setProperty('--color-primary-hover', adjustColor(theme.primary, -15));
-    root.style.setProperty('--color-primary-muted', adjustColor(theme.primary, 20));
+  for (const property of Object.values(USER_PROPERTIES)) {
+    root.style.removeProperty(property);
   }
-  if (theme.success) {
-    root.style.setProperty('--color-success', theme.success);
-    root.style.setProperty('--color-success-bg', adjustColor(theme.success, 85, 0.15));
-    root.style.setProperty('--color-success-border', adjustColor(theme.success, 50, 0.4));
+  for (const property of [
+    '--user-accent-hover', '--user-success-bg', '--user-success-border',
+    '--user-error-bg', '--user-error-border', '--user-warning-bg', '--user-warning-border',
+  ]) {
+    root.style.removeProperty(property);
   }
-  if (theme.error) {
-    root.style.setProperty('--color-error', theme.error);
-    root.style.setProperty('--color-error-bg', adjustColor(theme.error, 85, 0.15));
-    root.style.setProperty('--color-error-border', adjustColor(theme.error, 50, 0.4));
-  }
-  if (theme.warning) {
-    root.style.setProperty('--color-warning', theme.warning);
-    root.style.setProperty('--color-warning-bg', adjustColor(theme.warning, 85, 0.15));
-    root.style.setProperty('--color-warning-border', adjustColor(theme.warning, 50, 0.4));
-  }
-
-  if (theme.phase_opening) root.style.setProperty('--color-phase-opening', theme.phase_opening);
-  if (theme.phase_middlegame) root.style.setProperty('--color-phase-middlegame', theme.phase_middlegame);
-  if (theme.phase_endgame) root.style.setProperty('--color-phase-endgame', theme.phase_endgame);
-
-  if (theme.heatmap_empty) root.style.setProperty('--heatmap-empty', theme.heatmap_empty);
-  if (theme.heatmap_l1) root.style.setProperty('--heatmap-l1', theme.heatmap_l1);
-  if (theme.heatmap_l2) root.style.setProperty('--heatmap-l2', theme.heatmap_l2);
-  if (theme.heatmap_l3) root.style.setProperty('--heatmap-l3', theme.heatmap_l3);
-  if (theme.heatmap_l4) root.style.setProperty('--heatmap-l4', theme.heatmap_l4);
-
-  if (theme.bg) root.style.setProperty('--bg', theme.bg);
-  if (theme.bg_card) {
-    root.style.setProperty('--bg-elevated', theme.bg_card);
-    root.style.setProperty('--card-bg', theme.bg_card);
-  }
-  if (theme.text) root.style.setProperty('--text', theme.text);
-  if (theme.text_muted) root.style.setProperty('--text-muted', theme.text_muted);
-  if (theme.primary) root.style.setProperty('--accent', theme.primary);
-  if (theme.success) root.style.setProperty('--success', theme.success);
-  if (theme.error) root.style.setProperty('--error', theme.error);
-  if (theme.warning) root.style.setProperty('--warning', theme.warning);
 }
 
-const cached = localStorage.getItem('theme');
-if (cached) {
-  try { applyTheme(JSON.parse(cached) as ThemeColors); } catch { /* ignore */ }
+export function applyTheme(theme: ThemeColors): void {
+  const root = document.documentElement;
+  const derived = {
+    '--user-accent-hover': theme.primary && adjustColor(theme.primary, -15),
+    '--user-success-bg': theme.success && adjustColor(theme.success, 85, 0.15),
+    '--user-success-border': theme.success && adjustColor(theme.success, 50, 0.4),
+    '--user-error-bg': theme.error && adjustColor(theme.error, 85, 0.15),
+    '--user-error-border': theme.error && adjustColor(theme.error, 50, 0.4),
+    '--user-warning-bg': theme.warning && adjustColor(theme.warning, 85, 0.15),
+    '--user-warning-border': theme.warning && adjustColor(theme.warning, 50, 0.4),
+  };
+
+  removeTheme();
+  for (const [key, property] of Object.entries(USER_PROPERTIES) as Array<[keyof ThemeColors, string]>) {
+    const value = theme[key];
+    if (value) root.style.setProperty(property, value);
+  }
+  for (const [property, value] of Object.entries(derived)) {
+    if (value) root.style.setProperty(property, value);
+  }
 }
 
-window.adjustColor = adjustColor;
-window.applyTheme = applyTheme;
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+type EffectiveThemeMode = Exclude<ThemeMode, 'system'>;
+
+let previousMode: ThemeMode | null = null;
+let previousEffectiveMode: EffectiveThemeMode | null = null;
+let mediaQuery: MediaQueryList | null = null;
+let mediaListener: (() => void) | null = null;
+let initialized = false;
+
+function dispatchThemeChange(mode: ThemeMode, effectiveMode: EffectiveThemeMode): void {
+  window.dispatchEvent(new CustomEvent('themechange', { detail: { mode, effectiveMode } }));
+}
+
+export function syncThemeMode(): void {
+  const mode = getThemeMode();
+  const root = document.documentElement;
+  if (mode === 'system') root.removeAttribute('data-theme');
+  else root.dataset.theme = mode;
+
+  mediaQuery ??= typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-color-scheme: dark)')
+    : null;
+  if (mediaQuery && mode === 'system' && !mediaListener) {
+    mediaListener = () => { syncThemeMode(); };
+    mediaQuery.addEventListener('change', mediaListener);
+  } else if (mediaQuery && mode !== 'system' && mediaListener) {
+    mediaQuery.removeEventListener('change', mediaListener);
+    mediaListener = null;
+  }
+
+  const effectiveMode: EffectiveThemeMode = mode === 'system'
+    ? (mediaQuery?.matches ? 'dark' : 'light')
+    : mode;
+  const changed = mode !== previousMode || effectiveMode !== previousEffectiveMode;
+  previousMode = mode;
+  previousEffectiveMode = effectiveMode;
+  if (initialized && changed) dispatchThemeChange(mode, effectiveMode);
+}
+
+function isTheme(value: unknown): value is ThemeColors {
+  if (!value || typeof value !== 'object') return false;
+  return Object.keys(USER_PROPERTIES).every(key => {
+    const color = (value as Record<string, unknown>)[key];
+    return color === undefined || (typeof color === 'string' && HEX_COLOR.test(color));
+  });
+}
+
+/* Semantic tokens canvas consumers read; comparing their computed values tells us
+   whether a theme apply is actually visible to a chart. */
+const CANVAS_TOKENS = [
+  '--accent', '--success', '--warning', '--error',
+  '--text', '--text-muted', '--border', '--border-subtle', '--surface-raised',
+];
+
+function canvasPaletteSignature(): string {
+  const style = getComputedStyle(document.documentElement);
+  return CANVAS_TOKENS.map(name => style.getPropertyValue(name).trim()).join('|');
+}
+
+function syncTheme(): void {
+  fetch('/api/settings/theme')
+    .then(response => (response.ok ? response.json() as Promise<unknown> : Promise.reject(new Error('theme fetch failed'))))
+    .then(theme => {
+      if (!isTheme(theme)) return;
+      const before = canvasPaletteSignature();
+      localStorage.setItem('theme', JSON.stringify(theme));
+      applyTheme(theme);
+      if (canvasPaletteSignature() !== before && previousMode && previousEffectiveMode) {
+        dispatchThemeChange(previousMode, previousEffectiveMode);
+      }
+    })
+    .catch(() => {});
+}
+
+(function () {
+  const cached = localStorage.getItem('theme');
+  if (cached) {
+    try {
+      const theme: unknown = JSON.parse(cached);
+      if (isTheme(theme)) applyTheme(theme);
+      else localStorage.removeItem('theme');
+    } catch {
+      localStorage.removeItem('theme');
+    }
+  }
+
+  syncThemeMode();
+  window.adjustColor = adjustColor;
+  window.applyTheme = applyTheme;
+  window.removeTheme = removeTheme;
+  window.syncThemeMode = syncThemeMode;
+  initialized = true;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncTheme, { once: true });
+  } else {
+    syncTheme();
+  }
+})();

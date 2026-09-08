@@ -52,7 +52,6 @@ export function SyncSettings({ settings, syncVisible, analyzeVisible, onChange }
             min={100}
             max={10000}
             value={settings.max_games}
-            class="settings-input"
             aria-label={t('settings.max_games.label')}
             onInput={(e) => { update('max_games', Number(e.currentTarget.value)); }}
           />
@@ -84,7 +83,6 @@ export function SyncSettings({ settings, syncVisible, analyzeVisible, onChange }
           min={1}
           max={365}
           value={settings.spaced_repetition_days}
-          class="settings-input"
           aria-label={t('settings.spaced_repetition.label')}
           onInput={(e) => { update('spaced_repetition_days', Number(e.currentTarget.value)); }}
         />
