@@ -671,7 +671,7 @@
 .action-key#nextBtn kbd {
   background: var(--warning);
   border-color: var(--warning);
-  color: var(--text);
+  color: var(--text-on-accent);
 }
 
 .action-key-muted {

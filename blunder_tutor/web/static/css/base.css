@@ -223,13 +223,13 @@ nav a.active {
 .btn-primary {
   background: var(--warning);
   border: 2px solid var(--warning-border);
-  color: var(--text);
+  color: var(--text-on-accent);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--warning-hover);
   border-color: var(--warning-hover);
-  color: var(--text);
+  color: var(--text-on-accent);
 }
 
 /* Secondary (outlined) */

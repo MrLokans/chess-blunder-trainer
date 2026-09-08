@@ -90,7 +90,7 @@
 
 .eval-bar {
   width: 28px;
-  background: var(--piece-black);
+  background: var(--eval-black-fill);
   position: relative;
   border: none;
   overflow: hidden;
@@ -104,7 +104,7 @@
   left: 0;
   width: 100%;
   background: var(--piece-white);
-  border-top: 3px solid var(--piece-black);
+  border-top: 3px solid var(--eval-black-fill);
   transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 0;
 }
@@ -113,10 +113,10 @@
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   font-weight: 700;
-  color: var(--text-inverse);
+  color: var(--text-on-eval-fill);
   text-align: center;
   min-width: auto;
-  background: var(--piece-black);
+  background: var(--eval-black-fill);
   width: 28px;
   padding: 2px 0;
   line-height: 1;

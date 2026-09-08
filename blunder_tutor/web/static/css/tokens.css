@@ -44,6 +44,7 @@
   --text-disabled: light-dark(var(--mid-gray-light), #706E68);
   --text-inverse: light-dark(var(--white), #16150F);
   --text-on-accent: light-dark(var(--white), #16150F);
+  --text-on-eval-fill: var(--white);
   --border: light-dark(var(--mid-gray-light), #706E68);
   --border-subtle: light-dark(var(--warm-gray), #35322A);
   --border-card: light-dark(var(--black), #4A4639);
@@ -76,7 +77,8 @@
   --elevation-shadow: 0 4px 20px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.5));
   --shadow-card: 0 2px 12px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.35));
   --eval-white-advantage-fill: light-dark(rgba(255, 255, 255, 0.55), rgba(245, 242, 235, 0.30));
-  --eval-black-advantage-fill: light-dark(rgba(26, 26, 26, 0.10), rgba(16, 15, 11, 0.55));
+  --eval-black-fill: light-dark(var(--black), #3A362B);
+  --eval-black-advantage-fill: light-dark(rgba(26, 26, 26, 0.10), #3A362B);
   --demo-accent: var(--yellow);
   --brand-mark: var(--red);
   --notification: var(--red);
@@ -223,7 +225,7 @@
   --preview-board-dark: #b58863;
 
   /* Activity heatmap (GitHub-style green ramp) */
-  --heatmap-empty-future: light-dark(#d5d0c5, #2B291F);
+  --heatmap-empty-future: light-dark(#d5d0c5, #211F18);
   --heatmap-empty: light-dark(var(--user-heatmap-empty, #d5d0c5), #2B291F);
   --heatmap-l1: light-dark(var(--user-heatmap-l1, #9be9a8), #1D5728);
   --heatmap-l2: light-dark(var(--user-heatmap-l2, #40c463), #28773A);

@@ -7,7 +7,7 @@ const TOKENS = [
   '--control-accent', '--accent', '--accent-hover', '--success', '--success-hover', '--warning-hover',
   '--error', '--error-hover', '--info', '--success-bg', '--success-border', '--warning-bg', '--error-bg',
   '--error-border', '--info-bg', '--info-border', '--bg-phase', '--focus-ring-color', '--focus-ring-error',
-  '--modal-backdrop', '--elevation-shadow', '--shadow-card', '--eval-white-advantage-fill',
+  '--modal-backdrop', '--elevation-shadow', '--shadow-card', '--eval-white-advantage-fill', '--eval-black-fill',
   '--eval-black-advantage-fill', '--color-phase-opening', '--color-phase-endgame', '--heatmap-empty-future',
   '--heatmap-empty', '--heatmap-l1', '--heatmap-l2', '--heatmap-l3', '--heatmap-l4',
 ];
@@ -34,7 +34,7 @@ test('dark tokens match explicit and system theme activation', async ({ page }) 
     }));
     probe.remove();
     return values;
-  }, ['--surface', '--surface-raised', '--accent', '--success', '--error']);
+  }, ['--surface', '--surface-raised', '--accent', '--success', '--error', '--eval-black-fill', '--heatmap-empty-future']);
 
   const system = await palette();
   const systemColors = await colors();
@@ -44,6 +44,8 @@ test('dark tokens match explicit and system theme activation', async ({ page }) 
     '--accent': 'rgb(138, 161, 224)',
     '--success': 'rgb(79, 176, 95)',
     '--error': 'rgb(227, 133, 133)',
+    '--eval-black-fill': 'rgb(58, 54, 43)',
+    '--heatmap-empty-future': 'rgb(33, 31, 24)',
   });
   await page.evaluate(() => { document.documentElement.dataset.theme = 'dark'; });
   expect(await palette()).toEqual(system);
