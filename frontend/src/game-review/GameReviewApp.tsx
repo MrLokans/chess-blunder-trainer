@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'preact/hooks'
 import { client, ApiError } from '../shared/api';
 import { MoveSequence, ReadOnlyBoard, PlaybackController } from '../shared/sequence-player';
 import { AnalysisBoard } from '../shared/analysis-board';
-import { applyBoardBackground, applyPieceSet } from '../shared/board-theme';
+import { applyBoardTheme, applyPieceSet } from '../shared/board-theme';
 import { Button } from '../components/primitives/Button';
 import { Alert } from '../components/feedback/Alert';
 import { updateEvalBar } from '../shared/eval-bar';
@@ -197,10 +197,7 @@ async function fetchReview(gameId: string, signal: AbortSignal): Promise<ReviewD
 
   const boardSettings = await client.settings.getBoard().catch(() => null);
   if (boardSettings) {
-    const root = document.documentElement;
-    root.style.setProperty('--board-light', boardSettings.board_light);
-    root.style.setProperty('--board-dark', boardSettings.board_dark);
-    applyBoardBackground(boardSettings.board_light, boardSettings.board_dark);
+    applyBoardTheme(boardSettings.board_light, boardSettings.board_dark);
     applyPieceSet(boardSettings.piece_set || 'gioco');
   }
 

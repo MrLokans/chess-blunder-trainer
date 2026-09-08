@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'preact/hooks';
 import { Button } from '../components/primitives/Button';
 import { ColorInput } from '../components/primitives/ColorInput';
+import { readBoardColors } from '../shared/board-theme';
 import type { PieceSet, BoardColorPreset, BoardSettings } from './types';
 
 interface BoardEditorProps {
@@ -17,23 +18,23 @@ const PREVIEW_PIECES: (string | null)[][] = [
   ['wR', null, 'wB', 'wK'],
 ];
 
-const BOARD_DEFAULTS: BoardSettings = {
-  piece_set: 'gioco',
-  board_light: '#E0E0E0',
-  board_dark: '#A0A0A0',
-};
-
 export function BoardEditor({ pieceSets, colorPresets, settings, onChange }: BoardEditorProps) {
+  // null means "never customised" — the board follows the mode-aware default
+  // from tokens.css, which is what the inputs and preview should show.
+  const fallback = readBoardColors();
+  const light = settings.board_light ?? fallback.light;
+  const dark = settings.board_dark ?? fallback.dark;
+
   const activeColorPreset = colorPresets.find(
-    p => p.light.toLowerCase() === settings.board_light.toLowerCase()
-      && p.dark.toLowerCase() === settings.board_dark.toLowerCase(),
+    p => p.light.toLowerCase() === light.toLowerCase()
+      && p.dark.toLowerCase() === dark.toLowerCase(),
   )?.id ?? null;
 
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty('--preview-board-light', settings.board_light);
-    root.style.setProperty('--preview-board-dark', settings.board_dark);
-  }, [settings.board_light, settings.board_dark]);
+    root.style.setProperty('--preview-board-light', light);
+    root.style.setProperty('--preview-board-dark', dark);
+  }, [light, dark]);
 
   const handlePieceSetClick = useCallback((id: string) => {
     onChange({ ...settings, piece_set: id });
@@ -44,15 +45,17 @@ export function BoardEditor({ pieceSets, colorPresets, settings, onChange }: Boa
   }, [settings, onChange]);
 
   const handleLightChange = useCallback((value: string) => {
-    onChange({ ...settings, board_light: value });
-  }, [settings, onChange]);
+    onChange({ ...settings, board_light: value, board_dark: dark });
+  }, [settings, dark, onChange]);
 
   const handleDarkChange = useCallback((value: string) => {
-    onChange({ ...settings, board_dark: value });
-  }, [settings, onChange]);
+    onChange({ ...settings, board_light: light, board_dark: value });
+  }, [settings, light, onChange]);
 
+  // Clearing the colours (rather than writing the light-mode pair) is what puts
+  // the board back on the mode-aware default.
   const handleReset = useCallback(() => {
-    onChange({ ...BOARD_DEFAULTS });
+    onChange({ piece_set: 'gioco', board_light: null, board_dark: null });
   }, [onChange]);
 
   return (
@@ -111,13 +114,13 @@ export function BoardEditor({ pieceSets, colorPresets, settings, onChange }: Boa
             <div class="form-group mb-0">
               <label>{t('settings.board.light_squares')}</label>
               <div class="color-input-row">
-                <ColorInput value={settings.board_light} onChange={handleLightChange} />
+                <ColorInput value={light} onChange={handleLightChange} />
               </div>
             </div>
             <div class="form-group mb-0">
               <label>{t('settings.board.dark_squares')}</label>
               <div class="color-input-row">
-                <ColorInput value={settings.board_dark} onChange={handleDarkChange} />
+                <ColorInput value={dark} onChange={handleDarkChange} />
               </div>
             </div>
           </div>

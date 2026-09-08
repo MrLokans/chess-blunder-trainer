@@ -15,64 +15,64 @@ cg-board {
    ========================================================================== */
 
 cg-board square.last-move {
-  background-color: rgba(26, 58, 143, 0.12);
+  background-color: var(--board-hl-move);
 }
 
 cg-board square.selected {
-  background-color: rgba(26, 58, 143, 0.15);
+  background-color: var(--board-hl-selected);
 }
 
 cg-board square.check {
-  background-color: rgba(212, 40, 40, 0.5);
-  box-shadow: inset 0 0 0 3px var(--red);
+  background-color: var(--board-hl-check);
+  box-shadow: inset 0 0 0 3px var(--board-ring-error);
 }
 
 cg-board square.move-dest {
-  background: radial-gradient(rgba(26, 58, 143, 0.4) 22%, transparent 22%);
+  background: radial-gradient(var(--board-hl-dest) 22%, transparent 22%);
 }
 
 cg-board square.move-dest.oc {
-  background: radial-gradient(transparent 0%, transparent 80%, rgba(26, 58, 143, 0.25) 80%);
+  background: radial-gradient(transparent 0%, transparent 80%, var(--board-hl-dest-occupied) 80%);
 }
 
 cg-board square.highlight-blunder {
-  background-color: rgba(212, 40, 40, 0.25) !important;
-  box-shadow: inset 0 0 0 3px var(--red);
+  background-color: var(--board-hl-blunder) !important;
+  box-shadow: inset 0 0 0 3px var(--board-ring-error);
 }
 
 cg-board square.highlight-best {
-  background-color: rgba(45, 143, 62, 0.25) !important;
-  box-shadow: inset 0 0 0 3px var(--correct);
+  background-color: var(--board-hl-best) !important;
+  box-shadow: inset 0 0 0 3px var(--board-ring-success);
 }
 
 cg-board square.highlight-user {
-  background-color: rgba(242, 193, 46, 0.25) !important;
-  box-shadow: inset 0 0 0 3px var(--yellow);
+  background-color: var(--board-hl-user) !important;
+  box-shadow: inset 0 0 0 3px var(--board-ring-warning);
 }
 
 cg-board square.highlight-hanging {
-  background-color: rgba(212, 40, 40, 0.12) !important;
-  box-shadow: inset 0 0 0 2px rgba(212, 40, 40, 0.4) !important;
+  background-color: var(--board-hl-hanging) !important;
+  box-shadow: inset 0 0 0 2px var(--board-hl-hanging-ring) !important;
 }
 
 cg-board square.highlight-king-danger {
-  background-color: rgba(242, 193, 46, 0.1) !important;
-  box-shadow: inset 0 0 0 2px rgba(242, 193, 46, 0.4) !important;
+  background-color: var(--board-hl-king-danger) !important;
+  box-shadow: inset 0 0 0 2px var(--board-hl-king-danger-ring) !important;
 }
 
 cg-board square.highlight-checking {
-  background-color: rgba(242, 193, 46, 0.1) !important;
-  box-shadow: inset 0 0 0 2px rgba(242, 193, 46, 0.4) !important;
+  background-color: var(--board-hl-king-danger) !important;
+  box-shadow: inset 0 0 0 2px var(--board-hl-king-danger-ring) !important;
 }
 
 cg-board square.highlight-tactic-primary {
-  box-shadow: inset 0 0 0 3px var(--blue) !important;
-  background-color: rgba(26, 58, 143, 0.25) !important;
+  box-shadow: inset 0 0 0 3px var(--board-ring-accent) !important;
+  background-color: var(--board-hl-tactic) !important;
 }
 
 cg-board square.highlight-tactic-secondary {
-  background-color: rgba(26, 58, 143, 0.2) !important;
-  box-shadow: inset 0 0 0 2px var(--blue) !important;
+  background-color: var(--board-hl-tactic-secondary) !important;
+  box-shadow: inset 0 0 0 2px var(--board-ring-accent) !important;
 }
 
 /* ==========================================================================
@@ -126,11 +126,11 @@ cg-board square.highlight-tactic-secondary {
 }
 
 .cg-wrap coords coord.coord-light {
-  color: var(--board-dark, #8B7355);
+  color: var(--board-dark);
 }
 
 .cg-wrap coords coord.coord-dark {
-  color: var(--board-light, #D4C4A0);
+  color: var(--board-light);
 }
 
 /* ==========================================================================

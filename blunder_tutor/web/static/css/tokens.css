@@ -185,9 +185,40 @@
   --transition: 0.15s ease;
   --transition-slow: 0.25s ease;
 
-  /* Board colors */
-  --board-light: #E0E0E0;
-  --board-dark: #A0A0A0;
+  /* Board colors — the dark default is dimmed so the board stops being a
+     lightbox on a near-black page (7.23:1 / 3.27:1 vs --surface, square
+     separation 2.21:1 — better than the light pair's 1.98:1). Explicit user
+     board colours are written as inline custom properties at runtime and win
+     in both modes; see shared/board-theme.ts. */
+  --board-light: light-dark(#E0E0E0, #A9A297);
+  --board-dark: light-dark(#A0A0A0, #6E675C);
+
+  /* Board square highlights. Alphas are calibrated per mode: a tint that reads
+     on #E0E0E0/#A0A0A0 washes out on the dimmer dark squares, so the dark
+     values use the lightened semantic hues at higher alpha. Deliberately not
+     derived from --accent/--error/--success: those carry the user's custom
+     light-mode theme, and the board is its own subsystem. */
+  --board-hl-move: light-dark(rgba(26, 58, 143, 0.12), rgba(138, 161, 224, 0.22));
+  --board-hl-selected: light-dark(rgba(26, 58, 143, 0.15), rgba(138, 161, 224, 0.26));
+  --board-hl-dest: light-dark(rgba(26, 58, 143, 0.4), rgba(138, 161, 224, 0.5));
+  --board-hl-dest-occupied: light-dark(rgba(26, 58, 143, 0.25), rgba(138, 161, 224, 0.4));
+  --board-hl-check: light-dark(rgba(212, 40, 40, 0.5), rgba(227, 133, 133, 0.5));
+  --board-hl-blunder: light-dark(rgba(212, 40, 40, 0.25), rgba(227, 133, 133, 0.35));
+  --board-hl-best: light-dark(rgba(45, 143, 62, 0.25), rgba(79, 176, 95, 0.35));
+  --board-hl-user: light-dark(rgba(242, 193, 46, 0.25), rgba(242, 193, 46, 0.32));
+  --board-hl-hanging: light-dark(rgba(212, 40, 40, 0.12), rgba(227, 133, 133, 0.22));
+  --board-hl-hanging-ring: light-dark(rgba(212, 40, 40, 0.4), rgba(227, 133, 133, 0.6));
+  --board-hl-king-danger: light-dark(rgba(242, 193, 46, 0.1), rgba(242, 193, 46, 0.18));
+  --board-hl-king-danger-ring: light-dark(rgba(242, 193, 46, 0.4), rgba(242, 193, 46, 0.6));
+  --board-hl-tactic: light-dark(rgba(26, 58, 143, 0.25), rgba(138, 161, 224, 0.35));
+  --board-hl-tactic-secondary: light-dark(rgba(26, 58, 143, 0.2), rgba(138, 161, 224, 0.3));
+
+  /* Highlight ring strokes — fixed primitives in light, lightened in dark so
+     they read against the dimmed squares. */
+  --board-ring-error: light-dark(#D42828, #E38585);
+  --board-ring-success: light-dark(#2D8F3E, #4FB05F);
+  --board-ring-warning: light-dark(#F2C12E, #F2C12E);
+  --board-ring-accent: light-dark(#1A3A8F, #8AA1E0);
 
   /* Board preview colors (classic wood theme) */
   --preview-board-light: #f0d9b5;

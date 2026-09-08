@@ -108,8 +108,15 @@ class BoardColorPreset(BaseModel):
 
 class BoardSettingsResponse(BaseModel):
     piece_set: str = Field(description="Current piece set ID")
-    board_light: str = Field(description="Light square color")
-    board_dark: str = Field(description="Dark square color")
+    board_light: str | None = Field(
+        default=None,
+        description="Light square color; null when the user has never customised it, "
+        "in which case the client uses the mode-aware default from tokens.css",
+    )
+    board_dark: str | None = Field(
+        default=None,
+        description="Dark square color; null when the user has never customised it",
+    )
 
 
 class BoardSettingsRequest(BaseModel):
@@ -328,8 +335,6 @@ PIECE_SETS = (
 )
 
 DEFAULT_PIECE_SET = "gioco"
-DEFAULT_BOARD_LIGHT = "#E0E0E0"
-DEFAULT_BOARD_DARK = "#A0A0A0"
 
 BOARD_COLOR_PRESETS = MappingProxyType(
     {

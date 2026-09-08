@@ -37,8 +37,9 @@ export interface BoardColorPreset {
 
 export interface BoardSettings {
   piece_set: string;
-  board_light: string;
-  board_dark: string;
+  /** null when the user has never customised it; the mode-aware default applies. */
+  board_light: string | null;
+  board_dark: string | null;
 }
 
 export interface FeatureGroup {

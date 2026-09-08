@@ -1,5 +1,5 @@
 import { Chessground } from '@vendor/chessground';
-import { buildBoardSvgDataUrl } from './board-theme';
+import { buildBoardSvgDataUrl, readBoardColors } from './board-theme';
 import { applyBoardVisuals, buildDests, type BoardArrow, type ChessgroundVisualApi } from './board-visuals';
 import type { HighlightMap } from './highlights';
 
@@ -19,6 +19,9 @@ export class AnalysisBoard {
   private _onMove: MoveHandler;
   private _observer: MutationObserver | null = null;
   private _boardBgUrl = '';
+  // The board is an SVG data URL, so a mode-aware default square colour only
+  // takes effect if we regenerate it when the theme flips.
+  private _onThemeChange = (): void => { this._applyBoardBackground(); };
 
   constructor(
     containerEl: HTMLElement,
@@ -48,6 +51,7 @@ export class AnalysisBoard {
       drawable: { enabled: false },
     });
     this._applyBoardBackground();
+    window.addEventListener('themechange', this._onThemeChange);
     this._observer = new MutationObserver(() => { this._setBoardInline(); });
     this._observer.observe(this._el, { childList: true });
   }
@@ -86,9 +90,7 @@ export class AnalysisBoard {
   }
 
   private _applyBoardBackground(): void {
-    const style = getComputedStyle(document.documentElement);
-    const light = style.getPropertyValue('--board-light').trim() || '#E0E0E0';
-    const dark = style.getPropertyValue('--board-dark').trim() || '#A0A0A0';
+    const { light, dark } = readBoardColors();
     this._boardBgUrl = `url("${buildBoardSvgDataUrl(light, dark)}")`;
     this._el.style.setProperty('--board-bg', this._boardBgUrl);
     this._setBoardInline();
@@ -100,6 +102,7 @@ export class AnalysisBoard {
   }
 
   destroy(): void {
+    window.removeEventListener('themechange', this._onThemeChange);
     this._observer?.disconnect();
     this._cg?.destroy();
     this._cg = null;
