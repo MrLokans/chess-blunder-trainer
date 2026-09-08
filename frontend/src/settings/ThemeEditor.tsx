@@ -8,6 +8,7 @@ interface ThemeEditorProps {
   theme: ThemeColors;
   presets: ThemePreset[];
   onChange: (theme: ThemeColors) => void;
+  disabled?: boolean;
 }
 
 const SECTIONS: Array<{ titleKey: string; keys: readonly ThemeColorKey[] }> = [
@@ -44,7 +45,7 @@ const HEATMAP_GRID = [
   [0, 1, 0, 2, 1, 0, 0],
 ];
 
-export function ThemeEditor({ theme, presets, onChange }: ThemeEditorProps) {
+export function ThemeEditor({ theme, presets, onChange, disabled = false }: ThemeEditorProps) {
   const activePresetId = useMemo(() => {
     for (const preset of presets) {
       const matches = THEME_COLOR_KEYS.every(
@@ -60,21 +61,23 @@ export function ThemeEditor({ theme, presets, onChange }: ThemeEditorProps) {
   }, [theme]);
 
   const handleColorChange = useCallback((key: ThemeColorKey, value: string) => {
-    onChange({ ...theme, [key]: value });
-  }, [theme, onChange]);
+    if (!disabled) onChange({ ...theme, [key]: value });
+  }, [disabled, theme, onChange]);
 
   const handlePresetClick = useCallback((presetId: string) => {
+    if (disabled) return;
     const preset = presets.find(p => p.id === presetId);
     if (!preset) return;
     onChange({ ...preset.colors });
-  }, [presets, onChange]);
+  }, [disabled, presets, onChange]);
 
   const handleReset = useCallback(() => {
     handlePresetClick('default');
   }, [handlePresetClick]);
 
   return (
-    <div class="theme-colors">
+    <fieldset class="theme-colors" disabled={disabled} aria-disabled={disabled}>
+      {disabled && <p class="help-text">{t('settings.theme.light_only')}</p>}
       <div class="preset-selector">
         <label class="theme-section-title">{t('settings.theme.presets')}</label>
         <div class="preset-grid">
@@ -122,7 +125,7 @@ export function ThemeEditor({ theme, presets, onChange }: ThemeEditorProps) {
           {t('settings.theme.reset')}
         </Button>
       </div>
-    </div>
+    </fieldset>
   );
 }
 

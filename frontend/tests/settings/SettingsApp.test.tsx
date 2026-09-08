@@ -58,6 +58,11 @@ vi.mock('../../src/shared/api', async (importActual) => {
 describe('SettingsApp', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
     localStorage.clear();
     window.__features = { 'auto.sync': true, 'auto.analyze': true };
   });
@@ -120,6 +125,17 @@ describe('SettingsApp', () => {
 
     await user.click(screen.getByRole('radio', { name: t('settings.theme.mode_system') }));
     expect(localStorage.getItem('theme-mode')).toBeNull();
+  });
+
+  test('disables Theme Colors in system dark mode', async () => {
+    vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    render(<SettingsApp init={INIT} />);
+    await screen.findByText(t('settings.theme.presets'));
+    expect(screen.getByText(t('settings.theme.presets')).closest('fieldset')?.hasAttribute('disabled')).toBe(true);
   });
 
   test('renders the cache management section when not in demo mode', async () => {

@@ -24,6 +24,17 @@
     border-radius: 8px;
   }
 
+  .theme-colors {
+    border: 0;
+    margin: 0;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .theme-colors:disabled {
+    opacity: 0.5;
+  }
+
   .theme-section-title {
     font-size: var(--text-sm);
     font-weight: 600;

@@ -84,6 +84,7 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
   const [syncSettings, setSyncSettings] = useState(bundle.syncSettings);
   const [theme, setTheme] = useState(bundle.theme);
   const [themeMode, setThemeModeState] = useState<ThemeMode>(getThemeMode);
+  const [systemDark, setSystemDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
   const [boardSettings, setBoardSettings] = useState(bundle.boardSettings);
   const { themePresets, pieceSets, boardColorPresets } = bundle;
 
@@ -102,6 +103,14 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
     migrateLegacyDarkTheme(theme);
     setThemeModeState(getThemeMode());
   }, [theme]);
+
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const update = () => { setSystemDark(media.matches); };
+    media.addEventListener('change', update);
+    return () => { media.removeEventListener('change', update); };
+  }, []);
 
   const handleFeatureChanged = useCallback((featureId: string, enabled: boolean) => {
     const section = FEATURE_SECTION_MAP[featureId];
@@ -198,12 +207,11 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
             setThemeModeState(mode);
           }}
         />
-        <p class="help-text mb-4">{t('settings.theme.light_only')}</p>
-
         <ThemeEditor
           theme={theme}
           presets={themePresets}
           onChange={setTheme}
+          disabled={themeMode === 'dark' || (themeMode === 'system' && systemDark)}
         />
 
         <div class="btn-row mt-8">
