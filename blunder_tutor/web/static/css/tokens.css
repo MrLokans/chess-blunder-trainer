@@ -55,7 +55,7 @@
   --border-control: light-dark(var(--mid-gray), #B8B4AB);
   --border-hover: light-dark(var(--dark-gray), #F5F2EB);
   --border-swatch: light-dark(rgba(0, 0, 0, 0.1), rgba(245, 242, 235, 0.25));
-  --control-accent: light-dark(var(--black), #F5F2EB);
+  --control-accent: light-dark(var(--black), var(--accent));
   --accent: light-dark(var(--user-accent, var(--blue)), #8AA1E0);
   --accent-hover: light-dark(var(--user-accent-hover, #223FA8), #A1B4ED);
   --success: light-dark(var(--user-success, var(--correct)), #4FB05F);
@@ -83,9 +83,9 @@
   --eval-black-fill: light-dark(var(--black), #3A362B);
   --eval-black-advantage-fill: light-dark(rgba(26, 26, 26, 0.10), #3A362B);
   --demo-accent: var(--yellow);
-  --brand-mark: var(--red);
-  --notification: var(--red);
-  --piece-white: var(--white);
+  --brand-mark: light-dark(var(--red), #E05C5C);
+  --notification: light-dark(var(--red), #E05C5C);
+  --piece-white: light-dark(var(--white), #C9C4B8);
   --piece-black: var(--black);
 
   /* Tinted backgrounds */
@@ -107,19 +107,19 @@
   --color-phase-unknown: var(--mid-gray);
 
   /* Tactical Pattern Colors */
-  --color-tactic-fork: #ef4444;
-  --color-tactic-pin: var(--mid-gray-light);
-  --color-tactic-skewer: #06b6d4;
-  --color-tactic-discovered: #f59e0b;
-  --color-tactic-hanging: #ec4899;
-  --color-tactic-back-rank: #10b981;
-  --color-tactic-other: #6b7280;
+  --color-tactic-fork: light-dark(#ef4444, #EF6E6E);
+  --color-tactic-pin: light-dark(var(--mid-gray-light), #8C8778);
+  --color-tactic-skewer: light-dark(#06b6d4, #4FC3D9);
+  --color-tactic-discovered: light-dark(#f59e0b, #EFB457);
+  --color-tactic-hanging: light-dark(#ec4899, #E877B0);
+  --color-tactic-back-rank: light-dark(#10b981, #45C492);
+  --color-tactic-other: light-dark(#6b7280, #959BAA);
 
   /* Difficulty Colors */
-  --color-diff-easy: var(--blue);
-  --color-diff-medium: #f59e0b;
-  --color-diff-hard: #ef4444;
-  --color-diff-unscored: #6b7280;
+  --color-diff-easy: light-dark(var(--blue), #8AA1E0);
+  --color-diff-medium: light-dark(#f59e0b, #EFB457);
+  --color-diff-hard: light-dark(#ef4444, #EF6E6E);
+  --color-diff-unscored: light-dark(#6b7280, #959BAA);
 
   /* Game Type Colors */
   --color-gametype-ultrabullet: var(--dark-gray);
