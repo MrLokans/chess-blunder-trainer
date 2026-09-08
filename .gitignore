@@ -24,6 +24,9 @@ coverage.xml
 node_modules/
 .DS_Store
 
+# Local UI screenshot captures
+screenshots/
+
 # Dolt database files (added by bd init)
 .dolt/
 
