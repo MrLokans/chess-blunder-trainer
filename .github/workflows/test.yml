@@ -139,13 +139,6 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Check committed theme loader matches its source
-        # static/js/theme-loader.js is a build artifact of
-        # frontend/src/global/theme-loader.ts that base.html loads directly.
-        # Editing the source without rebuilding ships stale JS to production
-        # while typecheck, lint and Vitest all stay green.
-        run: git diff --exit-code blunder_tutor/web/static/js/theme-loader.js
-
   test-e2e-auth:
     name: E2E (credentials auth)
     runs-on: ubuntu-latest

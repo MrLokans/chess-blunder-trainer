@@ -5,7 +5,7 @@ export default defineConfig({
   root: resolve(__dirname),
   publicDir: false,
   build: {
-    outDir: resolve(__dirname, '../blunder_tutor/web/static/js'),
+    outDir: resolve(__dirname, '../blunder_tutor/web/static/dist'),
     emptyOutDir: false,
     lib: {
       entry: resolve(__dirname, 'src/global/theme-loader.ts'),

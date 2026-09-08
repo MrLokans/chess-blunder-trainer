@@ -11,8 +11,10 @@
   <link rel="stylesheet" href="/static/css/components.css">
   <link rel="stylesheet" href="/static/css/dropdown.css">
 
-  <!-- Built from frontend/src/global/theme-loader.ts; applies cached colors before render. -->
-  <script src="/static/js/theme-loader.js"></script>
+  <!-- Built from frontend/src/global/theme-loader.ts by vite.global.config.ts.
+       Synchronous (not type=module) so cached colors and the theme mode apply
+       before first paint; a deferred module would flash the wrong theme. -->
+  <script src="/static/dist/theme-loader.js"></script>
 
   <!-- i18n: inject translations for client-side JS -->
   <script>
