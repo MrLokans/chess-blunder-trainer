@@ -421,6 +421,6 @@
 }
 
 .status.preview-warning {
-  background: var(--color-warning-bg);
-  color: var(--color-warning);
+  background: var(--warning-bg);
+  color: var(--warning);
 }

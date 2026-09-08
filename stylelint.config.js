@@ -14,10 +14,15 @@ export default {
       },
     ],
     'declaration-property-value-disallowed-list': [
-      { '/.*/': [/var\(\s*--space-\d/] },
+      {
+        '/.*/': [
+          /var\(\s*--space-\d/,
+          /var\(\s*--(?:red|blue|yellow|black|white|warm-gray|mid-gray(?:-light)?|dark-gray|correct)\b/,
+        ],
+      },
       {
         message:
-          'Legacy numeric spacing aliases (--space-N) are banned for new code. Use the semantic --s-* scale from tokens.css (--s-xs/--s-sm/--s-md/--s-lg/--s-xl/--s-2xl).',
+          'Themeable components must use semantic tokens, not structural color primitives. Use --surface, --text, --border, --accent, or a semantic state token.',
       },
     ],
   },
@@ -29,6 +34,7 @@ export default {
       ],
       rules: {
         'color-no-hex': null,
+        'declaration-property-value-disallowed-list': null,
       },
     },
   ],

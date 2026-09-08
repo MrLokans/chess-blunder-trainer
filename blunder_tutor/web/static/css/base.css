@@ -1260,8 +1260,8 @@ body:has(.demo-banner) {
   vertical-align: middle;
 }
 
-.status-dot--success { background: var(--color-success); }
-.status-dot--error { background: var(--color-error); }
+.status-dot--success { background: var(--success); }
+.status-dot--error { background: var(--error); }
 
 .engine-status-row {
   display: flex;

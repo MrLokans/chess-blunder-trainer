@@ -15,15 +15,21 @@ const TOKENS = [
 test.use({ colorScheme: 'dark' });
 
 test('dark tokens match explicit and system theme activation', async ({ page }) => {
-  await page.route('**/api/settings/theme', route => route.fulfill({
-    json: { primary: '#123456', bg: '#123456', bg_card: '#123456' },
-  }));
-  await page.addInitScript(() => localStorage.clear());
+  await page.route('**/api/settings/theme', route => {
+    return route.fulfill({
+      json: { primary: '#123456', bg: '#123456', bg_card: '#123456' },
+    });
+  });
+  await page.addInitScript(() => {
+    localStorage.clear();
+  });
   await page.goto('/settings');
 
   const palette = () => page.evaluate(tokens => {
     const style = getComputedStyle(document.documentElement);
-    return Object.fromEntries(tokens.map(token => [token, style.getPropertyValue(token).trim()]));
+    return Object.fromEntries(tokens.map(token => {
+      return [token, style.getPropertyValue(token).trim()];
+    }));
   }, TOKENS);
   const colors = () => page.evaluate(tokens => {
     const probe = document.createElement('div');
