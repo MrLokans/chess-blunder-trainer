@@ -203,7 +203,7 @@
     padding: var(--s-md);
     border-radius: 0;
     text-align: center;
-    border: 2px solid var(--border-strong);
+    border: 2px solid var(--border-card);
   }
 
   .tactical-name,
@@ -321,7 +321,7 @@
   }
 
   .info-modal {
-    background: var(--surface-raised);
+    background: var(--surface-overlay);
     border: 3px solid var(--border-strong);
     border-radius: 0;
     padding: var(--s-xl);
@@ -546,7 +546,7 @@
   .cr-metric-card {
     text-align: center;
     padding: var(--s-md);
-    border: 2px solid var(--border-strong);
+    border: 2px solid var(--border-card);
     border-radius: 0;
     background: var(--surface-raised);
   }

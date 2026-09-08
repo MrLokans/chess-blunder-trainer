@@ -32,49 +32,51 @@
   --correct: #2D8F3E;
 
   /* Themeable semantic tokens */
-  --surface: var(--user-surface, var(--white));
-  --surface-raised: var(--user-surface-raised, var(--white));
-  --surface-sunken: var(--warm-gray);
-  --surface-hover: var(--mid-gray-light);
-  --surface-inverse: var(--black);
-  --text: var(--user-text, var(--black));
-  --text-secondary: var(--dark-gray);
-  --text-muted: var(--user-text-muted, var(--mid-gray));
-  --text-disabled: var(--mid-gray-light);
-  --text-inverse: var(--white);
-  --text-on-accent: var(--white);
-  --border: var(--mid-gray-light);
-  --border-subtle: var(--warm-gray);
-  --border-strong: var(--black);
-  --border-control: var(--mid-gray);
-  --border-hover: var(--dark-gray);
-  --border-swatch: rgba(0, 0, 0, 0.1);
-  --control-accent: var(--black);
-  --accent: var(--user-accent, var(--blue));
-  --accent-hover: var(--user-accent-hover, #223FA8);
-  --success: var(--user-success, var(--correct));
-  --success-hover: #247A33;
-  --warning: var(--user-warning, var(--yellow));
-  --warning-hover: var(--yellow-hover);
+  --surface: light-dark(var(--user-surface, var(--white)), #16150F);
+  --surface-raised: light-dark(var(--user-surface-raised, var(--white)), #26241B);
+  --surface-overlay: light-dark(var(--white), #302D22);
+  --surface-sunken: light-dark(var(--warm-gray), #100F0B);
+  --surface-hover: light-dark(var(--mid-gray-light), #353226);
+  --surface-inverse: light-dark(var(--black), #F5F2EB);
+  --text: light-dark(var(--user-text, var(--black)), #F5F2EB);
+  --text-secondary: light-dark(var(--dark-gray), #D5D0C5);
+  --text-muted: light-dark(var(--user-text-muted, var(--mid-gray)), #B8B4AB);
+  --text-disabled: light-dark(var(--mid-gray-light), #706E68);
+  --text-inverse: light-dark(var(--white), #16150F);
+  --text-on-accent: light-dark(var(--white), #16150F);
+  --border: light-dark(var(--mid-gray-light), #706E68);
+  --border-subtle: light-dark(var(--warm-gray), #35322A);
+  --border-card: light-dark(var(--black), #4A4639);
+  --border-strong: light-dark(var(--black), #837E70);
+  --border-control: light-dark(var(--mid-gray), #B8B4AB);
+  --border-hover: light-dark(var(--dark-gray), #F5F2EB);
+  --border-swatch: light-dark(rgba(0, 0, 0, 0.1), rgba(245, 242, 235, 0.25));
+  --control-accent: light-dark(var(--black), #F5F2EB);
+  --accent: light-dark(var(--user-accent, var(--blue)), #8AA1E0);
+  --accent-hover: light-dark(var(--user-accent-hover, #223FA8), #A1B4ED);
+  --success: light-dark(var(--user-success, var(--correct)), #4FB05F);
+  --success-hover: light-dark(#247A33, #65C874);
+  --warning: light-dark(var(--user-warning, var(--yellow)), #F2C12E);
+  --warning-hover: light-dark(var(--yellow-hover), #FFD451);
   --badge-primary: var(--yellow);
-  --error: var(--user-error, var(--red));
-  --error-hover: var(--red-hover);
-  --info: var(--blue);
-  --success-bg: var(--user-success-bg, var(--bg-correct));
-  --success-border: var(--user-success-border, var(--correct));
-  --warning-bg: var(--user-warning-bg, var(--bg-pending));
-  --warning-border: var(--user-warning-border, var(--yellow));
-  --error-bg: var(--user-error-bg, var(--bg-error));
-  --error-border: var(--user-error-border, var(--red));
-  --info-bg: rgba(26, 58, 143, 0.08);
-  --info-border: var(--blue);
-  --focus-ring-color: rgba(26, 58, 143, 0.25);
-  --focus-ring-error: 0 0 0 2px var(--red-focus-ring);
-  --modal-backdrop: rgba(0, 0, 0, 0.5);
-  --elevation-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
-  --eval-white-advantage-fill: rgba(255, 255, 255, 0.55);
-  --eval-black-advantage-fill: rgba(26, 26, 26, 0.10);
+  --error: light-dark(var(--user-error, var(--red)), #E38585);
+  --error-hover: light-dark(var(--red-hover), #F09B9B);
+  --info: light-dark(var(--blue), #8AA1E0);
+  --success-bg: light-dark(var(--user-success-bg, var(--bg-correct)), #19351F);
+  --success-border: light-dark(var(--user-success-border, var(--correct)), #4FB05F);
+  --warning-bg: light-dark(var(--user-warning-bg, var(--bg-pending)), #3A3014);
+  --warning-border: light-dark(var(--user-warning-border, var(--yellow)), #F2C12E);
+  --error-bg: light-dark(var(--user-error-bg, var(--bg-error)), #3A1C1C);
+  --error-border: light-dark(var(--user-error-border, var(--red)), #E38585);
+  --info-bg: light-dark(rgba(26, 58, 143, 0.08), #1C2945);
+  --info-border: light-dark(var(--blue), #8AA1E0);
+  --focus-ring-color: light-dark(rgba(26, 58, 143, 0.25), rgba(138, 161, 224, 0.6));
+  --focus-ring-error: 0 0 0 2px light-dark(var(--red-focus-ring), rgba(227, 133, 133, 0.6));
+  --modal-backdrop: light-dark(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7));
+  --elevation-shadow: 0 4px 20px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.5));
+  --shadow-card: 0 2px 12px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.35));
+  --eval-white-advantage-fill: light-dark(rgba(255, 255, 255, 0.55), rgba(245, 242, 235, 0.30));
+  --eval-black-advantage-fill: light-dark(rgba(26, 26, 26, 0.10), rgba(16, 15, 11, 0.55));
   --demo-accent: var(--yellow);
   --brand-mark: var(--red);
   --notification: var(--red);
@@ -85,7 +87,7 @@
   --bg-error: #FEF0F0;
   --bg-correct: #F0F7F1;
   --bg-pending: #FFFFF0;
-  --bg-phase: rgba(242, 193, 46, 0.2);
+  --bg-phase: light-dark(rgba(242, 193, 46, 0.2), rgba(242, 193, 46, 0.25));
 
   /* Hover/state shades — derived from primary triad */
   --yellow-hover: #E0B020;
@@ -128,9 +130,9 @@
   --color-slate-900: var(--black);
 
   /* Phase Colors */
-  --color-phase-opening: var(--user-phase-opening, var(--blue));
-  --color-phase-middlegame: var(--user-phase-middlegame, var(--yellow));
-  --color-phase-endgame: var(--user-phase-endgame, var(--dark-gray));
+  --color-phase-opening: light-dark(var(--user-phase-opening, var(--blue)), #8AA1E0);
+  --color-phase-middlegame: light-dark(var(--user-phase-middlegame, var(--yellow)), #F2C12E);
+  --color-phase-endgame: light-dark(var(--user-phase-endgame, var(--dark-gray)), #B8B4AB);
   --color-phase-unknown: var(--mid-gray);
 
   /* Tactical Pattern Colors */
@@ -221,12 +223,12 @@
   --preview-board-dark: #b58863;
 
   /* Activity heatmap (GitHub-style green ramp) */
-  --heatmap-empty-future: #d5d0c5;
-  --heatmap-empty: var(--user-heatmap-empty, var(--heatmap-empty-future));
-  --heatmap-l1: var(--user-heatmap-l1, #9be9a8);
-  --heatmap-l2: var(--user-heatmap-l2, #40c463);
-  --heatmap-l3: var(--user-heatmap-l3, #30a14e);
-  --heatmap-l4: var(--user-heatmap-l4, #216e39);
+  --heatmap-empty-future: light-dark(#d5d0c5, #2B291F);
+  --heatmap-empty: light-dark(var(--user-heatmap-empty, #d5d0c5), #2B291F);
+  --heatmap-l1: light-dark(var(--user-heatmap-l1, #9be9a8), #1D5728);
+  --heatmap-l2: light-dark(var(--user-heatmap-l2, #40c463), #28773A);
+  --heatmap-l3: light-dark(var(--user-heatmap-l3, #30a14e), #2E913F);
+  --heatmap-l4: light-dark(var(--user-heatmap-l4, #216e39), #43B556);
 
   /* Vim-input overlay (dark terminal palette) */
   --vim-prefix: #888;
@@ -239,122 +241,9 @@
 }
 
 :root,
-:root[data-theme="light"] {
-  color-scheme: light;
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --surface: #16150F;
-  --surface-raised: #201E16;
-  --surface-sunken: #100F0B;
-  --surface-hover: #2B291F;
-  --surface-inverse: #F5F2EB;
-  --text: #F5F2EB;
-  --text-secondary: #D5D0C5;
-  --text-muted: #B8B4AB;
-  --text-disabled: #706E68;
-  --text-inverse: #16150F;
-  --text-on-accent: #16150F;
-  --border: #706E68;
-  --border-subtle: #3A3A3A;
-  --border-strong: #F5F2EB;
-  --border-control: #B8B4AB;
-  --border-hover: #F5F2EB;
-  --border-swatch: rgba(245, 242, 235, 0.25);
-  --control-accent: #F5F2EB;
-  --accent: #617DC8;
-  --accent-hover: #7894DF;
-  --success: #2E913F;
-  --success-hover: #3BAE50;
-  --warning: #F2C12E;
-  --warning-hover: #FFD451;
-  --badge-primary: #F2C12E;
-  --error: #C65F5F;
-  --error-hover: #E67878;
-  --info: #617DC8;
-  --success-bg: #19351F;
-  --success-border: #2E913F;
-  --warning-bg: #3A3014;
-  --warning-border: #F2C12E;
-  --error-bg: #3A1C1C;
-  --error-border: #C65F5F;
-  --info-bg: #1C2945;
-  --info-border: #617DC8;
-  --bg-phase: rgba(242, 193, 46, 0.25);
-  --focus-ring-color: rgba(120, 148, 223, 0.6);
-  --focus-ring-error: 0 0 0 2px rgba(230, 120, 120, 0.6);
-  --modal-backdrop: rgba(0, 0, 0, 0.7);
-  --elevation-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
-  --eval-white-advantage-fill: rgba(245, 242, 235, 0.30);
-  --eval-black-advantage-fill: rgba(16, 15, 11, 0.55);
-  --color-phase-opening: #617DC8;
-  --color-phase-middlegame: #F2C12E;
-  --color-phase-endgame: #B8B4AB;
-  --color-phase-unknown: #706E68;
-  --heatmap-empty: #2B291F;
-  --heatmap-l1: #1D5728;
-  --heatmap-l2: #28773A;
-  --heatmap-l3: #2E913F;
-  --heatmap-l4: #43B556;
-}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    color-scheme: dark;
-    --surface: #16150F;
-    --surface-raised: #201E16;
-    --surface-sunken: #100F0B;
-    --surface-hover: #2B291F;
-    --surface-inverse: #F5F2EB;
-    --text: #F5F2EB;
-    --text-secondary: #D5D0C5;
-    --text-muted: #B8B4AB;
-    --text-disabled: #706E68;
-    --text-inverse: #16150F;
-    --text-on-accent: #16150F;
-    --border: #706E68;
-    --border-subtle: #3A3A3A;
-    --border-strong: #F5F2EB;
-    --border-control: #B8B4AB;
-    --border-hover: #F5F2EB;
-    --border-swatch: rgba(245, 242, 235, 0.25);
-    --control-accent: #F5F2EB;
-    --accent: #617DC8;
-    --accent-hover: #7894DF;
-    --success: #2E913F;
-    --success-hover: #3BAE50;
-    --warning: #F2C12E;
-    --warning-hover: #FFD451;
-    --badge-primary: #F2C12E;
-    --error: #C65F5F;
-    --error-hover: #E67878;
-    --info: #617DC8;
-    --success-bg: #19351F;
-    --success-border: #2E913F;
-    --warning-bg: #3A3014;
-    --warning-border: #F2C12E;
-    --error-bg: #3A1C1C;
-    --error-border: #C65F5F;
-    --info-bg: #1C2945;
-    --info-border: #617DC8;
-    --bg-phase: rgba(242, 193, 46, 0.25);
-    --focus-ring-color: rgba(120, 148, 223, 0.6);
-    --focus-ring-error: 0 0 0 2px rgba(230, 120, 120, 0.6);
-    --modal-backdrop: rgba(0, 0, 0, 0.7);
-    --elevation-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
-    --eval-white-advantage-fill: rgba(245, 242, 235, 0.30);
-    --eval-black-advantage-fill: rgba(16, 15, 11, 0.55);
-    --color-phase-opening: #617DC8;
-    --color-phase-middlegame: #F2C12E;
-    --color-phase-endgame: #B8B4AB;
-    --color-phase-unknown: #706E68;
-    --heatmap-empty: #2B291F;
-    --heatmap-l1: #1D5728;
-    --heatmap-l2: #28773A;
-    --heatmap-l3: #2E913F;
-    --heatmap-l4: #43B556;
-  }
+  :root:not([data-theme]) { color-scheme: dark; }
 }

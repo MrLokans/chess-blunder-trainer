@@ -78,7 +78,7 @@ select::-ms-expand {
   margin: 0;
   padding: 0;
   list-style: none;
-  background: var(--surface-raised);
+  background: var(--surface-overlay);
   border: 2px solid var(--border-strong);
   border-top: none;
   max-height: 240px;

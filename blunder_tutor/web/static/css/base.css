@@ -154,7 +154,7 @@ nav a.active {
 .card {
   background: var(--surface-raised);
   border: none;
-  border-top: 2px solid var(--border-strong);
+  border-top: 2px solid var(--border-card);
   border-radius: 0;
   padding: var(--s-lg) 0;
   box-shadow: none;
@@ -162,7 +162,7 @@ nav a.active {
 }
 
 .card:last-child {
-  border-bottom: 2px solid var(--border-strong);
+  border-bottom: 2px solid var(--border-card);
 }
 
 .card-header {
@@ -530,7 +530,7 @@ tr:hover td {
 
 .stat-card {
   background: var(--surface-raised);
-  border: 2px solid var(--border-strong);
+  border: 2px solid var(--border-card);
   border-radius: 0;
   padding: var(--s-lg);
   box-shadow: none;
@@ -594,7 +594,7 @@ tr:hover td {
 
 .chart-container {
   background: var(--surface-raised);
-  border: 2px solid var(--border-strong);
+  border: 2px solid var(--border-card);
   border-radius: 0;
   padding: var(--s-xl);
   box-shadow: none;
@@ -968,7 +968,7 @@ body:has(.demo-banner) {
     top: 100%;
     right: 0;
     flex-direction: column;
-    background: var(--surface-raised);
+    background: var(--surface-overlay);
     border: 2px solid var(--border-strong);
     z-index: 100;
     min-width: 180px;
@@ -1062,7 +1062,7 @@ body:has(.demo-banner) {
 }
 
 .modal {
-  background: var(--surface-raised);
+  background: var(--surface-overlay);
   border: 3px solid var(--border-strong);
   border-radius: 0;
   padding: var(--s-xl);

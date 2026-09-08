@@ -1,3 +1,5 @@
+import { readColorToken } from '../shared/css-color';
+
 const MAX_CP = 500;
 
 interface ReviewMove {
@@ -73,16 +75,14 @@ export class EvalChart {
     whiteFill: string;
     blackFill: string;
   } {
-    const style = getComputedStyle(document.documentElement);
-    const read = (name: string, fallback: string): string => style.getPropertyValue(name).trim() || fallback;
     return {
-      line: read('--text', '#1A1A1A'),
-      midline: read('--border', '#B8B4AB'),
-      active: read('--accent', '#1A3A8F'),
-      blunder: read('--error', '#D42828'),
-      mistake: read('--warning', '#F2C12E'),
-      whiteFill: read('--eval-white-advantage-fill', 'rgba(255, 255, 255, 0.55)'),
-      blackFill: read('--eval-black-advantage-fill', 'rgba(26, 26, 26, 0.10)'),
+      line: readColorToken('--text', '#1A1A1A'),
+      midline: readColorToken('--border', '#B8B4AB'),
+      active: readColorToken('--accent', '#1A3A8F'),
+      blunder: readColorToken('--error', '#D42828'),
+      mistake: readColorToken('--warning', '#F2C12E'),
+      whiteFill: readColorToken('--eval-white-advantage-fill', 'rgba(255, 255, 255, 0.55)'),
+      blackFill: readColorToken('--eval-black-advantage-fill', 'rgba(26, 26, 26, 0.10)'),
     };
   }
 

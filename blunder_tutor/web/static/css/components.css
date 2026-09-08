@@ -101,7 +101,7 @@
 
 .card-surface {
   background: var(--surface-raised);
-  border: 2px solid var(--border-strong);
+  border: 2px solid var(--border-card);
   border-radius: 0;
   padding: var(--s-lg);
 }
@@ -111,12 +111,12 @@
    aligns flush with the surrounding container's horizontal edges). */
 .card-surface--border-top {
   border: none;
-  border-top: 2px solid var(--border-strong);
+  border-top: 2px solid var(--border-card);
   padding: var(--s-lg) 0;
 }
 
 .card-surface--border-top:last-child {
-  border-bottom: 2px solid var(--border-strong);
+  border-bottom: 2px solid var(--border-card);
 }
 
 .card-surface--interactive {

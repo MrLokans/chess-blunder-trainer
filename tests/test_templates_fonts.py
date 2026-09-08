@@ -19,6 +19,7 @@ class TestColorScheme:
     def test_base_html_declares_native_color_schemes(self):
         assert '<meta name="color-scheme" content="light dark">' in BASE_HTML
 
-    def test_tokens_have_explicit_and_system_dark_selectors(self):
-        assert ':root[data-theme="dark"]' in TOKENS_CSS
-        assert ":root:not([data-theme])" in TOKENS_CSS
+    def test_tokens_use_light_dark_with_explicit_theme_overrides(self):
+        assert "light-dark(" in TOKENS_CSS
+        assert ':root[data-theme="dark"] { color-scheme: dark; }' in TOKENS_CSS
+        assert ":root:not([data-theme]) { color-scheme: dark; }" in TOKENS_CSS

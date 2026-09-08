@@ -1153,7 +1153,7 @@
 }
 
 .shortcuts-modal {
-  background: var(--surface-raised);
+  background: var(--surface-overlay);
   border: 3px solid var(--border-strong);
   border-radius: 0;
   padding: var(--s-xl);

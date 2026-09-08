@@ -159,7 +159,7 @@
     margin-top: var(--s-xl);
     padding: var(--s-md);
     background: var(--surface-raised);
-    border: 2px solid var(--border-strong);
+    border: 2px solid var(--border-card);
     border-radius: 0;
   }
 

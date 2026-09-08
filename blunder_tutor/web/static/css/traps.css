@@ -116,7 +116,7 @@
 .trap-detail-panel {
   background: var(--surface-raised);
   border-radius: 0;
-  border: 2px solid var(--border-strong);
+  border: 2px solid var(--border-card);
   padding: var(--s-md);
   margin-top: var(--s-md);
   position: relative;
