@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   LEGACY_DARK_THEME, getThemeMode, migrateLegacyDarkTheme, setThemeMode,
 } from '../../src/shared/theme-mode';
@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from '../../src/shared/storage-keys';
 
 afterEach(() => {
   localStorage.clear();
+  delete window.syncThemeMode;
 });
 
 describe('theme mode', () => {
@@ -26,6 +27,17 @@ describe('theme mode', () => {
     migrateLegacyDarkTheme({ ...LEGACY_DARK_THEME, text: '#F0EDE7' });
     expect(getThemeMode()).toBe('system');
     expect(localStorage.getItem(STORAGE_KEYS.themeModeMigration)).toBe('true');
+  });
+
+  it('applies the mode to the document whenever it is stored', () => {
+    const syncThemeMode = vi.fn();
+    window.syncThemeMode = syncThemeMode;
+
+    migrateLegacyDarkTheme(LEGACY_DARK_THEME);
+    expect(syncThemeMode).toHaveBeenCalledTimes(1);
+
+    setThemeMode('system');
+    expect(syncThemeMode).toHaveBeenCalledTimes(2);
   });
 
   it('does not override an explicit mode', () => {

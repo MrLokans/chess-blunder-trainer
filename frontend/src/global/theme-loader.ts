@@ -1,3 +1,6 @@
+import { getThemeMode } from '../shared/theme-mode';
+import type { ThemeMode } from '../shared/theme-mode';
+
 export interface ThemeColors {
   primary?: string;
   success?: string;
@@ -111,6 +114,43 @@ export function applyTheme(theme: ThemeColors): void {
 }
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+type EffectiveThemeMode = Exclude<ThemeMode, 'system'>;
+
+let previousMode: ThemeMode | null = null;
+let previousEffectiveMode: EffectiveThemeMode | null = null;
+let mediaQuery: MediaQueryList | null = null;
+let mediaListener: (() => void) | null = null;
+let initialized = false;
+
+function dispatchThemeChange(mode: ThemeMode, effectiveMode: EffectiveThemeMode): void {
+  window.dispatchEvent(new CustomEvent('themechange', { detail: { mode, effectiveMode } }));
+}
+
+export function syncThemeMode(): void {
+  const mode = getThemeMode();
+  const root = document.documentElement;
+  if (mode === 'system') root.removeAttribute('data-theme');
+  else root.dataset.theme = mode;
+
+  mediaQuery ??= typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-color-scheme: dark)')
+    : null;
+  if (mediaQuery && mode === 'system' && !mediaListener) {
+    mediaListener = () => { syncThemeMode(); };
+    mediaQuery.addEventListener('change', mediaListener);
+  } else if (mediaQuery && mode !== 'system' && mediaListener) {
+    mediaQuery.removeEventListener('change', mediaListener);
+    mediaListener = null;
+  }
+
+  const effectiveMode: EffectiveThemeMode = mode === 'system'
+    ? (mediaQuery?.matches ? 'dark' : 'light')
+    : mode;
+  const changed = mode !== previousMode || effectiveMode !== previousEffectiveMode;
+  previousMode = mode;
+  previousEffectiveMode = effectiveMode;
+  if (initialized && changed) dispatchThemeChange(mode, effectiveMode);
+}
 
 function isTheme(value: unknown): value is ThemeColors {
   if (!value || typeof value !== 'object') return false;
@@ -120,12 +160,29 @@ function isTheme(value: unknown): value is ThemeColors {
   });
 }
 
+/* Semantic tokens canvas consumers read; comparing their computed values tells us
+   whether a theme apply is actually visible to a chart. */
+const CANVAS_TOKENS = [
+  '--accent', '--success', '--warning', '--error',
+  '--text', '--text-muted', '--border', '--border-subtle', '--surface-raised',
+];
+
+function canvasPaletteSignature(): string {
+  const style = getComputedStyle(document.documentElement);
+  return CANVAS_TOKENS.map(name => style.getPropertyValue(name).trim()).join('|');
+}
+
 function syncTheme(): void {
   fetch('/api/settings/theme')
-    .then(response => response.json() as Promise<ThemeColors>)
+    .then(response => (response.ok ? response.json() as Promise<unknown> : Promise.reject(new Error('theme fetch failed'))))
     .then(theme => {
+      if (!isTheme(theme)) return;
+      const before = canvasPaletteSignature();
       localStorage.setItem('theme', JSON.stringify(theme));
       applyTheme(theme);
+      if (canvasPaletteSignature() !== before && previousMode && previousEffectiveMode) {
+        dispatchThemeChange(previousMode, previousEffectiveMode);
+      }
     })
     .catch(() => {});
 }
@@ -142,9 +199,12 @@ function syncTheme(): void {
     }
   }
 
+  syncThemeMode();
   window.adjustColor = adjustColor;
   window.applyTheme = applyTheme;
   window.removeTheme = removeTheme;
+  window.syncThemeMode = syncThemeMode;
+  initialized = true;
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', syncTheme, { once: true });
   } else {

@@ -110,11 +110,13 @@ describe('SettingsApp', () => {
 
   test('persists theme mode selection locally', async () => {
     const user = userEvent.setup();
+    window.syncThemeMode = vi.fn();
     render(<SettingsApp init={INIT} />);
     const dark = await screen.findByRole('radio', { name: t('settings.theme.mode_dark') });
 
     await user.click(dark);
     expect(localStorage.getItem('theme-mode')).toBe('dark');
+    expect(window.syncThemeMode).toHaveBeenCalled();
 
     await user.click(screen.getByRole('radio', { name: t('settings.theme.mode_system') }));
     expect(localStorage.getItem('theme-mode')).toBeNull();

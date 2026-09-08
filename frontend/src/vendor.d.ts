@@ -106,4 +106,5 @@ interface Window {
   adjustColor?: (hex: string, lightness: number | null, saturation?: number) => string;
   applyTheme?: (theme: Record<string, string | undefined>) => void;
   removeTheme?: () => void;
+  syncThemeMode?: () => void;
 }

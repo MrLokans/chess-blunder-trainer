@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from types import MappingProxyType
 from typing import Annotated
 
@@ -10,7 +11,13 @@ SYNC_INTERVAL_MAX_HOURS = 168  # 1 week
 MAX_GAMES_CEILING = 10_000  # safety cap on sync size
 SPACED_REPETITION_DAYS_DEFAULT = 30
 SPACED_REPETITION_DAYS_MAX = 365
-HexColor = Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]
+HEX_COLOR_PATTERN = r"^#[0-9A-Fa-f]{6}$"
+HexColor = Annotated[str, Field(pattern=HEX_COLOR_PATTERN)]
+_HEX_COLOR = re.compile(HEX_COLOR_PATTERN)
+
+
+def is_hex_color(value: str) -> bool:
+    return _HEX_COLOR.match(value) is not None
 
 
 class ThemeColors(BaseModel):

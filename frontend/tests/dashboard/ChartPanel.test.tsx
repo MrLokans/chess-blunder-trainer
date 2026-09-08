@@ -1,5 +1,5 @@
 import { describe, test, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/preact';
+import { render, screen, waitFor } from '@testing-library/preact';
 import { ChartPanel } from '../../src/dashboard/ChartPanel';
 
 vi.stubGlobal('Chart', undefined);
@@ -27,5 +27,21 @@ describe('ChartPanel', () => {
         data={{ labels: ['Mon'], gameCounts: [5], accuracies: [80] }} createChart={mockCreate} />
     );
     expect(container.querySelector('canvas')).not.toBeNull();
+  });
+
+  test('recreates a chart when the theme changes', async () => {
+    const destroy = vi.fn();
+    const mockCreate = vi.fn().mockReturnValue({ destroy });
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as CanvasRenderingContext2D);
+    render(
+      <ChartPanel title="Chart" description="Desc" emptyMessage="No data"
+        data={{ labels: ['Mon'], gameCounts: [5], accuracies: [80] }} createChart={mockCreate} />
+    );
+    await waitFor(() => { expect(mockCreate).toHaveBeenCalledTimes(1); });
+
+    window.dispatchEvent(new Event('themechange'));
+
+    await waitFor(() => { expect(mockCreate).toHaveBeenCalledTimes(2); });
+    expect(destroy).toHaveBeenCalled();
   });
 });

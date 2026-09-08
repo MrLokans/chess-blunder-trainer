@@ -1,3 +1,4 @@
+import asyncio
 from http import HTTPStatus
 
 import pytest
@@ -70,6 +71,16 @@ class TestThemeSettings:
             json={"theme": {"primary": color}},
         )
         assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize("color", ["blue", "#123", ""])
+    def test_falls_back_when_a_stored_color_predates_validation(self, app, color):
+        settings_repo = app.app.state.settings_repo
+        asyncio.run(settings_repo.write_setting("theme_primary", color))
+
+        response = app.get("/api/settings/theme")
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.json()["primary"] == DEFAULT_THEME["primary"]
 
 
 def test_post_features_persists(app):

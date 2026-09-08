@@ -211,10 +211,13 @@ async def reset_board_settings(settings_repo: SettingsRepoDep) -> dict[str, bool
     description="Retrieve the current theme color settings.",
 )
 async def get_theme(settings_repo: SettingsRepoDep) -> dict[str, str]:
+    # Values stored before write-time hex validation may not match the response
+    # model; fall back rather than 500 the head script on every page load.
     result: dict[str, str] = {}
     for key in schemas.THEME_KEYS:
         value = await settings_repo.read_setting(f"theme_{key}")
-        result[key] = value or schemas.DEFAULT_THEME[key]
+        usable = value if value and schemas.is_hex_color(value) else None
+        result[key] = usable or schemas.DEFAULT_THEME[key]
     return result
 
 

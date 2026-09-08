@@ -13,12 +13,15 @@ export const LEGACY_DARK_THEME: ThemeColors = {
 
 export function getThemeMode(): ThemeMode {
   const mode = localStorage.getItem(STORAGE_KEYS.themeMode);
-  return mode === 'light' || mode === 'dark' ? mode : 'system';
+  if (mode === 'light' || mode === 'dark') return mode;
+  if (mode !== null) localStorage.removeItem(STORAGE_KEYS.themeMode);
+  return 'system';
 }
 
 export function setThemeMode(mode: ThemeMode): void {
   if (mode === 'system') localStorage.removeItem(STORAGE_KEYS.themeMode);
   else localStorage.setItem(STORAGE_KEYS.themeMode, mode);
+  window.syncThemeMode?.();
 }
 
 export function migrateLegacyDarkTheme(theme: ThemeColors): void {

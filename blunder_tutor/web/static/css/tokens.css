@@ -73,6 +73,8 @@
   --modal-backdrop: rgba(0, 0, 0, 0.5);
   --elevation-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --eval-white-advantage-fill: rgba(255, 255, 255, 0.55);
+  --eval-black-advantage-fill: rgba(26, 26, 26, 0.10);
   --demo-accent: var(--yellow);
   --brand-mark: var(--red);
   --notification: var(--red);
@@ -285,6 +287,8 @@
   --modal-backdrop: rgba(0, 0, 0, 0.7);
   --elevation-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --eval-white-advantage-fill: rgba(245, 242, 235, 0.30);
+  --eval-black-advantage-fill: rgba(16, 15, 11, 0.55);
   --color-phase-opening: #617DC8;
   --color-phase-middlegame: #F2C12E;
   --color-phase-endgame: #B8B4AB;
@@ -341,6 +345,8 @@
     --modal-backdrop: rgba(0, 0, 0, 0.7);
     --elevation-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.35);
+    --eval-white-advantage-fill: rgba(245, 242, 235, 0.30);
+    --eval-black-advantage-fill: rgba(16, 15, 11, 0.55);
     --color-phase-opening: #617DC8;
     --color-phase-middlegame: #F2C12E;
     --color-phase-endgame: #B8B4AB;

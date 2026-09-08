@@ -119,6 +119,7 @@ function EvalChartCanvas({ moves, activeIndex, onSelect }: EvalChartProps) {
     chartRef.current.render(moves);
     chartRef.current.onClick(onSelect);
     return () => {
+      chartRef.current?.destroy();
       chartRef.current = null;
     };
   }, [moves, onSelect]);
@@ -126,6 +127,12 @@ function EvalChartCanvas({ moves, activeIndex, onSelect }: EvalChartProps) {
   useEffect(() => {
     chartRef.current?.setActivePly(activeIndex);
   }, [activeIndex]);
+
+  useEffect(() => {
+    const onThemeChange = (): void => { chartRef.current?.render(moves); };
+    window.addEventListener('themechange', onThemeChange);
+    return () => { window.removeEventListener('themechange', onThemeChange); };
+  }, [moves]);
 
   return <canvas ref={canvasRef} id="reviewEvalChart" />;
 }
