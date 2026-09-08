@@ -1,5 +1,4 @@
 import { Chessground } from '@vendor/chessground';
-import { buildBoardSvgDataUrl, readBoardColors } from './board-theme';
 
 interface ChessgroundApi {
   set(config: Record<string, unknown>): void;
@@ -100,11 +99,6 @@ export class MoveSequence {
 export class ReadOnlyBoard {
   private _el: HTMLElement;
   private _cg: ChessgroundApi | null;
-  private _observer: MutationObserver | null = null;
-  private _boardBgUrl = '';
-  // The board is an SVG data URL, so a mode-aware default square colour only
-  // takes effect if we regenerate it when the theme flips.
-  private _onThemeChange = (): void => { this._applyBoardBackground(); };
 
   constructor(containerEl: HTMLElement, { orientation = 'white', fen = 'start' }: { orientation?: string; fen?: string } = {}) {
     this._el = containerEl;
@@ -120,26 +114,6 @@ export class ReadOnlyBoard {
       premovable: { enabled: false },
       drawable: { enabled: false },
     });
-    this._applyBoardBackground();
-    window.addEventListener('themechange', this._onThemeChange);
-    this._observeBoardChanges();
-  }
-
-  private _applyBoardBackground(): void {
-    const { light, dark } = readBoardColors();
-    this._boardBgUrl = `url("${buildBoardSvgDataUrl(light, dark)}")`;
-    this._el.style.setProperty('--board-bg', this._boardBgUrl);
-    this._setBoardInline();
-  }
-
-  private _setBoardInline(): void {
-    const board = this._el.querySelector('cg-board');
-    if (board instanceof HTMLElement) board.style.backgroundImage = this._boardBgUrl;
-  }
-
-  private _observeBoardChanges(): void {
-    this._observer = new MutationObserver(() => { this._setBoardInline(); });
-    this._observer.observe(this._el, { childList: true });
   }
 
   setPosition(fen: string, lastMove: MoveResult | null): void {
@@ -158,11 +132,6 @@ export class ReadOnlyBoard {
   }
 
   destroy(): void {
-    window.removeEventListener('themechange', this._onThemeChange);
-    if (this._observer) {
-      this._observer.disconnect();
-      this._observer = null;
-    }
     if (this._cg) {
       this._cg.destroy();
       this._cg = null;
