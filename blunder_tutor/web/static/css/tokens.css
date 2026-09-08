@@ -38,6 +38,9 @@
   --surface-sunken: light-dark(var(--warm-gray), #100F0B);
   --surface-hover: light-dark(var(--mid-gray-light), #353226);
   --surface-inverse: light-dark(var(--black), #F5F2EB);
+  --selection-surface: light-dark(var(--black), var(--surface-hover));
+  --selection-text: light-dark(var(--white), var(--text));
+  --selection-border: light-dark(var(--black), var(--accent));
   --text: light-dark(var(--user-text, var(--black)), #F5F2EB);
   --text-secondary: light-dark(var(--dark-gray), #D5D0C5);
   --text-muted: light-dark(var(--user-text-muted, var(--mid-gray)), #B8B4AB);

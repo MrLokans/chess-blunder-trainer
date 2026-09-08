@@ -1128,9 +1128,9 @@
   }
 
   .filter-presets button.active {
-    background: var(--surface-inverse);
-    border-color: var(--border-strong);
-    color: var(--text-inverse);
+    background: var(--selection-surface);
+    border-color: var(--selection-border);
+    color: var(--selection-text);
   }
 
   /* Custom date toggle button — styled like a preset */
@@ -1160,13 +1160,13 @@
   }
 
   .filter-bar-custom-toggle.active {
-    background: var(--surface-inverse);
-    border-color: var(--border-strong);
-    color: var(--text-inverse);
+    background: var(--selection-surface);
+    border-color: var(--selection-border);
+    color: var(--selection-text);
   }
 
   .filter-bar-custom-toggle.active svg {
-    stroke: var(--text-inverse);
+    stroke: var(--selection-text);
   }
 
   /* Custom date row (collapsible) */

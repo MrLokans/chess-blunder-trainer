@@ -117,9 +117,10 @@ nav a:hover {
 }
 
 nav a.active {
-  color: var(--text-inverse);
-  background: var(--surface-inverse);
+  color: var(--selection-text);
+  background: var(--selection-surface);
   border: none;
+  box-shadow: inset 0 -2px var(--selection-border);
 }
 
 /* Top-right nav style */
@@ -663,9 +664,9 @@ tr:hover td {
 }
 
 .filter-checkbox-label:has(input:checked) {
-  background: var(--surface-inverse);
-  border-color: var(--border-strong);
-  color: var(--text-inverse);
+  background: var(--selection-surface);
+  border-color: var(--selection-border);
+  color: var(--selection-text);
 }
 
 .filter-checkbox-label input[type="checkbox"] {
@@ -1015,8 +1016,9 @@ body:has(.demo-banner) {
 }
 
 .trainer-nav-link.active {
-  background: var(--surface-inverse);
-  color: var(--text-inverse);
+  background: var(--selection-surface);
+  color: var(--selection-text);
+  box-shadow: inset 0 -2px var(--selection-border);
 }
 
 .nav-user {
@@ -1175,9 +1177,9 @@ body:has(.demo-banner) {
 }
 
 .chip.active {
-  background: var(--surface-inverse);
-  border-color: var(--border-strong);
-  color: var(--text-inverse);
+  background: var(--selection-surface);
+  border-color: var(--selection-border);
+  color: var(--selection-text);
 }
 
 /* Chip as label wrapping a hidden input */
@@ -1195,9 +1197,9 @@ body:has(.demo-banner) {
 }
 
 .chip-label:has(input:checked) .chip {
-  background: var(--surface-inverse);
-  border-color: var(--border-strong);
-  color: var(--text-inverse);
+  background: var(--selection-surface);
+  border-color: var(--selection-border);
+  color: var(--selection-text);
 }
 
 /* ==========================================================================
