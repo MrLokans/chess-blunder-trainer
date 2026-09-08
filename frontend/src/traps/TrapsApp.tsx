@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { client } from '../shared/api';
 import { useAsyncData } from '../hooks/useAsyncData';
+import { StatCard } from '../components/data/StatCard';
 import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
 import { EmptyState } from '../components/layout/EmptyState';
-import { Dropdown } from '../components/primitives/Dropdown';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Tabs, type TabDescriptor } from '../components/layout/Tabs';
+import { Badge } from '../components/primitives/Badge';
+import { Dropdown } from '../components/primitives/Dropdown';
 import SequencePlayer from '../shared/sequence-player';
 import type {
   TrapStat, TrapSummary, TrapCatalogEntry,
@@ -178,43 +180,27 @@ function Summary({ summary, catalog }: SummaryProps) {
   const isEmpty = summary.total_sprung === 0 && summary.total_entered === 0;
 
   if (isEmpty) {
-    return (
-      <div class="traps-summary">
-        <p>{t('traps.no_data')}</p>
-      </div>
-    );
+    return <p>{t('traps.no_data')}</p>;
   }
 
   return (
-    <div class="traps-summary">
-      <div class="summary-stats">
-        <div class="stat-item">
-          <div class="stat-value">{summary.total_sprung}</div>
-          <div class="stat-label">{t('traps.times_fell')}</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value">{summary.total_entered}</div>
-          <div class="stat-label">{t('traps.times_entered')}</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value">{summary.total_executed}</div>
-          <div class="stat-label">{t('traps.times_executed')}</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value">{summary.games_with_traps}</div>
-          <div class="stat-label">{t('traps.games_involved')}</div>
-        </div>
+    <>
+      <div class="stats-grid">
+        <StatCard label={t('traps.times_fell')} value={summary.total_sprung} />
+        <StatCard label={t('traps.times_entered')} value={summary.total_entered} />
+        <StatCard label={t('traps.times_executed')} value={summary.total_executed} />
+        <StatCard label={t('traps.games_involved')} value={summary.games_with_traps} />
       </div>
       {summary.top_traps && summary.top_traps.length > 0 && (
         <div class="top-traps">
-          <strong>{t('traps.most_common')}:</strong>{' '}
+          <span class="top-traps-label">{t('traps.most_common')}:</span>{' '}
           {summary.top_traps.map(tt => {
             const trapName = catalog[tt.trap_id]?.name ?? tt.trap_id;
             return <span key={tt.trap_id} class="trap-tag">{trapName} ({tt.count})</span>;
           })}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -275,7 +261,7 @@ function TrapsView({ data }: TrapsViewProps) {
                   style="cursor: pointer"
                 >
                   <td>{s.name}</td>
-                  <td><span class="category-badge">{t(`traps.category.${s.category}`) || s.category}</span></td>
+                  <td><Badge>{t(`traps.category.${s.category}`) || s.category}</Badge></td>
                   <td class="count-entered">{s.entered}</td>
                   <td class="count-sprung">{s.sprung}</td>
                   <td class="count-executed">{s.executed}</td>

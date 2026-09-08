@@ -1,44 +1,19 @@
-.traps-summary {
-  background: var(--surface-raised);
-  border-radius: 0;
-  padding: var(--s-md);
+.top-traps {
   margin-bottom: var(--s-md);
 }
 
-.traps-summary .summary-stats {
-  display: flex;
-  gap: var(--s-lg);
-  flex-wrap: wrap;
-}
-
-.traps-summary .stat-item {
-  text-align: center;
-}
-
-.traps-summary .stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.traps-summary .stat-label {
+.top-traps-label {
   color: var(--text-muted);
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
 }
 
-.traps-summary .top-traps {
-  margin-top: var(--s-md);
-}
-
-.traps-summary .top-traps .trap-tag {
+.trap-tag {
   display: inline-block;
   background: var(--accent);
   color: var(--text-on-accent);
   padding: var(--s-xs) var(--s-sm);
-  border-radius: 0;
   font-size: var(--text-sm);
   margin-right: var(--s-xs);
-  margin-bottom: var(--s-xs);
 }
 
 .traps-filter {
@@ -46,14 +21,6 @@
   align-items: center;
   gap: var(--s-sm);
   margin-bottom: var(--s-md);
-}
-
-.traps-filter select {
-  padding: var(--s-xs) var(--s-sm);
-  border-radius: 0;
-  border: 2px solid var(--border-strong);
-  background: var(--surface-raised);
-  color: var(--text);
 }
 
 .traps-table-container {
@@ -102,15 +69,6 @@
 
 .traps-table .count-executed {
   color: var(--success);
-}
-
-.traps-table .category-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 0;
-  font-size: var(--text-sm);
-  background: var(--surface-sunken);
-  border: 1px solid var(--border-control);
 }
 
 .trap-detail-panel {
