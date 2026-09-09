@@ -89,6 +89,40 @@ describe('TrainerApp', () => {
     });
   });
 
+  it('submits a board move immediately', async () => {
+    const { client } = await import('../../src/shared/api');
+    const history: Array<{ san: string; from: string; to: string }> = [];
+    (globalThis as Record<string, unknown>).Chess = function () {
+      return {
+        fen: () => 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1',
+        turn: () => 'b', moves: () => [],
+        move: () => {
+          const move = { san: 'e4', from: 'e2', to: 'e4' };
+          history.push(move);
+          return move;
+        },
+        undo: vi.fn(), history: () => history, game_over: () => false,
+        in_check: () => false, load: () => true, board: () => [], get: vi.fn(),
+        put: vi.fn(), remove: vi.fn(), pgn: () => '', load_pgn: () => true,
+      };
+    };
+    vi.mocked(client.trainer.submitMove).mockResolvedValue({
+      is_best: true, is_blunder: false, user_san: 'e4', user_eval: 60,
+      user_eval_display: '+0.6', user_uci: 'e2e4',
+    });
+
+    render(<TrainerApp />);
+    await waitFor(() => { expect(mockChessground).toHaveBeenCalled(); });
+    const config = mockChessground.mock.calls[0]?.[1] as {
+      movable: { events: { after: (orig: string, dest: string) => void } };
+    };
+    config.movable.events.after('e2', 'e4');
+
+    await waitFor(() => {
+      expect(client.trainer.submitMove).toHaveBeenCalledWith(expect.objectContaining({ move: 'e2e4' }));
+    });
+  });
+
   it('opens shortcuts from the toolbar, not the action keys', async () => {
     const { container } = render(<TrainerApp />);
 

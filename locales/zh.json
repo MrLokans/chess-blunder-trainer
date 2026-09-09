@@ -660,7 +660,6 @@
   "trainer.shortcuts.reset": "重置局面",
   "trainer.shortcuts.show_best": "显示最佳走法",
   "trainer.shortcuts.show_help": "显示此帮助",
-  "trainer.shortcuts.submit": "提交走法",
   "trainer.shortcuts.threats": "切换威胁",
   "trainer.shortcuts.title": "快捷键",
   "trainer.shortcuts.type_move": "输入着法（代数记谱法）",

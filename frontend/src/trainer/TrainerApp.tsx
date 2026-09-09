@@ -43,6 +43,7 @@ function TrainerCore(): preact.JSX.Element {
   const gameRef = useRef<ChessInstance | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPuzzleIdRef = useRef<string | null>(null);
+  const submissionPendingRef = useRef(false);
 
   const hasPreMove = useFeature('trainer.pre_move');
   const srsEnabled = useFeature('trainer.srs');
@@ -110,15 +111,18 @@ function TrainerCore(): preact.JSX.Element {
 
   // Submit move
   const handleSubmit = useCallback(async () => {
+    if (submissionPendingRef.current) return;
     const game = gameRef.current;
     if (!game) return;
     const history = game.history({ verbose: true });
     const lastMove = history[history.length - 1];
     if (!lastMove) return;
 
+    submissionPendingRef.current = true;
     const uci = lastMove.from + lastMove.to + (lastMove.promotion || '');
     setSubmitting(true);
     const data = await puzzleApi.submitMove(uci);
+    submissionPendingRef.current = false;
     setSubmitting(false);
 
     if (!data) {
@@ -181,13 +185,9 @@ function TrainerCore(): preact.JSX.Element {
     if (state.bestRevealed) {
       dispatch({ type: 'PUSH_MOVE', san: move.san });
     } else if (!state.submitted) {
-      const puzzle = state.puzzle;
-      const uci = move.from + move.to + (move.promotion || '');
-      if (puzzle && uci === puzzle.best_move_uci) {
-        setTimeout(() => { void handleSubmitRef.current(); }, 150);
-      }
+      void handleSubmitRef.current();
     }
-  }, [state.animating, state.bestRevealed, state.submitted, state.puzzle, dispatch]);
+  }, [state.animating, state.bestRevealed, state.submitted, dispatch]);
 
   // Reveal best move
   const handleReveal = useCallback(() => {
@@ -285,14 +285,8 @@ function TrainerCore(): preact.JSX.Element {
     void puzzleApi.loadPuzzle(filtersApi.getFilterParams());
   }, [puzzleApi, filtersApi, inReview, reviewQueue.session, loadNextReview]);
 
-  // Derived per render: gameRef mutates outside React's model, so a memo
-  // keyed on state.fen only approximates freshness — recomputing is cheap.
-  const game = gameRef.current;
-  const hasMove = !!game && game.history().length > 0;
-
   // Keyboard shortcuts
   useKeyboard({
-    submit: () => { void handleSubmit(); },
     next: handleNext,
     reset: handleReset,
     undo: handleUndo,
@@ -384,7 +378,7 @@ function TrainerCore(): preact.JSX.Element {
     return <div class="trainer-page" />;
   }
 
-  const interactive = !state.animating && !state.submitted && !!state.puzzle;
+  const interactive = !state.animating && !state.submitted && !submitting && !!state.puzzle;
 
   return (
     <div class="trainer-page">
@@ -450,11 +444,7 @@ function TrainerCore(): preact.JSX.Element {
           <div class="panel-section panel-actions">
             <MoveActions
               hasPuzzle={!!state.puzzle}
-              submitted={state.submitted}
               bestRevealed={state.bestRevealed}
-              submitting={submitting}
-              hasMove={hasMove}
-              onSubmit={() => { void handleSubmit(); }}
               onReset={handleReset}
               onReveal={handleReveal}
               onNext={handleNext}

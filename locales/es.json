@@ -660,7 +660,6 @@
   "trainer.shortcuts.reset": "Reiniciar posición",
   "trainer.shortcuts.show_best": "Mostrar mejor jugada",
   "trainer.shortcuts.show_help": "Mostrar esta ayuda",
-  "trainer.shortcuts.submit": "Enviar jugada",
   "trainer.shortcuts.threats": "Alternar amenazas",
   "trainer.shortcuts.title": "Atajos de teclado",
   "trainer.shortcuts.type_move": "Escribir jugada (notación algebraica)",

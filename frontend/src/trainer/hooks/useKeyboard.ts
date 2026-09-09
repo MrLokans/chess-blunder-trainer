@@ -1,7 +1,6 @@
 import { useEffect } from 'preact/hooks';
 
 interface KeyboardActions {
-  submit: () => void;
   next: () => void;
   reset: () => void;
   undo: () => void;
@@ -48,12 +47,6 @@ export function useKeyboard(actions: KeyboardActions): void {
       if (e.key === '?') {
         e.preventDefault();
         actions.toggleShortcuts();
-        return;
-      }
-
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        actions.submit();
         return;
       }
 

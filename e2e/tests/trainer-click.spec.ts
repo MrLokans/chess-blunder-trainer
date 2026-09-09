@@ -18,7 +18,7 @@ test.describe('Trainer - Click-based Moves', () => {
     });
   });
 
-  test('click wrong move and submit shows non-best feedback', async ({ trainerPage }) => {
+  test('click wrong move shows non-best feedback', async ({ trainerPage }) => {
     const puzzle = PUZZLES.forkMiddlegameWhite;
     // bestMove is Nf3+ (e5f3), replay the original blunder Qxg5+ (d8g5) instead
     const wrongFrom = 'd8';
@@ -28,11 +28,8 @@ test.describe('Trainer - Click-based Moves', () => {
       await trainerPage.loadSpecificPuzzle(puzzle.gameId, puzzle.ply);
     });
 
-    await test.step('Click wrong move and submit', async () => {
-      await trainerPage.makeMove(wrongFrom, wrongTo);
-      const responsePromise = trainerPage.page.waitForResponse('**/api/submit');
-      await trainerPage.submitBtn.click();
-      await responsePromise;
+    await test.step('Click wrong move', async () => {
+      await trainerPage.makeMoveAndWaitForSubmit(wrongFrom, wrongTo);
     });
 
     await test.step('Result card shows (not accent-correct)', async () => {

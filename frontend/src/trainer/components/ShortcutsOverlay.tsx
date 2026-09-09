@@ -19,7 +19,6 @@ export function ShortcutsOverlay({ visible, onClose }: ShortcutsOverlayProps): p
         </div>
         <table class="shortcuts-table">
           <tbody>
-            <tr><td><kbd>Enter</kbd></td><td>{t('trainer.shortcuts.submit')}</td></tr>
             <tr><td><kbd>N</kbd></td><td>{t('trainer.shortcuts.next')}</td></tr>
             <tr><td><kbd>R</kbd></td><td>{t('trainer.shortcuts.reset')}</td></tr>
             <tr><td><kbd>B</kbd></td><td>{t('trainer.shortcuts.show_best')}</td></tr>

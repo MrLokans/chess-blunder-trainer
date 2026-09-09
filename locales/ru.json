@@ -660,7 +660,6 @@
   "trainer.shortcuts.reset": "Сбросить позицию",
   "trainer.shortcuts.show_best": "Показать лучший ход",
   "trainer.shortcuts.show_help": "Показать справку",
-  "trainer.shortcuts.submit": "Отправить ход",
   "trainer.shortcuts.threats": "Угрозы",
   "trainer.shortcuts.title": "Горячие клавиши",
   "trainer.shortcuts.type_move": "Ввести ход (алгебраическая нотация)",

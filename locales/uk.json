@@ -660,7 +660,6 @@
   "trainer.shortcuts.reset": "Скинути позицію",
   "trainer.shortcuts.show_best": "Показати найкращий хід",
   "trainer.shortcuts.show_help": "Показати цю довідку",
-  "trainer.shortcuts.submit": "Надіслати хід",
   "trainer.shortcuts.threats": "Перемкнути загрози",
   "trainer.shortcuts.title": "Гарячі клавіші",
   "trainer.shortcuts.type_move": "Ввести хід (алгебраїчна нотація)",

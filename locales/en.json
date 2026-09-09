@@ -660,7 +660,6 @@
   "trainer.shortcuts.reset": "Reset position",
   "trainer.shortcuts.show_best": "Show best move",
   "trainer.shortcuts.show_help": "Show this help",
-  "trainer.shortcuts.submit": "Submit move",
   "trainer.shortcuts.threats": "Toggle threats",
   "trainer.shortcuts.title": "Keyboard Shortcuts",
   "trainer.shortcuts.type_move": "Type a move (algebraic notation)",

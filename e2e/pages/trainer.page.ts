@@ -10,7 +10,6 @@ export class TrainerPage extends BasePage {
   readonly bestMoveDisplay: Locator;
   readonly movePrompt: Locator;
   readonly emptyState: Locator;
-  readonly submitBtn: Locator;
   readonly resetBtn: Locator;
   readonly showBestBtn: Locator;
   readonly nextBtn: Locator;
@@ -32,7 +31,6 @@ export class TrainerPage extends BasePage {
     this.bestMoveDisplay = page.locator('#bestMoveDisplay');
     this.movePrompt = page.locator('#movePrompt');
     this.emptyState = page.locator('#emptyState');
-    this.submitBtn = page.locator('#submitBtn');
     this.resetBtn = page.locator('#resetBtn');
     this.showBestBtn = page.locator('#showBestBtn');
     this.nextBtn = page.locator('#nextBtn');
