@@ -22,10 +22,10 @@ vi.mock('../../src/shared/dropdown', () => ({
 }));
 
 vi.mock('../../src/shared/sequence-player', () => ({
-  default: vi.fn().mockImplementation(() => ({
+  default: vi.fn(function () { return {
     setMoves: vi.fn(),
     destroy: vi.fn(),
-  })),
+  }; }),
 }));
 
 const TRAP_STATS = [

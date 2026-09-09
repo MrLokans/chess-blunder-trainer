@@ -53,18 +53,18 @@ vi.mock('../../src/shared/api', async (importOriginal) => {
 });
 
 vi.mock('../../src/shared/sequence-player', () => ({
-  MoveSequence: vi.fn().mockImplementation(() => mockSequence),
-  ReadOnlyBoard: vi.fn().mockImplementation(() => mockBoard),
-  PlaybackController: vi.fn().mockImplementation(() => mockPlayback),
+  MoveSequence: vi.fn(function () { return mockSequence; }),
+  ReadOnlyBoard: vi.fn(function () { return mockBoard; }),
+  PlaybackController: vi.fn(function () { return mockPlayback; }),
 }));
 
 vi.mock('../../src/game-review/eval-chart', () => ({
-  EvalChart: vi.fn().mockImplementation(() => ({
+  EvalChart: vi.fn(function () { return {
     render: vi.fn(),
     setActivePly: vi.fn(),
     onClick: vi.fn(),
     destroy: vi.fn(),
-  })),
+  }; }),
   evalFromWhite: vi.fn().mockReturnValue(50),
 }));
 

@@ -1,5 +1,4 @@
 import tseslint from 'typescript-eslint';
-import vitest from 'eslint-plugin-vitest';
 import reactHooks from 'eslint-plugin-react-hooks';
 import { resolve } from 'path';
 
@@ -92,15 +91,13 @@ export default tseslint.config(
     },
   },
   {
-    files: ['tests/**/*.test.{ts,tsx}'],
-    plugins: { vitest },
+    files: ['**/tests/**/*.test.{ts,tsx}'],
     rules: {
-      'vitest/expect-expect': 'error',
-      'vitest/no-focused-tests': 'error',
-      'vitest/no-conditional-expect': 'error',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
     },
   },
   {

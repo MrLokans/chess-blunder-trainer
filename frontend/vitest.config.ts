@@ -21,6 +21,7 @@ export default defineConfig({
         statements: 70,
       },
     },
+    allowOnly: false,
     setupFiles: ['tests/helpers/setup.ts'],
   },
 });
