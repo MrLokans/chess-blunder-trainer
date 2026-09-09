@@ -161,7 +161,11 @@ test/e2e/auth: ## Run credentials-mode auth E2E tests locally
 	mkdir -p e2e/.tmp-auth
 	cd e2e && npx playwright test --config playwright.auth.config.ts
 
-test/e2e/all: test/e2e test/e2e/auth ## Run every E2E suite (demo + credentials-mode auth)
+test/e2e/cloud: ## Run cloud-mode billing E2E tests (stub Stripe gateway)
+	mkdir -p e2e/.tmp-cloud
+	cd e2e && npx playwright test --config playwright.cloud.config.ts
+
+test/e2e/all: test/e2e test/e2e/auth test/e2e/cloud ## Run every E2E suite (demo + auth + cloud billing)
 
 # Both suites run `npm run build` via their respective Playwright
 # webServer commands, so `make -j2 test/e2e/all` would race on

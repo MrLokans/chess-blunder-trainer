@@ -11,3 +11,6 @@ AUTH_UI_PATHS: frozenset[str] = frozenset(("/login", "/signup", "/setup", "/logo
 # reachable without an existing session (the session is being established
 # there).
 AUTH_API_PREFIX: str = "/api/auth/"
+
+BILLING_API_PREFIX: str = "/api/billing/"
+BILLING_WEBHOOK_PATH: str = "/api/billing/webhook"

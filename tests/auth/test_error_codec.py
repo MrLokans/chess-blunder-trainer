@@ -8,8 +8,8 @@ handlers — by passing a custom :class:`ErrorCodec` to the factory.
 
 from __future__ import annotations
 
-from http import HTTPStatus
 from datetime import timedelta
+from http import HTTPStatus
 from pathlib import Path
 
 import httpx

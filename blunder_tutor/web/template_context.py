@@ -49,4 +49,5 @@ def i18n_context(request: Request) -> dict[str, Any]:
         "has_feature": lambda key: bool(features.get(key, False)),
         "features_json": getattr(state, "features_json", "{}"),
         "locale_display_names": LOCALE_DISPLAY_NAMES,
+        "entitlements": getattr(state, "entitlements", None),
     }

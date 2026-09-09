@@ -1,0 +1,44 @@
+# Verified-fakes drift check: runs the gateway contract suite against a
+# REAL Stripe sandbox (tests/billing/test_gateway_contract.py, sandbox
+# param). Scheduled weekly — not per-PR — per Stripe's own guidance to
+# hit the real API infrequently. Requires the STRIPE_TEST_SECRET_KEY
+# repo secret (a sandbox restricted key); without it the job skips the
+# sandbox lane and only proves the fake lane, so keep the secret set.
+name: billing-contract
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run gateway contract suite (fake + sandbox lanes)
+        env:
+          STRIPE_TEST_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+        run: uv run pytest tests/billing/test_gateway_contract.py -v
+
+      - name: Fail if the sandbox lane was skipped
+        env:
+          STRIPE_TEST_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+        run: |
+          if [ -z "$STRIPE_TEST_SECRET_KEY" ]; then
+            echo "::error::STRIPE_TEST_SECRET_KEY secret is not configured — sandbox lane did not run, fake drift is unchecked."
+            exit 1
+          fi

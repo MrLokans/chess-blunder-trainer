@@ -104,6 +104,7 @@ DYNAMIC_PREFIXES: tuple[str, ...] = (
     "explanation.blunder.",
     "auth.signup.error.",  # translateSlug(`${namespace}.error.${slug}`)
     "auth.login.error.",  # same, login slug scaffold
+    "billing.settings.status_",  # t(`billing.settings.status_${status.status}`)
 )
 
 #: Allowlist for the English-fallback warning. Keyed on ``(locale,

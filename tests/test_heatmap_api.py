@@ -1,6 +1,7 @@
 """Tests for activity heatmap API endpoint."""
 
 from http import HTTPStatus
+
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
 
 

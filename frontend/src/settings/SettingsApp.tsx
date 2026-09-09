@@ -13,6 +13,7 @@ import { FeatureToggles } from './FeatureToggles';
 import { SyncSettings } from './SyncSettings';
 import { ThemeEditor } from './ThemeEditor';
 import { BoardEditor } from './BoardEditor';
+import { BillingSection } from './BillingSection';
 import { CacheManagement } from './CacheManagement';
 import type {
   SettingsInit, SyncSettings as SyncSettingsData,
@@ -226,6 +227,7 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
       </form>
 
       {!init.demoMode && <CacheManagement />}
+      <BillingSection />
     </Card>
   );
 }

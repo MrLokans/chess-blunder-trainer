@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from blunder_tutor.auth import AuthService, SqliteStorage
+from blunder_tutor.auth import AuthDb, AuthService, SqliteStorage
+from blunder_tutor.billing.service import BillingService
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,3 +39,16 @@ class AuthResources:
     service: AuthService
     db_path: Path
     users_dir: Path
+
+
+@dataclass(frozen=True, slots=True)
+class BillingResources:
+    """Cloud-mode billing bundle. Materialized in the
+    ``_bootstrap_billing`` lifespan phase; ``app.state.billing`` is
+    ``None`` unless ``CLOUD_MODE=true`` — same optionality contract as
+    :class:`AuthResources`, so readers MUST narrow on ``is not None``.
+    """
+
+    service: BillingService
+    db: AuthDb
+    db_path: Path
