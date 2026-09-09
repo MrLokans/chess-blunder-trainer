@@ -16,6 +16,7 @@ wheels/
 *.db
 *.jsonl
 
+.coverage
 coverage/
 coverage.xml
 
@@ -26,9 +27,6 @@ node_modules/
 
 # Local UI screenshot captures
 screenshots/
-
-# Dolt database files (added by bd init)
-.dolt/
 
 # Claude Code local settings (personal overrides)
 .claude/settings.local.json
@@ -42,3 +40,15 @@ blunder_tutor/web/static/dist/
 # Profiling data
 *cprofile.txt
 *.prof
+
+# Non-public documents
+docs/superpowers/
+docs/research/
+docs/agents/
+
+# Agents stuff
+.claude
+.agents
+.pi
+.codegraph
+.playwright-mcp

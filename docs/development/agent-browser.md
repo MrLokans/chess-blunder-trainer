@@ -1,6 +1,14 @@
-# UI Screenshot Capture
+## Browser Automation
 
-Use this workflow to give an LLM a consistent desktop overview of the app. It captures the initial viewport only: a full-page image becomes too tall for reliable vision-model analysis.
+Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
+
+Core workflow:
+1. `agent-browser open <url>` - Navigate to page
+2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
+3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
+4. Re-snapshot after page changes
+
+When taking screenshots of web apps, always use 2x (Retina) resolution/device scale factor. Never use 1x CSS scale for screenshots intended for documentation or landing pages. For the repeatable LLM UI-review workflow, see [UI Screenshot Capture](docs/screenshot-prompt.md).
 
 ## Capture the overviews
 

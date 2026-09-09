@@ -1,0 +1,112 @@
+...@styles/classes.d2
+
+direction: down
+
+# ==================
+# External
+# ==================
+
+browser: Browser {class: external}
+
+# ==================
+# Web Layer
+# ==================
+
+web: Web Layer {
+  class: container
+  direction: right
+  api: REST API {class: service}
+  ui: UI Router {class: service}
+  ws: WebSocket {class: infra}
+}
+
+# ==================
+# Domain (flat, side by side)
+# ==================
+
+services: Services {
+  class: container
+  direction: right
+  trainer: Trainer {class: service}
+  job_svc: Job Svc {class: service}
+  analysis_svc: Analysis Svc {class: service}
+}
+
+background: Background\nJobs {
+  class: infra
+}
+
+events: Event Bus\n→ WebSocket {
+  class: engine
+}
+
+analyzer: Game Analyzer {class: service}
+
+pipeline: Pipeline\neco → stockfish → quality\n→ phase → traps → write {class: infra}
+
+pool: Work\nCoordinator {class: engine}
+
+fetchers: Fetchers {
+  class: container
+  direction: right
+  lf: Lichess {class: service}
+  cf: Chess.com {class: service}
+  fs: Filesystem {class: service}
+}
+
+# ==================
+# Data Layer
+# ==================
+
+data: Data Layer {
+  class: container
+  direction: right
+  game: Game Repo {class: repository}
+  analysis_r: Analysis Repo {class: repository}
+  settings: Settings Repo {class: repository}
+  db: SQLite {class: database}
+}
+
+# ==================
+# External Systems
+# ==================
+
+stockfish: Stockfish\nEngine {class: engine}
+lichess: Lichess API {class: external}
+chesscom: Chess.com API {class: external}
+
+# ============================
+# Edges
+# ============================
+
+# User → Web
+browser -> web: HTTP + WebSocket {style.stroke: "#D42828"; style.stroke-width: 2}
+
+# Web → Services
+web.api -> services.job_svc
+web.api -> services.analysis_svc
+web.ui -> services.trainer
+
+# Services → Domain
+services.job_svc -> background: triggers
+services.job_svc -> events: publishes
+
+# Background → Processing
+background -> analyzer: analyze games
+background -> fetchers: sync games
+background -> events: progress events
+
+# Analysis chain
+analyzer -> pipeline: delegates
+pipeline -> pool: submits work
+pool -> stockfish: UCI {style.stroke: "#D42828"; style.stroke-width: 2}
+
+# Fetchers → External
+fetchers.lf -> lichess: HTTPS {style.stroke: "#F2C12E"}
+fetchers.cf -> chesscom: HTTPS {style.stroke: "#F2C12E"}
+
+# Domain → Data
+fetchers -> data.game: upserts
+pipeline -> data.analysis_r: writes
+pipeline -> data.game: reads PGN
+services.trainer -> data.game

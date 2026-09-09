@@ -39,7 +39,7 @@ FORCE :=
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*##"; print "Available targets:"} \
-		/^[a-zA-Z_\/-]+:.*##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+		/^[a-zA-Z0-9_\/-]+:.*##/ {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 install: ## Install dependencies
 	$(UV) sync $(UV_SYNC_FLAGS)
