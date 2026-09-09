@@ -140,11 +140,17 @@ lint/hooks: ## Test agent hooks
 typecheck/e2e: ## Run TypeScript type checking on E2E tests
 	cd e2e && npm run typecheck
 
-fix: ## Auto-fix linting issues
+fix: fix/be fix/fe fix/e2e ## Auto-fix linting issues
+
+fix/be: ## Auto-fix linting issues for backend
 	$(UV) run ruff format
 	$(UV) run ruff check --fix --unsafe-fixes blunder_tutor/ main.py
+
+fix/fe: ## Auto-fix linting issues for frontend
 	npm run lint:fix
 	npm run lint:css:fix
+
+fix/e2e: ## Auto-fix linting issues for E2E tests
 	cd e2e && npm run lint:fix
 
 test: test/be test/fe ## Run all tests

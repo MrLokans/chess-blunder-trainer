@@ -37,7 +37,7 @@ files = "^blunder_tutor/web/static/js/"
 [[repos.hooks]]
 id = "eslint-frontend"
 name = "eslint (frontend)"
-entry = "npm run lint:fix"
+entry = "make fix/fe"
 language = "system"
 pass_filenames = false
 files = "^frontend/(src|tests)/.+\\.(ts|tsx)$"
@@ -45,7 +45,7 @@ files = "^frontend/(src|tests)/.+\\.(ts|tsx)$"
 [[repos.hooks]]
 id = "i18n-lint"
 name = "i18n lint"
-entry = "uv run python scripts/lint_i18n.py --strict"
+entry = "make lint/i18n"
 language = "system"
 pass_filenames = false
 files = "^(locales/|frontend/src/|frontend/tests/|templates/|blunder_tutor/web/static/js/).+\\.(json|ts|tsx|js|html|py)$"
@@ -53,7 +53,7 @@ files = "^(locales/|frontend/src/|frontend/tests/|templates/|blunder_tutor/web/s
 [[repos.hooks]]
 id = "wps"
 name = "wemake-python-styleguide"
-entry = "uv run flake8 --select=WPS blunder_tutor/ main.py tests/"
+entry = "make lint/be-wps"
 language = "system"
 pass_filenames = false
 types = ["python"]
@@ -62,7 +62,7 @@ stages = ["pre-push"]
 [[repos.hooks]]
 id = "typecheck-fe"
 name = "frontend typecheck (tsc)"
-entry = "npm run typecheck"
+entry = "make typecheck/fe"
 language = "system"
 pass_filenames = false
 files = "^frontend/.+\\.(ts|tsx)$"
@@ -79,7 +79,7 @@ stages = ["pre-push"]
 [[repos.hooks]]
 id = "vitest"
 name = "vitest (frontend)"
-entry = "npm run test"
+entry = "make test/fe"
 language = "system"
 pass_filenames = false
 files = "^frontend/.+\\.(ts|tsx)$"
