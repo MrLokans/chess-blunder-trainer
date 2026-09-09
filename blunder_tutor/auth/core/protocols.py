@@ -221,32 +221,6 @@ class ErrorCodec(Protocol):
     def to_http(self, exc: AuthError) -> tuple[int, str]: ...
 
 
-class AuthProvider(Protocol):
-    """Pluggable authentication provider.
-
-    Adding OAuth (Lichess, Google, GitHub, …) is a new class that
-    satisfies this protocol — the registry on :class:`AuthService` is
-    a plain dict and grows without service-layer changes.
-    """
-
-    name: ProviderName
-
-    async def authenticate(self, credentials: dict[str, str]) -> Identity | None:
-        """Return the matching :class:`Identity` on success, ``None`` on
-        any failure mode (unknown user, wrong password, malformed
-        input). Implementations must keep the wall-clock time of all
-        failure paths indistinguishable from the success path so a
-        timing attacker cannot enumerate users.
-        """
-        ...
-
-    async def close(self) -> None:
-        """Release any provider-owned resources (HTTP clients, token
-        caches). Repository handles are owned by ``AuthService`` and
-        are not closed here."""
-        ...
-
-
 class Storage(Protocol):
     """Aggregate that bundles the four auth repos plus a transaction
     primitive. Today's only production-grade backend is
@@ -272,7 +246,6 @@ class Storage(Protocol):
 
 
 __all__ = [
-    "AuthProvider",
     "ErrorCodec",
     "IdentityRepo",
     "InvitePolicy",

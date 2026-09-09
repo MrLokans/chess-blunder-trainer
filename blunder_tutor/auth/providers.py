@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Protocol
+
 from blunder_tutor.auth.core.protocols import IdentityRepo, PasswordHasher
 from blunder_tutor.auth.core.types import (
     CREDENTIALS_PROVIDER_NAME,
@@ -11,6 +13,16 @@ from blunder_tutor.auth.core.types import (
     Username,
     ValidationRules,
 )
+
+
+class AuthProvider(Protocol):
+    """Pluggable authentication provider."""
+
+    name: ProviderName
+
+    async def authenticate(self, credentials: dict[str, str]) -> Identity | None: ...
+
+    async def close(self) -> None: ...
 
 
 class CredentialsProvider:

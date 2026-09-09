@@ -7,7 +7,6 @@ from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, NoReturn
 
 from blunder_tutor.auth.core.protocols import (
-    AuthProvider,
     InvitePolicy,
     PasswordHasher,
     QuotaPolicy,
@@ -24,6 +23,7 @@ from blunder_tutor.auth.core.types import (
     make_session_token,
     make_user_id,
 )
+from blunder_tutor.auth.providers import AuthProvider
 from blunder_tutor.utils.time import now_iso
 
 if TYPE_CHECKING:

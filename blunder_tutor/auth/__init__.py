@@ -43,7 +43,6 @@ from blunder_tutor.auth.core.policies import (
     OpenSignup,
 )
 from blunder_tutor.auth.core.protocols import (
-    AuthProvider,
     ErrorCodec,
     IdentityRepo,
     InvitePolicy,
@@ -83,7 +82,7 @@ from blunder_tutor.auth.core.types import (
     make_username,
 )
 from blunder_tutor.auth.fastapi.middleware import AuthMiddleware, MiddlewareConfig
-from blunder_tutor.auth.providers.credentials import CredentialsProvider
+from blunder_tutor.auth.providers import AuthProvider, CredentialsProvider
 from blunder_tutor.auth.storage_sqlite import SqliteStorage
 from blunder_tutor.auth.storage_sqlite.db import AuthDb
 from blunder_tutor.auth.storage_sqlite.repository import (
