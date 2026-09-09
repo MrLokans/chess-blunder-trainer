@@ -107,7 +107,7 @@ make train-ui       # Start on localhost:8000
 cd e2e && npx playwright test
 ```
 
-Requires Python 3.13+, Node.js 22+, and Stockfish on your PATH (or set `STOCKFISH_BINARY`).
+Requires Python 3.14+, Node.js 22+, and Stockfish on your PATH (or set `STOCKFISH_BINARY`).
 
 ### Pre-commit Hooks
 

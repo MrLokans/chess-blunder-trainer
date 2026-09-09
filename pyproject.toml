@@ -3,7 +3,7 @@ name = "blunder-tutor"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
   "aiosqlite>=0.22.0",
   "alembic>=1.19.2",
@@ -55,7 +55,7 @@ package = true
 
 [tool.ruff]
 line-length = 88
-target-version = "py313"
+target-version = "py314"
 exclude = [
   ".venv",
   "__pycache__",
@@ -423,15 +423,10 @@ addopts = ["-n", "auto", "--dist", "loadfile"]
 # unfixable warning we don't control.
 filterwarnings = [
   "error",
-  # `PytestUnraisableExceptionWarning` flakes under `-n auto --dist loadfile`
-  # because GC-time `sqlite3.Connection.__del__` from aiosqlite's internal
-  # worker threads occasionally fires on a different test boundary than the
-  # one that allocated it. Source-level tracing (TREK-134 investigation)
-  # confirmed 0 real aiosqlite leaks after the `BaseDbRepository.get_connection`
-  # race fix; the residual is xdist+GC ordering, not a real resource leak. Keep
-  # these warnings visible (default action) without failing CI. Tracked in
-  # TREK-134 as a follow-up — drop this line once that lands.
-  "default::pytest.PytestUnraisableExceptionWarning",
+  # python-chess 1.999 still imports the Python 3.14-deprecated event-loop policy.
+  "ignore:'asyncio.DefaultEventLoopPolicy' is deprecated and slated for removal in Python 3.16:DeprecationWarning:chess.engine",
+  # Python 3.14's subprocess finalizer races pytest-xdist's worker teardown.
+  "ignore:Exception ignored while calling deallocator <function BaseSubprocessTransport.__del__.*:pytest.PytestUnraisableExceptionWarning",
 ]
 markers = [
   "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",

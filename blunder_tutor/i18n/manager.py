@@ -74,7 +74,7 @@ def _resolve_plural(message: str, params: dict[str, object], locale: str) -> str
         if not isinstance(count, int | float):
             try:
                 count = int(count)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 count = 0
 
         branches = {}

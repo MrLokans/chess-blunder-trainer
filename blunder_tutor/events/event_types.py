@@ -44,7 +44,7 @@ class Event:
     timestamp: str
 
     @classmethod
-    def create(cls, event_type: EventType, data: dict[str, Any]) -> "Event":
+    def create(cls, event_type: EventType, data: dict[str, Any]) -> Event:
         return cls(type=event_type, data=data, timestamp=now_iso())
 
     def to_dict(self) -> dict:
@@ -56,7 +56,7 @@ class JobEvent(Event):
     @classmethod
     def create_status_changed(
         cls, job_id: str, job_type: str, status: str, error_message: str | None = None
-    ) -> "JobEvent":
+    ) -> JobEvent:
         return cls(
             type=EventType.JOB_STATUS_CHANGED,
             data={
@@ -71,7 +71,7 @@ class JobEvent(Event):
     @classmethod
     def create_progress_updated(
         cls, job_id: str, job_type: str, current: int, total: int
-    ) -> "JobEvent":
+    ) -> JobEvent:
         percent = int((current / total) * 100) if total > 0 else 0
         return cls(
             type=EventType.JOB_PROGRESS_UPDATED,
@@ -94,7 +94,7 @@ class ProgressEvent(Event):
 @dataclass
 class StatsEvent(Event):
     @classmethod
-    def create_stats_updated(cls, scope: str) -> "StatsEvent":
+    def create_stats_updated(cls, scope: str) -> StatsEvent:
         return cls(
             type=EventType.STATS_UPDATED,
             data={_TRIGGER_KEY: "job_completed", SCOPE_KEY: scope},
@@ -105,7 +105,7 @@ class StatsEvent(Event):
 @dataclass
 class TrapsEvent(Event):
     @classmethod
-    def create_traps_updated(cls, scope: str) -> "TrapsEvent":
+    def create_traps_updated(cls, scope: str) -> TrapsEvent:
         return cls(
             type=EventType.TRAPS_UPDATED,
             data={_TRIGGER_KEY: "trap_detection_completed", SCOPE_KEY: scope},
@@ -116,7 +116,7 @@ class TrapsEvent(Event):
 @dataclass
 class TrainingEvent(Event):
     @classmethod
-    def create_training_updated(cls, scope: str) -> "TrainingEvent":
+    def create_training_updated(cls, scope: str) -> TrainingEvent:
         return cls(
             type=EventType.TRAINING_UPDATED,
             data={_TRIGGER_KEY: "puzzle_attempt", SCOPE_KEY: scope},
@@ -130,7 +130,7 @@ class EloRatingEvent(Event):
     # docs/conventions/observability.md) — extend the literal set, do not
     # build values dynamically.
     @classmethod
-    def create_elo_rating_updated(cls, *, scope: str, trigger: str) -> "EloRatingEvent":
+    def create_elo_rating_updated(cls, *, scope: str, trigger: str) -> EloRatingEvent:
         return cls(
             type=EventType.ELO_RATING_UPDATED,
             data={_TRIGGER_KEY: trigger, SCOPE_KEY: scope},
@@ -141,7 +141,7 @@ class EloRatingEvent(Event):
 @dataclass
 class CacheEvent(Event):
     @classmethod
-    def create_cache_invalidated(cls, *, scope: str, tags: list[str]) -> "CacheEvent":
+    def create_cache_invalidated(cls, *, scope: str, tags: list[str]) -> CacheEvent:
         # `tags` are LOGICAL ("stats"), never scoped ("stats:<uid>"):
         # the scope rides in its own field so the WS layer delivers only
         # to that user and no tenant's id leaks to other connections.
@@ -161,7 +161,7 @@ class JobExecutionRequestEvent(Event):
         job_type: str,
         user_id: UserId,
         **kwargs: Any,
-    ) -> "JobExecutionRequestEvent":
+    ) -> JobExecutionRequestEvent:
         return cls(
             type=EventType.JOB_EXECUTION_REQUESTED,
             data={

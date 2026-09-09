@@ -48,7 +48,7 @@ COPY blunder_tutor/web/static/vendor/ ./blunder_tutor/web/static/vendor/
 RUN npm run build
 
 # Stage 3: Export dependencies to requirements.txt (separate stage for better caching)
-FROM python:3.13-slim AS deps-exporter
+FROM python:3.14-slim AS deps-exporter
 
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install uv
@@ -62,7 +62,7 @@ COPY uv.lock pyproject.toml ./
 RUN uv export --frozen --no-dev --no-hashes --no-emit-project -o requirements.txt
 
 # Stage 3: Build Python dependencies
-FROM python:3.13-slim AS python-builder
+FROM python:3.14-slim AS python-builder
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
@@ -93,7 +93,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --no-deps .
 
 # Stage 4: Final runtime image
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 # Install runtime dependencies
 # Note: cache mounts don't help in final stage since we need to clean up apt lists

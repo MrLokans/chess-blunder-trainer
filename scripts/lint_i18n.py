@@ -243,7 +243,7 @@ def scan_sources(
         file_count += 1
         try:
             text = path.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
+        except OSError, UnicodeDecodeError:
             continue
         for line_no, line in enumerate(text.splitlines(), start=1):
             for m in _LITERAL_KEY.finditer(line):

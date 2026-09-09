@@ -52,7 +52,7 @@ def _parse_pgn_moves(pgn: str) -> chess.Board | None:
             san = _strip_move_number(token)
             if san is not None:
                 board.push_san(san)
-    except (ValueError, chess.InvalidMoveError, chess.AmbiguousMoveError):
+    except ValueError, chess.InvalidMoveError, chess.AmbiguousMoveError:
         return None
     return board
 

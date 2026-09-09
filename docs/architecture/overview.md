@@ -23,7 +23,7 @@ This single-process boundary matters: the scheduler, job executor, event bus, ca
 
 | Area | Implementation |
 |---|---|
-| Backend | Python 3.13+, FastAPI, Uvicorn |
+| Backend | Python 3.14+, FastAPI, Uvicorn |
 | Frontend | TypeScript, Preact islands, Vite, Jinja2 page shells |
 | Data | SQLite, aiosqlite, Alembic |
 | Chess | python-chess, Stockfish over UCI |

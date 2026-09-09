@@ -125,7 +125,7 @@ async def validate_username_change(
         )
     try:
         check = await check_username_existence(platform, new_username)
-    except (RetryableHTTPError, httpx.HTTPStatusError):
+    except RetryableHTTPError, httpx.HTTPStatusError:
         # Accept the change; mark as not-confirmed so caller skips
         # `last_validated_at` refresh.
         return False

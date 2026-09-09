@@ -330,7 +330,7 @@ def _compute_tactical_squares(
             blunder_move,
             _safe_parse_uci(best_move_uci),
         )
-    except (AssertionError, ValueError):
+    except AssertionError, ValueError:
         return None
 
     seen: list[str] = []

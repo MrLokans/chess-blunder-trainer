@@ -17,6 +17,7 @@ import argparse
 import os
 import sqlite3
 from collections.abc import Generator
+from contextlib import closing
 from pathlib import Path
 
 import pytest
@@ -67,7 +68,11 @@ def credentials_client_multi(tmp_path: Path, monkeypatch) -> Generator[TestClien
 
 def _read_invite(client: TestClient) -> str:
     auth_db_path = client.app.state.auth.db_path
-    with sqlite3.connect(auth_db_path) as conn:
+    # `with sqlite3.connect(...)` only commits/rollbacks — it does NOT
+    # close. Leaking the handle raises ResourceWarning from `__del__` at
+    # GC time, which the warnings-as-errors gate turns into an
+    # unraisable failure in whatever test happens to trigger the GC.
+    with closing(sqlite3.connect(auth_db_path)) as conn:
         row = conn.execute(
             "SELECT value FROM setup WHERE key = 'invite_code'"
         ).fetchone()

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from functools import partial
 from pathlib import Path
 from typing import Self
 
@@ -10,6 +11,51 @@ import aiosqlite
 
 from blunder_tutor.analysis.db import _connect_async
 from blunder_tutor.web.config import AppConfig
+
+_pending_discards: set[asyncio.Future] = set()
+
+
+async def _open_cancel_safe(db_path: Path) -> aiosqlite.Connection:
+    """Open a connection that survives cancellation of the awaiting task.
+
+    aiosqlite hands the open off to its worker thread and resolves a future
+    when the `sqlite3.Connection` is ready. If the awaiting task is cancelled
+    first, that future is already done, aiosqlite's `set_result` no-ops, and
+    the handle it just created is dropped without ever being closed —
+    surfacing much later as a `ResourceWarning` raised from a finalizer,
+    attributed to whatever code happened to trigger the GC. Shutdown cancels
+    in-flight background jobs exactly this way.
+
+    Shielding the open keeps the connection reachable; `_discard_connection`
+    then closes it. Cleanup cannot `await` — a task under cancellation is not
+    guaranteed another suspension point — so it goes through the synchronous
+    `Connection.stop()` instead of `await Connection.close()`.
+    """
+    opening = asyncio.ensure_future(_connect_async(db_path))
+    try:
+        return await asyncio.shield(opening)
+    except asyncio.CancelledError:
+        opening.add_done_callback(_discard_connection)
+        raise
+
+
+def _discard_connection(opening: asyncio.Future[aiosqlite.Connection]) -> None:
+    if opening.cancelled() or opening.exception() is not None:
+        return
+    conn = opening.result()
+    stopped = conn.stop()
+    if stopped is None:
+        return
+    # `stop()` only queues the close onto the worker thread. Hold `conn`
+    # reachable (via this callback, via the future, via the set) until the
+    # worker reports back, or GC can reach `Connection.__del__` first and
+    # emit the exact ResourceWarning this path exists to prevent.
+    _pending_discards.add(stopped)
+    stopped.add_done_callback(partial(_finish_discard, conn))
+
+
+def _finish_discard(conn: aiosqlite.Connection, stopped: asyncio.Future) -> None:
+    _pending_discards.discard(stopped)
 
 
 class BaseDbRepository:
@@ -40,7 +86,7 @@ class BaseDbRepository:
             return self._conn
         async with self._conn_lock:
             if self._conn is None:
-                self._conn = await _connect_async(self.db_path)
+                self._conn = await _open_cancel_safe(self.db_path)
             return self._conn
 
     @asynccontextmanager

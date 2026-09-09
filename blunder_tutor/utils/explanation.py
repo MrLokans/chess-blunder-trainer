@@ -570,7 +570,7 @@ def _walk_pv_continuation(
         prev_board = state.line_board.copy()
         try:
             move = state.line_board.parse_san(move_san)
-        except (ValueError, chess.IllegalMoveError):
+        except ValueError, chess.IllegalMoveError:
             return False
         side = state.line_board.turn
         state.line_board.push(move)
@@ -600,7 +600,7 @@ def _analyze_pv(
 
     try:
         state.line_board.push(best_move)
-    except (ValueError, chess.IllegalMoveError):
+    except ValueError, chess.IllegalMoveError:
         return None
 
     gives_check = state.line_board.is_check()

@@ -49,7 +49,7 @@ def _attach_formatted_created_at(jobs: list[dict[str, Any]]) -> None:
         try:
             dt = parse_dt(created_at)
             job["created_at_formatted"] = dt.strftime("%Y-%m-%d %H:%M")
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             job["created_at_formatted"] = created_at
 
 
