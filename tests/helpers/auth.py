@@ -10,9 +10,9 @@ from blunder_tutor.auth import (
     AuthService,
     BcryptHasher,
     CredentialsProvider,
-    HmacInvitePolicy,
     InvitePolicy,
     MaxUsersQuota,
+    OpenSignup,
     QuotaPolicy,
     SessionConfig,
     SqliteStorage,
@@ -40,10 +40,9 @@ def build_test_auth_service(
     smaller value (or use the ``credentials_app`` fixture which boots
     via ``MAX_USERS=1`` at the env level).
 
-    ``invite_policy`` defaults to :class:`HmacInvitePolicy` against
-    ``storage.setup`` — matches the production wiring. Tests that need
-    a different policy (e.g. :class:`OpenSignup` for the no-gate path)
-    pass it explicitly.
+    ``invite_policy`` defaults to :class:`OpenSignup` so unit tests can
+    create users through the production ``signup`` path. Tests of invite
+    enforcement pass :class:`HmacInvitePolicy` explicitly.
     """
     storage = SqliteStorage(auth_db)
     return _build_auth_service(
@@ -52,7 +51,7 @@ def build_test_auth_service(
         session_max_age=session_max_age,
         session_idle=session_idle,
         quota=MaxUsersQuota(max_users),
-        invite_policy=invite_policy or HmacInvitePolicy(setup_repo=storage.setup),
+        invite_policy=invite_policy or OpenSignup(),
     )
 
 

@@ -54,7 +54,7 @@ class TestListUsers:
 
     async def test_returns_registered_users(self, service_storage) -> None:
         service, _ = service_storage
-        await service.register(username=Username("alice"), password="password123")
+        await service.signup(username=Username("alice"), password="password123")
         users = await admin.list_users(service)
         assert [u.username for u in users] == ["alice"]
 
@@ -64,9 +64,7 @@ class TestResetPassword:
         self, service_storage
     ) -> None:
         service, _ = service_storage
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
@@ -103,9 +101,7 @@ class TestResetPassword:
 class TestRevokeSessions:
     async def test_invalidates_all_sessions(self, service_storage) -> None:
         service, _ = service_storage
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         s1 = await service.create_session(user_id=user.id, user_agent=None, ip=None)
         s2 = await service.create_session(user_id=user.id, user_agent=None, ip=None)
 
@@ -126,9 +122,7 @@ class TestDeleteUser:
         self, service_storage, tmp_path: Path
     ) -> None:
         service, _ = service_storage
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         # The default test service wires `cleanup_user_dir` as on_after_delete.
         user_dir = tmp_path / "users" / user.id
         assert user_dir.exists()
@@ -154,7 +148,7 @@ class TestRegenerateInvite:
 
     async def test_refuses_when_users_already_exist(self, service_storage) -> None:
         service, storage = service_storage
-        await service.register(username=Username("alice"), password="password123")
+        await service.signup(username=Username("alice"), password="password123")
         with pytest.raises(InviteCannotBeRegeneratedError):
             await admin.regenerate_invite(
                 service, setup_repo=storage.setup, secret_key="x" * 32

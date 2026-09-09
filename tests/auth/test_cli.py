@@ -61,9 +61,7 @@ class TestListUsers:
         assert "No users" in out
 
     async def test_after_signup(self, ctx, capsys) -> None:
-        await ctx["service"].register(
-            username=Username("alice"), password="password123"
-        )
+        await ctx["service"].signup(username=Username("alice"), password="password123")
         await cmd_list_users(ctx)
         out = capsys.readouterr().out
         assert "alice" in out
@@ -72,9 +70,7 @@ class TestListUsers:
 class TestResetPassword:
     async def test_resets_and_revokes_sessions(self, ctx) -> None:
         service: AuthService = ctx["service"]
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
@@ -169,9 +165,7 @@ class TestResolveNewPassword:
 class TestRevokeSessions:
     async def test_revokes_all_tokens(self, ctx) -> None:
         service: AuthService = ctx["service"]
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         s1 = await service.create_session(user_id=user.id, user_agent=None, ip=None)
         s2 = await service.create_session(user_id=user.id, user_agent=None, ip=None)
 
@@ -188,9 +182,7 @@ class TestRevokeSessions:
 class TestDeleteUser:
     async def test_removes_row_and_directory(self, ctx) -> None:
         service: AuthService = ctx["service"]
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         user_dir = ctx["users_dir"] / user.id
         assert user_dir.exists()
 
@@ -221,9 +213,7 @@ class TestRegenerateInvite:
         assert await ctx["storage"].setup.get("invite_code") == code
 
     async def test_refuses_when_users_exist(self, ctx) -> None:
-        await ctx["service"].register(
-            username=Username("alice"), password="password123"
-        )
+        await ctx["service"].signup(username=Username("alice"), password="password123")
         with pytest.raises(SystemExit, match="users already exist"):
             await cmd_regenerate_invite(ctx)
 
@@ -231,9 +221,7 @@ class TestRegenerateInvite:
 class TestPruneOrphans:
     async def test_removes_only_unknown_dirs(self, ctx, capsys) -> None:
         service: AuthService = ctx["service"]
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         kept = ctx["users_dir"] / user.id
         orphan = ctx["users_dir"] / ("b" * 32)
         orphan.mkdir()
@@ -247,9 +235,7 @@ class TestPruneOrphans:
         assert "Removed 1 orphan" in out
 
     async def test_reports_zero_when_clean(self, ctx, capsys) -> None:
-        await ctx["service"].register(
-            username=Username("alice"), password="password123"
-        )
+        await ctx["service"].signup(username=Username("alice"), password="password123")
         await cmd_prune_orphans(ctx)
         out = capsys.readouterr().out
         assert "Removed 0 orphan" in out

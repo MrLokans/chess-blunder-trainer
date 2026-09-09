@@ -170,7 +170,7 @@ class JobExecutor:
             return
 
         # Delete-race guard. The per-user data directory is created by
-        # ``AuthService.register`` and removed by ``delete_account``; its
+        # ``AuthService.signup`` and removed by ``delete_account``; its
         # existence therefore tracks user-existence in credentials mode
         # (and is always true in none-mode after ``run_migrations``).
         # ``aiosqlite.connect`` would otherwise re-create the directory

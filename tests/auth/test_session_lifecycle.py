@@ -37,9 +37,7 @@ async def _force_column(
 
 class TestSessionResolution:
     async def test_fresh_session_resolves(self, service: AuthService):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent="ua", ip="127.0.0.1"
         )
@@ -56,9 +54,7 @@ class TestSessionResolution:
         assert await service.resolve_session("", None) is None
 
     async def test_absolute_expiry(self, service: AuthService, auth_db: AuthDb):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
@@ -75,9 +71,7 @@ class TestSessionResolution:
         assert await repo.get(session.token) is None
 
     async def test_idle_expiry(self, service: AuthService, auth_db: AuthDb):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
@@ -94,9 +88,7 @@ class TestSessionResolution:
         assert await repo.get(session.token) is None
 
     async def test_resolve_bumps_last_seen(self, service: AuthService, auth_db: AuthDb):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
@@ -124,9 +116,7 @@ class TestSessionResolution:
         debounce, N concurrent requests queue N writes behind the auth
         DB write lock (a real DoS vector — see H9 in the security
         review)."""
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
@@ -149,9 +139,7 @@ class TestSessionResolution:
 
 class TestRevocation:
     async def test_revoke_single(self, service: AuthService):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
@@ -159,9 +147,7 @@ class TestRevocation:
         assert await service.resolve_session(session.token, None) is None
 
     async def test_revoke_all(self, service: AuthService):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         tokens = []
         for _ in range(3):
             s = await service.create_session(user_id=user.id, user_agent=None, ip=None)
@@ -171,10 +157,8 @@ class TestRevocation:
             assert await service.resolve_session(tok, None) is None
 
     async def test_revoke_all_spares_other_users(self, service: AuthService):
-        alice = await service.register(
-            username=Username("alice"), password="password123"
-        )
-        bob = await service.register(username=Username("bob"), password="password123")
+        alice = await service.signup(username=Username("alice"), password="password123")
+        bob = await service.signup(username=Username("bob"), password="password123")
         bob_session = await service.create_session(
             user_id=bob.id, user_agent=None, ip=None
         )
@@ -188,9 +172,7 @@ class TestSessionIsolation:
     async def test_orphaned_session_row_is_cleaned_up(
         self, service: AuthService, auth_db: AuthDb
     ):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )

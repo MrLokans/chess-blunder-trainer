@@ -23,9 +23,7 @@ class TestPerUserDbInit:
     async def test_signup_creates_per_user_db_file(
         self, service: AuthService, tmp_path: Path
     ):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         path = resolve_user_db_path(tmp_path / "users", user.id)
         assert path.exists()
         assert path.name == "main.sqlite3"
@@ -33,9 +31,7 @@ class TestPerUserDbInit:
     async def test_signup_runs_migrations_on_per_user_db(
         self, service: AuthService, tmp_path: Path
     ):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         path = resolve_user_db_path(tmp_path / "users", user.id)
         # `with sqlite3.connect(...)` commits/rollbacks but does NOT close;
         # `closing()` is what actually releases the connection.
@@ -49,8 +45,8 @@ class TestPerUserDbInit:
     async def test_two_users_get_isolated_dbs(
         self, service: AuthService, tmp_path: Path
     ):
-        a = await service.register(username=Username("alice"), password="password123")
-        b = await service.register(username=Username("bob"), password="password123")
+        a = await service.signup(username=Username("alice"), password="password123")
+        b = await service.signup(username=Username("bob"), password="password123")
         users_dir = tmp_path / "users"
         path_a = resolve_user_db_path(users_dir, a.id)
         path_b = resolve_user_db_path(users_dir, b.id)

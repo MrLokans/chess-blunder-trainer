@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from http import HTTPStatus
 from datetime import timedelta
 from functools import partial
+from http import HTTPStatus
 from pathlib import Path
 
 import httpx
@@ -129,9 +129,7 @@ class TestModeCredentials:
     async def test_valid_session_sets_context(
         self, service: AuthService, wired_credentials_app: FastAPI
     ):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
@@ -144,9 +142,7 @@ class TestModeCredentials:
     async def test_valid_session_sets_user_dir_as_db_path(
         self, service: AuthService, wired_credentials_app: FastAPI, tmp_path: Path
     ):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
@@ -191,9 +187,7 @@ class TestModeCredentials:
     async def test_exempt_path_with_valid_session_still_sets_ctx(
         self, service: AuthService, wired_credentials_app: FastAPI
     ):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent=None, ip=None
         )
@@ -219,7 +213,7 @@ class TestModeCredentials:
             session_max_age=timedelta(seconds=-1),
             session_idle=timedelta(days=1),
         )
-        user = await short_lived.register(
+        user = await short_lived.signup(
             username=Username("alice"), password="password123"
         )
         session = await short_lived.create_session(

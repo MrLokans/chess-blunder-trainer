@@ -77,7 +77,7 @@ class TestTimingInvariants:
     async def test_all_failing_paths_run_one_db_query_and_one_bcrypt(
         self, service: AuthService, auth_db: AuthDb
     ):
-        await service.register(username=Username("alice"), password="password123")
+        await service.signup(username=Username("alice"), password="password123")
         provider, identities, hasher = _make_recording_provider(auth_db)
 
         # Case 1: malformed username (shape rejected)
@@ -112,7 +112,7 @@ class TestTimingInvariants:
     async def test_success_path_also_runs_one_db_query_and_one_bcrypt(
         self, service: AuthService, auth_db: AuthDb
     ):
-        await service.register(username=Username("alice"), password="password123")
+        await service.signup(username=Username("alice"), password="password123")
         provider, identities, hasher = _make_recording_provider(auth_db)
 
         r = await provider.authenticate(

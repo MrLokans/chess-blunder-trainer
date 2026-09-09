@@ -115,33 +115,6 @@ class AuthService:
         # depends on the dummy being precomputed.
         hasher.dummy_hash()
 
-    async def register(
-        self,
-        *,
-        username: Username,
-        password: str,
-        email: Email | None = None,
-    ) -> User:
-        # Hash outside the transaction — bcrypt is slow (~100ms) and we don't
-        # want to hold the write lock for that long. This also surfaces
-        # InvalidPasswordError before we touch the DB.
-        credential = self._hasher.hash(password)
-        user_id = make_user_id()
-        now = now_iso()
-        try:
-            async with self._storage.transaction() as conn:
-                await self._insert_user_with_credential(
-                    conn,
-                    user_id=user_id,
-                    username=username,
-                    email=email,
-                    credential=credential,
-                    now=now,
-                )
-        except sqlite3.IntegrityError as exc:
-            _translate_integrity_error(exc, username, email)
-        return await self._finalize_registration(user_id)
-
     async def signup(
         self,
         *,
@@ -159,9 +132,6 @@ class AuthService:
         both commit, exceeding the configured quota. Single-transaction
         gating makes the cap a DB invariant instead of a best-effort
         check.
-
-        ``register`` is the lower-level API and stays usable from tests
-        that don't care about quota/invite policy.
         """
         credential = self._hasher.hash(password)
         user_id = make_user_id()
@@ -325,8 +295,8 @@ class AuthService:
         now: str,
     ) -> None:
         """Single place where a new user + their credentials identity land
-        on disk. Both :meth:`register` and :meth:`signup` call this inside
-        their own ``BEGIN IMMEDIATE`` transaction — adding a column to
+        on disk. :meth:`signup` calls this inside a ``BEGIN IMMEDIATE``
+        transaction — adding a column to
         ``users`` or ``identities`` touches exactly one caller. Uses the
         injected repositories so the Protocol contract (instance-method
         ``insert_in_transaction``) is the single source of truth."""

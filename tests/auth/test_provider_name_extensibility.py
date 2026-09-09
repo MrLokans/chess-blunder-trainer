@@ -72,9 +72,7 @@ class TestAuthServiceAcceptsArbitraryProviderNames:
             invite_policy=OpenSignup(),
         )
         # Seed a user the custom provider will resolve to.
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         identity = Identity(
             id=make_identity_id(),
             user_id=user.id,

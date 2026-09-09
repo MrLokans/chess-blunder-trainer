@@ -8,8 +8,8 @@ handlers — by passing a custom :class:`ErrorCodec` to the factory.
 
 from __future__ import annotations
 
-from http import HTTPStatus
 from datetime import timedelta
+from http import HTTPStatus
 from pathlib import Path
 
 import httpx
@@ -77,7 +77,7 @@ class TestDefaultErrorCodec:
     async def test_duplicate_username_maps_to_409_username_taken(
         self, service: AuthService, tmp_path: Path
     ):
-        await service.register(username=Username("alice"), password="password123")
+        await service.signup(username=Username("alice"), password="password123")
         app = _make_app(service)
         async with httpx.AsyncClient(
             transport=ASGITransport(app=app), base_url="http://testserver"
@@ -105,7 +105,7 @@ class TestCustomErrorCodec:
                     return 422, "duplicate_login"
                 return DefaultErrorCodec().to_http(exc)
 
-        await service.register(username=Username("alice"), password="password123")
+        await service.signup(username=Username("alice"), password="password123")
         app = _make_app(service, error_codec=_Custom422Codec())
         async with httpx.AsyncClient(
             transport=ASGITransport(app=app), base_url="http://testserver"

@@ -44,7 +44,7 @@ InviteCode = NewType("InviteCode", str)
 ProviderName = NewType("ProviderName", str)
 
 # Canonical name for the built-in :class:`CredentialsProvider`. Auth
-# core wiring (``AuthService.register``/``signup``) hard-codes this
+# core wiring (``AuthService.signup``) hard-codes this
 # because credentials is the only provider whose registration flow
 # the service layer owns; OAuth/SAML providers live in consumer code
 # and mint their own ``ProviderName`` values via the same constructor.

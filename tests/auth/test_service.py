@@ -20,9 +20,9 @@ from blunder_tutor.auth import (
 from tests.helpers.auth import build_test_auth_service
 
 
-class TestRegister:
+class TestSignup:
     async def test_happy_path(self, service: AuthService):
-        user = await service.register(
+        user = await service.signup(
             username=Username("alice"),
             password="password123",
             email=Email("alice@example.com"),
@@ -32,46 +32,40 @@ class TestRegister:
         assert await service.user_count() == 1
 
     async def test_without_email(self, service: AuthService):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         assert user.email is None
 
     async def test_creates_credentials_identity(self, service: AuthService):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         identities = await service.identities_for(user.id)
         assert len(identities) == 1
         assert identities[0].provider == "credentials"
         assert identities[0].provider_subject == "alice"
         assert identities[0].credential is not None
 
-    async def test_register_is_atomic_on_dup(self, service: AuthService):
-        """Register runs in a single transaction: if the second call fails
+    async def test_signup_is_atomic_on_dup(self, service: AuthService):
+        """Signup runs in a single transaction: if the second call fails
         on the uniqueness constraint, no orphaned user row or identity row
         is left behind and user_count stays at 1."""
-        first = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        first = await service.signup(username=Username("alice"), password="password123")
         with pytest.raises(DuplicateUsernameError):
-            await service.register(username=Username("alice"), password="another123")
+            await service.signup(username=Username("alice"), password="another123")
         assert await service.user_count() == 1
         assert len(await service.identities_for(first.id)) == 1
 
     async def test_duplicate_username_raises(self, service: AuthService):
-        await service.register(username=Username("alice"), password="password123")
+        await service.signup(username=Username("alice"), password="password123")
         with pytest.raises(DuplicateUsernameError):
-            await service.register(username=Username("alice"), password="another123")
+            await service.signup(username=Username("alice"), password="another123")
 
     async def test_duplicate_email_raises(self, service: AuthService):
-        await service.register(
+        await service.signup(
             username=Username("alice"),
             password="password123",
             email=Email("alice@example.com"),
         )
         with pytest.raises(DuplicateEmailError):
-            await service.register(
+            await service.signup(
                 username=Username("bob"),
                 password="password123",
                 email=Email("alice@example.com"),
@@ -79,12 +73,12 @@ class TestRegister:
 
     async def test_password_too_short_raises(self, service: AuthService):
         with pytest.raises(InvalidPasswordError):
-            await service.register(username=Username("alice"), password="short")
+            await service.signup(username=Username("alice"), password="short")
 
 
 class TestAuthenticate:
     async def test_valid_credentials(self, service: AuthService):
-        registered = await service.register(
+        registered = await service.signup(
             username=Username("alice"), password="password123"
         )
         user = await service.authenticate(
@@ -94,7 +88,7 @@ class TestAuthenticate:
         assert user.id == registered.id
 
     async def test_wrong_password(self, service: AuthService):
-        await service.register(username=Username("alice"), password="password123")
+        await service.signup(username=Username("alice"), password="password123")
         assert (
             await service.authenticate(
                 "credentials",
@@ -112,7 +106,7 @@ class TestAuthenticate:
 
 class TestGetUser:
     async def test_by_id(self, service: AuthService):
-        registered = await service.register(
+        registered = await service.signup(
             username=Username("alice"), password="password123"
         )
         fetched = await service.get_user(registered.id)
@@ -122,9 +116,7 @@ class TestGetUser:
 
 class TestDeleteAccount:
     async def test_removes_user_row_identities_sessions(self, service: AuthService):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         session = await service.create_session(
             user_id=user.id, user_agent="ua", ip="127.0.0.1"
         )
@@ -136,9 +128,7 @@ class TestDeleteAccount:
         assert await service.resolve_session(session.token, None) is None
 
     async def test_removes_user_db_dir(self, service: AuthService, tmp_path: Path):
-        user = await service.register(
-            username=Username("alice"), password="password123"
-        )
+        user = await service.signup(username=Username("alice"), password="password123")
         user_dir = tmp_path / "users" / user.id
         user_dir.mkdir(parents=True, exist_ok=True)
         (user_dir / "main.sqlite3").touch()
@@ -221,10 +211,13 @@ class TestSignupWithHmacInvite:
             await service.signup(username=Username("alice"), password="password123")
 
     async def test_subsequent_signup_does_not_need_invite(self, hmac_service) -> None:
-        service, _storage = hmac_service
-        # First user via register() bypasses the invite gate (models a
-        # SaaS install where bootstrapping is done out-of-band).
-        await service.register(username=Username("alice"), password="password123")
+        service, storage = hmac_service
+        await storage.setup.put("invite_code", "stored.invite")
+        await service.signup(
+            username=Username("alice"),
+            password="password123",
+            invite_code="stored.invite",
+        )
         # Second user signs up without an invite — first-user gate has
         # already passed so HmacInvitePolicy lets it through.
         bob = await service.signup(

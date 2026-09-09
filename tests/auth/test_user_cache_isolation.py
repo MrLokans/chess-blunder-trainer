@@ -86,8 +86,8 @@ async def two_user_app(auth_db: AuthDb, tmp_path: Path):
         session_idle=timedelta(days=1),
     )
 
-    user_a = await service.register(username=Username("alice"), password="password123")
-    user_b = await service.register(username=Username("bob"), password="password123")
+    user_a = await service.signup(username=Username("alice"), password="password123")
+    user_b = await service.signup(username=Username("bob"), password="password123")
 
     # Alice completes setup in her own DB; Bob leaves his DB in default
     # (not-setup) state. run_migrations already ran during register() so
