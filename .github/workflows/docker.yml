@@ -63,7 +63,7 @@ jobs:
           build-args: |
             VERSION=${{ github.ref_name }}
             COMMIT=${{ github.sha }}
-            STOCKFISH_VERSION=sf_17
+            STOCKFISH_VERSION=sf_19
           cache-from: |
             type=gha
             type=registry,ref=${{ steps.image.outputs.name }}:buildcache
@@ -127,7 +127,7 @@ jobs:
           build-args: |
             VERSION=${{ github.ref_name }}
             COMMIT=${{ github.sha }}
-            STOCKFISH_VERSION=sf_17
+            STOCKFISH_VERSION=sf_19
           cache-from: |
             type=gha
             type=registry,ref=${{ steps.image.outputs.name }}:buildcache

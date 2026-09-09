@@ -1,5 +1,9 @@
 # Vendored Stockfish WASM Engine
 
+The backend Docker image uses Stockfish 19. This browser engine remains on
+Stockfish 18 because `nmrugg/stockfish.js` has not released a Stockfish 19
+WASM distribution yet.
+
 ## Source
 
 - **Upstream**: [nmrugg/stockfish.js](https://github.com/nmrugg/stockfish.js)
