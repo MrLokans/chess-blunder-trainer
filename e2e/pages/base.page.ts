@@ -13,7 +13,10 @@ export abstract class BasePage {
   }
 
   async clickNavLink(name: string): Promise<void> {
-    await this.nav.getByRole('link', { name }).click();
+    await expect(this.nav).toBeVisible();
+    const link = this.nav.getByRole('link', { name });
+    await expect(link).toBeVisible();
+    await link.click();
     await this.page.waitForLoadState('networkidle');
   }
 

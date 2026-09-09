@@ -113,13 +113,17 @@ test.describe('SRS Blunder Inbox', () => {
     });
 
     await test.step('Banner appears; start review session', async () => {
+      const srsStatusResp = page.waitForResponse('**/api/srs/status');
       await trainerPage.goto();
+      await srsStatusResp;
       await expect(page.getByTestId('srs-review-banner')).toBeVisible();
       await expect(page.locator('#srsNavBadge')).toHaveText('1');
       const nextResponse = page.waitForResponse('**/api/srs/next');
       await page.getByTestId('srs-start-review').click();
       await nextResponse;
-      await expect(page.getByTestId('srs-session-progress')).toHaveText('0 / 1');
+      await page.waitForLoadState('networkidle');
+      await expect(page.getByTestId('srs-session-progress')).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByTestId('srs-session-progress')).toHaveText('0 / 1', { timeout: 15_000 });
     });
 
     await test.step('Solve the review, reach inbox zero', async () => {

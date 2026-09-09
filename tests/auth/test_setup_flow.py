@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from http import HTTPStatus
 import asyncio
+from http import HTTPStatus
 
 import httpx
 
@@ -153,21 +153,25 @@ class TestDeleteAccount:
         r = await _signup(client_credentials_mode, invite_code)
         user_id = r.json()["id"]
 
-        # Warm the per-user caches by hitting a page that exercises
-        # SetupCheckMiddleware + LocaleMiddleware.
-        await client_credentials_mode.get("/api/auth/me")
-
-        setup_cache = credentials_app.state.setup_completed_cache
-        locale_cache = credentials_app.state.locale_cache
-        # No assertion on pre-state — the caches may or may not have the
-        # entry depending on whether any middleware path populated them
-        # for this endpoint. The guarantee we care about is post-delete.
+        # Seed every cache the delete hook is responsible for, rather than
+        # warming them through a request: which middleware populates which
+        # cache for a given endpoint is incidental, and relying on it made
+        # the post-delete assertions pass vacuously when nothing had been
+        # cached in the first place.
+        seeded = [
+            ("setup_completed", credentials_app.state.setup_completed_cache, True),
+            ("locale", credentials_app.state.locale_cache, "en"),
+            ("features", credentials_app.state.features_cache, {"srs": True}),
+        ]
+        for name, cache, value in seeded:
+            cache.set(user_id, value)
+            assert cache.get(user_id) is not None, f"failed to seed {name} cache"
 
         r = await client_credentials_mode.delete("/api/auth/account")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
-        assert setup_cache.get(user_id) is None
-        assert locale_cache.get(user_id) is None
+        for name, cache, _ in seeded:
+            assert cache.get(user_id) is None, f"{name} cache still holds deleted user"
 
 
 class TestSignupAtomicity:

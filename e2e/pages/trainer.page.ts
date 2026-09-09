@@ -120,6 +120,7 @@ export class TrainerPage extends BasePage {
   async openVimMode(): Promise<void> {
     await this.page.keyboard.press(':');
     await expect(this.vimInput).toHaveClass(/active/);
+    await expect(this.vimInputField).toBeVisible();
   }
 
   async typeVimMove(san: string): Promise<void> {

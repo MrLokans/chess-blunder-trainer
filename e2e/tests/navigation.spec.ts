@@ -36,14 +36,12 @@ test.describe('Navigation', () => {
     });
 
     await test.step('Navigate to settings via nav', async () => {
-      const settingsLink = page.locator('#mainNav').getByRole('link', { name: 'Settings' });
-      await settingsLink.click();
+      await trainerPage.clickNavLink('Settings');
       await page.waitForURL('**/settings');
     });
 
     await test.step('Navigate back to trainer', async () => {
-      const trainerLink = page.locator('#mainNav').getByRole('link', { name: 'Trainer' });
-      await trainerLink.click();
+      await page.locator('#mainNav a[href="/"]').click();
       await page.waitForURL(/\/$/);
     });
   });

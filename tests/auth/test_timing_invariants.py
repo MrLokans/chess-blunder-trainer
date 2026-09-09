@@ -9,7 +9,10 @@ from blunder_tutor.auth import (
     AuthService,
     BcryptHasher,
     CredentialsProvider,
+    Identity,
     IdentityRepository,
+    PasswordHash,
+    ProviderName,
     Username,
     ValidationRules,
 )
@@ -24,13 +27,43 @@ def service(service_factory) -> AuthService:
     )
 
 
-def _make_provider(auth_db: AuthDb) -> CredentialsProvider:
+class _RecordingIdentityRepo(IdentityRepository):
+    def __init__(self, db: AuthDb) -> None:
+        super().__init__(db)
+        self.lookups: list[tuple[str, str]] = []
+
+    async def get_by_provider_subject(
+        self, provider: ProviderName, provider_subject: str
+    ) -> Identity | None:
+        self.lookups.append((provider, provider_subject))
+        return await super().get_by_provider_subject(provider, provider_subject)
+
+
+class _RecordingHasher(BcryptHasher):
+    def __init__(self, rules: ValidationRules) -> None:
+        super().__init__(rules, cost=TEST_BCRYPT_COST)
+        self.verifications: list[str] = []
+
+    def verify(self, raw: str, hashed: PasswordHash) -> bool:
+        self.verifications.append(hashed[:10])
+        return super().verify(raw, hashed)
+
+
+def _make_recording_provider(
+    auth_db: AuthDb,
+) -> tuple[CredentialsProvider, _RecordingIdentityRepo, _RecordingHasher]:
+    """Build a provider whose collaborators count their own calls.
+
+    Injected through the constructor rather than monkeypatched onto a
+    live provider: the counters are then part of the object graph under
+    test, so no test can accidentally assert against an un-instrumented
+    provider.
+    """
     rules = ValidationRules.default()
-    return CredentialsProvider(
-        identities=IdentityRepository(db=auth_db),
-        hasher=BcryptHasher(rules, cost=TEST_BCRYPT_COST),
-        rules=rules,
-    )
+    identities = _RecordingIdentityRepo(auth_db)
+    hasher = _RecordingHasher(rules)
+    provider = CredentialsProvider(identities=identities, hasher=hasher, rules=rules)
+    return provider, identities, hasher
 
 
 class TestTimingInvariants:
@@ -42,29 +75,10 @@ class TestTimingInvariants:
     """
 
     async def test_all_failing_paths_run_one_db_query_and_one_bcrypt(
-        self, service: AuthService, auth_db: AuthDb, monkeypatch
+        self, service: AuthService, auth_db: AuthDb
     ):
         await service.register(username=Username("alice"), password="password123")
-
-        provider = _make_provider(auth_db)
-
-        db_calls: list[tuple[str, str]] = []
-        orig_lookup = provider._identities.get_by_provider_subject
-
-        async def spy_lookup(provider_name, subject):
-            db_calls.append((provider_name, subject))
-            return await orig_lookup(provider_name, subject)
-
-        monkeypatch.setattr(provider._identities, "get_by_provider_subject", spy_lookup)
-
-        verify_calls: list[str] = []
-        orig_verify = provider._hasher.verify
-
-        def spy_verify(raw, hashed):
-            verify_calls.append(hashed[:10])
-            return orig_verify(raw, hashed)
-
-        monkeypatch.setattr(provider._hasher, "verify", spy_verify)
+        provider, identities, hasher = _make_recording_provider(auth_db)
 
         # Case 1: malformed username (shape rejected)
         r = await provider.authenticate(
@@ -82,8 +96,8 @@ class TestTimingInvariants:
         )
         assert r is None
 
-        assert len(db_calls) == 3, db_calls
-        assert len(verify_calls) == 3, verify_calls
+        assert len(identities.lookups) == 3, identities.lookups
+        assert len(hasher.verifications) == 3, hasher.verifications
 
         # Case 4: empty creds short-circuit BEFORE DB or bcrypt — not a
         # timing leak for enumeration (attacker gains nothing by
@@ -92,37 +106,18 @@ class TestTimingInvariants:
         # explicit.
         r = await provider.authenticate({"username": "", "password": ""})
         assert r is None
-        assert len(db_calls) == 3
-        assert len(verify_calls) == 3
+        assert len(identities.lookups) == 3
+        assert len(hasher.verifications) == 3
 
     async def test_success_path_also_runs_one_db_query_and_one_bcrypt(
-        self, service: AuthService, auth_db: AuthDb, monkeypatch
+        self, service: AuthService, auth_db: AuthDb
     ):
         await service.register(username=Username("alice"), password="password123")
-
-        provider = _make_provider(auth_db)
-
-        db_calls: list[tuple[str, str]] = []
-        orig_lookup = provider._identities.get_by_provider_subject
-
-        async def spy_lookup(provider_name, subject):
-            db_calls.append((provider_name, subject))
-            return await orig_lookup(provider_name, subject)
-
-        monkeypatch.setattr(provider._identities, "get_by_provider_subject", spy_lookup)
-
-        verify_calls: list[str] = []
-        orig_verify = provider._hasher.verify
-
-        def spy_verify(raw, hashed):
-            verify_calls.append(hashed[:10])
-            return orig_verify(raw, hashed)
-
-        monkeypatch.setattr(provider._hasher, "verify", spy_verify)
+        provider, identities, hasher = _make_recording_provider(auth_db)
 
         r = await provider.authenticate(
             {"username": "alice", "password": "password123"}
         )
         assert r is not None
-        assert len(db_calls) == 1
-        assert len(verify_calls) == 1
+        assert len(identities.lookups) == 1
+        assert len(hasher.verifications) == 1
