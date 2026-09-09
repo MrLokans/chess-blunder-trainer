@@ -600,7 +600,6 @@
   "trainer.color.playing_as_black": "执黑",
   "trainer.color.playing_as_white": "执白",
   "trainer.debug.copied": "已复制！",
-  "trainer.debug.copy": "调试",
   "trainer.debug.copy_title": "复制游戏调试信息到剪贴板",
   "trainer.details.explanation": "为什么这是一步严重失误",
   "trainer.details.tactical": "战术详情",

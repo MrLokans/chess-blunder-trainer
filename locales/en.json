@@ -600,7 +600,6 @@
   "trainer.color.playing_as_black": "Playing as Black",
   "trainer.color.playing_as_white": "Playing as White",
   "trainer.debug.copied": "Copied!",
-  "trainer.debug.copy": "Debug",
   "trainer.debug.copy_title": "Copy game debug info to clipboard",
   "trainer.details.explanation": "Why This Was a Blunder",
   "trainer.details.tactical": "Tactical Details",

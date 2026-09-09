@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, waitFor } from '@testing-library/preact';
+import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
 
 const { mockChessground } = vi.hoisted(() => {
   const mockCg = {
@@ -86,6 +86,20 @@ describe('TrainerApp', () => {
     render(<TrainerApp />);
     await waitFor(() => {
       expect(client.trainer.getPuzzle).toHaveBeenCalled();
+    });
+  });
+
+  it('opens shortcuts from the toolbar, not the action keys', async () => {
+    const { container } = render(<TrainerApp />);
+
+    const shortcutButton = await screen.findByRole('button', { name: 'trainer.shortcuts.title' });
+    fireEvent.click(shortcutButton);
+
+    expect(shortcutButton.className).toContain('btn-ghost');
+    expect(container.querySelector('.panel-toolbar')).not.toBeNull();
+    expect([...container.querySelectorAll('.action-keys kbd')].map((key) => key.textContent)).not.toContain('?');
+    await waitFor(() => {
+      expect(document.querySelector('#shortcutsOverlay')).not.toBeNull();
     });
   });
 });

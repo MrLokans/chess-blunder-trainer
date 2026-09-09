@@ -600,7 +600,6 @@
   "trainer.color.playing_as_black": "Jugando con negras",
   "trainer.color.playing_as_white": "Jugando con blancas",
   "trainer.debug.copied": "¡Copiado!",
-  "trainer.debug.copy": "Depurar",
   "trainer.debug.copy_title": "Copiar información de depuración al portapapeles",
   "trainer.details.explanation": "Por qué fue un error grave",
   "trainer.details.tactical": "Detalles tácticos",

@@ -447,24 +447,26 @@ function TrainerCore(): preact.JSX.Element {
           {srsEnabled && !inReview && (
             <ReviewBanner dueCount={reviewQueue.dueCount} onStart={handleStartReview} />
           )}
-          <PuzzleTools
-            puzzle={state.puzzle}
-            starred={state.currentStarred}
-            onStarredChange={(starred: boolean) => { dispatch({ type: 'SET_STARRED', starred }); }}
-          />
-          <MoveActions
-            hasPuzzle={!!state.puzzle}
-            submitted={state.submitted}
-            bestRevealed={state.bestRevealed}
-            submitting={submitting}
-            hasMove={hasMove}
-            onSubmit={() => { void handleSubmit(); }}
-            onReset={handleReset}
-            onReveal={handleReveal}
-            onNext={handleNext}
-            onUndo={handleUndo}
-            onShowShortcuts={() => { dispatch({ type: 'TOGGLE_SHORTCUTS' }); }}
-          />
+          <div class="panel-section panel-actions">
+            <MoveActions
+              hasPuzzle={!!state.puzzle}
+              submitted={state.submitted}
+              bestRevealed={state.bestRevealed}
+              submitting={submitting}
+              hasMove={hasMove}
+              onSubmit={() => { void handleSubmit(); }}
+              onReset={handleReset}
+              onReveal={handleReveal}
+              onNext={handleNext}
+              onUndo={handleUndo}
+            />
+            <PuzzleTools
+              puzzle={state.puzzle}
+              starred={state.currentStarred}
+              onStarredChange={(starred: boolean) => { dispatch({ type: 'SET_STARRED', starred }); }}
+              onShowShortcuts={() => { dispatch({ type: 'TOGGLE_SHORTCUTS' }); }}
+            />
+          </div>
           {!inReview && <FiltersPanel filters={filtersApi} />}
         </div>
       </div>

@@ -9,42 +9,35 @@ interface MoveActionsProps {
   onReveal: () => void;
   onNext: () => void;
   onUndo: () => void;
-  onShowShortcuts: () => void;
 }
 
 export function MoveActions({
   hasPuzzle, submitted, bestRevealed, submitting, hasMove,
-  onSubmit, onReset, onReveal, onNext, onUndo: _onUndo, onShowShortcuts,
+  onSubmit, onReset, onReveal, onNext, onUndo: _onUndo,
 }: MoveActionsProps): preact.JSX.Element | null {
   if (!hasPuzzle) return null;
 
   return (
-    <div class="panel-section">
-      <div class="action-keys">
-        {!submitted && !bestRevealed && hasMove && (
-          <button class={`action-key ${submitting ? 'submitting' : ''}`} id="submitBtn" onClick={onSubmit} disabled={submitting}>
-            <kbd>Enter</kbd><span class="action-label">{t('trainer.shortcuts.submit')}</span>
-          </button>
-        )}
-
-        <button class="action-key" id="resetBtn" onClick={onReset}>
-          <kbd>R</kbd><span class="action-label">{t('trainer.shortcuts.reset')}</span>
+    <div class="action-keys">
+      {!submitted && !bestRevealed && hasMove && (
+        <button class={`action-key ${submitting ? 'submitting' : ''}`} id="submitBtn" onClick={onSubmit} disabled={submitting} aria-label={t('trainer.shortcuts.submit')} title={t('trainer.shortcuts.submit')}>
+          <kbd>Enter</kbd>
         </button>
+      )}
 
-        {!bestRevealed && (
-          <button class="action-key" id="showBestBtn" onClick={onReveal} disabled={submitting}>
-            <kbd>B</kbd><span class="action-label">{t('trainer.shortcuts.show_best')}</span>
-          </button>
-        )}
+      <button class="action-key" id="resetBtn" onClick={onReset} aria-label={t('trainer.shortcuts.reset')} title={t('trainer.shortcuts.reset')}>
+        <kbd>R</kbd>
+      </button>
 
-        <button class="action-key" id="nextBtn" onClick={onNext}>
-          <kbd>N</kbd><span class="action-label">{t('trainer.shortcuts.next')}</span>
+      {!bestRevealed && (
+        <button class="action-key" id="showBestBtn" onClick={onReveal} disabled={submitting} aria-label={t('trainer.shortcuts.show_best')} title={t('trainer.shortcuts.show_best')}>
+          <kbd>B</kbd>
         </button>
+      )}
 
-        <button class="action-key action-key-muted" id="shortcutsHintBtn" onClick={onShowShortcuts} title="Keyboard shortcuts (?)">
-          <kbd>?</kbd><span class="action-label">{t('trainer.shortcuts.title')}</span>
-        </button>
-      </div>
+      <button class="action-key" id="nextBtn" onClick={onNext} aria-label={t('trainer.shortcuts.next')} title={t('trainer.shortcuts.next')}>
+        <kbd>N</kbd>
+      </button>
     </div>
   );
 }

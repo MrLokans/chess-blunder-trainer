@@ -600,7 +600,6 @@
   "trainer.color.playing_as_black": "Играете чёрными",
   "trainer.color.playing_as_white": "Играете белыми",
   "trainer.debug.copied": "Скопировано!",
-  "trainer.debug.copy": "Отладка",
   "trainer.debug.copy_title": "Скопировать отладочную информацию в буфер обмена",
   "trainer.details.explanation": "Почему это был зевок",
   "trainer.details.tactical": "Тактические детали",

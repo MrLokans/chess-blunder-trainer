@@ -600,7 +600,6 @@
   "trainer.color.playing_as_black": "Граєте чорними",
   "trainer.color.playing_as_white": "Граєте білими",
   "trainer.debug.copied": "Скопійовано!",
-  "trainer.debug.copy": "Відладка",
   "trainer.debug.copy_title": "Скопіювати відлагоджувальну інформацію до буфера обміну",
   "trainer.details.explanation": "Чому це був промах",
   "trainer.details.tactical": "Тактичні деталі",
