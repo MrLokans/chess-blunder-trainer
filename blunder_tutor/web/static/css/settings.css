@@ -42,7 +42,7 @@
   .checkbox-label input[type="radio"],
   .feature-toggle-row input[type="checkbox"] {
     width: auto;
-    accent-color: light-dark(var(--black), var(--text));
+    accent-color: var(--control-accent);
   }
 
   .theme-colors {

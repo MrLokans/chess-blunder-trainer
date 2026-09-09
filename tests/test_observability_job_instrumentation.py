@@ -7,6 +7,7 @@ attributes (set_tag / set_data), never as metric tags. Verified explicitly.
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -99,13 +100,11 @@ class TestJobInstrumentation:
         status to "error" before the cancellation propagates — without it
         the metric would silently miscount cancellations as "ok".
         """
-        import asyncio as _asyncio
-
-        runner = AsyncMock(side_effect=_asyncio.CancelledError())
+        runner = AsyncMock(side_effect=asyncio.CancelledError())
         _install_runner(monkeypatch, runner)
         executor = _make_executor(tmp_path / "user.sqlite")
 
-        with pytest.raises(_asyncio.CancelledError):
+        with pytest.raises(asyncio.CancelledError):
             await executor._execute_job(
                 job_id="job-789",
                 job_type=_TEST_JOB_KIND,

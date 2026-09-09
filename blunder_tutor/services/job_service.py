@@ -207,9 +207,7 @@ class JobService:
         return await self.job_repository.delete_job(job_id)
 
     async def _publish_completion_fanout(self, job: dict[str, object]) -> None:
-        # Imported in-function, not at module top: core.dependencies
-        # imports JobService, so a top-level import would be circular.
-        from blunder_tutor.core.dependencies import get_context
+        from blunder_tutor.core.dependencies import get_context  # noqa: PLC0415, I001 — core.dependencies imports JobService.
 
         scope = user_scope(get_context())
         await self.event_bus.publish(StatsEvent.create_stats_updated(scope=scope))

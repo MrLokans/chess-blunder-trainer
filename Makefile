@@ -32,7 +32,7 @@ FORCE :=
 .PHONY: help install install-dev cli clean
 .PHONY: fetch-lichess fetch-chesscom list show index
 .PHONY: analyze analyze-bulk train-ui
-.PHONY: format lint lint/be lint/be-wps lint/fe check test test/be test/fe typecheck/fe build/fe download-pieces migrate
+.PHONY: format lint lint/be lint/be-wps lint/fe lint/hooks lint/imports check test test/be test/fe typecheck/fe build/fe download-pieces migrate
 .PHONY: docker/build docker/run docker/stop
 .PHONY: landing
 .PHONY: db/backup db/restore db/rm
@@ -113,13 +113,16 @@ migrate: ## Run database migrations
 	$(UV) run blunder-tutor-db
 
 # Code quality
-lint: lint/be lint/be-wps lint/fe lint/e2e lint/i18n ## Lint all code
+lint: lint/be lint/be-wps lint/fe lint/e2e lint/i18n lint/hooks lint/imports ## Lint all code
 
 lint/be: ## Lint Python with ruff
 	$(UV) run ruff check blunder_tutor/ main.py
 
 lint/be-wps: ## Lint Python with wemake-python-styleguide
 	$(UV) run flake8 --select=WPS blunder_tutor/ main.py tests/
+
+lint/imports: ## Enforce top-level Python imports
+	$(UV) run ruff check --select PLC0415 blunder_tutor/ main.py tests/
 
 lint/fe: ## Lint TypeScript with ESLint + CSS with stylelint
 	npm run lint
@@ -130,6 +133,9 @@ lint/e2e: ## Lint E2E tests with ESLint
 
 lint/i18n: ## Lint i18n locale files + key references (strict by default — matches CI; LINT_I18N_LENIENT=1 demotes warnings)
 	$(UV) run python scripts/lint_i18n.py $(if $(LINT_I18N_LENIENT),,--strict)
+
+lint/hooks: ## Test agent hooks
+	sh scripts/hooks/tests/frontend_guard.test.sh
 
 typecheck/e2e: ## Run TypeScript type checking on E2E tests
 	cd e2e && npm run typecheck

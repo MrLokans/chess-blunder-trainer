@@ -32,6 +32,9 @@ jobs:
       - name: Run ruff format check
         run: uv run ruff format --check blunder_tutor/
 
+      - name: Enforce top-level imports
+        run: uv run ruff check --select PLC0415 blunder_tutor/ main.py tests/
+
       - name: Run wemake-python-styleguide
         # Merge-blocking. Baseline reached zero violations in TREK-79
         # (WPS Phase 6); the EPIC-4 plan progressed Phase 1 (warn-only)

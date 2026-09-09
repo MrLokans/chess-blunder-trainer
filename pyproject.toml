@@ -75,6 +75,7 @@ select = [
   "SIM", # flake8-simplify
   "DTZ", # flake8-datetimez — forbids `datetime.utcnow()` and naive `datetime.now()`; route timestamps through `blunder_tutor.utils.time` instead.
   "PLW0603", # discourage `global` — WPS420 is silenced for pass/nonlocal noise; PLW0603 keeps a finer rule live for `global` introductions.
+  "PLC0415", # import-outside-top-level — WPS433 does not fire.
 ]
 ignore = [
   "E501", # line too long (handled by formatter)

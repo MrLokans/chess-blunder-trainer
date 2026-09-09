@@ -1,0 +1,1 @@
+{"tool_input":{"file_path":"/repo/frontend/src/foo.ts","content":"try { work(); } catch (err: any) {}"}}

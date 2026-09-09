@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import chess
 import chess.pgn
 
@@ -62,8 +64,6 @@ def make_mock_game(
     n_moves: int = 10,
     headers: dict[str, str] | None = None,
 ) -> chess.pgn.Game:
-    from unittest.mock import MagicMock
-
     mock_game = MagicMock(spec=chess.pgn.Game)
     mock_game.headers = headers or {}
     mock_game.board.side_effect = lambda: chess.Board()

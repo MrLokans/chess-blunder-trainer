@@ -1,0 +1,1 @@
+{"tool_input":{"file_path":"/repo/blunder_tutor/x.py","content":"try { work(); } catch (err: any) {}"}}
