@@ -19,7 +19,8 @@ COLLAPSE_BUCKET_SIZE = 5
 COLLAPSE_MAX_BUCKET_START = 41
 
 type _AggregationResult = tuple[int, list[dict[str, object]]]
-type _EcoStats = list[tuple[tuple[str, str], dict[str, object]]]
+type _EcoItem = tuple[tuple[str, str], dict[str, object]]
+type _EcoStats = list[_EcoItem]
 type _BucketLossMap = dict[tuple[str, object], list[int]]
 
 
@@ -809,7 +810,7 @@ def _aggregate_eco_rows(rows: list[dict[str, object]], limit: int) -> _EcoStats:
     return sorted_items[:limit]
 
 
-def _eco_rate_key(item: tuple[tuple[str, str], dict[str, object]]) -> tuple[float, int]:
+def _eco_rate_key(item: _EcoItem) -> tuple[float, int]:
     stats = item[1]
     game_count = len(stats["game_ids"])
     return (stats["count"] / game_count if game_count else -1, stats["count"])
@@ -821,20 +822,25 @@ def _eco_entry(
     stats: dict[str, object],
     total: int,
 ) -> dict[str, object]:
+    return {"eco_code": eco_code, "eco_name": eco_name, **_eco_metrics(stats, total)}
+
+
+def _eco_metrics(stats: dict[str, object], total: int) -> dict[str, object]:
     count = stats["count"]
-    avg_cp_loss = stats["total_cp_loss"] / count if count > 0 else 0.0
-    percentage = (count / total * 100) if total > 0 else 0.0
+    game_count = len(stats["game_ids"])
     return {
-        "eco_code": eco_code,
-        "eco_name": eco_name,
         "count": count,
-        "percentage": round(percentage, 1),
-        "avg_cp_loss": round(float(avg_cp_loss), 1),
-        "game_count": len(stats["game_ids"]),
-        "blunders_per_game": round(count / len(stats["game_ids"]), 2)
-        if stats["game_ids"]
-        else None,
+        "percentage": _safe_pct(count, total),
+        "avg_cp_loss": round(float(stats["total_cp_loss"] / count), 1)
+        if count
+        else 0.0,
+        "game_count": game_count,
+        "blunders_per_game": _per_game_rate(count, game_count),
     }
+
+
+def _per_game_rate(count: int, game_count: int) -> float | None:
+    return round(count / game_count, 2) if game_count else None
 
 
 def _pattern_entry(row: dict[str, object], total: int) -> dict[str, object]:

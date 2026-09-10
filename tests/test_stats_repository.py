@@ -55,7 +55,7 @@ async def _seed_blunder_game(
 class TestGetGameBreakdown:
     async def test_empty(self, stats_repo):
         result = await stats_repo.get_game_breakdown()
-        assert result == []
+        assert not result
 
     async def test_with_data(self, stats_repo):
         await insert_test_game(stats_repo, "g1", "alice", "alice", "bob")
@@ -119,7 +119,7 @@ class TestGetBlundersByPhase:
     async def test_empty(self, stats_repo):
         result = await stats_repo.get_blunders_by_phase()
         assert result["total_blunders"] == 0
-        assert result["by_phase"] == []
+        assert not result["by_phase"]
 
     async def test_with_phases(self, stats_repo):
         await _seed_blunder_game(stats_repo, game_id="g1", game_phase=0, cp_loss=200)
@@ -219,7 +219,7 @@ class TestGetBlundersByGameType:
 class TestGetRecentActivity:
     async def test_empty(self, stats_repo):
         result = await stats_repo.get_recent_activity()
-        assert result == []
+        assert not result
 
     async def test_with_jobs(self, stats_repo, job_repo):
         job_id = await job_repo.create_job(
@@ -235,7 +235,7 @@ class TestGetBlundersByEco:
     async def test_empty(self, stats_repo):
         result = await stats_repo.get_blunders_by_eco()
         assert result["total_blunders"] == 0
-        assert result["by_opening"] == []
+        assert not result["by_opening"]
 
     async def test_with_eco_data(self, stats_repo):
         await _seed_blunder_game(
@@ -263,7 +263,7 @@ class TestGetBlundersByEco:
 class TestGetGamesByDate:
     async def test_empty(self, stats_repo):
         result = await stats_repo.get_games_by_date()
-        assert result == []
+        assert not result
 
     async def test_with_data(self, stats_repo):
         await insert_test_game(
@@ -284,7 +284,7 @@ class TestGetGamesByDate:
 class TestGetGamesByHour:
     async def test_empty(self, stats_repo):
         result = await stats_repo.get_games_by_hour()
-        assert result == []
+        assert not result
 
     async def test_with_data(self, stats_repo):
         await insert_test_game(
