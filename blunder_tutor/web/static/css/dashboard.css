@@ -1,3 +1,18 @@
+  #dashboard-root {
+    --dashboard-positive: var(--color-dashboard-positive);
+    --dashboard-info: var(--color-dashboard-info);
+    --dashboard-caution: var(--color-dashboard-caution);
+    --dashboard-negative: var(--color-dashboard-negative);
+    --dashboard-tactic-fork: var(--color-dashboard-tactic-fork);
+    --dashboard-tactic-pin: var(--color-dashboard-tactic-pin);
+    --dashboard-tactic-skewer: var(--color-dashboard-tactic-skewer);
+    --dashboard-tactic-discovered: var(--color-dashboard-tactic-discovered);
+    --dashboard-tactic-hanging: var(--color-dashboard-tactic-hanging);
+    --dashboard-tactic-back-rank: var(--color-dashboard-tactic-back-rank);
+    --dashboard-tactic-trapped: var(--color-dashboard-tactic-trapped);
+    --dashboard-tactic-other: var(--color-dashboard-tactic-other);
+  }
+
   /* Dashboard-specific: chart canvas heights */
   .chart-canvas-container {
     position: relative;
@@ -104,13 +119,14 @@
   }
 
   /* Tactical bar segment colors */
-  .tactical-bar-segment.fork { background: var(--color-tactic-fork); }
-  .tactical-bar-segment.pin { background: var(--color-tactic-pin); }
-  .tactical-bar-segment.skewer { background: var(--color-tactic-skewer); }
-  .tactical-bar-segment.discovered { background: var(--color-tactic-discovered); }
-  .tactical-bar-segment.hanging { background: var(--color-tactic-hanging); }
-  .tactical-bar-segment.back_rank { background: var(--color-tactic-back-rank); }
-  .tactical-bar-segment.other { background: var(--color-tactic-other); }
+  .tactical-bar-segment.fork { background: var(--dashboard-tactic-fork); }
+  .tactical-bar-segment.pin { background: var(--dashboard-tactic-pin); }
+  .tactical-bar-segment.skewer { background: var(--dashboard-tactic-skewer); }
+  .tactical-bar-segment.discovered { background: var(--dashboard-tactic-discovered); }
+  .tactical-bar-segment.hanging { background: var(--dashboard-tactic-hanging); }
+  .tactical-bar-segment.back_rank { background: var(--dashboard-tactic-back-rank); }
+  .tactical-bar-segment.trapped { background: var(--dashboard-tactic-trapped); }
+  .tactical-bar-segment.other { background: var(--dashboard-tactic-other); }
 
   /* Difficulty bar segment colors */
   .difficulty-bar-segment.diff-easy { background: var(--color-diff-easy); }
@@ -158,13 +174,14 @@
   }
 
   /* Tactical legend colors */
-  .tactical-legend-color.fork { background: var(--color-tactic-fork); }
-  .tactical-legend-color.pin { background: var(--color-tactic-pin); }
-  .tactical-legend-color.skewer { background: var(--color-tactic-skewer); }
-  .tactical-legend-color.discovered { background: var(--color-tactic-discovered); }
-  .tactical-legend-color.hanging { background: var(--color-tactic-hanging); }
-  .tactical-legend-color.back_rank { background: var(--color-tactic-back-rank); }
-  .tactical-legend-color.other { background: var(--color-tactic-other); }
+  .tactical-legend-color.fork { background: var(--dashboard-tactic-fork); }
+  .tactical-legend-color.pin { background: var(--dashboard-tactic-pin); }
+  .tactical-legend-color.skewer { background: var(--dashboard-tactic-skewer); }
+  .tactical-legend-color.discovered { background: var(--dashboard-tactic-discovered); }
+  .tactical-legend-color.hanging { background: var(--dashboard-tactic-hanging); }
+  .tactical-legend-color.back_rank { background: var(--dashboard-tactic-back-rank); }
+  .tactical-legend-color.trapped { background: var(--dashboard-tactic-trapped); }
+  .tactical-legend-color.other { background: var(--dashboard-tactic-other); }
 
   /* Difficulty legend colors */
   .difficulty-legend-color.diff-easy { background: var(--color-diff-easy); }
@@ -237,21 +254,16 @@
   }
 
   /* Tactical card colors */
-  .tactical-card.fork { background: color-mix(in srgb, var(--color-tactic-fork) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-fork) 30%, transparent); }
-  .tactical-card.pin { background: color-mix(in srgb, var(--color-tactic-pin) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-pin) 30%, transparent); }
-  .tactical-card.skewer { background: color-mix(in srgb, var(--color-tactic-skewer) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-skewer) 30%, transparent); }
-  .tactical-card.discovered { background: color-mix(in srgb, var(--color-tactic-discovered) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-discovered) 30%, transparent); }
-  .tactical-card.hanging { background: color-mix(in srgb, var(--color-tactic-hanging) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-hanging) 30%, transparent); }
-  .tactical-card.back_rank { background: color-mix(in srgb, var(--color-tactic-back-rank) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-back-rank) 30%, transparent); }
-  .tactical-card.other { background: color-mix(in srgb, var(--color-tactic-other) 10%, transparent); border-color: color-mix(in srgb, var(--color-tactic-other) 30%, transparent); }
+  .tactical-card.fork { background: color-mix(in srgb, var(--dashboard-tactic-fork) 10%, transparent); border-color: var(--dashboard-tactic-fork); }
+  .tactical-card.pin { background: color-mix(in srgb, var(--dashboard-tactic-pin) 10%, transparent); border-color: var(--dashboard-tactic-pin); }
+  .tactical-card.skewer { background: color-mix(in srgb, var(--dashboard-tactic-skewer) 10%, transparent); border-color: var(--dashboard-tactic-skewer); }
+  .tactical-card.discovered { background: color-mix(in srgb, var(--dashboard-tactic-discovered) 10%, transparent); border-color: var(--dashboard-tactic-discovered); }
+  .tactical-card.hanging { background: color-mix(in srgb, var(--dashboard-tactic-hanging) 10%, transparent); border-color: var(--dashboard-tactic-hanging); }
+  .tactical-card.back_rank { background: color-mix(in srgb, var(--dashboard-tactic-back-rank) 10%, transparent); border-color: var(--dashboard-tactic-back-rank); }
+  .tactical-card.trapped { background: color-mix(in srgb, var(--dashboard-tactic-trapped) 10%, transparent); border-color: var(--dashboard-tactic-trapped); }
+  .tactical-card.other { background: color-mix(in srgb, var(--dashboard-tactic-other) 10%, transparent); border-color: var(--dashboard-tactic-other); }
 
-  .tactical-card.fork .tactical-name { color: var(--color-tactic-fork); }
-  .tactical-card.pin .tactical-name { color: var(--color-tactic-pin); }
-  .tactical-card.skewer .tactical-name { color: var(--color-tactic-skewer); }
-  .tactical-card.discovered .tactical-name { color: var(--color-tactic-discovered); }
-  .tactical-card.hanging .tactical-name { color: var(--color-tactic-hanging); }
-  .tactical-card.back_rank .tactical-name { color: var(--color-tactic-back-rank); }
-  .tactical-card.other .tactical-name { color: var(--color-tactic-other); }
+  .tactical-card .tactical-name { color: var(--text); }
 
   /* Difficulty card colors */
   .difficulty-card.diff-easy { background: color-mix(in srgb, var(--color-diff-easy) 10%, transparent); border-color: color-mix(in srgb, var(--color-diff-easy) 30%, transparent); }
@@ -708,20 +720,31 @@
   }
 
   .growth-trend {
-    flex: 0 0 24px;
-    font-size: 1.1rem;
+    flex: 0 0 100px;
+    font-size: 0.85rem;
     font-weight: 700;
     text-align: center;
   }
 
-  .growth-trend--improving { color: var(--success); }
+  .growth-trend-label { margin-left: var(--s-xs); }
+  .growth-trend--improving { color: var(--dashboard-positive); }
   .growth-trend--stable { color: var(--text-muted); }
-  .growth-trend--declining { color: var(--error); }
+  .growth-trend--declining { color: var(--dashboard-negative); }
 
-  .info-modal-definitions dt.cpl-excellent { color: var(--success); }
-  .info-modal-definitions dt.cpl-good { color: var(--success); }
-  .info-modal-definitions dt.cpl-average { color: var(--warning); }
-  .info-modal-definitions dt.cpl-high { color: var(--error); }
+  .dashboard-analysis-status {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    margin-top: var(--s-sm);
+  }
+
+  .dashboard-analysis-status--running { color: var(--dashboard-info); }
+  .dashboard-analysis-status--completed { color: var(--dashboard-positive); }
+  .dashboard-analysis-status--failed { color: var(--dashboard-negative); }
+
+  .info-modal-definitions dt.cpl-excellent,
+  .info-modal-definitions dt.cpl-good { color: var(--dashboard-positive); }
+  .info-modal-definitions dt.cpl-average { color: var(--dashboard-caution); }
+  .info-modal-definitions dt.cpl-high { color: var(--dashboard-negative); }
 
   .growth-insufficient {
     margin-top: 0.75rem;

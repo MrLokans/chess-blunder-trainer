@@ -2,6 +2,7 @@ import { describe, test, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import {
   PhaseBreakdown,
+  TacticalBreakdown,
   GameTypeBreakdown,
   CollapsePointBreakdown,
   EcoBreakdown,
@@ -45,6 +46,31 @@ describe('PhaseBreakdown', () => {
       />
     );
     expect(container.querySelectorAll('.phase-bar-segment').length).toBe(2);
+  });
+});
+
+describe('TacticalBreakdown', () => {
+  test('keeps trapped pieces separate from other tactics', () => {
+    const { container } = render(
+      <TacticalBreakdown
+        data={{
+          total_blunders: 2,
+          by_pattern: [
+            { pattern: 'Trapped Piece', count: 1, percentage: 50 },
+            { pattern: 'None', count: 1, percentage: 50 },
+          ],
+        }}
+      />
+    );
+
+    expect(container.querySelectorAll('.tactical-bar-segment.trapped')).toHaveLength(1);
+    expect(container.querySelectorAll('.tactical-bar-segment.other')).toHaveLength(1);
+    expect(container.querySelectorAll('.tactical-legend-color.trapped')).toHaveLength(1);
+    expect(container.querySelectorAll('.tactical-legend-color.other')).toHaveLength(1);
+    expect(container.querySelectorAll('.tactical-card.trapped')).toHaveLength(1);
+    expect(container.querySelectorAll('.tactical-card.other')).toHaveLength(1);
+    expect(screen.getAllByText(t('dashboard.tactical.trapped'))).toHaveLength(2);
+    expect(screen.getAllByText(t('dashboard.tactical.other'))).toHaveLength(2);
   });
 });
 
@@ -135,6 +161,37 @@ describe('CollapsePointBreakdown', () => {
     );
     expect(container.querySelectorAll('.collapse-bar-row').length).toBe(3);
     expect(container.querySelector('.collapse-big-number')).toBeDefined();
+  });
+
+  test('uses the median as the typical headline and labels the average', () => {
+    render(
+      <CollapsePointBreakdown
+        data={{
+          avg_collapse_move: 15,
+          median_collapse_move: 14,
+          total_games_with_blunders: 10,
+          total_games_without_blunders: 5,
+          distribution: [{ move_range: '1-5', count: 2 }],
+        }}
+      />
+    );
+    expect(screen.getByText(t('dashboard.collapse.median_move', { move: 14 }))).toBeDefined();
+    expect(screen.getByText(t('dashboard.collapse.avg_move', { move: 15 }))).toBeDefined();
+  });
+
+  test('shows no_data when the median is null', () => {
+    render(
+      <CollapsePointBreakdown
+        data={{
+          avg_collapse_move: 15,
+          median_collapse_move: null,
+          total_games_with_blunders: 10,
+          total_games_without_blunders: 5,
+          distribution: [],
+        }}
+      />
+    );
+    expect(screen.getByText('dashboard.collapse.no_data')).toBeDefined();
   });
 
   test('renders zone legend', () => {

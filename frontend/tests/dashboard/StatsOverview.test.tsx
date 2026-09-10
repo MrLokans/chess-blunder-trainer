@@ -52,7 +52,7 @@ describe('StatsOverview', () => {
     expect(statusEl.textContent).toContain('current=30');
     expect(statusEl.textContent).toContain('total=100');
     expect(statusEl.textContent).toContain('percent=30');
-    expect(statusEl.className).toContain('text-primary');
+    expect(statusEl.className).toContain('dashboard-analysis-status--running');
   });
 
   test('shows completed status', () => {
@@ -66,7 +66,7 @@ describe('StatsOverview', () => {
       />
     );
     const statusEl = screen.getByTestId('analysis-status');
-    expect(statusEl.className).toContain('text-success');
+    expect(statusEl.className).toContain('dashboard-analysis-status--completed');
   });
 
   test('shows retry button on failure', () => {

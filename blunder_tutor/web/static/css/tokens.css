@@ -115,6 +115,20 @@
   --color-tactic-back-rank: light-dark(#10b981, #45C492);
   --color-tactic-other: light-dark(#6b7280, #959BAA);
 
+  /* Dashboard accessibility colors */
+  --color-dashboard-positive: light-dark(#176B2B, #6DD97D);
+  --color-dashboard-info: light-dark(#164E9A, #A9C6FF);
+  --color-dashboard-caution: light-dark(#7A5200, #F5CE59);
+  --color-dashboard-negative: light-dark(#B42318, #FF9B94);
+  --color-dashboard-tactic-fork: light-dark(#B91C1C, #EF6E6E);
+  --color-dashboard-tactic-pin: light-dark(#57534E, #B8B4AB);
+  --color-dashboard-tactic-skewer: light-dark(#086B7A, #4FC3D9);
+  --color-dashboard-tactic-discovered: light-dark(#9A5700, #EFB457);
+  --color-dashboard-tactic-hanging: light-dark(#A51B5D, #E877B0);
+  --color-dashboard-tactic-back-rank: light-dark(#087755, #45C492);
+  --color-dashboard-tactic-trapped: light-dark(#6D28D9, #A78BFA);
+  --color-dashboard-tactic-other: light-dark(#4B5563, #959BAA);
+
   /* Difficulty Colors */
   --color-diff-easy: light-dark(var(--blue), #8AA1E0);
   --color-diff-medium: light-dark(#f59e0b, #EFB457);

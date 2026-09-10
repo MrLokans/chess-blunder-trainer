@@ -15,8 +15,8 @@ interface GrowthMetric {
 
 const METRICS: GrowthMetric[] = [
   { key: 'avg_blunders_per_game', i18n: 'growth.blunders_per_game', trendKey: 'blunder_frequency', precision: 2, lowerIsBetter: true },
-  { key: 'avg_cpl',              i18n: 'growth.avg_cpl',            trendKey: 'move_quality',       precision: 1, lowerIsBetter: true, helpBtnId: 'cplHelpBtn' },
-  { key: 'avg_blunder_severity', i18n: 'growth.blunder_severity',   trendKey: 'severity',           precision: 1, lowerIsBetter: true },
+  { key: 'avg_cpl',              i18n: 'growth.avg_cpl',            trendKey: 'move_quality',       precision: 1, lowerIsBetter: true, suffix: ' CP', helpBtnId: 'cplHelpBtn' },
+  { key: 'avg_blunder_severity', i18n: 'growth.blunder_severity',   trendKey: 'severity',           precision: 1, lowerIsBetter: true, suffix: ' CP' },
   { key: 'clean_game_rate',      i18n: 'growth.clean_game_rate',    trendKey: 'clean_rate',         precision: 1, lowerIsBetter: false, suffix: '%' },
   { key: 'catastrophic_rate',    i18n: 'growth.catastrophic_rate',  trendKey: 'catastrophic_rate',  precision: 1, lowerIsBetter: true,  suffix: '%' },
 ];
@@ -44,7 +44,7 @@ function Sparkline({ values }: SparklineProps) {
   }).join(' ');
 
   return (
-    <svg class="growth-sparkline" viewBox={`0 0 ${String(width)} ${String(height)}`} preserveAspectRatio="none">
+    <svg class="growth-sparkline" aria-hidden="true" viewBox={`0 0 ${String(width)} ${String(height)}`} preserveAspectRatio="none">
       <polyline points={points} fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   );
@@ -56,20 +56,16 @@ interface TrendArrowProps {
 }
 
 function TrendArrow({ direction, lowerIsBetter }: TrendArrowProps) {
-  if (!direction || direction === 'stable') {
-    if (direction === 'stable') {
-      return <span class="growth-trend growth-trend--stable" title={t('growth.stable')}>{'\u2192'}</span>;
-    }
-    return null;
-  }
+  if (!direction) return null;
 
+  const isStable = direction === 'stable';
   const valueWentDown = (direction === 'improving') === lowerIsBetter;
-  const symbol = valueWentDown ? '\u2193' : '\u2191';
-  const isGood = direction === 'improving';
-  const cssClass = isGood ? 'growth-trend--improving' : 'growth-trend--declining';
-  const label = t('growth.' + direction);
+  const symbol = isStable ? '\u2192' : valueWentDown ? '\u2193' : '\u2191';
+  const cssClass = isStable ? 'growth-trend--stable' : direction === 'improving'
+    ? 'growth-trend--improving' : 'growth-trend--declining';
+  const label = t(`growth.${direction}`);
 
-  return <span class={`growth-trend ${cssClass}`} title={label}>{symbol}</span>;
+  return <span class={`growth-trend ${cssClass}`} aria-label={label}><span aria-hidden="true">{symbol}</span><span class="growth-trend-label">{label}</span></span>;
 }
 
 interface GrowthMetricsProps {

@@ -151,6 +151,26 @@ class TestRealLocales:
         assert "нашли" in result.lower()
 
 
+class TestRawLocaleParity:
+    @pytest.mark.parametrize("locale", ["be", "es", "pl", "ru", "uk", "zh"])
+    def test_raw_locale_keys_match_english(self, locale):
+        locales_dir = Path(__file__).parent.parent / "locales"
+        english = json.loads((locales_dir / "en.json").read_text(encoding="utf-8"))
+        translated = json.loads(
+            (locales_dir / f"{locale}.json").read_text(encoding="utf-8")
+        )
+
+        assert translated.keys() == english.keys()
+        for key in (
+            "dashboard.tactical.trapped",
+            "dashboard.collapse.avg_move",
+            "dashboard.collapse.median_move",
+            "growth.avg_cpl",
+            "growth.blunder_severity",
+        ):
+            assert translated[key]
+
+
 class TestEnJsonIntegrity:
     def test_en_json_loads_and_has_trainer_keys(self):
         en_path = Path(__file__).parent.parent / "locales" / "en.json"
@@ -163,6 +183,11 @@ class TestEnJsonIntegrity:
         assert "nav.trainer" in data
         assert "chess.phase.opening" in data
         assert "heatmap.total" in data
+        assert "dashboard.tactical.trapped" in data
+        assert "dashboard.collapse.avg_move" in data
+        assert "dashboard.collapse.median_move" in data
+        assert "growth.avg_cpl" in data
+        assert "growth.blunder_severity" in data
 
     def test_en_json_all_values_are_strings(self):
         en_path = Path(__file__).parent.parent / "locales" / "en.json"

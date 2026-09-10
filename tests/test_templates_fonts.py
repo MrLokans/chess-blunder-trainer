@@ -1,7 +1,18 @@
 from pathlib import Path
 
+from jinja2 import Environment, FileSystemLoader
+
 BASE_HTML = Path("templates/base.html").read_text(encoding="utf-8")
 TOKENS_CSS = Path("blunder_tutor/web/static/css/tokens.css").read_text(encoding="utf-8")
+
+
+class TestDocumentLanguage:
+    def test_base_html_uses_the_active_locale(self):
+        template = Environment(loader=FileSystemLoader("templates")).get_template(
+            "base.html"
+        )
+
+        assert 'lang="ru"' in template.render(locale="ru", t=lambda key: key)
 
 
 class TestSelfHostedFonts:

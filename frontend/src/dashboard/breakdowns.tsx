@@ -75,7 +75,7 @@ const PATTERN_CLASSES: Record<string, string> = {
   Fork: 'fork', Pin: 'pin', Skewer: 'skewer',
   'Discovered Attack': 'discovered', 'Discovered Check': 'discovered', 'Double Check': 'discovered',
   'Hanging Piece': 'hanging', 'Back Rank Threat': 'back_rank',
-  'Trapped Piece': 'other', None: 'other',
+  'Trapped Piece': 'trapped', None: 'other',
 };
 
 const PATTERN_LABEL_KEYS: Record<string, string> = {
@@ -323,7 +323,7 @@ export function TacticalBreakdown({ data }: { data: TacticalData }) {
     return <div class="no-data-message">{t('dashboard.chart.no_tactical_data')}</div>;
   }
 
-  const uniqueClasses = [...new Set(data.by_pattern.map(p => PATTERN_CLASSES[p.pattern] ?? 'other'))];
+  const patterns = [...new Set(data.by_pattern.map(p => p.pattern))];
 
   return (
     <>
@@ -340,12 +340,12 @@ export function TacticalBreakdown({ data }: { data: TacticalData }) {
           })}
       </div>
       <div class="tactical-legend">
-        {uniqueClasses.map(cls => {
-          const label = Object.entries(PATTERN_CLASSES).find(([_k, v]) => v === cls)?.[0] ?? cls;
+        {patterns.map(pattern => {
+          const cls = PATTERN_CLASSES[pattern] ?? 'other';
           return (
-            <div key={cls} class="tactical-legend-item">
+            <div key={pattern} class="tactical-legend-item">
               <span class={`tactical-legend-color ${cls}`}></span>
-              <span>{patternLabel(label)}</span>
+              <span>{patternLabel(pattern)}</span>
             </div>
           );
         })}
@@ -432,9 +432,9 @@ export function DifficultyBreakdown({ data }: { data: DifficultyData }) {
 
 function zoneColor(label: string): string {
   const start = parseInt(label.split('-')[0] ?? '0');
-  if (start <= 10) return 'var(--success, #2D8F3E)';
-  if (start <= 25) return 'var(--warning, #F2C12E)';
-  return 'var(--error, #D42828)';
+  if (start <= 10) return 'var(--dashboard-positive)';
+  if (start <= 25) return 'var(--dashboard-caution)';
+  return 'var(--dashboard-negative)';
 }
 
 function zoneLabel(label: string): string {
@@ -445,7 +445,7 @@ function zoneLabel(label: string): string {
 }
 
 export function CollapsePointBreakdown({ data }: { data: CollapsePointData }) {
-  if (data.avg_collapse_move === null || data.total_games_with_blunders <= 0) {
+  if (data.median_collapse_move === null || data.total_games_with_blunders <= 0) {
     return <div class="no-data-message">{t('dashboard.collapse.no_data')}</div>;
   }
 
@@ -458,9 +458,9 @@ export function CollapsePointBreakdown({ data }: { data: CollapsePointData }) {
   return (
     <>
       <div class="collapse-summary">
-        <div class="collapse-big-number">{t('dashboard.collapse.avg_move', { move: data.avg_collapse_move })}</div>
+        <div class="collapse-big-number">{t('dashboard.collapse.median_move', { move: data.median_collapse_move })}</div>
         <div class="collapse-meta">
-          <span>{t('dashboard.collapse.median_move', { move: data.median_collapse_move })}</span>
+          <span>{t('dashboard.collapse.avg_move', { move: data.avg_collapse_move })}</span>
           <span class="collapse-separator">·</span>
           <span>{t('dashboard.collapse.games_with_blunders', { count: data.total_games_with_blunders })}</span>
         </div>
@@ -484,15 +484,15 @@ export function CollapsePointBreakdown({ data }: { data: CollapsePointData }) {
       </div>
       <div class="collapse-zone-legend">
         <span class="collapse-zone-item">
-          <span class="collapse-zone-dot" style={{ background: 'var(--success, #2D8F3E)' }}></span>
+          <span class="collapse-zone-dot" style={{ background: 'var(--dashboard-positive)' }}></span>
           {t('dashboard.collapse.zone_opening')}
         </span>
         <span class="collapse-zone-item">
-          <span class="collapse-zone-dot" style={{ background: 'var(--warning, #F2C12E)' }}></span>
+          <span class="collapse-zone-dot" style={{ background: 'var(--dashboard-caution)' }}></span>
           {t('dashboard.collapse.zone_middle')}
         </span>
         <span class="collapse-zone-item">
-          <span class="collapse-zone-dot" style={{ background: 'var(--error, #D42828)' }}></span>
+          <span class="collapse-zone-dot" style={{ background: 'var(--dashboard-negative)' }}></span>
           {t('dashboard.collapse.zone_late')}
         </span>
       </div>
@@ -506,16 +506,16 @@ export function ConversionResilienceBreakdown({ data }: { data: ConversionResili
   }
 
   const conversionColor = data.conversion_rate >= 70
-    ? 'var(--success, #2D8F3E)'
+    ? 'var(--dashboard-positive)'
     : data.conversion_rate >= 50
-      ? 'var(--warning, #F2C12E)'
-      : 'var(--error, #D42828)';
+      ? 'var(--dashboard-caution)'
+      : 'var(--dashboard-negative)';
 
   const resilienceColor = data.resilience_rate >= 20
-    ? 'var(--success, #2D8F3E)'
+    ? 'var(--dashboard-positive)'
     : data.resilience_rate >= 10
-      ? 'var(--warning, #F2C12E)'
-      : 'var(--error, #D42828)';
+      ? 'var(--dashboard-caution)'
+      : 'var(--dashboard-negative)';
 
   return (
     <div class="cr-metrics">

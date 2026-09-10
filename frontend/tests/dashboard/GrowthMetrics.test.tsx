@@ -77,13 +77,25 @@ describe('GrowthMetrics', () => {
     expect(container.querySelectorAll('.growth-sparkline').length).toBe(5);
   });
 
-  test('renders trend arrows', async () => {
+  test('renders visible, labeled trends', async () => {
     (client.stats.growth as ReturnType<typeof vi.fn>).mockResolvedValue(makeGrowthData());
     const { container } = render(<GrowthMetrics />);
     await waitFor(() => {
-      expect(screen.getByText(t('growth.blunders_per_game'))).toBeDefined();
+      expect(screen.getAllByLabelText(t('growth.improving'))).toHaveLength(3);
     });
-    expect(container.querySelectorAll('.growth-trend').length).toBeGreaterThan(0);
+    expect(screen.getByLabelText(t('growth.declining'))).toBeDefined();
+    expect(screen.getByLabelText(t('growth.stable'))).toBeDefined();
+    expect(container.querySelectorAll('.growth-trend').length).toBe(5);
+    expect(container.querySelectorAll('.growth-trend-label').length).toBe(5);
+  });
+
+  test('shows centipawn units for CPL metrics', async () => {
+    (client.stats.growth as ReturnType<typeof vi.fn>).mockResolvedValue(makeGrowthData());
+    render(<GrowthMetrics />);
+    await waitFor(() => {
+      expect(screen.getByText('70.0 CP')).toBeDefined();
+      expect(screen.getByText('130.0 CP')).toBeDefined();
+    });
   });
 
   test('shows error message on failure', async () => {

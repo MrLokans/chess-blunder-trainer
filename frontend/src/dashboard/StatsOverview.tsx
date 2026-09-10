@@ -21,7 +21,7 @@ function AnalysisStatusDisplay({ status, onRetry }: AnalysisStatusDisplayProps) 
     const total = status.progress_total ?? 0;
     const percent = total > 0 ? Math.round((current / total) * 100) : 0;
     return (
-      <div data-testid="analysis-status" class="text-sm text-muted mt-2 text-primary">
+      <div data-testid="analysis-status" class="dashboard-analysis-status dashboard-analysis-status--running">
         {t('dashboard.analysis.running', { current, total, percent })}
       </div>
     );
@@ -29,7 +29,7 @@ function AnalysisStatusDisplay({ status, onRetry }: AnalysisStatusDisplayProps) 
 
   if (status.status === 'completed') {
     return (
-      <div data-testid="analysis-status" class="text-sm text-muted mt-2 text-success">
+      <div data-testid="analysis-status" class="dashboard-analysis-status dashboard-analysis-status--completed">
         {t('dashboard.analysis.completed')}
       </div>
     );
@@ -37,7 +37,7 @@ function AnalysisStatusDisplay({ status, onRetry }: AnalysisStatusDisplayProps) 
 
   if (status.status === 'failed') {
     return (
-      <div data-testid="analysis-status" class="text-sm text-muted mt-2 text-error">
+      <div data-testid="analysis-status" class="dashboard-analysis-status dashboard-analysis-status--failed">
         {t('dashboard.analysis.failed')}
         <span style="margin-left: var(--s-sm);">
           <Button variant="secondary" size="sm" onClick={onRetry}>
@@ -48,7 +48,7 @@ function AnalysisStatusDisplay({ status, onRetry }: AnalysisStatusDisplayProps) 
     );
   }
 
-  return <div data-testid="analysis-status" class="text-sm text-muted mt-2" />;
+  return <div data-testid="analysis-status" class="dashboard-analysis-status" />;
 }
 
 export function StatsOverview({
