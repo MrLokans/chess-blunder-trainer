@@ -27,6 +27,8 @@ export interface ColorEntry {
   count: number;
   percentage: number;
   avg_cp_loss: number;
+  game_count: number;
+  blunders_per_game: number | null;
 }
 
 export interface ColorData {
@@ -38,6 +40,8 @@ export interface GameTypeEntry {
   game_type: string;
   count: number;
   percentage: number;
+  game_count: number;
+  blunders_per_game: number | null;
 }
 
 export interface GameTypeData {

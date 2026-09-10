@@ -5,6 +5,7 @@ export interface OpeningItem {
   percentage: number;
   avg_cp_loss: number;
   game_count: number;
+  blunders_per_game: number | null;
 }
 
 export interface OpeningGroup {
@@ -14,6 +15,7 @@ export interface OpeningGroup {
   totalGames: number;
   totalCpLossWeighted: number;
   avgCpLoss: number;
+  blundersPerGame: number | null;
 }
 
 export function groupOpeningsByBase(openings: OpeningItem[]): OpeningGroup[] {
@@ -22,7 +24,7 @@ export function groupOpeningsByBase(openings: OpeningItem[]): OpeningGroup[] {
     const colonIdx = item.eco_name.indexOf(': ');
     const baseName = colonIdx > -1 ? item.eco_name.substring(0, colonIdx) : item.eco_name;
     if (!groups.has(baseName)) {
-      groups.set(baseName, { baseName, variations: [], totalCount: 0, totalGames: 0, totalCpLossWeighted: 0, avgCpLoss: 0 });
+      groups.set(baseName, { baseName, variations: [], totalCount: 0, totalGames: 0, totalCpLossWeighted: 0, avgCpLoss: 0, blundersPerGame: null });
     }
     const group = groups.get(baseName);
     if (!group) continue;
@@ -32,8 +34,8 @@ export function groupOpeningsByBase(openings: OpeningItem[]): OpeningGroup[] {
     group.totalCpLossWeighted += item.avg_cp_loss * item.count;
   }
   return Array.from(groups.values())
-    .map(g => ({ ...g, avgCpLoss: g.totalCount > 0 ? g.totalCpLossWeighted / g.totalCount : 0 }))
-    .sort((a, b) => b.totalCount - a.totalCount);
+    .map(g => ({ ...g, avgCpLoss: g.totalCount > 0 ? g.totalCpLossWeighted / g.totalCount : 0, blundersPerGame: g.totalGames > 0 ? g.totalCount / g.totalGames : null }))
+    .sort((a, b) => (b.blundersPerGame ?? -1) - (a.blundersPerGame ?? -1));
 }
 
 export function openingNameSlug(name: string): string {

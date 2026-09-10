@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from blunder_tutor.repositories.stats_repository import StatsFilter
 from tests.helpers.stats_db import insert_test_game, insert_test_move
 
 
@@ -162,6 +163,35 @@ class TestGetBlundersByColor:
         colors = {c["color"]: c for c in result["by_color"]}
         assert "white" in colors
         assert "black" in colors
+        assert colors["white"]["game_count"] == 1
+        assert colors["white"]["blunders_per_game"] == 1.0
+
+    async def test_rate_includes_clean_analyzed_games(self, stats_repo):
+        await _seed_blunder_game(stats_repo, game_id="g1")
+        await insert_test_game(stats_repo, "g2", "testuser", "testuser", "opp")
+        await insert_test_move(stats_repo, "g2", 1, 0, cp_loss=20)
+
+        result = await stats_repo.get_blunders_by_color()
+        white = next(entry for entry in result["by_color"] if entry["color"] == "white")
+
+        assert white["count"] == 1
+        assert white["game_count"] == 2
+        assert white["blunders_per_game"] == 0.5
+
+    async def test_phase_rate_counts_only_games_with_user_moves_in_phase(
+        self, stats_repo
+    ):
+        await _seed_blunder_game(stats_repo, game_id="g1", game_phase=0)
+        await insert_test_game(stats_repo, "g2", "testuser", "testuser", "opp")
+        await insert_test_move(stats_repo, "g2", 1, 0, cp_loss=20, game_phase=0)
+        await insert_test_game(stats_repo, "g3", "testuser", "testuser", "opp")
+        await insert_test_move(stats_repo, "g3", 1, 1, cp_loss=20, game_phase=0)
+
+        result = await stats_repo.get_blunders_by_color(StatsFilter(game_phases=[0]))
+        white = result["by_color"][0]
+
+        assert white["game_count"] == 2
+        assert white["blunders_per_game"] == 0.5
 
 
 class TestGetBlundersByGameType:
@@ -182,6 +212,8 @@ class TestGetBlundersByGameType:
         assert result["total_blunders"] == 2
         types = {t["game_type"]: t for t in result["by_game_type"]}
         assert len(types) == 2
+        assert all(entry["game_count"] == 1 for entry in types.values())
+        assert all(entry["blunders_per_game"] == 1.0 for entry in types.values())
 
 
 class TestGetRecentActivity:
@@ -225,6 +257,7 @@ class TestGetBlundersByEco:
         openings = {o["eco_code"]: o for o in result["by_opening"]}
         assert "B00" in openings
         assert "C00" in openings
+        assert all(entry["blunders_per_game"] == 1.0 for entry in openings.values())
 
 
 class TestGetGamesByDate:

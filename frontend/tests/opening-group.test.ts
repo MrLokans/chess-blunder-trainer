@@ -19,7 +19,7 @@ describe('openingNameSlug', () => {
 
 describe('groupOpeningsByBase', () => {
   const makeItem = (eco_code: string, eco_name: string, count: number, avg_cp_loss: number, game_count: number) => ({
-    eco_code, eco_name, count, percentage: 0, avg_cp_loss, game_count,
+    eco_code, eco_name, count, percentage: 0, avg_cp_loss, game_count, blunders_per_game: count / game_count,
   });
 
   it('groups variations under the same base opening', () => {
@@ -44,7 +44,7 @@ describe('groupOpeningsByBase', () => {
     expect(italian?.totalCount).toBe(2);
   });
 
-  it('sorts groups by total blunder count descending', () => {
+  it('sorts groups by blunders per game descending', () => {
     const items = [
       makeItem('C50', 'Italian Game', 10, 200, 20),
       makeItem('B90', 'Sicilian Defense: Najdorf', 3, 300, 5),
@@ -52,8 +52,9 @@ describe('groupOpeningsByBase', () => {
     ];
 
     const groups = groupOpeningsByBase(items);
-    expect(groups[0]?.baseName).toBe('Italian Game');
-    expect(groups[1]?.baseName).toBe('Sicilian Defense');
+    expect(groups[0]?.baseName).toBe('Sicilian Defense');
+    expect(groups[1]?.baseName).toBe('Italian Game');
+    expect(groups[0]?.blundersPerGame).toBeCloseTo(5 / 9);
   });
 
   it('computes weighted average cp loss', () => {

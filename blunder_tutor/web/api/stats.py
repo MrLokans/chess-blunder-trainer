@@ -129,7 +129,12 @@ class ECOBlunderItem(BaseModel):
     count: int = Field(description="Number of blunders in this opening")
     percentage: float = Field(description="Percentage of total blunders")
     avg_cp_loss: float = Field(description="Average centipawn loss")
-    game_count: int = Field(description="Number of games with this opening")
+    game_count: int = Field(
+        description="Distinct games represented by matching blunders"
+    )
+    blunders_per_game: float | None = Field(
+        description="Blunders per represented game; null when no games are represented"
+    )
 
 
 class BlundersByECO(BaseModel):
@@ -145,6 +150,12 @@ class ColorBlunderItem(BaseModel):
     count: int = Field(description="Number of blunders when playing this color")
     percentage: float = Field(description="Percentage of total blunders")
     avg_cp_loss: float = Field(description="Average centipawn loss")
+    game_count: int = Field(
+        description="Distinct eligible analyzed games in this color"
+    )
+    blunders_per_game: float | None = Field(
+        description="Blunders per eligible analyzed game; not a percentage"
+    )
 
 
 class ColorDateBlunderItem(BaseModel):
@@ -445,7 +456,7 @@ async def get_blunders_by_phase(
     description="Returns blunder statistics grouped by ECO opening code.",
 )
 @cached(
-    tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters", "limit"]
+    tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=2, key_params=["filters", "limit"]
 )
 async def get_blunders_by_eco(
     request: Request,
@@ -469,7 +480,7 @@ async def get_blunders_by_eco(
     summary="Get blunders by player color",
     description="Returns blunder statistics grouped by the color the user was playing (white/black). Only counts the user's own blunders, not opponent blunders.",
 )
-@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=2, key_params=["filters"])
 async def get_blunders_by_color(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -551,6 +562,10 @@ class GameTypeBlunderItem(BaseModel):
     count: int = Field(description="Number of blunders in this game type")
     percentage: float = Field(description="Percentage of total blunders")
     avg_cp_loss: float = Field(description="Average centipawn loss")
+    game_count: int = Field(description="Distinct eligible analyzed games in this type")
+    blunders_per_game: float | None = Field(
+        description="Blunders per eligible analyzed game; not a percentage"
+    )
 
 
 class BlundersByGameType(BaseModel):
@@ -581,7 +596,7 @@ async def get_blunders_by_tactical_pattern(
     summary="Get blunders by game type",
     description="Returns blunder statistics grouped by game type (bullet, blitz, rapid, classical).",
 )
-@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=2, key_params=["filters"])
 async def get_blunders_by_game_type(
     request: Request,
     stats_repo: StatsRepoDep,

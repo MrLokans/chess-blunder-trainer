@@ -293,24 +293,22 @@ class StatsRepository(BaseDbRepository):
         filters: StatsFilter | None = None,
     ) -> dict[str, object]:
         criteria = filters or StatsFilter()
-        rows = await self._fetch_aggregation(
-            """
-            CASE
-                WHEN LOWER(g.white) = LOWER(g.username) THEN 0
-                WHEN LOWER(g.black) = LOWER(g.username) THEN 1
-            END as user_color,
-            COUNT(*) as count,
-            AVG(am.cp_loss) as avg_cp_loss
-            """,
-            "GROUP BY user_color ORDER BY user_color",
-            criteria,
-        )
+        rows = await self._fetch_normalized_buckets(criteria, "user_color")
         total, colors = _bucket_aggregation(
             rows,
             "user_color",
             COLOR_LABELS,
             label_field="color",
             id_field="color_id",
+        )
+        _add_bucket_rates(colors, rows, "user_color", "color_id")
+        colors.sort(
+            key=lambda entry: (
+                entry["blunders_per_game"]
+                if entry["blunders_per_game"] is not None
+                else -1
+            ),
+            reverse=True,
         )
 
         date_params: list[object] = []
@@ -427,10 +425,8 @@ class StatsRepository(BaseDbRepository):
         self,
         filters: StatsFilter | None = None,
     ) -> dict[str, object]:
-        rows = await self._fetch_aggregation(
-            "g.game_type, COUNT(*) as count, AVG(am.cp_loss) as avg_cp_loss",
-            "GROUP BY g.game_type ORDER BY g.game_type",
-            filters or StatsFilter(),
+        rows = await self._fetch_normalized_buckets(
+            filters or StatsFilter(), "game_type"
         )
         total, game_types = _bucket_aggregation(
             rows,
@@ -438,6 +434,15 @@ class StatsRepository(BaseDbRepository):
             GAME_TYPE_LABELS,
             label_field="game_type",
             id_field="game_type_id",
+        )
+        _add_bucket_rates(game_types, rows, "game_type", "game_type_id")
+        game_types.sort(
+            key=lambda entry: (
+                entry["blunders_per_game"]
+                if entry["blunders_per_game"] is not None
+                else -1
+            ),
+            reverse=True,
         )
         # game_type historically uses -1 as the sentinel id for the
         # "no game_type recorded" bucket (other report endpoints pass None).
@@ -675,6 +680,52 @@ class StatsRepository(BaseDbRepository):
         query += f" {group_order_clause}"
         return await self._fetch_rows(query, params)
 
+    async def _fetch_normalized_buckets(
+        self, criteria: StatsFilter, bucket: str
+    ) -> list[dict[str, object]]:
+        params: list[object] = []
+        eligible_where = criteria.append_to(
+            "WHERE g.analyzed = 1", params, include_phase=False
+        )
+        phase_filter = ""
+        if criteria.game_phases:
+            placeholders = ",".join("?" for _ in criteria.game_phases)
+            phase_filter = f" AND am.game_phase IN ({placeholders})"
+            eligible_where += f"""
+            AND EXISTS (
+                SELECT 1 FROM analysis_moves phase_am
+                WHERE phase_am.game_id = g.game_id
+                  AND phase_am.player = CASE
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
+                  END
+                  AND phase_am.game_phase IN ({placeholders})
+            )
+            """
+            params.extend(criteria.game_phases)
+            params.extend(criteria.game_phases)
+
+        bucket_column = "eg.user_color" if bucket == "user_color" else "eg.game_type"
+        query = f"""
+            WITH eligible_games AS (
+                SELECT g.game_id, g.game_type, CASE
+                    WHEN LOWER(g.white) = LOWER(g.username) THEN 0
+                    WHEN LOWER(g.black) = LOWER(g.username) THEN 1
+                END AS user_color
+                FROM game_index_cache g
+                {eligible_where}
+            )
+            SELECT {bucket_column} AS {bucket}, COUNT(*) AS game_count,
+                   COUNT(am.game_id) AS count, AVG(am.cp_loss) AS avg_cp_loss
+            FROM eligible_games eg
+            LEFT JOIN analysis_moves am ON am.game_id = eg.game_id
+                AND am.player = eg.user_color
+                AND am.classification = 3{phase_filter}
+            WHERE eg.user_color IS NOT NULL
+            GROUP BY {bucket_column}
+        """
+        return await self._fetch_rows(query, params)
+
 
 def _safe_int(value: object) -> int:
     return int(value) if value is not None else 0
@@ -727,6 +778,22 @@ def _safe_pct(numerator: int, total: int) -> float:
     return round(numerator / total * 100, 1) if total > 0 else 0.0
 
 
+def _add_bucket_rates(
+    entries: list[dict[str, object]],
+    rows: list[dict[str, object]],
+    row_id_key: str,
+    entry_id_key: str,
+) -> None:
+    row_by_id = {row[row_id_key]: row for row in rows}
+    for entry in entries:
+        row = row_by_id[entry[entry_id_key]]
+        game_count = _safe_int(row["game_count"])
+        entry["game_count"] = game_count
+        entry["blunders_per_game"] = (
+            round(_safe_int(row["count"]) / game_count, 2) if game_count else None
+        )
+
+
 def _aggregate_eco_rows(rows: list[dict[str, object]], limit: int) -> _EcoStats:
     eco_stats: dict[tuple[str, str], dict[str, object]] = {}
     for row in rows:
@@ -738,12 +805,14 @@ def _aggregate_eco_rows(rows: list[dict[str, object]], limit: int) -> _EcoStats:
         bucket["count"] += 1
         bucket["total_cp_loss"] += row["cp_loss"] or 0
         bucket["game_ids"].add(row["game_id"])
-    sorted_items = sorted(eco_stats.items(), key=_eco_count_key, reverse=True)
+    sorted_items = sorted(eco_stats.items(), key=_eco_rate_key, reverse=True)
     return sorted_items[:limit]
 
 
-def _eco_count_key(item: tuple[tuple[str, str], dict[str, object]]) -> int:
-    return item[1]["count"]
+def _eco_rate_key(item: tuple[tuple[str, str], dict[str, object]]) -> tuple[float, int]:
+    stats = item[1]
+    game_count = len(stats["game_ids"])
+    return (stats["count"] / game_count if game_count else -1, stats["count"])
 
 
 def _eco_entry(
@@ -762,6 +831,9 @@ def _eco_entry(
         "percentage": round(percentage, 1),
         "avg_cp_loss": round(float(avg_cp_loss), 1),
         "game_count": len(stats["game_ids"]),
+        "blunders_per_game": round(count / len(stats["game_ids"]), 2)
+        if stats["game_ids"]
+        else None,
     }
 
 

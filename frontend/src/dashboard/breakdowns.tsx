@@ -91,6 +91,10 @@ function patternLabel(pattern: string): string {
   return key ? t(key) : pattern;
 }
 
+function rateLabel(rate: number | null | undefined): string {
+  return rate == null ? '—' : t('dashboard.chart.blunders_per_game', { rate: rate.toFixed(2) });
+}
+
 export function PhaseBreakdown({ data }: { data: PhaseData }) {
   if (data.total_blunders <= 0 || data.by_phase.length === 0) {
     return <div class="no-data-message">{t('dashboard.chart.no_phase_data')}</div>;
@@ -122,7 +126,7 @@ export function PhaseBreakdown({ data }: { data: PhaseData }) {
 }
 
 export function ColorBreakdown({ data }: { data: ColorData }) {
-  if (data.total_blunders <= 0 || data.by_color.length === 0) {
+  if (data.by_color.length === 0) {
     return <div class="no-data-message">{t('dashboard.chart.no_color_data')}</div>;
   }
 
@@ -141,8 +145,8 @@ export function ColorBreakdown({ data }: { data: ColorData }) {
         {data.by_color.map(c => (
           <div key={c.color} class={`color-card ${c.color}`}>
             <div class="color-name">{t('dashboard.chart.as_color', { color: t(`chess.color.${c.color}`) })}</div>
-            <div class="color-count">{String(c.count)}</div>
-            <div class="color-percent">{t('dashboard.chart.phase_percent', { percentage: c.percentage })}</div>
+            <div class="color-count">{rateLabel(c.blunders_per_game)}</div>
+            <div class="color-percent">{t('dashboard.chart.blunders_games', { blunders: c.count, games: c.game_count })}</div>
             <div class="color-cpl">{t('dashboard.chart.avg_loss', { loss: (c.avg_cp_loss / 100).toFixed(1) })}</div>
           </div>
         ))}
@@ -152,7 +156,7 @@ export function ColorBreakdown({ data }: { data: ColorData }) {
 }
 
 export function GameTypeBreakdown({ data }: { data: GameTypeData }) {
-  if (data.total_blunders <= 0 || data.by_game_type.length === 0) {
+  if (data.by_game_type.length === 0) {
     return <div class="no-data-message">{t('dashboard.chart.no_game_type_data')}</div>;
   }
 
@@ -183,8 +187,8 @@ export function GameTypeBreakdown({ data }: { data: GameTypeData }) {
           .map(g => (
             <div key={g.game_type} class={`game-type-card ${g.game_type}`}>
               <div class="game-type-name">{gameTypeLabel(g.game_type)}</div>
-              <div class="game-type-count">{String(g.count)}</div>
-              <div class="game-type-percent">{`${String(g.percentage)}%`}</div>
+              <div class="game-type-count">{rateLabel(g.blunders_per_game)}</div>
+              <div class="game-type-percent">{t('dashboard.chart.blunders_games', { blunders: g.count, games: g.game_count })}</div>
             </div>
           ))}
       </div>
@@ -204,6 +208,7 @@ type EcoRow =
       totalCount: number;
       avgCpLoss: number;
       totalGames: number;
+      blundersPerGame: number | null;
       isExpanded: boolean;
     };
 
@@ -248,6 +253,7 @@ export function EcoBreakdown({ data }: { data: EcoData }) {
       totalCount: group.totalCount,
       avgCpLoss: group.avgCpLoss,
       totalGames: group.totalGames,
+      blundersPerGame: group.blundersPerGame,
       isExpanded,
     });
     if (isExpanded) {
@@ -286,6 +292,11 @@ export function EcoBreakdown({ data }: { data: EcoData }) {
         const name = renderOpeningName(row.item.eco_code, row.item.eco_name);
         return row.kind === 'child' ? <span class="eco-child-indent">{name}</span> : name;
       },
+    },
+    {
+      key: 'rate',
+      header: t('dashboard.chart.blunders_per_game_heading'),
+      render: row => rateLabel(row.kind === 'header' ? row.blundersPerGame : row.item.blunders_per_game),
     },
     {
       key: 'blunders',
