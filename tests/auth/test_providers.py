@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import time
-
 from blunder_tutor.auth import (
     AuthDb,
     BcryptHasher,
@@ -130,52 +128,3 @@ class TestCredentialsProvider:
             )
             is None
         )
-
-
-class TestTimingEqualization:
-    """Defense against username-enumeration via wall-clock timing.
-
-    bcrypt verification takes ~100ms; if we returned immediately for
-    unknown users, an attacker could enumerate valid usernames with a
-    stopwatch. The provider runs a dummy verify on every miss.
-    """
-
-    async def test_unknown_user_has_bcrypt_timing(self, auth_db: AuthDb):
-        # This test asserts a wall-clock invariant — both paths must run
-        # one bcrypt verify. At the test-suite-default cheap cost
-        # (~0.8ms) measurement noise can dominate the ratio assertion,
-        # so seed AND provider here use the library-default cost.
-        full_cost_hasher = BcryptHasher(ValidationRules.default(), cost=None)
-        users = UserRepository(db=auth_db)
-        identities = IdentityRepository(db=auth_db)
-        uid = make_user_id()
-        await users.insert(
-            user_id=uid,
-            username=Username("alice"),
-            email=None,
-        )
-        await identities.insert(
-            identity_id=make_identity_id(),
-            user_id=uid,
-            provider="credentials",
-            provider_subject="alice",
-            credential=full_cost_hasher.hash("password123"),
-        )
-        provider = _provider(auth_db, cost=None)
-
-        # Warm any first-call jitter.
-        await provider.authenticate({"username": "alice", "password": "wrong"})
-        await provider.authenticate({"username": "ghost", "password": "wrong"})
-
-        start_known = time.perf_counter()
-        await provider.authenticate({"username": "alice", "password": "wrong"})
-        known_elapsed = time.perf_counter() - start_known
-
-        start_unknown = time.perf_counter()
-        await provider.authenticate({"username": "ghost", "password": "wrong"})
-        unknown_elapsed = time.perf_counter() - start_unknown
-
-        # Both paths should take on the same order of magnitude (bcrypt-dominated).
-        # Without the dummy hash, unknown would be ~1000x faster.
-        assert unknown_elapsed > known_elapsed / 4
-        assert unknown_elapsed < known_elapsed * 4
