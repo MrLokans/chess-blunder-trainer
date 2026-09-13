@@ -50,6 +50,7 @@ interface DashboardData {
   analysisStatus: AnalysisStatus;
   dateItems: DateChartItem[] | null;
   hourItems: HourChartItem[] | null;
+  hourTimezone: string;
   phaseData: PhaseData | null;
   colorData: ColorData | null;
   gameTypeData: GameTypeData | null;
@@ -134,7 +135,7 @@ export function DashboardApp() {
         trapsResp,
       ] = await Promise.all([
         hasAccuracy ? client.stats.gamesByDate(qp) : Promise.resolve(null),
-        hasAccuracy ? client.stats.gamesByHour(qp) : Promise.resolve(null),
+        hasAccuracy ? client.stats.gamesByHour({ ...qp, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }) : Promise.resolve(null),
         hasPhase ? client.stats.blundersByPhase(qp) : Promise.resolve(null),
         client.stats.blundersByColor(qp),
         client.stats.blundersByGameType(qp),
@@ -151,6 +152,7 @@ export function DashboardApp() {
         analysisStatus,
         dateItems: dateResp?.items ?? null,
         hourItems: hourResp?.items ?? null,
+        hourTimezone: hourResp?.timezone ?? 'UTC',
         phaseData: phaseData ?? null,
         colorData,
         gameTypeData,
@@ -316,7 +318,7 @@ function DashboardBody({
             {state.gameTypeData && <BreakdownSection title={t('dashboard.chart.blunders_by_game_type')} description={t('dashboard.chart.blunders_by_game_type_desc')}><GameTypeBreakdown data={state.gameTypeData} /></BreakdownSection>}
             {hasHeatmap && <BreakdownSection title={t('dashboard.chart.puzzle_activity')} description={t('dashboard.chart.puzzle_activity_desc')} scopeNote={t('dashboard.scope.unfiltered')}><ActivityHeatmap /></BreakdownSection>}
             {hasTraps && state.trapsData && <BreakdownSection title={t('traps.dashboard_card_title')} description={t('traps.dashboard_card_desc')} scopeNote={t('dashboard.scope.unfiltered')}><TrapsSummary data={state.trapsData} /></BreakdownSection>}
-            {hasAccuracy && <ChartPanel title={t('dashboard.chart.accuracy_by_hour')} description={t('dashboard.chart.accuracy_by_hour_desc')} emptyMessage={t('dashboard.chart.no_hourly_data')} data={hourChartData} createChart={createHourChart} />}
+            {hasAccuracy && <ChartPanel title={t('dashboard.chart.accuracy_by_hour')} description={t('dashboard.chart.accuracy_by_hour_desc', { timezone: state.hourTimezone })} emptyMessage={t('dashboard.chart.no_hourly_data')} data={hourChartData} createChart={createHourChart} timezone={state.hourTimezone} />}
           </div>
         </details>
       )}

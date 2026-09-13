@@ -28,7 +28,7 @@ import type {
   ConversionResilienceData,
   GameBreakdownItem,
   DateChartItem,
-  HourChartItem,
+  HourChartData,
   GrowthData,
   HeatmapData,
 } from '../types/dashboard';
@@ -163,7 +163,7 @@ export const client = {
     overview: (params?: QueryParams) => request<OverviewData>(withQuery('/api/stats', params)),
     gameBreakdown: () => request<{ items: GameBreakdownItem[] }>('/api/stats/games'),
     gamesByDate: (params?: QueryParams) => request<{ items: DateChartItem[] }>(withQuery('/api/stats/games/by-date', params)),
-    gamesByHour: (params?: QueryParams) => request<{ items: HourChartItem[] }>(withQuery('/api/stats/games/by-hour', params)),
+    gamesByHour: (params?: QueryParams) => request<HourChartData>(withQuery('/api/stats/games/by-hour', params)),
     activityHeatmap: (days = 365) => request<HeatmapData>(`/api/stats/activity-heatmap?days=${String(days)}`),
     blundersByPhase: (params?: QueryParams) => request<PhaseData>(withQuery('/api/stats/blunders/by-phase', params)),
     blundersByColor: (params?: QueryParams) => request<ColorData>(withQuery('/api/stats/blunders/by-color', params)),

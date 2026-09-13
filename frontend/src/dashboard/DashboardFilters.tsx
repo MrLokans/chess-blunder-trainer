@@ -67,42 +67,52 @@ export function DashboardFilters({
   }
 
   function handleGameTypeChange(type: string, checked: boolean) {
-    const next = checked
-      ? [...gameTypes, type]
-      : gameTypes.filter(t => t !== type);
-    onGameTypesChange(next);
+    const next = checked ? [...gameTypes, type] : gameTypes.filter(t => t !== type);
+    onGameTypesChange(next.length ? next : gameTypes);
   }
 
   function handleGamePhaseChange(phase: string, checked: boolean) {
-    const next = checked
-      ? [...gamePhases, phase]
-      : gamePhases.filter(p => p !== phase);
-    onGamePhasesChange(next);
+    const next = checked ? [...gamePhases, phase] : gamePhases.filter(p => p !== phase);
+    onGamePhasesChange(next.length ? next : gamePhases);
+  }
+
+  const hasDateFilter = Boolean(dateFrom || dateTo);
+  const dateSummary = datePreset
+    ? t(DATE_PRESETS.find(preset => preset.key === datePreset)?.label ?? 'dashboard.filter.all_time')
+    : hasDateFilter ? [dateFrom, dateTo].filter(Boolean).join(' – ') : t('dashboard.filter.all_time');
+  const typesSummary = gameTypes.length === GAME_TYPES.length
+    ? t('dashboard.filter.all_time_controls')
+    : gameTypes.map(type => t(`trainer.game_type.${type}`)).join(', ');
+  const phasesSummary = gamePhases.length === GAME_PHASES.length
+    ? t('dashboard.filter.all_phases')
+    : gamePhases.map(phase => t(`chess.phase.${phase}`)).join(', ');
+  const hasActiveFilters = hasDateFilter || gameTypes.length !== GAME_TYPES.length || gamePhases.length !== GAME_PHASES.length;
+
+  function clearAll() {
+    handleClearDate();
+    onGameTypesChange([...GAME_TYPES]);
+    onGamePhasesChange([...GAME_PHASES]);
   }
 
   return (
     <div class="dashboard-filter-bar">
-      <div class="filter-bar-header" onClick={toggleCollapsed}>
-        <span class="filter-bar-title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+      <div class="filter-bar-header">
+        <button type="button" class="filter-bar-toggle" aria-expanded={!collapsed} aria-controls="dashboard-filter-body" onClick={toggleCollapsed}>
+          <span class="filter-bar-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+            {t('dashboard.filter.title')}
+          </span>
+          <span class="filter-bar-summary">{[dateSummary, typesSummary, phasesSummary].filter(Boolean).join(' · ')}</span>
+          <svg class={`chevron-icon${collapsed ? ' collapsed' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9" />
           </svg>
-          {t('dashboard.filter.title')}
-        </span>
-        <svg
-          class={`chevron-icon${collapsed ? ' collapsed' : ''}`}
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+        </button>
+        {hasActiveFilters && <button type="button" class="filter-bar-clear" onClick={clearAll}>{t('dashboard.filter.clear_all')}</button>}
       </div>
 
-      <div class={`filter-bar-body${collapsed ? ' collapsed' : ''}`}>
+      <div id="dashboard-filter-body" class={`filter-bar-body${collapsed ? ' collapsed' : ''}`}>
         <div class="filter-bar-row filter-bar-presets">
           <div class="filter-presets">
             {DATE_PRESETS.map(({ key, label }) => (

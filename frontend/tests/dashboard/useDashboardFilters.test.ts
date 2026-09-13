@@ -54,6 +54,15 @@ describe('useDashboardFilters', () => {
     expect(params.game_types).toEqual(['blitz']);
   });
 
+  test('keeps at least one game type and phase selected', async () => {
+    const { result } = renderHook(() => useDashboardFilters());
+    await act(() => { result.current.setGameTypes([]); });
+    await act(() => { result.current.setGamePhases([]); });
+
+    expect(result.current.gameTypes).toEqual(['bullet', 'blitz', 'rapid', 'classical']);
+    expect(result.current.gamePhases).toEqual(['opening', 'middlegame', 'endgame']);
+  });
+
   test('getParams includes date range from preset', async () => {
     const { result } = renderHook(() => useDashboardFilters());
     await act(() => { result.current.setDatePreset('30d'); });

@@ -5,10 +5,11 @@ interface ChartPanelProps {
   description: string;
   emptyMessage: string;
   data: { labels: string[]; gameCounts: number[]; accuracies: number[] } | null;
-  createChart: (ctx: CanvasRenderingContext2D, labels: string[], gameCounts: number[], accuracies: number[]) => ChartInstance;
+  createChart: (ctx: CanvasRenderingContext2D, labels: string[], gameCounts: number[], accuracies: number[], timezone?: string) => ChartInstance;
+  timezone?: string;
 }
 
-export function ChartPanel({ title, description, emptyMessage, data, createChart }: ChartPanelProps) {
+export function ChartPanel({ title, description, emptyMessage, data, createChart, timezone }: ChartPanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<ChartInstance | null>(null);
   const [themeVersion, setThemeVersion] = useState(0);
@@ -38,7 +39,7 @@ export function ChartPanel({ title, description, emptyMessage, data, createChart
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
 
-    chartRef.current = createChart(ctx, data.labels, data.gameCounts, data.accuracies);
+    chartRef.current = createChart(ctx, data.labels, data.gameCounts, data.accuracies, timezone);
 
     return () => {
       if (chartRef.current) {
@@ -46,7 +47,7 @@ export function ChartPanel({ title, description, emptyMessage, data, createChart
         chartRef.current = null;
       }
     };
-  }, [data, createChart, themeVersion]);
+  }, [data, createChart, themeVersion, timezone]);
 
   const isEmpty = !data || data.labels.length === 0;
 

@@ -132,6 +132,11 @@ export interface HourChartItem {
   avg_accuracy: number;
 }
 
+export interface HourChartData {
+  items: HourChartItem[];
+  timezone: string;
+}
+
 export interface GrowthWindow {
   window_index: number;
   game_start: number;

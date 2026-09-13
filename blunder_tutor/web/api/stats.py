@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from datetime import date
 from typing import Annotated, Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import Depends, Query, Request
+from fastapi import Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field, field_validator
@@ -70,6 +71,22 @@ def _build_stats_filter(
 
 
 StatsFilterDep = Annotated[StatsFilter, Depends(_build_stats_filter)]
+
+
+def _resolve_timezone(
+    timezone: Annotated[
+        str | None, Query(description="IANA timezone for hourly statistics")
+    ] = None,
+) -> ZoneInfo:
+    if timezone is None:
+        return ZoneInfo("UTC")
+    try:
+        return ZoneInfo(timezone)
+    except ZoneInfoNotFoundError as exc:
+        raise HTTPException(status_code=422, detail="Invalid timezone") from exc
+
+
+TimezoneDep = Annotated[ZoneInfo, Depends(_resolve_timezone)]
 
 
 class DashboardStats(BaseModel):
@@ -507,6 +524,7 @@ class GamesByHourItem(BaseModel):
 
 class GamesByHour(BaseModel):
     items: list[GamesByHourItem] = Field(description="Hourly game statistics")
+    timezone: str = Field(description="IANA timezone used for the hourly buckets")
 
 
 @stats_router.get(
@@ -531,14 +549,20 @@ async def get_games_by_date(
     summary="Get game accuracy by hour of day",
     description="Returns hourly game counts and average accuracy for the user's moves.",
 )
-@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=1, key_params=["filters"])
+@cached(
+    tag="stats",
+    ttl=STATS_CACHE_TTL_SECONDS,
+    version=2,
+    key_params=["filters", "timezone"],
+)
 async def get_games_by_hour(
     request: Request,
     stats_repo: StatsRepoDep,
     filters: StatsFilterDep,
+    timezone: TimezoneDep,
 ) -> dict[str, Any]:
-    items = await stats_repo.get_games_by_hour(filters=filters)
-    return {"items": items}
+    items = await stats_repo.get_games_by_hour(filters=filters, timezone=timezone)
+    return {"items": items, "timezone": timezone.key}
 
 
 class TacticalPatternItem(BaseModel):

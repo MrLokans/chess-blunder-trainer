@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from zoneinfo import ZoneInfo
+
 import pytest
 
 from blunder_tutor.repositories.stats_repository import StatsFilter
@@ -299,6 +301,31 @@ class TestGetGamesByHour:
         result = await stats_repo.get_games_by_hour()
         assert len(result) == 1
         assert result[0]["hour"] == 14
+
+    async def test_converts_utc_hours_including_dst(self, stats_repo):
+        for game_id, end_time in (
+            ("utc", "2025-01-15T14:30:00Z"),
+            ("dst", "2025-03-09T10:30:00Z"),
+        ):
+            await insert_test_game(
+                stats_repo,
+                game_id,
+                "testuser",
+                "testuser",
+                "opp",
+                end_time_utc=end_time,
+            )
+            await insert_test_move(stats_repo, game_id, 1, 0, cp_loss=50)
+
+        utc = await stats_repo.get_games_by_hour()
+        los_angeles = await stats_repo.get_games_by_hour(
+            timezone=ZoneInfo("America/Los_Angeles")
+        )
+        tokyo = await stats_repo.get_games_by_hour(timezone=ZoneInfo("Asia/Tokyo"))
+
+        assert {row["hour"] for row in utc} == {14, 10}
+        assert {row["hour"] for row in los_angeles} == {6, 3}
+        assert {row["hour"] for row in tokyo} == {23, 19}
 
 
 class TestGetBlundersByTacticalPattern:

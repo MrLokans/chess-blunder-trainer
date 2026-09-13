@@ -57,6 +57,17 @@ describe('DashboardApp', () => {
     });
   });
 
+  test('sends the browser timezone for hourly accuracy', async () => {
+    const { client } = await import('../../src/shared/api');
+    render(<DashboardApp />);
+
+    await waitFor(() => {
+      expect(vi.mocked(client.stats.gamesByHour)).toHaveBeenCalledWith(expect.objectContaining({
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }));
+    });
+  });
+
   test('renders filter bar', async () => {
     render(<DashboardApp />);
     await waitFor(() => {

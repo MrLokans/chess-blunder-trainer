@@ -4,6 +4,7 @@ import dataclasses
 import statistics
 from collections import defaultdict
 from collections.abc import Iterable
+from datetime import UTC, datetime, tzinfo
 
 from blunder_tutor.analysis.tactics import PATTERN_LABELS
 from blunder_tutor.constants import COLOR_LABELS, PHASE_LABELS
@@ -380,24 +381,27 @@ class StatsRepository(BaseDbRepository):
     async def get_games_by_hour(
         self,
         filters: StatsFilter | None = None,
+        timezone: tzinfo = UTC,
     ) -> list[dict[str, object]]:
         criteria = filters or StatsFilter()
         params: list[object] = []
         query = criteria.append_to(
             f"""
-            SELECT
-                g.game_id,
-                CAST(strftime('%H', g.end_time_utc) AS INTEGER) as hour,
-                am.cp_loss
+            SELECT g.game_id, g.end_time_utc, am.cp_loss
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
+              AND g.end_time_utc IS NOT NULL
             {PLAYER_SIDE_FILTER}
             """,
             params,
         )
         rows = await self._fetch_rows(query, params)
-        hour_accuracies = _accuracies_by_bucket(rows)
+        local_rows = [
+            (game_id, _local_hour(end_time, timezone), cp_loss)
+            for game_id, end_time, cp_loss in rows
+        ]
+        hour_accuracies = _accuracies_by_bucket(local_rows)
         return [
             {
                 "hour": h,
@@ -874,6 +878,13 @@ def _difficulty_entry(
         "percentage": round(percentage, 1),
         "avg_cp_loss": round(float(avg_cp_loss), 1),
     }
+
+
+def _local_hour(end_time: str, timezone: tzinfo) -> int:
+    timestamp = datetime.fromisoformat(end_time.replace("Z", "+00:00"))
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=UTC)
+    return timestamp.astimezone(timezone).hour
 
 
 def _accuracies_by_bucket(

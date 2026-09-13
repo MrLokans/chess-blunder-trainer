@@ -119,12 +119,13 @@ export function createHourChart(
   labels: string[],
   gameCounts: number[],
   accuracies: number[],
+  timezone = 'UTC',
 ): ChartInstance {
   return new Chart(ctx, {
     type: 'bar',
     data: datasets(labels, gameCounts, accuracies),
     options: sharedChartOptions({
-      title: { display: true, text: t('dashboard.chart.hour_axis') },
+      title: { display: true, text: t('dashboard.chart.hour_axis', { timezone }) },
     }),
   });
 }

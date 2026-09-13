@@ -57,8 +57,14 @@ export interface DashboardFiltersResult {
 
 export function useDashboardFilters(): DashboardFiltersResult {
   const [dateState, setDateState] = useState<DateState>(loadDateState);
-  const [gameTypes, setGameTypesState] = useState(() => loadFromStorage(GAME_TYPE_STORAGE_KEY, GAME_TYPES));
-  const [gamePhases, setGamePhasesState] = useState(() => loadFromStorage(GAME_PHASE_STORAGE_KEY, GAME_PHASES));
+  const [gameTypes, setGameTypesState] = useState(() => {
+    const stored = loadFromStorage(GAME_TYPE_STORAGE_KEY, GAME_TYPES);
+    return stored.length ? stored : [...GAME_TYPES];
+  });
+  const [gamePhases, setGamePhasesState] = useState(() => {
+    const stored = loadFromStorage(GAME_PHASE_STORAGE_KEY, GAME_PHASES);
+    return stored.length ? stored : [...GAME_PHASES];
+  });
 
   const setDatePreset = useCallback((preset: DatePreset) => {
     const dates = getPresetDates(preset);
@@ -77,13 +83,15 @@ export function useDashboardFilters(): DashboardFiltersResult {
   }, []);
 
   const setGameTypes = useCallback((types: string[]) => {
-    setGameTypesState(types);
-    localStorage.setItem(GAME_TYPE_STORAGE_KEY, JSON.stringify(types));
+    const next = types.length ? types : [...GAME_TYPES];
+    setGameTypesState(next);
+    localStorage.setItem(GAME_TYPE_STORAGE_KEY, JSON.stringify(next));
   }, []);
 
   const setGamePhases = useCallback((phases: string[]) => {
-    setGamePhasesState(phases);
-    localStorage.setItem(GAME_PHASE_STORAGE_KEY, JSON.stringify(phases));
+    const next = phases.length ? phases : [...GAME_PHASES];
+    setGamePhasesState(next);
+    localStorage.setItem(GAME_PHASE_STORAGE_KEY, JSON.stringify(next));
   }, []);
 
   const getParams = useCallback((): DateFilterParams => {
