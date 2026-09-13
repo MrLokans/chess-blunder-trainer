@@ -4,7 +4,7 @@ from datetime import date
 from typing import Annotated, Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import Depends, HTTPException, Query, Request
+from fastapi import Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field, field_validator
@@ -83,7 +83,10 @@ def _resolve_timezone(
     try:
         return ZoneInfo(timezone)
     except ZoneInfoNotFoundError as exc:
-        raise HTTPException(status_code=422, detail="Invalid timezone") from exc
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Invalid timezone",
+        ) from exc
 
 
 TimezoneDep = Annotated[ZoneInfo, Depends(_resolve_timezone)]
