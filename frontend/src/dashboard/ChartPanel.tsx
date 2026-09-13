@@ -15,8 +15,13 @@ export function ChartPanel({ title, description, emptyMessage, data, createChart
 
   useEffect(() => {
     const onThemeChange = () => { setThemeVersion(version => version + 1); };
+    const onDisclosureOpen = () => { requestAnimationFrame(() => { chartRef.current?.resize(); }); };
     window.addEventListener('themechange', onThemeChange);
-    return () => { window.removeEventListener('themechange', onThemeChange); };
+    window.addEventListener('dashboarddisclosureopen', onDisclosureOpen);
+    return () => {
+      window.removeEventListener('themechange', onThemeChange);
+      window.removeEventListener('dashboarddisclosureopen', onDisclosureOpen);
+    };
   }, []);
 
   useEffect(() => {

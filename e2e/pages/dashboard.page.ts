@@ -4,11 +4,15 @@ import { BasePage } from './base.page';
 export class DashboardPage extends BasePage {
   readonly statsGrid: Locator;
   readonly statCards: Locator;
+  readonly moreInsights: Locator;
+  readonly management: Locator;
 
   constructor(page: Page) {
     super(page);
     this.statsGrid = page.locator('.stats-grid');
     this.statCards = page.locator('.stat-card');
+    this.moreInsights = page.locator('.dashboard-more-insights');
+    this.management = page.locator('.dashboard-management');
   }
 
   async goto(): Promise<void> {

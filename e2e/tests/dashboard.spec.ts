@@ -12,6 +12,16 @@ test.describe('Dashboard', () => {
     });
   });
 
+  test('progressively discloses secondary insights', async ({ dashboardPage }) => {
+    await dashboardPage.goto();
+    await dashboardPage.expectLoaded();
+
+    await expect(dashboardPage.moreInsights).not.toHaveAttribute('open', '');
+    await dashboardPage.moreInsights.locator('summary').click();
+    await expect(dashboardPage.moreInsights).toHaveAttribute('open', '');
+    await expect(dashboardPage.management).toBeVisible();
+  });
+
   test('dashboard loads without console errors', async ({ dashboardPage, page }) => {
     const errors: string[] = [];
     page.on('console', msg => {

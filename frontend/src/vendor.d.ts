@@ -79,6 +79,7 @@ interface ChartConfiguration {
 
 interface ChartInstance {
   destroy(): void;
+  resize(): void;
   update(): void;
   data: ChartConfiguration['data'];
   options: Record<string, unknown>;

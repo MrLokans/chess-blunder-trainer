@@ -71,6 +71,18 @@ describe('DashboardApp', () => {
     });
   });
 
+  test('collapses secondary insights and labels unfiltered reports', async () => {
+    const { container } = render(<DashboardApp />);
+    await waitFor(() => {
+      expect(screen.getByText(t('dashboard.section.explore_more'))).toBeDefined();
+    });
+
+    const details = container.querySelector('.dashboard-more-insights') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(container.querySelector('.dashboard-management')).not.toBeNull();
+    expect(screen.getAllByText(t('dashboard.scope.unfiltered')).length).toBeGreaterThan(0);
+  });
+
   test('renders management link', async () => {
     render(<DashboardApp />);
     await waitFor(() => {

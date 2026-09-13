@@ -29,6 +29,18 @@ describe('ChartPanel', () => {
     expect(container.querySelector('canvas')).not.toBeNull();
   });
 
+  test('resizes when its disclosure opens', async () => {
+    const resize = vi.fn();
+    const mockCreate = vi.fn().mockReturnValue({ destroy: vi.fn(), resize });
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as CanvasRenderingContext2D);
+    render(<ChartPanel title="Chart" description="Desc" emptyMessage="No data" data={{ labels: ['Mon'], gameCounts: [5], accuracies: [80] }} createChart={mockCreate} />);
+    await waitFor(() => { expect(mockCreate).toHaveBeenCalledTimes(1); });
+
+    window.dispatchEvent(new Event('dashboarddisclosureopen'));
+
+    await waitFor(() => { expect(resize).toHaveBeenCalledTimes(1); });
+  });
+
   test('recreates a chart when the theme changes', async () => {
     const destroy = vi.fn();
     const mockCreate = vi.fn().mockReturnValue({ destroy });
