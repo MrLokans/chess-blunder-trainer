@@ -86,7 +86,7 @@ const PATTERN_LABEL_KEYS: Record<string, string> = {
   'Trapped Piece': 'dashboard.tactical.trapped', None: 'dashboard.tactical.other',
 };
 
-function patternLabel(pattern: string): string {
+export function patternLabel(pattern: string): string {
   const key = PATTERN_LABEL_KEYS[pattern];
   return key ? t(key) : pattern;
 }

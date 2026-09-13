@@ -8,14 +8,16 @@ export interface StatsOverviewProps {
   totalBlunders: number;
   analysisStatus: AnalysisStatus;
   onRetryAnalysis: () => void;
+  showRetry?: boolean;
 }
 
 interface AnalysisStatusDisplayProps {
   status: AnalysisStatus;
   onRetry: () => void;
+  showRetry: boolean;
 }
 
-function AnalysisStatusDisplay({ status, onRetry }: AnalysisStatusDisplayProps) {
+function AnalysisStatusDisplay({ status, onRetry, showRetry }: AnalysisStatusDisplayProps) {
   if (status.status === 'running') {
     const current = status.progress_current ?? 0;
     const total = status.progress_total ?? 0;
@@ -26,7 +28,7 @@ function AnalysisStatusDisplay({ status, onRetry }: AnalysisStatusDisplayProps) 
   if (status.status === 'failed') {
     return <div data-testid="analysis-status" class="dashboard-analysis-status dashboard-analysis-status--failed">
       {t('dashboard.analysis.failed')}
-      <span style="margin-left: var(--s-sm);"><Button variant="secondary" size="sm" onClick={onRetry}>{t('dashboard.analysis.retry')}</Button></span>
+      {showRetry && <span class="dashboard-analysis-retry"><Button variant="secondary" size="sm" onClick={onRetry}>{t('dashboard.analysis.retry')}</Button></span>}
     </div>;
   }
   return <div data-testid="analysis-status" class="dashboard-analysis-status" />;
@@ -39,6 +41,7 @@ export function StatsOverview({
   totalBlunders,
   analysisStatus,
   onRetryAnalysis,
+  showRetry = true,
 }: StatsOverviewProps) {
   const progressPercent = totalGames > 0 ? Math.round((analyzedGames / totalGames) * 100) : 0;
 
@@ -50,7 +53,7 @@ export function StatsOverview({
       <div class="dashboard-kpi dashboard-kpi--progress">
         <span>{t('dashboard.stat.analysis_progress')}</span><strong>{formatNumber(progressPercent)}%</strong>
         <div class="progress-bar"><div class="progress-fill" style={{ width: `${String(progressPercent)}%` }} /></div>
-        <AnalysisStatusDisplay status={analysisStatus} onRetry={onRetryAnalysis} />
+        <AnalysisStatusDisplay status={analysisStatus} onRetry={onRetryAnalysis} showRetry={showRetry} />
       </div>
     </div>
   );

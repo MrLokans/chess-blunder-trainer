@@ -9,8 +9,10 @@ vi.mock('../../src/shared/api', async (importActual) => {
   isAbortError: actual.isAbortError,
   client: {
     stats: {
-      overview: vi.fn().mockResolvedValue({ total_games: 100, analyzed_games: 80, total_blunders: 25 }),
-      gameBreakdown: vi.fn().mockResolvedValue({ items: [] }),
+      overview: vi.fn().mockResolvedValue({ total_games: 100, analyzed_games: 80, pending_analysis: 20, total_blunders: 25 }),
+      gameBreakdown: vi.fn().mockResolvedValue({
+        items: [{ source: 'lichess', username: 'player', total_games: 137, analyzed_games: 137, pending_games: 0 }],
+      }),
       gamesByDate: vi.fn().mockResolvedValue({ items: [] }),
       gamesByHour: vi.fn().mockResolvedValue({ items: [] }),
       blundersByPhase: vi.fn().mockResolvedValue({ total_blunders: 0, by_phase: [] }),
@@ -100,6 +102,68 @@ describe('DashboardApp', () => {
     expect(screen.queryByText(t('dashboard.chart.blunders_by_tactical'))).toBeNull();
     expect(screen.queryByText(t('dashboard.chart.collapse_point'))).toBeNull();
     expect(screen.queryByText(t('dashboard.chart.growth'))).toBeNull();
+  });
+
+  test('renders the coaching action above the stat grid', async () => {
+    const { container } = render(<DashboardApp />);
+    await waitFor(() => {
+      expect(screen.getByTestId('coaching-action')).toBeDefined();
+    });
+
+    const card = screen.getByTestId('coaching-action');
+    expect(card.dataset.action).toBe('train');
+
+    // Ordering is the invariant here; match on class membership so an added
+    // modifier class does not read as a DOM-ordering failure.
+    const order = Array.from(
+      container.querySelectorAll('.dashboard-filter-bar, .coach-card, .stats-grid'),
+    );
+    expect(order.map(el => ['dashboard-filter-bar', 'coach-card', 'stats-grid']
+      .find(name => el.classList.contains(name))))
+      .toEqual(['dashboard-filter-bar', 'coach-card', 'stats-grid']);
+  });
+
+  test('coaching action falls back to the blunder total when breakdowns are off', async () => {
+    window.__features = {
+      'dashboard.phase_breakdown': false,
+      'dashboard.tactical_breakdown': false,
+    };
+
+    render(<DashboardApp />);
+    await waitFor(() => {
+      expect(screen.getByTestId('coaching-action')).toBeDefined();
+    });
+
+    expect(screen.getByText(t('dashboard.coach.evidence.overall'))).toBeDefined();
+    expect(screen.getByText(t('dashboard.coach.evidence.count', { count: 25 }))).toBeDefined();
+  });
+
+  test('offers exactly one retry when analysis failed with nothing to train', async () => {
+    const { client } = await import('../../src/shared/api');
+    vi.mocked(client.stats.overview).mockResolvedValue({ total_games: 100, analyzed_games: 80, pending_analysis: 20, total_blunders: 0 });
+    vi.mocked(client.analysis.status).mockResolvedValue({ status: 'failed' });
+
+    const { container } = render(<DashboardApp />);
+    await waitFor(() => {
+      expect(screen.getByTestId('coaching-action').dataset.action).toBe('analysis_failed');
+    });
+
+    expect(screen.getAllByText(t('dashboard.coach.analysis_failed.cta'))).toHaveLength(1);
+    expect(container.querySelector('[data-testid="analysis-status"] button')).toBeNull();
+  });
+
+  test('keeps the stat-grid retry when the card is recommending training', async () => {
+    const { client } = await import('../../src/shared/api');
+    // Both mocks set explicitly: clearAllMocks resets calls, not implementations.
+    vi.mocked(client.stats.overview).mockResolvedValue({ total_games: 100, analyzed_games: 80, pending_analysis: 20, total_blunders: 25 });
+    vi.mocked(client.analysis.status).mockResolvedValue({ status: 'failed' });
+
+    const { container } = render(<DashboardApp />);
+    await waitFor(() => {
+      expect(screen.getByTestId('coaching-action').dataset.action).toBe('train');
+    });
+
+    expect(container.querySelector('[data-testid="analysis-status"] button')).not.toBeNull();
   });
 
   test('shows canonical loading state initially', () => {

@@ -8,6 +8,7 @@ import { debounce } from '../shared/debounce';
 import { useDashboardFilters } from './useDashboardFilters';
 import { DashboardFilters } from './DashboardFilters';
 import { StatsOverview } from './StatsOverview';
+import { CoachingAction, libraryTotals, selectNextAction } from './CoachingAction';
 import { ChartPanel } from './ChartPanel';
 import { BreakdownSection } from './BreakdownSection';
 import { InfoModal } from './InfoModal';
@@ -232,6 +233,15 @@ function DashboardBody({
     accuracies: state.dateItems.map(d => d.avg_accuracy),
   } : null;
 
+  const nextAction = selectNextAction({
+    ...libraryTotals(state.gameBreakdown),
+    filteredGames: state.overview.total_games,
+    filteredBlunders: state.overview.total_blunders,
+    analysisStatus: state.analysisStatus.status,
+    tacticalData: state.tacticalData,
+    phaseData: state.phaseData,
+  });
+
   const filledHours = state.hourItems ? fillHours(state.hourItems) : null;
   const hourChartData = filledHours && filledHours.some(h => h.game_count > 0) ? {
     labels: filledHours.map(d => `${String(d.hour).padStart(2, '0')}:00`),
@@ -254,6 +264,8 @@ function DashboardBody({
         onGamePhasesChange={filters.setGamePhases}
       />
 
+      <CoachingAction action={nextAction} onRetryAnalysis={onRetryAnalysis} />
+
       <StatsOverview
         totalGames={state.overview.total_games}
         analyzedGames={state.overview.analyzed_games}
@@ -261,6 +273,7 @@ function DashboardBody({
         totalBlunders={state.overview.total_blunders}
         analysisStatus={state.analysisStatus}
         onRetryAnalysis={onRetryAnalysis}
+        showRetry={nextAction.kind !== 'analysis_failed'}
       />
 
       {hasGrowth && (

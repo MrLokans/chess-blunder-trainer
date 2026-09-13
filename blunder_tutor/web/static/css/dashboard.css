@@ -1282,3 +1282,105 @@
     background: var(--border-subtle);
     flex-shrink: 0;
   }
+
+  /* ==========================================================================
+     Coaching Action — the single "next step" card above the stat grid
+     ========================================================================== */
+
+  .coach-card {
+    background: var(--surface-raised);
+    border: 2px solid var(--border-card);
+    border-left-width: 6px;
+    border-left-color: var(--accent);
+    padding: var(--s-lg) var(--s-xl);
+    margin-bottom: var(--s-lg);
+  }
+
+  .coach-eyebrow {
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: var(--ls-wide);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 var(--s-xs);
+  }
+
+  .coach-headline {
+    font-family: var(--font-ui);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--text);
+    margin: 0 0 var(--s-sm);
+    overflow-wrap: anywhere;
+  }
+
+  .coach-body {
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    margin: 0 0 var(--s-md);
+    max-width: 60ch;
+    overflow-wrap: anywhere;
+  }
+
+  .coach-evidence {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--s-xs) var(--s-sm);
+    margin: 0 0 var(--s-md);
+    padding: var(--s-sm) var(--s-md);
+    background: var(--surface-sunken);
+  }
+
+  .coach-evidence-label {
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    letter-spacing: var(--ls-wide);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .coach-evidence-value {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--s-xs) var(--s-sm);
+    font-size: var(--text-base);
+    color: var(--text);
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .coach-evidence-name {
+    font-weight: 700;
+  }
+
+  .coach-evidence-count {
+    color: var(--text-muted);
+  }
+
+  .coach-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-sm);
+  }
+
+  .coach-note {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    margin: var(--s-md) 0 0;
+    max-width: 60ch;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 480px) {
+    .coach-card {
+      padding: var(--s-md);
+    }
+
+    .coach-actions .btn {
+      width: 100%;
+    }
+  }

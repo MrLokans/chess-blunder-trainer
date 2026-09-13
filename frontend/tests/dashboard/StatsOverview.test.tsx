@@ -2,51 +2,33 @@ import { describe, test, expect } from 'vitest';
 import { render, screen } from '@testing-library/preact';
 import { StatsOverview } from '../../src/dashboard/StatsOverview';
 
+const props = {
+  totalGames: 100,
+  analyzedGames: 50,
+  pendingAnalysis: 50,
+  totalBlunders: 10,
+  analysisStatus: { status: 'idle' as const },
+  onRetryAnalysis: () => {},
+};
+
 describe('StatsOverview', () => {
-  test('renders stat values', () => {
-    render(
-      <StatsOverview
-        totalGames={150}
-        analyzedGames={100}
-        totalBlunders={42}
-        analysisStatus={{ status: 'completed' }}
-        onRetryAnalysis={() => {}}
-      />
-    );
+  test('renders compact KPIs including API pending count', () => {
+    render(<StatsOverview {...props} totalGames={150} analyzedGames={100} pendingAnalysis={50} totalBlunders={42} analysisStatus={{ status: 'completed' }} />);
     expect(screen.getByText('150')).toBeDefined();
     expect(screen.getByText('100')).toBeDefined();
     expect(screen.getByText('42')).toBeDefined();
+    expect(screen.getByText(t('dashboard.stat.pending_analysis', { count: 50 }))).toBeDefined();
   });
 
   test('renders progress bar percentage', () => {
-    const { container } = render(
-      <StatsOverview
-        totalGames={200}
-        analyzedGames={100}
-        totalBlunders={0}
-        analysisStatus={{ status: 'idle' }}
-        onRetryAnalysis={() => {}}
-      />
-    );
+    const { container } = render(<StatsOverview {...props} totalGames={200} analyzedGames={100} pendingAnalysis={100} totalBlunders={0} />);
     expect(screen.getByText('50%')).toBeDefined();
-    const fill = container.querySelector('.progress-fill') as HTMLElement;
-    expect(fill.style.width).toBe('50%');
+    expect((container.querySelector('.progress-fill') as HTMLElement).style.width).toBe('50%');
   });
 
   test('shows running status with progress', () => {
-    render(
-      <StatsOverview
-        totalGames={100}
-        analyzedGames={50}
-        totalBlunders={10}
-        analysisStatus={{ status: 'running', progress_current: 30, progress_total: 100 }}
-        onRetryAnalysis={() => {}}
-      />
-    );
+    render(<StatsOverview {...props} analysisStatus={{ status: 'running', progress_current: 30, progress_total: 100 }} />);
     const statusEl = screen.getByTestId('analysis-status');
-    // Values must reach `t()` as params (catches the regression where
-    // placeholders in `dashboard.analysis.running` rendered literally
-    // alongside JSX-concatenated numbers).
     expect(statusEl.textContent).not.toContain('{current}');
     expect(statusEl.textContent).not.toContain('{percent}');
     expect(statusEl.textContent).toContain('current=30');
@@ -56,29 +38,14 @@ describe('StatsOverview', () => {
   });
 
   test('shows completed status', () => {
-    render(
-      <StatsOverview
-        totalGames={100}
-        analyzedGames={100}
-        totalBlunders={10}
-        analysisStatus={{ status: 'completed' }}
-        onRetryAnalysis={() => {}}
-      />
-    );
-    const statusEl = screen.getByTestId('analysis-status');
-    expect(statusEl.className).toContain('dashboard-analysis-status--completed');
+    render(<StatsOverview {...props} analysisStatus={{ status: 'completed' }} />);
+    expect(screen.getByTestId('analysis-status').className).toContain('dashboard-analysis-status--completed');
   });
 
-  test('shows retry button on failure', () => {
-    render(
-      <StatsOverview
-        totalGames={100}
-        analyzedGames={50}
-        totalBlunders={10}
-        analysisStatus={{ status: 'failed' }}
-        onRetryAnalysis={() => {}}
-      />
-    );
+  test('shows and hides retry button on failure', () => {
+    const { rerender } = render(<StatsOverview {...props} analysisStatus={{ status: 'failed' }} />);
     expect(screen.getByText(t('dashboard.analysis.retry'))).toBeDefined();
+    rerender(<StatsOverview {...props} analysisStatus={{ status: 'failed' }} showRetry={false} />);
+    expect(screen.getByTestId('analysis-status').querySelector('button')).toBeNull();
   });
 });
