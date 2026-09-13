@@ -257,6 +257,7 @@ function DashboardBody({
       <StatsOverview
         totalGames={state.overview.total_games}
         analyzedGames={state.overview.analyzed_games}
+        pendingAnalysis={state.overview.pending_analysis}
         totalBlunders={state.overview.total_blunders}
         analysisStatus={state.analysisStatus}
         onRetryAnalysis={onRetryAnalysis}

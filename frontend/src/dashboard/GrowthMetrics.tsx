@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'preact/hooks';
 import { client } from '../shared/api';
 import { InfoModal } from './InfoModal';
-import type { GrowthData } from './types';
+import type { GrowthData, GrowthWindow } from './types';
 
 interface GrowthMetric {
-  key: string;
+  key: keyof Pick<GrowthWindow, 'avg_blunders_per_game' | 'avg_cpl' | 'avg_blunder_severity' | 'clean_game_rate' | 'catastrophic_rate'>;
   i18n: string;
   trendKey: string;
   precision: number;
@@ -36,7 +36,6 @@ function Sparkline({ values }: SparklineProps) {
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min || 1;
-
   const points = values.map((v, i) => {
     const x = pad + (i / (values.length - 1)) * (width - 2 * pad);
     const y = pad + (1 - (v - min) / range) * (height - 2 * pad);
@@ -72,6 +71,11 @@ interface GrowthMetricsProps {
   params?: QueryParams;
 }
 
+function valueFor(window: GrowthWindow, key: GrowthMetric['key']): number {
+  const value = window[key];
+  return Number.isFinite(value) ? value : 0;
+}
+
 export function GrowthMetrics({ params }: GrowthMetricsProps) {
   const [data, setData] = useState<GrowthData | null>(null);
   const [cplHelpOpen, setCplHelpOpen] = useState(false);
@@ -82,8 +86,7 @@ export function GrowthMetrics({ params }: GrowthMetricsProps) {
     setError(false);
     void (async () => {
       try {
-        const result = await client.stats.growth(params);
-        setData(result);
+        setData(await client.stats.growth(params));
       } catch (err) {
         console.error('Failed to load growth metrics:', err);
         setError(true);
@@ -92,69 +95,39 @@ export function GrowthMetrics({ params }: GrowthMetricsProps) {
   }, [params]);
 
   if (error) return <div class="no-data-message">{t('growth.load_error')}</div>;
-
-  if (!data) {
-    return <div class="loading-placeholder">{t('common.loading')}</div>;
-  }
-
-  if (data.total_games === 0) {
-    return <div class="no-data-message">{t('growth.no_data')}</div>;
-  }
-
-  if (data.windows.length === 0) {
-    return <div class="no-data-message">{t('growth.insufficient_data', { count: data.window_size })}</div>;
-  }
+  if (!data) return <div class="loading-placeholder">{t('common.loading')}</div>;
+  if (data.total_games === 0) return <div class="no-data-message">{t('growth.no_data')}</div>;
+  if (data.windows.length === 0) return <div class="no-data-message">{t('growth.insufficient_data', { count: data.window_size })}</div>;
 
   return (
     <>
       {METRICS.map(metric => {
-        const values = data.windows.map(w => w[metric.key] ?? 0);
-        const current = values[values.length - 1] ?? 0;
+        const values = data.windows.map(window => valueFor(window, metric.key));
+        const current = values.at(-1) ?? 0;
         const suffix = metric.suffix ?? '';
-        const trendDir = metric.trendKey && data.trend ? (data.trend[metric.trendKey] ?? null) : null;
+        const trendDir = data.trend?.[metric.trendKey] ?? null;
 
         return (
           <div key={metric.key} class="growth-metric-row">
             <span class="growth-metric-label">
               {t(metric.i18n)}
-              {metric.helpBtnId && (
-                <button
-                  class="info-help-btn"
-                  id={metric.helpBtnId}
-                  aria-label={t('growth.cpl_help_label')}
-                  onClick={() => { setCplHelpOpen(true); }}
-                >
-                  ?
-                </button>
-              )}
+              {metric.helpBtnId && <button class="info-help-btn" id={metric.helpBtnId} aria-label={t('growth.cpl_help_label')} onClick={() => { setCplHelpOpen(true); }}>?</button>}
             </span>
             <Sparkline values={values} />
-            <span class="growth-value">{current.toFixed(metric.precision)}{suffix}</span>
+            <span class="growth-value">{formatNumber(current, { minimumFractionDigits: metric.precision, maximumFractionDigits: metric.precision })}{suffix}</span>
             <TrendArrow direction={trendDir} lowerIsBetter={metric.lowerIsBetter} />
           </div>
         );
       })}
 
-      {data.windows.length < 2 && (
-        <div class="growth-insufficient">{t('growth.insufficient_data', { count: data.window_size * 2 })}</div>
-      )}
-
-      <InfoModal
-        open={cplHelpOpen}
-        onClose={() => { setCplHelpOpen(false); }}
-        title={t('growth.cpl_help_title')}
-      >
+      <InfoModal open={cplHelpOpen} onClose={() => { setCplHelpOpen(false); }} title={t('growth.cpl_help_title')}>
         <p>{t('growth.cpl_help_intro')}</p>
         <h4>{t('growth.cpl_help_scale_title')}</h4>
         <dl class="info-modal-definitions">
-          <dt>{'< 50'}</dt>
-          <dd>{t('growth.cpl_help_excellent')}</dd>
-          <dt>50–100</dt>
-          <dd>{t('growth.cpl_help_good')}</dd>
-          <dt>100–150</dt>
-          <dd>{t('growth.cpl_help_average')}</dd>
-          <dt>{'> 150'}</dt>
-          <dd>{t('growth.cpl_help_high')}</dd>
+          <dt>{'< 50'}</dt><dd>{t('growth.cpl_help_excellent')}</dd>
+          <dt>50–100</dt><dd>{t('growth.cpl_help_good')}</dd>
+          <dt>100–150</dt><dd>{t('growth.cpl_help_average')}</dd>
+          <dt>{'> 150'}</dt><dd>{t('growth.cpl_help_high')}</dd>
         </dl>
         <p class="info-modal-note">{t('growth.cpl_help_note')}</p>
       </InfoModal>

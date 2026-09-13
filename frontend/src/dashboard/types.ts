@@ -21,6 +21,7 @@ export type {
   DateChartItem,
   HourChartItem,
   GrowthData,
+  GrowthWindow,
   DailyCount,
   HeatmapData,
 } from '../types/dashboard';

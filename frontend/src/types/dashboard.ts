@@ -110,6 +110,7 @@ export interface EcoData {
 export interface OverviewData {
   total_games: number;
   analyzed_games: number;
+  pending_analysis: number;
   total_blunders: number;
 }
 
@@ -131,10 +132,21 @@ export interface HourChartItem {
   avg_accuracy: number;
 }
 
+export interface GrowthWindow {
+  window_index: number;
+  game_start: number;
+  game_end: number;
+  avg_blunders_per_game: number;
+  avg_cpl: number;
+  avg_blunder_severity: number;
+  clean_game_rate: number;
+  catastrophic_rate: number;
+}
+
 export interface GrowthData {
   total_games: number;
   window_size: number;
-  windows: Array<Record<string, number>>;
+  windows: GrowthWindow[];
   trend?: Record<string, string>;
 }
 

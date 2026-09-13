@@ -41,8 +41,8 @@ export interface JobStatus {
 export interface StatsOverview {
   total_games: number;
   analyzed_games: number;
+  pending_analysis: number;
   total_blunders: number;
-  [key: string]: unknown;
 }
 
 export interface ImportResult {
