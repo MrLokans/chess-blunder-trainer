@@ -17,26 +17,21 @@ from blunder_tutor.analysis.pipeline.steps.base import AnalysisStep
 if TYPE_CHECKING:
     from blunder_tutor.analysis.pipeline.context import StepContext
 
-# Difficulty heuristic constants. Each move's "difficulty" score (0-100)
-# rewards positions that are objectively harder to navigate: quiet best
-# moves, narrow legal-move counts, and deep tactics. Scoring weights are
-# tuned by manual review of analyzed games.
+# Weights tuned by manual review of analyzed games.
 DIFFICULTY_NO_BEST_MOVE_DEFAULT = 50
 DIFFICULTY_QUIET_BEST = 40
 DIFFICULTY_CAPTURE_NO_CHECK = 15
 DIFFICULTY_FORCED_BEST = 5
-DIFFICULTY_VERY_NARROW = 30  # legal_count ≤ 3
-DIFFICULTY_NARROW = 20  # legal_count ≤ 8
-DIFFICULTY_MODERATE = 10  # legal_count ≤ 15
+DIFFICULTY_VERY_NARROW = 30
+DIFFICULTY_NARROW = 20
+DIFFICULTY_MODERATE = 10
 DIFFICULTY_DEEP_TACTIC_THRESHOLD_CP = 400
 DIFFICULTY_DEEP_TACTIC_BONUS = 15
 LEGAL_COUNT_VERY_NARROW = 3
 LEGAL_COUNT_NARROW = 8
 LEGAL_COUNT_MODERATE = 15
 
-# (is_capture, gives_check) → difficulty score for the best move's
-# "quietness". Quiet (non-forcing) best moves are harder to spot than
-# captures or checks; checks dominate captures.
+# Quiet best moves are harder to spot than captures or checks; checks dominate captures.
 _QUIETNESS_SCORES = MappingProxyType(
     {
         (False, False): DIFFICULTY_QUIET_BEST,

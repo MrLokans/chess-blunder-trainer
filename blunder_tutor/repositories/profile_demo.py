@@ -1,9 +1,7 @@
 """In-memory `ProfileRepository` for demo mode.
 
-Process-wide singleton — mutations are visible to every concurrent demo
-viewer until the next process restart. Documented as a v1 trade-off in
-the design spec; revisit if abuse appears.
-"""
+A process-wide singleton, so mutations are visible to every demo viewer until restart
+(accepted v1 trade-off)."""
 
 # flake8: noqa: WPS202
 
@@ -39,10 +37,6 @@ _DEMO_SEED_CHESSCOM_STATS: tuple[ProfileStatSnapshot, ...] = (
 
 
 def _require_profile(store: dict[int, Profile], profile_id: int) -> Profile:
-    """Single raise-site for `ProfileNotFoundError` so the constructor is
-    only invoked from one place. Kept module-level so multiple repo
-    methods can share it.
-    """
     profile = store.get(profile_id)
     if profile is None:
         raise ProfileNotFoundError(profile_id)
@@ -50,12 +44,6 @@ def _require_profile(store: dict[int, Profile], profile_id: int) -> Profile:
 
 
 class InMemoryProfileRepository:
-    """Demo-mode `ProfileRepository`. Process-wide singleton; not per-session.
-
-    Seeds two example profiles on construction so a first-page load shows
-    something meaningful instead of the empty state.
-    """
-
     def __init__(self) -> None:
         self._profiles: dict[int, Profile] = {}
         self._stats: dict[int, list[ProfileStatSnapshot]] = {}
@@ -183,9 +171,7 @@ class InMemoryProfileRepository:
             return updated
 
     async def delete(self, profile_id: int, *, detach_games: bool) -> None:
-        # `detach_games` is part of the protocol but irrelevant in demo —
-        # there are no game rows to detach or cascade-delete in this
-        # in-memory store.
+        # `detach_games` is irrelevant in demo: there are no game rows.
         del detach_games
         async with self._lock:
             _require_profile(self._profiles, profile_id)
@@ -195,9 +181,7 @@ class InMemoryProfileRepository:
     async def upsert_stats(
         self, profile_id: int, snapshots: list[ProfileStatSnapshot]
     ) -> None:
-        # Per the design spec: keep seeded values stable across job runs
-        # in demo mode. The runner-side stats refresh will still report
-        # success; the demo-visible numbers stay.
+        # Keep seeded values stable across runs in demo mode (per design spec).
         del snapshots
         _require_profile(self._profiles, profile_id)
 
@@ -277,19 +261,16 @@ class InMemoryProfileRepository:
         self._stats[chesscom.id] = list(_DEMO_SEED_CHESSCOM_STATS)
 
 
-# Mutable container for the process-wide demo repo. Wrapping the slot in a
-# list dodges the `global` statement (and ruff's PLW0603) while preserving
-# the single-instance contract — every caller goes through the helpers.
+# A list slot dodges `global` (PLW0603) while keeping a single instance.
 _demo_repo_slot: list[InMemoryProfileRepository | None] = [None]
 
 
 def get_demo_profile_repository() -> InMemoryProfileRepository:
-    """Lazily construct the process-wide demo repo on first request."""
     if _demo_repo_slot[0] is None:
         _demo_repo_slot[0] = InMemoryProfileRepository()
     return _demo_repo_slot[0]
 
 
 def reset_demo_profile_repository() -> None:
-    """Reset the singleton — only for tests that need a fresh seed."""
+    """Test-only."""
     _demo_repo_slot[0] = None

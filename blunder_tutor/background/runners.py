@@ -1,10 +1,3 @@
-"""Injectable job runner functions using FastDepends.
-
-These functions are decorated with @inject to automatically resolve
-dependencies. They can be called from the JobExecutor or scheduler
-after setting up the DependencyContext.
-"""
-
 from __future__ import annotations
 
 import logging
@@ -61,9 +54,6 @@ from blunder_tutor.services.job_service import JobService
 
 logger = logging.getLogger(__name__)
 
-# Type aliases for the FastDepends-injected services. Hoisting these out
-# of the parameter lists keeps each runner signature short and avoids
-# repeating `Annotated[T, Depends(provider)]` at every site.
 JobServiceDep = Annotated[JobService, Depends(get_job_service)]
 SettingsRepoDep = Annotated[SettingsRepository, Depends(get_settings_repository)]
 GameRepoDep = Annotated[GameRepository, Depends(get_game_repository)]
@@ -284,7 +274,6 @@ async def run_import_pgn_job(
     return await job.execute(job_id=job_id, game_id=game_id, username=username)
 
 
-# Mapping of job types to runner functions
 JOB_RUNNERS = MappingProxyType(
     {
         JOB_TYPE_IMPORT: run_import_job,

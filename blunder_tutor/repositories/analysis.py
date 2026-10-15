@@ -279,7 +279,6 @@ class AnalysisRepository(BaseDbRepository):
             )
 
     async def get_game_ids_missing_tactics(self) -> list[str]:
-        """Get game IDs where blunders don't have tactical patterns classified."""
         conn = await self.get_connection()
         async with conn.execute(
             """
@@ -293,7 +292,6 @@ class AnalysisRepository(BaseDbRepository):
     async def fetch_blunders_for_tactics_backfill(
         self, game_id: str
     ) -> list[dict[str, object]]:
-        """Fetch blunders that need tactical pattern classification."""
         conn = await self.get_connection()
         async with conn.execute(
             """
@@ -344,15 +342,8 @@ class AnalysisRepository(BaseDbRepository):
         player_colors: list[int] | None = None,
         game_types: list[int] | None = None,
     ) -> list[dict[str, object]]:
-        """Fetch blunders with optional filtering by phase, tactical pattern, color, and game type.
-
-        Args:
-            game_phases: Filter by game phase (0=opening, 1=middlegame, 2=endgame)
-            tactical_patterns: Filter by tactical pattern
-            player_colors: Filter by player color (0=white, 1=black)
-            game_types: Filter by game type - requires post-fetch filtering since
-                        game_type is computed from time_control
-        """
+        """`game_types` is filtered after fetch because game type is derived from
+        `time_control`."""
         conn = await self.get_connection()
         conditions = ["am.classification = ?"]
         params: list = [CLASSIFICATION_BLUNDER]

@@ -229,12 +229,7 @@ class JobRepository(BaseDbRepository):
     async def get_last_completed_sync_at(
         self, source: str, username: str
     ) -> str | None:
-        """Most recent successful import/sync completion for `(source, username)`.
-
-        Used by the profiles API to populate the `last_game_sync_at` field.
-        Case-insensitive on `username` because the ProfileRepository
-        lowercases on write, but historical jobs may carry mixed casing.
-        """
+        """Case-insensitive: historical jobs may carry mixed-case usernames."""
         conn = await self.get_connection()
         async with conn.execute(
             """

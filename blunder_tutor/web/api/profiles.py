@@ -214,11 +214,8 @@ async def trigger_profile_sync(
             detail="profile not found",
         )
 
-    # Manual trigger uses `JOB_TYPE_IMPORT` (backfill semantics, capped by
-    # `preferences.sync_max_games` or the global default) rather than
-    # `JOB_TYPE_SYNC` (incremental from last sync) — spec choice. The user
-    # clicking "Sync Now" gets a fresh pull; the scheduler's auto-sync
-    # path uses `JOB_TYPE_SYNC` for incremental fetches.
+    # Manual trigger uses `JOB_TYPE_IMPORT` (fresh pull, capped by `sync_max_games`),
+    # not `JOB_TYPE_SYNC` (incremental, the scheduler's auto path).
     job_id = await job_service.create_job(
         job_type=JOB_TYPE_IMPORT,
         username=profile.username,
@@ -269,12 +266,10 @@ async def refresh_profile_stats(
 
 
 async def _do_stats_refresh(repo: SqliteProfileRepository, profile: Profile) -> None:
-    """Fetch + upsert + touch_validated_at — the write path of stats refresh.
+    """Fetch, upsert and touch `last_validated_at`.
 
-    Split from `_build_stats_refresh_response` so the upstream-error window
-    (`RateLimitError` → 429) is bounded to the write path and doesn't
-    overlap with the post-write read (which can race against a concurrent
-    profile delete and surface as 404).
+    Split from `_build_stats_refresh_response` so the `RateLimitError` to 429 window
+    covers only the write path, not the post-write read that can race a profile delete.
     """
     snapshots = await fetch_stats_for_profile(profile)
     if snapshots:
@@ -287,9 +282,8 @@ async def _build_stats_refresh_response(
 ) -> ProfileStatsRefreshResponse:
     refreshed = await repo.get(profile_id)
     if refreshed is None:
-        # Profile was deleted concurrently with this refresh. Return 404
-        # rather than a stale shape — the upserted stats rows are now
-        # orphaned (next operation against this profile_id will fail).
+        # Profile deleted concurrently: 404, since the upserted stats rows are now
+        # orphaned.
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="profile not found",
@@ -345,11 +339,8 @@ async def delete_profile(
             detail="profile not found",
         ) from exc
 
-    # Both `detach=True` and `detach=False` change the games dataset visible
-    # to the rating-history endpoint (rows reassigned to profile_id=NULL or
-    # hard-deleted). Either way, cached rating-history responses for this
-    # user are now stale. Use the canonical cache scope so the
-    # invalidation tag matches the cached entry.
+    # Both detach modes change the games visible to rating history, so cached responses
+    # are stale; use the canonical scope so the tag matches.
     await event_bus.publish(
         EloRatingEvent.create_elo_rating_updated(
             scope=user_scope(request.state.user_ctx),

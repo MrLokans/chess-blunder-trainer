@@ -27,10 +27,8 @@ logger = logging.getLogger(__name__)
 
 PROGRESS_FLUSH_INTERVAL = 2.0
 
-# Job types whose completion changes `game_index_cache` rows (and therefore
-# the rating-history derivation). Gating ELO emission to these avoids
-# spurious cache churn on analyze/backfill/stats-sync jobs that don't
-# touch game rows.
+# Only these change `game_index_cache` (hence rating history); gating avoids cache churn
+# on other jobs.
 _GAME_DATASET_JOB_TYPES: frozenset[str] = frozenset(
     (
         JOB_TYPE_IMPORT,
@@ -169,14 +167,7 @@ class JobService:
         total: int,
         body: JobBody[T],
     ) -> T:
-        """Run `body` with the standard job lifecycle.
-
-        Sets status to `running`, initializes progress at 0/total, then
-        invokes `body(progress)` where `progress(current)` updates the
-        job's progress. On success, marks the job complete with the body's
-        return value. On exception, marks the job failed with the
-        exception message and re-raises.
-        """
+        """An exception marks the job failed and re-raises."""
         await self.update_job_status(job_id, JOB_STATUS_RUNNING)
         await self.update_job_progress(job_id, 0, total)
 

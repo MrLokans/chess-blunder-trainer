@@ -7,10 +7,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import NewType
 
-# Errors live in their own module (``core.errors``) so consumers can
-# import every recoverable failure mode without dragging in entity
-# plumbing; re-exported here so internal callers that need entities
-# and errors in one shot keep working with a single import.
+# Re-exported from `core.errors` for callers that need entities and errors in one
+# import.
 from blunder_tutor.auth.core.errors import (  # noqa: F401, WPS235 — full re-export contract; see module docstring above.
     AuthError,
     CorruptCredentialError,
@@ -35,30 +33,18 @@ IdentityId = NewType("IdentityId", str)
 PasswordHash = NewType("PasswordHash", str)
 InviteCode = NewType("InviteCode", str)
 
-# Plain typed-string: the auth core can't enumerate every consumer's
-# provider catalogue. A library user adding ``"github"`` or
-# ``"saml-corp"`` constructs the value via ``ProviderName(name)`` and
-# registers an :class:`AuthProvider` keyed on it; the dispatch table
-# in :class:`AuthService` is a plain ``dict[ProviderName, AuthProvider]``
-# and grows without service-layer changes.
+# Plain typed string: consumers add providers (`ProviderName("github")`) without core
+# changes.
 ProviderName = NewType("ProviderName", str)
 
-# Canonical name for the built-in :class:`CredentialsProvider`. Auth
-# core wiring (``AuthService.signup``) hard-codes this
-# because credentials is the only provider whose registration flow
-# the service layer owns; OAuth/SAML providers live in consumer code
-# and mint their own ``ProviderName`` values via the same constructor.
-# Importing the constant rather than passing the bare literal keeps
-# call sites type-checker-clean against the ``ProviderName`` NewType.
+# Credentials is the only provider whose registration the service owns; OAuth/SAML
+# providers mint their own names.
 CREDENTIALS_PROVIDER_NAME = ProviderName("credentials")
 
 USERNAME_RE = re.compile(r"^[a-z0-9_\-]{3,32}$")
 
-# Local part and each domain label must be non-empty (no consecutive dots,
-# no leading/trailing dots) and the domain must have at least two labels.
-# Intentionally stricter than RFC 5322 — we don't need to accept quoted locals
-# or bracketed IP-literal domains, and rejecting "a..b@x.com" / "a@.b.com"
-# prevents DB unique-constraint duplicates that confuse support.
+# Intentionally stricter than RFC 5322: rejects `a..b@x.com`-style addresses that cause
+# duplicate-looking rows.
 _EMAIL_LABEL = r"[^\s@.]+"
 EMAIL_RE = re.compile(
     rf"^{_EMAIL_LABEL}(?:\.{_EMAIL_LABEL})*@{_EMAIL_LABEL}(?:\.{_EMAIL_LABEL})+$"
@@ -72,17 +58,6 @@ SESSION_TOKEN_HEX_BYTES = 32  # 32 random bytes = 64 hex chars = 256 bits.
 
 @dataclass(frozen=True)
 class ValidationRules:
-    """Per-application username/email/password validation policy.
-
-    Default values (:meth:`ValidationRules.default`) match blunder_tutor's
-    self-hosted policy — 3-32 char usernames, 8-72 byte passwords
-    (bcrypt's hard limit), 254-char email cap. A consumer with different
-    requirements (longer usernames for enterprise SSO, argon2 with
-    256-byte passwords) constructs a custom :class:`ValidationRules`
-    and threads it through the hasher and any direct callers of the
-    validation methods.
-    """
-
     username_re: re.Pattern[str]
     email_re: re.Pattern[str]
     password_min: int
@@ -137,11 +112,7 @@ def make_user_id() -> UserId:
 
 
 def is_user_id_shape(candidate: str) -> bool:
-    """True iff ``candidate`` could plausibly be a ``UserId`` (32-char
-    lowercase hex). Used by orphan-directory scans to distinguish
-    per-user data dirs from operator artefacts like ``users/backups``
-    or ``users/README`` before any destructive action.
-    """
+    """Lets orphan scans skip operator artefacts like `users/backups`."""
     return bool(_USER_ID_RE.match(candidate))
 
 
@@ -194,8 +165,6 @@ class UserContext:
 
     @property
     def is_authenticated(self) -> bool:
-        # Synthetic single-user contexts (the web-layer bypass for
-        # back-compat installs) carry no session token; every reader
-        # must check this property instead of re-implementing
-        # ``session_token is not None``.
+        # Synthetic single-user contexts carry no session token; check this property
+        # instead of `session_token is not None`.
         return self.session_token is not None

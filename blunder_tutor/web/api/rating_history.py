@@ -13,9 +13,8 @@ from blunder_tutor.web.dependencies import (
     set_request_scope,
 )
 
-# 5 minutes — same default as the stats/traps caches; bounded by event-driven
-# invalidation, so the TTL just caps how long stale data can survive in the
-# unlikely event of a missed event.
+# 5 min like the stats/traps caches; event-driven invalidation is primary, the TTL only
+# caps staleness after a missed event.
 _ELO_RATING_CACHE_TTL_SECONDS = 300
 
 rating_history_router = APIRouter(dependencies=[Depends(set_request_scope)])

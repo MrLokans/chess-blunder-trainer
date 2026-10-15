@@ -22,15 +22,9 @@ from blunder_tutor.web.api._profile_schemas import (
 
 
 async def safe_check_username_existence(platform: str, username: str) -> ExistenceCheck:
-    """Existence check that maps upstream HTTP errors to a 502.
-
-    Wraps `check_username_existence` so that anything other than 200/404/429
-    (e.g. persistent 5xx after retry exhaustion, 4xx like 451) surfaces as
-    `HTTPException(502)` rather than a bare 500. Use this in handlers that
-    want strict "we know existence" semantics (`validate_profile`,
-    `create_profile`). PATCH calls the underlying `check_username_existence`
-    directly because it accepts uncertainty.
-    """
+    """Maps upstream HTTP errors other than 200/404/429 to 502 instead of a bare 500, for
+    handlers needing strict existence semantics (`validate_profile`, `create_profile`).
+    PATCH calls `check_username_existence` directly because it tolerates uncertainty."""
     try:
         return await check_username_existence(platform, username)
     except RetryableHTTPError as exc:
@@ -53,9 +47,8 @@ def build_profile_shape(
     stats: list[ProfileStatSnapshot],
     last_game_sync_at: str | None,
 ) -> ProfileShape:
-    # `default=None` covers the case where every snapshot has
-    # `synced_at = None` (e.g. demo-mode in-memory seed) — without it, the
-    # generator's empty-after-filter raises `ValueError`.
+    # `default=None` covers all snapshots having `synced_at = None` (demo seed);
+    # otherwise the empty generator raises.
     last_stats_sync_at = max(
         (snap.synced_at for snap in stats if snap.synced_at is not None),
         default=None,
@@ -107,17 +100,12 @@ async def validate_username_change(
     platform: str,
     new_username: str,
 ) -> bool:
-    """Duplicate + existence checks for a PATCH username change.
+    """Duplicate check (409) plus existence check; True iff upstream confirmed.
 
-    Returns True iff upstream confirmed existence. Raises 409 on duplicate.
-    Does NOT raise on non-existent or upstream-unavailable — explicit spec
-    judgment so users can fix typos on previously-invalid profiles, even
-    when the platform is briefly down.
-    """
+    Deliberately doesn't raise for non-existent or unavailable upstream, so users can
+    fix typos on invalid profiles while the platform is down."""
     other = await repo.find_by_platform_username(platform, new_username)
-    # `other.id != profile_id` is defensive: the caller's pre-check already
-    # filters self-rename via the lowercased-equality early-out, but this
-    # guards against a stale `existing` snapshot under concurrent rename.
+    # Defensive: guards against a stale `existing` snapshot under concurrent rename.
     if other is not None and other.id != profile_id:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -152,9 +140,6 @@ async def apply_patch_identity(
     existing: Profile,
     payload: ProfileUpdateRequest,
 ) -> bool:
-    """Apply username/is_primary changes if requested. Returns True iff the
-    upstream existence check confirmed the new username.
-    """
     fields = payload.model_fields_set
     confirmed = False
     if "username" in fields and payload.username is not None:
@@ -191,10 +176,6 @@ async def apply_patch_preferences(
 async def finalize_new_profile(
     repo: SqliteProfileRepository, profile_id: int
 ) -> ProfileShape:
-    """Stamp `last_validated_at` and return the GET-shaped DTO for a freshly
-    created profile. Empty stats, null `last_game_sync_at`. Extracted so
-    `create_profile` stays under WPS238's raise-count limit.
-    """
     await repo.touch_validated_at(profile_id)
     refreshed = await repo.get(profile_id)
     if refreshed is None:
@@ -212,9 +193,6 @@ async def finalize_patch(
     profile_id: int,
     confirmed_existence: bool,
 ) -> ProfileShape:
-    """After PATCH writes complete, refresh `last_validated_at` if the new
-    username was upstream-confirmed, then return the full GET-shaped DTO.
-    """
     if confirmed_existence:
         await repo.touch_validated_at(profile_id)
     refreshed = await repo.get(profile_id)

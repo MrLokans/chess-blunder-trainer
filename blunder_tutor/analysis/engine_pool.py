@@ -29,12 +29,8 @@ _SENTINEL = object()
 
 
 def _emit_engine_telemetry(outcome: str, elapsed_ms: float) -> None:
-    """Bounded-cardinality contract for the engine chokepoint metrics.
-
-    Both the metric names and the tag schema are part of the operator's
-    dashboards (see `docs/conventions/observability.md`). Renaming
-    requires updating the conventions doc and any operator-side alerts.
-    """
+    """Metric names and the tag schema are an operator-facing contract; see
+    docs/conventions/observability.md."""
     count("engine.analyse.completed", tags={"outcome": outcome})
     distribution("engine.analyse.duration_ms", elapsed_ms)
 
@@ -163,10 +159,8 @@ class EnginePool:
         fn: Callable[[chess.engine.UciProtocol], Awaitable[Any]],
         future: asyncio.Future,
     ) -> tuple[chess.engine.UciProtocol, bool]:
-        # Exists solely to scope the `engine.analyse` span around
-        # `_dispatch_engine_task`. Do not inline — splitting was needed
-        # both for span boundary clarity and to keep WPS231 cognitive
-        # complexity under the project ceiling.
+        # Do not inline: split to scope the `engine.analyse` span and keep WPS231 under
+        # the ceiling.
         with start_span("engine.analyse", op="chess.engine"):
             return await self._dispatch_engine_task(engine, fn, future)
 

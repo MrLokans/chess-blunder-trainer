@@ -14,21 +14,14 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 from blunder_tutor.observability.config import ObservabilityConfig
 from blunder_tutor.observability.scrubbing import make_event_scrubber
 
-# Paths and prefixes whose transactions are dropped before they hit
-# Sentry's quota. Docker healthchecks and static-asset requests are
-# pure noise from a debugging perspective. The set is intentionally
-# small and lives next to `init_observability`; new noise discovered
-# in production gets added here, not in external config.
+# Healthchecks and static assets are noise; add new noise here, not in external config.
 _NOISE_PATHS = frozenset(("/health", "/favicon.ico"))
 _NOISE_PREFIXES = ("/static",)
 
-# Two-second cap so a stuck Sentry connection cannot hang the FastAPI
-# shutdown sequence. Trailing batch may drop; preferable to a hang.
+# Cap so a stuck Sentry connection can't hang shutdown; dropping the tail beats hanging.
 _FLUSH_TIMEOUT_SECONDS = 2.0
 
-# Single activation flag for the whole observability surface. Read by
-# `metrics` and `tracing` to gate dispatch; flipped exactly once by
-# `init_observability` and again by `shutdown_observability`.
+# Single activation flag read by `metrics` and `tracing`.
 active: bool = False
 
 
@@ -48,10 +41,8 @@ def _traces_sampler(
         path = asgi_scope.get("path", "")
         if path in _NOISE_PATHS or path.startswith(_NOISE_PREFIXES):
             return 0.0
-    # Honor parent's decision when present (both True and False).
-    # The spec snippet uses an `or` shortcut that would up-sample on
-    # parent_sampled=False; this `is not None` form correctly drops
-    # the trace when an upstream service decided not to sample.
+    # Honor the parent's decision both ways; the spec's `or` shortcut would up-sample on
+    # parent_sampled=False.
     parent_sampled = sampling_context.get("parent_sampled")
     if parent_sampled is not None:
         return float(parent_sampled)
@@ -80,12 +71,6 @@ def _build_integrations() -> list[Any]:
 
 
 def init_observability(config: ObservabilityConfig) -> None:
-    """Initialize Sentry per the supplied config.
-
-    Idempotent: a second call is a no-op. Returns silently when
-    telemetry is disabled (the default), so the call site does not
-    need a guard.
-    """
     if active or not config.enabled:
         return
 

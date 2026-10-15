@@ -1,10 +1,3 @@
-"""Auth-domain error hierarchy.
-
-Lives apart from ``types.py`` so consumers building UIs around the
-auth flow can import every recoverable failure mode in one shot
-without dragging in entity classes / NewType plumbing.
-"""
-
 from __future__ import annotations
 
 
@@ -13,12 +6,10 @@ class AuthError(Exception):
 
 
 class _InputError(AuthError):
-    """Invalid input from the caller. Error message is safe to surface;
-    the offending value is kept on `.offender` for logs only. `.code` is
-    the stable slug the HTTP layer emits — intentionally divorced from
-    the human-readable message so translations and renamed error strings
-    can't desync.
-    """
+    """Invalid caller input.
+
+    The message is safe to show; the offending value stays on `.offender` for logs.
+    `.code` is the stable slug the HTTP layer emits, independent of the message."""
 
     _message: str = "invalid input"
     code: str = "invalid_input"
@@ -61,16 +52,12 @@ class UserCapReachedError(AuthError):
 
 
 class CorruptCredentialError(AuthError):
-    """Stored credential hash is malformed — indicates DB corruption,
-    not a wrong password attempt."""
+    """Stored hash is malformed: DB corruption, not a wrong password."""
 
 
 class UserNotFoundError(AuthError):
-    """No user matches the given username. Raised by admin operations
-    that look up a user by name (``reset_password``, ``revoke_sessions``,
-    ``delete_user``); the service-layer flows that look up by id use
-    ``get_user`` returning ``None`` instead.
-    """
+    """Raised by admin operations that look up by username; flows by id return None
+    instead."""
 
     def __init__(self, username: str) -> None:
         super().__init__(f"User not found: {username}")
@@ -78,10 +65,7 @@ class UserNotFoundError(AuthError):
 
 
 class NoCredentialsIdentityError(AuthError):
-    """The user exists but has no ``credentials`` identity row, so a
-    password reset has nothing to update. Surfaces during admin reset
-    on accounts that only signed up via OAuth.
-    """
+    """User has no credentials identity (OAuth-only), so there is nothing to reset."""
 
     def __init__(self, username: str) -> None:
         super().__init__(f"User has no credentials identity: {username}")
@@ -89,8 +73,5 @@ class NoCredentialsIdentityError(AuthError):
 
 
 class InviteCannotBeRegeneratedError(AuthError):
-    """Invite codes are first-user-only — a regenerate attempt with
-    existing users would imply a misconfiguration, so the admin
-    operation refuses rather than minting a code that the
-    first-user-gate would never honour.
-    """
+    """Raised when regenerating an invite while users exist; the first-user gate would
+    never honour it."""

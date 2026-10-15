@@ -7,9 +7,7 @@ from fastapi_throttle import RateLimiter
 if TYPE_CHECKING:
     from blunder_tutor.web.config import AppConfig
 
-# Effectively-unbounded request count for the no-op limiter — used when
-# demo mode is off and we want a Pass-through `RateLimiter` instance to
-# satisfy the dependency type without actually rate-limiting.
+# Effectively unbounded count for the no-op limiter used when demo mode is off.
 _NOOP_RATE_LIMITER_TIMES = 999_999
 
 _NOOP_LIMITER = RateLimiter(times=_NOOP_RATE_LIMITER_TIMES, seconds=1)

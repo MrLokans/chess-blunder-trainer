@@ -15,16 +15,7 @@ def board_from_fen(fen: str) -> chess.Board:
 
 
 def format_eval(cp: int, player_color: str) -> str:
-    """Format centipawn evaluation from player's perspective.
-
-    Args:
-        cp: Centipawn score (positive = good for white)
-        player_color: "white" or "black"
-
-    Returns:
-        Formatted string like "+1.5", "-M", etc.
-    """
-    # Convert to player perspective
+    """Eval from the player's perspective, e.g. `+1.5` or `-M`."""
     if player_color == "black":
         cp = -cp
     if cp >= DISPLAY_MATE_THRESHOLD:
@@ -40,16 +31,6 @@ def score_to_cp(
     side: chess.Color,
     mate_score: int = 100000,
 ) -> int:
-    """Convert chess.engine.PovScore to centipawns from perspective.
-
-    Args:
-        score: Engine score object
-        side: chess.WHITE or chess.BLACK
-        mate_score: Value to use for mate scores
-
-    Returns:
-        Centipawn value
-    """
     if score is None:
         return 0
     return score.pov(side).score(mate_score=mate_score) or 0

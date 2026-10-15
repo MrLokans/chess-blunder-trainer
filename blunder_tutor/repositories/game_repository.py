@@ -36,13 +36,8 @@ class GameRepository(BaseDbRepository):
         *,
         profile_id: int | None = None,
     ) -> int:
-        """Insert games into ``game_index_cache``.
-
-        ``profile_id`` tags every inserted row with the owning tracked
-        profile. Callers using the legacy username-pair path pass ``None``;
-        rows then have ``profile_id IS NULL`` and stay reachable only by
-        ``(source, username)`` denormalization.
-        """
+        """The legacy username-pair path passes `profile_id=None`; those rows stay
+        reachable only via `(source, username)`."""
         timestamp = now_iso()
         inserted = 0
 
@@ -81,7 +76,6 @@ class GameRepository(BaseDbRepository):
         return inserted
 
     async def get_all_game_side_map(self) -> dict[str, int]:
-        """Build a side map for every game using the stored ``username`` column."""
         game_map: dict[str, int] = {}
 
         conn = await self.get_connection()
@@ -294,15 +288,7 @@ class GameRepository(BaseDbRepository):
         game_type: int | None = None,
         since: str | None = None,
     ) -> list[dict[str, object]]:
-        """Project the latest game per calendar day for the profile.
-
-        Uses a window function to keep only the row with the largest
-        `end_time_utc` for each ``YYYY-MM-DD`` partition, minimizing rows
-        the service has to PGN-parse and ship. PGN parsing stays in the
-        service layer so this remains a pure SQL projection — trivial to
-        swap for a column-based query once `white_rating` / `black_rating`
-        are denormalized.
-        """
+        """One row per day (latest `end_time_utc`) to minimise PGN parsing in the service."""
         params: list[object] = [profile_id]
         game_type_clause = ""
         if game_type is not None:
@@ -344,7 +330,6 @@ class GameRepository(BaseDbRepository):
         source: str,
         username: str,
     ) -> datetime | None:
-        """Get the end_time_utc of the most recent game for a source/username."""
         query = """
             SELECT end_time_utc FROM game_index_cache
             WHERE source = ? AND username = ?

@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-"""Download missing chess piece sets from Lichess."""
-
 from __future__ import annotations
 
 import asyncio
@@ -11,7 +9,6 @@ import httpx
 PIECES = ["wK", "wQ", "wR", "wB", "wN", "wP", "bK", "bQ", "bR", "bB", "bN", "bP"]
 LICHESS_BASE_URL = "https://lichess.org/assets/piece"
 
-# Sets we want to have
 WANTED_SETS = [
     "alpha",
     "california",

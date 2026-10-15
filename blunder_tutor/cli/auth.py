@@ -1,13 +1,3 @@
-"""``blunder-tutor auth <sub>`` — argparse glue around the library's
-admin functions in :mod:`blunder_tutor.auth.cli.admin`.
-
-The actual operations live in the library; this module is the
-operator-facing wrapper: argparse subparsers, password resolution
-that keeps the new password off argv, and translation of typed
-:class:`AuthError` subclasses into operator-friendly
-``SystemExit`` messages.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -99,12 +89,8 @@ async def cmd_regenerate_invite(ctx: dict) -> None:
 
 
 async def cmd_prune_orphans(ctx: dict) -> None:
-    """Per-user data dirs are a blunder_tutor concept — auth core
-    knows nothing about filesystem layout (validates the EPIC-3 P3.1
-    seam). The library admin module deliberately does not expose
-    ``prune_orphans``; it stays here next to the other dir-aware
-    helpers in ``web/auth_hooks.py``.
-    """
+    """Lives here, not in the auth library, because per-user dirs are a blunder_tutor
+    concept."""
     users = ctx["storage"].users
     known = {u.id for u in await users.list_all()}
     users_dir: Path = ctx["users_dir"]
@@ -113,10 +99,8 @@ async def cmd_prune_orphans(ctx: dict) -> None:
         print("Removed 0 orphan directories")
         return
 
-    # Refuse to act on what looks like a misconfigured DB_PATH: an
-    # empty `users` table paired with existing per-user directories
-    # almost always means the auth DB is fresh but the data dirs are
-    # real. Running `rmtree` here would destroy every user's data.
+    # Refuse when `users` is empty but per-user dirs exist: likely a misconfigured
+    # DB_PATH, and rmtree would destroy real data.
     candidates = [
         c for c in users_dir.iterdir() if c.is_dir() and is_user_id_shape(c.name)
     ]
@@ -138,8 +122,8 @@ async def cmd_prune_orphans(ctx: dict) -> None:
 _DISPATCH = MappingProxyType(
     {
         "list-users": (cmd_list_users, ()),
-        # ``new_password`` is populated from stdin or getpass in the
-        # dispatcher, not from argparse — passwords must not appear on argv.
+        # Populated from stdin or getpass, never argparse: passwords must not appear on
+        # argv.
         "reset-password": (cmd_reset_password, ("username", "new_password")),  # noqa: WPS226 — argparse positional name `username`; identical signature across user-management subcommands.
         "revoke-sessions": (cmd_revoke_sessions, ("username",)),
         "delete-user": (cmd_delete_user, ("username",)),
@@ -150,11 +134,8 @@ _DISPATCH = MappingProxyType(
 
 
 def _read_password_interactive() -> str:
-    # `getpass` silently falls back to `input()` when no TTY is
-    # attached — and `input()` echoes. Refuse explicitly so an
-    # operator running e.g. ``docker exec container auth reset-password
-    # alice`` (no ``-it``) gets a clear error instead of typing a
-    # password that appears in scrollback.
+    # `getpass` falls back to `input()` (which echoes) without a TTY; refuse, e.g.
+    # `docker exec` without `-it`.
     if not sys.stdin.isatty():
         raise SystemExit(
             "reset-password: no TTY attached. Use --password-stdin "
@@ -171,11 +152,7 @@ def _read_password_interactive() -> str:
 
 
 def _resolve_new_password(args: argparse.Namespace) -> str:
-    """Read the new password from stdin (non-interactive) or prompt twice
-    via ``getpass`` (interactive). Never consults ``args.new_password``
-    because argparse doesn't expose it — the flag was intentionally
-    removed to prevent the value from landing on argv.
-    """
+    """No argv flag by design, to keep the password out of process listings."""
     if getattr(args, "password_stdin", False):
         password = sys.stdin.readline().rstrip("\n")
         if not password:
@@ -185,10 +162,6 @@ def _resolve_new_password(args: argparse.Namespace) -> str:
 
 
 class AuthCommand(CLICommand):
-    """`blunder-tutor auth <sub>` — operator tools for the credentials
-    auth backend. All subcommands are no-ops outside ``AUTH_MODE=credentials``
-    since there is no auth.sqlite3 to act on."""
-
     def should_run(self, args: argparse.Namespace) -> bool:
         return args.command == "auth"
 
@@ -276,10 +249,6 @@ class AuthCommand(CLICommand):
             await self._dispatch(args, ctx)
 
     async def _dispatch(self, args: argparse.Namespace, ctx: dict) -> None:
-        # reset-password reads the new password from a non-argv source so
-        # it never appears in `ps`, shell history, or journald. Stdin mode
-        # is for piped/scripted invocation; interactive falls through to
-        # getpass with a confirmation prompt.
         if args.auth_subcommand == "reset-password":
             args.new_password = _resolve_new_password(args)
         fn, arg_names = _DISPATCH[args.auth_subcommand]

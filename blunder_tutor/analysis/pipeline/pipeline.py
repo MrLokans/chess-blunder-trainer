@@ -54,8 +54,7 @@ class AnalysisPipeline:
         return self._topological_sort(requested_ids)
 
     def _pull_in_missing_deps(self, requested_ids: set[str]) -> None:
-        # Iterates the original config list, not requested_ids, so adding to
-        # the set during the loop is safe.
+        # Iterates the original config list, so mutating `requested_ids` is safe.
         for step_id in self.config.steps:
             step = self._steps_by_id[step_id]
             for dep_id in step.depends_on - requested_ids:

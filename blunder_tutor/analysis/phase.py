@@ -4,10 +4,7 @@ import chess
 
 from blunder_tutor.constants import PHASE_ENDGAME, PHASE_MIDDLEGAME, PHASE_OPENING
 
-# Phase classification heuristics. Tuned by manual review against
-# annotated games; the boundaries reflect typical material/move-count
-# transitions (e.g., few captures + many pieces in early moves =
-# opening; lots of captures + few pieces = endgame).
+# Heuristics tuned by manual review against annotated games.
 KING_COUNT = 2
 OPENING_EARLY_MOVE_LIMIT = 10
 OPENING_EARLY_PIECE_FLOOR = 20

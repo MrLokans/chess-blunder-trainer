@@ -13,9 +13,8 @@ async def _count_then_delete(conn: aiosqlite.Connection, table: str) -> int:
     return count
 
 
-# (table, optional). Optional tables may not exist in older databases;
-# missing-table errors are swallowed to keep the wipe idempotent across
-# schema versions. Order is preserved from the original implementation.
+# (table, optional): optional tables may be missing in older DBs; their errors are
+# swallowed to keep the wipe idempotent.
 _WIPE_TABLES: tuple[tuple[str, bool], ...] = (
     ("srs_cards", True),
     ("trap_matches", True),

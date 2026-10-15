@@ -12,11 +12,8 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class SettingsSnapshot:
-    """Per-request bundle of the three per-user settings values that two
-    middleware previously each opened the DB to read. Field is `None` when
-    the DB was unavailable (credentials mode pre-auth, or DB initializing);
-    callers fall back to defaults.
-    """
+    """A field is None when the DB was unavailable (pre-auth, initializing); callers use
+    defaults."""
 
     setup_completed: bool | None
     locale: str | None
@@ -27,13 +24,6 @@ _EMPTY = SettingsSnapshot(setup_completed=None, locale=None, features=None)
 
 
 async def get_settings_snapshot(request: Request) -> SettingsSnapshot:
-    """Return the per-request snapshot, materializing on first call.
-    Subsequent calls in the same request are O(1) attribute reads.
-
-    Materialization opens the user DB exactly once and populates all three
-    per-user caches as a side effect, so the next request for the same
-    user can short-circuit at the cache layer without touching this helper.
-    """
     cached = getattr(request.state, "settings_snapshot", None)
     if cached is not None:
         return cached

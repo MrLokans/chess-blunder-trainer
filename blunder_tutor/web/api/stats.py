@@ -19,9 +19,7 @@ from blunder_tutor.web.dependencies import (
     set_request_scope,
 )
 
-# Cache TTL applied to dashboard stats endpoints. 5 minutes balances
-# freshness with the cost of recomputing aggregations over the full
-# game/analysis tables.
+# 5 min trades freshness against recomputing aggregations over full tables.
 STATS_CACHE_TTL_SECONDS = 300
 
 # Heatmap window bounds. 30-day floor keeps the view non-empty for new
@@ -29,8 +27,6 @@ STATS_CACHE_TTL_SECONDS = 300
 HEATMAP_DAYS_MIN = 30
 HEATMAP_DAYS_MAX = 365
 
-# Top-openings table cap: 50 openings is enough breadth without crowding
-# the UI or hitting query-cost cliffs.
 OPENINGS_LIMIT_MAX = 50
 
 

@@ -1,11 +1,7 @@
-"""Cheap stats-only sync job.
+"""Stats-only profile sync, fire-and-forget.
 
-Fire-and-forget by design: dispatched by the scheduler via
-`JobExecutionRequestEvent` *without* a `job_service.create_job` row, so
-there is no `background_jobs` lifecycle to advance — the runner directly
-UPSERTs `profile_stats` and updates `profile.last_validated_at`. Adding a
-job row in the future also means adding `update_job_status` calls here.
-"""
+Dispatched via `JobExecutionRequestEvent` without a `background_jobs` row, so the runner
+upserts `profile_stats` and updates `last_validated_at` directly."""
 
 from __future__ import annotations
 
@@ -26,22 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 async def fetch_stats_for_profile(profile: Profile) -> list[ProfileStatSnapshot]:
-    """Dispatch to the appropriate fetcher for the profile's platform.
+    """Per-platform fetch, resolved at call time so tests can monkeypatch the fetchers.
+    Public because `POST /api/profiles/{id}/stats/refresh` reuses it.
 
-    Looked up dynamically rather than via a module-level dict so tests can
-    `monkeypatch.setattr` the underlying fetcher modules — a captured
-    reference would shadow the patch.
-
-    Public (no leading underscore) because the synchronous
-    `POST /api/profiles/{id}/stats/refresh` endpoint reuses the same
-    dispatch.
-
-    TREK-127 follow-up: when `dispatch_fetch` lands in
-    `blunder_tutor/fetchers/__init__.py`, move this helper there and
-    re-import from both `stats_sync.py` and `web/api/profiles.py`.
-    Platform-keyed dispatch belongs in the fetchers package, not in a
-    job module.
-    """
+    TREK-127: move to the fetchers package once `dispatch_fetch` lands."""
     if profile.platform == PLATFORM_LICHESS:
         return await lichess.fetch_user_perfs(profile.username)
     if profile.platform == PLATFORM_CHESSCOM:
@@ -66,9 +50,8 @@ class StatsSyncJob(BaseJob):
         self.profile_repo = profile_repo
 
     async def execute(self, job_id: str, **kwargs: Any) -> dict[str, Any]:
-        # `profile_id` is required: stats_sync is dispatched only by the
-        # scheduler / manual triggers, which always supply it. KeyError
-        # here is the load-bearing failure mode for a misconfigured caller.
+        # `profile_id` is required; KeyError is the intended failure for a misconfigured
+        # caller.
         profile_id = int(kwargs["profile_id"])
         profile = await self.profile_repo.get(profile_id)
         if profile is None:

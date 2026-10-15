@@ -16,16 +16,13 @@ from blunder_tutor.events.event_types import (
 
 logger = logging.getLogger(__name__)
 
-# One spelling per tag so the registry and the event mapping below
-# cannot drift; both are built from these constants.
 _TAG_STATS = "stats"
 _TAG_TRAPS = "traps"
 _TAG_TRAINING = "training"
 _TAG_ELO_RATING = "elo_rating"
 
-# Canonical registry of every cache tag base. The clear control and the
-# structural `@cached` membership test (sibling task) both check against
-# this, so a new cached aggregate cannot silently escape invalidation.
+# Every cache tag base; a new cached aggregate must be registered here so it cannot
+# escape invalidation.
 CACHE_TAGS: frozenset[str] = frozenset(
     (_TAG_STATS, _TAG_TRAPS, _TAG_TRAINING, _TAG_ELO_RATING)
 )
@@ -41,13 +38,8 @@ EVENT_TAG_MAPPING: MappingProxyType[EventType, str] = MappingProxyType(
 
 
 async def clear_user_cache(backend: CacheBackend, scope: str) -> list[str]:
-    """Invalidate only `scope`'s entries for every registered tag.
-
-    Never `backend.clear()`: that wipes every tenant's entries in the
-    shared in-memory backend. Uses the same scoped `invalidate_tag`
-    primitive the event path uses, so a manual clear is indistinguishable
-    from an automatic invalidation.
-    """
+    """Invalidate only `scope`'s entries for every tag. Never `backend.clear()`, which
+    would wipe other tenants."""
     cleared: list[str] = []
     for tag in CACHE_TAGS:
         await backend.invalidate_tag(f"{tag}:{scope}")
@@ -63,14 +55,8 @@ class CacheInvalidator:
         self._task: asyncio.Task | None = None
 
     async def start(self) -> None:
-        """Subscribe to the bus and spawn the consume task, then return.
-
-        One all-events subscription (filtered on `EVENT_TAG_MAPPING`)
-        replaces the per-type fan-in: no forwarder tasks, and the
-        consume task is owned here so `stop()` can deterministically
-        terminate it. The own-published `CACHE_INVALIDATED` event is not
-        in the mapping, so the filter also breaks the feedback loop.
-        """
+        """The filter on `EVENT_TAG_MAPPING` also keeps the own `CACHE_INVALIDATED` event
+        from looping."""
         self._queue = await self._event_bus.subscribe()
         self._task = asyncio.create_task(self._consume_loop(self._queue))
 

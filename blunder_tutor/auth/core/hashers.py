@@ -13,27 +13,8 @@ _DUMMY_RAW = b"dummy-password-for-timing-equalization"
 
 
 class BcryptHasher:
-    """Bcrypt-backed password hasher.
-
-    Construction is cheap; the constant-time dummy hash used by
-    :class:`CredentialsProvider` is computed lazily on the first call
-    to :meth:`dummy_hash`. :class:`AuthService` warms it at startup so
-    the first authenticate request never pays the bcrypt cost on a
-    cold cache.
-
-    The hasher delegates length validation to its
-    :class:`ValidationRules` so the consumer's password policy
-    (min length, max bytes — bcrypt caps at 72) is the single source
-    of truth.
-
-    ``cost`` is the bcrypt salt cost factor (``rounds`` in
-    ``bcrypt.gensalt``); ``None`` defers to the library default (12 in
-    bcrypt 5.x — production-grade). Tests override to a much cheaper
-    factor (~4) so a suite that hashes hundreds of passwords doesn't
-    burn 30+ seconds of bcrypt CPU. Verify is unaffected by this knob —
-    the cost factor is encoded in each stored hash, so checkpw runs at
-    whatever cost the hash was created at.
-    """
+    """`cost=None` uses the library default; tests lower it. The constant-time dummy hash
+    is computed lazily and warmed by `AuthService` at startup."""
 
     def __init__(self, rules: ValidationRules, *, cost: int | None = None) -> None:
         self._rules = rules
@@ -53,10 +34,8 @@ class BcryptHasher:
         try:
             return bcrypt.checkpw(encoded, hashed.encode("utf-8"))
         except ValueError as exc:
-            # Structural bcrypt failure (malformed stored hash, wrong
-            # prefix, etc.) is different from "wrong password" —
-            # surface as :class:`CorruptCredentialError` so corrupted
-            # rows don't masquerade as auth misses.
+            # A malformed hash is DB corruption, not a wrong password; surface it
+            # distinctly.
             raise CorruptCredentialError(str(exc)) from exc
 
     def dummy_hash(self) -> PasswordHash:
@@ -70,11 +49,8 @@ class BcryptHasher:
         return PasswordHash(hashed.decode("utf-8"))
 
 
-# Module-level singleton + shims for callers (CLI admin commands, the
-# auth.types module's tests) that just need a default-policy hash or
-# verify without instantiating the class. Lazy so importing the
-# module doesn't cost a bcrypt round (the hasher itself is cheap to
-# construct; only the dummy is).
+# Default-policy shims for callers without a hasher; lazy so importing costs no bcrypt
+# round.
 cached_hasher: BcryptHasher | None = None
 
 

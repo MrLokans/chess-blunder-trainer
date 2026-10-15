@@ -129,12 +129,8 @@ def _warn_insecure_cookie_posture(auth_config) -> None:
 
 
 async def _bootstrap_auth(app: FastAPI) -> None:
-    """Initialize `auth.sqlite3`, build the credentials-mode auth bundle,
-    surface an invite code when no users exist, and run the orphan-directory
-    scan. All side effects run on the app's own event loop so
-    `aiosqlite` connections are bound to the same loop as request
-    handlers.
-    """
+    """Runs on the app's event loop so aiosqlite connections match the request handlers'
+    loop."""
     config: AppConfig = app.state.config
     auth_config = config.auth
     auth_db_path = config.data.db_path.parent / "auth.sqlite3"
@@ -158,10 +154,8 @@ async def _bootstrap_auth(app: FastAPI) -> None:
         db_path=auth_db_path,
         users_dir=users_dir,
     )
-    # Per-user DB path topology lives here, not in the auth core. The
-    # `UserDbPathMiddleware` reads this resolver per-request to populate
-    # `request.state.user_db_path`; `_wire_background` reuses it so the
-    # foreground request path and background fan-out share one mapping.
+    # Per-user DB topology lives here, not in the auth core; `UserDbPathMiddleware` and
+    # `_wire_background` share this one mapping.
     app.state.db_path_resolver = partial(resolve_user_db_path, users_dir)
 
     _warn_insecure_cookie_posture(auth_config)
@@ -173,11 +167,6 @@ async def _bootstrap_auth(app: FastAPI) -> None:
 
 
 def _wire_background(app: FastAPI) -> None:
-    """Build the JobExecutor + BackgroundScheduler with auth-mode-aware
-    user enumeration. The per-user DB-path resolver is shared with the
-    foreground request path via ``app.state.db_path_resolver``, set in
-    ``_build_app`` (none mode) or ``_bootstrap_auth`` (credentials mode).
-    """
     config: AppConfig = app.state.config
     event_bus = app.state.event_bus
     work_coordinator = app.state.work_coordinator
@@ -204,15 +193,8 @@ def _wire_background(app: FastAPI) -> None:
 
 
 async def scan_orphans(users: auth_pkg.UserRepo, users_dir: Path) -> None:
-    """Log any per-user directories on disk that don't match a row in
-    ``users``. Startup diagnostic only — deletion is the operator's
-    call via the CLI. A silent auto-delete would be a footgun: orphans
-    can legitimately appear after a partial restore from backup, a
-    botched manual ``rm``, or a crash mid-``delete_account``.
-
-    Non-user-id-shaped entries (e.g. ``users/backups``, ``users/README``)
-    are skipped — they're operator artefacts, not stale data.
-    """
+    """Diagnostic only: deletion is the operator's call, since orphans appear after partial
+    restores or crashes mid-delete."""
     if not users_dir.exists():
         return
     known = {u.id for u in await users.list_all()}
@@ -253,28 +235,23 @@ def _on_supervised_exit(name: str, task: asyncio.Task) -> None:
 
 
 def _supervise(name: str, coro: Coroutine[Any, Any, None]) -> asyncio.Task:
-    # Fire-and-forget create_task makes a long-lived task's crash invisible:
-    # asyncio only surfaces the exception when the task is GC'd while
-    # pending, which a process-lifetime task never is. The done-callback
-    # turns a silent exit into a logged one. The sibling job_executor.run()
-    # spawn shares this anti-pattern; converting it is a separate ticket.
+    # A fire-and-forget task's crash is invisible until GC, which never happens for a
+    # process-lifetime task; the done-callback logs it. `job_executor.run()` has the
+    # same issue (separate ticket).
     task = asyncio.create_task(coro, name=name)
     task.add_done_callback(partial(_on_supervised_exit, name))
     return task
 
 
 async def _run_startup(app: FastAPI) -> None:
-    # `init_observability` runs first so any subsequent startup
-    # exception (engine boot, auth bootstrap, background wiring) is
-    # captured by Sentry. No-op when observability is disabled.
+    # First, so any later startup exception is captured by Sentry.
     config: AppConfig = app.state.config
     init_observability(config.observability)
 
     coordinator: WorkCoordinator = app.state.work_coordinator
     await coordinator.start()
 
-    # Auth bootstrap MUST run before the executor/scheduler start so the
-    # AuthDb is available to the multi-user UserLister callback.
+    # Must precede executor/scheduler: the multi-user `UserLister` needs the AuthDb.
     if app.state.auth_mode == AUTH_MODE_CREDENTIALS:
         await _bootstrap_auth(app)
 
@@ -283,16 +260,14 @@ async def _run_startup(app: FastAPI) -> None:
     _wire_background(app)
     app.state.scheduler.start()
 
-    # Subscribe BEFORE yield so callers publishing an event during
-    # request handling never race the executor's queue subscription.
+    # Subscribe before yield so events published during requests don't race the
+    # subscription.
     await app.state.job_executor.subscribe()
 
     app.state.broadcast_task = _supervise(
         "ws-broadcast", app.state.connection_manager.start_broadcasting()
     )
     asyncio.create_task(app.state.job_executor.run())
-    # start() subscribes (awaited, before yield → no publish race) then
-    # spawns and owns its consume task; stop() terminates it.
     await app.state.cache_invalidator.start()
 
 
@@ -300,18 +275,16 @@ async def _close_storage(app: FastAPI) -> None:
     settings_repo = app.state.settings_repo
     if settings_repo is not None:
         await settings_repo.close()
-    # AuthDb owns the shared aiosqlite connection; close it here.
-    # Provider lifecycles are no-ops (CredentialsProvider holds no
-    # external resources) so AuthService has no close method — if a
-    # future provider needs cleanup, re-add it and wire it back here.
+    # AuthDb owns the shared connection. Providers hold no resources, so `AuthService`
+    # has no close.
     if app.state.auth is not None:
         auth_db = app.state.auth.storage.auth_db
         await auth_db.close()
 
 
 async def _run_cleanup(app: FastAPI) -> None:
-    # The broadcaster loops forever; cancelling it runs its finally, which
-    # closes the coalescer. _on_supervised_exit stays silent on cancel.
+    # Cancelling runs the broadcaster's finally, which closes the coalescer;
+    # `_on_supervised_exit` stays silent on cancel.
     broadcast_task = app.state.broadcast_task
     broadcast_task.cancel()
     with suppress(asyncio.CancelledError):
@@ -328,16 +301,13 @@ async def _run_shutdown(app: FastAPI) -> None:
     try:  # noqa: WPS501 — bare try/finally is intentional: re-raise the original cleanup failure but still flush Sentry.
         await _run_cleanup(app)
     finally:
-        # In `finally` so a failure in any earlier cleanup step still
-        # gets a chance to flush buffered events (including the failure
-        # itself, captured via the LoggingIntegration). The flush has
-        # its own 2s timeout to keep shutdown bounded.
+        # In `finally` so a failure in earlier cleanup still flushes buffered events;
+        # the flush has its own 2s timeout.
         shutdown_observability()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Async lifespan context manager for FastAPI app startup/shutdown."""
     await _run_startup(app)
     yield
     await _run_shutdown(app)
@@ -352,9 +322,6 @@ def _init_templates(app: FastAPI, config: AppConfig) -> Jinja2Templates:
     i18n = TranslationManager(locales_dir)
     app.state.i18n = i18n
 
-    # Per-request template state (t, locale, features, translations_json,
-    # features_json) is plumbed via ``i18n_context`` from ``request.state``
-    # so concurrent renders can't observe each other's context.
     templates.env.globals["available_locales"] = i18n.available_locales
     templates.env.globals["vite_asset"] = lambda entry: vite_asset(
         entry, dev_mode=config.vite_dev
@@ -384,21 +351,16 @@ def _init_caches(app: FastAPI, config: AppConfig) -> None:
         cache=cache_backend, event_bus=app.state.event_bus
     )
 
-    # Per-user caches keyed on user_id (or `_local` in none-mode). Always
-    # present so middleware never has to lazy-init.
+    # Always present so middleware never lazy-inits.
     app.state.setup_completed_cache = PerUserCache[bool]()
     app.state.locale_cache = PerUserCache[str]()
     app.state.features_cache = PerUserCache[dict[str, bool]]()
 
 
 def _init_rate_limiters(app: FastAPI, config: AppConfig) -> None:
-    # Per-IP rate limiters for auth endpoints. `RateLimiter` is stateful
-    # (in-memory sliding-window), so it must be instantiated once per
-    # process and reused across requests. ``trust_proxy`` is opt-in via
-    # `AUTH_TRUST_PROXY`: default ``False`` keys the limiter on the
-    # direct client IP, so a direct-to-uvicorn deploy cannot be bypassed
-    # by spoofing ``X-Forwarded-For``. Flip to ``True`` only behind a
-    # reverse proxy that overwrites the header.
+    # RateLimiter is stateful (in-memory window): one instance per process.
+    # `trust_proxy` defaults False so a spoofed `X-Forwarded-For` can't bypass it;
+    # enable only behind a proxy that overwrites the header.
     app.state.login_rate_limiter = RateLimiter(
         times=config.auth.login_rate_limit,
         seconds=config.auth.login_rate_window_seconds,
@@ -429,31 +391,20 @@ def _init_state(app: FastAPI, config: AppConfig) -> None:
     _init_caches(app, config)
     app.state.connection_manager = ConnectionManager(app.state.event_bus)
 
-    # JobExecutor + BackgroundScheduler are constructed in the lifespan
-    # by `_wire_background` once auth bootstrap has populated the AuthDb
-    # (credentials mode needs the user list at tick time).
     app.state.job_executor = None
     app.state.scheduler = None
     app.state.settings_repo = settings
 
-    # Auth state. `app.state.auth` is the credentials-mode bundle
-    # materialized in `_bootstrap_auth`; readers narrow on
-    # `if app.state.auth is not None` so the type system carries the
-    # mode invariant. `none_mode_db_path` is the legacy single-user DB
-    # path. It is set ONLY when ``auth.mode == "none"`` so any code that
-    # reaches for ``app.state.none_mode_db_path`` in credentials mode
-    # raises AttributeError instead of silently writing to the wrong DB.
-    # The ``tests/test_none_mode_db_path_isolation.py`` structural guard
-    # enforces that only the documented call sites read this attribute.
+    # `none_mode_db_path` is set only when `auth.mode == "none"`, so reads in
+    # credentials mode raise AttributeError rather than silently hit the wrong DB;
+    # `tests/test_none_mode_db_path_isolation.py` guards the call sites.
     app.state.auth_mode = config.auth.mode
     app.state.auth_config = config.auth
     app.state.auth = None
 
     if config.auth.mode == AUTH_MODE_NONE:
         app.state.none_mode_db_path = config.data.db_path
-        # Single-user topology: every request resolves to the same
-        # legacy DB. Credentials mode populates this in `_bootstrap_auth`
-        # once `users_dir` is known.
+        # Single-user topology: every request resolves to the legacy DB.
         none_db_path = config.data.db_path
         app.state.db_path_resolver = lambda _user_id: none_db_path
 
@@ -463,32 +414,22 @@ def _init_state(app: FastAPI, config: AppConfig) -> None:
 
 
 def _register_middleware(app: FastAPI, config: AppConfig) -> None:
-    # Order matters: last added = first executed.
-    # `AuthMiddleware` runs first so downstream middleware can read the
-    # per-request `user_ctx` / `db_path` from `request.state`.
-    # `SecurityHeadersMiddleware` is added first (runs last on response)
-    # so it stamps headers regardless of what earlier middleware
-    # returned — including Auth's 401 and redirect responses.
-    # Host header allowlist. Without it, a shared-vhost deployment lets
-    # any cross-origin attacker pass the CSRF Origin/Host equality check
-    # by sending a spoofed Host header. Default "*" preserves behavior
-    # for single-host dev setups; operators MUST configure this on any
-    # multi-tenant or shared-origin deploy.
+    # Middleware runs in reverse add order. `SecurityHeadersMiddleware` is added first
+    # so it stamps headers on every response, including Auth's 401/redirects.
+    #
+    # Host allowlist: without it, a shared-vhost deploy lets a cross-origin attacker
+    # pass the CSRF Origin/Host check with a spoofed Host. Default "*" suits single-host
+    # dev; configure it on shared deploys.
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(config.allowed_hosts))
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(SetupCheckMiddleware)
     app.add_middleware(DemoModeMiddleware)
     app.add_middleware(LocaleMiddleware)
-    # `UserDbPathMiddleware` must run AFTER `AuthMiddleware` (which sets
-    # `request.state.user_ctx`) and BEFORE the middleware that opens
-    # per-user DBs. Add order is reverse of execution: added BEFORE Auth
-    # here so it runs AFTER it on the request.
+    # Must run after `AuthMiddleware` (sets `user_ctx`) and before middleware that opens
+    # per-user DBs; added before Auth, so it executes after.
     app.add_middleware(UserDbPathMiddleware)
-    # AuthMiddleware (credentials mode) and BypassAuthMiddleware (none
-    # mode) are mutually exclusive: each writes the same `user_ctx`
-    # request-state slot, so registering both would have the inner one
-    # silently overwrite the outer's value. The auth core knows nothing
-    # about none mode after TREK-54 — that branch lives entirely here.
+    # Auth and Bypass middleware are mutually exclusive: both write `user_ctx`, so the
+    # inner would overwrite the outer.
     if config.auth.mode == AUTH_MODE_CREDENTIALS:
         app.add_middleware(
             auth_pkg.AuthMiddleware,
@@ -500,11 +441,8 @@ def _register_middleware(app: FastAPI, config: AppConfig) -> None:
         )
     else:
         app.add_middleware(BypassAuthMiddleware)
-    # CsrfOriginMiddleware added LAST → runs FIRST on the request path.
-    # A cross-origin mutation must be rejected before Auth/Locale/Setup
-    # run any side effects. AuthMiddleware's /login redirect would
-    # otherwise consume the request before CSRF sees it, violating the
-    # "CSRF rejects before side effects" invariant.
+    # Added last so CSRF runs first: a cross-origin mutation must be rejected before
+    # Auth's /login redirect or any other side effect.
     app.add_middleware(CsrfOriginMiddleware)
 
 

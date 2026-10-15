@@ -1,5 +1,3 @@
-"""Background job for backfilling tactical patterns on existing blunders."""
-
 from __future__ import annotations
 
 import contextlib
@@ -65,7 +63,6 @@ class BackfillTacticsJob(BaseJob):
         }
 
     async def _process_game(self, game_id: str) -> int:
-        """Process a single game and return number of blunders classified."""
         blunders = await self.analysis_repo.fetch_blunders_for_tactics_backfill(game_id)
         if not blunders:
             return 0

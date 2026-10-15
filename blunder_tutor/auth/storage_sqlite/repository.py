@@ -70,9 +70,6 @@ class UserRepository:
         email: Email | None,
         created_at: str,
     ) -> None:
-        """Single copy of the ``users`` INSERT. Callers own the transaction
-        (and the write lock) so service-layer multi-table writes can share
-        one ``BEGIN IMMEDIATE`` span with the ``identities`` INSERT."""
         await conn.execute(
             "INSERT INTO users (id, username, email, created_at) VALUES (?, ?, ?, ?)",
             (user_id, username, email, created_at),
@@ -121,9 +118,7 @@ class UserRepository:
         return [_row_to_user(r) for r in rows]
 
     async def delete(self, user_id: UserId) -> None:
-        """Single-row hard delete. ON DELETE CASCADE on identities/sessions
-        means a service-layer ``delete_account`` only needs to call this
-        from inside ``AuthDb.transaction()``."""
+        """Identities and sessions go via ON DELETE CASCADE."""
         async with self._db.write() as conn:
             await conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
 
@@ -152,9 +147,6 @@ class IdentityRepository:
         credential: PasswordHash | None,
         created_at: str,
     ) -> None:
-        """Single copy of the ``identities`` INSERT. Paired with
-        :meth:`UserRepository.insert_in_transaction` under one service-layer
-        transaction."""
         await conn.execute(
             "INSERT INTO identities "
             "(id, user_id, provider, provider_subject, credential, created_at) "

@@ -31,7 +31,6 @@ def health_check(request: Request) -> JSONResponse:
 def configure_router(app: FastAPI) -> FastAPI:
     router = APIRouter()
 
-    # Health check
     router.add_api_route(
         "/health", health_check, response_class=JSONResponse, methods=["GET"]
     )

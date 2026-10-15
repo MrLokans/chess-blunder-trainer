@@ -1,12 +1,9 @@
-"""PGN header extraction helpers — regex-based, no full game parse."""
-
 from __future__ import annotations
 
 import re
 
-# Anchor at line start so a stray "[WhiteElo "..."]" inside a move-text comment
-# (rare but possible) cannot poison the result. The header section comes first
-# in any valid PGN, so the first match per side is authoritative.
+# Anchored at line start so a `[WhiteElo ...]` inside a move comment can't poison the
+# result; the first match per side wins.
 _WHITE_ELO_RE = re.compile(r'^\[WhiteElo "([^"]*)"\]', re.MULTILINE)
 _BLACK_ELO_RE = re.compile(r'^\[BlackElo "([^"]*)"\]', re.MULTILINE)
 # Trailing-"?" tolerated for provisional ratings ("1500?").
@@ -21,12 +18,8 @@ def _parse_elo(raw: str | None) -> int | None:
 
 
 def extract_player_elos(pgn_content: str) -> tuple[int | None, int | None]:
-    """Extract `(white_elo, black_elo)` from PGN headers.
-
-    Returns `None` for missing, `?`-placeholder, empty-string, or non-numeric
-    values. Trailing `?` (provisional rating annotation) is stripped before
-    parsing — `"1500?"` becomes `1500`.
-    """
+    """`None` for missing, `?`, empty or non-numeric values; a trailing `?` (provisional
+    rating) is stripped."""
     white = _WHITE_ELO_RE.search(pgn_content)
     black = _BLACK_ELO_RE.search(pgn_content)
     return (

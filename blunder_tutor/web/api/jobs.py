@@ -31,9 +31,7 @@ from blunder_tutor.web.dependencies import (
     JobServiceDep,
 )
 
-# Pagination defaults for the jobs API. JSON list defaults to 50 with a
-# 500 cap (operator/admin views); HTMX partial defaults to 20 (table fits
-# on one screen).
+# JSON list: 50 default, 500 cap; HTMX partial: 20 (fits one screen).
 JOBS_JSON_LIMIT_DEFAULT = 50
 JOBS_JSON_LIMIT_MAX = 500
 JOBS_HTML_LIMIT_DEFAULT = 20

@@ -29,27 +29,15 @@ DbPathResolver = Callable[[UserId], Path]
 
 
 def _emit_job_completion(job_kind: str, status: str, elapsed_ms: float) -> None:
-    """Bounded-cardinality contract for the job chokepoint metrics.
-
-    Tags are restricted to the small static set ``{kind, status}`` —
-    high-cardinality identifiers (``user_id``, ``job_id``) live on the
-    span, not on metrics. See `docs/conventions/observability.md`.
-    """
+    """Chokepoint metrics are tagged only with `{kind, status}`; `user_id`/`job_id` go on
+    the span to keep cardinality bounded. See docs/conventions/observability.md."""
     count("job.completed", tags={"kind": job_kind, "status": status})
     distribution("job.duration_ms", elapsed_ms, tags={"kind": job_kind})
 
 
 class JobExecutor:
-    """Executes background jobs using FastDepends for dependency injection.
-
-    Subscribes to JOB_EXECUTION_REQUESTED events and uses injectable
-    job runners that automatically resolve and cleanup dependencies.
-
-    The executor is process-wide and routes each event to the correct
-    per-user database via ``db_path_resolver(user_id)``. The engine pool
-    (``work_coordinator``) is shared across users — Stockfish is a
-    process-wide resource and the coordinator queue serializes work.
-    """
+    """The engine pool is shared across users; each job is routed to its user's DB via
+    `db_path_resolver`."""
 
     def __init__(
         self,
@@ -67,21 +55,14 @@ class JobExecutor:
         self._queue: asyncio.Queue | None = None
 
     async def subscribe(self) -> None:
-        """Register the executor's queue with the event bus. Must be
-        awaited before any caller publishes a ``JobExecutionRequestEvent``;
-        otherwise events published during the ``start()`` race window
-        are dropped silently (no subscriber on the bus yet).
-        """
+        """Must be awaited before anyone publishes a job request, or events published
+        during startup are dropped."""
         if self._queue is None:
             self._queue = await self._event_bus.subscribe(
                 EventType.JOB_EXECUTION_REQUESTED
             )
 
     async def run(self) -> None:
-        """Consume events from the subscribed queue. Idempotent re-entry
-        guard: ``subscribe()`` is called here too in case the caller
-        skipped the explicit pre-subscribe.
-        """
         await self.subscribe()
         logger.info("JobExecutor started, listening for job execution requests")
 
@@ -133,12 +114,9 @@ class JobExecutor:
         )
 
     def _on_task_done(self, task: asyncio.Task, *, job_id: str, job_type: str) -> None:
-        # Retrieve .exception() so asyncio does not log "Task exception
-        # was never retrieved". When Sentry is active, AsyncioIntegration
-        # has already captured the traceback parented by the job span;
-        # the stdout `logger.error` below is *intentional duplication*
-        # to give operators visibility without requiring Sentry. Do not
-        # remove it as a "deduplication" pass.
+        # Retrieve .exception() to silence "never retrieved". The logger.error below
+        # intentionally duplicates Sentry's capture so operators see it without Sentry;
+        # don't dedupe.
         self._running_tasks.pop(job_id, None)
         if task.cancelled():
             return
@@ -169,23 +147,16 @@ class JobExecutor:
             )
             return
 
-        # Delete-race guard. The per-user data directory is created by
-        # ``AuthService.signup`` and removed by ``delete_account``; its
-        # existence therefore tracks user-existence in credentials mode
-        # (and is always true in none-mode after ``run_migrations``).
-        # ``aiosqlite.connect`` would otherwise re-create the directory
-        # via the auto-mkdir in ``analysis.db._connect_async`` — silently
-        # undoing part of ``delete_account`` for any event that arrives
-        # in the small window between user deletion and event consumption.
+        # Delete-race guard: connecting would re-create the user's dir (auto-mkdir in
+        # `analysis.db._connect_async`) for events arriving between user deletion and
+        # consumption.
         if not db_path.parent.exists():
             logger.info(
                 f"Skipping job {job_id} ({job_type}): user {user_id} no longer exists"
             )
             return
 
-        # Per-task contextvar — asyncio.create_task snapshots the parent
-        # context, then set_context here mutates only this task's copy.
-        # Concurrent jobs don't observe each other's db_path.
+        # Per-task contextvar: concurrent jobs don't see each other's db_path.
         context = DependencyContext(
             db_path=db_path,
             event_bus=self._event_bus,
@@ -195,11 +166,8 @@ class JobExecutor:
         )
         set_context(context)
 
-        # Top-level `start_span` becomes a transaction implicitly under
-        # sentry-sdk 2.x; the facade keeps this site SDK-agnostic. If
-        # the SDK churns this contract in 3.x, switch to an explicit
-        # transaction primitive on the facade rather than importing
-        # `sentry_sdk` here.
+        # Top-level `start_span` becomes a transaction under sentry-sdk 2.x; revisit
+        # through the facade if 3.x changes that.
         with start_span(job_type, op="job") as span:
             span.set_tag("user_id", str(user_id))
             span.set_data("job_id", job_id)
@@ -208,16 +176,13 @@ class JobExecutor:
             status = "ok"
             try:
                 logger.info(f"Starting execution of job {job_id} ({job_type})")
-                # FastDepends @inject handles all dependency resolution
-                # and cleanup. Exceptions propagate so AsyncioIntegration
-                # captures them parented by this span.
+                # Exceptions propagate so AsyncioIntegration captures them under this
+                # span.
                 result = await runner(job_id=job_id, **kwargs)
                 logger.info(f"Job {job_id} completed with result: {result}")
             except BaseException:
-                # Widen to BaseException so `asyncio.CancelledError` (which
-                # is BaseException since 3.8) flips status to "error".
-                # `Exception` alone would let cancellation propagate with
-                # status still "ok" — silently miscounting the metric.
+                # BaseException so `CancelledError` also flips status to error;
+                # otherwise the metric miscounts.
                 status = "error"
                 raise
             finally:

@@ -64,7 +64,6 @@ async def _truncate_table(conn: Any, table: str, job_id: str) -> int:
     cursor = await conn.execute(f"SELECT COUNT(*) FROM {table}")
     count = (await cursor.fetchone())[0]
     if table == "background_jobs":
-        # Don't delete the current job from background_jobs
         await conn.execute(
             "DELETE FROM background_jobs WHERE job_id != ?",
             (job_id,),

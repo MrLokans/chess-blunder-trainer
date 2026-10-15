@@ -41,7 +41,6 @@ class WriteAnalysisStep(AnalysisStep):
         moves = move_quality_result.data.get("moves", [])
         phases = {p["ply"]: p["phase"] for p in phase_result.data.get("phases", [])}  # noqa: WPS226 — `ply` is the dict-key projection across phases/tactics/moves; renaming would obscure the join.
 
-        # Get tactics data if available
         tactics_result = ctx.get_step_result("tactics")
         tactics_map = {}
         if tactics_result and tactics_result.success:

@@ -52,10 +52,6 @@ def _pick_side(
     white_elo: int | None,
     black_elo: int | None,
 ) -> tuple[Color, int, int | None] | None:
-    """Return `(color, rating, opponent_rating)` for the side matching the
-    profile's username, or `None` if neither side matches or that side's Elo
-    is missing.
-    """
     target = profile_username.lower()
     if white and white.lower() == target:
         if white_elo is None:

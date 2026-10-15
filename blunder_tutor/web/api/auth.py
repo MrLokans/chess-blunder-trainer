@@ -1,16 +1,3 @@
-"""blunder_tutor's auth API surface — a thin wrapper around
-:func:`blunder_tutor.auth.fastapi.build_auth_router`.
-
-Wires the library factory with project-specific defaults: the
-session-cookie setter that knows about ``AppConfig`` (TLS,
-trusted-proxy, ``AUTH_COOKIE_SECURE`` override), the per-IP rate
-limiters from ``app.state``, and the auth-service lookup from the
-``AuthResources`` bundle. Cache invalidation on account delete is
-composed into the ``on_after_delete`` hook on :class:`AuthService` at
-construction time (see ``web/auth_hooks.py``); the route itself is
-just a thin pass-through.
-"""
-
 from __future__ import annotations
 
 from fastapi import HTTPException, Request, Response, status
@@ -28,7 +15,6 @@ from blunder_tutor.web.cookies import set_session_cookie as _set_session_cookie
 def _auth_service_provider(request: Request) -> AuthService:
     auth = request.app.state.auth
     if auth is None:
-        # Credentials mode not active — auth endpoints are offline.
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return auth.service
 
@@ -36,10 +22,9 @@ def _auth_service_provider(request: Request) -> AuthService:
 def _set_session_cookie_with_config(
     response: Response, token: str, request: Request
 ) -> None:
-    # ``web.cookies.set_session_cookie`` takes ``AppConfig`` for the
-    # Secure flag computation; the router factory's contract is
-    # ``(response, token, request)`` so we pull the config off
-    # ``app.state`` here, keeping AppConfig out of the auth library.
+    # `web.cookies.set_session_cookie` needs AppConfig for `Secure`; the factory
+    # contract is `(response, token, request)`, so the config is pulled from `app.state`
+    # here to keep AppConfig out of the library.
     _set_session_cookie(response, token, request.app.state.config, request)
 
 

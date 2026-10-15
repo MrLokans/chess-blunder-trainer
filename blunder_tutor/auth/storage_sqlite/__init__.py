@@ -13,13 +13,6 @@ from blunder_tutor.auth.storage_sqlite.repository import (
 
 
 class SqliteStorage:
-    """Production :class:`Storage` implementation: bundles the four
-    SQLite repos against a shared :class:`AuthDb` and forwards the
-    transaction primitive. The auth core only sees this aggregate —
-    never ``AuthDb`` directly — so the SQLite specifics live behind
-    the Storage seam.
-    """
-
     def __init__(self, auth_db: AuthDb) -> None:
         self._auth_db = auth_db
         self.users = UserRepository(db=auth_db)
@@ -32,7 +25,5 @@ class SqliteStorage:
 
     @property
     def auth_db(self) -> AuthDb:
-        """Escape hatch for code that needs the underlying ``AuthDb``
-        (lifespan close, orphan-scan startup hook). Kept narrow so the
-        coupling is explicit and visible."""
+        """Escape hatch for lifespan close and the orphan-scan startup hook."""
         return self._auth_db

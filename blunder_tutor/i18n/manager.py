@@ -5,10 +5,7 @@ import re
 from pathlib import Path
 from types import MappingProxyType
 
-# CLDR plural-rule constants. The integer values are CLDR-spec
-# pluralization boundaries (https://cldr.unicode.org/index/cldr-spec/plural-rules),
-# not arbitrary magic numbers — naming them documents the contract and
-# satisfies WPS432.
+# Boundaries from the CLDR plural spec, not magic numbers.
 _LAST_DIGIT_BASE = 10
 _LAST_TWO_BASE = 100
 _TEEN_LO = 11
@@ -20,7 +17,6 @@ _TEEN_FEW_LO = 12
 
 
 def _east_slavic_plural(n: int) -> str:
-    # CLDR rules for Russian, Ukrainian, Belarusian (identical structure).
     last_digit = n % _LAST_DIGIT_BASE
     last_two = n % _LAST_TWO_BASE
     if last_digit == 1 and last_two != _TEEN_LO:
@@ -83,7 +79,6 @@ def _resolve_plural(message: str, params: dict[str, object], locale: str) -> str
             text = branch_match.group(2)
             branches[category] = text
 
-        # Check for exact match first (=0, =1, etc.)
         exact_match = branches.get(f"={int(count)}")
         if exact_match is not None:
             result = exact_match

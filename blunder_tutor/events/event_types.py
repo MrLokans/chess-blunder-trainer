@@ -5,24 +5,14 @@ from typing import Any
 from blunder_tutor.auth import UserId
 from blunder_tutor.utils.time import now_iso
 
-# Event-data dict keys are part of the on-the-wire contract. `SCOPE_KEY`
-# is public: downstream readers (CacheInvalidator, ConnectionManager)
-# import it instead of re-spelling the literal, so the wire key lives in
-# exactly one place.
+# Wire keys of the event-data dict; `SCOPE_KEY` is public so readers don't re-spell it.
 _TRIGGER_KEY = "trigger"
 SCOPE_KEY = "scope"
 
 
 class EventType(StrEnum):
-    """All event types in the system.
-
-    Member values are part of the metrics-tag contract: the
-    ``ws.broadcast.sent`` counter tags broadcasts with ``event_type=<value>``.
-    Adding members is fine (bounded growth); introducing dynamically-built
-    values (e.g., ``f"job.{kind}"``) would break the cardinality guarantee
-    documented in `docs/conventions/observability.md` and must be remapped
-    onto a static set before merging.
-    """
+    """Values are metric tags, so never build them dynamically; see
+    docs/conventions/observability.md."""
 
     JOB_CREATED = "job.created"
     JOB_STATUS_CHANGED = "job.status_changed"
@@ -142,9 +132,8 @@ class EloRatingEvent(Event):
 class CacheEvent(Event):
     @classmethod
     def create_cache_invalidated(cls, *, scope: str, tags: list[str]) -> CacheEvent:
-        # `tags` are LOGICAL ("stats"), never scoped ("stats:<uid>"):
-        # the scope rides in its own field so the WS layer delivers only
-        # to that user and no tenant's id leaks to other connections.
+        # `tags` are logical ("stats"), never scoped; scope has its own field so no
+        # tenant id leaks to other connections.
         return cls(
             type=EventType.CACHE_INVALIDATED,
             data={SCOPE_KEY: scope, "tags": tags},

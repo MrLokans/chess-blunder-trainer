@@ -42,7 +42,6 @@ async def _fetch_games(
     since: datetime | None,
     progress_callback: Any,
 ) -> FetchResult:
-    """Dynamic dispatch over fetcher modules — see import_games.py for why."""
     if source == PLATFORM_LICHESS:
         return await lichess.fetch(
             username,
@@ -83,11 +82,9 @@ class SyncGamesJob(BaseJob):
     async def execute(self, job_id: str, **kwargs: Any) -> dict[str, Any]:
         profile_id = kwargs.get("profile_id")
         if profile_id is None:
-            # All live dispatchers (scheduler, /api/profiles/{id}/sync) pass
-            # profile_id. An event arriving without one is either a stale
-            # in-flight event from before deploy or a misconfigured caller —
-            # flip the parent to FAILED before raising so it cannot orphan
-            # at PENDING.
+            # Live dispatchers always pass profile_id; a missing one is a stale
+            # pre-deploy event or a misconfiguration. Fail the parent first so it can't
+            # orphan at PENDING.
             await self.job_service.update_job_status(
                 job_id, JOB_STATUS_FAILED, "sync requires profile_id"
             )
@@ -106,11 +103,9 @@ class SyncGamesJob(BaseJob):
         return await self._sync_for_profile(job_id, profile)
 
     async def _sync_for_profile(self, job_id: str, profile: Profile) -> dict[str, Any]:
-        # Platform validation lives inside `_fetch_games` (called via the
-        # lambda below) so a bad platform raises *inside* the lifecycle and
-        # `run_with_lifecycle` flips the parent job to FAILED. A pre-flight
-        # check here would orphan the parent at PENDING — same shape as the
-        # bug fixed alongside this method.
+        # Platform validation sits inside `_fetch_games` so a bad platform fails inside
+        # the lifecycle and flips the job to FAILED; a pre-flight check would orphan it
+        # at PENDING.
         max_games = await self._resolve_max_games_for_profile(profile)
         since = await self.game_repo.get_latest_game_time(
             profile.platform, profile.username

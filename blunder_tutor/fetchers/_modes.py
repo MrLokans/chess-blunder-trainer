@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from blunder_tutor.repositories.profile_types import ProfileStatSnapshot
 
-# Canonical mode set for v1. All other platform-specific modes are dropped
-# (Lichess variants, Chess.com tactics/lessons, etc.). Order is the
-# rendering order used by tests and downstream UI.
+# Canonical v1 set; order is the rendering order.
 CANONICAL_MODES: tuple[str, ...] = (
     "bullet",
     "blitz",
@@ -24,12 +22,6 @@ _CHESSCOM_KEY_TO_CANONICAL: tuple[tuple[str, str], ...] = (
 
 
 def lichess_to_canonical(perfs: dict[str, object]) -> list[ProfileStatSnapshot]:
-    """Map a Lichess `/api/user/{username}` `perfs` block to canonical snapshots.
-
-    Drops non-canonical modes (puzzle, racingKings, crazyhouse, chess960,
-    kingOfTheHill, threeCheck, antichess, atomic, horde, ultraBullet, ...)
-    by iterating only over `CANONICAL_MODES`.
-    """
     snapshots: list[ProfileStatSnapshot] = []
     for mode in CANONICAL_MODES:
         perf = perfs.get(mode)
@@ -46,12 +38,7 @@ def lichess_to_canonical(perfs: dict[str, object]) -> list[ProfileStatSnapshot]:
 
 
 def chesscom_to_canonical(stats: dict[str, object]) -> list[ProfileStatSnapshot]:
-    """Map a Chess.com `/pub/player/{u}/stats` payload to canonical snapshots.
-
-    Sums `record.{win,loss,draw}` for `games_count`. Maps `chess_daily` →
-    `correspondence`. Drops `tactics`, `lessons`, `puzzle_rush`, and any
-    variant-specific blocks (e.g. `chess960_daily`).
-    """
+    """`chess_daily` maps to `correspondence`; other blocks are dropped."""
     snapshots: list[ProfileStatSnapshot] = []
     for cc_key, canonical in _CHESSCOM_KEY_TO_CANONICAL:
         block = stats.get(cc_key)

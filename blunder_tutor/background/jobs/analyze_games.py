@@ -23,8 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 class _AnalyzeContext:
-    """Mutable per-batch state shared between submitted analysis tasks."""
-
     def __init__(
         self,
         steps: list[str] | None,
@@ -195,7 +193,6 @@ class AnalyzeGamesJob(BaseJob):
 
 
 async def _next_failed_event_for(queue: asyncio.Queue, job_id: str) -> bool:
-    """Returns True iff the next event (within 1s) is the FAILED transition for this job."""
     try:
         event = await asyncio.wait_for(queue.get(), timeout=1.0)
     except TimeoutError:

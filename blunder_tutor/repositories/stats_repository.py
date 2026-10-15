@@ -890,7 +890,6 @@ def _local_hour(end_time: str, timezone: tzinfo) -> int:
 def _accuracies_by_bucket(
     rows: list[tuple[str, object, int]],
 ) -> dict[object, list[float]]:
-    """Group rows by (game_id, bucket), collapse cp_losses to per-game accuracy, then bucket by their second key."""
     game_bucket_losses: _BucketLossMap = defaultdict(list)
     for game_id, bucket_key, cp_loss in rows:
         game_bucket_losses[(game_id, bucket_key)].append(cp_loss)

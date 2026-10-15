@@ -1,17 +1,8 @@
-"""Public API for the auth library shape.
+"""Public API of the auth library.
 
-The auth package is structured to be a publishable plug-and-play
-library (TREK-56 / EPIC-3 P4.1): consumers reach in through this
-top-level namespace or :mod:`blunder_tutor.auth.fastapi` and never
-through ``core``, ``storage_sqlite``, ``providers``, or ``cli``.
-``__all__`` is the single source of truth for the public contract —
-everything else under ``blunder_tutor.auth.*`` is an implementation
-detail and may move between subpackages without notice.
-
-The ``hashers`` submodule is re-bound on the package object so test
-fixtures that need to monkeypatch the lazy default hasher don't have
-to reach into ``core``.
-"""
+Consumers import from here or `blunder_tutor.auth.fastapi`, never from `core`,
+`storage_sqlite`, `providers` or `cli`; `__all__` is the contract. `hashers` is re-bound
+on the package so tests can monkeypatch the default hasher."""
 
 from blunder_tutor.auth.cli import admin
 from blunder_tutor.auth.core import hashers

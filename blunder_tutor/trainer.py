@@ -18,19 +18,17 @@ from blunder_tutor.utils.pgn_utils import (
     move_uci_at_ply,
 )
 
-# Puzzle-weighting heuristics. These multipliers tune how the trainer
-# samples blunders: short mate misses are the most learnable, easy-but-
-# missed blunders are higher signal than tough engine-line tactics, and
+# Weights favour short mate misses and easy-but-missed blunders over hard engine lines;
 # unseen patterns get a small exploration bonus.
-_WEIGHT_MATE_VERY_SHORT = 2.0  # mate-in ≤ 2
-_WEIGHT_MATE_SHORT = 1.5  # mate-in ≤ 5
+_WEIGHT_MATE_VERY_SHORT = 2.0
+_WEIGHT_MATE_SHORT = 1.5
 _MATE_DEPTH_VERY_SHORT = 2
 _MATE_DEPTH_SHORT = 5
 
 _WEIGHT_UNSEEN_PATTERN = 1.5
 
-_WEIGHT_EASY_DIFFICULTY = 1.3  # difficulty ≤ 30
-_WEIGHT_HARD_DIFFICULTY = 0.7  # difficulty ≥ 70
+_WEIGHT_EASY_DIFFICULTY = 1.3
+_WEIGHT_HARD_DIFFICULTY = 0.7
 _DIFFICULTY_EASY = 30
 _DIFFICULTY_HARD = 70
 

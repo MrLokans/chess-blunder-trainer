@@ -12,13 +12,8 @@ def now_iso() -> str:
 
 
 def parse_dt(raw: str) -> datetime:
-    """Parse a stored timestamp into a tz-aware datetime.
-
-    Naive ISO inputs (legacy: pre-migration writes used
-    ``datetime.utcnow().isoformat()``) are coerced to UTC so callers can
-    rely on aware datetimes for arithmetic and comparison without
-    ``TypeError`` on naive/aware mixing.
-    """
+    """Naive ISO inputs (legacy `datetime.utcnow().isoformat()` writes) are coerced to UTC
+    so callers can compare aware datetimes safely."""
     parsed = datetime.fromisoformat(raw)
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=UTC)

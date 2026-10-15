@@ -23,12 +23,8 @@ async def validate_username(platform: str, username: str) -> bool:
 
 
 async def check_username_existence(platform: str, username: str) -> ExistenceCheck:
-    """Authoritative existence check: distinguishes 404 from persistent 429.
-
-    Used by `/api/profiles/validate`. Unlike `validate_username` (which
-    swallows all errors as `False`), this surfaces rate limits via
-    `ExistenceCheck.rate_limited` so the API can communicate "we don't
-    know" to the caller.
+    """Authoritative check for `/api/profiles/validate`. Unlike `validate_username`, which
+    swallows errors as False, it reports rate limits via `ExistenceCheck.rate_limited`.
     """
     checker = _EXISTENCE_CHECKERS.get(platform)
     if checker is None:

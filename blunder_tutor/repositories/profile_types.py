@@ -32,23 +32,9 @@ class ProfileStatSnapshot:
 
 @dataclass(frozen=True)
 class ProfileSyncCandidate:
-    """Scheduler-facing tuple for both game-sync and stats-sync dispatch.
-
-    Surfaces every profile with `auto_sync_enabled = 1` plus the data
-    each dispatcher needs to decide "is this one due?":
-    - stats dispatcher uses `last_stats_sync_at` (from `profile_stats`).
-    - game-sync dispatcher uses `platform` + `username` to look up
-      the most recent completed import/sync job in `background_jobs`.
-
-    `last_stats_sync_at` is `None` for a profile that has never synced
-    stats (first-sync path; treated as overdue).
-
-    The shape works because both consumers ignore exactly one field
-    each. If a third consumer (or a JOIN-folded `last_game_sync_at`)
-    arrives, prefer adding a separate repo method that returns a
-    purpose-built dataclass over growing this one — the symmetry is
-    what makes the current shape sustainable.
-    """
+    """The stats dispatcher uses `last_stats_sync_at` (None means overdue); the game-sync
+    dispatcher uses `platform` + `username`. A third consumer should get its own method
+    and dataclass rather than growing this one."""
 
     profile_id: int
     platform: str

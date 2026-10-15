@@ -21,14 +21,6 @@ if _DEBUG_EVENTS:
 
 
 class EventBus:
-    """In-memory async event bus for real-time updates.
-
-    Uses asyncio.Queue for each subscriber to enable non-blocking
-    event distribution. Thread-safe via asyncio locks.
-
-    Set BLUNDER_TUTOR_DEBUG_EVENTS=1 to log every published event.
-    """
-
     def __init__(self) -> None:
         self._subscribers: dict[EventType, list[asyncio.Queue]] = defaultdict(list)
         self._all_subscribers: list[asyncio.Queue] = []
@@ -54,11 +46,8 @@ class EventBus:
             queues.extend(self._all_subscribers.copy())
 
         for queue in queues:
-            # Subscriber queues are unbounded (asyncio.Queue() with no
-            # maxsize), so put_nowait never raises QueueFull or blocks.
-            # There is deliberately no backpressure — accepted/deferred,
-            # see docs/quality/gaps.md "Unbounded event-bus subscriber
-            # queues (no backpressure)".
+            # Queues are unbounded so put_nowait never blocks; no backpressure, accepted
+            # (docs/quality/gaps.md).
             queue.put_nowait(event)
 
     async def unsubscribe(

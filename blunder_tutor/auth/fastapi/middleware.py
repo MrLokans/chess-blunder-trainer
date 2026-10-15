@@ -12,17 +12,6 @@ from blunder_tutor.auth.core.types import UserContext
 
 @dataclass(frozen=True)
 class MiddlewareConfig:
-    """Per-application config for :class:`AuthMiddleware`.
-
-    ``cookie_name`` is the cookie key the middleware reads to extract
-    the session token. ``exempt_paths`` are exact-match URLs that bypass
-    the auth check (login/signup/setup pages, health probes);
-    ``exempt_prefixes`` are prefix-match (static asset routes, auth API
-    prefix). Consumers pass only what their URL space requires — the
-    auth core has no opinions about which non-API paths should be
-    public.
-    """
-
     cookie_name: str
     exempt_paths: frozenset[str] = field(default_factory=frozenset)
     exempt_prefixes: tuple[str, ...] = ()
@@ -34,27 +23,14 @@ def _wants_html(request: Request) -> bool:
         return True
     if "application/json" in accept:
         return False
-    # Browser navigations often omit Accept entirely; treat any non-/api
-    # path as HTML by default so the client gets a proper /login redirect
-    # instead of a JSON 401.
+    # Browsers often omit Accept; treat non-/api paths as HTML so users get a /login
+    # redirect, not a JSON 401.
     return not request.url.path.startswith("/api/")
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    """Resolves the per-request :class:`UserContext` from the session
-    cookie and attaches it to ``request.state.user_ctx``.
-
-    Unauthenticated requests either redirect HTML navigations to
-    ``/login?next=<path>`` or return a 401 JSON body for API callers.
-    Exempt paths (login/signup/setup, static, ``/api/auth/*``) run
-    without a context so route handlers that need the context must
-    depend on :func:`get_user_context`.
-
-    Single-user back-compat (``AUTH_MODE=none``) is a consumer-side
-    concern and lives in a separate web-layer middleware
-    (:class:`blunder_tutor.web.bypass_auth.BypassAuthMiddleware`); the
-    two are mutually exclusive at registration time.
-    """
+    """Exempt paths run without a user context. Mutually exclusive with
+    `BypassAuthMiddleware`."""
 
     def __init__(self, app, config: MiddlewareConfig) -> None:
         super().__init__(app)

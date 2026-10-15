@@ -8,8 +8,6 @@ from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.web.config import AppConfig
 
-# Default Lichess pagination batch size — matches Lichess's documented
-# per-request soft cap.
 DEFAULT_LICHESS_BATCH_SIZE = 200
 
 

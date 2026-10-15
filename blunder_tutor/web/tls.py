@@ -6,19 +6,11 @@ from blunder_tutor.web.config import AuthConfig
 
 
 def is_https_request(request: Request, auth_config: AuthConfig) -> bool:
-    """Return True when the request arrived over TLS — directly or via a
-    trusted reverse proxy that terminated TLS and forwarded the scheme in
-    ``X-Forwarded-Proto``.
+    """True if the request arrived over TLS, directly or via a trusted proxy's
+    `X-Forwarded-Proto`.
 
-    Consumed by both the HSTS header policy and the session cookie
-    Secure-flag computation. Keeping a single source ensures the two track
-    the same "TLS hop present?" answer; drift here produces an inconsistent
-    security posture (cookie without ``Secure`` but HSTS set, or vice versa).
-
-    ``AUTH_TRUST_PROXY`` gates ``X-Forwarded-Proto`` for the same reason it
-    gates ``X-Forwarded-For`` in the rate limiter: a direct-to-uvicorn deploy
-    that trusted the header would let any client claim the request was HTTPS
-    by setting the header itself.
+    Single source for HSTS and cookie `Secure` so they cannot disagree. Gated by
+    `AUTH_TRUST_PROXY`, as for `X-Forwarded-For`, so a direct client cannot claim HTTPS.
     """
     if request.url.scheme == "https":
         return True

@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import math
 
-# Lichess-style move accuracy formula: a * exp(-b * cp_loss) - c, clamped
-# to [0, 100]. Coefficients are empirical fits from Lichess's published
-# Advice.scala — leaving them inline ties this implementation to a
-# specific upstream reference.
+# `a * exp(-b * cp_loss) - c` clamped to [0, 100]; coefficients are Lichess's empirical
+# fit (Advice.scala).
 _ACCURACY_COEFF_A = 103.1668
 _ACCURACY_COEFF_B = 0.04354
 _ACCURACY_COEFF_C = 3.1668

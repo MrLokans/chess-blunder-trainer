@@ -10,20 +10,8 @@ import aiosqlite
 
 
 class AuthDb:
-    """Owns a single aiosqlite connection to ``auth.sqlite3`` plus an
-    asyncio write lock that all repositories share.
-
-    The write lock groups *multi-statement transactions* atomically —
-    aiosqlite already serializes individual statements on one connection
-    through its worker thread, so ``write()`` (single-statement) is
-    grouped for symmetry rather than correctness: every mutation path
-    traverses the same seam, so ``write()`` cannot interleave with a
-    ``transaction()`` span. ``PRAGMA foreign_keys = ON`` is set exactly
-    once per connection lifetime; reconnect after ``close`` re-applies it.
-
-    Repositories accept an :class:`AuthDb` and use ``conn`` for reads and
-    ``write()`` / ``transaction()`` for writes.
-    """
+    """`write()` and `transaction()` share one lock so a single write cannot interleave
+    with a multi-statement transaction."""
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -46,8 +34,6 @@ class AuthDb:
 
     @asynccontextmanager
     async def write(self) -> AsyncIterator[aiosqlite.Connection]:
-        """Single-statement write — still grabs the lock so it cannot
-        interleave with a multi-statement transaction."""
         async with self._write_lock:
             conn = await self.connect()
             try:
@@ -59,12 +45,6 @@ class AuthDb:
 
     @asynccontextmanager
     async def transaction(self) -> AsyncIterator[aiosqlite.Connection]:
-        """Multi-statement transaction (``BEGIN IMMEDIATE`` … ``COMMIT``).
-
-        Use this for any service-layer operation that touches more than
-        one table or row and must be atomic (e.g. ``register`` inserting
-        ``users`` + ``identities``).
-        """
         async with self._write_lock:
             conn = await self.connect()
             await conn.execute("BEGIN IMMEDIATE")

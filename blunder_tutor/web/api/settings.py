@@ -157,8 +157,6 @@ def _validate_hex_color(field: str, value: str) -> None:
 
 type _BoardFieldSpec = tuple[Callable[[str], None], str]
 
-# Per-field (validator, db_key) for board settings. Keeps the endpoint a
-# straight loop instead of nested if-blocks.
 _BOARD_FIELDS: Mapping[str, _BoardFieldSpec] = MappingProxyType(
     {
         "piece_set": (_validate_piece_set, "board_piece_set"),

@@ -1,9 +1,3 @@
-"""Core dependency injection module using FastDepends.
-
-This module provides dependency factories that work both in FastAPI routes
-(via the web adapter) and in background jobs (via direct injection).
-"""
-
 from __future__ import annotations
 
 import contextvars
@@ -33,11 +27,6 @@ from blunder_tutor.services.phase_backfill_service import PhaseBackfillService
 
 
 def _repo_dep[T: BaseDbRepository](cls: type[T]):
-    """Same pattern as ``web.dependencies._repo_dep`` but ambient-context:
-    the DB path comes from the current ``DependencyContext`` instead of a
-    per-request ``Depends(get_db_path)``. Used by the background job
-    runner, which doesn't live under a FastAPI request scope.
-    """
 
     async def factory() -> AsyncGenerator[T]:
         ctx = get_context()
@@ -80,17 +69,12 @@ def clear_context() -> None:
     _context_var.set(None)
 
 
-# --- Repository Dependencies ---
-
 get_job_repository = _repo_dep(JobRepository)
 get_settings_repository = _repo_dep(SettingsRepository)
 get_game_repository = _repo_dep(GameRepository)
 get_analysis_repository = _repo_dep(AnalysisRepository)
 get_data_management_repository = _repo_dep(DataManagementRepository)
 get_profile_repository = _repo_dep(SqliteProfileRepository)
-
-
-# --- Service Dependencies ---
 
 
 async def get_job_service(

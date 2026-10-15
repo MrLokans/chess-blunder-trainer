@@ -46,8 +46,6 @@ class DifficultyEnum(StrEnum):
     hard = "hard"
 
 
-# Default for spaced_repetition_days when not configured; mirrors the
-# default used by the settings model (SettingsRequest.spaced_repetition_days).
 SPACED_REPETITION_DAYS_DEFAULT = 30
 
 

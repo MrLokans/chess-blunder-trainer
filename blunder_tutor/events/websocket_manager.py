@@ -71,7 +71,6 @@ class ConnectionManager:
         if subscriptions is None:
             return
         for event_type_str in event_types:
-            # Skip strings that don't map to a known EventType.
             with contextlib.suppress(ValueError):
                 subscriptions.add(EventType(event_type_str))
 
@@ -80,9 +79,7 @@ class ConnectionManager:
             message = event.to_dict()
             target_user = _event_target_user(event)
         except Exception:
-            # A single un-serializable event must be dropped, not allowed
-            # to propagate: it would kill the broadcast loop and stop all
-            # WS delivery for the process lifetime.
+            # Drop one bad event rather than let it kill the broadcast loop.
             log.exception("Dropping un-broadcastable event type=%s", event.type)
             count("ws.broadcast.error", tags={"stage": "prepare"})
             return
@@ -92,8 +89,7 @@ class ConnectionManager:
             try:
                 deliver = self._should_deliver(conn_id, event.type, target_user)
             except Exception:
-                # A delivery-check failure for one connection must not
-                # starve the others, so isolate it per connection.
+                # Isolate per connection so one failure doesn't starve the rest.
                 log.exception("Delivery check failed for connection %s", conn_id)
                 count("ws.broadcast.error", tags={"stage": "should_deliver"})
                 continue
@@ -114,9 +110,8 @@ class ConnectionManager:
         try:  # noqa: WPS501 — bare try/finally is intentional: the loop never returns normally; cleanup runs only on cancellation.
             await self._consume(queue, coalescer)
         finally:
-            # Drop any pending coalesced events (a reconnecting client
-            # refetches anyway) but cancel the in-flight flush timer so it
-            # is not GC'd as an orphaned pending task.
+            # Drop pending coalesced events (the client refetches on reconnect) but
+            # cancel the flush timer so it isn't GC'd as an orphan.
             await coalescer.aclose()
 
     async def _consume(
@@ -127,23 +122,18 @@ class ConnectionManager:
             try:
                 await coalescer.submit(event)
             except Exception:
-                # Backstop the per-event guards in broadcast_event: any leak
-                # from the submit/flush path must drop one event, never end
-                # the loop (a silent total-outage SPOF). CancelledError is a
-                # BaseException and still propagates to start_broadcasting's
-                # finally so the coalescer is closed on shutdown.
+                # Backstop: a leak from submit/flush must drop one event, never end the
+                # loop. CancelledError still propagates so the coalescer closes on
+                # shutdown.
                 log.exception("Broadcast submit failed; dropping event")
                 count("ws.broadcast.error", tags={"stage": "submit"})
 
     def _should_deliver(
         self, conn_id: str, event_type: EventType, target_user: str | None
     ) -> bool:
-        # When an event carries a scope, deliver only to connections
-        # authenticated as that user. Job-lifecycle events carry no scope
-        # and still broadcast to all subscribers — per-user scoping of
-        # those is a separate, untracked concern, not part of the
-        # coalescing work. Connections without a user_id (AUTH_MODE=none)
-        # see every event — single-user instance, no cross-user leak.
+        # Scoped events go only to that user's connections. Unscoped job-lifecycle
+        # events still go to everyone; connections without user_id (AUTH_MODE=none) see
+        # all (single user).
         if event_type not in self.connection_subscriptions.get(conn_id, set()):
             return False
         if target_user is None:

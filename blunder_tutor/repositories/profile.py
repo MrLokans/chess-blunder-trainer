@@ -12,9 +12,8 @@ from blunder_tutor.repositories.profile_types import (
 )
 from blunder_tutor.utils.time import now_iso
 
-# Per-game tables that participate in the cascade-delete path. Children are
-# listed before parents so the IN-clause subqueries against game_index_cache
-# continue resolving until the final delete on that table.
+# Children before parents so IN-subqueries on game_index_cache resolve until its final
+# delete.
 _GAME_CASCADE_TABLES: tuple[str, ...] = (
     "trap_matches",
     "puzzle_attempts",
@@ -81,12 +80,8 @@ async def _delete_games_for_profile(
 
 
 async def _purge_profile_rows(conn: aiosqlite.Connection, profile_id: int) -> None:
-    """Drop the profile + its 1:1 metadata rows (preferences, stats).
-
-    Explicit because `PRAGMA foreign_keys` is not enabled on main app
-    connections — the schema-level CASCADE on `profile_preferences` and
-    `profile_stats` is documentation only.
-    """
+    """Explicit because `PRAGMA foreign_keys` is off on app connections, so schema CASCADE
+    is documentation only."""
     params = (profile_id,)
     await conn.execute("DELETE FROM profile_stats WHERE profile_id = ?", params)
     await conn.execute("DELETE FROM profile_preferences WHERE profile_id = ?", params)
@@ -128,9 +123,7 @@ class SqliteProfileRepository(BaseDbRepository):
         async with self.write_transaction() as conn:
             existing_primary = await self._has_primary_for_platform(conn, platform)
             should_be_primary = make_primary or not existing_primary
-            # Demote the previous primary before inserting — the partial
-            # unique index fires at INSERT time, so the new row would
-            # collide otherwise.
+            # Demote first: the partial unique index fires at INSERT.
             if should_be_primary and existing_primary:
                 await conn.execute(
                     "UPDATE profile SET is_primary = 0 "
@@ -174,8 +167,7 @@ class SqliteProfileRepository(BaseDbRepository):
             new_is_primary = (
                 is_primary if is_primary is not None else current.is_primary
             )
-            # Demote any existing primary before promoting this one — the
-            # partial unique index would otherwise reject the UPDATE.
+            # Demote first: the partial unique index would reject the UPDATE.
             if is_primary is True:
                 await conn.execute(
                     "UPDATE profile SET is_primary = 0 "
@@ -290,17 +282,7 @@ class SqliteProfileRepository(BaseDbRepository):
         return [_row_to_stat(row) for row in rows]
 
     async def list_auto_sync_candidates(self) -> list[ProfileSyncCandidate]:
-        """Return profiles eligible for auto sync, with their latest
-        `profile_stats.synced_at` plus enough identity (`platform`,
-        `username`) for the game-sync dispatcher to look up its own
-        last-sync time in `background_jobs`. The repo just narrows by
-        `auto_sync_enabled = 1` and joins in the stats timestamp; the
-        scheduler does the time-based due-vs-fresh filtering.
-
-        `LEFT JOIN` so a profile that has never synced stats still
-        surfaces with `last_stats_sync_at = None` — the first-sync
-        path the scheduler treats as overdue.
-        """
+        """LEFT JOIN so never-synced profiles surface with `last_stats_sync_at = None`."""
         conn = await self.get_connection()
         async with conn.execute(
             """

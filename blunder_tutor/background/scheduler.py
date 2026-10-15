@@ -50,26 +50,9 @@ async def _maybe_dispatch_sync_for_user(  # noqa: WPS211 — FastDepends @inject
     job_repo: Annotated[JobRepository, Depends(get_job_repository)],
     user_id: UserId,
 ) -> None:
-    """Per-(user, profile) game-sync dispatch loop.
-
-    The global `auto_sync_enabled` setting is the kill-switch; with it off,
-    nothing dispatches even for profiles whose own `auto_sync_enabled = 1`.
-    With it on, each profile's last successful sync (looked up in
-    `background_jobs`) is compared against the global
-    `sync_interval_hours`; due profiles each get their own
-    `JOB_TYPE_SYNC` execution event with `profile_id` in the kwargs.
-
-    N+1 by design: per-profile `get_last_completed_sync_at` keeps the
-    repository boundary clean (ProfileRepository owns profile state,
-    JobRepository owns job state). At typical N=1-3 profiles per user
-    this is microseconds per tick; if profile counts grow past ~10 per
-    user, fold the lookup into `list_auto_sync_candidates` via a LEFT
-    JOIN against `background_jobs`.
-
-    Caller must have already set the :class:`DependencyContext` for
-    ``user_id`` before invoking — this function is per-user-scoped via
-    the ambient context.
-    """
+    """The global `auto_sync_enabled` is the kill-switch. Per-profile lookups are N+1 on
+    purpose to keep repository boundaries clean; fold them into
+    `list_auto_sync_candidates` with a JOIN if profiles per user pass ~10."""
     settings = await settings_repo.get_all_settings()
     if not _is_feature_enabled(settings, "auto.sync"):
         return
@@ -114,18 +97,7 @@ async def _maybe_dispatch_stats_sync_for_user(
     profile_repo: Annotated[SqliteProfileRepository, Depends(get_profile_repository)],
     user_id: UserId,
 ) -> None:
-    """Per-user stats-sync dispatch loop.
-
-    For each tracked profile with `auto_sync_enabled = 1`, publishes a
-    `JOB_TYPE_STATS_SYNC` execution event when the latest stats snapshot
-    is older than `app_settings.stats_sync_interval_hours` (default 1).
-    Profiles that have never synced surface as `last_stats_sync_at = None`
-    and are treated as overdue (first-sync path).
-
-    No `background_jobs` row is created — stats sync is fire-and-forget
-    (see `blunder_tutor.background.jobs.stats_sync` docstring). The
-    runner does the upsert; the scheduler just decides when to fire.
-    """
+    """Fire-and-forget: no `background_jobs` row."""
     settings = await settings_repo.get_all_settings()
     interval_str = settings.get("stats_sync_interval_hours")
     interval_hours = (
@@ -151,9 +123,6 @@ async def _maybe_dispatch_stats_sync_for_user(
 
 
 def _is_sync_due(last_sync_iso: str | None, interval_hours: int) -> bool:
-    """No prior sync ⇒ catch up on next tick. With a prior sync, fire
-    once the interval has elapsed.
-    """
     if not last_sync_iso:
         return True
     try:
@@ -170,19 +139,14 @@ async def _dispatch_one_user(
     user_id: UserId,
     db_path_resolver: DbPathResolver,
 ) -> None:
-    """Body of one per-user iteration of `_fanout_tick`. Extracted so the
-    caller's loop stays under WPS231's cognitive-complexity ceiling.
-    """
     try:
         db_path = db_path_resolver(user_id)
     except Exception:
         logger.exception(f"Auto-sync tick: db_path resolve failed for {user_id}")
         return
 
-    # Delete-race guard. ``list_users`` is read once at tick start;
-    # a user can be deleted before this loop iteration reaches them.
-    # Opening their DB would silently re-create the data directory
-    # (see executor.py for the same guard).
+    # Delete-race guard: the user may be deleted since `list_users`; opening their DB
+    # would re-create the data dir (see executor.py).
     if not db_path.parent.exists():
         logger.info(f"Auto-sync tick: skipping deleted user {user_id}")
         return
@@ -210,21 +174,9 @@ async def _fanout_tick(
     list_users: UserLister,
     db_path_resolver: DbPathResolver,
 ) -> None:
-    """One scheduler tick. Walks users sequentially and dispatches sync
-    jobs for any user whose settings say a sync is due.
-
-    Sequential — not ``asyncio.gather`` — to bound concurrent SQLite
-    connections to the auth DB and the per-user DBs. The work per user
-    is a single settings read plus an event publish, so the sequential
-    pass is microseconds-fast even at thousands of users; cross-user
-    failure isolation comes from the inner try/except, not from
-    parallelism.
-
-    Decorated with ``@sentry_sdk.monitor`` so Sentry alerts the operator
-    when the expected check-in fails to arrive. Decorator no-ops cleanly
-    when Sentry is not initialized; the monitor *configuration* (interval,
-    grace period) is created by the operator in the Sentry UI.
-    """
+    """Sequential to bound concurrent SQLite connections; the inner try/except isolates
+    failures. `@sentry_sdk.monitor` alerts when the check-in goes missing (config lives
+    in the Sentry UI)."""
     try:
         user_ids = await list_users()
     except Exception:
@@ -241,14 +193,6 @@ async def _fanout_tick(
 
 
 class BackgroundScheduler:
-    """Multi-user fanout scheduler. One APScheduler job ticks every
-    ``tick_seconds``; each tick walks the user list and dispatches
-    sync jobs for users whose per-user settings say a sync is due.
-
-    Stateless w.r.t. user lifecycle: signups and account deletions
-    take effect on the next tick with no add/remove plumbing.
-    """
-
     def __init__(
         self,
         event_bus: EventBus,

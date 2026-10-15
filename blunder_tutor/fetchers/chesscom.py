@@ -29,7 +29,6 @@ type _FetchResult = tuple[list[dict[str, object]], set[str]]
 
 
 def _parse_archive_month(archive_url: str) -> tuple[int, int] | None:
-    """Extract (year, month) from archive URL like '.../games/2024/01'."""
     match = ARCHIVE_URL_PATTERN.search(archive_url)
     if match:
         return int(match.group(1)), int(match.group(2))
@@ -37,7 +36,6 @@ def _parse_archive_month(archive_url: str) -> tuple[int, int] | None:
 
 
 def _filter_archives_since(archives: list[str], since: datetime | None) -> list[str]:
-    """Filter archives to only include those that may contain games after `since`."""
     if since is None:
         return archives
 
@@ -114,7 +112,6 @@ async def _process_archive(
     username: str,
     game_bar: tqdm,
 ) -> bool:
-    """Process one archive's games. Returns True iff the quota was exhausted."""
     for raw_game in reversed(archive_games):
         if not _passes_initial_filter(raw_game, since_ts):
             continue
@@ -166,12 +163,6 @@ async def validate_username(username: str) -> bool:
 
 
 async def fetch_user_stats(username: str) -> list[ProfileStatSnapshot]:
-    """Fetch per-mode rating + game count from Chess.com `/pub/player/{u}/stats`.
-
-    Raises `RateLimitError` if Chess.com persistently 429s the request after
-    the resilience layer's retry budget is exhausted. 404s and other
-    non-retryable status codes propagate as `httpx.HTTPStatusError`.
-    """
     url = CHESSCOM_STATS_URL.format(username=username.lower())
     async with httpx.AsyncClient(
         timeout=10,
@@ -191,11 +182,6 @@ async def fetch_user_stats(username: str) -> list[ProfileStatSnapshot]:
 
 
 async def check_username_existence(username: str) -> ExistenceCheck:
-    """Check whether a Chess.com user exists, with rate-limit awareness.
-
-    Distinguishes 404 (`exists=False`) from persistent 429
-    (`rate_limited=True`). 5xx and other non-retryable errors propagate.
-    """
     url = CHESSCOM_USER_URL.format(username=username.lower())
     async with httpx.AsyncClient(
         timeout=10,

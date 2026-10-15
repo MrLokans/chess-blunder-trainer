@@ -11,13 +11,6 @@ from blunder_tutor.observability import sentry_init
 
 
 class Span:
-    """Public span surface — strictly `set_tag` and `set_data`.
-
-    Thin wrapper around the underlying SDK span so call sites never
-    import `sentry_sdk` directly. When telemetry is disabled, the inner
-    span is `None` and both methods are silent no-ops.
-    """
-
     __slots__ = ("_inner",)
 
     def __init__(self, inner: _SentrySpan | None) -> None:

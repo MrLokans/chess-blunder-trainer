@@ -1,12 +1,5 @@
-"""Tactical pattern detection for chess positions.
-
-Detects common tactical motifs like forks, pins, skewers, discovered attacks,
-back rank weaknesses, and more. Used to classify blunders by pattern type.
-
-The key insight for blunder classification:
-1. MISSED TACTIC - The best move exploited a tactic we didn't see
-2. ALLOWED TACTIC - Our blunder let the opponent execute a tactic against us
-"""
+"""Missed tactic: the best move exploited one. Allowed tactic: the blunder let the opponent
+execute one."""
 
 from __future__ import annotations
 
@@ -32,10 +25,8 @@ class TacticalPattern(IntEnum):
     OVERLOADED_PIECE = 11
 
 
-# Tactical pattern detection thresholds. Material gain in centipawns:
-# 300 ≈ minor piece, 500 ≈ rook (used for "is this discovered attack
-# substantial?"); 10000 represents mate-threat-level severity for the
-# back-rank weight.
+# Centipawns: 300 is about a minor piece, 500 a rook; 10000 is mate-threat severity for
+# the back-rank weight.
 DISCOVERED_ATTACK_MATERIAL_FLOOR = 300
 DOUBLE_CHECK_MATERIAL_GAIN = 500
 MATE_THREAT_MATERIAL_GAIN = 10_000
@@ -58,7 +49,6 @@ PATTERN_LABELS = MappingProxyType(
     }
 )
 
-# Standard piece values in centipawns
 PIECE_VALUES = MappingProxyType(
     {
         chess.PAWN: 100,
@@ -82,8 +72,6 @@ class TacticalMotif:
 
 @dataclass
 class BlunderTactics:
-    """Tactical analysis of a blunder position."""
-
     missed_tactic: TacticalMotif | None = None
     allowed_tactic: TacticalMotif | None = None
     blunder_reason: str = ""
@@ -175,7 +163,6 @@ def _build_fork_motif(
 
 
 def detect_fork(board: chess.Board, move: chess.Move) -> TacticalMotif | None:
-    """Detect if a move creates a fork (attacks 2+ valuable pieces)."""
     moving_piece = board.piece_at(move.from_square)
     if not moving_piece:
         return None
@@ -259,7 +246,6 @@ def _find_relative_pin_behind(
     target_sq: chess.Square,
     color: chess.Color,
 ) -> chess.Square | None:
-    """Find a friendly piece behind `target_sq` that's pinned through it."""
     ray = chess.ray(attacker_sq, target_sq)
     if not ray:
         return None
@@ -336,7 +322,6 @@ def _try_relative_pin(
 
 
 def detect_pin(board: chess.Board, color: chess.Color) -> list[TacticalMotif]:
-    """Detect all pins against a given color (both absolute and relative)."""
     return _detect_absolute_pins(board, color) + _detect_relative_pins(board, color)
 
 
@@ -410,7 +395,6 @@ def _try_skewer(
 
 
 def detect_skewer(board: chess.Board, move: chess.Move) -> TacticalMotif | None:
-    """Detect if a move creates a skewer."""
     moving_piece = board.piece_at(move.from_square)
     if moving_piece is None:
         return None
@@ -501,7 +485,6 @@ def _try_discovered_attack(
 def detect_discovered_attack(
     board: chess.Board, move: chess.Move
 ) -> TacticalMotif | None:
-    """Detect if moving a piece reveals an attack from a piece behind it."""
     moving_piece = board.piece_at(move.from_square)
     if not moving_piece:
         return None
@@ -526,7 +509,6 @@ def detect_discovered_attack(
 
 
 def detect_double_check(board: chess.Board, move: chess.Move) -> TacticalMotif | None:
-    """Detect if a move delivers double check."""
     board_after = board.copy()
     board_after.push(move)
     if not board_after.is_check():
@@ -547,7 +529,6 @@ def detect_double_check(board: chess.Board, move: chess.Move) -> TacticalMotif |
 
 
 def detect_hanging_piece(board: chess.Board, color: chess.Color) -> list[TacticalMotif]:
-    """Detect undefended pieces that are under attack."""
     enemy_color = not color
     return [
         TacticalMotif(
@@ -609,7 +590,6 @@ def _is_back_rank_mate(
 def detect_back_rank_threat(
     board: chess.Board, move: chess.Move
 ) -> TacticalMotif | None:
-    """Detect if a move creates a back rank threat."""
     moving_piece = board.piece_at(move.from_square)
     if not moving_piece or moving_piece.piece_type not in (chess.ROOK, chess.QUEEN):
         return None
@@ -644,7 +624,6 @@ _MOVE_DETECTORS = (
 
 
 def analyze_move_tactics(board: chess.Board, move: chess.Move) -> TacticalMotif | None:
-    """Analyze what tactical pattern a move exploits."""
     tactics: list[TacticalMotif] = []
     for detector in _MOVE_DETECTORS:
         motif = detector(board, move)
@@ -658,7 +637,6 @@ def analyze_move_tactics(board: chess.Board, move: chess.Move) -> TacticalMotif 
 def analyze_position_weaknesses(
     board: chess.Board, color: chess.Color
 ) -> list[TacticalMotif]:
-    """Analyze weaknesses in a position for the given color."""
     return detect_hanging_piece(board, color) + detect_pin(board, color)
 
 
@@ -677,7 +655,6 @@ def classify_blunder_tactics(
     best_move: chess.Move | None,
     opponent_reply: chess.Move | None = None,
 ) -> BlunderTactics:
-    """Classify what tactical patterns explain a blunder."""
     result = BlunderTactics()
     reasons: list[str] = []
 

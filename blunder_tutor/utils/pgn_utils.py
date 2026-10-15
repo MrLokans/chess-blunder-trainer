@@ -1,5 +1,3 @@
-"""PGN file utility functions."""
-
 from __future__ import annotations
 
 import hashlib
@@ -88,18 +86,6 @@ def extract_game_url_from_string(pgn_content: str) -> str | None:
 
 
 def board_before_ply(game: chess.pgn.Game, target_ply: int) -> chess.Board:
-    """Get the board state before a specific ply.
-
-    Args:
-        game: Chess game
-        target_ply: The ply number (1-indexed)
-
-    Returns:
-        Board state before the target ply
-
-    Raises:
-        ValueError: If the target ply is not found in the game
-    """
     board = game.board()
     ply = 1
     for move in game.mainline_moves():

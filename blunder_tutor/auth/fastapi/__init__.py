@@ -1,14 +1,3 @@
-"""FastAPI integration surface — the one allowed sub-namespace.
-
-Consumers import directly from ``blunder_tutor.auth.fastapi`` (rather
-than the top-level ``blunder_tutor.auth``) when they need pieces that
-only make sense in a FastAPI app: middleware, request-scoped
-dependencies, cookie helpers, the auth router factory and its
-extension Protocols. Everything else (entities, errors, service,
-providers, storage) goes through the top-level package so the auth
-core stays usable without FastAPI on the import path.
-"""
-
 from blunder_tutor.auth.fastapi.cookies import (
     SESSION_COOKIE_NAME,
     clear_session_cookie,

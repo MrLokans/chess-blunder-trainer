@@ -1,5 +1,3 @@
-"""Env-var parsing helpers shared across config builders."""
-
 from __future__ import annotations
 
 _TRUTHY = frozenset(("true", "1", "yes"))

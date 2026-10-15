@@ -18,22 +18,12 @@ from blunder_tutor.auth.core.types import (
     Username,
 )
 
-# Opaque transaction handle. SQLite passes ``aiosqlite.Connection``;
-# a future non-SQL backend (Postgres pool, remote API session, …)
-# passes whatever sentinel it needs. ``Any`` is deliberate — typing
-# it more strictly would couple every Protocol to a specific storage
-# implementation.
+# Opaque handle (`aiosqlite.Connection` for SQLite). `Any` is deliberate so protocols
+# don't couple to a backend.
 Transaction = Any
 
 
 class UserRepo(Protocol):
-    """Persistent store for user rows. Implementations carry their own
-    storage handle (SQLite connection, future Postgres pool, remote
-    API client, …) and are constructed by the consumer;
-    ``AuthService`` holds a reference and never reaches past this
-    surface.
-    """
-
     async def insert_in_transaction(
         self,
         txn: Transaction,
@@ -42,13 +32,7 @@ class UserRepo(Protocol):
         username: Username,
         email: Email | None,
         created_at: str,
-    ) -> None:
-        """Insert a user row inside an already-open transaction. The
-        caller (``AuthService``) holds the write lock and the
-        transaction span so a register / signup atomically writes both
-        the user and its credentials identity.
-        """
-        ...
+    ) -> None: ...
 
     async def insert(
         self,
@@ -56,10 +40,7 @@ class UserRepo(Protocol):
         user_id: UserId,
         username: Username,
         email: Email | None,
-    ) -> None:
-        """Insert a user row in its own transaction. Intended for tests
-        and admin tooling that bypass the full register flow."""
-        ...
+    ) -> None: ...
 
     async def get_by_id(self, user_id: UserId) -> User | None: ...
     async def get_by_username(self, username: Username) -> User | None: ...
@@ -68,19 +49,11 @@ class UserRepo(Protocol):
     async def list_all(self) -> list[User]: ...
 
     async def delete(self, user_id: UserId) -> None:
-        """Hard-delete the user row. ``ON DELETE CASCADE`` (or the
-        backend's equivalent) is expected to remove any dependent
-        identities and sessions; the implementation makes the cascade
-        guarantee, not the caller.
-        """
+        """Must cascade to identities and sessions."""
         ...
 
 
 class IdentityRepo(Protocol):
-    """Persistent store for credential / OAuth identity rows. One user
-    can own N identities (credentials + OAuth providers); the
-    ``(provider, provider_subject)`` pair is unique."""
-
     async def insert_in_transaction(
         self,
         txn: Transaction,
@@ -111,17 +84,10 @@ class IdentityRepo(Protocol):
 
     async def update_credential(
         self, identity_id: IdentityId, credential: PasswordHash
-    ) -> None:
-        """In-place credential rotation (password reset, hash upgrade)."""
-        ...
+    ) -> None: ...
 
 
 class SessionRepo(Protocol):
-    """Persistent store for opaque-token sessions. Tokens are server-
-    side, revocable individually or in bulk; ``last_seen_at`` is bumped
-    on resolve to support idle-timeout enforcement.
-    """
-
     async def insert(
         self,
         *,
@@ -137,28 +103,14 @@ class SessionRepo(Protocol):
     async def delete(self, token: SessionToken) -> None: ...
     async def delete_all_for_user(self, user_id: UserId) -> None: ...
 
-    async def delete_expired(self, as_of: datetime) -> int:
-        """Bulk-delete expired sessions, returning the row count for
-        diagnostics. Used by maintenance commands; ``AuthService``
-        itself only deletes one session at a time on the resolve path."""
-        ...
+    async def delete_expired(self, as_of: datetime) -> int: ...
 
     async def list_for_user(self, user_id: UserId) -> list[Session]: ...
 
 
 class SetupRepo(Protocol):
-    """Tiny key/value store for one-shot bootstrap state (today: the
-    first-user invite code). Operationally a SQLite table, but the
-    Protocol is small enough that any backend can satisfy it.
-
-    The ``*_in_transaction`` variants exist so policies that run
-    inside the signup write-span (notably :class:`HmacInvitePolicy`)
-    can read and delete in the same atomic context as the user insert
-    without re-acquiring the storage lock — calling :meth:`get` or
-    :meth:`delete` from inside a ``transaction()`` block would produce
-    a separate, racy transaction on SQLite, and any future single-
-    connection backend would deadlock outright.
-    """
+    """The `*_in_transaction` variants exist because `get`/`delete` inside a transaction
+    would open a separate, racy one."""
 
     async def get(self, key: str) -> str | None: ...
     async def put(self, key: str, value: str) -> None: ...
@@ -168,15 +120,8 @@ class SetupRepo(Protocol):
 
 
 class PasswordHasher(Protocol):
-    """Hash + verify primitive. Implementations may be bcrypt, argon2id,
-    or a layered hasher that reads the algorithm marker on the stored
-    hash and dispatches accordingly (rehash-on-login).
-
-    ``dummy_hash`` returns a hasher-specific placeholder used by
-    :class:`CredentialsProvider` to keep the verify-time wall-clock
-    invariant — the implementation must precompute and cache the value
-    so the constant-time path never pays the hash cost twice.
-    """
+    """`dummy_hash` must be precomputed and cached; it keeps `CredentialsProvider`'s verify
+    timing constant."""
 
     def hash(self, raw: str) -> PasswordHash: ...
     def verify(self, raw: str, hashed: PasswordHash) -> bool: ...
@@ -184,24 +129,10 @@ class PasswordHasher(Protocol):
 
 
 class QuotaPolicy(Protocol):
-    """Per-deploy signup-quota strategy. Called inside the signup
-    transaction with the freshly observed user count; returning
-    ``False`` raises :class:`UserCapReachedError` at the service layer.
-    """
-
     def allow_signup(self, current_count: int) -> bool: ...
 
 
 class InvitePolicy(Protocol):
-    """First-user / always-required / never-required invite strategy.
-
-    ``user_count`` is the snapshot from inside the signup transaction
-    — a policy that gates only on first-user can return early when the
-    count is non-zero. The implementation owns whatever DB calls it
-    needs against the passed connection so the consume happens in the
-    same atomic span as the user insert.
-    """
-
     async def consume(
         self,
         txn: Transaction,
@@ -211,32 +142,10 @@ class InvitePolicy(Protocol):
 
 
 class ErrorCodec(Protocol):
-    """Maps an :class:`AuthError` to an HTTP ``(status, detail)`` pair.
-    The default codec ships blunder_tutor's stable detail slugs
-    (``"username_taken"``, ``"invite_code_invalid"``, …); a consumer
-    that wants i18n keys or a different status convention swaps in
-    their own implementation.
-    """
-
     def to_http(self, exc: AuthError) -> tuple[int, str]: ...
 
 
 class Storage(Protocol):
-    """Aggregate that bundles the four auth repos plus a transaction
-    primitive. Today's only production-grade backend is
-    :class:`SqliteStorage` wrapping :class:`AuthDb`; future Postgres
-    or multi-region backends ship their own implementation against
-    this protocol. The protocol stays explicit even with one backend
-    so the seam is enforced at type-check time, not discovered when
-    the second backend lands.
-
-    ``transaction()`` is the one place where the storage backend
-    declares atomicity semantics — SQLite issues ``BEGIN IMMEDIATE``,
-    a future remote backend may bracket a remote-API session. Repos
-    use the yielded :data:`Transaction` handle when their
-    ``*_in_transaction`` methods are invoked from inside the span.
-    """
-
     users: UserRepo
     identities: IdentityRepo
     sessions: SessionRepo

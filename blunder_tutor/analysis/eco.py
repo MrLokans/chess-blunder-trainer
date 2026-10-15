@@ -36,7 +36,6 @@ class ECODatabase:
 
 
 def _strip_move_number(token: str) -> str | None:
-    """Return the SAN portion of a PGN token, or None if the token has no move."""
     if token.endswith(".") or (token[0].isdigit() and "." not in token):
         return None
     if "." in token:

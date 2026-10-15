@@ -18,19 +18,10 @@ _pending_discards: set[asyncio.Future] = set()
 async def _open_cancel_safe(db_path: Path) -> aiosqlite.Connection:
     """Open a connection that survives cancellation of the awaiting task.
 
-    aiosqlite hands the open off to its worker thread and resolves a future
-    when the `sqlite3.Connection` is ready. If the awaiting task is cancelled
-    first, that future is already done, aiosqlite's `set_result` no-ops, and
-    the handle it just created is dropped without ever being closed —
-    surfacing much later as a `ResourceWarning` raised from a finalizer,
-    attributed to whatever code happened to trigger the GC. Shutdown cancels
-    in-flight background jobs exactly this way.
-
-    Shielding the open keeps the connection reachable; `_discard_connection`
-    then closes it. Cleanup cannot `await` — a task under cancellation is not
-    guaranteed another suspension point — so it goes through the synchronous
-    `Connection.stop()` instead of `await Connection.close()`.
-    """
+    If the task is cancelled after aiosqlite's worker opened the handle, the result is
+    dropped unclosed and surfaces later as a ResourceWarning. Shielding the open keeps
+    it reachable so `_discard_connection` can close it, via the sync `Connection.stop()`
+    because a cancelled task cannot be relied on to await."""
     opening = asyncio.ensure_future(_connect_async(db_path))
     try:
         return await asyncio.shield(opening)
@@ -46,10 +37,9 @@ def _discard_connection(opening: asyncio.Future[aiosqlite.Connection]) -> None:
     stopped = conn.stop()
     if stopped is None:
         return
-    # `stop()` only queues the close onto the worker thread. Hold `conn`
-    # reachable (via this callback, via the future, via the set) until the
-    # worker reports back, or GC can reach `Connection.__del__` first and
-    # emit the exact ResourceWarning this path exists to prevent.
+    # `stop()` only queues the close; keep `conn` reachable until the worker reports
+    # back, or GC reaches `__del__` first and emits the ResourceWarning this path
+    # prevents.
     _pending_discards.add(stopped)
     stopped.add_done_callback(partial(_finish_discard, conn))
 
@@ -64,11 +54,8 @@ class BaseDbRepository:
     def __init__(self, db_path: Path):
         self.db_path = db_path
         self._conn: aiosqlite.Connection | None = None
-        # Concurrent callers (e.g. `asyncio.gather(repo.foo(), repo.bar())`)
-        # would otherwise both pass the `_conn is None` check, both open a
-        # connection, and orphan one of them — surfacing as an aiosqlite
-        # ResourceWarning at GC time. Double-checked locking serializes the
-        # cold-path open without paying for the lock on warm reads.
+        # Double-checked locking: concurrent callers would otherwise both open a
+        # connection and orphan one (ResourceWarning at GC).
         self._conn_lock = asyncio.Lock()
 
     async def __aenter__(self) -> Self:

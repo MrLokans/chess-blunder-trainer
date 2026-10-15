@@ -1,5 +1,3 @@
-"""Pipeline step for tactical pattern detection on blunders."""
-
 from __future__ import annotations
 
 import contextlib
@@ -19,13 +17,6 @@ if TYPE_CHECKING:
 
 
 class TacticsClassifyStep(AnalysisStep):
-    """Detect tactical patterns in blunder positions.
-
-    Analyzes each blunder to identify:
-    - What tactical patterns the best move exploited (fork, pin, etc.)
-    - What weaknesses the blunder created in the position
-    """
-
     @property
     def step_id(self) -> str:
         return "tactics"
@@ -66,7 +57,7 @@ def _scan_blunders(game: chess.pgn.Game, moves: list[dict]) -> list[dict]:
 
         board_before = board.copy()
 
-        if move_data["classification"] == 3:  # Blunder
+        if move_data["classification"] == 3:
             tactics_data.append(_classify_blunder_at(board_before, move, move_data))
 
         board.push(move)

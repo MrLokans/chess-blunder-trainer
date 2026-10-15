@@ -53,7 +53,6 @@ def _translate_integrity_error(
     username: Username,
     email: Email | None,
 ) -> NoReturn:
-    """UNIQUE constraint violation → domain error. Always raises."""
     message = str(exc)
     if "users.username" in message:
         raise DuplicateUsernameError(username) from exc
@@ -64,27 +63,14 @@ def _translate_integrity_error(
 
 @dataclass(frozen=True, kw_only=True)
 class SessionConfig:
-    """Lifetime bounds for issued sessions.
-
-    ``kw_only=True`` because both fields are ``timedelta`` — a positional
-    swap would type-check but silently invert the absolute-vs-idle
-    invariant.
-    """
+    """`kw_only`: both fields are timedelta and a positional swap would silently invert
+    them."""
 
     max_age: timedelta
     idle: timedelta
 
 
 class AuthService:
-    """Service layer for all auth operations.
-
-    Owns a single :class:`Storage` aggregate (the four repos plus the
-    transaction primitive). Concurrent register/login calls serialize
-    correctly because the storage's transaction span is the only
-    multi-statement write path; reads use the storage's read seam
-    without locking.
-    """
-
     def __init__(
         self,
         *,
@@ -109,10 +95,8 @@ class AuthService:
         self._hasher = hasher
         self._quota = quota
         self._invite_policy = invite_policy
-        # Warm the dummy hash so the first authenticate request runs in
-        # the same wall-clock window as subsequent ones — the
-        # constant-time invariant in :class:`CredentialsProvider`
-        # depends on the dummy being precomputed.
+        # Warm the dummy hash so the first authenticate takes the same time as later
+        # ones.
         hasher.dummy_hash()
 
     async def signup(
@@ -123,27 +107,16 @@ class AuthService:
         email: Email | None = None,
         invite_code: str | None = None,
     ) -> User:
-        """Atomic signup path for the HTTP surface.
-
-        Quota enforcement and invite-consume happen inside the same
-        ``BEGIN IMMEDIATE`` transaction as the ``users`` / ``identities``
-        INSERTs. Without this, two concurrent POSTs to
-        ``/api/auth/signup`` could both pass an API-level cap check and
-        both commit, exceeding the configured quota. Single-transaction
-        gating makes the cap a DB invariant instead of a best-effort
-        check.
-        """
+        """Atomic signup: quota check and invite consume run in the same `BEGIN IMMEDIATE`
+        transaction as the inserts, so concurrent signups cannot exceed the cap."""
         credential = self._hasher.hash(password)
         user_id = make_user_id()
         now = now_iso()
         try:
             async with self._storage.transaction() as conn:
-                # ``self._users.count()`` runs inside the open
-                # ``BEGIN IMMEDIATE`` because ``UserRepository.count()``
-                # uses the same shared aiosqlite connection that holds
-                # the transaction; concurrent signups serialize on the
-                # write lock and the cap stays a DB invariant rather
-                # than a best-effort check.
+                # `count()` runs inside the open `BEGIN IMMEDIATE` on the same
+                # connection, so concurrent signups serialize and the cap is a DB
+                # invariant.
                 count = await self._users.count()
                 if not self._quota.allow_signup(count):
                     raise UserCapReachedError()
@@ -161,16 +134,6 @@ class AuthService:
         return await self._finalize_registration(user_id)
 
     def register_provider(self, provider: AuthProvider) -> None:
-        """Register an :class:`AuthProvider` after construction.
-
-        The dispatch table is a plain dict keyed on ``provider.name`` —
-        a consumer wiring OAuth post-boot (e.g. once a tenant configures
-        SSO, or a test that swaps in a fake) calls this and the new
-        provider becomes addressable through :meth:`authenticate`. Late
-        registration of an already-registered name is allowed: the
-        latest registration wins, matching the constructor's behaviour
-        for duplicate keys in the input ``Mapping``.
-        """
         self._providers[provider.name] = provider
 
     async def authenticate(
@@ -214,8 +177,8 @@ class AuthService:
         await self._maybe_bump_last_seen(typed_token, session)
         user = await self._users.get_by_id(session.user_id)
         if user is None:
-            # Session row orphaned — referential integrity should prevent
-            # this, but don't trust it as a security invariant.
+            # Orphaned session row: referential integrity should prevent this, but don't
+            # rely on it for security.
             await self._sessions.delete(typed_token)
             return None
         return UserContext(
@@ -231,18 +194,11 @@ class AuthService:
         await self._sessions.delete_all_for_user(user_id)
 
     async def delete_account(self, user_id: UserId) -> None:
-        # ``users.delete`` is a single statement — the storage backend's
-        # ``ON DELETE CASCADE`` (SQLite: ``identities.user_id`` +
-        # ``sessions.user_id``) removes the dependent rows atomically
-        # without an explicit transaction span. SQLite atomicity here
-        # depends on ``PRAGMA foreign_keys = ON`` being set on the
-        # connection (see ``AuthDb.connect``); any code that opens the
-        # auth DB outside ``AuthDb`` would silently break the cascade.
-        # The on_after_delete hook runs AFTER the delete commits: if
-        # the hook fails, the user is already logged out and cannot
-        # log back in — any external resources the hook would have
-        # cleaned up are a nuisance, not a data-integrity bug. Inverse
-        # ordering could leave a live user with no external resources.
+        # Single statement: ON DELETE CASCADE removes identities and sessions
+        # atomically, which needs `PRAGMA foreign_keys = ON` (set in `AuthDb.connect`).
+        #
+        # The hook runs after commit: if it fails the user is already gone, and leftover
+        # external resources are a nuisance, not an integrity bug.
         await self._users.delete(user_id)
         await self._on_after_delete(user_id)
 
@@ -271,15 +227,8 @@ class AuthService:
         identity_id: IdentityId,
         new_password: str,
     ) -> None:
-        """Rotate a user's password — hash the new value with the
-        service's configured hasher, overwrite the credential row, and
-        revoke every active session. Bundling the two writes is an
-        OWASP V7 invariant: a credential rotation that leaves live
-        tokens behind is the bug the standard exists to prevent. A
-        future caller wanting to opt out of session revoke (a hash-
-        upgrade-on-login path, say) should reach for the lower-level
-        :meth:`IdentityRepo.update_credential` directly.
-        """
+        """Also revokes every session (OWASP V7); use `IdentityRepo.update_credential` to
+        skip that."""
         hashed = self._hasher.hash(new_password)
         await self._identities.update_credential(identity_id, hashed)
         await self._sessions.delete_all_for_user(user_id)
@@ -294,12 +243,6 @@ class AuthService:
         credential: PasswordHash,
         now: str,
     ) -> None:
-        """Single place where a new user + their credentials identity land
-        on disk. :meth:`signup` calls this inside a ``BEGIN IMMEDIATE``
-        transaction — adding a column to
-        ``users`` or ``identities`` touches exactly one caller. Uses the
-        injected repositories so the Protocol contract (instance-method
-        ``insert_in_transaction``) is the single source of truth."""
         await self._users.insert_in_transaction(
             conn,
             user_id=user_id,
@@ -318,27 +261,17 @@ class AuthService:
         )
 
     async def _finalize_registration(self, user_id: UserId) -> User:
-        """Post-commit step: look up the freshly inserted user and run the
-        consumer's ``on_after_register`` hook (per-user DB init, cache
-        warm, audit log, etc.).
+        """Run the `on_after_register` hook after commit.
 
-        Trade-off: if the hook fails after the auth-table commit, the
-        user + identity rows already exist — the user can authenticate
-        but the external resources the hook would have created are
-        missing, and subsequent requests may 500. We accept this over
-        (a) holding the auth write-lock for slow hook work, or (b) a
-        compensating rollback that duplicates logic already handled by
-        CASCADE. A future change may move hook execution to lazy-on-
-        first-access to close the gap entirely.
-        """
+        If the hook fails the user already exists but its external resources (per-user
+        DB) may be missing. Accepted over holding the write lock during slow hooks or a
+        compensating rollback."""
         user = await self._users.get_by_id(user_id)
         assert user is not None
         await self._on_after_register(user)
         return user
 
     async def _load_live_session(self, typed_token: SessionToken) -> Session | None:
-        """Fetch the session and reject (with side-effecting delete) if
-        it is past its absolute expiry or its idle timeout."""
         session = await self._sessions.get(typed_token)
         if session is None:
             return None
@@ -353,13 +286,8 @@ class AuthService:
     async def _maybe_bump_last_seen(
         self, typed_token: SessionToken, session: Session
     ) -> None:
-        # Debounce ``last_seen`` writes so every authenticated request
-        # doesn't serialize behind the auth DB write lock. The idle
-        # timeout guarantee is unchanged: threshold is ``idle / 10``,
-        # small enough that a bump happens many times per idle window
-        # but large enough that a burst of requests from one client
-        # coalesces into one write. At the 7-day default idle this
-        # means a bump roughly every 17 hours of continuous use.
+        # Debounce `last_seen` writes so authenticated requests don't queue behind the
+        # auth write lock: bump only past `idle / 10` (~17h at the 7-day default).
         bump_threshold = self._session_idle / 10
         if datetime.now(UTC) - session.last_seen_at >= bump_threshold:
             await self._sessions.bump_last_seen(typed_token)

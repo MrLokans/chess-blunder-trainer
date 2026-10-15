@@ -8,38 +8,20 @@ import aiosqlite
 
 
 class FilePermissionPolicy(Protocol):
-    """Strategy for hardening auth DB file permissions during schema init.
-
-    The auth core must not assume POSIX semantics (chmod, umask) since
-    operators on Windows, networked filesystems, or ephemeral test dirs
-    don't need or can't apply owner-only perms. Callers inject a policy
-    that knows how their platform handles file permissions; the default
-    :class:`NoOpFilePermissionPolicy` is safe everywhere.
-    """
+    """Injected because the core cannot assume POSIX."""
 
     def restrict_umask(self) -> AbstractContextManager[None]:
-        """Sync context manager that tightens file-creation perms for
-        the lifetime of the body. The schema connect runs inside this
-        so the new file lands with restrictive perms before any chmod
-        follow-up — closing the race between file create and chmod.
-        """
+        """Closes the create-then-chmod race."""
         ...
 
-    def secure_db_file(self, path: Path) -> None:
-        """Belt-and-suspenders chmod after the file is created. Idempotent."""
-        ...
+    def secure_db_file(self, path: Path) -> None: ...
 
 
 class NoOpFilePermissionPolicy:
-    """Default :class:`FilePermissionPolicy`: do nothing. Library-safe
-    on any platform; consumers that need POSIX file hardening swap in
-    their own implementation."""
-
     def restrict_umask(self) -> AbstractContextManager[None]:
         return nullcontext()
 
-    def secure_db_file(self, path: Path) -> None:
-        """No-op: defer to caller's umask + filesystem ACLs."""
+    def secure_db_file(self, path: Path) -> None: ...
 
 
 _NOOP_POLICY: FilePermissionPolicy = NoOpFilePermissionPolicy()

@@ -8,12 +8,6 @@ if TYPE_CHECKING:
 
 
 def user_scope(ctx: UserContext | DependencyContext) -> str:
-    """The single canonical cache scope.
-
-    `ctx.user_id` is the real auth id in `AUTH_MODE=credentials` and the
-    fixed `_local` sentinel in `AUTH_MODE=none` (BypassAuthMiddleware on
-    every request; the executor's DependencyContext for jobs). Reusing it
-    keeps cache isolation identical to data isolation, on both the
-    web-request and background-job paths, with no mode special-casing.
-    """
+    """`ctx.user_id` is the real id in credentials mode and `_local` in none mode, so cache
+    isolation matches data isolation."""
     return ctx.user_id

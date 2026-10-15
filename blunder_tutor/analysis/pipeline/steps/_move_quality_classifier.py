@@ -1,9 +1,3 @@
-"""Move-quality classification helpers used by MoveQualityStep.
-
-Lives as a sibling private module so the step class stays focused on the
-step-protocol surface; classification rules + dataclass live here.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -20,10 +14,8 @@ if TYPE_CHECKING:
     from blunder_tutor.analysis.thresholds import Thresholds
 
 
-# Move-quality classification labels. Match `CLASSIFICATION_LABELS` in
-# constants.py but referenced here by a private alias because this module
-# also uses "good" — a label that exists at the wire level but not in the
-# DB-backed `CLASSIFICATION_*` integer constants (good = 0).
+# Aliased privately because this module also uses "good", which exists on the wire but
+# not in the DB-backed integer constants.
 _LABEL_GOOD = "good"
 _LABEL_INACCURACY = "inaccuracy"
 _LABEL_MISTAKE = "mistake"
@@ -93,11 +85,11 @@ def _pick_label(
     has_winning_after = is_mate_after and eval_after > 0
     has_losing_after = is_mate_after and eval_after < 0
 
-    if not is_mate_before and has_losing_after:  # mate_created
+    if not is_mate_before and has_losing_after:
         return _classify_mate_created(eval_before)
     if has_winning_before and not has_winning_after and not has_losing_after:
         return _classify_mate_lost(eval_after)
-    if has_winning_before and has_losing_after:  # mate_delayed
+    if has_winning_before and has_losing_after:
         return _LABEL_BLUNDER
 
     return _classify_wc(
@@ -112,7 +104,7 @@ def classify_move(
     eval_before = move_data["eval_before"]
     eval_after = move_data["eval_after"]
 
-    if eval_after == MATE_SCORE_ANALYSIS:  # Checkmate delivered
+    if eval_after == MATE_SCORE_ANALYSIS:
         return MoveClassification(
             label=_LABEL_GOOD, delta=0, cp_loss=0, missed_mate_depth=None
         )

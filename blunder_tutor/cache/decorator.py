@@ -21,9 +21,8 @@ class _CacheWrapper:
     value: Any
 
 
-# Cache key is sha256-hashed and truncated to 32 hex chars (128 bits) — long
-# enough to make collisions practically impossible across the cache lifetime
-# while keeping keys short for storage backends.
+# sha256 truncated to 128 bits: collisions are practically impossible and keys stay
+# short.
 _CACHE_KEY_HEX_LEN = 32
 
 
@@ -84,11 +83,9 @@ def _resolve_request(args: tuple[Any, ...], kwargs: dict[str, Any]) -> Request |
 def _resolve_request_scope(
     func: Callable, args: tuple[Any, ...], kwargs: dict[str, Any]
 ) -> tuple[Request, str]:
-    """Fail closed: a `@cached` route without a Request or without a
-    `request.state.user_scope` (set by `set_request_scope`) is a
-    misconfiguration. Raise loudly — naming the route — instead of
-    serving a guessed bucket that would leak one user's data to another.
-    """
+    """Fail closed: a `@cached` route without `request.state.user_scope` is a
+    misconfiguration, and raising beats serving a guessed bucket that could leak across
+    users."""
     where = func.__qualname__
     request = _resolve_request(args, kwargs)
     if request is None:

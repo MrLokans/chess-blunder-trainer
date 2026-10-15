@@ -5,9 +5,8 @@ from pathlib import Path
 
 import aiosqlite
 
-# SQLite connection timeout for both sync and async paths. 30 s is the
-# WAL-mode busy-wait ceiling — long enough to ride out routine writer
-# contention, short enough that genuine deadlocks surface as errors.
+# 30 s is the WAL busy-wait ceiling: long enough to ride out writer contention, short
+# enough that real deadlocks surface as errors.
 SQLITE_TIMEOUT_SECONDS = 30.0
 SQLITE_BUSY_TIMEOUT_MS = 30_000
 

@@ -1,28 +1,3 @@
-"""Factory for the auth API routes.
-
-Replaces the module-level ``router = APIRouter(prefix="/api/auth")``
-constant in blunder_tutor with a function that takes the per-app
-specifics — auth-service lookup, cookie-set/clear that knows about
-the consumer's TLS posture, error codec, response factories, rate
-limiters — and returns a fully wired :class:`APIRouter`.
-
-Consumers wrap the factory with their own glue:
-
-.. code-block:: python
-
-    router = build_auth_router(
-        auth_service_provider=lambda req: req.app.state.auth.service,
-        cookies=CookieAdapter(
-            set_cookie=set_cookie_with_app_config,
-            clear_cookie=clear_session_cookie,
-            name=SESSION_COOKIE_NAME,
-        ),
-        login_dependencies=[Depends(login_rate_limit)],
-        signup_dependencies=[Depends(signup_rate_limit)],
-    )
-    app.include_router(router)
-"""
-
 import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -48,8 +23,6 @@ from blunder_tutor.auth.fastapi.errors import DefaultErrorCodec
 log = logging.getLogger(__name__)
 
 
-# Real callable types so a wrong-shape consumer-supplied callable
-# fails type-checking at the wiring site instead of at request time.
 type AuthServiceProvider = Callable[[Request], AuthService]
 type SetSessionCookie = Callable[[Response, str, Request], None]
 type ClearSessionCookie = Callable[[Response], None]
@@ -58,13 +31,6 @@ type MeResponseFactory = Callable[[User], BaseModel]
 
 @dataclass(frozen=True, kw_only=True)
 class CookieAdapter:
-    """Cookie I/O bound to the consumer's TLS posture.
-
-    ``set_cookie`` is called with ``(response, token, request)`` so the
-    consumer can flip ``Secure``/``SameSite`` based on the originating
-    request. ``clear_cookie`` is called on the response only.
-    """
-
     set_cookie: SetSessionCookie
     clear_cookie: ClearSessionCookie
     name: str = SESSION_COOKIE_NAME
@@ -83,12 +49,6 @@ class LoginRequest(BaseModel):
 
 
 class MeResponse(BaseModel):
-    """Default body for ``GET /me`` and the success payload for
-    ``signup`` / ``login``. Override via the ``me_response_factory``
-    parameter of :func:`build_auth_router` if a consumer needs a
-    different shape (e.g. role claims, tenant id, profile fields).
-    """
-
     id: str
     username: str
     email: str | None = None
@@ -100,8 +60,6 @@ def _default_me_factory(user: User) -> MeResponse:
 
 @dataclass(frozen=True)
 class _RouterCtx:
-    """Per-app wiring shared by every route handler in the factory."""
-
     auth_service_provider: AuthServiceProvider
     cookies: CookieAdapter
     codec: ErrorCodec
@@ -120,10 +78,8 @@ def _raise_from_auth_error(codec: ErrorCodec, exc: AuthError) -> NoReturn:
 async def _revoke_caller_cookie(
     request: Request, service: AuthService, cookie_name: str
 ) -> None:
-    # OWASP V7: a privilege change must terminate the previous
-    # session in addition to issuing a new ID. Best-effort —
-    # transient storage failures here must not block the legitimate
-    # login / signup flow.
+    # OWASP V7: a privilege change must terminate the previous session; best-effort so
+    # storage hiccups don't block login.
     old_token = request.cookies.get(cookie_name)
     if not old_token:
         return
@@ -181,10 +137,8 @@ async def _do_login(
     response: Response,
     service: AuthService,
 ) -> BaseModel:
-    # Pass the raw username straight through: ``CredentialsProvider``
-    # runs ``make_username`` internally and consumes bcrypt dummy
-    # time on shape failure, keeping "malformed input" indistinguishable
-    # from "unknown user" on the wall clock.
+    # Raw username on purpose: `CredentialsProvider` normalises it and burns dummy time
+    # on bad shapes, keeping malformed indistinguishable from unknown.
     user = await service.authenticate(
         CREDENTIALS_PROVIDER_NAME,
         {"username": body.username, "password": body.password},
@@ -212,19 +166,8 @@ def build_auth_router(
     signup_dependencies: Sequence[Any] = (),
     prefix: str = "/api/auth",
 ) -> APIRouter:
-    """Build the auth API router.
-
-    All blunder_tutor-specific bits flow through the parameters so a
-    different consumer can swap any individual piece without forking
-    the route bodies. The router keeps the existing six-route surface:
-    ``signup``, ``login``, ``logout``, ``logout-all``, ``me``,
-    ``account``.
-
-    Cache invalidation on account delete is the consumer's job —
-    compose it into ``AuthService.on_after_delete`` at construction
-    time. The route handler itself only revokes the session cookie
-    after the service call returns.
-    """
+    """Account-delete cache invalidation belongs in `AuthService.on_after_delete`, not the
+    handler."""
     ctx = _RouterCtx(
         auth_service_provider=auth_service_provider,
         cookies=cookies,
@@ -232,17 +175,11 @@ def build_auth_router(
         me_factory=me_response_factory or _default_me_factory,
     )
 
-    # Every endpoint reaches the per-app wiring through `ctx` (closed
-    # over by the inner functions). The closure-style factory is what
-    # lets a consumer swap any piece (TLS posture, rate limits, error
-    # shape) without forking the route bodies.
     def _get_service(request: Request) -> AuthService:
         return ctx.auth_service_provider(request)
 
     def _get_optional_user_context(request: Request) -> UserContext | None:
-        # Logout-style routes are idempotent: a client calling
-        # ``/logout`` without a live session gets a clean 204, not a
-        # confusing 401.
+        # Idempotent: logout without a live session is 204, not 401.
         return getattr(request.state, "user_ctx", None)
 
     router = APIRouter(prefix=prefix)
@@ -302,10 +239,6 @@ def build_auth_router(
         response: Response,
         service: Annotated[AuthService, Depends(_get_service)],
     ) -> None:
-        # Cache eviction / per-user-dir cleanup belongs in the
-        # ``on_after_delete`` hook on :class:`AuthService` — the route
-        # only handles the cookie. Composition happens at consumer
-        # wiring time.
         await service.delete_account(user_ctx.user_id)
         ctx.cookies.clear_cookie(response)
 

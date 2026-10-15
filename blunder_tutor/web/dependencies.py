@@ -38,13 +38,6 @@ from blunder_tutor.web.config import AppConfig
 
 
 def _repo_dep[T: BaseDbRepository](cls: type[T]):
-    """Generic factory for `Depends(get_db_path)`-scoped repositories.
-
-    Collapses the eight identical "construct → yield → close()" blocks into
-    one helper. Every repo extends ``BaseDbRepository`` which already
-    supports ``async with``; we just plumb the DI seam through it. Adding
-    a new repo is now a single call-site line, not a 6-line factory.
-    """
 
     async def factory(
         db_path: Annotated[Path, Depends(get_db_path)],
@@ -65,12 +58,7 @@ def get_event_bus(request: Request) -> EventBus:
 
 
 def get_db_path(request: Request) -> Path:
-    """Per-request DB path populated by ``UserDbPathMiddleware``. Treats
-    a missing/None value as 401 — by the time a route depends on this,
-    `AuthMiddleware` has already enforced auth, so the absence of a
-    resolved path is a misconfiguration (route not exempt, but middleware
-    skipped) rather than a real unauth case.
-    """
+    """Missing means a misconfigured route: auth has already run."""
     db_path = getattr(request.state, "user_db_path", None)
     if db_path is None:
         raise HTTPException(
@@ -94,10 +82,6 @@ get_data_management_repository = _repo_dep(DataManagementRepository)
 async def get_profile_repository(  # noqa: WPS463 — FastAPI DI factory, not a getter; yields the repo into the request scope.
     request: Request,
 ) -> AsyncGenerator[ProfileRepository]:
-    """Pick the in-memory repo in demo mode; otherwise the per-user
-    SQLite-backed implementation. Returns the protocol so handlers
-    depend on the contract instead of the concrete class.
-    """
     if getattr(request.app.state, "demo_mode", False):
         yield get_demo_profile_repository()
         return
@@ -165,15 +149,9 @@ async def get_puzzle_service(
 
 
 async def set_request_scope(request: Request) -> None:
-    """FastAPI dependency: stash the canonical cache scope on
-    `request.state.user_scope` so the `@cached` decorator reads one
-    value it never re-derives. `user_ctx` is always populated upstream
-    (BypassAuthMiddleware in none mode, AuthMiddleware in credentials).
-    """
     request.state.user_scope = user_scope(request.state.user_ctx)
 
 
-# Type annotations for dependency injection in route handlers
 ConfigDep = Annotated[AppConfig, Depends(get_config)]
 EventBusDep = Annotated[EventBus, Depends(get_event_bus)]
 SettingsRepoDep = Annotated[SettingsRepository, Depends(get_settings_repository)]

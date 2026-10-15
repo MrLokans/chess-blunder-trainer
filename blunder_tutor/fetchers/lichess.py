@@ -106,7 +106,6 @@ async def _process_batch(
     username: str,
     progress: tqdm,
 ) -> tuple[int, int | None, bool]:
-    """Process one batch. Returns (count, oldest_time_ms, quota_exhausted)."""
     batch_count = 0
     oldest_time_ms: int | None = None
     for pgn_text, end_ms in _split_pgn_stream(response_text):
@@ -153,12 +152,6 @@ async def validate_username(username: str) -> bool:
 
 
 async def fetch_user_perfs(username: str) -> list[ProfileStatSnapshot]:
-    """Fetch per-mode rating + game count from Lichess `/api/user/{u}`.
-
-    Raises `RateLimitError` if Lichess persistently 429s the request after
-    the resilience layer's retry budget is exhausted. 404s and other
-    non-retryable status codes propagate as `httpx.HTTPStatusError`.
-    """
     url = LICHESS_USER_URL.format(username=username)
     async with httpx.AsyncClient(
         timeout=10,
@@ -181,11 +174,6 @@ async def fetch_user_perfs(username: str) -> list[ProfileStatSnapshot]:
 
 
 async def check_username_existence(username: str) -> ExistenceCheck:
-    """Check whether a Lichess user exists, with rate-limit awareness.
-
-    Distinguishes 404 (`exists=False`) from persistent 429
-    (`rate_limited=True`). 5xx and other non-retryable errors propagate.
-    """
     url = LICHESS_USER_URL.format(username=username)
     async with httpx.AsyncClient(
         timeout=10,

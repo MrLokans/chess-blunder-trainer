@@ -59,11 +59,6 @@ async def signup_page(request: Request):
 
 @auth_ui_router.get("/setup", response_class=HTMLResponse)
 async def setup_page(request: Request):
-    """Dispatch between the credentials-mode first-user invite page and
-    the legacy platform-setup page (Lichess / Chess.com username + initial
-    import). Pre-auth era had a single `/setup` route; this handler
-    preserves it while layering the new first-user flow on top.
-    """
     service = _service(request)
     ctx = _ctx(request)
     templates = request.app.state.templates
@@ -75,9 +70,6 @@ async def setup_page(request: Request):
         if ctx is None or not ctx.is_authenticated:
             return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
 
-    # `UserDbPathMiddleware` populates `user_db_path` from the per-mode
-    # resolver — credentials-mode ⇒ the signed-in user's DB, none-mode
-    # ⇒ the legacy single-user DB.
     db_path: Path = request.state.user_db_path
 
     async with SettingsRepository(db_path=db_path) as settings_repo:
@@ -89,10 +81,6 @@ async def setup_page(request: Request):
 
 @auth_ui_router.post("/logout")
 async def logout_ui(request: Request):
-    """Browser-friendly logout: revokes the session and redirects to
-    ``/login`` (credentials mode) or ``/`` (none mode). The JSON API at
-    ``/api/auth/logout`` stays available for programmatic callers.
-    """
     service = _service(request)
     ctx = _ctx(request)
     if service is not None and ctx is not None and ctx.is_authenticated:

@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""
-Download chess piece sets from Lichess assets (MIT licensed).
-
-Lichess serves SVGs at: https://lichess.org/assets/piece/{set}/{piece}.svg
-Modern browsers and chessboard.js fully support SVG pieces.
-"""
+"""Source: lichess.org/assets/piece/{set}/{piece}.svg (MIT)."""
 
 from __future__ import annotations
 
@@ -14,31 +9,28 @@ from pathlib import Path
 import httpx
 
 PIECE_SETS = [
-    # Classic/Traditional styles
-    "alpha",  # Clean traditional
-    "california",  # Popular on chess.com
-    "cardinal",  # Classic red accents
-    "cburnett",  # Lichess default, very popular
-    "merida",  # Traditional tournament style
-    "staunty",  # Classic Staunton design
-    "tatiana",  # Elegant traditional
-    "leipzig",  # German classical style
-    "dubrovny",  # Classic wooden look
-    # Modern/Clean styles
-    "maestro",  # Professional modern
-    "chessnut",  # Clean wooden style
-    "companion",  # Modern companion pieces
-    "kosal",  # Elegant modern
-    "fresca",  # Fresh modern look
-    "gioco",  # Italian modern style
-    # Artistic/Unique styles
-    "horsey",  # Fun distinctive knight
-    "pirouetti",  # Artistic ballet style
-    "spatial",  # 3D-like appearance
-    "mono",  # Minimalist monochrome
-    "pixel",  # Retro pixel art
-    "letter",  # Letter-based pieces (K, Q, R, B, N, P)
-    "shapes",  # Geometric shapes
+    "alpha",
+    "california",
+    "cardinal",
+    "cburnett",
+    "merida",
+    "staunty",
+    "tatiana",
+    "leipzig",
+    "dubrovny",
+    "maestro",
+    "chessnut",
+    "companion",
+    "kosal",
+    "fresca",
+    "gioco",
+    "horsey",
+    "pirouetti",
+    "spatial",
+    "mono",
+    "pixel",
+    "letter",
+    "shapes",
 ]
 
 PIECES = ["wK", "wQ", "wR", "wB", "wN", "wP", "bK", "bQ", "bR", "bB", "bN", "bP"]

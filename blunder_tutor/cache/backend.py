@@ -77,8 +77,6 @@ class InMemoryCacheBackend:
 
 
 class NullCacheBackend:
-    """No-op backend: every `get` misses, every write is dropped."""
-
     async def get(self, key: str) -> Any | None:
         pass
 

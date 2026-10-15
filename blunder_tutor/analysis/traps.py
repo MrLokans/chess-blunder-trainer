@@ -11,8 +11,7 @@ import chess.polyglot
 
 from blunder_tutor.constants import DEFAULT_FIXTURES_PATH
 
-# Maps a Zobrist trigger-position hash → the (trap, position) pair that
-# triggers from there. Aliased so the annotation depth stays under WPS234.
+# Aliased to keep annotation depth under WPS234.
 _TriggerLookup = dict[int, list[tuple["TrapDefinition", "TrapPosition"]]]
 
 
@@ -43,7 +42,7 @@ class TrapDefinition:
 @dataclass(frozen=True)
 class TrapMatch:
     trap_id: str
-    match_type: str  # "entered", "sprung", "executed"
+    match_type: str
     user_was_victim: bool
     mistake_ply: int | None
 

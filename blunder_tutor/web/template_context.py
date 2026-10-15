@@ -25,22 +25,13 @@ def _default_t(key: str, **_: Any) -> str:
 
 
 def i18n_context(request: Request) -> dict[str, Any]:
-    """Jinja2Templates context processor.
-
-    All per-request template state (``t``, ``locale``, ``features``, etc.)
-    lives on ``request.state`` — set by ``LocaleMiddleware`` — and is pulled
-    into the render context here. Historically these values were assigned
-    to ``templates.env.globals`` per request, which mutated a
-    process-shared dict; under concurrent requests the awaits between
-    "globals written" and "template rendered" let one user's map render
-    for another. Sourcing from ``request.state`` keeps each render
-    strictly scoped to its own request.
-    """
+    """Context processor pulling per-request state (`t`, `locale`, `features`, ...) from
+    `request.state`. Writing it to shared `templates.env.globals` raced under concurrent
+    requests and rendered one user's map for another."""
     state = request.state
     features: dict[str, bool] = getattr(state, "features", {})
-    # `features.get` would return ``None`` for unknown keys, which renders
-    # as the string "None" in ``{{ has_feature('x') }}``. Wrap in ``bool``
-    # so both absence and explicit ``False`` look the same to a template.
+    # `features.get` returns None, which renders as "None" in templates; `bool` makes
+    # absence and False identical.
     return {
         "t": getattr(state, "t", _default_t),
         "locale": getattr(state, "locale", "en"),

@@ -56,7 +56,6 @@ def _validate_and_parse_pgn(pgn_text: str) -> tuple[chess.pgn.Game | None, list[
 
 
 def _normalize_pgn_date(pgn_date: str) -> str | None:
-    """Convert PGN date like '2024.01.15' to ISO '2024-01-15', or None if invalid."""
     if not pgn_date or "?" in pgn_date:
         return None
     return pgn_date.replace(".", "-")

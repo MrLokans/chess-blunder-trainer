@@ -1,13 +1,3 @@
-"""Session cookie helpers — pure web-layer plumbing without consumer-
-specific config types.
-
-Callers compute the ``Secure`` / ``SameSite`` / ``max_age`` values from
-their own configuration and pass them in. Anything that depends on
-blunder_tutor's :class:`AppConfig` (HTTPS detection, trusted-proxy
-handling) lives in ``blunder_tutor/web/cookies.py`` and wraps these
-primitives.
-"""
-
 from __future__ import annotations
 
 from typing import Literal

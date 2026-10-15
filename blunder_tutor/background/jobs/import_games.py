@@ -23,8 +23,7 @@ logger = logging.getLogger(__name__)
 _DEFAULT_MAX_GAMES = 1000
 _VALID_SOURCES: frozenset[str] = frozenset((PLATFORM_LICHESS, PLATFORM_CHESSCOM))
 
-# Fetcher return shape: (games, metadata). Hoisted out of the function
-# signature so the annotation depth doesn't trip WPS234.
+# Hoisted to keep annotation depth under WPS234.
 GameRow = dict[str, object]
 FetchResult = tuple[list[GameRow], Any]
 
@@ -39,11 +38,7 @@ async def _fetch_games(
     max_games: int,
     progress_callback: Any,
 ) -> FetchResult:
-    """Dynamic dispatch over ``lichess.fetch`` / ``chesscom.fetch``.
-
-    Looked up at call time (not via a captured-reference dict) so tests can
-    `monkeypatch.setattr` the underlying fetcher modules.
-    """
+    """Resolves the fetcher at call time so tests can monkeypatch the fetcher modules."""
     if source == PLATFORM_LICHESS:
         return await lichess.fetch(
             username, max_games, progress_callback=progress_callback
@@ -79,12 +74,8 @@ class ImportGamesJob(BaseJob):
         profile_id = kwargs.get("profile_id")
         if profile_id is not None:
             return await self._execute_for_profile(job_id, int(profile_id))
-        # /api/setup has been removed; the remaining caller of the legacy
-        # source/username payload is /api/import/start (Bulk Import). Drop
-        # this branch + helpers when TREK-113 replaces ImportSection with
-        # BulkImportPanel (which dispatches via /api/profiles/{id}/sync).
-        # `info` rather than `warning` because the legacy path is the
-        # *expected* state for the entire transition window.
+        # Legacy path, still used by /api/import/start; drop with TREK-113. `info` not
+        # `warning` because it's the expected state during the transition.
         logger.info(
             f"import {job_id}: legacy payload without profile_id — "
             f"rows inserted with profile_id=NULL"
@@ -116,14 +107,9 @@ class ImportGamesJob(BaseJob):
         )
         return result
 
-    # _execute_legacy and its helpers (_resolve_max_games override path,
-    # _required_source_and_username) are the legacy username-pair
-    # entry-point — now only reached via /api/import/start (Bulk Import).
-    # Delete this method, the `override` branch in _resolve_max_games, and
-    # _required_source_and_username when TREK-113's BulkImportPanel
-    # replaces ImportSection (dispatching via /api/profiles/{id}/sync
-    # instead). Rows inserted by this branch get profile_id=NULL; the
-    # cleanup migration backfills them by (source, username) match.
+    # Legacy username-pair entry point (via /api/import/start). Delete this, the
+    # `override` branch in `_resolve_max_games` and `_required_source_and_username` with
+    # TREK-113. Rows get profile_id=NULL; the cleanup migration backfills them.
     async def _execute_legacy(
         self, job_id: str, kwargs: dict[str, Any]
     ) -> dict[str, Any]:

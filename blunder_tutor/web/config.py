@@ -24,22 +24,18 @@ from blunder_tutor.utils.env import parse_bool, parse_optional_bool
 
 AuthMode = Literal["none", "credentials"]
 
-# 64 hex chars = 32 random bytes = the canonical output of
-# `secrets.token_hex(32)` / `secrets.token_urlsafe(32)`. We reject anything
-# shorter because `SECRET_KEY` is used for HMAC invite codes and future
-# CSRF tokens; 128+ bits of entropy is the operational floor.
+# 64 hex chars = 32 bytes; `SECRET_KEY` signs invite codes, so shorter is rejected (128+
+# bits is the floor).
 SECRET_KEY_MIN_LEN = 64
 
-# Session lifetime defaults: 30 days for absolute max, 7 days for idle
-# expiry. Values match OWASP "remember-me" guidance for self-hosted apps.
+# 30 days absolute / 7 days idle, per OWASP remember-me guidance.
 _SECONDS_PER_DAY = 60 * 60 * 24
 _SESSION_MAX_AGE_DAYS = 30
 _SESSION_IDLE_DAYS = 7
 _SESSION_MAX_AGE_DEFAULT = _SECONDS_PER_DAY * _SESSION_MAX_AGE_DAYS
 _SESSION_IDLE_DEFAULT = _SECONDS_PER_DAY * _SESSION_IDLE_DAYS
 
-# bcrypt cost ceiling per spec (4 is the floor; 31 is the ceiling, though
-# in practice anything past ~14 is too slow for a login path).
+# bcrypt's range is 4-31; past ~14 is too slow for a login path.
 _BCRYPT_COST_MAX = 31
 
 
@@ -54,32 +50,20 @@ class AuthConfig(BaseModel):
     max_users: int = 1
     session_max_age_seconds: int = _SESSION_MAX_AGE_DEFAULT
     session_idle_seconds: int = _SESSION_IDLE_DEFAULT
-    # Tri-state: `None` ⇒ "derive from request scheme + vite_dev" (dev
-    # convenience); `True` / `False` ⇒ explicit override for prod
-    # deployments behind a TLS-terminating reverse proxy where
-    # `request.url.scheme` still reads as `http`.
+    # `None` derives from request scheme + vite_dev; explicit True/False for prod behind
+    # a TLS-terminating proxy where the scheme still reads `http`.
     cookie_secure: bool | None = None
-    # Per-IP rate limits. Defaults match OWASP guidance for "low-risk"
-    # self-hosted deployments; tune via env for public instances. Login
-    # hits bcrypt on every request so the cap also caps CPU cost.
+    # OWASP low-risk defaults; login hits bcrypt per request, so this also caps CPU.
     login_rate_limit: int = 5
     login_rate_window_seconds: int = 60
     signup_rate_limit: int = 3
     signup_rate_window_seconds: int = 60 * 60
-    # Whether to trust ``X-Forwarded-For`` when keying rate limiters.
-    # MUST stay ``False`` (default) for direct-to-uvicorn deploys — a
-    # trusted proxy header on a publicly-reachable origin lets any
-    # client spoof the source IP and get a fresh bucket per forged
-    # value, trivially bypassing the rate limit. Set to ``True`` only
-    # behind a reverse proxy that overwrites the header (nginx
-    # ``proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;``
-    # and a trusted upstream).
+    # Must stay False for direct-to-uvicorn: a trusted `X-Forwarded-For` lets clients
+    # spoof IPs and dodge the limiter. True only behind a proxy that overwrites the
+    # header.
     trust_proxy: bool = False
-    # Bcrypt salt cost factor (rounds). ``None`` defers to the library
-    # default — production-grade hardness (currently 12). Operators can
-    # tune for their hardware via ``AUTH_BCRYPT_COST``; the test suite
-    # forces the bcrypt minimum (4) to keep auth-test wall time bounded.
-    # Values outside [4, 31] are rejected by bcrypt itself.
+    # `None` uses the library default (12). Tests force the minimum (4) to keep auth
+    # tests fast.
     bcrypt_cost: int | None = None
 
     @model_validator(mode="after")
@@ -158,12 +142,8 @@ class AppConfig(BaseModel):
     cache: CacheConfig = CacheConfig()
     auth: AuthConfig = AuthConfig()
     observability: ObservabilityConfig = ObservabilityConfig()
-    # Host header allowlist passed to Starlette TrustedHostMiddleware.
-    # Default `["*"]` accepts any Host header — appropriate for single-
-    # tenant self-hosted instances. Shared-vhost or multi-tenant
-    # deployments MUST set `ALLOWED_HOSTS=example.com,www.example.com`
-    # to prevent Host-header spoofing from defeating the CSRF Origin
-    # check.
+    # Default `["*"]` suits single-tenant self-hosting; shared-vhost deploys must set
+    # `ALLOWED_HOSTS`, or a spoofed Host defeats the CSRF Origin check.
     allowed_hosts: tuple[str, ...] = ("*",)
 
     @model_validator(mode="after")
@@ -200,7 +180,6 @@ def _parse_auth_mode(raw: str | None) -> AuthMode:
 
 
 def _build_auth_config(environ: Mapping) -> AuthConfig:
-    """Extract auth-related env vars and let AuthConfig validate them."""
     return AuthConfig(
         mode=_parse_auth_mode(environ.get("AUTH_MODE")),
         secret_key=(environ.get("SECRET_KEY") or "").strip() or None,

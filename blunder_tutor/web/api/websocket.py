@@ -14,13 +14,10 @@ _REJECT_REASON = "unauthorized"
 
 
 async def _resolve_user_id(websocket: WebSocket) -> tuple[bool, UserId | None]:
-    """Resolve the connecting user. Returns ``(allow, user_id)``.
+    """Returns `(allow, user_id)`; `allow=False` closes with `_REJECT_CODE`.
 
-    ``allow=False`` means the connection must be closed with
-    :data:`_REJECT_CODE`. Under ``AUTH_MODE=none`` there is no auth core,
-    so every connection passes through with ``user_id=None`` (single-
-    user instance — cross-user leak is structurally impossible).
-    """
+    Under none mode there is no auth core and every connection passes with
+    `user_id=None` (single user, no cross-user leak)."""
     auth = websocket.app.state.auth
     if auth is None:
         return True, None

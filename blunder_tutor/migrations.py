@@ -47,10 +47,8 @@ def run_migrations(db_path: Path) -> None:
 
     config = get_alembic_config(db_path)
 
-    # Migrations on first boot of a fresh deploy CREATE the DB file
-    # via alembic's sqlalchemy engine. Wrapping both the stamp/upgrade
-    # calls in a tight umask closes the window where the freshly-
-    # created file sits at 0644 before secure_db_file chmods it.
+    # Wrap in a tight umask: alembic creates the DB file, which would sit at 0644 until
+    # `secure_db_file` chmods it.
     with restrict_umask():
         if db_path.exists():
             with closing(sqlite3.connect(str(db_path))) as conn:
@@ -66,8 +64,7 @@ def run_migrations(db_path: Path) -> None:
 
         command.upgrade(config, "head")
 
-    # Belt: ensures 0600 even if the umask story changes, and covers
-    # existing DBs that predate this lock-down.
+    # Belt: also covers existing DBs that predate the lock-down.
     secure_db_file(db_path)
 
 

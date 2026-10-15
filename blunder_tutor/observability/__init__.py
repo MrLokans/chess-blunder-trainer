@@ -1,10 +1,5 @@
-"""Opt-in observability — Sentry SDK behind a thin facade.
-
-Call sites import only from this package; the underlying SDK can be
-swapped (or augmented with OpenTelemetry) without changing a single
-service or handler. When telemetry is disabled (the default), every
-function in this package is a zero-cost no-op.
-"""
+"""Facade over the Sentry SDK so call sites never import it; every function is a no-op when
+telemetry is disabled (the default)."""
 
 from __future__ import annotations
 

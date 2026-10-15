@@ -6,7 +6,6 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-# Settings request validation bounds.
 SYNC_INTERVAL_MAX_HOURS = 168  # 1 week
 MAX_GAMES_CEILING = 10_000  # safety cap on sync size
 SPACED_REPETITION_DAYS_DEFAULT = 30
