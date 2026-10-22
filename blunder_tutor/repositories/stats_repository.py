@@ -909,9 +909,8 @@ def _aggregate_game_evals(
         if game_id not in games:
             is_white = bool(white) and white.lower() == (game_username or "").lower()
             games[game_id] = {"result": game_result, "is_white": is_white, "evals": []}
-        bucket = games[game_id]
-        user_eval = eval_before if bucket["is_white"] else -eval_before
-        bucket["evals"].append(user_eval)
+        # Rows are the user's own moves and eval_before is mover-perspective.
+        games[game_id]["evals"].append(eval_before)
     return games
 
 

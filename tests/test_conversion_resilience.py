@@ -60,20 +60,27 @@ async def test_resilience_loss_from_losing_position(stats_repo):
     assert result["resilience_rate"] == 0.0
 
 
-async def test_black_perspective_eval_flipped(stats_repo):
-    # User plays black, eval_before = +300 from white's POV = -300 from user's POV (losing)
+async def test_black_side_eval_is_mover_perspective(stats_repo):
+    # eval_before is stored from the mover's (black's) perspective: -300 = losing
     await insert_test_game(
         stats_repo, "g5", "testuser", "opponent", "testuser", "1/2-1/2"
     )
-    await insert_test_move(
-        stats_repo, "g5", 2, 1, eval_before=300
-    )  # +3.0 from white's POV
+    await insert_test_move(stats_repo, "g5", 2, 1, eval_before=-300)
 
     result = await stats_repo.get_conversion_resilience()
-    # From user (black) perspective, eval = -300, so this is a losing position
     assert result["games_with_disadvantage"] == 1
     assert result["games_saved"] == 1
     assert result["games_with_advantage"] == 0
+
+
+async def test_black_side_conversion(stats_repo):
+    await insert_test_game(stats_repo, "g5b", "testuser", "opponent", "testuser", "0-1")
+    await insert_test_move(stats_repo, "g5b", 2, 1, eval_before=500)
+
+    result = await stats_repo.get_conversion_resilience()
+    assert result["games_with_advantage"] == 1
+    assert result["games_converted"] == 1
+    assert result["games_with_disadvantage"] == 0
 
 
 async def test_game_both_winning_and_losing(stats_repo):
