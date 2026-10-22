@@ -11,6 +11,7 @@ import pytest
 import sentry_sdk
 from fastapi.testclient import TestClient
 
+from blunder_tutor.errors import PuzzleNotFoundError
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
@@ -21,8 +22,11 @@ from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.repositories.srs_repository import SrsRepository
 from blunder_tutor.repositories.starred_puzzle_repository import StarredPuzzleRepository
 from blunder_tutor.repositories.stats_repository import StatsRepository
-from blunder_tutor.trainer import Trainer
+from blunder_tutor.services.analysis_service import AnalysisService
+from blunder_tutor.services.puzzle_service import PuzzleService
+from blunder_tutor.trainer import BlunderPuzzle, Trainer
 from blunder_tutor.web.config import AppConfig, DataConfig, EngineConfig
+from blunder_tutor.web.dependencies import get_puzzle_service
 from tests.helpers.engine import make_test_client
 
 
@@ -173,6 +177,72 @@ async def trainer(
 @pytest.fixture
 def app(test_config: AppConfig) -> Generator[TestClient]:
     yield from make_test_client(test_config)
+
+
+SUBMIT_PUZZLE_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+
+CHESS960_PUZZLE_FEN = "nrbbqk1r/pppppp1p/7n/6p1/6P1/7N/PPPPPP1P/NRBBQK1R w KQkq - 2 3"
+
+_STUB_PUZZLES: dict[tuple[str, int], BlunderPuzzle] = {
+    ("g1", 1): BlunderPuzzle(
+        game_id="g1",
+        ply=1,
+        blunder_uci="g2g4",
+        blunder_san="g4",
+        fen=SUBMIT_PUZZLE_FEN,
+        source="lichess",
+        username="testuser",
+        eval_before=20,
+        eval_after=-300,
+        cp_loss=320,
+        player_color="white",
+        best_move_uci="e2e4",
+        best_move_san="e4",
+        best_line="e4 e5",
+        best_move_eval=30,
+    ),
+    # Chess960: king f1, rook h1; castling is only legal in Chess960 mode.
+    ("g960", 5): BlunderPuzzle(
+        game_id="g960",
+        ply=5,
+        blunder_uci="f2f4",
+        blunder_san="f4",
+        fen=CHESS960_PUZZLE_FEN,
+        source="lichess",
+        username="testuser",
+        eval_before=10,
+        eval_after=-250,
+        cp_loss=260,
+        player_color="white",
+        best_move_uci="f1h1",
+        best_move_san="O-O",
+        best_line="O-O",
+        best_move_eval=15,
+    ),
+}
+
+
+class _StubTrainer:
+    """Serves the stored puzzles in `_STUB_PUZZLES`."""
+
+    async def get_specific_blunder(self, game_id: str, ply: int) -> BlunderPuzzle:
+        puzzle = _STUB_PUZZLES.get((game_id, ply))
+        if puzzle is None:
+            raise PuzzleNotFoundError(f"No analysis found for game {game_id} ply {ply}")
+        return puzzle
+
+
+@pytest.fixture
+def submit_app(app: TestClient) -> Generator[TestClient]:
+    state = app.app.state
+    service = PuzzleService(
+        trainer=_StubTrainer(),
+        analysis_service=AnalysisService(state.work_coordinator, state.limit),
+    )
+    app.app.dependency_overrides[get_puzzle_service] = lambda: service
+    yield app
+    app.app.dependency_overrides.pop(get_puzzle_service, None)
 
 
 def pytest_configure(config):

@@ -11,7 +11,11 @@ CENTIPAWNS_PER_PAWN = 100
 
 
 def board_from_fen(fen: str) -> chess.Board:
-    return chess.Board(fen)
+    """Chess960 mode only when the castling rights need it: a plain standard board drops
+    non-standard rights, making legal Chess960 castling look illegal."""
+    board = chess.Board(fen, chess960=True)
+    board.chess960 = board.has_chess960_castling_rights()
+    return board
 
 
 def format_eval(cp: int, player_color: str) -> str:

@@ -24,6 +24,18 @@ class TestBoardFromFen:
         with pytest.raises(ValueError):
             board_from_fen("invalid fen string")
 
+    def test_standard_position_stays_standard(self):
+        board = board_from_fen("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1")
+        assert board.chess960 is False
+        assert board.uci(board.parse_uci("e1h1")) == "e1g1"
+
+    def test_chess960_castling_rights_kept(self):
+        board = board_from_fen(
+            "nrbbqk1r/pppppp1p/7n/6p1/6P1/7N/PPPPPP1P/NRBBQK1R w KQkq - 2 3"
+        )
+        assert board.chess960 is True
+        assert board.parse_uci("f1h1") in board.legal_moves
+
     def test_empty_board(self):
         fen = "8/8/8/8/8/8/8/8 w - - 0 1"
         board = board_from_fen(fen)

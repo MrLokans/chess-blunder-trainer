@@ -10,44 +10,33 @@ from blunder_tutor.repositories.srs_repository import SrsRepository
 from blunder_tutor.srs import enroll
 from blunder_tutor.utils.time import utcnow
 
-START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-
 
 def _submit_payload(move: str) -> dict[str, object]:
-    return {
-        "move": move,
-        "fen": START_FEN,
-        "game_id": "g1",
-        "ply": 1,
-        "blunder_uci": "g2g4",
-        "blunder_san": "g4",
-        "best_move_uci": "e2e4",
-        "best_move_san": "e4",
-        "best_line": [],
-        "player_color": "white",
-        "eval_after": -300,
-        "best_move_eval": 30,
-    }
+    return {"move": move, "game_id": "g1", "ply": 1}
 
 
 class TestSubmitSrsHook:
-    async def test_failed_submit_enrolls_card(self, app, srs_repo: SrsRepository):
-        resp = app.post("/api/submit", json=_submit_payload("g2g4"))
+    async def test_failed_submit_enrolls_card(
+        self, submit_app, srs_repo: SrsRepository
+    ):
+        resp = submit_app.post("/api/submit", json=_submit_payload("g2g4"))
         assert resp.status_code == HTTPStatus.OK
         assert resp.json()["srs_suspended"] is False
         card = await srs_repo.get_card("g1", 1)
         assert card is not None
         assert card.rung == 0
 
-    async def test_correct_first_try_not_enrolled(self, app, srs_repo: SrsRepository):
-        app.post("/api/submit", json=_submit_payload("e2e4"))
+    async def test_correct_first_try_not_enrolled(
+        self, submit_app, srs_repo: SrsRepository
+    ):
+        submit_app.post("/api/submit", json=_submit_payload("e2e4"))
         assert await srs_repo.get_card("g1", 1) is None
 
     async def test_correct_submit_on_active_card_climbs(
-        self, app, srs_repo: SrsRepository
+        self, submit_app, srs_repo: SrsRepository
     ):
         await srs_repo.upsert_card(enroll("g1", 1, utcnow() - timedelta(days=2)))
-        app.post("/api/submit", json=_submit_payload("e2e4"))
+        submit_app.post("/api/submit", json=_submit_payload("e2e4"))
         card = await srs_repo.get_card("g1", 1)
         assert card.rung == 1
 

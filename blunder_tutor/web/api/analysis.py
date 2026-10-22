@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from blunder_tutor.analysis.tactics import PATTERN_LABELS
 from blunder_tutor.cache.scope import user_scope
 from blunder_tutor.constants import PHASE_FROM_STRING, PHASE_LABELS
+from blunder_tutor.errors import IllegalMoveError, PuzzleNotFoundError
 from blunder_tutor.events.event_types import TrainingEvent
 from blunder_tutor.trainer import BlunderFilter
 from blunder_tutor.utils.chess_utils import format_eval
@@ -18,8 +19,8 @@ from blunder_tutor.utils.explanation import generate_explanation, resolve_explan
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from blunder_tutor.services.analysis_service import AnalysisService
     from blunder_tutor.services.puzzle_service import PuzzleWithAnalysis
+
 from blunder_tutor.web.api import _analysis_schemas as schemas
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
@@ -183,27 +184,6 @@ def _build_puzzle_response(
     }
 
 
-async def _resolve_user_eval_cp(
-    payload: schemas.SubmitMoveRequest,
-    is_best: bool,
-    is_blunder: bool,
-    analysis_service: AnalysisService,
-) -> int:
-    if is_blunder:
-        return payload.eval_after
-    if is_best and payload.best_move_eval is not None:
-        return payload.best_move_eval
-    try:
-        user_eval = await analysis_service.evaluate_move(
-            payload.fen, payload.move, payload.player_color
-        )
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
-        ) from exc
-    return user_eval.eval_cp
-
-
 analysis_router = APIRouter()
 
 
@@ -270,7 +250,8 @@ async def specific_puzzle(
     "/api/submit",
     response_model=schemas.SubmitMoveResponse,
     responses={
-        400: {"model": ErrorResponse, "description": "Invalid move or no puzzle"}
+        400: {"model": ErrorResponse, "description": "Illegal or malformed move"},
+        404: {"model": ErrorResponse, "description": "Puzzle not found"},
     },
     summary="Submit puzzle move",
     description="Submit a move attempt for the current puzzle and receive evaluation feedback.",
@@ -279,35 +260,36 @@ async def submit(
     request: Request,
     payload: schemas.SubmitMoveRequest,
     attempt_repo: PuzzleAttemptRepoDep,
-    analysis_service: AnalysisServiceDep,
+    puzzle_service: PuzzleServiceDep,
     srs_service: SrsServiceDep,
     event_bus: EventBusDep,
     _throttle: EngineThrottleDep,
 ) -> dict[str, Any]:
     try:
-        user_san = analysis_service.get_move_san(payload.fen, payload.move)
-    except ValueError:
+        graded = await puzzle_service.grade_attempt(
+            payload.game_id, payload.ply, payload.move
+        )
+    except PuzzleNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Puzzle not found"
+        ) from None
+    except IllegalMoveError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid move"
         ) from None
-
-    is_best = bool(payload.best_move_uci and payload.move == payload.best_move_uci)
-    is_blunder = payload.move == payload.blunder_uci
-    user_eval_cp = await _resolve_user_eval_cp(
-        payload, is_best, is_blunder, analysis_service
-    )
+    puzzle = graded.puzzle
 
     await attempt_repo.record_attempt(
-        game_id=payload.game_id,
-        ply=payload.ply,
-        was_correct=is_best,
-        user_move_uci=payload.move,
-        best_move_uci=payload.best_move_uci,
+        game_id=puzzle.game_id,
+        ply=puzzle.ply,
+        was_correct=graded.is_best,
+        user_move_uci=graded.user_uci,
+        best_move_uci=puzzle.best_move_uci,
     )
     srs_suspended = await srs_service.on_attempt(
-        game_id=payload.game_id,
-        ply=payload.ply,
-        was_correct=is_best,
+        game_id=puzzle.game_id,
+        ply=puzzle.ply,
+        was_correct=graded.is_best,
     )
 
     training_event = TrainingEvent.create_training_updated(
@@ -316,16 +298,16 @@ async def submit(
     await event_bus.publish(training_event)
 
     return {
-        "user_san": user_san,
-        "user_uci": payload.move,
-        "user_eval": user_eval_cp,
-        "user_eval_display": format_eval(user_eval_cp, payload.player_color),
-        "best_san": payload.best_move_san,
-        "best_uci": payload.best_move_uci,
-        "best_line": payload.best_line,
-        "is_best": is_best,
-        "is_blunder": is_blunder,
-        "blunder_san": payload.blunder_san,
+        "user_san": graded.user_san,
+        "user_uci": graded.user_uci,
+        "user_eval": graded.user_eval_cp,
+        "user_eval_display": format_eval(graded.user_eval_cp, puzzle.player_color),
+        "best_san": puzzle.best_move_san,
+        "best_uci": puzzle.best_move_uci,
+        "best_line": puzzle.best_line.split() if puzzle.best_line else [],
+        "is_best": graded.is_best,
+        "is_blunder": graded.is_blunder,
+        "blunder_san": puzzle.blunder_san,
         "srs_suspended": srs_suspended,
     }
 

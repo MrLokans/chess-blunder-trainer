@@ -105,17 +105,8 @@ export interface SrsStatusResponse {
 
 export interface SubmitMovePayload {
   move: string;
-  fen: string;
   game_id: string;
   ply: number;
-  blunder_uci: string;
-  blunder_san: string;
-  best_move_uci: string;
-  best_move_san: string;
-  best_line: string[];
-  player_color: string;
-  eval_after: number;
-  best_move_eval: number | null;
 }
 
 export interface SubmitMoveResponse {

@@ -62,7 +62,7 @@ class AnalysisService:
     async def analyze_position(
         self, fen: str, player_color: str | None = None
     ) -> PositionAnalysis:
-        board = chess.Board(fen)
+        board = board_from_fen(fen)
         info = await self._analyse(board)
         eval_cp = _eval_cp_from_info(info)
         best_uci, best_san, best_line = _extract_best_line(board, info.get("pv", []))
@@ -81,7 +81,7 @@ class AnalysisService:
         board = board_from_fen(fen)
 
         try:
-            move = chess.Move.from_uci(move_uci)
+            move = board.parse_uci(move_uci)
         except ValueError as exc:
             raise ValueError(f"Invalid move: {move_uci}") from exc
 
@@ -96,14 +96,6 @@ class AnalysisService:
             eval_cp=eval_cp,
             eval_display=_format_eval(eval_cp, player_color),
         )
-
-    def get_move_san(self, fen: str, move_uci: str) -> str:
-        board = board_from_fen(fen)
-        try:
-            move = chess.Move.from_uci(move_uci)
-            return board.san(move)
-        except ValueError as exc:
-            raise ValueError(f"Invalid move: {move_uci}") from exc
 
     async def _analyse(self, board: chess.Board) -> chess.engine.InfoDict:
         limit = self.limit

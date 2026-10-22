@@ -96,18 +96,11 @@ class SrsInfo(BaseModel):
 
 
 class SubmitMoveRequest(BaseModel):
+    # Only the attempt itself: the position, best move and evals are loaded from the
+    # DB, so a client cannot mark a move as best or touch a non-existent puzzle.
     move: str = Field(description="Move in UCI notation (e.g., 'e2e4')")
-    fen: str = Field(description="Position FEN before the move")
     game_id: str = Field(description="Game ID of the puzzle")
     ply: int = Field(description="Ply of the puzzle")
-    blunder_uci: str = Field(description="The blunder move in UCI notation")
-    blunder_san: str = Field(description="The blunder move in SAN notation")
-    best_move_uci: str | None = Field(description="Best move in UCI notation")
-    best_move_san: str | None = Field(description="Best move in SAN notation")
-    best_line: list[str] = Field(description="Best continuation line")
-    player_color: str = Field(description="Player color ('white' or 'black')")
-    eval_after: int = Field(description="Evaluation after the blunder")
-    best_move_eval: int | None = Field(description="Cached evaluation after best move")
 
 
 class AnalyzeMoveRequest(BaseModel):

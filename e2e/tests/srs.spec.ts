@@ -14,17 +14,9 @@ const DOCKER_CONTAINER = process.env.E2E_DOCKER_CONTAINER;
 const DOCKER_DB_PATH = process.env.E2E_DOCKER_DB_PATH ?? '/app/data/main.sqlite3';
 
 interface PuzzleDetail {
-  fen: string;
   game_id: string;
   ply: number;
   blunder_uci: string;
-  blunder_san: string;
-  best_move_uci: string;
-  best_move_san: string;
-  best_line: string[];
-  player_color: string;
-  eval_after: number;
-  best_move_eval: number | null;
 }
 
 interface SrsStatus {
@@ -81,17 +73,8 @@ test.describe('SRS Blunder Inbox', () => {
       const submit = await request.post('/api/submit', {
         data: {
           move: detail.blunder_uci,
-          fen: detail.fen,
           game_id: detail.game_id,
           ply: detail.ply,
-          blunder_uci: detail.blunder_uci,
-          blunder_san: detail.blunder_san,
-          best_move_uci: detail.best_move_uci,
-          best_move_san: detail.best_move_san,
-          best_line: detail.best_line,
-          player_color: detail.player_color,
-          eval_after: detail.eval_after,
-          best_move_eval: detail.best_move_eval,
         },
       });
       expect(submit.ok()).toBe(true);

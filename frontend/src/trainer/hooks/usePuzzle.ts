@@ -103,17 +103,8 @@ export function usePuzzle(): PuzzleAPI {
 
     const payload = {
       move: uci,
-      fen: puzzle.fen || '',
       game_id: puzzle.game_id || '',
       ply: puzzle.ply || 0,
-      blunder_uci: puzzle.blunder_uci || '',
-      blunder_san: puzzle.blunder_san || '',
-      best_move_uci: puzzle.best_move_uci || '',
-      best_move_san: puzzle.best_move_san || '',
-      best_line: puzzle.best_line,
-      player_color: puzzle.player_color,
-      eval_after: puzzle.eval_after || 0,
-      best_move_eval: puzzle.best_move_eval ?? null,
     };
 
     try {

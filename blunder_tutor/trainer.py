@@ -8,6 +8,7 @@ import chess
 
 from blunder_tutor.analysis.filtering import filter_blunders, puzzle_key
 from blunder_tutor.analysis.tactics import classify_blunder_tactics
+from blunder_tutor.errors import PuzzleNotFoundError
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
@@ -106,7 +107,7 @@ class Trainer:
     async def get_specific_blunder(self, game_id: str, ply: int) -> BlunderPuzzle:
         blunder = await self.analysis.get_move_analysis(game_id, ply)
         if not blunder:
-            raise ValueError(f"No analysis found for game {game_id} ply {ply}")
+            raise PuzzleNotFoundError(f"No analysis found for game {game_id} ply {ply}")
         return await self._build_puzzle(blunder, game_id, ply)
 
     async def _gather_candidates(

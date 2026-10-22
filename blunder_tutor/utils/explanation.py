@@ -25,6 +25,8 @@ from types import MappingProxyType
 
 import chess
 
+from blunder_tutor.utils.chess_utils import board_from_fen
+
 CENTIPAWNS_PER_PAWN = 100
 
 # 1.5 pawns: clearly visible to a beginner without firing only on blowouts.
@@ -1011,7 +1013,7 @@ def generate_explanation(
     cp_loss: int = 0,
     best_line: list[str] | None = None,
 ) -> BlunderExplanation:
-    board = chess.Board(fen)
+    board = board_from_fen(fen)
     blunder_move = _parse_legal_move(board, blunder_uci)
     if blunder_move is None:
         return BlunderExplanation(blunder=None, best_move=None)
