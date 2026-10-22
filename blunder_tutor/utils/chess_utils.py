@@ -18,10 +18,8 @@ def board_from_fen(fen: str) -> chess.Board:
     return board
 
 
-def format_eval(cp: int, player_color: str) -> str:
-    """Eval from the player's perspective, e.g. `+1.5` or `-M`."""
-    if player_color == "black":
-        cp = -cp
+def format_eval(cp: int) -> str:
+    """`cp` must already be from the player's perspective, e.g. `+1.5` or `-M`."""
     if cp >= DISPLAY_MATE_THRESHOLD:
         return "+M"
     if cp <= -DISPLAY_MATE_THRESHOLD:

@@ -1,15 +1,14 @@
 import { MAX_EVAL_CP } from '../../shared/eval-bar';
 
 interface EvalBarProps {
+  // From the player's perspective (puzzle evals are stored mover-POV).
   cp: number;
-  playerColor: string;
 }
 
-export function EvalBar({ cp, playerColor }: EvalBarProps): preact.JSX.Element {
+export function EvalBar({ cp }: EvalBarProps): preact.JSX.Element {
   const maxCp = MAX_EVAL_CP;
   const normalized = Math.max(-maxCp, Math.min(maxCp, cp));
-  const whitePercent = 50 + (normalized / maxCp) * 50;
-  const fillPercent = playerColor === 'white' ? whitePercent : 100 - whitePercent;
+  const fillPercent = 50 + (normalized / maxCp) * 50;
 
   let display: string;
   if (Math.abs(cp) >= 10000) {

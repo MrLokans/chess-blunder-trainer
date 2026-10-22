@@ -392,7 +392,7 @@ function TrainerCore(): preact.JSX.Element {
           )}
           <ContextTags puzzle={state.puzzle} />
           <div class="board-eval-wrapper">
-            <EvalBar cp={state.puzzle.eval_before} playerColor={state.puzzle.player_color} />
+            <EvalBar cp={state.puzzle.eval_before} />
             <div id="boardWrapper">
               <Board
                 fen={state.fen}

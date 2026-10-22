@@ -162,12 +162,8 @@ def _build_puzzle_response(
         "eval_before": puzzle_data.eval_before,
         "eval_after": puzzle_data.eval_after,
         "cp_loss": puzzle_data.cp_loss,
-        "eval_before_display": format_eval(
-            puzzle_data.eval_before, puzzle_data.player_color
-        ),
-        "eval_after_display": format_eval(
-            puzzle_data.eval_after, puzzle_data.player_color
-        ),
+        "eval_before_display": format_eval(puzzle_data.eval_before),
+        "eval_after_display": format_eval(puzzle_data.eval_after),
         "best_move_uci": analysis.best_move_uci or "",
         "best_move_san": analysis.best_move_san or "",
         "best_line": analysis.best_line or [],
@@ -301,7 +297,7 @@ async def submit(
         "user_san": graded.user_san,
         "user_uci": graded.user_uci,
         "user_eval": graded.user_eval_cp,
-        "user_eval_display": format_eval(graded.user_eval_cp, puzzle.player_color),
+        "user_eval_display": format_eval(graded.user_eval_cp),
         "best_san": puzzle.best_move_san,
         "best_uci": puzzle.best_move_uci,
         "best_line": puzzle.best_line.split() if puzzle.best_line else [],

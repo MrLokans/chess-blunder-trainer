@@ -7,7 +7,7 @@ import chess
 import chess.engine
 
 from blunder_tutor.constants import MATE_SCORE_WEB
-from blunder_tutor.utils.chess_utils import board_from_fen, format_eval
+from blunder_tutor.utils.chess_utils import board_from_fen, format_eval, score_to_cp
 
 if TYPE_CHECKING:
     from blunder_tutor.analysis.engine_pool import WorkCoordinator
@@ -48,9 +48,9 @@ def _eval_cp_from_info(info: chess.engine.InfoDict) -> int:
     return score.white().score(mate_score=MATE_SCORE_WEB) if score else 0
 
 
-def _format_eval(eval_cp: int, player_color: str | None) -> str:
+def _format_white_eval(eval_cp: int, player_color: str | None) -> str:
     if player_color:
-        return format_eval(eval_cp, player_color)
+        return format_eval(-eval_cp if player_color == "black" else eval_cp)
     return str(eval_cp)
 
 
@@ -69,15 +69,15 @@ class AnalysisService:
 
         return PositionAnalysis(
             eval_cp=eval_cp,
-            eval_display=_format_eval(eval_cp, player_color),
+            eval_display=_format_white_eval(eval_cp, player_color),
             best_move_uci=best_uci,
             best_move_san=best_san,
             best_line=best_line,
         )
 
-    async def evaluate_move(
-        self, fen: str, move_uci: str, player_color: str | None = None
-    ) -> MoveEvaluation:
+    async def evaluate_move(self, fen: str, move_uci: str) -> MoveEvaluation:
+        """Eval is from the mover's perspective on the stored-analysis mate scale, so it
+        compares directly with a puzzle's `eval_before`."""
         board = board_from_fen(fen)
 
         try:
@@ -88,14 +88,12 @@ class AnalysisService:
         if move not in board.legal_moves:
             raise ValueError(f"Illegal move: {move_uci}")
 
+        mover = board.turn
         board.push(move)
         info = await self._analyse(board)
-        eval_cp = _eval_cp_from_info(info)
+        eval_cp = score_to_cp(info.get("score"), mover)
 
-        return MoveEvaluation(
-            eval_cp=eval_cp,
-            eval_display=_format_eval(eval_cp, player_color),
-        )
+        return MoveEvaluation(eval_cp=eval_cp, eval_display=format_eval(eval_cp))
 
     async def _analyse(self, board: chess.Board) -> chess.engine.InfoDict:
         limit = self.limit

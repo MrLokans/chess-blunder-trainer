@@ -44,35 +44,29 @@ class TestBoardFromFen:
 
 class TestFormatEval:
     def test_white_winning(self):
-        assert format_eval(150, "white") == "+1.5"
-        assert format_eval(50, "white") == "+0.5"
-        assert format_eval(100, "white") == "+1.0"
+        assert format_eval(150) == "+1.5"
+        assert format_eval(50) == "+0.5"
+        assert format_eval(100) == "+1.0"
 
     def test_white_losing(self):
-        assert format_eval(-150, "white") == "-1.5"
-        assert format_eval(-50, "white") == "-0.5"
-
-    def test_black_perspective(self):
-        assert format_eval(150, "black") == "-1.5"
-        assert format_eval(-150, "black") == "+1.5"
-        assert format_eval(0, "black") == "0.0"
+        assert format_eval(-150) == "-1.5"
+        assert format_eval(-50) == "-0.5"
 
     def test_mate_score_positive(self):
-        assert format_eval(15000, "white") == "+M"
-        assert format_eval(10000, "white") == "+M"
-        assert format_eval(100000, "white") == "+M"
+        assert format_eval(15000) == "+M"
+        assert format_eval(10000) == "+M"
+        assert format_eval(100000) == "+M"
 
     def test_mate_score_negative(self):
-        assert format_eval(-15000, "white") == "-M"
-        assert format_eval(-10000, "white") == "-M"
+        assert format_eval(-15000) == "-M"
+        assert format_eval(-10000) == "-M"
 
     def test_even_position(self):
-        assert format_eval(0, "white") == "0.0"
-        assert format_eval(0, "black") == "0.0"
+        assert format_eval(0) == "0.0"
 
     def test_small_advantage(self):
-        assert format_eval(25, "white") == "+0.2"
-        assert format_eval(-25, "white") == "-0.2"
+        assert format_eval(25) == "+0.2"
+        assert format_eval(-25) == "-0.2"
 
 
 class TestScoreToCp:

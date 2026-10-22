@@ -41,7 +41,7 @@ class PuzzleService:
             best_line_list = puzzle.best_line.split()
             analysis = PositionAnalysis(
                 eval_cp=puzzle.eval_before,
-                eval_display=self._format_eval(puzzle.eval_before, puzzle.player_color),
+                eval_display=format_eval(puzzle.eval_before),
                 best_move_uci=puzzle.best_move_uci,
                 best_move_san=puzzle.best_move_san,
                 best_line=best_line_list,
@@ -60,7 +60,7 @@ class PuzzleService:
             best_line_list = puzzle.best_line.split()
             analysis = PositionAnalysis(
                 eval_cp=puzzle.eval_before,
-                eval_display=self._format_eval(puzzle.eval_before, puzzle.player_color),
+                eval_display=format_eval(puzzle.eval_before),
                 best_move_uci=puzzle.best_move_uci,
                 best_move_san=puzzle.best_move_san,
                 best_line=best_line_list,
@@ -102,13 +102,8 @@ class PuzzleService:
             return puzzle.eval_after
         if is_best and puzzle.best_move_eval is not None:
             return puzzle.best_move_eval
-        evaluation = await self.analysis_service.evaluate_move(
-            puzzle.fen, move, puzzle.player_color
-        )
+        evaluation = await self.analysis_service.evaluate_move(puzzle.fen, move)
         return evaluation.eval_cp
-
-    def _format_eval(self, eval_cp: int, player_color: str) -> str:
-        return format_eval(eval_cp, player_color)
 
 
 def _parse_legal_move(board: chess.Board, move_uci: str) -> chess.Move:
