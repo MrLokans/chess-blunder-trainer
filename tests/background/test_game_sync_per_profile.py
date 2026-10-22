@@ -12,6 +12,7 @@ from blunder_tutor.background.jobs.sync_games import SyncGamesJob
 from blunder_tutor.constants import (
     JOB_STATUS_COMPLETED,
     JOB_STATUS_FAILED,
+    JOB_TYPE_IMPORT,
     JOB_TYPE_SYNC,
 )
 from blunder_tutor.events.event_bus import EventBus
@@ -50,6 +51,11 @@ async def job_service(job_repo: JobRepository, event_bus: EventBus) -> JobServic
     return JobService(job_repository=job_repo, event_bus=event_bus, scope="testuser")
 
 
+@pytest.fixture
+async def job_id(job_service: JobService) -> str:
+    return await job_service.create_job(JOB_TYPE_IMPORT)
+
+
 GameRow = dict[str, object]
 FetchResult = tuple[list[GameRow], dict]
 
@@ -81,6 +87,7 @@ class TestImportPerProfile:
         settings_repo: SettingsRepository,
         game_repo: GameRepository,
         job_service: JobService,
+        job_id: str,
         db_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ):
@@ -99,7 +106,7 @@ class TestImportPerProfile:
             profile_repo=profile_repo,
             user_id="testuser",
         )
-        result = await job.execute(job_id="job-1", profile_id=profile.id)
+        result = await job.execute(job_id=job_id, profile_id=profile.id)
 
         assert result["stored"] == 1
         assert captured["username"] == "alice"
@@ -112,6 +119,7 @@ class TestImportPerProfile:
         settings_repo: SettingsRepository,
         game_repo: GameRepository,
         job_service: JobService,
+        job_id: str,
         monkeypatch: pytest.MonkeyPatch,
     ):
         profile = await profile_repo.create("lichess", "alice")
@@ -130,7 +138,7 @@ class TestImportPerProfile:
             profile_repo=profile_repo,
             user_id="testuser",
         )
-        await job.execute(job_id="job-1", profile_id=profile.id)
+        await job.execute(job_id=job_id, profile_id=profile.id)
 
         assert captured["max_games"] == 50
 
@@ -140,6 +148,7 @@ class TestImportPerProfile:
         settings_repo: SettingsRepository,
         game_repo: GameRepository,
         job_service: JobService,
+        job_id: str,
         monkeypatch: pytest.MonkeyPatch,
     ):
         profile = await profile_repo.create("lichess", "alice")
@@ -158,7 +167,7 @@ class TestImportPerProfile:
             profile_repo=profile_repo,
             user_id="testuser",
         )
-        await job.execute(job_id="job-1", profile_id=profile.id)
+        await job.execute(job_id=job_id, profile_id=profile.id)
 
         assert captured["max_games"] == 200
 
@@ -168,6 +177,7 @@ class TestImportPerProfile:
         settings_repo: SettingsRepository,
         game_repo: GameRepository,
         job_service: JobService,
+        job_id: str,
         db_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ):
@@ -186,7 +196,7 @@ class TestImportPerProfile:
             user_id="testuser",
         )
         result = await job.execute(
-            job_id="job-1", source="lichess", username="bob", max_games=50
+            job_id=job_id, source="lichess", username="bob", max_games=50
         )
 
         assert result["stored"] == 1

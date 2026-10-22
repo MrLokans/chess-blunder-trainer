@@ -14,6 +14,8 @@ from blunder_tutor.constants import (
 from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.utils.time import now_iso
 
+_ACTIVE_STATUSES = (JOB_STATUS_PENDING, JOB_STATUS_RUNNING)
+
 
 class JobRepository(BaseDbRepository):
     async def create_job(
@@ -56,7 +58,9 @@ class JobRepository(BaseDbRepository):
         job_id: str,
         status: str,
         error_message: str | None = None,
-    ) -> None:
+    ) -> bool:
+        """False when the job already reached a terminal state (e.g. stopped by the
+        user), which is never overwritten."""
         timestamp_field = None
         timestamp_value = now_iso()
 
@@ -67,23 +71,30 @@ class JobRepository(BaseDbRepository):
 
         async with self.write_transaction() as conn:
             if timestamp_field:
-                await conn.execute(
+                cursor = await conn.execute(
                     f"""
                     UPDATE background_jobs
                     SET status = ?, error_message = ?, {timestamp_field} = ?
-                    WHERE job_id = ?
+                    WHERE job_id = ? AND status IN (?, ?)
                     """,
-                    (status, error_message, timestamp_value, job_id),
+                    (
+                        status,
+                        error_message,
+                        timestamp_value,
+                        job_id,
+                        *_ACTIVE_STATUSES,
+                    ),
                 )
             else:
-                await conn.execute(
+                cursor = await conn.execute(
                     """
                     UPDATE background_jobs
                     SET status = ?, error_message = ?
-                    WHERE job_id = ?
+                    WHERE job_id = ? AND status IN (?, ?)
                     """,
-                    (status, error_message, job_id),
+                    (status, error_message, job_id, *_ACTIVE_STATUSES),
                 )
+            return cursor.rowcount > 0
 
     async def update_job_progress(
         self,
@@ -105,19 +116,26 @@ class JobRepository(BaseDbRepository):
         self,
         job_id: str,
         result: dict[str, object],
-    ) -> None:
+    ) -> bool:
         completed_at = now_iso()
         result_json = json.dumps(result)
 
         async with self.write_transaction() as conn:
-            await conn.execute(
+            cursor = await conn.execute(
                 """
                 UPDATE background_jobs
-                SET status = 'completed', result_json = ?, completed_at = ?
-                WHERE job_id = ?
+                SET status = ?, result_json = ?, completed_at = ?
+                WHERE job_id = ? AND status IN (?, ?)
                 """,
-                (result_json, completed_at, job_id),
+                (
+                    JOB_STATUS_COMPLETED,
+                    result_json,
+                    completed_at,
+                    job_id,
+                    *_ACTIVE_STATUSES,
+                ),
             )
+            return cursor.rowcount > 0
 
     async def get_job(self, job_id: str) -> dict[str, object] | None:
         conn = await self.get_connection()
@@ -227,7 +245,7 @@ class JobRepository(BaseDbRepository):
                 SET status = ?, error_message = 'interrupted', completed_at = ?
                 WHERE status IN (?, ?)
                 """,
-                (JOB_STATUS_FAILED, now_iso(), JOB_STATUS_PENDING, JOB_STATUS_RUNNING),
+                (JOB_STATUS_FAILED, now_iso(), *_ACTIVE_STATUSES),
             )
             return cursor.rowcount
 

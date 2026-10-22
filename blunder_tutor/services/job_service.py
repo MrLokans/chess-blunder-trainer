@@ -4,6 +4,7 @@ import logging
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from typing import cast
 
 from blunder_tutor.constants import (
     JOB_STATUS_COMPLETED,
@@ -86,8 +87,12 @@ class JobService:
         job_id: str,
         status: str,
         error_message: str | None = None,
-    ) -> None:
-        await self.job_repository.update_job_status(job_id, status, error_message)
+    ) -> bool:
+        changed = await self.job_repository.update_job_status(
+            job_id, status, error_message
+        )
+        if not changed:
+            return False
 
         job = await self.job_repository.get_job(job_id)
         if job:
@@ -102,6 +107,7 @@ class JobService:
 
             if status == JOB_STATUS_COMPLETED:
                 await self._publish_completion_fanout(job)
+        return True
 
     async def update_job_progress(
         self,
@@ -152,7 +158,8 @@ class JobService:
         result: dict[str, object],
     ) -> None:
         await self.flush_progress(job_id)
-        await self.job_repository.complete_job(job_id, result)
+        if not await self.job_repository.complete_job(job_id, result):
+            return
 
         job = await self.job_repository.get_job(job_id)
         if job:
@@ -174,8 +181,10 @@ class JobService:
         total: int,
         body: JobBody[T],
     ) -> T:
-        """An exception marks the job failed and re-raises."""
-        await self.update_job_status(job_id, JOB_STATUS_RUNNING)
+        """An exception marks the job failed and re-raises. A job stopped while still
+        pending is skipped and returns an empty result."""
+        if not await self.update_job_status(job_id, JOB_STATUS_RUNNING):
+            return cast(T, {})
         await self.update_job_progress(job_id, 0, total)
 
         async def progress(current: int) -> None:  # noqa: WPS430 — closure binds `job_id`/`total` so the body-callback signature stays `(current,) -> None`.
