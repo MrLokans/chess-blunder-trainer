@@ -109,8 +109,6 @@ To add a job:
 4. create the job through `JobService` before publishing its execution request;
 5. test lifecycle, user isolation, cancellation, and failure behavior that applies.
 
-The decorator registry in `background/registry.py` is not the executor dispatch table; `JOB_RUNNERS` is.
-
 `BackgroundScheduler` is a single interval-driven fan-out scheduler backed by APScheduler's memory store. Each tick enumerates users and checks per-user profile settings before publishing game or rating-stat sync work. Schedules and queued/running tasks do not survive restart.
 
 ## Events, WebSockets, and cache

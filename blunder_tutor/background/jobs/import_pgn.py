@@ -8,7 +8,6 @@ import chess.engine
 from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.background.base import BaseJob
-from blunder_tutor.background.registry import register_job
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
@@ -21,7 +20,6 @@ _CLASSIFICATION_MISTAKE = 2
 _CLASSIFICATION_INACCURACY = 1
 
 
-@register_job
 class ImportPgnJob(BaseJob):
     job_identifier: ClassVar[str] = "import_pgn"
 

@@ -108,7 +108,7 @@ train-ui: ## Start training UI (usage: make train-ui USERNAME=player)
 
 # Setup
 download-pieces: ## Download chess piece images
-	$(UV) run python blunder_tutor/scripts/download_pieces.py
+	$(UV) run python blunder_tutor/scripts/download_missing_pieces.py
 
 # Database
 migrate: ## Run database migrations

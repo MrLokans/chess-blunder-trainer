@@ -207,9 +207,6 @@ class JobService:
     ) -> list[dict[str, object]]:
         return await self.job_repository.list_jobs(job_type, status, limit)
 
-    async def get_active_jobs(self) -> list[dict[str, object]]:
-        return await self.job_repository.get_active_jobs()
-
     async def delete_job(self, job_id: str) -> bool:
         return await self.job_repository.delete_job(job_id)
 

@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from blunder_tutor.auth import UserId
 from blunder_tutor.background.base import BaseJob
-from blunder_tutor.background.registry import register_job
 from blunder_tutor.constants import PLATFORM_CHESSCOM, PLATFORM_LICHESS
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import JobExecutionRequestEvent
@@ -50,7 +49,6 @@ async def _fetch_games(
     raise ValueError(f"Unknown source: {source}")
 
 
-@register_job
 class ImportGamesJob(BaseJob):
     job_identifier: ClassVar[str] = "import"
 

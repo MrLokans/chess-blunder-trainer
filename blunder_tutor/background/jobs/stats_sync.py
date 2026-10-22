@@ -9,7 +9,6 @@ import logging
 from typing import Any, ClassVar
 
 from blunder_tutor.background.base import BaseJob
-from blunder_tutor.background.registry import register_job
 from blunder_tutor.constants import PLATFORM_CHESSCOM, PLATFORM_LICHESS
 from blunder_tutor.fetchers import RateLimitError, chesscom, lichess
 from blunder_tutor.repositories.profile import (
@@ -42,7 +41,6 @@ def _result(
     return payload
 
 
-@register_job
 class StatsSyncJob(BaseJob):
     job_identifier: ClassVar[str] = "stats_sync"
 

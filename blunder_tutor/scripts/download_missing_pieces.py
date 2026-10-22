@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Source: lichess.org/assets/piece/{set}/{piece}.svg (MIT). Skips pieces already on disk."""
+
 from __future__ import annotations
 
 import asyncio
@@ -80,7 +82,7 @@ async def main() -> None:
             print(f"  Downloaded {success}/12 pieces")
 
     print("\nFinal status:")
-    for set_name in ["wikipedia"] + WANTED_SETS:
+    for set_name in WANTED_SETS:
         set_path = output_dir / set_name
         if set_path.exists():
             count = len(list(set_path.glob("*.svg"))) + len(

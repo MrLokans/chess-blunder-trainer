@@ -4,7 +4,6 @@ import logging
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from blunder_tutor.background.base import BaseJob
-from blunder_tutor.background.registry import register_job
 from blunder_tutor.services.trap_backfill_service import TrapBackfillService
 
 if TYPE_CHECKING:
@@ -15,7 +14,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@register_job
 class BackfillTrapsJob(BaseJob):
     job_identifier: ClassVar[str] = "backfill_traps"
 

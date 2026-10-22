@@ -208,34 +208,6 @@ class JobRepository(BaseDbRepository):
             for row in rows
         ]
 
-    async def get_active_jobs(self) -> list[dict[str, object]]:
-        conn = await self.get_connection()
-        async with conn.execute(
-            """
-            SELECT job_id, job_type, status, username, source,
-                   progress_current, progress_total, created_at, started_at
-            FROM background_jobs
-            WHERE status IN ('pending', 'running')
-            ORDER BY created_at DESC
-            """
-        ) as cursor:
-            rows = await cursor.fetchall()
-
-        return [
-            {
-                "job_id": row[0],
-                "job_type": row[1],
-                "status": row[2],
-                "username": row[3],
-                "source": row[4],
-                "progress_current": row[5],
-                "progress_total": row[6],
-                "created_at": row[7],
-                "started_at": row[8],
-            }
-            for row in rows
-        ]
-
     async def fail_interrupted_jobs(self) -> int:
         """Only safe at startup: the job queue is in-memory, so any active row is orphaned."""
         async with self.write_transaction() as conn:

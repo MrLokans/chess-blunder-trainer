@@ -3,14 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from blunder_tutor.background.base import BaseJob
-from blunder_tutor.background.registry import register_job
 
 if TYPE_CHECKING:
     from blunder_tutor.repositories.data_management import DataManagementRepository
     from blunder_tutor.services.job_service import JobService, ProgressCallback
 
 
-@register_job
 class DeleteAllDataJob(BaseJob):
     job_identifier: ClassVar[str] = "delete_all_data"
 

@@ -6,7 +6,6 @@ from typing import Any, ClassVar
 
 from blunder_tutor.auth import UserId
 from blunder_tutor.background.base import BaseJob
-from blunder_tutor.background.registry import register_job
 from blunder_tutor.constants import (
     JOB_STATUS_FAILED,
     JOB_TYPE_ANALYZE,
@@ -59,7 +58,6 @@ async def _fetch_games(
     raise ValueError(f"Unknown source: {source}")
 
 
-@register_job
 class SyncGamesJob(BaseJob):
     job_identifier: ClassVar[str] = "sync"
 

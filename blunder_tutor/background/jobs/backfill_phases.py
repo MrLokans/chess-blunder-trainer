@@ -11,7 +11,6 @@ from blunder_tutor.analysis.pipeline.pipeline import (
 )
 from blunder_tutor.analysis.pipeline.steps import get_all_steps
 from blunder_tutor.background.base import BaseJob
-from blunder_tutor.background.registry import register_job
 
 if TYPE_CHECKING:
     from blunder_tutor.repositories.analysis import AnalysisRepository
@@ -21,7 +20,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@register_job
 class BackfillPhasesJob(BaseJob):
     job_identifier: ClassVar[str] = "backfill_phases"
 
