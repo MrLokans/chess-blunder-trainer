@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import HTTPException, Path, Query, status
 from fastapi.requests import Request
@@ -23,6 +23,8 @@ from blunder_tutor.constants import (
 )
 from blunder_tutor.events.event_types import JobExecutionRequestEvent
 from blunder_tutor.utils.time import parse_dt
+from blunder_tutor.web.api._profile_schemas import USERNAME_MAX_LEN
+from blunder_tutor.web.api._settings_schemas import MAX_GAMES_CEILING
 from blunder_tutor.web.api.schemas import ErrorResponse
 from blunder_tutor.web.dependencies import (
     AnalysisRepoDep,
@@ -52,9 +54,20 @@ def _attach_formatted_created_at(jobs: list[dict[str, Any]]) -> None:
 
 
 class StartImportRequest(BaseModel):
-    username: str = Field(description="Username to import games for")
-    source: str = Field(description="Platform source ('lichess' or 'chesscom')")
-    max_games: int = Field(default=100, description="Maximum number of games to import")
+    # The pattern keeps the username safe to interpolate into platform API URLs.
+    username: str = Field(
+        min_length=1,
+        max_length=USERNAME_MAX_LEN,
+        pattern=r"^[A-Za-z0-9_-]+$",
+        description="Username to import games for",
+    )
+    source: Literal["lichess", "chesscom"] = Field(description="Platform source")
+    max_games: int = Field(
+        default=100,
+        ge=1,
+        le=MAX_GAMES_CEILING,
+        description="Maximum number of games to import",
+    )
 
 
 class JobResponse(BaseModel):

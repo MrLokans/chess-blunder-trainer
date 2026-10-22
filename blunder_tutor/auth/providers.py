@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Protocol
 
 from blunder_tutor.auth.core.protocols import IdentityRepo, PasswordHasher
@@ -68,7 +69,10 @@ class CredentialsProvider:
         )
 
         try:
-            verified = self._hasher.verify(raw_password, hash_to_verify)
+            # bcrypt is ~250ms of CPU; off the loop so a login flood can't stall it.
+            verified = await asyncio.to_thread(
+                self._hasher.verify, raw_password, hash_to_verify
+            )
         except CorruptCredentialError:
             # Corruption counts as an auth miss here; a 500 would leak it.
             verified = False

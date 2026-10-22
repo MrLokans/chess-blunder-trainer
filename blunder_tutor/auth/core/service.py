@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import sqlite3
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
@@ -109,7 +110,7 @@ class AuthService:
     ) -> User:
         """Atomic signup: quota check and invite consume run in the same `BEGIN IMMEDIATE`
         transaction as the inserts, so concurrent signups cannot exceed the cap."""
-        credential = self._hasher.hash(password)
+        credential = await asyncio.to_thread(self._hasher.hash, password)
         user_id = make_user_id()
         now = now_iso()
         try:
@@ -229,7 +230,7 @@ class AuthService:
     ) -> None:
         """Also revokes every session (OWASP V7); use `IdentityRepo.update_credential` to
         skip that."""
-        hashed = self._hasher.hash(new_password)
+        hashed = await asyncio.to_thread(self._hasher.hash, new_password)
         await self._identities.update_credential(identity_id, hashed)
         await self._sessions.delete_all_for_user(user_id)
 

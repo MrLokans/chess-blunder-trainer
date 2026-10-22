@@ -7,7 +7,7 @@ from typing import Any
 
 import chess.pgn
 from fastapi.routing import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from blunder_tutor.auth.fastapi import UserContextDep
 from blunder_tutor.constants import JOB_TYPE_IMPORT_PGN
@@ -23,8 +23,12 @@ from blunder_tutor.web.dependencies import (
 import_router = APIRouter()
 
 
+# Far above any real single game; bounds the synchronous parse on the event loop.
+MAX_PGN_CHARS = 100_000
+
+
 class ImportRequest(BaseModel):
-    pgn: str
+    pgn: str = Field(max_length=MAX_PGN_CHARS)
 
 
 class ImportResponse(BaseModel):

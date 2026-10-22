@@ -117,6 +117,26 @@ def import_app(db_path: Path) -> TestClient:
     yield from make_test_client(config)
 
 
+class TestImportInputLimits:
+    def test_oversize_pgn_rejected(self, import_app: TestClient):
+        resp = import_app.post("/api/import/pgn", json={"pgn": "1. e4 " * 20_000})
+        assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {"source": "fics", "username": "alice"},
+            {"source": "lichess", "username": "../alice?x=1"},
+            {"source": "lichess", "username": "alice", "max_games": 10_000_000},
+            {"source": "lichess", "username": "alice", "max_games": 0},
+        ],
+        ids=["unknown-source", "url-unsafe-username", "huge-max-games", "zero"],
+    )
+    def test_invalid_start_import_rejected(self, import_app: TestClient, payload):
+        resp = import_app.post("/api/import/start", json=payload)
+        assert resp.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
 class TestImportEndpoint:
     def test_invalid_pgn_returns_errors(self, import_app: TestClient):
         resp = import_app.post("/api/import/pgn", json={"pgn": "not a pgn"})
