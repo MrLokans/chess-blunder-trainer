@@ -8,63 +8,6 @@ from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
 
 
-class TestGetLastCorrectAttempt:
-    async def test_not_found(self, puzzle_attempt_repo: PuzzleAttemptRepository):
-        result = await puzzle_attempt_repo.get_last_correct_attempt("g1", 5, "local")
-        assert result is None
-
-    async def test_only_incorrect_returns_none(
-        self, puzzle_attempt_repo: PuzzleAttemptRepository
-    ):
-        await puzzle_attempt_repo.record_attempt("g1", 5, was_correct=False)
-        result = await puzzle_attempt_repo.get_last_correct_attempt("g1", 5, "local")
-        assert result is None
-
-    async def test_returns_correct_attempt(
-        self, puzzle_attempt_repo: PuzzleAttemptRepository
-    ):
-        await puzzle_attempt_repo.record_attempt(
-            "g1", 5, was_correct=True, user_move_uci="e2e4"
-        )
-        result = await puzzle_attempt_repo.get_last_correct_attempt("g1", 5, "local")
-        assert result is not None
-        assert result["was_correct"] is True
-        assert result["game_id"] == "g1"
-        assert result["ply"] == 5
-        assert result["user_move_uci"] == "e2e4"
-
-    async def test_returns_most_recent(
-        self, puzzle_attempt_repo: PuzzleAttemptRepository
-    ):
-        await puzzle_attempt_repo.record_attempt(
-            "g1", 5, was_correct=True, user_move_uci="e2e4"
-        )
-        await puzzle_attempt_repo.record_attempt(
-            "g1", 5, was_correct=True, user_move_uci="d2d4"
-        )
-        result = await puzzle_attempt_repo.get_last_correct_attempt("g1", 5, "local")
-        assert result["user_move_uci"] == "d2d4"
-
-
-class TestGetPuzzleStats:
-    async def test_no_attempts(self, puzzle_attempt_repo: PuzzleAttemptRepository):
-        stats = await puzzle_attempt_repo.get_puzzle_stats("g1", 5, "local")
-        assert stats["total_attempts"] == 0
-        assert stats["correct_attempts"] == 0
-        assert stats["incorrect_attempts"] == 0
-        assert stats["last_correct_at"] is None
-
-    async def test_mixed_attempts(self, puzzle_attempt_repo: PuzzleAttemptRepository):
-        await puzzle_attempt_repo.record_attempt("g1", 5, was_correct=False)
-        await puzzle_attempt_repo.record_attempt("g1", 5, was_correct=True)
-        await puzzle_attempt_repo.record_attempt("g1", 5, was_correct=False)
-        stats = await puzzle_attempt_repo.get_puzzle_stats("g1", 5, "local")
-        assert stats["total_attempts"] == 3
-        assert stats["correct_attempts"] == 1
-        assert stats["incorrect_attempts"] == 2
-        assert stats["last_correct_at"] is not None
-
-
 class TestGetUserStats:
     async def test_empty(self, puzzle_attempt_repo: PuzzleAttemptRepository):
         stats = await puzzle_attempt_repo.get_user_stats()

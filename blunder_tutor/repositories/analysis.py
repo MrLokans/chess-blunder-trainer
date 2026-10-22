@@ -94,31 +94,6 @@ class AnalysisRepository(BaseDbRepository):
                 ],
             )
 
-    async def fetch_blunders(
-        self, game_phases: list[int] | None = None
-    ) -> list[dict[str, object]]:
-        conn = await self.get_connection()
-        if game_phases:
-            placeholders = ",".join("?" * len(game_phases))
-            query = f"""
-                SELECT game_id, ply, player, uci, san, eval_before, eval_after, cp_loss,
-                       best_move_uci, best_move_san, best_line, best_move_eval, game_phase
-                FROM analysis_moves
-                WHERE classification = ? AND game_phase IN ({placeholders})
-            """
-            params = (CLASSIFICATION_BLUNDER, *game_phases)
-        else:
-            query = """
-                SELECT game_id, ply, player, uci, san, eval_before, eval_after, cp_loss,
-                       best_move_uci, best_move_san, best_line, best_move_eval, game_phase
-                FROM analysis_moves
-                WHERE classification = ?
-            """
-            params = (CLASSIFICATION_BLUNDER,)
-        async with conn.execute(query, params) as cursor:
-            rows = await cursor.fetchall()
-        return [dict(row) for row in rows]
-
     async def get_move_analysis(
         self, game_id: str, ply: int
     ) -> dict[str, object] | None:
@@ -182,13 +157,6 @@ class AnalysisRepository(BaseDbRepository):
             rows = await cursor.fetchall()
         return [dict(row) for row in rows]
 
-    async def update_move_phase(self, game_id: str, ply: int, game_phase: int) -> None:
-        async with self.write_transaction() as conn:
-            await conn.execute(
-                "UPDATE analysis_moves SET game_phase = ? WHERE game_id = ? AND ply = ?",
-                (game_phase, game_id, ply),
-            )
-
     async def update_moves_phases_batch(
         self, updates: list[tuple[int, str, int]]
     ) -> None:
@@ -239,9 +207,6 @@ class AnalysisRepository(BaseDbRepository):
             return {"eco_code": row["eco_code"], "eco_name": row["eco_name"]}
         return {"eco_code": None, "eco_name": None}
 
-    async def mark_step_completed(self, game_id: str, step_id: str) -> None:
-        await self.mark_steps_completed(game_id, [step_id])
-
     async def mark_steps_completed(self, game_id: str, step_ids: list[str]) -> None:
         completed_at = datetime.now(UTC).isoformat()
         async with self.write_transaction() as conn:
@@ -271,13 +236,6 @@ class AnalysisRepository(BaseDbRepository):
             row = await cursor.fetchone()
         return row is not None
 
-    async def clear_step_status(self, game_id: str) -> None:
-        async with self.write_transaction() as conn:
-            await conn.execute(
-                "DELETE FROM analysis_step_status WHERE game_id = ?",
-                (game_id,),
-            )
-
     async def get_game_ids_missing_tactics(self) -> list[str]:
         conn = await self.get_connection()
         async with conn.execute(
@@ -304,23 +262,6 @@ class AnalysisRepository(BaseDbRepository):
         ) as cursor:
             rows = await cursor.fetchall()
         return [dict(row) for row in rows]
-
-    async def update_move_tactics(
-        self,
-        game_id: str,
-        ply: int,
-        tactical_pattern: int | None,
-        tactical_reason: str | None,
-    ) -> None:
-        async with self.write_transaction() as conn:
-            await conn.execute(
-                """
-                UPDATE analysis_moves
-                SET tactical_pattern = ?, tactical_reason = ?
-                WHERE game_id = ? AND ply = ?
-                """,
-                (tactical_pattern, tactical_reason, game_id, ply),
-            )
 
     async def update_moves_tactics_batch(
         self, updates: list[tuple[int | None, str | None, str, int]]

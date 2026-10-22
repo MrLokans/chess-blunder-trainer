@@ -6,7 +6,6 @@ from blunder_tutor.utils.time_control import (
     GameType,
     classify_game_type,
     estimate_game_duration,
-    get_game_type_from_label,
     get_game_type_label,
     parse_time_control,
 )
@@ -100,18 +99,6 @@ class TestGameTypeLabels:
     )
     def test_get_label(self, game_type, label):
         assert get_game_type_label(game_type) == label
-
-    @pytest.mark.parametrize(
-        "label,expected",
-        [
-            ("bullet", GameType.BULLET),
-            ("blitz", GameType.BLITZ),
-            ("RAPID", GameType.RAPID),
-            ("unknown_value", GameType.UNKNOWN),
-        ],
-    )
-    def test_get_from_label(self, label, expected):
-        assert get_game_type_from_label(label) == expected
 
 
 class TestGameTypeValues:

@@ -73,11 +73,3 @@ class TestActiveKeys:
         await srs_repo.upsert_card(_card("g2", 1, state=CardState.GRADUATED))
         await srs_repo.upsert_card(_card("g3", 1, state=CardState.SUSPENDED))
         assert await srs_repo.active_keys() == {("g1", 1), ("g3", 1)}
-
-
-class TestDeleteAll:
-    async def test_delete_all_returns_count(self, srs_repo: SrsRepository):
-        await srs_repo.upsert_card(_card("g1", 1))
-        await srs_repo.upsert_card(_card("g2", 1))
-        assert await srs_repo.delete_all() == 2
-        assert await srs_repo.get_card("g1", 1) is None

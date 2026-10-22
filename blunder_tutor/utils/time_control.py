@@ -101,7 +101,3 @@ def classify_game_type(time_control: str | None) -> GameType:
 
 def get_game_type_label(game_type: GameType | int) -> str:
     return GAME_TYPE_LABELS.get(int(game_type), "unknown")
-
-
-def get_game_type_from_label(label: str) -> GameType:
-    return GameType(GAME_TYPE_FROM_STRING.get(label.lower(), GameType.UNKNOWN))

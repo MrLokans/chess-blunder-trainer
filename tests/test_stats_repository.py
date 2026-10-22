@@ -117,30 +117,6 @@ class TestGetAnalysisProgress:
         assert result["failed_jobs"] == 1
 
 
-class TestGetBlundersByPhase:
-    async def test_empty(self, stats_repo):
-        result = await stats_repo.get_blunders_by_phase()
-        assert result["total_blunders"] == 0
-        assert not result["by_phase"]
-
-    async def test_with_phases(self, stats_repo):
-        await _seed_blunder_game(stats_repo, game_id="g1", game_phase=0, cp_loss=200)
-        await _seed_blunder_game(
-            stats_repo,
-            game_id="g2",
-            game_phase=1,
-            cp_loss=300,
-            blunder_ply=7,
-            end_time_utc="2025-01-16T10:00:00Z",
-        )
-        result = await stats_repo.get_blunders_by_phase()
-        assert result["total_blunders"] == 2
-        phases = {p["phase"]: p for p in result["by_phase"]}
-        assert "opening" in phases
-        assert "middlegame" in phases
-        assert phases["opening"]["count"] == 1
-
-
 class TestGetBlundersByColor:
     async def test_white_vs_black(self, stats_repo):
         await _seed_blunder_game(
@@ -216,21 +192,6 @@ class TestGetBlundersByGameType:
         assert len(types) == 2
         assert all(entry["game_count"] == 1 for entry in types.values())
         assert all(entry["blunders_per_game"] == 1.0 for entry in types.values())
-
-
-class TestGetRecentActivity:
-    async def test_empty(self, stats_repo):
-        result = await stats_repo.get_recent_activity()
-        assert not result
-
-    async def test_with_jobs(self, stats_repo, job_repo):
-        job_id = await job_repo.create_job(
-            "analysis", username="testuser", source="lichess"
-        )
-        result = await stats_repo.get_recent_activity()
-        assert len(result) == 1
-        assert result[0]["job_id"] == job_id
-        assert result[0]["job_type"] == "analysis"
 
 
 class TestGetBlundersByEco:

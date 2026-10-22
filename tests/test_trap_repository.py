@@ -112,22 +112,6 @@ class TestTrapRepository:
         assert len(stats) == 1
         assert stats[0]["sprung"] == 1
 
-    async def test_delete_all(self, trap_repo):
-        await trap_repo.save_trap_match(
-            game_id="game1",
-            trap_id="scholars_mate",
-            match_type="sprung",
-            victim_side="black",
-            user_was_victim=True,
-            mistake_ply=6,
-        )
-
-        count = await trap_repo.delete_all()
-        assert count == 1
-
-        stats = await trap_repo.get_trap_stats()
-        assert len(stats) == 0
-
     async def test_get_analyzed_game_ids_without_trap_data(self, trap_repo):
         ids_before = await trap_repo.get_analyzed_game_ids_without_trap_data()
         assert "game1" in ids_before

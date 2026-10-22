@@ -143,10 +143,3 @@ class TrapRepository(BaseDbRepository):
         ) as cursor:
             rows = await cursor.fetchall()
         return [row[0] for row in rows]
-
-    async def delete_all(self) -> int:
-        async with self.write_transaction() as conn:
-            cursor = await conn.execute("SELECT COUNT(*) FROM trap_matches")
-            count = (await cursor.fetchone())[0]
-            await conn.execute("DELETE FROM trap_matches")
-            return count

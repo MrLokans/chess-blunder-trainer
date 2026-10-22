@@ -221,43 +221,6 @@ class StatsRepository(BaseDbRepository):
             "in_progress_jobs": _safe_int(row["in_progress"]),
         }
 
-    async def get_recent_activity(self, limit: int = 10) -> list[dict[str, object]]:
-        rows = await self._fetch_rows(
-            """
-            SELECT
-                job_id,
-                job_type,
-                status,
-                username,
-                source,
-                created_at,
-                completed_at
-            FROM background_jobs
-            ORDER BY created_at DESC
-            LIMIT ?
-            """,
-            [limit],
-        )
-        return [dict(row) for row in rows]
-
-    async def get_blunders_by_phase(
-        self,
-        filters: StatsFilter | None = None,
-    ) -> dict[str, object]:
-        rows = await self._fetch_aggregation(
-            "game_phase, COUNT(*) as count, AVG(cp_loss) as avg_cp_loss",
-            "GROUP BY game_phase ORDER BY game_phase",
-            filters or StatsFilter(),
-        )
-        total, phases = _bucket_aggregation(
-            rows,
-            "game_phase",
-            PHASE_LABELS,
-            label_field="phase",
-            id_field="phase_id",
-        )
-        return {"total_blunders": total, "by_phase": phases}
-
     async def get_blunders_by_eco(
         self,
         filters: StatsFilter | None = None,

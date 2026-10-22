@@ -474,7 +474,11 @@ class TestTrainingPipelineIntegration:
         assert await analysis_repo.analysis_exists(game_id)
 
         # Check that blunders were detected
-        blunders = await analysis_repo.fetch_blunders()
+        blunders = [
+            move
+            for move in await analysis_repo.fetch_moves(game_id)
+            if move["classification"] == CLASSIFICATION_BLUNDER
+        ]
         assert len(blunders) > 0, "Should detect at least one blunder"
 
         # Create trainer and pick a puzzle

@@ -125,7 +125,6 @@ class TestPipelineExecutor:
         game_repo = AsyncMock()
 
         analysis_repo.is_step_completed = AsyncMock(return_value=False)
-        analysis_repo.mark_step_completed = AsyncMock()
         analysis_repo.mark_steps_completed = AsyncMock()
         analysis_repo.get_game_eco = AsyncMock(
             return_value={"eco_code": None, "eco_name": None}

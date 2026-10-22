@@ -88,13 +88,6 @@ class SrsRepository(BaseDbRepository):
             rows = await cursor.fetchall()
         return {(row["game_id"], row["ply"]) for row in rows}
 
-    async def delete_all(self) -> int:
-        async with self.write_transaction() as conn:
-            cursor = await conn.execute("SELECT COUNT(*) FROM srs_cards")
-            count = (await cursor.fetchone())[0]
-            await conn.execute("DELETE FROM srs_cards")
-            return count
-
 
 def _row_to_card(row: object) -> SrsCard:
     record = dict(row)  # type: ignore[call-overload]

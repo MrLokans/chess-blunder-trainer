@@ -36,28 +36,6 @@ class PuzzleAttemptRepository(BaseDbRepository):
                 ),
             )
 
-    async def get_last_correct_attempt(
-        self, game_id: str, ply: int, username: str
-    ) -> dict[str, object] | None:
-        conn = await self.get_connection()
-        async with conn.execute(
-            """
-            SELECT attempt_id, game_id, ply, username, was_correct,
-                   user_move_uci, best_move_uci, attempted_at
-            FROM puzzle_attempts
-            WHERE game_id = ? AND ply = ? AND username = ? AND was_correct = 1
-            ORDER BY attempted_at DESC
-            LIMIT 1
-            """,
-            (game_id, ply, username),
-        ) as cursor:
-            row = await cursor.fetchone()
-
-        if not row:
-            return None
-
-        return {**dict(row), "was_correct": bool(row["was_correct"])}
-
     async def get_recently_solved_puzzles(self, days: int = 30) -> set[tuple[str, int]]:
         cutoff_date = (utcnow() - timedelta(days=days)).isoformat()
 
@@ -73,40 +51,6 @@ class PuzzleAttemptRepository(BaseDbRepository):
             rows = await cursor.fetchall()
 
         return {(row["game_id"], row["ply"]) for row in rows}
-
-    async def get_puzzle_stats(
-        self, game_id: str, ply: int, username: str
-    ) -> dict[str, object]:
-        conn = await self.get_connection()
-        async with conn.execute(
-            """
-            SELECT
-                COUNT(*) as total_attempts,
-                SUM(CASE WHEN was_correct = 1 THEN 1 ELSE 0 END) as correct_attempts,
-                MAX(CASE WHEN was_correct = 1 THEN attempted_at ELSE NULL END) as last_correct_at
-            FROM puzzle_attempts
-            WHERE game_id = ? AND ply = ? AND username = ?
-            """,
-            (game_id, ply, username),
-        ) as cursor:
-            row = await cursor.fetchone()
-
-        if not row or row["total_attempts"] == 0:
-            return {
-                "total_attempts": 0,
-                "correct_attempts": 0,
-                "incorrect_attempts": 0,
-                "last_correct_at": None,
-            }
-
-        total = row["total_attempts"]
-        correct = row["correct_attempts"] or 0
-        return {
-            "total_attempts": total,
-            "correct_attempts": correct,
-            "incorrect_attempts": total - correct,
-            "last_correct_at": row["last_correct_at"],
-        }
 
     async def get_user_stats(self) -> dict[str, object]:
         conn = await self.get_connection()

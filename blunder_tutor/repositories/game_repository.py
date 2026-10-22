@@ -6,7 +6,6 @@ from datetime import datetime
 import chess.pgn
 
 from blunder_tutor.repositories.base import BaseDbRepository
-from blunder_tutor.utils.date_utils import exclusive_end_bound
 from blunder_tutor.utils.pgn_utils import load_game_from_string
 from blunder_tutor.utils.time import now_iso, parse_dt
 from blunder_tutor.utils.time_control import classify_game_type
@@ -146,103 +145,6 @@ class GameRepository(BaseDbRepository):
             return dict(row)
 
         return None
-
-    async def list_games_filtered(
-        self,
-        source: str | None = None,
-        username: str | None = None,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        analyzed_only: bool = False,
-        limit: int | None = None,
-        offset: int = 0,
-    ) -> tuple[list[GameRow], int]:
-        query = """
-            SELECT game_id AS id, source, username, white, black, result,
-                   date, end_time_utc, time_control, analyzed
-            FROM game_index_cache
-            WHERE 1=1
-        """
-        count_query = "SELECT COUNT(*) FROM game_index_cache WHERE 1=1"
-        params: list[str | int] = []
-
-        if source:
-            query += " AND source = ?"
-            count_query += " AND source = ?"
-            params.append(source)
-
-        if username:
-            query += " AND username = ?"
-            count_query += " AND username = ?"
-            params.append(username)
-
-        if start_date:
-            query += " AND end_time_utc >= ?"
-            count_query += " AND end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND end_time_utc < ?"
-            count_query += " AND end_time_utc < ?"
-            params.append(exclusive_end_bound(end_date))
-
-        if analyzed_only:
-            query += " AND analyzed = 1"
-            count_query += " AND analyzed = 1"
-
-        query += " ORDER BY end_time_utc DESC"
-
-        conn = await self.get_connection()
-        count_params = list(params)
-        async with conn.execute(count_query, count_params) as cursor:
-            count_row = await cursor.fetchone()
-            total_count = count_row[0] if count_row else 0
-
-        if limit is not None:
-            query += " LIMIT ? OFFSET ?"
-            params.extend([limit, offset])
-
-        async with conn.execute(query, params) as cursor:
-            rows = await cursor.fetchall()
-
-        games = [dict(row) for row in rows]
-
-        return games, total_count
-
-    async def count_games(
-        self,
-        source: str | None = None,
-        username: str | None = None,
-        start_date: str | None = None,
-        end_date: str | None = None,
-        analyzed_only: bool = False,
-    ) -> int:
-        query = "SELECT COUNT(*) FROM game_index_cache WHERE 1=1"
-        params: list[str] = []
-
-        if source:
-            query += " AND source = ?"
-            params.append(source)
-
-        if username:
-            query += " AND username = ?"
-            params.append(username)
-
-        if start_date:
-            query += " AND end_time_utc >= ?"
-            params.append(start_date)
-
-        if end_date:
-            query += " AND end_time_utc < ?"
-            params.append(exclusive_end_bound(end_date))
-
-        if analyzed_only:
-            query += " AND analyzed = 1"
-
-        conn = await self.get_connection()
-        async with conn.execute(query, params) as cursor:
-            row = await cursor.fetchone()
-            return row[0]
 
     async def mark_game_analyzed(self, game_id: str) -> None:
         async with self.write_transaction() as conn:

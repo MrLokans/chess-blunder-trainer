@@ -56,45 +56,6 @@ async def _write_game(repo: AnalysisRepository, game_id: str = "g1", moves=None,
     await repo.write_analysis(**defaults)
 
 
-class TestFetchBlundersWithPhaseFilter:
-    async def test_no_filter_returns_all(self, analysis_repo: AnalysisRepository):
-        await _write_game(
-            analysis_repo,
-            moves=[
-                _blunder_move(1, game_phase=0),
-                _blunder_move(3, game_phase=1),
-                _blunder_move(5, game_phase=2),
-            ],
-        )
-        blunders = await analysis_repo.fetch_blunders()
-        assert len(blunders) == 3
-
-    async def test_phase_filter(self, analysis_repo: AnalysisRepository):
-        await _write_game(
-            analysis_repo,
-            moves=[
-                _blunder_move(1, game_phase=0),
-                _blunder_move(3, game_phase=1),
-                _blunder_move(5, game_phase=2),
-            ],
-        )
-        blunders = await analysis_repo.fetch_blunders(game_phases=[0])
-        assert len(blunders) == 1
-        assert blunders[0]["game_phase"] == 0
-
-    async def test_multiple_phases(self, analysis_repo: AnalysisRepository):
-        await _write_game(
-            analysis_repo,
-            moves=[
-                _blunder_move(1, game_phase=0),
-                _blunder_move(3, game_phase=1),
-                _blunder_move(5, game_phase=2),
-            ],
-        )
-        blunders = await analysis_repo.fetch_blunders(game_phases=[0, 2])
-        assert len(blunders) == 2
-
-
 class TestGetMoveAnalysis:
     async def test_existing_move(self, analysis_repo: AnalysisRepository):
         await _write_game(
@@ -121,22 +82,15 @@ class TestStepCompletion:
     async def test_mark_and_check(self, analysis_repo: AnalysisRepository):
         await _write_game(analysis_repo)
         assert not await analysis_repo.is_step_completed("g1", "eco")
-        await analysis_repo.mark_step_completed("g1", "eco")
+        await analysis_repo.mark_steps_completed("g1", ["eco"])
         assert await analysis_repo.is_step_completed("g1", "eco")
 
     async def test_get_completed_steps(self, analysis_repo: AnalysisRepository):
         await _write_game(analysis_repo)
-        await analysis_repo.mark_step_completed("g1", "eco")
-        await analysis_repo.mark_step_completed("g1", "phase")
+        await analysis_repo.mark_steps_completed("g1", ["eco"])
+        await analysis_repo.mark_steps_completed("g1", ["phase"])
         steps = await analysis_repo.get_completed_steps("g1")
         assert steps == {"eco", "phase"}
-
-    async def test_clear_step_status(self, analysis_repo: AnalysisRepository):
-        await _write_game(analysis_repo)
-        await analysis_repo.mark_step_completed("g1", "eco")
-        await analysis_repo.clear_step_status("g1")
-        assert not await analysis_repo.is_step_completed("g1", "eco")
-        assert await analysis_repo.get_completed_steps("g1") == set()
 
 
 class TestPhaseBackfill:
@@ -148,12 +102,6 @@ class TestPhaseBackfill:
         ids = await analysis_repo.get_game_ids_missing_phase()
         assert "g1" in ids
         assert "g2" not in ids
-
-    async def test_update_move_phase(self, analysis_repo: AnalysisRepository):
-        await _write_game(analysis_repo, moves=[_make_move(1)])
-        await analysis_repo.update_move_phase("g1", 1, 2)
-        result = await analysis_repo.get_move_analysis("g1", 1)
-        assert result["game_phase"] == 2
 
     async def test_update_moves_phases_batch(self, analysis_repo: AnalysisRepository):
         await _write_game(analysis_repo, moves=[_make_move(1), _make_move(2)])
@@ -190,7 +138,7 @@ class TestEcoBackfill:
 
     async def test_eco_step_excludes_completed(self, analysis_repo: AnalysisRepository):
         await _write_game(analysis_repo, game_id="g1")
-        await analysis_repo.mark_step_completed("g1", "eco")
+        await analysis_repo.mark_steps_completed("g1", ["eco"])
         ids = await analysis_repo.get_game_ids_missing_eco()
         assert "g1" not in ids
 
@@ -333,10 +281,3 @@ class TestTacticsBackfill:
         blunders = await analysis_repo.fetch_blunders_for_tactics_backfill("g1")
         assert len(blunders) == 1
         assert blunders[0]["ply"] == 1
-
-    async def test_update_move_tactics(self, analysis_repo: AnalysisRepository):
-        await _write_game(analysis_repo, moves=[_blunder_move(1)])
-        await analysis_repo.update_move_tactics("g1", 1, 3, "hanging piece")
-        result = await analysis_repo.get_move_analysis("g1", 1)
-        assert result["tactical_pattern"] == 3
-        assert result["tactical_reason"] == "hanging piece"

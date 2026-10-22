@@ -3,7 +3,6 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from blunder_tutor.constants import CLASSIFICATION_BLUNDER
 from blunder_tutor.migrations import run_migrations
 
 
@@ -138,68 +137,6 @@ class TestWriteAnalysis:
         game_moves = await analysis_repo.fetch_moves("game123")
         assert len(game_moves) == 1
         assert game_moves[0]["uci"] == "d2d4"
-
-
-class TestFetchBlunders:
-    async def test_fetch_empty(self, analysis_repo):
-        blunders = await analysis_repo.fetch_blunders()
-        assert blunders == []
-
-    async def test_fetch_only_blunders(self, analysis_repo):
-        moves = [
-            {
-                "ply": 1,
-                "move_number": 1,
-                "player": "white",
-                "uci": "e2e4",
-                "san": "e4",
-                "eval_before": 20,
-                "eval_after": 30,
-                "delta": -10,
-                "cp_loss": 0,
-                "classification": 0,  # Normal move
-            },
-            {
-                "ply": 2,
-                "move_number": 1,
-                "player": "black",
-                "uci": "e7e6",
-                "san": "e6",
-                "eval_before": -30,
-                "eval_after": -230,
-                "delta": 200,
-                "cp_loss": 200,
-                "classification": CLASSIFICATION_BLUNDER,  # Blunder
-            },
-            {
-                "ply": 3,
-                "move_number": 2,
-                "player": "white",
-                "uci": "d2d4",
-                "san": "d4",
-                "eval_before": 230,
-                "eval_after": 150,
-                "delta": 80,
-                "cp_loss": 80,
-                "classification": 1,  # Inaccuracy
-            },
-        ]
-
-        await analysis_repo.write_analysis(
-            game_id="game123",
-            pgn_path="/tmp/test.pgn",
-            analyzed_at="2023-12-25T00:00:00Z",
-            engine_path="/usr/bin/stockfish",
-            depth=14,
-            time_limit=None,
-            thresholds={"inaccuracy": 50, "mistake": 100, "blunder": 200},
-            moves=moves,
-        )
-
-        blunders = await analysis_repo.fetch_blunders()
-        assert len(blunders) == 1
-        assert blunders[0]["uci"] == "e7e6"
-        assert blunders[0]["cp_loss"] == 200
 
 
 class TestFetchGameMoves:
