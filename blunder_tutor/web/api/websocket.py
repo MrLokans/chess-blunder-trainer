@@ -5,12 +5,14 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from blunder_tutor.auth import UserId
 from blunder_tutor.auth.fastapi import SESSION_COOKIE_NAME
 from blunder_tutor.events.websocket_manager import ConnectionManager
+from blunder_tutor.web.middleware import _origin_matches_host
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 _REJECT_CODE = 4401
 _REJECT_REASON = "unauthorized"
+_FORBIDDEN_ORIGIN_CODE = 4403
 
 
 async def _resolve_user_id(websocket: WebSocket) -> tuple[bool, UserId | None]:
@@ -33,6 +35,10 @@ async def _resolve_user_id(websocket: WebSocket) -> tuple[bool, UserId | None]:
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    # CSRF middleware never sees WebSocket upgrades, and browsers let any page open one.
+    if not _origin_matches_host(websocket):
+        await websocket.close(code=_FORBIDDEN_ORIGIN_CODE, reason="forbidden origin")
+        return
     allow, user_id = await _resolve_user_id(websocket)
     if not allow:
         await websocket.close(code=_REJECT_CODE, reason=_REJECT_REASON)

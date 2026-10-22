@@ -39,6 +39,7 @@ from blunder_tutor.web.auth_hooks import (
 )
 from blunder_tutor.web.bypass_auth import LOCAL_USER_ID, BypassAuthMiddleware
 from blunder_tutor.web.config import AppConfig
+from blunder_tutor.web.host_policy import LocalHostOnlyMiddleware
 from blunder_tutor.web.middleware import (
     CsrfOriginMiddleware,
     DemoModeMiddleware,
@@ -416,11 +417,6 @@ def _init_state(app: FastAPI, config: AppConfig) -> None:
 def _register_middleware(app: FastAPI, config: AppConfig) -> None:
     # Middleware runs in reverse add order. `SecurityHeadersMiddleware` is added first
     # so it stamps headers on every response, including Auth's 401/redirects.
-    #
-    # Host allowlist: without it, a shared-vhost deploy lets a cross-origin attacker
-    # pass the CSRF Origin/Host check with a spoofed Host. Default "*" suits single-host
-    # dev; configure it on shared deploys.
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(config.allowed_hosts))
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(SetupCheckMiddleware)
     app.add_middleware(DemoModeMiddleware)
@@ -441,9 +437,18 @@ def _register_middleware(app: FastAPI, config: AppConfig) -> None:
         )
     else:
         app.add_middleware(BypassAuthMiddleware)
-    # Added last so CSRF runs first: a cross-origin mutation must be rejected before
-    # Auth's /login redirect or any other side effect.
+    # Added late so CSRF runs before Auth: a cross-origin mutation must be rejected
+    # before Auth's /login redirect or any other side effect.
     app.add_middleware(CsrfOriginMiddleware)
+    # Added last so the Host allowlist runs first: without it, a shared-vhost deploy
+    # lets a cross-origin attacker pass the CSRF Origin/Host check with a spoofed Host,
+    # and a no-login instance is open to DNS rebinding.
+    if config.allowed_hosts is not None:
+        app.add_middleware(
+            TrustedHostMiddleware, allowed_hosts=list(config.allowed_hosts)
+        )
+    elif config.auth.mode == AUTH_MODE_NONE and not config.demo_mode:
+        app.add_middleware(LocalHostOnlyMiddleware)
 
 
 def build_app(config: AppConfig) -> FastAPI:

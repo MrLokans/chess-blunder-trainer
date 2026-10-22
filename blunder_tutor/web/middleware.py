@@ -6,6 +6,7 @@ import re
 from fastapi import Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import HTTPConnection
 
 from blunder_tutor.features import DEFAULTS
 from blunder_tutor.web.paths import AUTH_API_PREFIX, AUTH_UI_PATHS
@@ -53,7 +54,7 @@ class CsrfOriginMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-def _origin_matches_host(request: Request) -> bool:
+def _origin_matches_host(request: HTTPConnection) -> bool:
     # Origin, else Referer. With neither it's a non-browser client or strict referrer
     # policy; SameSite=Lax is the primary defense, and browser CSRF needs cookies,
     # cross-origin initiation and headers, so absence isn't exploitable (Django's
@@ -69,7 +70,7 @@ def _origin_matches_host(request: Request) -> bool:
     return True
 
 
-def _expected_host(request: Request) -> str | None:
+def _expected_host(request: HTTPConnection) -> str | None:
     host = request.headers.get("host")
     if host is None:
         return None

@@ -2,6 +2,9 @@ import asyncio
 import contextlib
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+from starlette.websockets import WebSocketDisconnect
+
 from blunder_tutor.events import websocket_manager as ws_module
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import (
@@ -24,6 +27,26 @@ def test_websocket_connection(app):
         response = websocket.receive_json()
         assert response["type"] == "subscribed"
         assert "job.created" in response["events"]
+
+
+def test_websocket_rejects_cross_origin(app):
+    with (
+        pytest.raises(WebSocketDisconnect) as exc,
+        app.websocket_connect(
+            "/ws", headers={"origin": "http://evil.example"}
+        ) as websocket,
+    ):
+        websocket.send_json({"action": "ping"})
+        websocket.receive_json()
+    assert exc.value.code == 4403
+
+
+def test_websocket_accepts_same_origin(app):
+    with app.websocket_connect(
+        "/ws", headers={"origin": "http://testserver"}
+    ) as websocket:
+        websocket.send_json({"action": "ping"})
+        assert websocket.receive_json()["type"] == "pong"
 
 
 def test_websocket_ping_pong(app):

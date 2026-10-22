@@ -24,6 +24,9 @@ services:
       # - DEMO_MODE=true
       # - DEMO_THROTTLE_RATE=30/60  # requests/seconds per IP (default: 30/60)
 
+      # Hostnames to serve besides localhost / IP addresses (see docs/environment.md)
+      # - ALLOWED_HOSTS=chess.home.lan
+
       # Override database path (e.g. to use embedded demo DB)
       # - DB_PATH=/app/demo/demo.sqlite3
 

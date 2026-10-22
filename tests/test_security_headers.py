@@ -20,6 +20,7 @@ async def none_mode_client(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("DB_PATH", str(tmp_path / "main.sqlite3"))
     monkeypatch.setenv("VITE_DEV", "true")
     monkeypatch.setenv("AUTH_MODE", "none")
+    monkeypatch.setenv("ALLOWED_HOSTS", "testserver")
     monkeypatch.delenv("AUTH_COOKIE_SECURE", raising=False)
 
     ns = _ap.Namespace(engine_path="/fake/stockfish", depth=20)

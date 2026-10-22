@@ -38,7 +38,7 @@ See [`docs/AUTH.md`](AUTH.md) for the multi-user setup walkthrough and CLI admin
 | `DB_PATH` | `data/main.sqlite3` | SQLite database path in `none` mode. Ignored in `credentials` mode (per-user DBs are materialized under `users_dir/<user_id>/main.sqlite3`). |
 | `BLUNDER_TUTOR_DB_PATH` | unset | Alias for `DB_PATH` honored by the `blunder-tutor-db` migration CLI. |
 | `STOCKFISH_BINARY` | auto-detect | Path to the Stockfish binary. If unset, the app probes `/usr/games/stockfish`, `/usr/local/bin/stockfish`, `/usr/bin/stockfish` in order and fails if none exists. |
-| `ALLOWED_HOSTS` | `*` | Comma-separated `Host` header allowlist passed to `TrustedHostMiddleware`. The `*` default accepts any Host — appropriate for single-tenant self-hosted instances. **Multi-tenant or shared-vhost deploys MUST set this** (e.g. `example.com,www.example.com`) to prevent Host-header spoofing from defeating the CSRF Origin check. |
+| `ALLOWED_HOSTS` | unset | Comma-separated `Host` header allowlist passed to `TrustedHostMiddleware` (`*` accepts any Host). When unset with `AUTH_MODE=none` (and no demo mode), only `localhost` and IP addresses are accepted, which blocks DNS-rebinding attacks from websites you visit; LAN access by IP keeps working. **Set this to serve the no-login app under a hostname** (e.g. `chess.home.lan`), otherwise requests get `400 Invalid host header`. When unset in credentials or demo mode, any Host is accepted. **Multi-tenant or shared-vhost deploys MUST set this** (e.g. `example.com,www.example.com`) to prevent Host-header spoofing from defeating the CSRF Origin check. |
 
 ---
 

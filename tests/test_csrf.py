@@ -11,6 +11,7 @@ from httpx import ASGITransport
 
 from blunder_tutor.web.app import create_app
 from blunder_tutor.web.config import config_factory
+from blunder_tutor.web.host_policy import _is_loopback_or_ip_host
 from blunder_tutor.web.middleware import (
     _extract_host,
     _origin_matches_host,
@@ -76,6 +77,7 @@ async def app_client(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("DB_PATH", str(tmp_path / "main.sqlite3"))
     monkeypatch.setenv("VITE_DEV", "true")
     monkeypatch.setenv("AUTH_MODE", "none")
+    monkeypatch.setenv("ALLOWED_HOSTS", "testserver")
 
     ns = _ap.Namespace(engine_path="/fake/stockfish", depth=20)
     config = config_factory(ns, dict(_os.environ))
@@ -163,3 +165,80 @@ class TestTrustedHostMiddleware:
             "/health", headers={"host": "attacker.example"}
         )
         assert r.status_code == HTTPStatus.BAD_REQUEST
+
+
+async def _default_hosts_client(tmp_path: Path, monkeypatch, *, auth_mode: str):
+    monkeypatch.setenv("STOCKFISH_BINARY", "/fake/stockfish")
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "main.sqlite3"))
+    monkeypatch.setenv("VITE_DEV", "true")
+    monkeypatch.setenv("AUTH_MODE", auth_mode)
+    monkeypatch.setenv("SECRET_KEY", "x" * 64)
+    monkeypatch.delenv("ALLOWED_HOSTS", raising=False)
+
+    ns = _ap.Namespace(engine_path="/fake/stockfish", depth=20)
+    config = config_factory(ns, dict(_os.environ))
+
+    with mock_engine_context():
+        app = create_app(config)
+        async with app.router.lifespan_context(app):
+            transport = ASGITransport(app=app)
+            async with httpx.AsyncClient(
+                transport=transport, base_url="http://localhost"
+            ) as client:
+                yield client
+
+
+@pytest.fixture
+async def none_mode_default_hosts(tmp_path: Path, monkeypatch):
+    async for client in _default_hosts_client(tmp_path, monkeypatch, auth_mode="none"):
+        yield client
+
+
+@pytest.fixture
+async def credentials_default_hosts(tmp_path: Path, monkeypatch):
+    async for client in _default_hosts_client(
+        tmp_path, monkeypatch, auth_mode="credentials"
+    ):
+        yield client
+
+
+class TestDefaultHostPolicy:
+    @pytest.mark.parametrize(
+        "host,allowed",
+        [
+            ("localhost", True),
+            ("LOCALHOST", True),
+            ("localhost.", True),
+            ("127.0.0.1", True),
+            ("192.168.1.20", True),
+            ("::1", True),
+            ("attacker.example", False),
+            ("localhost.attacker.example", False),
+            (None, False),
+        ],
+    )
+    def test_is_loopback_or_ip_host(self, host: str | None, allowed: bool):
+        assert _is_loopback_or_ip_host(host) is allowed
+
+    @pytest.mark.parametrize(
+        "host,expected",
+        [
+            ("localhost:8000", HTTPStatus.OK),
+            ("192.168.1.20:8000", HTTPStatus.OK),
+            ("[::1]:8000", HTTPStatus.OK),
+            ("rebound.attacker.example", HTTPStatus.BAD_REQUEST),
+        ],
+    )
+    async def test_none_mode_blocks_dns_rebinding_hostnames(
+        self, none_mode_default_hosts: httpx.AsyncClient, host: str, expected: int
+    ):
+        r = await none_mode_default_hosts.get("/health", headers={"host": host})
+        assert r.status_code == expected
+
+    async def test_credentials_mode_keeps_any_host(
+        self, credentials_default_hosts: httpx.AsyncClient
+    ):
+        r = await credentials_default_hosts.get(
+            "/health", headers={"host": "chess.example.com"}
+        )
+        assert r.status_code == HTTPStatus.OK

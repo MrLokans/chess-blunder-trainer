@@ -142,9 +142,11 @@ class AppConfig(BaseModel):
     cache: CacheConfig = CacheConfig()
     auth: AuthConfig = AuthConfig()
     observability: ObservabilityConfig = ObservabilityConfig()
-    # Default `["*"]` suits single-tenant self-hosting; shared-vhost deploys must set
-    # `ALLOWED_HOSTS`, or a spoofed Host defeats the CSRF Origin check.
-    allowed_hosts: tuple[str, ...] = ("*",)
+    # None (the env default when `ALLOWED_HOSTS` is unset) means: in no-login, non-demo
+    # mode only localhost and IP literals, which blocks DNS rebinding; elsewhere any
+    # Host. Shared-vhost deploys must set `ALLOWED_HOSTS`, or a spoofed Host defeats the
+    # CSRF Origin check.
+    allowed_hosts: tuple[str, ...] | None = ("*",)
 
     @model_validator(mode="after")
     def _check_mode_compatibility(self) -> Self:
@@ -247,12 +249,11 @@ def config_factory(parsed_args: argparse.Namespace, environ: Mapping) -> AppConf
     data = DataConfig(db_path=Path(db_path_env)) if db_path_env else DataConfig()
 
     allowed_hosts_env = environ.get("ALLOWED_HOSTS")
+    allowed_hosts = None
     if allowed_hosts_env:
         allowed_hosts = tuple(
             h.strip() for h in allowed_hosts_env.split(",") if h.strip()
         )
-    else:
-        allowed_hosts = ("*",)
 
     cache = CacheConfig(
         enabled=parse_bool(environ.get("CACHE_ENABLED"), default=True),
