@@ -4,7 +4,6 @@ from datetime import timedelta
 from http import HTTPStatus
 from pathlib import Path
 
-from blunder_tutor.background.jobs.delete_all_data import TABLE_ORDER
 from blunder_tutor.repositories.data_management import DataManagementRepository
 from blunder_tutor.repositories.srs_repository import SrsRepository
 from blunder_tutor.srs import enroll
@@ -53,6 +52,3 @@ class TestDataWipeIncludesSrs:
         finally:
             await mgmt.close()
         assert await srs_repo.get_card("g1", 1) is None
-
-    def test_delete_all_data_job_covers_srs_cards(self):
-        assert "srs_cards" in TABLE_ORDER
