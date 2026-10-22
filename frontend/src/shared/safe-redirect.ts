@@ -1,10 +1,9 @@
 export function safeNext(raw: string | null): string {
-  // Reject absolute/protocol-relative URLs so `?next=//evil.com` or
-  // `?next=https://evil.com` can't bounce the user off-origin after
-  // login. Only same-origin paths pass.
-  if (!raw) return '/';
-  if (!raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/\\')) {
-    return '/';
-  }
-  return raw;
+  // Only same-origin paths pass. Validate what the browser will actually
+  // navigate to: URL parsing strips tabs/newlines and treats `\` as `/`, so
+  // `/\t/evil.com` would otherwise become `//evil.com`.
+  if (!raw?.startsWith('/')) return '/';
+  const url = new URL(raw, window.location.origin);
+  if (url.origin !== window.location.origin) return '/';
+  return url.pathname + url.search + url.hash;
 }

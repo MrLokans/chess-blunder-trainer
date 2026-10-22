@@ -17,6 +17,15 @@ describe('safeNext', () => {
     expect(safeNext('http://evil.com/path')).toBe('/');
   });
   it('rejects backslash-prefixed variants', () => { expect(safeNext('/\\evil.com')).toBe('/'); });
+  it('rejects paths browsers normalize to another origin', () => {
+    expect(safeNext('/\t/evil.com')).toBe('/');
+    expect(safeNext('/\n/evil.com')).toBe('/');
+    expect(safeNext('/\r\n/evil.com/path')).toBe('/');
+    expect(safeNext('/\t\\evil.com')).toBe('/');
+  });
+  it('keeps hash and query of same-origin paths', () => {
+    expect(safeNext('/game/abc?ply=12#move')).toBe('/game/abc?ply=12#move');
+  });
   it('rejects schemeless paths without leading slash', () => {
     expect(safeNext('trainer')).toBe('/');
     expect(safeNext('evil.com')).toBe('/');
