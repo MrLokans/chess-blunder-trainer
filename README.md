@@ -38,11 +38,15 @@ Blunder Tutor combines the parts that matter: finds your mistakes, turns them in
 
 ## Quick Start
 
+Requires [Docker](https://docs.docker.com/get-docker/) (check with `docker --version`). Stockfish is bundled in the image.
+
 ```bash
 docker run -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/mrlokans/blunder-tutor:latest
 ```
 
-Open http://localhost:8000 and enter your chess username. That's it.
+On Windows PowerShell use `-v ${PWD}/data:/app/data` instead.
+
+Open http://localhost:8000 and enter your chess username. Your games are then imported and analyzed in the background — this takes a while on the first run. The trainer shows an "Analyzing your games" screen and puzzles appear as analysis finishes; job progress is on the **Management** page.
 
 For Docker Compose, environment variables, and advanced options see [Docker Deployment Guide](docs/DOCKER.md).
 
@@ -60,22 +64,9 @@ docker run -p 8000:8000 -v $(pwd)/data:/app/data \
 
 First signup uses a one-time invite code printed to the server log on boot. Each account gets an isolated SQLite database under `data/users/`. See [Authentication](docs/AUTH.md) for the full setup, CLI admin commands, and gotchas.
 
-## Observability (optional)
-
-Off by default. Enable Sentry to get HTTP transactions, exception capture, custom metrics for engine / jobs / WebSockets, and a Sentry Crons monitor on the scheduler tick:
-
-```bash
-docker run -p 8000:8000 -v $(pwd)/data:/app/data \
-  -e SENTRY_ENABLED=true \
-  -e SENTRY_DSN="https://<key>@<org>.ingest.sentry.io/<project>" \
-  ghcr.io/mrlokans/blunder-tutor:latest
-```
-
-For tuning knobs, the Sentry-side Crons monitor setup, and data-handling notes see the **Observability** section of [`docs/environment.md`](docs/environment.md).
-
 ## Configuration
 
-All environment variables — auth, data, demo, engine, cache, analytics, observability, debugging — are documented in [`docs/environment.md`](docs/environment.md).
+All environment variables — auth, data, demo, engine, cache, analytics, observability (optional Sentry integration), debugging — are documented in [`docs/environment.md`](docs/environment.md).
 
 ## Features
 
@@ -96,38 +87,52 @@ All environment variables — auth, data, demo, engine, cache, analytics, observ
 
 ## Local Development
 
+### Prerequisites
+
+| Tool | Version | Check | Install |
+|---|---|---|---|
+| [uv](https://docs.astral.sh/uv/) | any recent | `uv --version` | [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+| Python | 3.14+ | `uv python find 3.14` | `uv python install 3.14` |
+| Node.js | 22+ | `node -v` | [nodejs.org](https://nodejs.org) |
+| Stockfish | any | `which stockfish` | `brew install stockfish` / `apt install stockfish` |
+
+Stockfish is looked up only in `/usr/games`, `/usr/local/bin` and `/usr/bin` — **not** your `PATH`. If it lives elsewhere (e.g. Homebrew on Apple Silicon puts it in `/opt/homebrew/bin`), export `STOCKFISH_BINARY="$(which stockfish)"`.
+
+### Setup
+
 ```bash
-make install-dev    # Install dependencies
-make test           # Run tests
+git clone https://github.com/MrLokans/chess-blunder-trainer.git
+cd chess-blunder-trainer
+make install-dev    # Python dependencies
+npm ci              # Frontend dependencies
+make build/fe       # Build frontend assets — required before the first run
+make train-ui       # Start on http://localhost:8000
+```
+
+### Everyday commands
+
+```bash
+make test           # Run backend + frontend tests
 make lint           # Check code style
 make fix            # Auto-fix formatting
-make train-ui       # Start on localhost:8000
+make help           # List all targets
 
-# E2E tests (requires npm ci in e2e/)
-cd e2e && npx playwright test
+# E2E tests
+cd e2e && npm ci && npx playwright install && npx playwright test
 ```
 
-Requires Python 3.14+, Node.js 22+, and Stockfish on your PATH (or set `STOCKFISH_BINARY`).
+### Common problems
 
-### Pre-commit Hooks
+- **`Unable to resolve the stockfish binary path`** — set `STOCKFISH_BINARY` (see Prerequisites).
+- **Pages return 500 with `FileNotFoundError: .../static/dist/.vite/manifest.json`** — the frontend isn't built; run `npm ci && make build/fe`.
+- **Port 8000 already in use** — `make train-ui PORT=8001`, or for Docker `-p 8080:8000`.
+- **Trainer says "No puzzles available"** — import games first, or wait for analysis to finish (progress on the Management page).
 
-We use [prek](https://prek.j178.dev/) for pre-commit hooks (configured in `prek.toml`). To skip certain files or directories from hook processing, add an `exclude` pattern at the top level or per-hook:
-
-```toml
-# Global exclude — applies to all hooks
-exclude = "node_modules|^\\.git"
-
-# Per-hook exclude
-[[repos.hooks]]
-id = "ruff-check"
-exclude = "migrations\\.py"
-```
-
-See [prek exclude docs](https://prek.j178.dev/configuration/#exclude) for details.
+Pre-commit hooks use [prek](https://prek.j178.dev/), configured in `prek.toml`.
 
 ## Contributing
 
-Issues and pull requests are welcome. Run `make install-dev` and `make test` before submitting.
+Issues and pull requests are welcome. Follow [Local Development](#local-development) and run `make test` and `make lint` before submitting.
 
 ## Links
 
