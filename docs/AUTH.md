@@ -41,6 +41,8 @@ docker run -p 8000:8000 -v $(pwd)/data:/app/data \
 
 ### Local
 
+Complete the [Local Development setup](../README.md#local-development) first (the frontend must be built), then:
+
 ```bash
 AUTH_MODE=credentials SECRET_KEY="$(openssl rand -hex 32)" MAX_USERS=5 uv run python main.py train-ui
 ```

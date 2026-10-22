@@ -2,13 +2,19 @@
 
 ## Quick Start
 
+Requires [Docker](https://docs.docker.com/get-docker/) (check with `docker --version`). Stockfish is bundled in the image; nothing else needs installing.
+
 ### Docker Run
 
 ```bash
 docker run -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/mrlokans/blunder-tutor:latest
 ```
 
+On Windows PowerShell use `-v ${PWD}/data:/app/data` instead.
+
 ### Docker Compose
+
+`docker-compose.yml` builds the image from source (including compiling Stockfish), so the first `up` takes several minutes. Use Docker Run above if you just want the published image.
 
 ```bash
 git clone https://github.com/MrLokans/chess-blunder-trainer.git
@@ -16,13 +22,19 @@ cd chess-blunder-trainer
 docker compose up -d
 ```
 
-Open http://localhost:8000 and enter your username.
+Check it's up with `curl http://localhost:8000/health`, then open http://localhost:8000 and enter your username. Games are imported and analyzed in the background — the first run takes a while. Puzzles appear in the trainer as analysis finishes; job progress is on the **Management** page.
 
 Supports `linux/amd64` and `linux/arm64` (Apple Silicon, Raspberry Pi).
 
 ## Configuration
 
-Optionally create a `.env` file (see `.env.example`):
+Optionally create a `.env` file next to `docker-compose.yml`:
+
+```bash
+cp .env.example .env
+```
+
+Commonly set variables (the full list is in [`environment.md`](environment.md)):
 
 | Variable | Default | Description |
 |---|---|---|
@@ -47,9 +59,19 @@ tar -czf blunder-tutor-backup-$(date +%Y%m%d).tar.gz data/
 
 ## Updating
 
+Docker Run — pull the new image, then remove and re-run the container (data in `./data` is kept):
+
 ```bash
 docker pull ghcr.io/mrlokans/blunder-tutor:latest
-docker compose down && docker compose up -d
+docker rm -f <container>
+docker run -p 8000:8000 -v $(pwd)/data:/app/data ghcr.io/mrlokans/blunder-tutor:latest
+```
+
+Docker Compose — it builds from source, so update the checkout and rebuild:
+
+```bash
+git pull
+docker compose up -d --build
 ```
 
 Database migrations run automatically on startup.
@@ -61,3 +83,7 @@ Database migrations run automatically on startup.
 **Analysis is slow** — lower `STOCKFISH_DEPTH` to 10–12 in `.env`
 
 **Port conflict** — change the host port: `-p 8080:8000`
+
+**Permission denied writing to `/app/data`** — the host `./data` directory isn't writable by UID 1000; see **Host ownership** above.
+
+**Trainer says "No puzzles available"** — import games first, or wait for analysis to finish (progress on the Management page).
