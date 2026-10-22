@@ -71,8 +71,7 @@ class ImportPgnJob(BaseJob):
             await self.analyzer.analyze_game(game_id=game_id, engine=engine)
             await self.game_repo.mark_game_analyzed(game_id)
 
-        coordinator.submit(run_analysis)
-        await coordinator.drain()
+        await coordinator.submit(run_analysis)
 
         eco = await self.analysis_repo.get_game_eco(game_id)
         moves = await self.analysis_repo.fetch_moves(game_id)

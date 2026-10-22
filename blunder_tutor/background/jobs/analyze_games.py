@@ -122,9 +122,15 @@ class AnalyzeGamesJob(BaseJob):
             len(game_ids),
         )
         ctx = _AnalyzeContext(steps, len(game_ids), cancelled, progress)
-        for game_id in game_ids:
-            coordinator.submit(partial(self._process_one_game, game_id, ctx))
-        await coordinator.drain()
+        outcomes = await coordinator.run_all(
+            partial(self._process_one_game, game_id, ctx) for game_id in game_ids
+        )
+        # Engine timeouts/crashes surface here, outside `_analyze_one`'s handler.
+        for game_id, outcome in zip(game_ids, outcomes, strict=True):
+            if isinstance(outcome, Exception):
+                logger.error("Failed to analyze game %s: %s", game_id, outcome)
+                ctx.results["failed"] += 1
+                await self._tick_progress(ctx)
         return ctx.results
 
     async def _process_one_game(

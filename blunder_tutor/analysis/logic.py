@@ -131,17 +131,21 @@ class GameAnalyzer:
         results: dict[str, int],
     ) -> None:
         with tqdm(total=len(game_ids), desc="Analyze games", unit="game") as progress:
-            for game_id in game_ids:
-                coordinator.submit(
-                    functools.partial(
-                        self._process_one_game,
-                        game_id=game_id,
-                        options=options,
-                        results=results,
-                        progress=progress,
-                    )
+            outcomes = await coordinator.run_all(
+                functools.partial(
+                    self._process_one_game,
+                    game_id=game_id,
+                    options=options,
+                    results=results,
+                    progress=progress,
                 )
-            await coordinator.drain()
+                for game_id in game_ids
+            )
+            for outcome in outcomes:
+                if isinstance(outcome, Exception):
+                    results["failed"] += 1
+                    results["processed"] += 1
+                    progress.update(1)
 
     async def _process_one_game(
         self,

@@ -266,24 +266,71 @@ class TestEnginePool:
         assert future.result() == 42
         await pool.shutdown()
 
+    async def test_cancelled_caller_stops_work_and_worker_survives(
+        self, mock_popen_uci
+    ):
+        pool = EnginePool("/fake/stockfish", 1)
+        await pool.start()
+        started = asyncio.Event()
+        stopped = asyncio.Event()
+
+        async def hang(engine):
+            started.set()
+            try:
+                await asyncio.sleep(999)
+            except asyncio.CancelledError:
+                stopped.set()
+                raise
+
+        async def fast(engine):
+            return 42
+
+        caller = asyncio.create_task(asyncio.wait_for(pool.submit(hang), 999))
+        await started.wait()
+        caller.cancel()
+        await asyncio.wait_for(stopped.wait(), 1)
+
+        assert await asyncio.wait_for(pool.submit(fast), 1) == 42
+        await pool.shutdown()
+
 
 class TestWorkCoordinator:
-    async def test_submit_and_drain(self, mock_popen_uci):
+    async def test_run_all_returns_results_and_exceptions(self, mock_popen_uci):
         mock, engines = mock_popen_uci
         coord = WorkCoordinator("/fake/stockfish", pool_size=2)
         await coord.start()
 
-        results: list[int] = []
-
         async def work(engine):
-            results.append(1)
+            return 1
 
-        for _ in range(4):
-            coord.submit(work)
-        await coord.drain()
+        async def boom(engine):
+            raise ValueError("boom")
 
-        assert len(results) == 4
+        results = await coord.run_all([work, work, boom, work])
+
+        assert results[:2] == [1, 1]
+        assert isinstance(results[2], ValueError)
+        assert results[3] == 1
         assert mock.call_count == 2
+        await coord.shutdown()
+
+    async def test_run_all_leaves_queue_room_for_other_callers(self, mock_popen_uci):
+        coord = WorkCoordinator("/fake/stockfish", pool_size=2)
+        await coord.start()
+        order: list[str] = []
+
+        async def slow(engine):
+            await asyncio.sleep(0.01)
+            order.append("batch")
+
+        async def interactive(engine):
+            order.append("interactive")
+
+        batch = asyncio.create_task(coord.run_all([slow for _ in range(10)]))
+        await asyncio.sleep(0)
+        await coord.submit(interactive)
+        assert order.index("interactive") <= 2
+        await batch
         await coord.shutdown()
 
     async def test_submit_returns_awaitable_future(self, mock_popen_uci):
