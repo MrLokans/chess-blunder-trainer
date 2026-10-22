@@ -1,6 +1,7 @@
 import { useCallback, useRef, useContext } from 'preact/hooks';
 import { client, ApiError } from '../../shared/api';
 import { TrainerContext } from '../context';
+import { useFeature } from '../../hooks/useFeature';
 import type { SubmitMoveResponse } from '../../types/api';
 import type { QueryParams } from './useFilters';
 
@@ -24,6 +25,7 @@ async function hasActiveJobs(): Promise<boolean> {
 
 export function usePuzzle(): PuzzleAPI {
   const { state, dispatch } = useContext(TrainerContext);
+  const animatePreMove = useFeature('trainer.pre_move');
   const cooldownRef = useRef(false);
 
   const loadPuzzle = useCallback(async (filterParams?: QueryParams) => {
@@ -36,7 +38,7 @@ export function usePuzzle(): PuzzleAPI {
 
     try {
       const data = await client.trainer.getPuzzle(filterParams);
-      dispatch({ type: 'SET_PUZZLE', puzzle: data });
+      dispatch({ type: 'SET_PUZZLE', puzzle: data, animatePreMove });
       dispatch({ type: 'SET_FEN', fen: data.fen });
       dispatch({ type: 'SET_ORIENTATION', orientation: data.player_color === 'black' ? 'black' : 'white' });
       trackEvent('Puzzle Loaded', {
@@ -63,7 +65,7 @@ export function usePuzzle(): PuzzleAPI {
         dispatch({ type: 'SET_ERROR', error: t('common.error') });
       }
     }
-  }, [dispatch]);
+  }, [dispatch, animatePreMove]);
 
   const loadSpecificPuzzle = useCallback(async (gameId: string, ply: string) => {
     dispatch({ type: 'RESET_FOR_NEW_PUZZLE' });
@@ -71,7 +73,7 @@ export function usePuzzle(): PuzzleAPI {
 
     try {
       const data = await client.trainer.getSpecificPuzzle(gameId, parseInt(ply, 10));
-      dispatch({ type: 'SET_PUZZLE', puzzle: data });
+      dispatch({ type: 'SET_PUZZLE', puzzle: data, animatePreMove });
       dispatch({ type: 'SET_FEN', fen: data.fen });
       dispatch({ type: 'SET_ORIENTATION', orientation: data.player_color === 'black' ? 'black' : 'white' });
     } catch (err) {
@@ -79,7 +81,7 @@ export function usePuzzle(): PuzzleAPI {
       dispatch({ type: 'SET_ERROR', error: t('common.error') });
       dispatch({ type: 'SET_LOADING', loading: false });
     }
-  }, [dispatch]);
+  }, [dispatch, animatePreMove]);
 
   const loadReviewPuzzle = useCallback(async (): Promise<boolean> => {
     dispatch({ type: 'RESET_FOR_NEW_PUZZLE' });
@@ -87,7 +89,7 @@ export function usePuzzle(): PuzzleAPI {
 
     try {
       const data = await client.srs.next();
-      dispatch({ type: 'SET_PUZZLE', puzzle: data });
+      dispatch({ type: 'SET_PUZZLE', puzzle: data, animatePreMove });
       dispatch({ type: 'SET_FEN', fen: data.fen });
       dispatch({ type: 'SET_ORIENTATION', orientation: data.player_color === 'black' ? 'black' : 'white' });
       return true;
@@ -95,7 +97,7 @@ export function usePuzzle(): PuzzleAPI {
       dispatch({ type: 'SET_LOADING', loading: false });
       return false;
     }
-  }, [dispatch]);
+  }, [dispatch, animatePreMove]);
 
   const submitMove = useCallback(async (uci: string): Promise<SubmitMoveResponse | null> => {
     const puzzle = state.puzzle;

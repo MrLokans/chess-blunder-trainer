@@ -83,9 +83,7 @@ export class TrainerPage extends BasePage {
     const file = square.charCodeAt(0) - 97; // a=0, h=7
     const rank = parseInt(square.charAt(1), 10) - 1; // 1=0, 8=7
 
-    const orientation = await this.board.evaluate(
-      (el) => el.classList.contains('orientation-black') ? 'black' : 'white',
-    );
+    const orientation = await this.board.getAttribute('data-orientation');
 
     const cellSize = box.width / 8;
     const col = orientation === 'white' ? file : 7 - file;
@@ -102,7 +100,14 @@ export class TrainerPage extends BasePage {
     await this.page.mouse.click(x, y);
   }
 
+  // Moves made before the board accepts them (e.g. during the opponent's
+  // pre-move animation) are silently dropped, by clicks and vim input alike.
+  async waitForMovableBoard(): Promise<void> {
+    await expect(this.board).toHaveAttribute('data-movable', /^(white|black)$/);
+  }
+
   async makeMove(from: string, to: string): Promise<void> {
+    await this.waitForMovableBoard();
     await this.clickSquare(from);
     await this.clickSquare(to);
   }
@@ -116,12 +121,16 @@ export class TrainerPage extends BasePage {
   // --- Vim mode ---
 
   async openVimMode(): Promise<void> {
-    await this.page.keyboard.press(':');
-    await expect(this.vimInput).toHaveClass(/active/);
+    // The keydown listener attaches after the board paints; retry until it is live.
+    await expect(async () => {
+      await this.page.keyboard.press(':');
+      await expect(this.vimInput).toHaveClass(/active/, { timeout: 500 });
+    }).toPass();
     await expect(this.vimInputField).toBeVisible();
   }
 
   async typeVimMove(san: string): Promise<void> {
+    await this.waitForMovableBoard();
     await this.openVimMode();
     await this.vimInputField.fill(san);
     await this.vimInputField.press('Enter');
@@ -198,20 +207,15 @@ export class TrainerPage extends BasePage {
   async uncheckGameTypeFilter(gameType: string): Promise<void> {
     const section = this.page.locator('.game-type-filter');
     await expect(section).toBeVisible();
-    const label = section.locator('label.filter-checkbox-label', { hasText: new RegExp(gameType, 'i') });
+    const label = section.locator(`label.filter-checkbox-label[data-value="${gameType}"]`);
     await label.click();
   }
 
   async setColorFilter(color: 'white' | 'black' | 'both'): Promise<void> {
     const section = this.page.locator('.color-filter');
     await expect(section).toBeVisible();
-    const label = section.locator('label.filter-radio-label', { hasText: new RegExp(color, 'i') });
+    const label = section.locator(`label.filter-radio-label[data-value="${color}"]`);
     await label.click();
-  }
-
-  async clearFilters(): Promise<void> {
-    const clearBtn = this.page.getByRole('button', { name: /clear/i });
-    await clearBtn.click();
   }
 
   async expectActiveFilterCount(minCount: number): Promise<void> {

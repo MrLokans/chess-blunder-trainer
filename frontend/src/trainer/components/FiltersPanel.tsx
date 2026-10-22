@@ -29,7 +29,7 @@ function CheckboxGroup({ items, selected, onChange, labelPrefix }: {
   return (
     <>
       {items.map(item => (
-        <label key={item} class="filter-checkbox-label">
+        <label key={item} class="filter-checkbox-label" data-value={item}>
           <input
             type="checkbox"
             checked={selected.includes(item)}
@@ -135,7 +135,7 @@ export function FiltersPanel({ filters }: FiltersPanelProps): preact.JSX.Element
               <div class="filter-label">{t('trainer.filters.color')}</div>
               <div class="color-filter">
                 {(['both', 'white', 'black'] as const).map(c => (
-                  <label key={c} class="filter-radio-label">
+                  <label key={c} class="filter-radio-label" data-value={c}>
                     <input
                       type="radio"
                       name="colorFilter"

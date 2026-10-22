@@ -8,11 +8,12 @@ export interface SegmentedProps<T> {
   value: T;
   onChange: (value: T) => void;
   ariaLabel?: string;
+  testId?: string;
 }
 
-export function Segmented<T>({ options, value, onChange, ariaLabel }: SegmentedProps<T>) {
+export function Segmented<T>({ options, value, onChange, ariaLabel, testId }: SegmentedProps<T>) {
   return (
-    <div class="segmented" role="group" aria-label={ariaLabel}>
+    <div class="segmented" role="group" aria-label={ariaLabel} data-testid={testId}>
       {options.map(opt => (
         <button
           key={String(opt.value)}

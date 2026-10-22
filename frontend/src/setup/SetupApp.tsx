@@ -362,7 +362,7 @@ export function SetupApp() {
               <div class="help-text">{t('setup.chesscom_help')}</div>
             </div>
 
-            <Button type="submit" variant="primary" disabled={submitting}>
+            <Button type="submit" variant="primary" disabled={submitting} testId="setup-submit">
               {submitting ? t('setup.submitting') : t('setup.submit')}
             </Button>
           </form>

@@ -64,17 +64,8 @@ export function AddProfileModal({ open, onClose, onCreated, existingProfiles }: 
   // call from a prior keystroke can't overwrite a fresher result.
   const latestRequestRef = useRef(0);
 
-  // When the user opens the modal, default `make_primary` to true unless a
-  // profile already exists for the currently-selected platform.
-  useEffect(() => {
-    if (!open) return;
-    setMakePrimary(!platformHasProfile(existingProfiles, platform));
-    setValidation({ status: 'idle' });
-    setSubmitError(null);
-    setUsername('');
-  }, [open, existingProfiles, platform]);
-
-  // Re-evaluate the make-primary default when the user switches platform.
+  // Default `make_primary` to true unless a profile already exists for the
+  // selected platform; re-evaluated on platform switch.
   useEffect(() => {
     setMakePrimary(!platformHasProfile(existingProfiles, platform));
   }, [platform, existingProfiles]);
@@ -107,6 +98,18 @@ export function AddProfileModal({ open, onClose, onCreated, existingProfiles }: 
     [runValidation],
   );
 
+  // Reset in the close handler rather than an effect: effects run after paint,
+  // so an effect-driven reset races the user's (or a test's) first keystrokes.
+  const handleClose = useCallback(() => {
+    debouncedValidate.cancel();
+    latestRequestRef.current += 1; // drop in-flight validations
+    setValidation({ status: 'idle' });
+    setSubmitError(null);
+    setUsername('');
+    setMakePrimary(!platformHasProfile(existingProfiles, platform));
+    onClose();
+  }, [debouncedValidate, existingProfiles, platform, onClose]);
+
   const handleUsernameChange = useCallback((value: string) => {
     setUsername(value);
     setValidation({ status: 'idle' });
@@ -136,7 +139,7 @@ export function AddProfileModal({ open, onClose, onCreated, existingProfiles }: 
         make_primary: makePrimary,
       });
       onCreated(created);
-      onClose();
+      handleClose();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setSubmitError(t('profiles.add_modal.race_conflict'));
@@ -147,7 +150,7 @@ export function AddProfileModal({ open, onClose, onCreated, existingProfiles }: 
     } finally {
       setSubmitting(false);
     }
-  }, [canSubmit, platform, username, makePrimary, onCreated, onClose]);
+  }, [canSubmit, platform, username, makePrimary, onCreated, handleClose]);
 
   const validationError = validationToError(validation);
   const validationHint = validation.status === 'checking'
@@ -157,8 +160,8 @@ export function AddProfileModal({ open, onClose, onCreated, existingProfiles }: 
       : undefined;
 
   return (
-    <Modal open={open} onClose={onClose} title={t('profiles.add_modal.title')} size="md">
-      <div class="add-profile-form">
+    <Modal open={open} onClose={handleClose} title={t('profiles.add_modal.title')} size="md">
+      <div class="add-profile-form" data-testid="add-profile-form" data-validation={validation.status}>
         <FormField label={t('profiles.add_modal.platform_label')}>
           <Dropdown options={PLATFORM_OPTIONS} value={platform} onChange={handlePlatformChange} />
         </FormField>
@@ -187,10 +190,11 @@ export function AddProfileModal({ open, onClose, onCreated, existingProfiles }: 
         <Alert type="error" message={submitError} />
 
         <div class="add-profile-form__actions">
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={handleClose} testId="add-profile-cancel">
             {t('profiles.add_modal.cancel')}
           </Button>
           <Button
+            testId="add-profile-submit"
             variant="primary"
             onClick={() => { void handleSubmit(); }}
             disabled={!canSubmit}

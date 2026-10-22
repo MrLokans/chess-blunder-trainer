@@ -24,7 +24,7 @@ test.describe('Game review engine', () => {
 
     // The multi-PV selector (a Segmented control, role="group") renders as soon as
     // analysis mode is on (no engine needed).
-    await expect(page.locator('#engineControls').getByRole('group', { name: /lines/i })).toBeVisible();
+    await expect(page.getByTestId('engine-multipv')).toBeVisible();
 
     // End-to-end smoke: the (single-threaded) engine actually loads and produces
     // lines, so the panel becomes visible. Generous timeout for WASM load.

@@ -28,23 +28,23 @@ export class ProfilesPage extends BasePage {
     this.sidebar = page.locator('.profile-list');
     // The "add" trigger has two locations depending on state: empty CTA or
     // sidebar button. Both ultimately open the same modal.
-    this.addButton = page.getByRole('button', { name: /Add profile|Add your first profile/i });
-    this.emptyStateCta = page.getByRole('button', { name: /Add your first profile/i });
+    this.addButton = page.getByTestId('profile-add').or(page.getByTestId('profile-add-first'));
+    this.emptyStateCta = page.getByTestId('profile-add-first');
     this.modal = page.getByRole('dialog');
     this.platformDropdown = this.modal.getByRole('button', { expanded: false }).first();
     this.usernameInput = this.modal.getByRole('textbox');
-    this.modalSubmit = this.modal.getByRole('button', { name: /Add profile/i });
-    this.modalCancel = this.modal.getByRole('button', { name: /Cancel/i });
-    this.tablistOverview = page.getByRole('tab', { name: /Overview/i });
-    this.tablistPreferences = page.getByRole('tab', { name: /Preferences/i });
-    this.preferencesSaveButton = page.getByRole('button', { name: /Save preferences/i });
-    this.preferencesDeleteButton = page.getByRole('button', { name: /Delete profile/i });
+    this.modalSubmit = page.getByTestId('add-profile-submit');
+    this.modalCancel = page.getByTestId('add-profile-cancel');
+    this.tablistOverview = page.getByTestId('tab-overview');
+    this.tablistPreferences = page.getByTestId('tab-preferences');
+    this.preferencesSaveButton = page.getByTestId('profile-preferences-save');
+    this.preferencesDeleteButton = page.getByTestId('profile-delete');
     this.autoSyncToggle = page.getByRole('switch');
     this.maxGamesInput = page.getByRole('spinbutton');
     this.confirmDialog = page.getByRole('dialog');
-    this.confirmDetach = page.getByRole('button', { name: /Detach/i });
-    this.confirmDeleteGames = page.getByRole('button', { name: /Delete games too/i });
-    this.confirmCancel = page.getByRole('button', { name: /Cancel/i });
+    this.confirmDetach = page.getByTestId('confirm-dialog-confirm');
+    this.confirmDeleteGames = page.getByTestId('confirm-dialog-secondary');
+    this.confirmCancel = page.getByTestId('confirm-dialog-cancel');
   }
 
   async goto(): Promise<void> {
@@ -76,6 +76,7 @@ export class ProfilesPage extends BasePage {
 
   /** Sidebar card containing the given username (case-insensitive match). */
   cardForUsername(username: string): Locator {
+    // eslint-disable-next-line no-restricted-syntax -- matches user data, not UI text
     return this.sidebar.locator('.profile-list__item', { hasText: username.toLowerCase() });
   }
 }

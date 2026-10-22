@@ -12,7 +12,7 @@ export class ImportPage extends BasePage {
     super(page);
     this.root = page.locator('#import-root');
     this.pgnTextarea = page.locator('.pgn-textarea');
-    this.submitBtn = this.root.getByRole('button', { name: /import/i });
+    this.submitBtn = this.root.getByTestId('import-submit');
     this.errors = page.locator('.import-errors');
     this.spinner = page.locator('.import-spinner');
   }

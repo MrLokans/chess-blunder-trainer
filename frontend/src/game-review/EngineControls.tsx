@@ -50,6 +50,7 @@ export function EngineControls(props: EngineControlsProps) {
                 value={props.multipv}
                 onChange={props.onMultiPv}
                 ariaLabel={t('game_review.engine.multipv')}
+                testId="engine-multipv"
               />
             </div>
 

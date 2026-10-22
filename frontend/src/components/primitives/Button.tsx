@@ -12,6 +12,7 @@ export interface ButtonProps {
   type?: 'button' | 'submit' | 'reset';
   onClick?: () => void;
   ariaLabel?: string;
+  testId?: string;
   children?: ComponentChildren;
 }
 
@@ -28,6 +29,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     type = 'button',
     onClick,
     ariaLabel,
+    testId,
     children,
   },
   ref,
@@ -42,6 +44,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={isDisabled}
       aria-busy={loading || undefined}
       aria-label={ariaLabel}
+      data-testid={testId}
       onClick={onClick}
     >
       {loading && <span class="btn__spinner" aria-hidden="true" />}

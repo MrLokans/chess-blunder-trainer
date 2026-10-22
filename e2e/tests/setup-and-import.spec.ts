@@ -154,7 +154,7 @@ test.describe('Setup → Bulk Import (post-rewrite, profile-aware)', () => {
     const setupCompletePromise = page.waitForResponse((resp) =>
       resp.url().endsWith('/api/setup/complete') && resp.request().method() === 'POST',
     );
-    await page.locator('#submitBtn').click();
+    await page.getByTestId('setup-submit').click();
 
     const completeResp = await setupCompletePromise;
     expect(completeResp.status()).toBe(200);
@@ -172,7 +172,7 @@ test.describe('Setup → Bulk Import (post-rewrite, profile-aware)', () => {
     //    profiles and expose a single "Update games" button (no per-profile
     //    selector — fan-out happens on click).
     await page.goto('/management');
-    const updateButton = page.getByRole('button', { name: /Update games/i });
+    const updateButton = page.getByTestId('update-games');
     await expect(updateButton).toBeVisible({ timeout: 10_000 });
     const profileItems = page.locator('.update-games-panel__profile');
     await expect(profileItems).toHaveCount(2);

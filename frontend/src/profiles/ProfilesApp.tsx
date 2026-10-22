@@ -161,7 +161,7 @@ function ProfilesView({ initialProfiles, demoMode }: ProfilesViewProps) {
           title={t('profiles.empty_state.title')}
           message={t('profiles.empty_state.message')}
           action={
-            <Button variant="primary" onClick={handleAddOpen}>
+            <Button variant="primary" onClick={handleAddOpen} testId="profile-add-first">
               {t('profiles.empty_state.cta')}
             </Button>
           }
@@ -192,7 +192,7 @@ function ProfilesView({ initialProfiles, demoMode }: ProfilesViewProps) {
           onSelect={handleSelect}
         />
         <div class="profiles-app__sidebar-actions">
-          <Button variant="primary" size="sm" onClick={handleAddOpen}>
+          <Button variant="primary" size="sm" onClick={handleAddOpen} testId="profile-add">
             {t('profiles.add_button')}
           </Button>
         </div>

@@ -1,24 +1,44 @@
 import { describe, it, expect } from 'vitest';
 import { trainerReducer, initialState } from '../../src/trainer/context';
 
+const PUZZLE = {
+  game_id: 'abc', fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+  ply: 10, blunder_uci: 'e2e4', blunder_san: 'e4', best_move_uci: 'd2d4',
+  best_move_san: 'd4', best_line: ['d4', 'Nf6'], player_color: 'white' as const,
+  eval_before: 50, eval_after: -200, eval_before_display: '+0.5',
+  eval_after_display: '-2.0', cp_loss: 250, game_phase: 'middlegame',
+  tactical_pattern: null, tactical_reason: null, tactical_squares: [],
+  explanation_blunder: null, explanation_best: null, game_url: null,
+  difficulty: 'medium', pre_move_uci: null, pre_move_fen: null, best_move_eval: 60,
+};
+
+const WITH_PRE_MOVE = {
+  ...PUZZLE,
+  pre_move_uci: 'e7e5',
+  pre_move_fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1',
+};
+
 describe('trainerReducer', () => {
   it('sets puzzle data', () => {
-    const puzzle = {
-      game_id: 'abc', fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-      ply: 10, blunder_uci: 'e2e4', blunder_san: 'e4', best_move_uci: 'd2d4',
-      best_move_san: 'd4', best_line: ['d4', 'Nf6'], player_color: 'white' as const,
-      eval_before: 50, eval_after: -200, eval_before_display: '+0.5',
-      eval_after_display: '-2.0', cp_loss: 250, game_phase: 'middlegame',
-      tactical_pattern: null, tactical_reason: null, tactical_squares: [],
-      explanation_blunder: null, explanation_best: null, game_url: null,
-      difficulty: 'medium', pre_move_uci: null, pre_move_fen: null, best_move_eval: 60,
-    };
-    const state = trainerReducer(initialState, { type: 'SET_PUZZLE', puzzle });
-    expect(state.puzzle).toBe(puzzle);
+    const state = trainerReducer(initialState, { type: 'SET_PUZZLE', puzzle: PUZZLE, animatePreMove: true });
+    expect(state.puzzle).toBe(PUZZLE);
     expect(state.submitted).toBe(false);
     expect(state.bestRevealed).toBe(false);
     expect(state.moveHistory).toEqual([]);
     expect(state.loading).toBe(false);
+    expect(state.preMoveAnimating).toBe(false);
+  });
+
+  it('locks only the board from the first render while a pre-move will animate', () => {
+    const state = trainerReducer(initialState, { type: 'SET_PUZZLE', puzzle: WITH_PRE_MOVE, animatePreMove: true });
+    expect(state.preMoveAnimating).toBe(true);
+    expect(state.animating).toBe(false);
+    expect(trainerReducer(state, { type: 'PRE_MOVE_DONE' }).preMoveAnimating).toBe(false);
+  });
+
+  it('does not lock when pre-move animation is disabled', () => {
+    const state = trainerReducer(initialState, { type: 'SET_PUZZLE', puzzle: WITH_PRE_MOVE, animatePreMove: false });
+    expect(state.preMoveAnimating).toBe(false);
   });
 
   it('marks submitted', () => {

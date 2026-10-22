@@ -6,6 +6,15 @@ function delay(ms: number): Promise<void> {
 }
 
 describe('debounce', () => {
+  it('cancel drops a pending call', async () => {
+    let callCount = 0;
+    const fn = debounce(() => { callCount++; }, 50);
+    fn();
+    fn.cancel();
+    await delay(80);
+    expect(callCount).toBe(0);
+  });
+
   it('delays execution until after the quiet period', async () => {
     let callCount = 0;
     const fn = debounce(() => { callCount++; }, 50);

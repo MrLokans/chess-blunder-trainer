@@ -53,4 +53,20 @@ describe('VimInput', () => {
       expect.objectContaining({ san: 'e4', from: 'e2', to: 'e4' }),
     );
   });
+
+  it('keeps typed text when the game object changes while open', () => {
+    const { rerender } = render(<VimInput {...defaultProps} game={new Chess()} />);
+    const input = screen.getByRole('textbox') as HTMLInputElement;
+    fireEvent.input(input, { target: { value: 'e4' } });
+    rerender(<VimInput {...defaultProps} game={new Chess()} />);
+    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('e4');
+  });
+
+  it('starts empty after close and reopen', () => {
+    const { rerender } = render(<VimInput {...defaultProps} game={new Chess()} />);
+    fireEvent.input(screen.getByRole('textbox'), { target: { value: 'e4' } });
+    rerender(<VimInput {...defaultProps} visible={false} game={new Chess()} />);
+    rerender(<VimInput {...defaultProps} game={new Chess()} />);
+    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('');
+  });
 });

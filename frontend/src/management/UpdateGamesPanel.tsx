@@ -105,6 +105,7 @@ export function UpdateGamesPanel({
 
       <div class="update-games-panel__actions">
         <Button
+          testId="update-games"
           variant="primary"
           onClick={() => { void handleUpdate(); }}
           loading={dispatching}

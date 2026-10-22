@@ -84,7 +84,9 @@ test.describe('Profiles page — five core flows', () => {
     // Sidebar should show the profile after the modal closes.
     await expect(profilesPage.modal).toBeHidden({ timeout: 15_000 });
     await expect(profilesPage.cardForUsername(REAL_USER)).toBeVisible();
-    await expect(profilesPage.cardForUsername(REAL_USER)).toContainText(/Primary/i);
+    await expect(
+      profilesPage.cardForUsername(REAL_USER).getByTestId('profile-primary-badge'),
+    ).toBeVisible();
   });
 
   test('3. validate-duplicate disables the submit button', async ({
@@ -99,7 +101,8 @@ test.describe('Profiles page — five core flows', () => {
 
     // Submit stays disabled because validation reports already_tracked.
     await expect(profilesPage.modalSubmit).toBeDisabled();
-    await expect(page.getByRole('alert')).toContainText(/already tracked/i);
+    await expect(page.getByTestId('add-profile-form'))
+      .toHaveAttribute('data-validation', 'already_tracked');
 
     await profilesPage.modalCancel.click();
     await expect(profilesPage.modal).toBeHidden();
@@ -135,7 +138,6 @@ test.describe('Profiles page — five core flows', () => {
 
   test('5. delete with detach removes the profile from the sidebar', async ({
     profilesPage,
-    page,
   }) => {
     await profilesPage.goto();
     await profilesPage.cardForUsername(REAL_USER).click();
@@ -150,7 +152,6 @@ test.describe('Profiles page — five core flows', () => {
     await expect(profilesPage.cardForUsername(REAL_USER)).toBeHidden();
 
     // After the only profile is gone, the empty state CTA returns.
-    await expect(page.getByRole('button', { name: /Add your first profile/i }))
-      .toBeVisible();
+    await expect(profilesPage.emptyStateCta).toBeVisible();
   });
 });

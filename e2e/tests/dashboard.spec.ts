@@ -7,8 +7,9 @@ test.describe('Dashboard', () => {
       await dashboardPage.expectLoaded();
     });
 
-    await test.step('Stats cards are rendered', async () => {
-      await expect(dashboardPage.statCards.nth(2)).toBeVisible();
+    await test.step('KPI strip shows demo data', async () => {
+      await expect(dashboardPage.kpis).toHaveCount(4);
+      await expect(dashboardPage.kpis.first().locator('strong')).not.toHaveText('0');
     });
   });
 

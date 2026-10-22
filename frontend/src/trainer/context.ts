@@ -21,6 +21,9 @@ export interface TrainerState {
   linePositions: LinePosition[];
   lineViewIndex: number;
   animating: boolean;
+  // Board-only lock while the opponent's preceding move animates in; unlike
+  // `animating` it must not block shortcuts such as next puzzle or reveal.
+  preMoveAnimating: boolean;
   boardFlipped: boolean;
   currentStarred: boolean;
 
@@ -36,7 +39,7 @@ export interface TrainerState {
 }
 
 export type TrainerAction =
-  | { type: 'SET_PUZZLE'; puzzle: PuzzleData }
+  | { type: 'SET_PUZZLE'; puzzle: PuzzleData; animatePreMove: boolean }
   | { type: 'RESET_FOR_NEW_PUZZLE' }
   | { type: 'SET_SUBMITTED' }
   | { type: 'REVEAL_BEST' }
@@ -51,6 +54,7 @@ export type TrainerAction =
   | { type: 'SET_LINE_VIEW_INDEX'; index: number }
   | { type: 'CLEAR_LINE_NAVIGATION' }
   | { type: 'SET_ANIMATING'; animating: boolean }
+  | { type: 'PRE_MOVE_DONE' }
   | { type: 'SET_EMPTY_STATE'; emptyState: EmptyStateType }
   | { type: 'SET_ERROR'; error: string | null }
   | { type: 'TOGGLE_SHORTCUTS' }
@@ -65,6 +69,7 @@ export const initialState: TrainerState = {
   linePositions: [],
   lineViewIndex: -1,
   animating: false,
+  preMoveAnimating: false,
   boardFlipped: false,
   currentStarred: false,
 
@@ -79,6 +84,10 @@ export const initialState: TrainerState = {
   emptyState: null,
 };
 
+export function hasPreMove(puzzle: PuzzleData): boolean {
+  return Boolean(puzzle.pre_move_uci && puzzle.pre_move_fen);
+}
+
 export function trainerReducer(state: TrainerState, action: TrainerAction): TrainerState {
   switch (action.type) {
     case 'SET_PUZZLE':
@@ -91,6 +100,8 @@ export function trainerReducer(state: TrainerState, action: TrainerAction): Trai
         linePositions: [],
         lineViewIndex: -1,
         animating: false,
+        // Locked from the first render, not via an effect after paint.
+        preMoveAnimating: action.animatePreMove && hasPreMove(action.puzzle),
         feedbackType: null,
         resultVisible: false,
         loading: false,
@@ -107,6 +118,7 @@ export function trainerReducer(state: TrainerState, action: TrainerAction): Trai
         linePositions: [],
         lineViewIndex: -1,
         animating: false,
+        preMoveAnimating: false,
         feedbackType: null,
         resultVisible: false,
         error: null,
@@ -139,6 +151,8 @@ export function trainerReducer(state: TrainerState, action: TrainerAction): Trai
       return { ...state, linePositions: [], lineViewIndex: -1 };
     case 'SET_ANIMATING':
       return { ...state, animating: action.animating };
+    case 'PRE_MOVE_DONE':
+      return { ...state, preMoveAnimating: false };
     case 'SET_EMPTY_STATE':
       return { ...state, emptyState: action.emptyState };
     case 'SET_ERROR':

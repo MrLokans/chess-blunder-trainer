@@ -71,6 +71,9 @@ export function Board({
               },
               lastMove: [orig, dest],
             });
+            markBoardState(
+              el, orientationRef.current, interactiveRef.current ? orientationRef.current : undefined,
+            );
 
             onMoveRef.current(orig, dest, move);
           },
@@ -82,6 +85,7 @@ export function Board({
       drawable: { enabled: false },
     });
     cgRef.current = cg;
+    markBoardState(el, orientation, interactive ? orientation : undefined);
 
     return () => {
       cg.destroy();
@@ -104,11 +108,17 @@ export function Board({
         dests: game && interactive ? buildDests(game) : new Map(),
       },
     });
+    if (containerRef.current) {
+      markBoardState(containerRef.current, orientation, interactive ? orientation : undefined);
+    }
   }, [fen, interactive, orientation, gameRef]);
 
   // Sync orientation
   useEffect(() => {
-    cgRef.current?.set({ orientation });
+    const cg = cgRef.current;
+    if (!cg || !containerRef.current) return;
+    cg.set({ orientation });
+    containerRef.current.dataset.orientation = orientation;
   }, [orientation]);
 
   // Sync coordinates
@@ -143,13 +153,8 @@ export function Board({
       });
 
       t2 = setTimeout(() => {
-        cg.set({
-          animation: { duration: 150 },
-          movable: {
-            color: orientationRef.current,
-            dests: game ? buildDests(game) : new Map(),
-          },
-        });
+        // Movability comes from the sync effect once onComplete clears `animating`.
+        cg.set({ animation: { duration: 150 } });
         animateFrom.onComplete();
       }, 400);
     }, 400);
@@ -161,4 +166,15 @@ export function Board({
   }, [animateFrom, fen, gameRef]);
 
   return <div ref={containerRef} class="cg-wrap" id="board" />;
+}
+
+// Stable hooks for e2e: chessground state changes land in effects after paint,
+// so tests wait on these instead of guessing timing or reading its CSS classes.
+function markBoardState(
+  el: HTMLElement,
+  orientation: 'white' | 'black',
+  movableColor: 'white' | 'black' | undefined,
+): void {
+  el.dataset.orientation = orientation;
+  el.dataset.movable = movableColor ?? 'none';
 }

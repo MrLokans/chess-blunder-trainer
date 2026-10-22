@@ -31,12 +31,12 @@ test.describe('Navigation', () => {
     });
 
     await test.step('Navigate to dashboard via nav', async () => {
-      await trainerPage.clickNavLink('Dashboard');
+      await trainerPage.clickNavLink('/dashboard');
       await page.waitForURL('**/dashboard');
     });
 
     await test.step('Navigate to settings via nav', async () => {
-      await trainerPage.clickNavLink('Settings');
+      await trainerPage.clickNavLink('/settings');
       await page.waitForURL('**/settings');
     });
 

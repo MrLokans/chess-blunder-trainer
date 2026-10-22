@@ -110,7 +110,7 @@ test.describe('Trainer - Feature-Gated Filters', () => {
 
     await test.step('Click a phase filter and get response', async () => {
       const phaseSection = trainerPage.page.locator('.phase-filter');
-      const endgameLabel = phaseSection.locator('label.filter-checkbox-label', { hasText: /endgame/i });
+      const endgameLabel = phaseSection.locator('label.filter-checkbox-label[data-value="endgame"]');
       const responsePromise = trainerPage.page.waitForResponse(
         resp => resp.url().includes('/api/puzzle'),
       );

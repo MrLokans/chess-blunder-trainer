@@ -20,7 +20,7 @@ export class GameReviewPage extends BasePage {
   async enableAnalysis(): Promise<void> {
     // The analysis control is a <Toggle> (role="switch"), not a checkbox, so check()
     // doesn't apply — click it only if it isn't already on.
-    const toggle = this.page.getByRole('switch', { name: /engine analysis/i });
+    const toggle = this.page.locator('#engineAnalysisToggle');
     if ((await toggle.getAttribute('aria-checked')) !== 'true') {
       await toggle.click();
     }

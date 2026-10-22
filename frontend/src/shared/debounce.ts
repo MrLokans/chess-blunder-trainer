@@ -1,15 +1,25 @@
+export type Debounced<T extends (...args: never[]) => void> = ((...args: Parameters<T>) => void) & {
+  cancel: () => void;
+};
+
 export function debounce<T extends (...args: never[]) => void>(
   fn: T,
   delayMs: number,
-): (...args: Parameters<T>) => void {
+): Debounced<T> {
   let timer: ReturnType<typeof setTimeout> | null = null;
-  return function (this: unknown, ...args: Parameters<T>) {
+  const debounced = function (this: unknown, ...args: Parameters<T>) {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       timer = null;
       fn.apply(this, args);
     }, delayMs);
   };
+  return Object.assign(debounced, {
+    cancel: () => {
+      if (timer) clearTimeout(timer);
+      timer = null;
+    },
+  });
 }
 
 export function throttle<T extends (...args: never[]) => void>(

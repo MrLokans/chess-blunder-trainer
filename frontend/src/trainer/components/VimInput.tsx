@@ -30,14 +30,17 @@ export function VimInput({ visible, game, interactive, onMove, onClose }: VimInp
     setSelectedIndex(-1);
   }, [game]);
 
+  // Clear on close, not on open: effects run after paint, so an on-open reset
+  // wipes keystrokes typed right after the input appears.
   useEffect(() => {
-    if (visible && fieldRef.current) {
+    if (!visible) {
       setValue('');
       setError('');
       setSelectedIndex(-1);
-      fieldRef.current.focus();
-      updateSuggestions('');
+      return;
     }
+    fieldRef.current?.focus();
+    updateSuggestions(fieldRef.current?.value ?? '');
   }, [visible, updateSuggestions]);
 
   const tryMove = useCallback((moveStr: string) => {

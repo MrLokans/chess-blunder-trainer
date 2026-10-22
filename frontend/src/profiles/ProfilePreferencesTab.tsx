@@ -128,6 +128,7 @@ export function ProfilePreferencesTab({
 
       <div class="profile-preferences__actions">
         <Button
+          testId="profile-preferences-save"
           variant="primary"
           onClick={() => { void handleSave(); }}
           loading={saving}
@@ -148,6 +149,7 @@ export function ProfilePreferencesTab({
           {t('profiles.preferences.delete_explainer')}
         </p>
         <Button
+          testId="profile-delete"
           variant="danger"
           onClick={() => { setConfirmOpen(true); }}
           disabled={demoMode}

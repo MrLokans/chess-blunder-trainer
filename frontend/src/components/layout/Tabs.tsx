@@ -67,6 +67,7 @@ export function Tabs<K extends string = string>({
             <button
               key={tab.key}
               id={tabId(tab.key)}
+              data-testid={`tab-${tab.key}`}
               type="button"
               role="tab"
               aria-selected={active}

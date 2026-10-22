@@ -82,6 +82,65 @@ describe('AddProfileModal', () => {
     expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('false');
   });
 
+  test('keeps the typed username when the profile list refreshes while open', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const { rerender } = render(
+      <AddProfileModal open={true} onClose={() => {}} onCreated={() => {}} existingProfiles={[]} />,
+    );
+    await user.type(screen.getByRole('textbox'), 'magnuscarlsen');
+    rerender(
+      <AddProfileModal open={true} onClose={() => {}} onCreated={() => {}} existingProfiles={[]} />,
+    );
+    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('magnuscarlsen');
+  });
+
+  test('keeps the typed username when switching platform', async () => {
+    fetchSpy.mockResolvedValue(validateResponse());
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(
+      <AddProfileModal open={true} onClose={() => {}} onCreated={() => {}} existingProfiles={[]} />,
+    );
+    await user.type(screen.getByRole('textbox'), 'magnuscarlsen');
+    await user.click(screen.getByRole('button', { name: /Lichess/ }));
+    await user.click(screen.getByRole('option', { name: 'Chess.com' }));
+    expect(screen.getByRole('button', { name: /Chess\.com/ })).toBeDefined();
+    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('magnuscarlsen');
+  });
+
+  test('reopening after cancel shows a clean form even if validation was pending', async () => {
+    fetchSpy.mockResolvedValue(validateResponse());
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const { rerender } = render(
+      <AddProfileModal open={true} onClose={() => {}} onCreated={() => {}} existingProfiles={[]} />,
+    );
+    await user.type(screen.getByRole('textbox'), 'magnuscarlsen');
+    await user.click(screen.getByRole('button', { name: 'profiles.add_modal.cancel' }));
+    rerender(
+      <AddProfileModal open={false} onClose={() => {}} onCreated={() => {}} existingProfiles={[]} />,
+    );
+    vi.advanceTimersByTime(500);
+    rerender(
+      <AddProfileModal open={true} onClose={() => {}} onCreated={() => {}} existingProfiles={[]} />,
+    );
+    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(screen.queryByText(/profiles\.add_modal\.validation\.valid/)).toBeNull();
+  });
+
+  test('reopening after cancel restores the make-primary default', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const { rerender } = render(
+      <AddProfileModal open={true} onClose={() => {}} onCreated={() => {}} existingProfiles={[]} />,
+    );
+    await user.click(screen.getByRole('switch'));
+    expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('false');
+    await user.click(screen.getByRole('button', { name: 'profiles.add_modal.cancel' }));
+    rerender(
+      <AddProfileModal open={true} onClose={() => {}} onCreated={() => {}} existingProfiles={[]} />,
+    );
+    expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('true');
+  });
+
   test('typing username triggers debounced validation and shows valid state', async () => {
     fetchSpy.mockResolvedValueOnce(validateResponse({ exists: true, already_tracked: false }));
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });

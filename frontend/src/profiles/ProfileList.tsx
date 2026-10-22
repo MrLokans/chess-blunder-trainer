@@ -29,7 +29,7 @@ export function ProfileList({ profiles, selectedId, onSelect }: ProfileListProps
               <div class="profile-list__row">
                 <span class="profile-list__platform">{PLATFORM_LABEL[p.platform]}</span>
                 {p.is_primary && (
-                  <Badge variant="primary">
+                  <Badge variant="primary" testId="profile-primary-badge">
                     {t('profiles.list.primary_indicator')}
                   </Badge>
                 )}

@@ -90,6 +90,7 @@ export function ImportApp({ demoMode }: Props) {
 
         {!demoMode && (
           <Button
+            testId="import-submit"
             variant="primary"
             onClick={() => { void handleSubmit(); }}
             disabled={analyzing || !pgn.trim()}

@@ -62,7 +62,7 @@ export function ConfirmDialog({
     <Modal open={open} onClose={onClose} title={title} size="sm" initialFocusRef={initialFocusRef}>
       <p class="confirm-dialog__message">{message}</p>
       <div class="confirm-dialog__actions">
-        <Button ref={cancelRef} variant="ghost" onClick={onClose}>
+        <Button ref={cancelRef} variant="ghost" onClick={onClose} testId="confirm-dialog-cancel">
           {cancelLabel}
         </Button>
         {secondaryAction && (
@@ -70,6 +70,7 @@ export function ConfirmDialog({
             ref={secondaryRef}
             variant={secondaryAction.destructive ? 'danger' : 'secondary'}
             onClick={handleSecondary}
+            testId="confirm-dialog-secondary"
           >
             {secondaryAction.label}
           </Button>
@@ -78,6 +79,7 @@ export function ConfirmDialog({
           ref={confirmRef}
           variant={destructive ? 'danger' : 'primary'}
           onClick={handleConfirm}
+          testId="confirm-dialog-confirm"
         >
           {confirmLabel}
         </Button>

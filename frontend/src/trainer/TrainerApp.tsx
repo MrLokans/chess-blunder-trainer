@@ -45,7 +45,7 @@ function TrainerCore(): preact.JSX.Element {
   const lastPuzzleIdRef = useRef<string | null>(null);
   const submissionPendingRef = useRef(false);
 
-  const hasPreMove = useFeature('trainer.pre_move');
+  const hasPreMoveFeature = useFeature('trainer.pre_move');
   const srsEnabled = useFeature('trainer.srs');
   const reviewQueue = useReviewQueue(srsEnabled);
   const inReview = reviewQueue.session !== null;
@@ -100,14 +100,14 @@ function TrainerCore(): preact.JSX.Element {
   // Pre-move animation config
   const animateFrom = useMemo(() => {
     const puzzle = state.puzzle;
-    if (!puzzle || !hasPreMove || !puzzle.pre_move_uci || !puzzle.pre_move_fen) return null;
+    if (!puzzle || !hasPreMoveFeature || !puzzle.pre_move_uci || !puzzle.pre_move_fen) return null;
     return {
       fen: puzzle.pre_move_fen,
       from: puzzle.pre_move_uci.slice(0, 2),
       to: puzzle.pre_move_uci.slice(2, 4),
-      onComplete: () => { dispatch({ type: 'SET_ANIMATING', animating: false }); },
+      onComplete: () => { dispatch({ type: 'PRE_MOVE_DONE' }); },
     };
-  }, [state.puzzle, hasPreMove, dispatch]);
+  }, [state.puzzle, hasPreMoveFeature, dispatch]);
 
   // Submit move
   const handleSubmit = useCallback(async () => {
@@ -378,7 +378,8 @@ function TrainerCore(): preact.JSX.Element {
     return <div class="trainer-page" />;
   }
 
-  const interactive = !state.animating && !state.submitted && !submitting && !!state.puzzle;
+  const interactive = !state.animating && !state.preMoveAnimating && !state.submitted
+    && !submitting && !!state.puzzle;
 
   return (
     <div class="trainer-page">

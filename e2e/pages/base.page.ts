@@ -12,9 +12,9 @@ export abstract class BasePage {
     await this.page.waitForLoadState('networkidle');
   }
 
-  async clickNavLink(name: string): Promise<void> {
+  async clickNavLink(path: string): Promise<void> {
     await expect(this.nav).toBeVisible();
-    const link = this.nav.getByRole('link', { name });
+    const link = this.nav.locator(`a[href="${path}"]`);
     await expect(link).toBeVisible();
     await link.click();
     await this.page.waitForLoadState('networkidle');
