@@ -6,6 +6,7 @@ from datetime import datetime
 import chess.pgn
 
 from blunder_tutor.repositories.base import BaseDbRepository
+from blunder_tutor.utils.date_utils import exclusive_end_bound
 from blunder_tutor.utils.pgn_utils import load_game_from_string
 from blunder_tutor.utils.time import now_iso, parse_dt
 from blunder_tutor.utils.time_control import classify_game_type
@@ -181,9 +182,9 @@ class GameRepository(BaseDbRepository):
             params.append(start_date)
 
         if end_date:
-            query += " AND end_time_utc <= ?"
-            count_query += " AND end_time_utc <= ?"
-            params.append(end_date)
+            query += " AND end_time_utc < ?"
+            count_query += " AND end_time_utc < ?"
+            params.append(exclusive_end_bound(end_date))
 
         if analyzed_only:
             query += " AND analyzed = 1"
@@ -232,8 +233,8 @@ class GameRepository(BaseDbRepository):
             params.append(start_date)
 
         if end_date:
-            query += " AND end_time_utc <= ?"
-            params.append(end_date)
+            query += " AND end_time_utc < ?"
+            params.append(exclusive_end_bound(end_date))
 
         if analyzed_only:
             query += " AND analyzed = 1"

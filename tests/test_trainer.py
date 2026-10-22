@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from blunder_tutor.trainer import _date_in_range
 from tests.helpers.factories import make_blunder, make_mock_game
 
 
@@ -181,3 +182,8 @@ class TestPreMoveFields:
 
         assert puzzle.pre_move_uci is None
         assert puzzle.pre_move_fen is None
+
+
+def test_date_in_range_includes_whole_end_day():
+    assert _date_in_range("2026-05-06T19:20:26+00:00", "2026-05-06", "2026-05-06")
+    assert not _date_in_range("2026-05-07T00:00:01+00:00", None, "2026-05-06")

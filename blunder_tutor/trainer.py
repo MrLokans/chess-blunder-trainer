@@ -13,6 +13,7 @@ from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.game_repository import GameRepository
 from blunder_tutor.repositories.puzzle_attempt_repository import PuzzleAttemptRepository
 from blunder_tutor.repositories.srs_repository import SrsRepository
+from blunder_tutor.utils.date_utils import exclusive_end_bound
 from blunder_tutor.utils.pgn_utils import (
     board_before_ply,
     extract_game_url,
@@ -265,7 +266,7 @@ def _date_in_range(
         return False
     if start_date and game_date < start_date:
         return False
-    return not (end_date and game_date > end_date)
+    return not (end_date and game_date >= exclusive_end_bound(end_date))
 
 
 def _weight_for_blunder(

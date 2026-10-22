@@ -10,6 +10,7 @@ from blunder_tutor.analysis.tactics import PATTERN_LABELS
 from blunder_tutor.constants import COLOR_LABELS, PHASE_LABELS
 from blunder_tutor.repositories.base import BaseDbRepository
 from blunder_tutor.utils.accuracy import MoveEvals, game_accuracy
+from blunder_tutor.utils.date_utils import exclusive_end_bound
 from blunder_tutor.utils.time_control import GAME_TYPE_LABELS
 
 CATASTROPHIC_CP_LOSS = 500
@@ -45,8 +46,8 @@ class StatsFilter:
             clause += f" AND {table_alias}.end_time_utc >= ?"
             params.append(self.start_date)
         if self.end_date:
-            clause += f" AND {table_alias}.end_time_utc <= ?"
-            params.append(self.end_date + " 23:59:59")
+            clause += f" AND {table_alias}.end_time_utc < ?"
+            params.append(exclusive_end_bound(self.end_date))
         if self.game_types:
             placeholders = ",".join("?" for _ in self.game_types)
             clause += f" AND {table_alias}.game_type IN ({placeholders})"

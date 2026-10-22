@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC
 
 from blunder_tutor.utils.date_utils import (
+    exclusive_end_bound,
     parse_pgn_datetime,
     parse_pgn_datetime_iso,
     parse_pgn_datetime_ms,
@@ -86,3 +87,10 @@ class TestParsePgnDatetimeMs:
         time = "00:00:00"
         result = parse_pgn_datetime_ms(date, time)
         assert result == 1704067200000
+
+
+def test_exclusive_end_bound_is_next_day():
+    assert exclusive_end_bound("2026-05-06") == "2026-05-07"
+    assert exclusive_end_bound("2026-12-31") == "2027-01-01"
+    assert exclusive_end_bound("2026-05-06") > "2026-05-06T19:20:26+00:00"
+    assert exclusive_end_bound("2026-05-06") <= "2026-05-07T00:00:01+00:00"

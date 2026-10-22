@@ -144,3 +144,31 @@ def test_api_endpoint_accepts_game_types(app):
         "/api/stats/conversion-resilience?game_types=bullet&game_types=blitz"
     )
     assert response.status_code == HTTPStatus.OK
+
+
+async def test_end_date_includes_whole_last_day(stats_repo):
+    await insert_test_game(
+        stats_repo,
+        "last",
+        "testuser",
+        "testuser",
+        "opponent",
+        "1-0",
+        end_time_utc="2026-05-06T19:20:26+00:00",
+    )
+    await insert_test_move(stats_repo, "last", 1, 0, eval_before=500)
+    await insert_test_game(
+        stats_repo,
+        "next",
+        "testuser",
+        "testuser",
+        "opponent",
+        "1-0",
+        end_time_utc="2026-05-07T00:00:01+00:00",
+    )
+    await insert_test_move(stats_repo, "next", 1, 0, eval_before=500)
+
+    result = await stats_repo.get_conversion_resilience(
+        filters=StatsFilter(start_date="2026-05-06", end_date="2026-05-06")
+    )
+    assert result["games_with_advantage"] == 1
