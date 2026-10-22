@@ -45,11 +45,18 @@ class Event:
 class JobEvent(Event):
     @classmethod
     def create_status_changed(
-        cls, job_id: str, job_type: str, status: str, error_message: str | None = None
+        cls,
+        job_id: str,
+        job_type: str,
+        status: str,
+        error_message: str | None = None,
+        *,
+        scope: str,
     ) -> JobEvent:
         return cls(
             type=EventType.JOB_STATUS_CHANGED,
             data={
+                SCOPE_KEY: scope,
                 "job_id": job_id,
                 "job_type": job_type,
                 "status": status,
@@ -60,12 +67,13 @@ class JobEvent(Event):
 
     @classmethod
     def create_progress_updated(
-        cls, job_id: str, job_type: str, current: int, total: int
+        cls, job_id: str, job_type: str, current: int, total: int, *, scope: str
     ) -> JobEvent:
         percent = int((current / total) * 100) if total > 0 else 0
         return cls(
             type=EventType.JOB_PROGRESS_UPDATED,
             data={
+                SCOPE_KEY: scope,
                 "job_id": job_id,
                 "job_type": job_type,
                 "current": current,
@@ -154,6 +162,7 @@ class JobExecutionRequestEvent(Event):
         return cls(
             type=EventType.JOB_EXECUTION_REQUESTED,
             data={
+                SCOPE_KEY: user_id,
                 "job_id": job_id,
                 "job_type": job_type,
                 "user_id": user_id,

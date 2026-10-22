@@ -47,8 +47,10 @@ async def websocket_endpoint(websocket: WebSocket):
             action = message.get("action")
             if action == "subscribe":
                 event_types = message.get("events", [])
-                await connection_manager.subscribe(connection_id, event_types)
-                await websocket.send_json({"type": "subscribed", "events": event_types})
+                accepted = await connection_manager.subscribe(
+                    connection_id, event_types
+                )
+                await websocket.send_json({"type": "subscribed", "events": accepted})
             elif action == "ping":
                 await websocket.send_json({"type": "pong"})
     except WebSocketDisconnect:

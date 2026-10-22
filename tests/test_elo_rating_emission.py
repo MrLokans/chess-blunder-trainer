@@ -13,11 +13,6 @@ from blunder_tutor.constants import (
     JOB_STATUS_PENDING,
     JOB_STATUS_RUNNING,
 )
-from blunder_tutor.core.dependencies import (
-    DependencyContext,
-    clear_context,
-    set_context,
-)
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import EventType
 from blunder_tutor.repositories.job_repository import JobRepository
@@ -55,24 +50,11 @@ class TestJobServiceEmitsEloRating:
 
     @pytest.fixture
     async def service(self, job_repo: JobRepository, event_bus: EventBus) -> JobService:
-        return JobService(job_repository=job_repo, event_bus=event_bus)
-
-    @pytest.fixture(autouse=True)
-    async def _context(self, db_path: Path, event_bus: EventBus):
-        # The fanout must scope events on the ambient DependencyContext's
-        # user_id (the canonical cache scope), NOT the job's chess
-        # username. The job below is created with username="alice" while
-        # the context user is "user-zoe" precisely to prove that.
-        set_context(
-            DependencyContext(
-                db_path=db_path,
-                event_bus=event_bus,
-                engine_path="/fake/engine",
-                user_id=_CTX_USER_ID,
-            )
+        # Scope is the app user id, NOT the job's chess username: jobs below use
+        # username="alice" while the scope is "user-zoe" precisely to prove that.
+        return JobService(
+            job_repository=job_repo, event_bus=event_bus, scope=_CTX_USER_ID
         )
-        yield
-        clear_context()
 
     async def test_complete_job_publishes_elo_rating_updated(
         self,

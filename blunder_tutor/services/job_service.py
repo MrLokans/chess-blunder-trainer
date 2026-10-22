@@ -5,7 +5,6 @@ import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 
-from blunder_tutor.cache.scope import user_scope
 from blunder_tutor.constants import (
     JOB_STATUS_COMPLETED,
     JOB_STATUS_FAILED,
@@ -51,9 +50,10 @@ class _ProgressState:
 
 
 class JobService:
-    def __init__(self, job_repository: JobRepository, event_bus: EventBus):
+    def __init__(self, job_repository: JobRepository, event_bus: EventBus, scope: str):
         self.job_repository = job_repository
         self.event_bus = event_bus
+        self.scope = scope
         self._progress: dict[str, _ProgressState] = {}
 
     async def create_job(
@@ -74,7 +74,9 @@ class JobService:
             max_games=max_games,
         )
 
-        event = JobEvent.create_status_changed(job_id, job_type, JOB_STATUS_PENDING)
+        event = JobEvent.create_status_changed(
+            job_id, job_type, JOB_STATUS_PENDING, scope=self.scope
+        )
         await self.event_bus.publish(event)
 
         return job_id
@@ -94,6 +96,7 @@ class JobService:
                 job_type=job[_JOB_TYPE_KEY],
                 status=status,
                 error_message=error_message,
+                scope=self.scope,
             )
             await self.event_bus.publish(event)
 
@@ -121,6 +124,7 @@ class JobService:
             job_type=state.job_type,
             current=current,
             total=total,
+            scope=self.scope,
         )
         await self.event_bus.publish(event)
 
@@ -153,7 +157,10 @@ class JobService:
         job = await self.job_repository.get_job(job_id)
         if job:
             event = JobEvent.create_status_changed(
-                job_id=job_id, job_type=job[_JOB_TYPE_KEY], status=JOB_STATUS_COMPLETED
+                job_id=job_id,
+                job_type=job[_JOB_TYPE_KEY],
+                status=JOB_STATUS_COMPLETED,
+                scope=self.scope,
             )
             await self.event_bus.publish(event)
             await self._publish_completion_fanout(job)
@@ -198,13 +205,10 @@ class JobService:
         return await self.job_repository.delete_job(job_id)
 
     async def _publish_completion_fanout(self, job: dict[str, object]) -> None:
-        from blunder_tutor.core.dependencies import get_context  # noqa: PLC0415, I001 — core.dependencies imports JobService.
-
-        scope = user_scope(get_context())
-        await self.event_bus.publish(StatsEvent.create_stats_updated(scope=scope))
+        await self.event_bus.publish(StatsEvent.create_stats_updated(scope=self.scope))
         if job.get(_JOB_TYPE_KEY) in _GAME_DATASET_JOB_TYPES:
             await self.event_bus.publish(
                 EloRatingEvent.create_elo_rating_updated(
-                    scope=scope, trigger="game_sync_completed"
+                    scope=self.scope, trigger="game_sync_completed"
                 )
             )

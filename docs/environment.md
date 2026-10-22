@@ -24,7 +24,7 @@ Active only when `AUTH_MODE=credentials`. The `none` default is single-user with
 | `AUTH_LOGIN_RATE_WINDOW_SECONDS` | `60` | Login rate-limit window. |
 | `AUTH_SIGNUP_RATE_LIMIT` | `3` | Per-IP signup attempts allowed in `AUTH_SIGNUP_RATE_WINDOW_SECONDS`. |
 | `AUTH_SIGNUP_RATE_WINDOW_SECONDS` | `3600` | Signup rate-limit window. |
-| `AUTH_TRUST_PROXY` | `false` | When `true`, rate limiters key on `X-Forwarded-For`. **Security-critical:** must stay `false` for direct-to-uvicorn deploys. Set `true` only behind a reverse proxy that overwrites the header (e.g. nginx `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`). |
+| `AUTH_TRUST_PROXY` | `false` | When `true`, rate limiters key on `X-Forwarded-For`. **Security-critical:** must stay `false` for direct-to-uvicorn deploys. Set `true` only behind a reverse proxy that overwrites the header with the real client IP (nginx: `proxy_set_header X-Forwarded-For $remote_addr;`). Do not use `$proxy_add_x_forwarded_for`: it appends to the client's header, and the limiter keys on the first, client-controlled entry. |
 | `AUTH_BCRYPT_COST` | unset (library default, currently 12) | Bcrypt cost factor (rounds). Range `4`–`31`. Higher = stronger but slower. The test suite forces `4` to keep wall time bounded. |
 
 See [`docs/AUTH.md`](AUTH.md) for the multi-user setup walkthrough and CLI admin commands.
@@ -49,7 +49,7 @@ Hosted-demo guardrails. When `DEMO_MODE=true`, all mutation endpoints return 403
 | Var | Default | Purpose |
 |---|---|---|
 | `DEMO_MODE` | `false` | Enables read-only demo mode. Cannot be combined with `AUTH_MODE=credentials`. |
-| `DEMO_THROTTLE_RATE` | unset | Format: `<requests>/<seconds>`, e.g. `10/60`. Caps engine-analysis requests per IP. Empty/unset uses the in-code defaults (`engine_requests=10`, `engine_window_seconds=60`). |
+| `DEMO_THROTTLE_RATE` | unset | Format: `<requests>/<seconds>`, e.g. `10/60`. Caps engine-analysis requests per IP. Behind a reverse proxy, also set `AUTH_TRUST_PROXY=true` or every visitor shares the proxy's bucket. Empty/unset uses the in-code defaults (`engine_requests=10`, `engine_window_seconds=60`). |
 
 ---
 

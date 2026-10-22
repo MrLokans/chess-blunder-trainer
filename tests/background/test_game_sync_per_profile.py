@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sqlite3
-from collections.abc import AsyncGenerator
 from contextlib import closing
 from pathlib import Path
 from typing import Any
@@ -14,11 +13,6 @@ from blunder_tutor.constants import (
     JOB_STATUS_COMPLETED,
     JOB_STATUS_FAILED,
     JOB_TYPE_SYNC,
-)
-from blunder_tutor.core.dependencies import (
-    DependencyContext,
-    clear_context,
-    set_context,
 )
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.game_repository import GameRepository
@@ -53,26 +47,7 @@ def _make_game(game_id: str, *, source: str, username: str) -> dict[str, object]
 
 @pytest.fixture
 async def job_service(job_repo: JobRepository, event_bus: EventBus) -> JobService:
-    return JobService(job_repository=job_repo, event_bus=event_bus)
-
-
-@pytest.fixture(autouse=True)
-async def _job_context(db_path: Path, event_bus: EventBus) -> AsyncGenerator[None]:
-    # Production always runs job bodies inside the executor's
-    # DependencyContext (executor.set_context); the completion fanout
-    # scopes its events on that context's user_id. These tests call
-    # job.execute() directly, so establish the same context — matching
-    # the user_id the jobs are constructed with.
-    set_context(
-        DependencyContext(
-            db_path=db_path,
-            event_bus=event_bus,
-            engine_path="/fake/engine",
-            user_id="testuser",
-        )
-    )
-    yield
-    clear_context()
+    return JobService(job_repository=job_repo, event_bus=event_bus, scope="testuser")
 
 
 GameRow = dict[str, object]

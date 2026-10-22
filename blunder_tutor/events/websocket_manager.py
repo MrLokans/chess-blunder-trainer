@@ -66,13 +66,21 @@ class ConnectionManager:
         count("ws.connection.closed", tags={"reason": reason})
         gauge("ws.connections.active", len(self.active_connections))
 
-    async def subscribe(self, connection_id: str, event_types: list[str]) -> None:
+    async def subscribe(
+        self, connection_id: str, event_types: list[str]
+    ) -> list[EventType]:
         subscriptions = self.connection_subscriptions.get(connection_id)
         if subscriptions is None:
-            return
+            return []
+        accepted: list[EventType] = []
         for event_type_str in event_types:
             with contextlib.suppress(ValueError):
-                subscriptions.add(EventType(event_type_str))
+                event_type = EventType(event_type_str)
+                # Internal executor command: carries job kwargs, never meant for browsers.
+                if event_type is not EventType.JOB_EXECUTION_REQUESTED:
+                    subscriptions.add(event_type)
+                    accepted.append(event_type)
+        return accepted
 
     async def broadcast_event(self, event: Event) -> None:
         try:
@@ -131,9 +139,8 @@ class ConnectionManager:
     def _should_deliver(
         self, conn_id: str, event_type: EventType, target_user: str | None
     ) -> bool:
-        # Scoped events go only to that user's connections. Unscoped job-lifecycle
-        # events still go to everyone; connections without user_id (AUTH_MODE=none) see
-        # all (single user).
+        # Scoped events go only to that user's connections; connections without
+        # user_id (AUTH_MODE=none) see all (single user).
         if event_type not in self.connection_subscriptions.get(conn_id, set()):
             return False
         if target_user is None:

@@ -104,7 +104,7 @@ The game review island loads the vendored single-threaded Stockfish WASM worker 
 - Route per-user work through the request/job database-path resolver; never fall back to the shared local database in credentials mode.
 - Use repositories for application-data SQL. Migration code and the isolated auth storage package are the expected exceptions.
 - Use the shared `WorkCoordinator` for concurrent server-side engine work. Keep standalone engine ownership inside the Stockfish pipeline step.
-- Publish bounded event types from `events/event_types.py`; user-specific data-change events must carry a user scope. Job lifecycle events are currently unscoped and can reach every subscribed credentials-mode connection.
+- Publish bounded event types from `events/event_types.py`; every user-specific event, including job lifecycle events, must carry a user scope. `job.execution_requested` is internal and cannot be subscribed to over WebSocket.
 - Keep the app single-process unless scheduler leadership, jobs, pub/sub, cache, and engine coordination are moved to shared infrastructure.
 - Add user-visible text through the translation files, not inline in templates or browser code.
 - When adding persisted user data, update account deletion, any relevant data-wipe path, and cache cleanup.

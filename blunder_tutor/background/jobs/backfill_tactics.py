@@ -25,10 +25,12 @@ class BackfillTacticsJob(BaseJob):
         analysis_repo: AnalysisRepository,
         game_repo: GameRepository,
         event_bus: EventBus,
+        scope: str,
     ):
         self.analysis_repo = analysis_repo
         self.game_repo = game_repo
         self.event_bus = event_bus
+        self.scope = scope
         self._log = logging.getLogger("BackfillTacticsJob")
 
     async def execute(self, job_id: str, **kwargs) -> dict:
@@ -54,6 +56,7 @@ class BackfillTacticsJob(BaseJob):
                     job_type=self.job_identifier,
                     current=processed,
                     total=total,
+                    scope=self.scope,
                 )
                 await self.event_bus.publish(event)
 

@@ -25,8 +25,7 @@ def _coalesce_key(event: Event) -> tuple[str | None, EventType]:
     # collapse across tenants rather than raise.
     data = event.data if isinstance(event.data, dict) else {}
     if event.type is EventType.JOB_PROGRESS_UPDATED:
-        # Progress carries no scope; collapsing two concurrent jobs into
-        # one broadcast would lose information, so key on job_id.
+        # Key on job_id so one user's concurrent jobs don't collapse into one broadcast.
         return (data.get("job_id"), event.type)
     return (data.get(SCOPE_KEY), event.type)
 

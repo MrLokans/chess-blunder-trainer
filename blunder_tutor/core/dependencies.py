@@ -13,6 +13,7 @@ from blunder_tutor.analysis.engine_pool import WorkCoordinator
 from blunder_tutor.analysis.logic import GameAnalyzer
 from blunder_tutor.analysis.pipeline.executor import PipelineExecutor
 from blunder_tutor.auth import UserId
+from blunder_tutor.cache.scope import user_scope
 from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.repositories.analysis import AnalysisRepository
 from blunder_tutor.repositories.base import BaseDbRepository
@@ -81,7 +82,9 @@ async def get_job_service(
     job_repository: Annotated[JobRepository, Depends(get_job_repository)],
 ) -> JobService:
     ctx = get_context()
-    return JobService(job_repository=job_repository, event_bus=ctx.event_bus)
+    return JobService(
+        job_repository=job_repository, event_bus=ctx.event_bus, scope=user_scope(ctx)
+    )
 
 
 def get_event_bus() -> EventBus:

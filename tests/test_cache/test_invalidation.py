@@ -123,7 +123,7 @@ class TestCacheInvalidator:
 
     async def test_unknown_event_is_ignored(self, invalidator, event_bus, cache):
         await cache.set("k1", "v1", tags={"stats:alice"})
-        event = JobEvent.create_status_changed("job-1", "import", "pending")
+        event = JobEvent.create_status_changed("job-1", "import", "pending", scope="u1")
         await self._start_and_publish(invalidator, event_bus, event)
         assert await cache.get("k1") == "v1"
 

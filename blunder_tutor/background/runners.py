@@ -215,6 +215,7 @@ async def run_backfill_tactics_job(
         analysis_repo=analysis_repo,
         game_repo=game_repo,
         event_bus=event_bus,
+        scope=user_scope(get_context()),
     )
     return await job.execute(job_id=job_id)
 

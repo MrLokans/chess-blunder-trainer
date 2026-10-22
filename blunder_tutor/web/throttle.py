@@ -20,6 +20,6 @@ def create_engine_throttle(config: AppConfig) -> RateLimiter:
     return RateLimiter(
         times=config.throttle.engine_requests,
         seconds=config.throttle.engine_window_seconds,
-        trust_proxy=True,
+        trust_proxy=config.auth.trust_proxy,
         add_headers=True,
     )

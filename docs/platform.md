@@ -117,7 +117,7 @@ The decorator registry in `background/registry.py` is not the executor dispatch 
 
 `EventBus` is in-memory pub/sub with one unbounded `asyncio.Queue` per subscriber. `ConnectionManager` forwards subscribed events to WebSockets and coalesces noisy updates. `CacheInvalidator` maps data-change events to user-scoped cache tags, then publishes a cache-invalidated event so clients can refresh.
 
-Use events for same-process coordination and UI refresh, not durable delivery. Events published before subscription are lost, subscriber queues are unbounded, and a restart clears them. Consumers must recover from persisted database state. Tenant-specific events must carry scope; job lifecycle events are currently unscoped.
+Use events for same-process coordination and UI refresh, not durable delivery. Events published before subscription are lost, subscriber queues are unbounded, and a restart clears them. Consumers must recover from persisted database state. Tenant-specific events, including job lifecycle events, must carry scope.
 
 The response cache has in-memory and null backends. `@cached` routes require `set_request_scope`, and keys include the user scope and an explicit version. Setup, locale, and feature snapshots use separate per-user caches.
 

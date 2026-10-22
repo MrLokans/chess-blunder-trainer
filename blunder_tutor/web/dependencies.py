@@ -91,10 +91,15 @@ async def get_profile_repository(  # noqa: WPS463 — FastAPI DI factory, not a 
 
 
 async def get_job_service(
+    request: Request,
     job_repository: Annotated[JobRepository, Depends(get_job_repository)],
     event_bus: Annotated[EventBus, Depends(get_event_bus)],
 ) -> JobService:
-    return JobService(job_repository=job_repository, event_bus=event_bus)
+    return JobService(
+        job_repository=job_repository,
+        event_bus=event_bus,
+        scope=user_scope(request.state.user_ctx),
+    )
 
 
 def get_work_coordinator(request: Request) -> WorkCoordinator:

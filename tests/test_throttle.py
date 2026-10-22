@@ -65,3 +65,16 @@ def test_normal_mode_no_throttle(app: TestClient):
     for _ in range(10):
         resp = app.post("/api/analyze", json=payload)
         assert resp.status_code != HTTPStatus.TOO_MANY_REQUESTS
+
+
+def test_spoofed_forwarded_for_does_not_reset_bucket(throttled_app: TestClient):
+    payload = {"fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"}
+    for i in range(3):
+        throttled_app.post(
+            "/api/analyze", json=payload, headers={"X-Forwarded-For": f"10.0.0.{i}"}
+        )
+
+    resp = throttled_app.post(
+        "/api/analyze", json=payload, headers={"X-Forwarded-For": "10.0.0.99"}
+    )
+    assert resp.status_code == HTTPStatus.TOO_MANY_REQUESTS

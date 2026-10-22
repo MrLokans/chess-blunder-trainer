@@ -4,7 +4,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 from blunder_tutor.events import websocket_manager as ws_module
 from blunder_tutor.events.event_bus import EventBus
-from blunder_tutor.events.event_types import Event, EventType, StatsEvent
+from blunder_tutor.events.event_types import (
+    Event,
+    EventType,
+    JobEvent,
+    JobExecutionRequestEvent,
+    StatsEvent,
+)
 from blunder_tutor.events.websocket_manager import ConnectionManager
 from tests.helpers.observability import patch_facade
 
@@ -61,6 +67,7 @@ def test_websocket_invalid_event_type(app):
         # Should still receive confirmation (invalid types are skipped)
         response = websocket.receive_json()
         assert response["type"] == "subscribed"
+        assert response["events"] == ["job.created", "job.completed"]
 
 
 def test_none_mode_delivers_scoped_event_regardless_of_user(app):
@@ -248,3 +255,40 @@ class TestBroadcastResilience:
         bad_ws.send_json.assert_not_awaited()
         good_ws.send_json.assert_awaited_once()
         assert any(c["name"] == "ws.broadcast.error" for c in recorder.counts)
+
+
+class TestJobEventScoping:
+    async def test_job_events_reach_only_owning_user(self) -> None:
+        cm = ConnectionManager(event_bus=MagicMock())
+        alice_ws = _make_ws()
+        bob_ws = _make_ws()
+        alice = await cm.connect(alice_ws, user_id="alice")
+        bob = await cm.connect(bob_ws, user_id="bob")
+        job_types = [
+            EventType.JOB_STATUS_CHANGED.value,
+            EventType.JOB_PROGRESS_UPDATED.value,
+        ]
+        await cm.subscribe(alice, job_types)
+        await cm.subscribe(bob, job_types)
+
+        await cm.broadcast_event(
+            JobEvent.create_status_changed("j1", "import", "failed", scope="bob")
+        )
+        await cm.broadcast_event(
+            JobEvent.create_progress_updated("j1", "import", 1, 2, scope="bob")
+        )
+
+        alice_ws.send_json.assert_not_awaited()
+        assert bob_ws.send_json.await_count == 2
+
+    async def test_execution_request_is_not_subscribable(self) -> None:
+        cm = ConnectionManager(event_bus=MagicMock())
+        ws = _make_ws()
+        conn = await cm.connect(ws)
+        await cm.subscribe(conn, [EventType.JOB_EXECUTION_REQUESTED.value])
+
+        await cm.broadcast_event(
+            JobExecutionRequestEvent.create("j1", "import", "bob", username="x")
+        )
+
+        ws.send_json.assert_not_awaited()
