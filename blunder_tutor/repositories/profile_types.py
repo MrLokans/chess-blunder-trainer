@@ -32,14 +32,14 @@ class ProfileStatSnapshot:
 
 @dataclass(frozen=True)
 class ProfileSyncCandidate:
-    """The stats dispatcher uses `last_stats_sync_at` (None means overdue); the game-sync
+    """The stats dispatcher uses `last_stats_attempt_at` (None means overdue); the game-sync
     dispatcher uses `platform` + `username`. A third consumer should get its own method
     and dataclass rather than growing this one."""
 
     profile_id: int
     platform: str
     username: str
-    last_stats_sync_at: str | None
+    last_stats_attempt_at: str | None
 
 
 class ProfileNotFoundError(LookupError):

@@ -73,7 +73,12 @@ class StatsSyncJob(BaseJob):
                 f"stats_sync {job_id}: unknown platform {profile.platform!r} "
                 f"for profile {profile_id}"
             )
-            return _result(stored=0)
+            snapshots = []
+        except Exception:
+            # Count the failed attempt so a broken account (e.g. closed → 404) backs off
+            # for a full interval instead of being re-fetched every tick.
+            await self.profile_repo.touch_validated_at(profile_id)
+            raise
 
         if snapshots:
             await self.profile_repo.upsert_stats(profile_id, snapshots)

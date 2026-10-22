@@ -257,6 +257,25 @@ class JobRepository(BaseDbRepository):
             )
             return cursor.rowcount > 0
 
+    async def get_sync_attempt_state(
+        self, source: str, username: str
+    ) -> tuple[str | None, bool]:
+        """(latest attempt of any outcome, whether one is still pending/running), so the
+        scheduler neither overlaps a running sync nor retries a failing one every tick."""
+        conn = await self.get_connection()
+        async with conn.execute(
+            """
+            SELECT MAX(created_at), COALESCE(MAX(status IN (?, ?)), 0)
+            FROM background_jobs
+            WHERE source = ?
+              AND LOWER(username) = LOWER(?)
+              AND job_type IN (?, ?)
+            """,
+            (*_ACTIVE_STATUSES, source, username, JOB_TYPE_IMPORT, JOB_TYPE_SYNC),
+        ) as cursor:
+            row = await cursor.fetchone()
+        return row[0], bool(row[1])
+
     async def get_last_completed_sync_at(
         self, source: str, username: str
     ) -> str | None:

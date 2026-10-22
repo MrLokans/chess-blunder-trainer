@@ -13,6 +13,8 @@ from blunder_tutor.background.scheduler import (
 )
 from blunder_tutor.constants import (
     JOB_STATUS_COMPLETED,
+    JOB_STATUS_FAILED,
+    JOB_STATUS_RUNNING,
     JOB_TYPE_IMPORT,
     JOB_TYPE_STATS_SYNC,
     JOB_TYPE_SYNC,
@@ -26,11 +28,20 @@ from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import EventType
 from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.profile import (
-    ProfileStatSnapshot,
     SqliteProfileRepository,
 )
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.utils.time import utcnow
+
+
+async def _set_last_stats_attempt(
+    profile_repo: SqliteProfileRepository, profile_id: int, at: str
+) -> None:
+    conn = await profile_repo.get_connection()
+    await conn.execute(
+        "UPDATE profile SET last_validated_at = ? WHERE id = ?", (at, profile_id)
+    )
+    await conn.commit()
 
 
 async def _seed_completed_sync_job(
@@ -40,11 +51,11 @@ async def _seed_completed_sync_job(
     source: str,
     username: str,
     completed_at: str,
+    status: str = JOB_STATUS_COMPLETED,
 ) -> None:
-    """Insert a `background_jobs` row that the per-(user, profile) game-sync
-    fan-out reads via `JobRepository.get_last_completed_sync_at`. Done via
+    """Insert a back-dated `background_jobs` row for the game-sync fan-out. Done via
     raw SQL because the repo's `create_job` generates its own job_id and
-    won't let us back-date `completed_at`.
+    won't let us back-date `created_at`.
     """
     conn = await job_repo.get_connection()
     await conn.execute(
@@ -56,7 +67,7 @@ async def _seed_completed_sync_job(
         (
             job_id,
             JOB_TYPE_SYNC,
-            JOB_STATUS_COMPLETED,
+            status,
             username,
             source,
             completed_at,
@@ -116,13 +127,9 @@ class TestSyncDuePredicateTimezoneTolerance:
         context: None,
     ):
         profile = await profile_repo.create("lichess", "alice")
-        # `upsert_stats` writes `synced_at = now_iso()` when the
-        # snapshot's `synced_at` field is None — exactly the production
-        # path the scheduler reads back later.
-        await profile_repo.upsert_stats(
-            profile.id,
-            [ProfileStatSnapshot(mode="bullet", rating=2400, games_count=100)],
-        )
+        # `touch_validated_at` writes a tz-aware `now_iso()` — exactly the
+        # production path the scheduler reads back later.
+        await profile_repo.touch_validated_at(profile.id)
         queue = await event_bus.subscribe(EventType.JOB_EXECUTION_REQUESTED)
 
         # Default interval = 1h, the row was just written → fresh, not due.
@@ -144,18 +151,8 @@ class TestStatsSyncDispatch:
         context: None,
     ):
         profile = await profile_repo.create("lichess", "alice", make_primary=True)
-        # Stats stale by 2h, interval is 1h → due.
-        await profile_repo.upsert_stats(
-            profile.id,
-            [
-                ProfileStatSnapshot(
-                    mode="bullet",
-                    rating=2400,
-                    games_count=100,
-                    synced_at=_hours_ago_iso(2),
-                )
-            ],
-        )
+        # Last attempt 2h ago, interval is 1h → due.
+        await _set_last_stats_attempt(profile_repo, profile.id, _hours_ago_iso(2))
         queue = await event_bus.subscribe(EventType.JOB_EXECUTION_REQUESTED)
 
         await _maybe_dispatch_stats_sync_for_user(
@@ -175,18 +172,8 @@ class TestStatsSyncDispatch:
         context: None,
     ):
         profile = await profile_repo.create("lichess", "alice")
-        # Stats fresh — synced 10 minutes ago, interval default 1h → NOT due.
-        await profile_repo.upsert_stats(
-            profile.id,
-            [
-                ProfileStatSnapshot(
-                    mode="bullet",
-                    rating=2400,
-                    games_count=100,
-                    synced_at=_hours_ago_iso(10 / 60),
-                )
-            ],
-        )
+        # Last attempt 10 minutes ago, interval default 1h → NOT due.
+        await _set_last_stats_attempt(profile_repo, profile.id, _hours_ago_iso(10 / 60))
         queue = await event_bus.subscribe(EventType.JOB_EXECUTION_REQUESTED)
 
         await _maybe_dispatch_stats_sync_for_user(
@@ -202,7 +189,7 @@ class TestStatsSyncDispatch:
         context: None,
     ):
         profile = await profile_repo.create("lichess", "alice")
-        # No upsert_stats call → first-sync path.
+        # Never attempted → first-sync path.
         queue = await event_bus.subscribe(EventType.JOB_EXECUTION_REQUESTED)
 
         await _maybe_dispatch_stats_sync_for_user(
@@ -240,18 +227,8 @@ class TestStatsSyncDispatch:
         context: None,
     ):
         profile = await profile_repo.create("lichess", "alice")
-        await profile_repo.upsert_stats(
-            profile.id,
-            [
-                ProfileStatSnapshot(
-                    mode="bullet",
-                    rating=2400,
-                    games_count=100,
-                    synced_at=_hours_ago_iso(3),
-                )
-            ],
-        )
-        # Interval 6h — 3h-old stats are NOT due.
+        await _set_last_stats_attempt(profile_repo, profile.id, _hours_ago_iso(3))
+        # Interval 6h — a 3h-old attempt is NOT due.
         await settings_repo.write_setting("stats_sync_interval_hours", "6")
         queue = await event_bus.subscribe(EventType.JOB_EXECUTION_REQUESTED)
 
@@ -271,17 +248,7 @@ class TestStatsSyncDispatch:
         p2 = await profile_repo.create("chesscom", "alice")
         # Both stale.
         for profile_id in (p1.id, p2.id):
-            await profile_repo.upsert_stats(
-                profile_id,
-                [
-                    ProfileStatSnapshot(
-                        mode="bullet",
-                        rating=2400,
-                        games_count=10,
-                        synced_at=_hours_ago_iso(5),
-                    )
-                ],
-            )
+            await _set_last_stats_attempt(profile_repo, profile_id, _hours_ago_iso(5))
         queue = await event_bus.subscribe(EventType.JOB_EXECUTION_REQUESTED)
 
         await _maybe_dispatch_stats_sync_for_user(
@@ -350,6 +317,38 @@ class TestGameSyncFanOut:
         events = await _drain_dispatched_events(queue)
         assert len(events) == 1
         assert events[0]["kwargs"]["profile_id"] == stale.id
+
+    @pytest.mark.parametrize(
+        ("status", "hours_ago"),
+        [(JOB_STATUS_RUNNING, 48), (JOB_STATUS_FAILED, 2)],
+        ids=["still-running", "recently-failed"],
+    )
+    async def test_active_or_recently_failed_sync_is_not_redispatched(
+        self,
+        profile_repo: SqliteProfileRepository,
+        settings_repo: SettingsRepository,
+        job_repo: JobRepository,
+        event_bus: EventBus,
+        context: None,
+        status: str,
+        hours_ago: float,
+    ):
+        await settings_repo.write_setting("auto_sync_enabled", "true")
+        await settings_repo.write_setting("sync_interval_hours", "24")
+        profile = await profile_repo.create("lichess", "alice", make_primary=True)
+        await _seed_completed_sync_job(
+            job_repo,
+            job_id="prior-job",
+            source=profile.platform,
+            username=profile.username,
+            completed_at=_hours_ago_iso(hours_ago),
+            status=status,
+        )
+        queue = await event_bus.subscribe(EventType.JOB_EXECUTION_REQUESTED)
+
+        await _maybe_dispatch_sync_for_user(event_bus=event_bus, user_id="testuser")
+
+        assert await _drain_dispatched_events(queue) == []
 
     async def test_global_auto_sync_disabled_no_dispatch(
         self,

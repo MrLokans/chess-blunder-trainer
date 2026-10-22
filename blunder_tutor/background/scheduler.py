@@ -29,6 +29,7 @@ from blunder_tutor.events.event_bus import EventBus
 from blunder_tutor.events.event_types import JobExecutionRequestEvent
 from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.profile import SqliteProfileRepository
+from blunder_tutor.repositories.profile_types import ProfileSyncCandidate
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.services.job_service import JobService
 from blunder_tutor.utils.time import parse_dt, utcnow
@@ -63,10 +64,7 @@ async def _maybe_dispatch_sync_for_user(  # noqa: WPS211 — FastDepends @inject
 
     candidates = await profile_repo.list_auto_sync_candidates()
     for candidate in candidates:
-        last_sync_at = await job_repo.get_last_completed_sync_at(
-            candidate.platform, candidate.username
-        )
-        if not _is_sync_due(last_sync_at, interval_hours):
+        if not await _is_game_sync_due(job_repo, candidate, interval_hours):
             continue
         job_id = await job_service.create_job(
             job_type=JOB_TYPE_SYNC,
@@ -84,6 +82,16 @@ async def _maybe_dispatch_sync_for_user(  # noqa: WPS211 — FastDepends @inject
             f"Auto-sync dispatched for user {user_id} "
             f"profile={candidate.profile_id} job={job_id}"
         )
+
+
+async def _is_game_sync_due(
+    job_repo: JobRepository, candidate: ProfileSyncCandidate, interval_hours: int
+) -> bool:
+    # Any attempt counts, so a failing sync backs off for the interval too.
+    last_attempt_at, active = await job_repo.get_sync_attempt_state(
+        candidate.platform, candidate.username
+    )
+    return not active and _is_sync_due(last_attempt_at, interval_hours)
 
 
 def _is_feature_enabled(settings: dict[str, str | None], feature_key: str) -> bool:
@@ -106,7 +114,7 @@ async def _maybe_dispatch_stats_sync_for_user(
 
     candidates = await profile_repo.list_auto_sync_candidates()
     for candidate in candidates:
-        if not _is_sync_due(candidate.last_stats_sync_at, interval_hours):
+        if not _is_sync_due(candidate.last_stats_attempt_at, interval_hours):
             continue
         synthetic_job_id = f"stats_sync-{user_id}-{candidate.profile_id}"
         event = JobExecutionRequestEvent.create(

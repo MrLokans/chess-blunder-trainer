@@ -283,7 +283,8 @@ class SqliteProfileRepository(BaseDbRepository):
         return [_row_to_stat(row) for row in rows]
 
     async def list_auto_sync_candidates(self) -> list[ProfileSyncCandidate]:
-        """LEFT JOIN so never-synced profiles surface with `last_stats_sync_at = None`."""
+        """`last_validated_at` is touched on every stats attempt, including empty results
+        and failures, so a profile with nothing to store isn't re-fetched every tick."""
         conn = await self.get_connection()
         async with conn.execute(
             """
@@ -291,12 +292,10 @@ class SqliteProfileRepository(BaseDbRepository):
                 p.id AS profile_id,
                 p.platform AS platform,
                 p.username AS username,
-                MAX(ps.synced_at) AS last_stats_sync_at
+                p.last_validated_at AS last_stats_attempt_at
             FROM profile p
             JOIN profile_preferences pp ON pp.profile_id = p.id
-            LEFT JOIN profile_stats ps ON ps.profile_id = p.id
             WHERE pp.auto_sync_enabled = 1
-            GROUP BY p.id
             ORDER BY p.id
             """
         ) as cursor:
@@ -306,7 +305,7 @@ class SqliteProfileRepository(BaseDbRepository):
                 profile_id=row["profile_id"],
                 platform=row["platform"],
                 username=row["username"],
-                last_stats_sync_at=row["last_stats_sync_at"],
+                last_stats_attempt_at=row["last_stats_attempt_at"],
             )
             for row in rows
         ]

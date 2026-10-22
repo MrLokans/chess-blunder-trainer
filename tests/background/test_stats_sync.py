@@ -173,3 +173,50 @@ class TestStatsSyncJobMissingProfile:
         result = await job.execute(job_id="job-1", profile_id=999)
 
         assert result == {"deferred": False, "stored": 0, "missing": True}
+
+
+class TestStatsSyncJobRecordsAttempt:
+    async def test_fetch_failure_touches_last_validated_and_reraises(
+        self,
+        profile_repo: SqliteProfileRepository,
+        db_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        profile = await profile_repo.create("lichess", "alice")
+
+        async def boom(_username):
+            raise RuntimeError("404 closed account")
+
+        monkeypatch.setattr(
+            "blunder_tutor.background.jobs.stats_sync.lichess.fetch_user_perfs", boom
+        )
+
+        with pytest.raises(RuntimeError):
+            await StatsSyncJob(profile_repo=profile_repo).execute(
+                job_id="job-1", profile_id=profile.id
+            )
+
+        assert _read_last_validated_at(db_path, profile.id) is not None
+
+    async def test_empty_result_touches_last_validated(
+        self,
+        profile_repo: SqliteProfileRepository,
+        db_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        profile = await profile_repo.create("lichess", "alice")
+
+        async def empty(_username):
+            return []
+
+        monkeypatch.setattr(
+            "blunder_tutor.background.jobs.stats_sync.fetch_stats_for_profile",
+            lambda _profile: empty(None),
+        )
+
+        result = await StatsSyncJob(profile_repo=profile_repo).execute(
+            job_id="job-1", profile_id=profile.id
+        )
+
+        assert result["stored"] == 0
+        assert _read_last_validated_at(db_path, profile.id) is not None
