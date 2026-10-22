@@ -29,6 +29,7 @@ from blunder_tutor.events.websocket_manager import ConnectionManager
 from blunder_tutor.i18n.manager import TranslationManager
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.observability import init_observability, shutdown_observability
+from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web import routes
 from blunder_tutor.web.auth_hooks import (
@@ -167,17 +168,31 @@ async def _bootstrap_auth(app: FastAPI) -> None:
     await scan_orphans(storage.users, users_dir)
 
 
+def _user_lister(app: FastAPI):  # type: ignore[no-untyped-def]
+    if app.state.config.auth.mode == AUTH_MODE_CREDENTIALS:
+        assert app.state.auth is not None  # set by _bootstrap_auth
+        return partial(_list_users_credentials_mode, app.state.auth.storage.users)
+    return _list_users_none_mode
+
+
+async def _fail_interrupted_jobs(app: FastAPI) -> None:
+    resolver: DbPathResolver = app.state.db_path_resolver
+    for user_id in await _user_lister(app)():
+        db_path = resolver(user_id)
+        if not db_path.exists():
+            continue
+        async with JobRepository(db_path) as repo:
+            failed = await repo.fail_interrupted_jobs()
+        if failed:
+            log.warning("Marked %d interrupted job(s) as failed in %s", failed, db_path)
+
+
 def _wire_background(app: FastAPI) -> None:
     config: AppConfig = app.state.config
     event_bus = app.state.event_bus
     work_coordinator = app.state.work_coordinator
     resolver: DbPathResolver = app.state.db_path_resolver
-
-    if config.auth.mode == AUTH_MODE_CREDENTIALS:
-        assert app.state.auth is not None  # set by _bootstrap_auth
-        list_users = partial(_list_users_credentials_mode, app.state.auth.storage.users)
-    else:
-        list_users = _list_users_none_mode
+    list_users = _user_lister(app)
 
     app.state.job_executor = JobExecutor(
         event_bus=event_bus,
@@ -244,7 +259,7 @@ def _supervise(name: str, coro: Coroutine[Any, Any, None]) -> asyncio.Task:
     return task
 
 
-async def _run_startup(app: FastAPI) -> None:
+async def _run_startup(app: FastAPI) -> None:  # noqa: WPS217 — ordered startup sequence; splitting it hides the ordering constraints.
     # First, so any later startup exception is captured by Sentry.
     config: AppConfig = app.state.config
     init_observability(config.observability)
@@ -257,6 +272,7 @@ async def _run_startup(app: FastAPI) -> None:
         await _bootstrap_auth(app)
 
     await _seed_locale_cache(app)
+    await _fail_interrupted_jobs(app)
 
     _wire_background(app)
     app.state.scheduler.start()

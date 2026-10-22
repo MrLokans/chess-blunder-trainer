@@ -218,6 +218,19 @@ class JobRepository(BaseDbRepository):
             for row in rows
         ]
 
+    async def fail_interrupted_jobs(self) -> int:
+        """Only safe at startup: the job queue is in-memory, so any active row is orphaned."""
+        async with self.write_transaction() as conn:
+            cursor = await conn.execute(
+                """
+                UPDATE background_jobs
+                SET status = ?, error_message = 'interrupted', completed_at = ?
+                WHERE status IN (?, ?)
+                """,
+                (JOB_STATUS_FAILED, now_iso(), JOB_STATUS_PENDING, JOB_STATUS_RUNNING),
+            )
+            return cursor.rowcount
+
     async def delete_job(self, job_id: str) -> bool:
         async with self.write_transaction() as conn:
             cursor = await conn.execute(
