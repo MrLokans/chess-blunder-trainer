@@ -9,7 +9,7 @@ from datetime import UTC, datetime, tzinfo
 from blunder_tutor.analysis.tactics import PATTERN_LABELS
 from blunder_tutor.constants import COLOR_LABELS, PHASE_LABELS
 from blunder_tutor.repositories.base import BaseDbRepository
-from blunder_tutor.utils.accuracy import game_accuracy
+from blunder_tutor.utils.accuracy import MoveEvals, game_accuracy
 from blunder_tutor.utils.time_control import GAME_TYPE_LABELS
 
 CATASTROPHIC_CP_LOSS = 500
@@ -22,7 +22,7 @@ COLLAPSE_MAX_BUCKET_START = 41
 type _AggregationResult = tuple[int, list[dict[str, object]]]
 type _EcoItem = tuple[tuple[str, str], dict[str, object]]
 type _EcoStats = list[_EcoItem]
-type _BucketLossMap = dict[tuple[str, object], list[int]]
+type _BucketMovesMap = dict[tuple[str, object], list[MoveEvals]]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -358,7 +358,8 @@ class StatsRepository(BaseDbRepository):
             SELECT
                 g.game_id,
                 DATE(g.end_time_utc) as game_date,
-                am.cp_loss
+                am.eval_before,
+                am.eval_after
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
@@ -387,7 +388,7 @@ class StatsRepository(BaseDbRepository):
         params: list[object] = []
         query = criteria.append_to(
             f"""
-            SELECT g.game_id, g.end_time_utc, am.cp_loss
+            SELECT g.game_id, g.end_time_utc, am.eval_before, am.eval_after
             FROM analysis_moves am
             JOIN game_index_cache g ON am.game_id = g.game_id
             WHERE g.analyzed = 1
@@ -398,8 +399,8 @@ class StatsRepository(BaseDbRepository):
         )
         rows = await self._fetch_rows(query, params)
         local_rows = [
-            (game_id, _local_hour(end_time, timezone), cp_loss)
-            for game_id, end_time, cp_loss in rows
+            (game_id, _local_hour(end_time, timezone), eval_before, eval_after)
+            for game_id, end_time, eval_before, eval_after in rows
         ]
         hour_accuracies = _accuracies_by_bucket(local_rows)
         return [
@@ -888,15 +889,15 @@ def _local_hour(end_time: str, timezone: tzinfo) -> int:
 
 
 def _accuracies_by_bucket(
-    rows: list[tuple[str, object, int]],
+    rows: list[tuple[str, object, int, int]],
 ) -> dict[object, list[float]]:
-    game_bucket_losses: _BucketLossMap = defaultdict(list)
-    for game_id, bucket_key, cp_loss in rows:
-        game_bucket_losses[(game_id, bucket_key)].append(cp_loss)
+    game_bucket_moves: _BucketMovesMap = defaultdict(list)
+    for game_id, bucket_key, eval_before, eval_after in rows:
+        game_bucket_moves[(game_id, bucket_key)].append((eval_before, eval_after))
 
     bucket_accuracies: dict[object, list[float]] = defaultdict(list)
-    for (_game_id, bucket_key), losses in game_bucket_losses.items():
-        bucket_accuracies[bucket_key].append(game_accuracy(losses))
+    for (_game_id, bucket_key), moves in game_bucket_moves.items():
+        bucket_accuracies[bucket_key].append(game_accuracy(moves))
     return bucket_accuracies
 
 

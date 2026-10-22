@@ -276,11 +276,14 @@ class TestGetGamesByDate:
             "opp",
             end_time_utc="2025-01-15T10:00:00Z",
         )
-        await insert_test_move(stats_repo, "g1", 1, 0, cp_loss=50)
+        await insert_test_move(
+            stats_repo, "g1", 1, 0, eval_before=0, eval_after=-50, cp_loss=50
+        )
         result = await stats_repo.get_games_by_date()
         assert len(result) == 1
         assert result[0]["date"] == "2025-01-15"
         assert result[0]["game_count"] == 1
+        assert result[0]["avg_accuracy"] == pytest.approx(81.3, abs=0.1)
 
 
 class TestGetGamesByHour:
