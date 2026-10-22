@@ -9,12 +9,11 @@ import chess.pgn
 
 from blunder_tutor.analysis.tactics import classify_blunder_tactics
 from blunder_tutor.background.base import BaseJob
-from blunder_tutor.events.event_types import JobEvent
 
 if TYPE_CHECKING:
-    from blunder_tutor.events.event_bus import EventBus
     from blunder_tutor.repositories.analysis import AnalysisRepository
     from blunder_tutor.repositories.game_repository import GameRepository
+    from blunder_tutor.services.job_service import JobService, ProgressCallback
 
 
 class BackfillTacticsJob(BaseJob):
@@ -22,46 +21,38 @@ class BackfillTacticsJob(BaseJob):
 
     def __init__(
         self,
+        job_service: JobService,
         analysis_repo: AnalysisRepository,
         game_repo: GameRepository,
-        event_bus: EventBus,
-        scope: str,
     ):
+        self.job_service = job_service
         self.analysis_repo = analysis_repo
         self.game_repo = game_repo
-        self.event_bus = event_bus
-        self.scope = scope
         self._log = logging.getLogger("BackfillTacticsJob")
 
     async def execute(self, job_id: str, **kwargs) -> dict:
         game_ids = await self.analysis_repo.get_game_ids_missing_tactics()
-        total = len(game_ids)
-        processed = 0
+        self._log.info("Backfilling tactics for %d games", len(game_ids))
+        return await self.job_service.run_with_lifecycle(
+            job_id,
+            len(game_ids),
+            lambda progress: self._backfill(game_ids, progress),
+        )
+
+    async def _backfill(
+        self, game_ids: list[str], progress: ProgressCallback
+    ) -> dict[str, Any]:
         blunders_classified = 0
-
-        self._log.info("Backfilling tactics for %d games", total)
-
-        for game_id in game_ids:
+        for processed, game_id in enumerate(game_ids, start=1):
             try:
-                count = await self._process_game(game_id)
-                blunders_classified += count
+                blunders_classified += await self._process_game(game_id)
             except Exception as e:
                 self._log.warning("Failed to process game %s: %s", game_id, e)
-
-            processed += 1
-
-            if processed % 10 == 0 or processed == total:
-                event = JobEvent.create_progress_updated(
-                    job_id=job_id,
-                    job_type=self.job_identifier,
-                    current=processed,
-                    total=total,
-                    scope=self.scope,
-                )
-                await self.event_bus.publish(event)
+            if processed % 10 == 0 or processed == len(game_ids):
+                await progress(processed)
 
         return {
-            "games_processed": processed,
+            "games_processed": len(game_ids),
             "blunders_classified": blunders_classified,
         }
 

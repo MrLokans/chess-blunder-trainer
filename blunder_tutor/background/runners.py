@@ -207,15 +207,14 @@ async def run_delete_all_data_job(
 @inject
 async def run_backfill_tactics_job(
     job_id: str,
+    job_service: JobServiceDep,
     analysis_repo: AnalysisRepoDep,
     game_repo: GameRepoDep,
-    event_bus: EventBusDep,
 ) -> dict[str, Any]:
     job = BackfillTacticsJob(
+        job_service=job_service,
         analysis_repo=analysis_repo,
         game_repo=game_repo,
-        event_bus=event_bus,
-        scope=user_scope(get_context()),
     )
     return await job.execute(job_id=job_id)
 

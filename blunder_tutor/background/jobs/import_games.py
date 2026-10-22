@@ -88,7 +88,9 @@ class ImportGamesJob(BaseJob):
         profile = await self.profile_repo.get(profile_id)
         if profile is None:
             logger.warning(f"import {job_id}: profile {profile_id} not found, skipping")
-            return _import_result(stored=0, skipped=0)
+            result = _import_result(stored=0, skipped=0)
+            await self.job_service.complete_job(job_id, result)
+            return result
 
         max_games = await self._resolve_max_games_for_profile(profile)
         result = await self.job_service.run_with_lifecycle(

@@ -205,6 +205,25 @@ class TestImportPerProfile:
         rows = _read_game_rows(db_path)
         assert rows == [("g-legacy", "lichess", "bob", None)]
 
+    async def test_missing_profile_completes_job(
+        self,
+        profile_repo: SqliteProfileRepository,
+        settings_repo: SettingsRepository,
+        game_repo: GameRepository,
+        job_service: JobService,
+        job_id: str,
+    ):
+        job = ImportGamesJob(
+            job_service=job_service,
+            settings_repo=settings_repo,
+            game_repo=game_repo,
+            profile_repo=profile_repo,
+            user_id="testuser",
+        )
+        await job.execute(job_id=job_id, profile_id=999)
+
+        assert (await job_service.get_job(job_id))["status"] == JOB_STATUS_COMPLETED
+
 
 class TestSyncPerProfile:
     async def test_with_profile_id_targets_only_that_profile(
