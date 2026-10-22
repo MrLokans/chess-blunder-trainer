@@ -34,8 +34,14 @@ async def _connect_async(db_path: Path) -> aiosqlite.Connection:
 
     conn = await aiosqlite.connect(db_path_str, timeout=SQLITE_TIMEOUT_SECONDS)
     conn.row_factory = aiosqlite.Row
-    await conn.execute("PRAGMA journal_mode=WAL;")
-    await conn.execute("PRAGMA synchronous=NORMAL;")
-    await conn.execute(f"PRAGMA busy_timeout={SQLITE_BUSY_TIMEOUT_MS};")
+    try:
+        await conn.execute("PRAGMA journal_mode=WAL;")
+        await conn.execute("PRAGMA synchronous=NORMAL;")
+        await conn.execute(f"PRAGMA busy_timeout={SQLITE_BUSY_TIMEOUT_MS};")
+    except BaseException:
+        # Interrupted setup (e.g. loop teardown cancelling the open) would otherwise
+        # orphan the handle, since no caller ever receives it.
+        await conn.close()
+        raise
 
     return conn

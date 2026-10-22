@@ -29,6 +29,7 @@ from blunder_tutor.events.websocket_manager import ConnectionManager
 from blunder_tutor.i18n.manager import TranslationManager
 from blunder_tutor.migrations import run_migrations
 from blunder_tutor.observability import init_observability, shutdown_observability
+from blunder_tutor.repositories.base import settle_abandoned_connections
 from blunder_tutor.repositories.job_repository import JobRepository
 from blunder_tutor.repositories.settings import SettingsRepository
 from blunder_tutor.web import routes
@@ -289,6 +290,8 @@ async def _run_startup(app: FastAPI) -> None:  # noqa: WPS217 — ordered startu
 
 
 async def _close_storage(app: FastAPI) -> None:
+    # After executor/scheduler shutdown, which is what abandons in-flight opens.
+    await settle_abandoned_connections()
     settings_repo = app.state.settings_repo
     if settings_repo is not None:
         await settings_repo.close()

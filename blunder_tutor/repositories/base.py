@@ -13,6 +13,7 @@ from blunder_tutor.analysis.db import _connect_async
 from blunder_tutor.web.config import AppConfig
 
 _pending_discards: set[asyncio.Future] = set()
+_inflight_opens: set[asyncio.Future] = set()
 
 
 async def _open_cancel_safe(db_path: Path) -> aiosqlite.Connection:
@@ -23,6 +24,8 @@ async def _open_cancel_safe(db_path: Path) -> aiosqlite.Connection:
     it reachable so `_discard_connection` can close it, via the sync `Connection.stop()`
     because a cancelled task cannot be relied on to await."""
     opening = asyncio.ensure_future(_connect_async(db_path))
+    _inflight_opens.add(opening)
+    opening.add_done_callback(_inflight_opens.discard)
     try:
         return await asyncio.shield(opening)
     except asyncio.CancelledError:
@@ -46,6 +49,21 @@ def _discard_connection(opening: asyncio.Future[aiosqlite.Connection]) -> None:
 
 def _finish_discard(conn: aiosqlite.Connection, stopped: asyncio.Future) -> None:
     _pending_discards.discard(stopped)
+
+
+async def settle_abandoned_connections() -> None:
+    """Call before the event loop closes: opens and discards outlive their cancelled
+    callers, and aiosqlite's worker thread raises if it reports into a closed loop."""
+    loop = asyncio.get_running_loop()
+    while True:
+        pending = [
+            fut
+            for fut in (*_inflight_opens, *_pending_discards)
+            if fut.get_loop() is loop
+        ]
+        if not pending:
+            return
+        await asyncio.wait(pending)
 
 
 class BaseDbRepository:
