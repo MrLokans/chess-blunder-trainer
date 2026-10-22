@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from http import HTTPStatus
+
 import httpx
 
 from tests.auth.conftest import signup_via_http as _signup

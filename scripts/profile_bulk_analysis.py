@@ -341,7 +341,7 @@ async def cmd_benchmark(args: argparse.Namespace) -> None:
         "depths": depths,
     }
 
-    ts = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    ts = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%S")
     run_dir = PROFILING_ROOT / ts
     run_dir.mkdir(parents=True, exist_ok=True)
 

@@ -1,5 +1,7 @@
 #:schema: https://www.schemastore.org/prek.json
 
+default_install_hook_types = ["pre-commit", "pre-push", "commit-msg"]
+
 [[repos]]
 repo = "builtin"
 hooks = [
@@ -12,17 +14,19 @@ hooks = [
 [[repos]]
 repo = "local"
 
-[[repos.hooks]]
-id = "ruff-format"
-name = "ruff format"
-entry = "uv run ruff format"
-language = "system"
-types = ["python"]
-
+# Same pair and order as `make fix/be`: check first, since unsafe fixes can leave
+# code the formatter rewraps.
 [[repos.hooks]]
 id = "ruff-check"
 name = "ruff check"
 entry = "uv run ruff check --fix --unsafe-fixes"
+language = "system"
+types = ["python"]
+
+[[repos.hooks]]
+id = "ruff-format"
+name = "ruff format"
+entry = "uv run ruff format"
 language = "system"
 types = ["python"]
 
@@ -84,3 +88,10 @@ language = "system"
 pass_filenames = false
 files = "^frontend/.+\\.(ts|tsx)$"
 stages = ["pre-push"]
+
+[[repos.hooks]]
+id = "commit-msg-guard"
+name = "no AI co-author / agent identity"
+entry = "sh scripts/hooks/commit_msg_guard.sh"
+language = "system"
+stages = ["commit-msg"]

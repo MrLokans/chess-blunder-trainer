@@ -10,6 +10,7 @@ from __future__ import annotations
 import sqlalchemy as sa
 
 from alembic import op
+from blunder_tutor.utils.time_control import classify_game_type
 
 revision = "006"
 down_revision = "005"
@@ -27,8 +28,6 @@ def upgrade() -> None:
     rows = conn.execute(
         sa.text("SELECT game_id, time_control FROM game_index_cache")
     ).fetchall()
-
-    from blunder_tutor.utils.time_control import classify_game_type
 
     for game_id, time_control in rows:
         gt = int(classify_game_type(time_control))

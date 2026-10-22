@@ -4,6 +4,8 @@ SHELL := /bin/sh
 # Tools
 UV := uv
 UV_SYNC_FLAGS := --frozen
+# Tracked Python sources; untracked scratch files at the repo root stay out of lint.
+PY_PATHS := blunder_tutor main.py tests alembic scripts
 
 # Common options
 DATA_DIR := data
@@ -32,7 +34,7 @@ FORCE :=
 .PHONY: help install install-dev cli clean
 .PHONY: fetch-lichess fetch-chesscom list show index
 .PHONY: analyze analyze-bulk train-ui
-.PHONY: format lint lint/be lint/be-wps lint/fe lint/hooks lint/imports check test test/be test/fe typecheck/fe build/fe download-pieces migrate
+.PHONY: format lint lint/be lint/be-wps lint/fe lint/hooks check test test/be test/fe typecheck/fe build/fe download-pieces migrate
 .PHONY: docker/build docker/run docker/stop
 .PHONY: landing
 .PHONY: db/backup db/restore db/rm
@@ -113,16 +115,14 @@ migrate: ## Run database migrations
 	$(UV) run blunder-tutor-db
 
 # Code quality
-lint: lint/be lint/be-wps lint/fe lint/e2e lint/i18n lint/hooks lint/imports ## Lint all code
+lint: lint/be lint/be-wps lint/fe lint/e2e lint/i18n lint/hooks ## Lint all code
 
-lint/be: ## Lint Python with ruff
-	$(UV) run ruff check blunder_tutor/ main.py
+lint/be: ## Lint and format-check Python with ruff (same rules as the pre-commit hook)
+	$(UV) run ruff check $(PY_PATHS)
+	$(UV) run ruff format --check $(PY_PATHS)
 
 lint/be-wps: ## Lint Python with wemake-python-styleguide
 	$(UV) run flake8 --select=WPS blunder_tutor/ main.py tests/
-
-lint/imports: ## Enforce top-level Python imports
-	$(UV) run ruff check --select PLC0415 blunder_tutor/ main.py tests/
 
 lint/fe: ## Lint TypeScript with ESLint + CSS with stylelint
 	npm run lint
@@ -142,9 +142,11 @@ typecheck/e2e: ## Run TypeScript type checking on E2E tests
 
 fix: fix/be fix/fe fix/e2e ## Auto-fix linting issues
 
+# Check before format: unsafe fixes (e.g. SIM117 merging `with`) can leave code the
+# formatter rewraps. The pre-commit hooks in prek.toml run the same pair in this order.
 fix/be: ## Auto-fix linting issues for backend
-	$(UV) run ruff format
-	$(UV) run ruff check --fix --unsafe-fixes blunder_tutor/ main.py
+	$(UV) run ruff check --fix --unsafe-fixes $(PY_PATHS)
+	$(UV) run ruff format $(PY_PATHS)
 
 fix/fe: ## Auto-fix linting issues for frontend
 	npm run lint:fix

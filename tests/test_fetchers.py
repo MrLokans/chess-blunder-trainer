@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from http import HTTPStatus
 from datetime import UTC, datetime
+from http import HTTPStatus
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 

@@ -26,14 +26,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
 
-      - name: Run ruff lint
-        run: uv run ruff check blunder_tutor/
-
-      - name: Run ruff format check
-        run: uv run ruff format --check blunder_tutor/
-
-      - name: Enforce top-level imports
-        run: uv run ruff check --select PLC0415 blunder_tutor/ main.py tests/
+      - name: Run ruff lint and format check
+        run: make lint/be
 
       - name: Run wemake-python-styleguide
         # Merge-blocking. Baseline reached zero violations in TREK-79
