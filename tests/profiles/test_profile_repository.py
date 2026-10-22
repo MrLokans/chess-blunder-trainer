@@ -64,6 +64,11 @@ _GAME_CASCADE_INSERTS: tuple[tuple[str, str], ...] = (
         "INSERT INTO starred_puzzles (game_id, ply, starred_at) "
         "VALUES (?, 1, '2026-04-30')",
     ),
+    (
+        "srs_cards",
+        "INSERT INTO srs_cards (game_id, ply, due_at, enrolled_at) "
+        "VALUES (?, 1, '2026-04-30', '2026-04-30')",
+    ),
 )
 
 

@@ -21,6 +21,7 @@ _GAME_CASCADE_TABLES: tuple[str, ...] = (
     "analysis_moves",
     "analysis_games",
     "starred_puzzles",
+    "srs_cards",
 )
 
 _PROFILE_SELECT = """
