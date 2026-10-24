@@ -1,0 +1,110 @@
+[
+  {
+    "id": "gh-17-blocking-check-is-not-a-pin",
+    "source": "https://github.com/MrLokans/chess-blunder-trainer/issues/17",
+    "note": "Be6 and the best move Be7 both block Re1+, so both pin a bishop to Black's own king; the pin explains nothing and is no tactic of Black's. Be6 loses to Nxe6 fxe6 Rxe6+.",
+    "fen": "r1b1kb1r/pp3ppp/2pn4/8/3N4/8/PPP2PPP/RNB1R1K1 b kq - 0 1",
+    "blunder": "c8e6",
+    "best": "f8e7",
+    "cp_loss": 190,
+    "expect": {
+      "pattern": "None",
+      "forbidden_best_keys": [
+        "explanation.best.pattern_pin",
+        "explanation.best.pattern_generic"
+      ]
+    }
+  },
+  {
+    "id": "block-check-pins-when-best-move-steps-aside",
+    "note": "Same position, but with Kd8 as the best move only the block creates the pin, so it is still blamed.",
+    "fen": "r1b1kb1r/pp3ppp/2pn4/8/3N4/8/PPP2PPP/RNB1R1K1 b kq - 0 1",
+    "blunder": "c8e6",
+    "best": "e8d8",
+    "cp_loss": 190,
+    "expect": {
+      "pattern": "Pin",
+      "forbidden_best_keys": [
+        "explanation.best.pattern_pin"
+      ]
+    }
+  },
+  {
+    "id": "missed-knight-fork",
+    "note": "Nxf7 forks queen and rook; the fork is the best move's own tactic.",
+    "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p1N1/2B1P3/8/PPPP1PPP/RNBQK2R w KQkq - 0 1",
+    "blunder": "g5h3",
+    "best": "g5f7",
+    "cp_loss": 300,
+    "expect": {
+      "pattern": "Fork",
+      "best_key": "explanation.best.pattern_fork"
+    }
+  },
+  {
+    "id": "missed-rook-skewer",
+    "fen": "8/qk6/8/8/8/8/8/2K4R w - - 0 1",
+    "blunder": "c1d2",
+    "best": "h1h7",
+    "cp_loss": 600,
+    "expect": {
+      "pattern": "Skewer",
+      "best_key": "explanation.best.check_with_pattern"
+    }
+  },
+  {
+    "id": "discovered-attack-wins-queen-via-line",
+    "note": "Bxh7+ uncovers Qd1 on the d5 queen; Ng5+ Kg8 Qxd5 collects it.",
+    "fen": "r1b2rk1/pppp1ppp/8/3qB3/8/3B1N2/5PPP/1R1Q2K1 w - - 0 21",
+    "blunder": "b1b5",
+    "best": "d3h7",
+    "cp_loss": 298,
+    "best_line": [
+      "Bxh7+",
+      "Kxh7",
+      "Ng5+",
+      "Kg8",
+      "Qxd5"
+    ],
+    "expect": {
+      "pattern": "Discovered Attack",
+      "best_key": "explanation.best.pv_wins_piece_via_pattern"
+    }
+  },
+  {
+    "id": "best-move-capture-does-not-mask-hanging-queen",
+    "source": "demo e0040ef4e66e:41",
+    "note": "Qxc6 hangs the queen to Qe8xc6. The best move Qxe8+ also leaves a queen briefly attacked, which must not cancel the real hanging queen.",
+    "fen": "r3q1k1/5rpp/p1p1Qb2/1p6/2n1PB2/2N5/PPP1RPPP/3R2K1 w - - 13 21",
+    "blunder": "e6c6",
+    "best": "e6e8",
+    "cp_loss": 751,
+    "expect": {
+      "reason_contains": "Created hanging queen"
+    }
+  },
+  {
+    "id": "knight-hangs-wherever-it-goes-still-blamed",
+    "source": "demo 4887e4dde53f:19",
+    "fen": "rnb1k1nr/3p1p2/2pq3p/ppb1p1p1/N1B1P3/P2P1N2/1PPB1PPP/R2QK2R w KQkq - 0 10",
+    "blunder": "a4b6",
+    "best": "a4c5",
+    "cp_loss": 468,
+    "expect": {
+      "pattern": "Hanging Piece"
+    }
+  },
+  {
+    "id": "royal-fork-check-keeps-fork-wording",
+    "source": "demo c3c983fd553e:59",
+    "note": "Qd4+ forks king and queen; an unrelated loose piece must not replace the fork wording.",
+    "fen": "5b2/pp5p/1kp5/4Q3/2P1R1P1/8/P2q3P/5K2 w - - 2 30",
+    "blunder": "a2a4",
+    "best": "e5d4",
+    "cp_loss": 314,
+    "expect": {
+      "pattern": "Fork",
+      "best_key": "explanation.best.check_with_pattern"
+    }
+  }
+]

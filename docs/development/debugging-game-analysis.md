@@ -47,3 +47,9 @@ SELECT * FROM analysis_games WHERE game_id = '<id>';
 SELECT game_id, white, black, date, result FROM game_index_cache
 WHERE white LIKE '%name%' OR black LIKE '%name%' ORDER BY end_time_utc DESC LIMIT 10;
 ```
+
+## Regression-testing tactics and explanations
+
+- **Reported misexplanation**: add the position to `tests/fixtures/blunder_cases.json` with what must (`pattern`, `reason_contains`, `blunder_key`, `best_key`) and must not (`forbidden_best_keys`) come out, then fix until `tests/test_blunder_cases.py` passes. A failure prints everything the detector and generator produced.
+- **Corpus snapshot**: `tests/test_blunder_snapshot.py` runs every blunder in `demo/demo.sqlite3` through `classify_blunder_tactics` and `generate_explanation` and compares against `tests/fixtures/snapshots/demo_blunders.txt`, one line per blunder. After an intended change, run `UPDATE_SNAPSHOTS=1 uv run pytest tests/test_blunder_snapshot.py` and review the snapshot's git diff: every changed line is a puzzle whose tag or wording changed.
+- Stored `tactical_pattern`/`tactical_reason` are only recomputed for rows where they are NULL (tactics backfill), so detector fixes don't reach already-analysed games by themselves. Best-move wording is computed per request and is always current.

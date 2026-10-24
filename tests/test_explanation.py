@@ -38,7 +38,6 @@ _EN_TEMPLATES = {
     "explanation.best.pattern_skewer": "The best move {san} creates a skewer, forcing a valuable piece to move and exposing another.",
     "explanation.best.pattern_discovered": "The best move {san} unleashes a discovered attack, hitting a valuable piece.",
     "explanation.best.pattern_back_rank": "The best move {san} exploits a back rank weakness.",
-    "explanation.best.pattern_hanging": "The best move {san} captures an undefended piece.",
     "explanation.best.pattern_hanging_piece": "The best move {san} captures the undefended {piece} on {square}.",
     "explanation.best.check_wins_hanging": "The best move {san} gives check, winning the undefended {piece} on {square}.",
     "explanation.best.pattern_generic": "The best move {san} wins material with a {pattern}.",
@@ -95,37 +94,27 @@ class TestGenerateExplanation:
         assert "check" in result.best_move_text.lower()
 
     def test_best_move_with_fork_pattern(self):
-        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        result = _resolve(
-            fen,
-            blunder_uci="e2e3",
-            best_move_uci="e2e4",
-            tactical_pattern="Fork",
-            cp_loss=200,
-        )
+        fen = "r1bqkb1r/pppp1ppp/2n2n2/4p1N1/2B1P3/8/PPPP1PPP/RNBQK2R w KQkq - 0 1"
+        result = _resolve(fen, blunder_uci="g5h3", best_move_uci="g5f7", cp_loss=200)
         assert "fork" in result.best_move_text.lower()
 
-    def test_best_move_with_pin_pattern(self):
-        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        result = _resolve(
-            fen,
-            blunder_uci="e2e3",
-            best_move_uci="e2e4",
-            tactical_pattern="Pin",
-            cp_loss=200,
-        )
-        assert "pin" in result.best_move_text.lower()
-
     def test_best_move_with_skewer_pattern(self):
-        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        result = _resolve(
-            fen,
-            blunder_uci="e2e3",
-            best_move_uci="e2e4",
-            tactical_pattern="Skewer",
-            cp_loss=200,
-        )
+        fen = "8/qk6/8/8/8/8/8/2K4R w - - 0 1"
+        result = _resolve(fen, blunder_uci="c1d2", best_move_uci="h1h7", cp_loss=600)
         assert "skewer" in result.best_move_text.lower()
+
+    def test_quiet_best_move_gets_no_pattern(self):
+        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        result = _resolve(fen, blunder_uci="e2e3", best_move_uci="e2e4", cp_loss=200)
+        for pattern in ("fork", "pin", "skewer", "discovered"):
+            assert pattern not in result.best_move_text.lower()
+
+    def test_best_move_blocking_check_is_not_a_pin(self):
+        # GH #17: Be6 and Be7 both block Re1+; neither pins anything of White's.
+        fen = "r1b1kb1r/pp3ppp/2pn4/8/3N4/8/PPP2PPP/RNB1R1K1 b kq - 0 1"
+        result = _resolve(fen, blunder_uci="c8e6", best_move_uci="f8e7", cp_loss=190)
+        assert "pin" not in result.best_move_text.lower()
+        assert "Be7" in result.best_move_text
 
     def test_best_move_checkmate(self):
         fen = "7k/6pp/5Q2/8/8/8/8/6K1 w - - 0 1"
@@ -150,63 +139,38 @@ class TestGenerateExplanation:
         assert result.blunder_text != ""
 
     def test_discovered_attack_pattern(self):
-        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        result = _resolve(
-            fen,
-            blunder_uci="e2e3",
-            best_move_uci="e2e4",
-            tactical_pattern="Discovered Attack",
-            cp_loss=300,
-        )
+        fen = "3qk3/8/8/8/3B4/8/8/3RK3 w - - 0 1"
+        result = _resolve(fen, blunder_uci="e1f1", best_move_uci="d4b6", cp_loss=300)
         assert "discovered" in result.best_move_text.lower()
 
-    def test_back_rank_pattern(self):
-        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        result = _resolve(
-            fen,
-            blunder_uci="e2e3",
-            best_move_uci="e2e4",
-            tactical_pattern="Back Rank Threat",
-            cp_loss=300,
-        )
-        assert "back rank" in result.best_move_text.lower()
-
-    def test_hanging_piece_pattern_when_best_move_captures(self):
-        # Best move captures the hanging piece → use "captures undefended" template
+    def test_best_move_captures_undefended_piece(self):
         fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"
         result = _resolve(
             fen,
             blunder_uci="e1e2",
             best_move_uci="d1d5",
-            tactical_pattern="Hanging Piece",
             cp_loss=500,
         )
         assert "undefended" in result.best_move_text.lower()
 
-    def test_hanging_piece_pattern_capture_of_defended_piece(self):
-        # "Hanging Piece" pattern refers to the blunder creating a hanging piece
-        # (White queen on d4), NOT the captured piece being undefended.
-        # When best move captures a defended piece, don't say "undefended".
+    def test_best_move_captures_defended_piece(self):
         # Real bug: Qxf6 where queen on f6 is defended by rook on f8.
         fen = "r1b2rk1/p1p4p/2p1pqp1/3p4/2PQ4/8/PP1N1PPP/R3K2R w KQ - 1 18"
         result = _resolve(
             fen,
             blunder_uci="e1g1",
             best_move_uci="d4f6",
-            tactical_pattern="Hanging Piece",
             cp_loss=600,
         )
         assert "undefended" not in result.best_move_text.lower()
         assert result.best_move_text != ""
 
-    def test_hanging_piece_pattern_when_best_move_not_capture(self):
-        # Best move avoids hanging a piece but doesn't capture → fall through
+    def test_quiet_best_move_not_called_capture(self):
         fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         result = _resolve(
             fen,
             blunder_uci="e2e3",
             best_move_uci="e2e4",
-            tactical_pattern="Hanging Piece",
             cp_loss=300,
         )
         assert "undefended" not in result.best_move_text.lower()
@@ -225,7 +189,6 @@ class TestGenerateExplanation:
             fen,
             blunder_uci="e1g1",
             best_move_uci="b1d2",
-            tactical_pattern="Hanging Piece",
             cp_loss=262,
         )
         assert "captures" not in result.best_move_text.lower()
@@ -246,7 +209,6 @@ class TestGenerateExplanation:
             fen,
             blunder_uci="d5d6",
             best_move_uci="f3h4",
-            tactical_pattern="None",
             cp_loss=276,
         )
         assert "none" not in result.best_move_text.lower()
@@ -258,7 +220,6 @@ class TestGenerateExplanation:
             fen,
             blunder_uci="d5d6",
             best_move_uci="f3h4",
-            tactical_pattern="None",
             cp_loss=276,
             best_line=["Nh4", "Nxd5", "Bh7+", "Kxh7", "Qxd5"],
         )
@@ -276,9 +237,8 @@ class TestGenerateExplanation:
         )
         assert result.best_move_text != ""
 
-    def test_sacrifice_with_check_uses_pv_to_explain_combination(self):
-        # Bxh7+ sacrifices bishop for pawn with check, then Ng5+ Kg8 Qxd5
-        # wins the queen. PV-first should show "wins the queen through a combination".
+    def test_sacrifice_with_check_names_pattern_and_line(self):
+        # Bxh7+ uncovers Qd1 on the d5 queen, and Ng5+ Kg8 Qxd5 collects it.
         fen = "r1b2rk1/pppp1ppp/8/3qB3/8/3B1N2/5PPP/1R1Q2K1 w - - 0 21"
         result = _resolve(
             fen,
@@ -288,7 +248,7 @@ class TestGenerateExplanation:
             best_line=["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qxd5"],
         )
         assert "queen" in result.best_move_text.lower()
-        assert "combination" in result.best_move_text.lower()
+        assert "discovered attack" in result.best_move_text.lower()
         assert "Bxh7+" in result.best_move_text
         assert "Qxd5" in result.best_move_text
 
@@ -330,20 +290,6 @@ class TestGenerateExplanation:
         )
         assert "queen" in result.best_move_text.lower()
         assert "Ng5+" in result.best_move_text
-
-    def test_pv_with_pattern_enrichment(self):
-        # When PV wins material AND a tactical pattern is known, mention the pattern
-        fen = "r1b2rk1/pppp1ppp/8/3qB3/8/3B1N2/5PPP/1R1Q2K1 w - - 0 21"
-        result = _resolve(
-            fen,
-            blunder_uci="b1b5",
-            best_move_uci="d3h7",
-            cp_loss=298,
-            tactical_pattern="Discovered Attack",
-            best_line=["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qxd5"],
-        )
-        assert "queen" in result.best_move_text.lower()
-        assert "discovered attack" in result.best_move_text.lower()
 
     def test_pv_simple_capture_defers_to_static(self):
         # Simple Qxd5 (no sacrifice, direct capture) should use static "wins the piece"

@@ -223,6 +223,26 @@ class TestClassifyBlunderTactics:
             or result.allowed_tactic.pattern != TacticalPattern.PIN
         )
 
+    def test_self_pin_from_blocking_check_not_attributed_to_blunder(self):
+        # GH #17: Be6 and the best move Be7 both block Re1+ and both pin the bishop.
+        board = chess.Board("r1b1kb1r/pp3ppp/2pn4/8/3N4/8/PPP2PPP/RNB1R1K1 b kq - 0 1")
+        result = classify_blunder_tactics(
+            board, chess.Move.from_uci("c8e6"), chess.Move.from_uci("f8e7")
+        )
+
+        assert result.allowed_tactic is None
+        assert result.primary_pattern == TacticalPattern.NONE
+
+    def test_self_pin_kept_when_best_move_avoids_it(self):
+        # Best Kd8 sidesteps Re1+, so blocking with Be6 is what creates the pin.
+        board = chess.Board("r1b1kb1r/pp3ppp/2pn4/8/3N4/8/PPP2PPP/RNB1R1K1 b kq - 0 1")
+        result = classify_blunder_tactics(
+            board, chess.Move.from_uci("c8e6"), chess.Move.from_uci("e8d8")
+        )
+
+        assert result.allowed_tactic is not None
+        assert result.allowed_tactic.pattern == TacticalPattern.PIN
+
     def test_primary_pattern_from_missed_tactic(self):
         """Primary pattern comes from missed tactic if present."""
         board = chess.Board(

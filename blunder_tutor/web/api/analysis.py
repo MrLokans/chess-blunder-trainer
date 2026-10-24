@@ -141,7 +141,6 @@ def _build_puzzle_response(
         fen=puzzle_data.fen,
         blunder_uci=puzzle_data.blunder_uci,
         best_move_uci=analysis.best_move_uci,
-        tactical_pattern=pattern_label,
         cp_loss=puzzle_data.cp_loss,
         best_line=analysis.best_line,
     )
