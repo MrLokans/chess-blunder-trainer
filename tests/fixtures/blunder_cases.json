@@ -339,5 +339,231 @@
         "piece": "chess.piece.pawn.acc"
       }
     }
+  },
+  {
+    "id": "pinned-recapturer-means-a-won-piece-not-a-trade",
+    "source": "demo 72eeb34f56f7:37",
+    "note": "Qxd6 takes the queen; the only recapturer, Be7, is pinned by Re1, so nothing is traded.",
+    "fen": "r3k3/p3br1p/bppq2pB/8/8/6Q1/PPPN1PPP/R3R1K1 w - - 0 19",
+    "blunder": "g3e3",
+    "best": "g3d6",
+    "cp_loss": 507,
+    "expect": {
+      "best_key": "explanation.best.wins_piece",
+      "best_params": {
+        "piece": "chess.piece.queen.acc"
+      }
+    }
+  },
+  {
+    "id": "line-confirmed-capture-is-a-win-not-a-trade",
+    "source": "demo 01cd81f36428:3",
+    "note": "exd5 is pawn for pawn on paper, but the engine line keeps the extra pawn; the line outranks the static trade check.",
+    "fen": "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+    "blunder": "g1f3",
+    "best": "e4d5",
+    "cp_loss": 182,
+    "best_line": [
+      "exd5",
+      "Nf6",
+      "Bb5+",
+      "Bd7",
+      "Bc4"
+    ],
+    "refutation_line": [
+      "dxe4",
+      "Ng5",
+      "Bf5",
+      "Nc3",
+      "Nf6"
+    ],
+    "expect": {
+      "best_key": "explanation.best.wins_piece",
+      "best_params": {
+        "piece": "chess.piece.pawn.acc"
+      }
+    }
+  },
+  {
+    "id": "real-game-check-wins-hanging",
+    "source": "demo 0ca30ec7e23d:25",
+    "note": "The checking move also hits a loose piece it can take next.",
+    "fen": "r2qk2r/ppp2ppp/4p3/n3P3/3P2Pb/1QP5/PP3PR1/RNB1K3 w Qkq - 3 13",
+    "blunder": "b3b4",
+    "best": "b3a4",
+    "cp_loss": 166,
+    "best_line": [
+      "Qa4+",
+      "Nc6",
+      "Qb5",
+      "Qd7",
+      "g5"
+    ],
+    "refutation_line": [
+      "Qd5",
+      "Kf1",
+      "f6",
+      "exf6",
+      "Bxf6"
+    ],
+    "expect": {
+      "best_key": "explanation.best.check_wins_hanging"
+    }
+  },
+  {
+    "id": "real-game-combination",
+    "source": "demo 050a8ae37fee:21",
+    "note": "The line wins material overall, but gives back too much to name one piece as won.",
+    "fen": "r3kb1r/ppp1p1pp/2n5/3q1p2/3PNB2/4PQ2/PPP2PPP/R3K2R w KQkq - 0 11",
+    "blunder": "e4c3",
+    "best": "e4d6",
+    "cp_loss": 388,
+    "best_line": [
+      "Nd6+",
+      "Qxd6",
+      "Bxd6",
+      "cxd6",
+      "Qxf5"
+    ],
+    "refutation_line": [
+      "Qxf3",
+      "gxf3",
+      "O-O-O",
+      "O-O-O",
+      "e6"
+    ],
+    "expect": {
+      "best_key": "explanation.best.combination"
+    }
+  },
+  {
+    "id": "real-game-pattern-skewer",
+    "source": "demo 06520f633e5d:25",
+    "note": "The best move's own tactic is a skewer.",
+    "fen": "r1b4r/ppp2kpp/5n2/8/1b6/4BQ2/PqPN1PPP/R4RK1 w - - 2 13",
+    "blunder": "f1b1",
+    "best": "a1b1",
+    "cp_loss": 210,
+    "best_line": [
+      "Rab1",
+      "Qa3",
+      "Rb3",
+      "Qa4",
+      "Qf4"
+    ],
+    "refutation_line": [
+      "Qe5",
+      "Nc4",
+      "Qc3",
+      "Qf4",
+      "Bd6"
+    ],
+    "expect": {
+      "best_key": "explanation.best.pattern_skewer"
+    }
+  },
+  {
+    "id": "real-game-pv-mate",
+    "source": "demo 009b4ac19373:43",
+    "note": "The best line mates; the player delivers it on an odd ply.",
+    "fen": "6k1/4rppp/p7/2p2q2/8/8/PPP2PPP/3RR1K1 w - - 0 22",
+    "blunder": "e1e7",
+    "best": "d1d8",
+    "cp_loss": 1500,
+    "best_line": [
+      "Rd8+",
+      "Re8",
+      "Rexe8#"
+    ],
+    "refutation_line": [
+      "h5",
+      "Re2",
+      "h4",
+      "h3",
+      "g6"
+    ],
+    "expect": {
+      "best_key": "explanation.best.pv_mate"
+    }
+  },
+  {
+    "id": "real-game-threatens-capture-check",
+    "source": "demo 10e4f2db39e8:25",
+    "note": "The best move sets up a capture with check that wasn't available before.",
+    "fen": "r1b1k2r/p3ppb1/2p4p/2p1qp2/3p1N2/1P1P1PP1/P1PBP2P/R2QK2R w KQkq - 4 13",
+    "blunder": "b3b4",
+    "best": "f4h5",
+    "cp_loss": 200,
+    "best_line": [
+      "Nh5",
+      "Bf8",
+      "Bf4",
+      "Qe6",
+      "h3"
+    ],
+    "refutation_line": [
+      "h5",
+      "h4",
+      "cxb4",
+      "a3",
+      "bxa3"
+    ],
+    "expect": {
+      "best_key": "explanation.best.threatens_capture_check"
+    }
+  },
+  {
+    "id": "real-game-threatens-mate",
+    "source": "demo 197fae8a8b4f:21",
+    "note": "The best move creates a mate threat that wasn't there before.",
+    "fen": "r1bqk2r/pppp1ppp/4n3/1BbNQ3/8/8/PPPP2PP/R1B2R1K w kq - 1 11",
+    "blunder": "f1e1",
+    "best": "e5h5",
+    "cp_loss": 235,
+    "best_line": [
+      "Qh5",
+      "g6",
+      "Qf3",
+      "f5",
+      "d4"
+    ],
+    "refutation_line": [
+      "O-O",
+      "Bd3",
+      "Bd6",
+      "Qh5",
+      "g6"
+    ],
+    "expect": {
+      "best_key": "explanation.best.threatens_mate"
+    }
+  },
+  {
+    "id": "line-confirmed-capture-with-check-keeps-its-check",
+    "source": "demo 06520f633e5d:38",
+    "note": "Qxa1+ wins the rook and gives check; the line-based win must not drop the check wording.",
+    "fen": "r3r3/pQp3p1/5nkp/8/1b6/1Rq1BP2/P1P2P1P/R5K1 b - - 2 19",
+    "blunder": "a8b8",
+    "best": "c3a1",
+    "cp_loss": 456,
+    "best_line": [
+      "Qxa1+",
+      "Kg2",
+      "Bd6",
+      "Rb5",
+      "Rad8"
+    ],
+    "refutation_line": [
+      "Rxc3",
+      "Rxb7",
+      "Rb3",
+      "Nd5"
+    ],
+    "expect": {
+      "best_key": "explanation.best.capture_with_check",
+      "best_params": {
+        "piece": "chess.piece.rook.acc"
+      }
+    }
   }
 ]

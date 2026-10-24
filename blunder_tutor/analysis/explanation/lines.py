@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from itertools import pairwise
 
 import chess
 
@@ -12,27 +13,12 @@ from blunder_tutor.analysis.explanation.board import (
 
 
 @dataclass(frozen=True)
-class _PVCapture:
-    piece_type: chess.PieceType
-    by_color: chess.Color
-
-
-@dataclass
-class _PVWalkState:
-    line_board: chess.Board
-    player_caps: list[_PVCapture] = field(default_factory=list)
-    opp_caps: list[_PVCapture] = field(default_factory=list)
-    gives_mate: bool = False
-
-
-@dataclass(frozen=True)
 class PVAnalysis:
     moves_san: list[str]
-    gives_check: bool
     gives_mate: bool
     balance_gain: int
-    player_captures: list[_PVCapture]
-    opponent_captures: list[_PVCapture]
+    player_captures: list[chess.PieceType]
+    opponent_captures: list[chess.PieceType]
     assumed_recapture: chess.PieceType | None = None
 
     @property
@@ -45,8 +31,8 @@ class PVAnalysis:
             return None
         # Cancel like-for-like trades first: trading queens while also taking a knight
         # wins a knight, not a queen.
-        won = [cap.piece_type for cap in self.player_captures]
-        lost = [cap.piece_type for cap in self.opponent_captures]
+        won = list(self.player_captures)
+        lost = list(self.opponent_captures)
         if self.assumed_recapture is not None:
             lost.append(self.assumed_recapture)
         for lost_type in lost:
@@ -61,45 +47,6 @@ class PVAnalysis:
         if named is None or piece_value(named) - self.balance_gain > MINOR_PIECE_VALUE:
             return None
         return named
-
-
-def _record_capture_if_any(
-    state: _PVWalkState,
-    prev_board: chess.Board,
-    move: chess.Move,
-    side: chess.Color,
-    player: chess.Color,
-) -> None:
-    if not prev_board.is_capture(move):
-        return
-    captured = prev_board.piece_at(move.to_square)
-    if captured is None:
-        return
-    cap = _PVCapture(captured.piece_type, side)
-    if side == player:
-        state.player_caps.append(cap)
-    else:
-        state.opp_caps.append(cap)
-
-
-def _walk_pv_continuation(
-    state: _PVWalkState,
-    best_line: list[str],
-    player: chess.Color,
-) -> bool:
-    for move_san in best_line[1:]:
-        prev_board = state.line_board.copy()
-        try:
-            move = state.line_board.parse_san(move_san)
-        except ValueError, chess.IllegalMoveError:
-            return False
-        side = state.line_board.turn
-        state.line_board.push(move)
-        _record_capture_if_any(state, prev_board, move, side, player)
-        if state.line_board.is_checkmate():
-            state.gives_mate = True
-            return True
-    return True
 
 
 def final_capture_at_risk(
@@ -127,45 +74,65 @@ def final_capture_at_risk(
     return capturer.piece_type
 
 
+def _captured_piece(before: chess.Board, after: chess.Board) -> chess.PieceType | None:
+    move = after.peek()
+    if not before.is_capture(move):
+        return None
+    captured = before.piece_at(move.to_square)
+    return captured.piece_type if captured else None
+
+
+def _captures_by_side(
+    boards: list[chess.Board], player: chess.Color
+) -> tuple[list[chess.PieceType], list[chess.PieceType]]:
+    player_captures: list[chess.PieceType] = []
+    opponent_captures: list[chess.PieceType] = []
+    for before, after in pairwise(boards):
+        captured = _captured_piece(before, after)
+        if captured is not None:
+            side = player_captures if before.turn == player else opponent_captures
+            side.append(captured)
+    return player_captures, opponent_captures
+
+
+def _settled_balance_gain(
+    board: chess.Board, line_end: chess.Board, player: chess.Color
+) -> tuple[int, chess.PieceType | None]:
+    at_risk = final_capture_at_risk(line_end, player)
+    at_risk_value = piece_value(at_risk) if at_risk else 0
+    gain = material_balance(line_end, player) - material_balance(board, player)
+    return gain - at_risk_value, at_risk
+
+
+def _replay(
+    board: chess.Board, first_move: chess.Move, rest_san: list[str]
+) -> list[chess.Board]:
+    first = board.copy()
+    first.push(first_move)
+    return [first, *line_boards(first, rest_san)]
+
+
 def analyze_pv(
     board: chess.Board,
     best_move: chess.Move,
     best_line: list[str],
 ) -> PVAnalysis | None:
     player = board.turn
-    state = _PVWalkState(line_board=board.copy())
-    balance_before = material_balance(board, player)
-
-    try:
-        state.line_board.push(best_move)
-    except ValueError, chess.IllegalMoveError:
+    boards = _replay(board, best_move, best_line[1:])
+    player_captures, opponent_captures = _captures_by_side([board, *boards], player)
+    gives_mate = boards[-1].is_checkmate()
+    # A line whose SAN stops parsing early, with nothing captured and no check, is too
+    # unreliable to explain from; fall back to the static layer.
+    parsed_fully = gives_mate or len(boards) == len(best_line)
+    if not parsed_fully and not player_captures and not boards[0].is_check():
         return None
-
-    gives_check = state.line_board.is_check()
-    if state.line_board.is_checkmate():
-        state.gives_mate = True
-    if board.is_capture(best_move):
-        captured = board.piece_at(best_move.to_square)
-        if captured:
-            state.player_caps.append(_PVCapture(captured.piece_type, player))
-
-    walked_cleanly = state.gives_mate or _walk_pv_continuation(state, best_line, player)
-    # If SAN parse fails mid-line with nothing captured and no check, the PV is too
-    # unreliable; fall back to the static layer.
-    if not walked_cleanly and not state.player_caps and not gives_check:
-        return None
-
-    at_risk = final_capture_at_risk(state.line_board, player)
-    at_risk_value = piece_value(at_risk) if at_risk else 0
+    balance_gain, at_risk = _settled_balance_gain(board, boards[-1], player)
     return PVAnalysis(
         moves_san=best_line,
-        gives_check=gives_check,
-        gives_mate=state.gives_mate,
-        balance_gain=material_balance(state.line_board, player)
-        - balance_before
-        - at_risk_value,
-        player_captures=state.player_caps,
-        opponent_captures=state.opp_caps,
+        gives_mate=gives_mate,
+        balance_gain=balance_gain,
+        player_captures=player_captures,
+        opponent_captures=opponent_captures,
         assumed_recapture=at_risk,
     )
 

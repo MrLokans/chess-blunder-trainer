@@ -14,17 +14,18 @@ from blunder_tutor.analysis.explanation.board import (
 )
 from blunder_tutor.analysis.explanation.lines import PVAnalysis, analyze_pv
 from blunder_tutor.analysis.explanation.messages import I18nMessage, piece_key, type_key
+from blunder_tutor.analysis.explanation.puzzle import Puzzle
 
 
-def _is_ignored_threat(
-    board: chess.Board,
-    board_after: chess.Board,
-    sq: chess.Square,
-    piece: chess.Piece,
-    blunder_move: chess.Move,
-    player_color: chess.Color,
-    enemy: chess.Color,
-) -> bool:
+def _moved_piece_key(puzzle: Puzzle, case: str = "") -> str:
+    key = piece_key(puzzle.board, puzzle.blunder_move.from_square, case)
+    assert key is not None
+    return key
+
+
+def _is_ignored_threat(puzzle: Puzzle, sq: chess.Square, piece: chess.Piece) -> bool:
+    board, blunder_move = puzzle.board, puzzle.blunder_move
+    enemy = not puzzle.player
     piece_val = piece_value(piece.piece_type)
     if piece_val < 3 or blunder_move.from_square == sq:
         return False
@@ -34,129 +35,92 @@ def _is_ignored_threat(
         enemy, sq
     ):
         return False
-    piece_after = board_after.piece_at(sq)
-    if piece_after is None or piece_after.color != player_color:
+    piece_after = puzzle.board_after_blunder.piece_at(sq)
+    if piece_after is None or piece_after.color != puzzle.player:
         return False
-    return board_after.is_attacked_by(enemy, sq)
+    return puzzle.board_after_blunder.is_attacked_by(enemy, sq)
 
 
 def _find_ignored_threat(
-    board: chess.Board,
-    blunder_move: chess.Move,
-    player_color: chess.Color,
+    puzzle: Puzzle,
 ) -> tuple[chess.PieceType, chess.Square] | None:
-    board_after = board.copy()
-    board_after.push(blunder_move)
-    enemy = not player_color
-    candidates: list[tuple[int, chess.PieceType, chess.Square]] = []
-    for sq in chess.SQUARES:
-        piece = board.piece_at(sq)
-        if piece is None or piece.color != player_color:
-            continue
-        if _is_ignored_threat(
-            board, board_after, sq, piece, blunder_move, player_color, enemy
-        ):
-            candidates.append((piece_value(piece.piece_type), piece.piece_type, sq))
-    if not candidates:
-        return None
-    _, piece_type, found_sq = max(candidates, key=lambda c: c[0])
-    return (piece_type, found_sq)
+    candidates = [
+        (piece.piece_type, sq)
+        for sq in chess.SQUARES
+        if (piece := puzzle.board.piece_at(sq)) is not None
+        and piece.color == puzzle.player
+        and _is_ignored_threat(puzzle, sq, piece)
+    ]
+    return max(candidates, key=lambda found: piece_value(found[0]), default=None)
 
 
-def _blunder_missed_mate(
-    board: chess.Board, best_move: chess.Move | None, **_: object
-) -> I18nMessage | None:
-    if best_move and move_gives_mate(board, best_move):
+def _blunder_missed_mate(puzzle: Puzzle) -> I18nMessage | None:
+    if puzzle.best_move and move_gives_mate(puzzle.board, puzzle.best_move):
         return I18nMessage(key="explanation.blunder.missed_mate")
     return None
 
 
-def _blunder_hanging(
-    board: chess.Board,
-    blunder_move: chess.Move,
-    board_after: chess.Board,
-    player_color: chess.Color,
-    moved_key_nom: str,
-    **_: object,
-) -> I18nMessage | None:
-    if not is_capturable(board_after, blunder_move.to_square, player_color):
+def _blunder_hanging(puzzle: Puzzle) -> I18nMessage | None:
+    landing = puzzle.blunder_move.to_square
+    if not is_capturable(puzzle.board_after_blunder, landing, puzzle.player):
         return None
     return I18nMessage(
         key="explanation.blunder.hanging_piece",
         params={
-            "piece": moved_key_nom,
-            "square": chess.square_name(blunder_move.to_square),
+            "piece": _moved_piece_key(puzzle),
+            "square": chess.square_name(landing),
         },
     )
 
 
 def _is_newly_exposed(
-    board_before_null: chess.Board,
-    board_after: chess.Board,
-    sq: chess.Square,
-    blunder_move_to: chess.Square,
-    player_color: chess.Color,
+    puzzle: Puzzle, board_before_null: chess.Board, sq: chess.Square
 ) -> bool:
-    piece = board_after.piece_at(sq)
-    if piece is None or piece.color != player_color or sq == blunder_move_to:
+    piece = puzzle.board_after_blunder.piece_at(sq)
+    if (
+        piece is None
+        or piece.color != puzzle.player
+        or sq == puzzle.blunder_move.to_square
+    ):
         return False
-    return is_capturable(board_after, sq, player_color) and not is_capturable(
-        board_before_null, sq, player_color
-    )
+    return is_capturable(
+        puzzle.board_after_blunder, sq, puzzle.player
+    ) and not is_capturable(board_before_null, sq, puzzle.player)
 
 
 def _find_exposed_piece(
-    board: chess.Board,
-    board_after: chess.Board,
-    blunder_move: chess.Move,
-    player_color: chess.Color,
+    puzzle: Puzzle,
 ) -> tuple[chess.PieceType, chess.Square] | None:
     # Legal captures on both sides, with the opponent to move before the blunder too:
     # unpinning an attacker newly exposes a piece.
-    board_before_null = board.copy()
+    board_before_null = puzzle.board.copy()
     board_before_null.push(chess.Move.null())
-    for sq in chess.SQUARES:
-        if not _is_newly_exposed(
-            board_before_null, board_after, sq, blunder_move.to_square, player_color
-        ):
-            continue
-        piece = board_after.piece_at(sq)
-        assert piece is not None
-        return (piece.piece_type, sq)
-    return None
+    exposed = [
+        (piece.piece_type, sq)
+        for sq in chess.SQUARES
+        if _is_newly_exposed(puzzle, board_before_null, sq)
+        and (piece := puzzle.board_after_blunder.piece_at(sq)) is not None
+    ]
+    return max(exposed, key=lambda found: piece_value(found[0]), default=None)
 
 
-def _blunder_exposed(
-    board: chess.Board,
-    board_after: chess.Board,
-    blunder_move: chess.Move,
-    player_color: chess.Color,
-    moved_key_inst: str | None,
-    **_: object,
-) -> I18nMessage | None:
-    if moved_key_inst is None:
-        return None
-    exposed = _find_exposed_piece(board, board_after, blunder_move, player_color)
+def _blunder_exposed(puzzle: Puzzle) -> I18nMessage | None:
+    exposed = _find_exposed_piece(puzzle)
     if exposed is None:
         return None
     piece_type, sq = exposed
     return I18nMessage(
         key="explanation.blunder.exposed_piece",
         params={
-            "piece": moved_key_inst,
+            "piece": _moved_piece_key(puzzle, "inst"),
             "exposed": type_key(piece_type, "acc"),
             "square": chess.square_name(sq),
         },
     )
 
 
-def _blunder_ignored_threat(
-    board: chess.Board,
-    blunder_move: chess.Move,
-    player_color: chess.Color,
-    **_: object,
-) -> I18nMessage | None:
-    ignored = _find_ignored_threat(board, blunder_move, player_color)
+def _blunder_ignored_threat(puzzle: Puzzle) -> I18nMessage | None:
+    ignored = _find_ignored_threat(puzzle)
     if ignored is None:
         return None
     piece_type, ignored_sq = ignored
@@ -169,15 +133,9 @@ def _blunder_ignored_threat(
     )
 
 
-def _blunder_bad_capture(
-    board: chess.Board,
-    blunder_move: chess.Move,
-    board_after: chess.Board,
-    player_color: chess.Color,
-    moved_key_inst: str | None,
-    **_: object,
-) -> I18nMessage | None:
-    if moved_key_inst is None or not board.is_capture(blunder_move):
+def _blunder_bad_capture(puzzle: Puzzle) -> I18nMessage | None:
+    board, blunder_move = puzzle.board, puzzle.blunder_move
+    if not board.is_capture(blunder_move):
         return None
     captured = board.piece_at(blunder_move.to_square)
     mover = board.piece_at(blunder_move.from_square)
@@ -185,16 +143,16 @@ def _blunder_bad_capture(
         return None
     if piece_value(mover.piece_type) <= piece_value(captured.piece_type):
         return None
-    if not has_legal_capture(board_after, blunder_move.to_square):
+    if not has_legal_capture(puzzle.board_after_blunder, blunder_move.to_square):
         return None
     return I18nMessage(
         key="explanation.blunder.bad_capture",
-        params={"piece": moved_key_inst},
+        params={"piece": _moved_piece_key(puzzle, "inst")},
     )
 
 
-def _blunder_cp_loss(cp_loss: int, **_: object) -> I18nMessage | None:
-    pawn_loss = cp_loss / CENTIPAWNS_PER_PAWN
+def _blunder_cp_loss(puzzle: Puzzle) -> I18nMessage | None:
+    pawn_loss = puzzle.cp_loss / CENTIPAWNS_PER_PAWN
     if pawn_loss < 1:
         return None
     return I18nMessage(
@@ -203,22 +161,19 @@ def _blunder_cp_loss(cp_loss: int, **_: object) -> I18nMessage | None:
     )
 
 
-def _refutation_pv(
-    board_after: chess.Board, refutation_line: list[str] | None
-) -> PVAnalysis | None:
+def _refutation_pv(puzzle: Puzzle) -> PVAnalysis | None:
+    refutation_line = puzzle.refutation_line
     if not refutation_line:
         return None
     try:
-        reply = board_after.parse_san(refutation_line[0])
+        reply = puzzle.board_after_blunder.parse_san(refutation_line[0])
     except ValueError:
         return None
-    return analyze_pv(board_after, reply, refutation_line)
+    return analyze_pv(puzzle.board_after_blunder, reply, refutation_line)
 
 
-def _blunder_refuted(
-    board_after: chess.Board, refutation_line: list[str] | None, **_: object
-) -> I18nMessage | None:
-    pv = _refutation_pv(board_after, refutation_line)
+def _blunder_refuted(puzzle: Puzzle) -> I18nMessage | None:
+    pv = _refutation_pv(puzzle)
     if pv is None:
         return None
     params = {"reply": pv.moves_san[0]}
@@ -231,7 +186,8 @@ def _blunder_refuted(
     return None
 
 
-_BLUNDER_STRATEGIES: tuple[Callable[..., I18nMessage | None], ...] = (
+# First match wins: the most specific reason the move was a blunder comes first.
+_BLUNDER_STRATEGIES: tuple[Callable[[Puzzle], I18nMessage | None], ...] = (
     _blunder_missed_mate,
     _blunder_hanging,
     _blunder_exposed,
@@ -242,32 +198,14 @@ _BLUNDER_STRATEGIES: tuple[Callable[..., I18nMessage | None], ...] = (
 )
 
 
-def explain_blunder(
-    board: chess.Board,
-    blunder_move: chess.Move,
-    player_color: chess.Color,
-    cp_loss: int,
-    best_move: chess.Move | None = None,
-    refutation_line: list[str] | None = None,
-) -> I18nMessage | None:
-    moved_key_nom = piece_key(board, blunder_move.from_square)
-    if not moved_key_nom:
+def explain_blunder(puzzle: Puzzle) -> I18nMessage | None:
+    if puzzle.board.piece_at(puzzle.blunder_move.from_square) is None:
         return None
-    board_after = board.copy()
-    board_after.push(blunder_move)
-    ctx = {
-        "board": board,
-        "blunder_move": blunder_move,
-        "board_after": board_after,
-        "player_color": player_color,
-        "cp_loss": cp_loss,
-        "best_move": best_move,
-        "refutation_line": refutation_line,
-        "moved_key_nom": moved_key_nom,
-        "moved_key_inst": piece_key(board, blunder_move.from_square, "inst"),
-    }
-    for strategy in _BLUNDER_STRATEGIES:
-        message = strategy(**ctx)
-        if message is not None:
-            return message
-    return None
+    return next(
+        (
+            message
+            for strategy in _BLUNDER_STRATEGIES
+            if (message := strategy(puzzle)) is not None
+        ),
+        None,
+    )

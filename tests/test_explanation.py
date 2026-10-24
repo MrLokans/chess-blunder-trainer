@@ -2,78 +2,20 @@
 
 from __future__ import annotations
 
+from functools import partial
+from pathlib import Path
+
 from blunder_tutor.analysis.explanation import (
     BlunderExplanation,
     ResolvedExplanation,
     generate_explanation,
     resolve_explanation,
 )
+from blunder_tutor.i18n.manager import TranslationManager
 
-# Minimal English translator for tests: resolves piece keys and fills placeholders.
-_EN_PIECES = {
-    "chess.piece.pawn": "pawn",
-    "chess.piece.knight": "knight",
-    "chess.piece.bishop": "bishop",
-    "chess.piece.rook": "rook",
-    "chess.piece.queen": "queen",
-    "chess.piece.king": "king",
-}
-# English case forms are identical to nominative
-for piece in ["pawn", "knight", "bishop", "rook", "queen", "king"]:
-    for case in ["gen", "acc", "inst"]:
-        _EN_PIECES[f"chess.piece.{piece}.{case}"] = piece
-
-_EN_TEMPLATES = {
-    "explanation.blunder.missed_mate": "You missed a checkmate in one move.",
-    "explanation.blunder.hanging_piece": "Your {piece} on {square} is undefended and can be captured.",
-    "explanation.blunder.exposed_piece": "Moving your {piece} left your {exposed} on {square} undefended.",
-    "explanation.blunder.bad_capture": "Capturing with your {piece} loses material — your {piece} is worth more than the captured piece.",
-    "explanation.blunder.cp_loss": "This move loses about {loss} pawns worth of advantage.",
-    "explanation.blunder.refuted_mate": "Your opponent answers {reply} and forces checkmate.",
-    "explanation.blunder.refuted_material": "Your opponent answers {reply} and wins material.",
-    "explanation.best.checkmate": "The best move {san} delivers checkmate.",
-    "explanation.best.capture_with_check": "The best move {san} captures the {piece} with check.",
-    "explanation.best.check_with_pattern": "The best move {san} gives check, exploiting a {pattern}.",
-    "explanation.best.pattern_fork": "The best move {san} creates a fork, attacking multiple pieces at once.",
-    "explanation.best.pattern_pin": "The best move {san} creates a pin, winning material.",
-    "explanation.best.pattern_skewer": "The best move {san} creates a skewer, forcing a valuable piece to move and exposing another.",
-    "explanation.best.pattern_discovered": "The best move {san} unleashes a discovered attack, hitting a valuable piece.",
-    "explanation.best.pattern_back_rank": "The best move {san} exploits a back rank weakness.",
-    "explanation.best.pattern_hanging_piece": "The best move {san} captures the undefended {piece} on {square}.",
-    "explanation.best.check_wins_hanging": "The best move {san} gives check, winning the undefended {piece} on {square}.",
-    "explanation.best.pattern_generic": "The best move {san} wins material with a {pattern}.",
-    "explanation.best.doubles_pawns": "After {line}, your opponent is left with doubled pawns on the {file}-file.",
-    "explanation.best.opens_king": "After {line}, your opponent's king loses its pawn cover on the {file}-file.",
-    "explanation.best.trades_piece": "The best move {san} trades off the {piece}.",
-    "explanation.best.wins_piece": "The best move {san} wins the {piece}.",
-    "explanation.best.attacks_piece": "The best move {san} attacks the {piece}.",
-    "explanation.best.threatens_mate": "The best move {san} threatens checkmate.",
-    "explanation.best.threatens_capture_check": "The best move {san} threatens {piece} capture with check.",
-    "explanation.best.creates_threat": "The best move {san} creates a {piece} threat.",
-    "explanation.best.combination": "The best move {san} starts a combination that wins material.",
-    "explanation.best.pv_mate": "The best move {san} leads to checkmate in {moves} moves: {line}",
-    "explanation.best.pv_wins_piece": "The best move {san} wins the {piece} after {line}",
-    "explanation.best.pv_wins_piece_via_combination": "The best move {san} wins the {piece} through a combination: {line}",
-    "explanation.best.pv_wins_piece_via_pattern": "The best move {san} wins the {piece} via {pattern}: {line}",
-    "explanation.blunder.ignored_threat": "This move leaves your {piece} on {square} to be captured.",
-    "explanation.best.saves_piece": "The best move {san} saves the {piece} from capture.",
-    "explanation.best.avoids_loss": "The best move {san} avoids losing {loss} pawns worth of advantage.",
-    "explanation.best.fallback": "The best move is {san}.",
-}
-
-_ALL_EN = {**_EN_PIECES, **_EN_TEMPLATES}
-
-
-def _t(key: str, **kwargs: object) -> str:
-    template = _ALL_EN.get(key, key)
-    # Resolve piece references in kwargs
-    resolved = {}
-    for k, v in kwargs.items():
-        if isinstance(v, str) and v.startswith("chess.piece."):
-            resolved[k] = _ALL_EN.get(v, v)
-        else:
-            resolved[k] = v
-    return template.format(**resolved) if resolved else template
+# The real English locale rather than a hand copy that drifts from it; checks on wording
+# catch a missing key too, since the translator then returns the key itself.
+_t = partial(TranslationManager(Path(__file__).parents[1] / "locales").t, "en")
 
 
 def _resolve(
@@ -314,6 +256,63 @@ class TestGenerateExplanation:
         )
         assert "pawn cover" not in result.best_move_text
 
+    def test_best_line_ending_in_the_opponents_mate_is_not_our_mate(self):
+        # Even-length line: after Nf4 it is White who mates with Ra8#.
+        fen = "6k1/5ppp/8/7n/8/8/5PPP/R5K1 b - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="h5g3",
+            best_move_uci="h5f4",
+            cp_loss=300,
+            best_line=["Nf4", "Ra8#"],
+        )
+        assert "checkmate" not in result.best_move_text.lower()
+
+    def test_blunder_missing_a_mate_in_one(self):
+        fen = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1"
+        raw = generate_explanation(fen, "g1f1", "a1a8", 10000)
+        assert raw.blunder is not None
+        assert raw.blunder.key == "explanation.blunder.missed_mate"
+
+    def test_capturing_a_defended_pawn_with_the_queen(self):
+        # Qxd6 is covered by the rook, so it doesn't hang, but cxd6 still wins the queen.
+        fen = "4k3/2p5/3p4/8/8/8/3Q4/3RK3 w - - 0 1"
+        raw = generate_explanation(fen, "d2d6", "e1f1", 800)
+        assert raw.blunder is not None
+        assert raw.blunder.key == "explanation.blunder.bad_capture"
+
+    def test_best_line_mate_in_two(self):
+        fen = "5r1k/6pp/8/8/8/8/R7/R5K1 w - - 0 1"
+        raw = generate_explanation(
+            fen, "g1h1", "a2a8", 10000, best_line=["Ra8", "Rxa8", "Rxa8#"]
+        )
+        assert raw.best_move is not None
+        assert raw.best_move.key == "explanation.best.pv_mate"
+        assert raw.best_move.params["moves"] == "2"
+
+    def test_quiet_move_attacking_a_rook(self):
+        fen = "r3k3/8/8/8/8/8/8/4KB2 w - - 0 1"
+        raw = generate_explanation(fen, "e1d2", "f1g2", 300)
+        assert raw.best_move is not None
+        assert raw.best_move.key == "explanation.best.attacks_piece"
+
+    def test_line_ending_with_the_player_mated_explains_nothing(self):
+        # The engine line ends in Qxg2#, against the player: it can't be why Qxa8+ is best.
+        fen = "r5k1/5pp1/7p/3b4/Q7/8/5qPP/7K w - - 0 1"
+        raw = generate_explanation(
+            fen, "h2h3", "a4a8", 300, best_line=["Qxa8+", "Kh7", "h3", "Qxg2#"]
+        )
+        assert raw.best_move is not None
+        assert raw.best_move.key == "explanation.best.capture_with_check"
+
+    def test_exposed_piece_names_the_most_valuable(self):
+        # Nf3 drops both the b3 pawn and the e4 rook to the d5 bishop; name the rook.
+        fen = "4r1k1/5ppp/8/3b4/4R3/1P6/3N2PP/7K w - - 0 1"
+        raw = generate_explanation(fen, "d2f3", None, 300)
+        assert raw.blunder is not None
+        assert raw.blunder.key == "explanation.blunder.exposed_piece"
+        assert raw.blunder.params["square"] == "e4"
+
     def test_best_move_simple_capture(self):
         fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"
         result = _resolve(fen, blunder_uci="e1e2", best_move_uci="d1d5", cp_loss=500)
@@ -332,9 +331,6 @@ class TestGenerateExplanation:
         assert "captures" not in result.best_move_text.lower()
         assert "undefended" not in result.best_move_text.lower()
         assert "Nd2" in result.best_move_text
-
-    def test_left_piece_hanging_blunder(self):
-        pass
 
     def test_small_cp_loss_no_blunder_text(self):
         fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"

@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from functools import partial
+from dataclasses import dataclass
+from functools import cached_property
 
 import chess
 
-from blunder_tutor.analysis.explanation.blunder import explain_blunder
 from blunder_tutor.analysis.explanation.board import (
     CENTIPAWNS_PER_PAWN,
     find_hanging_piece,
+    has_legal_capture,
     is_hanging,
     is_retreat_to_safety,
     move_gives_check,
@@ -16,11 +17,8 @@ from blunder_tutor.analysis.explanation.board import (
     piece_value,
 )
 from blunder_tutor.analysis.explanation.lines import PVAnalysis, analyze_pv, format_line
-from blunder_tutor.analysis.explanation.messages import (
-    BlunderExplanation,
-    I18nMessage,
-    type_key,
-)
+from blunder_tutor.analysis.explanation.messages import I18nMessage, type_key
+from blunder_tutor.analysis.explanation.puzzle import Puzzle
 from blunder_tutor.analysis.explanation.structure import explain_best_structure
 from blunder_tutor.analysis.explanation.threats import (
     THREAT_ATTACKS,
@@ -30,98 +28,9 @@ from blunder_tutor.analysis.explanation.threats import (
     detect_next_move_threat,
 )
 from blunder_tutor.analysis.tactics import PATTERN_LABELS, analyze_move_tactics
-from blunder_tutor.utils.chess_utils import board_from_fen
 
 # 1.5 pawns: clearly visible to a beginner without firing only on blowouts.
 SIGNIFICANT_PAWN_LOSS = 1.5
-
-
-def _has_pattern(tactical_pattern: str | None) -> bool:
-    return bool(tactical_pattern) and tactical_pattern.lower() != "none"
-
-
-def _explain_pv_mate(san: str, pv: PVAnalysis) -> I18nMessage:
-    mate_depth = len(pv.moves_san) // 2 + 1
-    if mate_depth <= 1:
-        return I18nMessage(key="explanation.best.checkmate", params={"san": san})
-    return I18nMessage(
-        key="explanation.best.pv_mate",
-        params={
-            "san": san,
-            "moves": str(mate_depth),
-            "line": format_line(pv.moves_san),
-        },
-    )
-
-
-def _explain_pv_sacrifice(
-    san: str, pv: PVAnalysis, tactical_pattern: str | None
-) -> I18nMessage:
-    assert pv.net_piece_won is not None
-    piece_key = type_key(pv.net_piece_won, "acc")
-    line_str = format_line(pv.moves_san)
-    if _has_pattern(tactical_pattern):
-        return I18nMessage(
-            key="explanation.best.pv_wins_piece_via_pattern",
-            params={
-                "san": san,
-                "piece": piece_key,
-                "pattern": tactical_pattern.lower(),
-                "line": line_str,
-            },
-        )
-    return I18nMessage(
-        key="explanation.best.pv_wins_piece_via_combination",
-        params={"san": san, "piece": piece_key, "line": line_str},
-    )
-
-
-def _is_simple_first_capture(
-    board: chess.Board, best_move: chess.Move, pv: PVAnalysis
-) -> bool:
-    if not board.is_capture(best_move):
-        return False
-    if len(pv.player_captures) != 1 or pv.net_piece_won is None:
-        return False
-    return pv.balance_gain >= piece_value(pv.net_piece_won)
-
-
-def _explain_pv_material_win(
-    board: chess.Board,
-    best_move: chess.Move,
-    san: str,
-    pv: PVAnalysis,
-) -> I18nMessage | None:
-    if _is_simple_first_capture(board, best_move, pv):
-        return None
-    assert pv.net_piece_won is not None
-    return I18nMessage(
-        key="explanation.best.pv_wins_piece",
-        params={
-            "san": san,
-            "piece": type_key(pv.net_piece_won, "acc"),
-            "line": format_line(pv.moves_san),
-        },
-    )
-
-
-def _explain_best_from_pv(
-    board: chess.Board,
-    best_move: chess.Move,
-    pv: PVAnalysis,
-    tactical_pattern: str | None,
-) -> I18nMessage | None:
-    san = board.san(best_move)
-    if pv.gives_mate:
-        return _explain_pv_mate(san, pv)
-    if pv.is_sacrifice_combination and pv.net_piece_won:
-        return _explain_pv_sacrifice(san, pv, tactical_pattern)
-    if pv.balance_gain >= 1 and pv.net_piece_won:
-        return _explain_pv_material_win(board, best_move, san, pv)
-    if pv.balance_gain >= 3:
-        return I18nMessage(key="explanation.best.combination", params={"san": san})
-    return None
-
 
 _PATTERN_KEYS = frozendict(
     {
@@ -130,7 +39,6 @@ _PATTERN_KEYS = frozendict(
         "back rank threat": "explanation.best.pattern_back_rank",
     }
 )
-
 
 _THREAT_KEYS = frozendict(
     {
@@ -142,105 +50,205 @@ _THREAT_KEYS = frozendict(
 )
 
 
-def _explain_best_check(
-    board: chess.Board,
-    best_move: chess.Move,
-    san: str,
-    tactical_pattern: str | None,
-) -> I18nMessage | None:
-    if board.is_capture(best_move):
-        captured = board.piece_at(best_move.to_square)
-        if captured:
-            return I18nMessage(
-                key="explanation.best.capture_with_check",
-                params={"san": san, "piece": type_key(captured.piece_type, "acc")},
-            )
-    if _has_pattern(tactical_pattern):
-        return I18nMessage(
-            key="explanation.best.check_with_pattern",
-            params={"san": san, "pattern": tactical_pattern.lower()},
-        )
-    hanging = find_hanging_piece(board, best_move, board.turn)
-    if hanging is not None:
-        piece_type, sq = hanging
-        return I18nMessage(
-            key="explanation.best.check_wins_hanging",
-            params={
-                "san": san,
-                "piece": type_key(piece_type, "acc"),
-                "square": chess.square_name(sq),
-            },
-        )
-    return None
+@dataclass(frozen=True)
+class _BestMove:
+    puzzle: Puzzle
+    move: chess.Move
+
+    @property
+    def board(self) -> chess.Board:
+        return self.puzzle.board
+
+    @cached_property
+    def san(self) -> str:
+        return self.board.san(self.move)
+
+    @cached_property
+    def pattern(self) -> str | None:
+        """The best move's own tactic: a puzzle's stored pattern may describe what the
+        blunder allowed instead."""
+        tactic = analyze_move_tactics(self.board, self.move)
+        label = PATTERN_LABELS[tactic.pattern].lower() if tactic else None
+        return None if label == "none" else label
+
+    @cached_property
+    def line(self) -> PVAnalysis | None:
+        best_line = self.puzzle.best_line
+        if not best_line or len(best_line) < 2:
+            return None
+        line = analyze_pv(self.board, self.move, best_line)
+        # Engine lines stop at mate, so an even length means the player got mated: a
+        # line that ends that way explains nothing about why the move is best.
+        if line is not None and line.gives_mate and len(line.moves_san) % 2 == 0:
+            return None
+        return line
+
+    @cached_property
+    def gives_check(self) -> bool:
+        return move_gives_check(self.board, self.move)
+
+    @cached_property
+    def captured(self) -> chess.Piece | None:
+        if not self.board.is_capture(self.move):
+            return None
+        return self.board.piece_at(self.move.to_square)
+
+    def say(self, key: str, **params: str) -> I18nMessage:
+        return I18nMessage(key=key, params={"san": self.san, **params})
 
 
-def _is_capturable_hanging(
-    board: chess.Board, best_move: chess.Move, captured: chess.Piece | None
-) -> bool:
-    if captured is None or not board.is_capture(best_move):
+def _mate_in_one(best: _BestMove) -> I18nMessage | None:
+    if not move_gives_mate(best.board, best.move):
+        return None
+    return best.say("explanation.best.checkmate")
+
+
+def _line_mate(best: _BestMove) -> I18nMessage | None:
+    line = best.line
+    if line is None or not line.gives_mate:
+        return None
+    return best.say(
+        "explanation.best.pv_mate",
+        moves=str(len(line.moves_san) // 2 + 1),
+        line=format_line(line.moves_san),
+    )
+
+
+def _line_sacrifice(best: _BestMove) -> I18nMessage | None:
+    line = best.line
+    if line is None or not line.is_sacrifice_combination:
+        return None
+    if line.net_piece_won is None:
+        return None
+    piece = type_key(line.net_piece_won, "acc")
+    if best.pattern:
+        return best.say(
+            "explanation.best.pv_wins_piece_via_pattern",
+            piece=piece,
+            pattern=best.pattern,
+            line=format_line(line.moves_san),
+        )
+    return best.say(
+        "explanation.best.pv_wins_piece_via_combination",
+        piece=piece,
+        line=format_line(line.moves_san),
+    )
+
+
+def _is_simple_first_capture(best: _BestMove, line: PVAnalysis) -> bool:
+    if best.captured is None or line.net_piece_won is None:
         return False
-    return is_hanging(board, best_move.to_square, not board.turn)
+    if len(line.player_captures) != 1:
+        return False
+    return line.balance_gain >= piece_value(line.net_piece_won)
 
 
-def _explain_best_hanging_capture(
-    board: chess.Board, best_move: chess.Move, san: str
-) -> I18nMessage | None:
-    captured = board.piece_at(best_move.to_square)
-    if captured is None or not _is_capturable_hanging(board, best_move, captured):
+def _line_material_win(best: _BestMove) -> I18nMessage | None:
+    line = best.line
+    if line is None or line.balance_gain < 1 or line.net_piece_won is None:
         return None
-    return I18nMessage(
-        key="explanation.best.pattern_hanging_piece",
-        params={
-            "san": san,
-            "piece": type_key(captured.piece_type, "acc"),
-            "square": chess.square_name(best_move.to_square),
-        },
-    )
-
-
-def _explain_best_pattern(san: str, tactical_pattern: str) -> I18nMessage:
-    pattern_lower = tactical_pattern.lower()
-    if "discovered" in pattern_lower:
-        return I18nMessage(
-            key="explanation.best.pattern_discovered", params={"san": san}
+    piece = type_key(line.net_piece_won, "acc")
+    if not _is_simple_first_capture(best, line):
+        return best.say(
+            "explanation.best.pv_wins_piece",
+            piece=piece,
+            line=format_line(line.moves_san),
         )
-    pattern_key = _PATTERN_KEYS.get(pattern_lower)
+    # A check or a named tactic is the more instructive sentence, so leave those to
+    # their steps; otherwise the line confirms the capture nets material, which the
+    # static capture step can't see.
+    if best.pattern or best.gives_check:
+        return None
+    return _hanging_capture(best) or best.say(
+        "explanation.best.wins_piece", piece=piece
+    )
+
+
+def _line_combination(best: _BestMove) -> I18nMessage | None:
+    line = best.line
+    if line is None or line.net_piece_won is not None or line.balance_gain < 3:
+        return None
+    return best.say("explanation.best.combination")
+
+
+def _check_capture(best: _BestMove) -> I18nMessage | None:
+    if not best.gives_check or best.captured is None:
+        return None
+    return best.say(
+        "explanation.best.capture_with_check",
+        piece=type_key(best.captured.piece_type, "acc"),
+    )
+
+
+def _check_pattern(best: _BestMove) -> I18nMessage | None:
+    if not best.gives_check or best.pattern is None:
+        return None
+    return best.say("explanation.best.check_with_pattern", pattern=best.pattern)
+
+
+def _check_wins_hanging(best: _BestMove) -> I18nMessage | None:
+    if not best.gives_check:
+        return None
+    hanging = find_hanging_piece(best.board, best.move, best.board.turn)
+    if hanging is None:
+        return None
+    piece_type, sq = hanging
+    return best.say(
+        "explanation.best.check_wins_hanging",
+        piece=type_key(piece_type, "acc"),
+        square=chess.square_name(sq),
+    )
+
+
+def _pattern(best: _BestMove) -> I18nMessage | None:
+    pattern = best.pattern
+    if pattern is None:
+        return None
+    if "discovered" in pattern:
+        return best.say("explanation.best.pattern_discovered")
+    pattern_key = _PATTERN_KEYS.get(pattern)
     if pattern_key:
-        return I18nMessage(key=pattern_key, params={"san": san})
-    return I18nMessage(
-        key="explanation.best.pattern_generic",
-        params={"san": san, "pattern": pattern_lower},
+        return best.say(pattern_key)
+    return best.say("explanation.best.pattern_generic", pattern=pattern)
+
+
+def _hanging_capture(best: _BestMove) -> I18nMessage | None:
+    captured = best.captured
+    if captured is None or not is_hanging(
+        best.board, best.move.to_square, not best.board.turn
+    ):
+        return None
+    return best.say(
+        "explanation.best.pattern_hanging_piece",
+        piece=type_key(captured.piece_type, "acc"),
+        square=chess.square_name(best.move.to_square),
     )
 
 
-def _explain_best_capture(
-    board: chess.Board, best_move: chess.Move, san: str
-) -> I18nMessage | None:
-    if not board.is_capture(best_move):
-        return None
-    captured = board.piece_at(best_move.to_square)
-    capturer = board.piece_at(best_move.from_square)
-    if captured is None or capturer is None:
-        return None
-    key = _capture_outcome_key(board, best_move, captured, capturer)
-    if key is None:
-        return None
-    return I18nMessage(
-        key=key, params={"san": san, "piece": type_key(captured.piece_type, "acc")}
+def _structure(best: _BestMove) -> I18nMessage | None:
+    puzzle = best.puzzle
+    return explain_best_structure(
+        puzzle.board, puzzle.blunder_move, puzzle.best_line, puzzle.refutation_line
     )
 
 
-def _capture_outcome_key(
-    board: chess.Board,
-    capture: chess.Move,
-    captured: chess.Piece,
-    capturer: chess.Piece,
-) -> str | None:
+def _retreat(best: _BestMove) -> I18nMessage | None:
+    retreat = is_retreat_to_safety(best.board, best.move)
+    if retreat is None:
+        return None
+    piece_type, _from_sq = retreat
+    return best.say("explanation.best.saves_piece", piece=type_key(piece_type, "acc"))
+
+
+def _capture_outcome_key(best: _BestMove, captured: chess.Piece) -> str | None:
+    capturer = best.board.piece_at(best.move.from_square)
+    if capturer is None:
+        return None
     captured_value = piece_value(captured.piece_type)
     capturer_value = piece_value(capturer.piece_type)
-    board_after = board.copy()
-    board_after.push(capture)
-    recapturable = board_after.is_attacked_by(board_after.turn, capture.to_square)
+    board_after = best.board.copy()
+    board_after.push(best.move)
+    recapturable = has_legal_capture(board_after, best.move.to_square)
     if captured_value > capturer_value or not recapturable:
         return "explanation.best.wins_piece"
     if captured_value == capturer_value:
@@ -249,153 +257,60 @@ def _capture_outcome_key(
     return None
 
 
-def _explain_best_threat(
-    board: chess.Board, best_move: chess.Move, san: str
-) -> I18nMessage | None:
-    threat = detect_next_move_threat(board, best_move)
+def _capture(best: _BestMove) -> I18nMessage | None:
+    captured = best.captured
+    if captured is None:
+        return None
+    key = _capture_outcome_key(best, captured)
+    if key is None:
+        return None
+    return best.say(key, piece=type_key(captured.piece_type, "acc"))
+
+
+def _threat(best: _BestMove) -> I18nMessage | None:
+    threat = detect_next_move_threat(best.board, best.move)
     if threat is None:
         return None
-    return I18nMessage(
-        key=_THREAT_KEYS[threat.kind],
-        params={"san": san, "piece": threat.piece_key},
-    )
+    return best.say(_THREAT_KEYS[threat.kind], piece=threat.piece_key)
 
 
-def _explain_best_retreat(
-    board: chess.Board, best_move: chess.Move, san: str
-) -> I18nMessage | None:
-    retreat = is_retreat_to_safety(board, best_move)
-    if retreat is None:
-        return None
-    piece_type, _from_sq = retreat
-    return I18nMessage(
-        key="explanation.best.saves_piece",
-        params={"san": san, "piece": type_key(piece_type, "acc")},
-    )
-
-
-def _explain_best_loss_avoidance(san: str, cp_loss: int) -> I18nMessage:
-    pawn_loss = cp_loss / CENTIPAWNS_PER_PAWN
+def _loss_avoidance(best: _BestMove) -> I18nMessage:
+    pawn_loss = best.puzzle.cp_loss / CENTIPAWNS_PER_PAWN
     if pawn_loss >= SIGNIFICANT_PAWN_LOSS:
-        return I18nMessage(
-            key="explanation.best.avoids_loss",
-            params={"san": san, "loss": f"{pawn_loss:.1f}"},
-        )
-    return I18nMessage(key="explanation.best.fallback", params={"san": san})
+        return best.say("explanation.best.avoids_loss", loss=f"{pawn_loss:.1f}")
+    return best.say("explanation.best.fallback")
 
 
-def _try_static_strategies(
-    board: chess.Board,
-    best_move: chess.Move,
-    san: str,
-    tactical_pattern: str | None,
-    structure: I18nMessage | None,
-) -> I18nMessage | None:
-    if _has_pattern(tactical_pattern):
-        return _explain_best_pattern(san, tactical_pattern)
-    # Lazy: the threat search is the expensive one and runs only if nothing earlier fits.
-    strategies: tuple[Callable[[], I18nMessage | None], ...] = (
-        partial(_explain_best_hanging_capture, board, best_move, san),
-        lambda: structure,
-        partial(_explain_best_retreat, board, best_move, san),
-        partial(_explain_best_capture, board, best_move, san),
-        partial(_explain_best_threat, board, best_move, san),
-    )
+# First match wins. Steps that read the engine line come before the static ones, a
+# check is worded before quiet reasons, and the threat search (the slowest) runs last.
+_BEST_STRATEGIES: tuple[Callable[[_BestMove], I18nMessage | None], ...] = (
+    _mate_in_one,
+    _line_mate,
+    _line_sacrifice,
+    _line_material_win,
+    _line_combination,
+    _check_capture,
+    _check_pattern,
+    _check_wins_hanging,
+    _pattern,
+    _hanging_capture,
+    _structure,
+    _retreat,
+    _capture,
+    _threat,
+    _loss_avoidance,
+)
+
+
+def explain_best(puzzle: Puzzle) -> I18nMessage | None:
+    if puzzle.best_move is None:
+        return None
+    best = _BestMove(puzzle, puzzle.best_move)
     return next(
-        (message for strategy in strategies if (message := strategy()) is not None),
+        (
+            message
+            for strategy in _BEST_STRATEGIES
+            if (message := strategy(best)) is not None
+        ),
         None,
     )
-
-
-def _explain_best_static(
-    board: chess.Board,
-    best_move: chess.Move,
-    tactical_pattern: str | None,
-    cp_loss: int,
-    structure: I18nMessage | None = None,
-) -> I18nMessage | None:
-    san = board.san(best_move)
-    if move_gives_mate(board, best_move):
-        return I18nMessage(key="explanation.best.checkmate", params={"san": san})
-    if move_gives_check(board, best_move):
-        check_msg = _explain_best_check(board, best_move, san, tactical_pattern)
-        if check_msg is not None:
-            return check_msg
-    static_msg = _try_static_strategies(
-        board, best_move, san, tactical_pattern, structure
-    )
-    if static_msg is not None:
-        return static_msg
-    return _explain_best_loss_avoidance(san, cp_loss)
-
-
-def _explain_best(
-    board: chess.Board,
-    best_move: chess.Move,
-    tactical_pattern: str | None,
-    cp_loss: int,
-    best_line: list[str] | None = None,
-    structure: I18nMessage | None = None,
-) -> I18nMessage | None:
-    if move_gives_mate(board, best_move):
-        return I18nMessage(
-            key="explanation.best.checkmate", params={"san": board.san(best_move)}
-        )
-
-    if best_line and len(best_line) >= 2:
-        pv = analyze_pv(board, best_move, best_line)
-        if pv:
-            pv_msg = _explain_best_from_pv(board, best_move, pv, tactical_pattern)
-            if pv_msg:
-                return pv_msg
-
-    return _explain_best_static(board, best_move, tactical_pattern, cp_loss, structure)
-
-
-def _parse_legal_move(board: chess.Board, uci: str | None) -> chess.Move | None:
-    if not uci:
-        return None
-    try:
-        move = chess.Move.from_uci(uci)
-    except ValueError:
-        return None
-    if move not in board.legal_moves:
-        return None
-    return move
-
-
-def _best_move_pattern(board: chess.Board, best_move: chess.Move) -> str | None:
-    tactic = analyze_move_tactics(board, best_move)
-    return PATTERN_LABELS[tactic.pattern] if tactic else None
-
-
-def generate_explanation(
-    fen: str,
-    blunder_uci: str,
-    best_move_uci: str | None,
-    cp_loss: int = 0,
-    best_line: list[str] | None = None,
-    refutation_line: list[str] | None = None,
-) -> BlunderExplanation:
-    board = board_from_fen(fen)
-    blunder_move = _parse_legal_move(board, blunder_uci)
-    if blunder_move is None:
-        return BlunderExplanation(blunder=None, best_move=None)
-
-    best_move = _parse_legal_move(board, best_move_uci)
-    blunder_msg = explain_blunder(
-        board, blunder_move, board.turn, cp_loss, best_move, refutation_line
-    )
-    best_msg = (
-        _explain_best(
-            board,
-            best_move,
-            _best_move_pattern(board, best_move),
-            cp_loss,
-            best_line,
-            explain_best_structure(board, blunder_move, best_line, refutation_line),
-        )
-        if best_move
-        else None
-    )
-    return BlunderExplanation(blunder=blunder_msg, best_move=best_msg)
