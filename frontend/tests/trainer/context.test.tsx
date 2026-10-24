@@ -4,7 +4,7 @@ import { trainerReducer, initialState } from '../../src/trainer/context';
 const PUZZLE = {
   game_id: 'abc', fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
   ply: 10, blunder_uci: 'e2e4', blunder_san: 'e4', best_move_uci: 'd2d4',
-  best_move_san: 'd4', best_line: ['d4', 'Nf6'], player_color: 'white' as const,
+  best_move_san: 'd4', best_line: ['d4', 'Nf6'], refutation_line: [], player_color: 'white' as const,
   eval_before: 50, eval_after: -200, eval_before_display: '+0.5',
   eval_after_display: '-2.0', cp_loss: 250, game_phase: 'middlegame',
   tactical_pattern: null, tactical_reason: null, tactical_squares: [],

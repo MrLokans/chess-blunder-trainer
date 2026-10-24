@@ -755,12 +755,43 @@ def _blunder_cp_loss(cp_loss: int, **_: object) -> I18nMessage | None:
     )
 
 
+def _refutation_pv(
+    board_after: chess.Board, refutation_line: list[str] | None
+) -> PVAnalysis | None:
+    if not refutation_line:
+        return None
+    try:
+        reply = board_after.parse_san(refutation_line[0])
+    except ValueError:
+        return None
+    return _analyze_pv(board_after, reply, refutation_line)
+
+
+def _blunder_refuted(
+    board_after: chess.Board, refutation_line: list[str] | None, **_: object
+) -> I18nMessage | None:
+    pv = _refutation_pv(board_after, refutation_line)
+    if pv is None:
+        return None
+    params = {"reply": pv.moves_san[0]}
+    # Engine lines stop at mate, so an odd length means the opponent delivered it.
+    if pv.gives_mate and len(pv.moves_san) % 2 == 1:
+        return I18nMessage(key="explanation.blunder.refuted_mate", params=params)
+    # Judge material after the player's last reply: a final capture they can take
+    # back is no win. Net balance, not the biggest capture: Nxe6 fxe6 Rxe6+ nets a pawn.
+    settled = _refutation_pv(board_after, pv.moves_san[: len(pv.moves_san) // 2 * 2])
+    if settled is not None and settled.balance_gain >= 1:
+        return I18nMessage(key="explanation.blunder.refuted_material", params=params)
+    return None
+
+
 _BLUNDER_STRATEGIES: tuple[Callable[..., I18nMessage | None], ...] = (
     _blunder_missed_mate,
     _blunder_hanging,
     _blunder_exposed,
     _blunder_ignored_threat,
     _blunder_bad_capture,
+    _blunder_refuted,
     _blunder_cp_loss,
 )
 
@@ -771,6 +802,7 @@ def _explain_blunder(
     player_color: chess.Color,
     cp_loss: int,
     best_move: chess.Move | None = None,
+    refutation_line: list[str] | None = None,
 ) -> I18nMessage | None:
     moved_key_nom = _piece_key(board, blunder_move.from_square)
     if not moved_key_nom:
@@ -784,6 +816,7 @@ def _explain_blunder(
         "player_color": player_color,
         "cp_loss": cp_loss,
         "best_move": best_move,
+        "refutation_line": refutation_line,
         "moved_key_nom": moved_key_nom,
         "moved_key_inst": _piece_key(board, blunder_move.from_square, "inst"),
     }
@@ -1014,6 +1047,7 @@ def generate_explanation(
     best_move_uci: str | None,
     cp_loss: int = 0,
     best_line: list[str] | None = None,
+    refutation_line: list[str] | None = None,
 ) -> BlunderExplanation:
     board = board_from_fen(fen)
     blunder_move = _parse_legal_move(board, blunder_uci)
@@ -1021,7 +1055,9 @@ def generate_explanation(
         return BlunderExplanation(blunder=None, best_move=None)
 
     best_move = _parse_legal_move(board, best_move_uci)
-    blunder_msg = _explain_blunder(board, blunder_move, board.turn, cp_loss, best_move)
+    blunder_msg = _explain_blunder(
+        board, blunder_move, board.turn, cp_loss, best_move, refutation_line
+    )
     best_msg = (
         _explain_best(
             board, best_move, _best_move_pattern(board, best_move), cp_loss, best_line

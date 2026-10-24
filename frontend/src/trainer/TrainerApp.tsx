@@ -75,7 +75,7 @@ function TrainerCore(): preact.JSX.Element {
   filtersRef.current = filtersApi;
 
   // Line player
-  const { playBestMove, navigateLine } = useLinePlayer(gameRef);
+  const { playBestMove, playRefutation, navigateLine } = useLinePlayer(gameRef);
 
   // WebSocket for stats updates
   const ws = useWebSocket(['stats.updated']);
@@ -433,6 +433,7 @@ function TrainerCore(): preact.JSX.Element {
             moveHistory={state.moveHistory}
             srsSuspended={srsSuspended}
             onPlayBest={playBestMove}
+            onPlayRefutation={playRefutation}
             onNext={handleNext}
             onClose={() => { dispatch({ type: 'SET_RESULT_VISIBLE', visible: false }); }}
           />

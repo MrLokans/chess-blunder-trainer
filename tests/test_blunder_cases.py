@@ -30,6 +30,7 @@ def test_blunder_case(case: dict[str, Any]):
         case.get("best"),
         case.get("cp_loss", 0),
         case.get("best_line"),
+        case.get("refutation_line"),
     )
     expect = case["expect"]
     produced = {

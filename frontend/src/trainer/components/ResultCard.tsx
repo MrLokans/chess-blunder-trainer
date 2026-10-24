@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'preact/hooks';
 import { useDrag } from '../hooks/useDrag';
+import { Button } from '../../components/primitives/Button';
 import type { PuzzleData, FeedbackType } from '../context';
 
 interface ResultCardProps {
@@ -12,6 +13,7 @@ interface ResultCardProps {
   moveHistory: string[];
   srsSuspended?: boolean;
   onPlayBest: () => void;
+  onPlayRefutation: () => void;
   onNext: () => void;
   onClose: () => void;
 }
@@ -25,7 +27,7 @@ const ACCENT_MAP: Record<string, string> = {
 
 export function ResultCard({
   visible, feedbackType, feedbackTitle, feedbackDetail, puzzle,
-  bestRevealed, moveHistory, srsSuspended, onPlayBest, onNext, onClose: _onClose,
+  bestRevealed, moveHistory, srsSuspended, onPlayBest, onPlayRefutation, onNext, onClose: _onClose,
 }: ResultCardProps): preact.JSX.Element | null {
   const cardRef = useRef<HTMLDivElement>(null);
   const { handleRef, restorePosition } = useDrag(cardRef);
@@ -76,22 +78,45 @@ export function ResultCard({
                 </button>
               </div>
 
+              {(puzzle.refutation_line.length > 0 || puzzle.explanation_blunder) && (
+                <section class="board-result-section" data-testid="result-blunder">
+                  <h3 class="board-result-section-heading">
+                    {t('trainer.result.you_played', { move: puzzle.blunder_san })}
+                    <span class="board-result-loss">
+                      {puzzle.eval_before_display} → {puzzle.eval_after_display}
+                    </span>
+                  </h3>
+                  {puzzle.refutation_line.length > 0 && (
+                    <div class="board-result-refutation">
+                      <span class="board-result-line" data-testid="refutation-line">
+                        {puzzle.refutation_line.join(' ')}
+                      </span>
+                      <Button variant="secondary" size="sm" testId="show-refutation" onClick={onPlayRefutation}>
+                        {t('trainer.button.show_refutation')}
+                      </Button>
+                    </div>
+                  )}
+                  {puzzle.explanation_blunder && (
+                    <p class="board-result-section-text" id="explanationBlunder">{puzzle.explanation_blunder}</p>
+                  )}
+                </section>
+              )}
+
+              {puzzle.explanation_best && (
+                <section class="board-result-section" data-testid="result-best">
+                  <h3 class="board-result-section-heading">
+                    {t('trainer.result.why_better', { move: puzzle.best_move_san })}
+                  </h3>
+                  <p class="board-result-section-text" id="explanationBest">{puzzle.explanation_best}</p>
+                </section>
+              )}
+
               {puzzle.tactical_pattern && puzzle.tactical_pattern !== 'None' && puzzle.tactical_reason && (
                 <details class="board-result-details" id="tacticalDetails">
                   <summary>{t('trainer.details.tactical')} ▸</summary>
                   <div class="board-result-details-body">
                     <div class="board-result-details-heading" id="tacticalInfoTitle">{puzzle.tactical_pattern}</div>
                     <div class="board-result-details-text" id="tacticalInfoReason">{puzzle.tactical_reason}</div>
-                  </div>
-                </details>
-              )}
-
-              {(puzzle.explanation_blunder || puzzle.explanation_best) && (
-                <details class="board-result-details" id="explanationDetails">
-                  <summary>{t('trainer.details.explanation')} ▸</summary>
-                  <div class="board-result-details-body">
-                    <div id="explanationBlunder">{puzzle.explanation_blunder || ''}</div>
-                    <div id="explanationBest">{puzzle.explanation_best || ''}</div>
                   </div>
                 </details>
               )}

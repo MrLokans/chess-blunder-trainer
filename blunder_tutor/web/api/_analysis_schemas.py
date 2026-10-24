@@ -121,6 +121,10 @@ class PuzzleResponse(BaseModel):
     best_move_uci: str | None = Field(description="Best move in UCI notation")
     best_move_san: str | None = Field(description="Best move in SAN notation")
     best_line: list[str] = Field(description="Best continuation line (up to 5 moves)")
+    refutation_line: list[str] = Field(
+        default_factory=list,
+        description="Opponent's best line after the blunder (up to 5 moves)",
+    )
     best_move_eval: int | None = Field(description="Evaluation after best move")
     game_phase: str | None = Field(
         description="Game phase (opening, middlegame, endgame)"

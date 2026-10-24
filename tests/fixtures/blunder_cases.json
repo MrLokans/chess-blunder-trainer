@@ -12,8 +12,16 @@
       "forbidden_best_keys": [
         "explanation.best.pattern_pin",
         "explanation.best.pattern_generic"
-      ]
-    }
+      ],
+      "blunder_key": "explanation.blunder.refuted_material"
+    },
+    "refutation_line": [
+      "Nxe6",
+      "fxe6",
+      "Rxe6+",
+      "Kf7",
+      "Re2"
+    ]
   },
   {
     "id": "block-check-pins-when-best-move-steps-aside",
@@ -105,6 +113,25 @@
     "expect": {
       "pattern": "Fork",
       "best_key": "explanation.best.check_with_pattern"
+    }
+  },
+  {
+    "id": "refutation-ending-on-recapturable-capture-is-not-a-win",
+    "source": "demo 0b245b774db2:26",
+    "note": "The 5-ply line ends with Bxe4, which Black can take back; material must be judged after Black's last reply.",
+    "fen": "rnbq1rk1/ppp2p2/5n2/3pP1p1/3N4/2PB4/P1P2PPP/R2QR1K1 b - - 0 13",
+    "blunder": "f6g4",
+    "best": "f6e4",
+    "cp_loss": 197,
+    "refutation_line": [
+      "e6",
+      "Nxf2",
+      "Qh5",
+      "Ne4",
+      "Bxe4"
+    ],
+    "expect": {
+      "blunder_key": "explanation.blunder.cp_loss"
     }
   }
 ]

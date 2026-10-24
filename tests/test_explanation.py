@@ -29,6 +29,8 @@ _EN_TEMPLATES = {
     "explanation.blunder.exposed_piece": "Moving your {piece} left your {exposed} on {square} undefended.",
     "explanation.blunder.bad_capture": "Capturing with your {piece} loses material — your {piece} is worth more than the captured piece.",
     "explanation.blunder.cp_loss": "This move loses about {loss} pawns worth of advantage.",
+    "explanation.blunder.refuted_mate": "Your opponent answers {reply} and forces checkmate.",
+    "explanation.blunder.refuted_material": "Your opponent answers {reply} and wins material.",
     "explanation.best.checkmate": "The best move {san} delivers checkmate.",
     "explanation.best.capture_with_check": "The best move {san} captures the {piece} with check.",
     "explanation.best.check_with_pattern": "The best move {san} gives check, exploiting a {pattern}.",
@@ -115,6 +117,54 @@ class TestGenerateExplanation:
         result = _resolve(fen, blunder_uci="c8e6", best_move_uci="f8e7", cp_loss=190)
         assert "pin" not in result.best_move_text.lower()
         assert "Be7" in result.best_move_text
+
+    def test_blunder_refuted_by_mate(self):
+        fen = "6k1/5ppp/8/8/8/8/5PPP/R5K1 b - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="g8h8",
+            best_move_uci="g8f8",
+            cp_loss=10000,
+            refutation_line=["Ra8#"],
+        )
+        assert "Ra8#" in result.blunder_text
+        assert "checkmate" in result.blunder_text.lower()
+
+    def test_mate_by_the_blunderer_is_not_called_a_refutation(self):
+        # Even-length line: the player, not the opponent, delivers the final mate.
+        fen = "r5k1/5ppp/8/1N6/8/8/5PPP/6K1 b - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="h7h6",
+            best_move_uci="g7g6",
+            cp_loss=300,
+            refutation_line=["Nc7", "Ra1#"],
+        )
+        assert "checkmate" not in result.blunder_text.lower()
+
+    def test_blunder_refuted_by_material_win(self):
+        # GH #17: Nxe6 fxe6 Rxe6+ takes a bishop for a knight and nets a pawn.
+        fen = "r1b1kb1r/pp3ppp/2pn4/8/3N4/8/PPP2PPP/RNB1R1K1 b kq - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="c8e6",
+            best_move_uci="f8e7",
+            cp_loss=190,
+            refutation_line=["Nxe6", "fxe6", "Rxe6+", "Kf7", "Re2"],
+        )
+        assert "Nxe6" in result.blunder_text
+        assert "material" in result.blunder_text.lower()
+
+    def test_even_trade_refutation_falls_back_to_cp_loss(self):
+        fen = "r1b1kb1r/pp3ppp/2pn4/8/3N4/8/PPP2PPP/RNB1R1K1 b kq - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="c8e6",
+            best_move_uci="f8e7",
+            cp_loss=190,
+            refutation_line=["Nxe6", "fxe6"],
+        )
+        assert "1.9" in result.blunder_text
 
     def test_best_move_checkmate(self):
         fen = "7k/6pp/5Q2/8/8/8/8/6K1 w - - 0 1"

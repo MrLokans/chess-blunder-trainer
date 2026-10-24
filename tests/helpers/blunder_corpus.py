@@ -31,6 +31,7 @@ def describe_blunder(
     best_uci: str | None,
     cp_loss: int,
     best_line: list[str] | None = None,
+    refutation_line: list[str] | None = None,
 ) -> dict[str, Any]:
     board = board_from_fen(fen)
     best_move = chess.Move.from_uci(best_uci) if best_uci else None
@@ -43,6 +44,7 @@ def describe_blunder(
         best_move_uci=best_uci,
         cp_loss=cp_loss,
         best_line=best_line,
+        refutation_line=refutation_line,
     )
     return {
         "pattern": tactics.primary_pattern_name,
@@ -54,9 +56,10 @@ def describe_blunder(
 
 _BLUNDERS_SQL = """
     SELECT am.game_id, am.ply, am.san, am.uci, am.best_move_san, am.best_move_uci,
-           am.best_line, am.cp_loss, g.pgn_content
+           am.best_line, am.cp_loss, g.pgn_content, nx.best_line AS refutation_line
     FROM analysis_moves am
     JOIN game_index_cache g ON g.game_id = am.game_id
+    LEFT JOIN analysis_moves nx ON nx.game_id = am.game_id AND nx.ply = am.ply + 1
     WHERE am.classification = 3
     ORDER BY am.game_id, am.ply
 """
@@ -95,6 +98,7 @@ def iter_db_blunders(db_path: Path) -> Iterator[dict[str, Any]]:
                     row["best_move_uci"],
                     row["cp_loss"],
                     row["best_line"].split() if row["best_line"] else None,
+                    row["refutation_line"].split() if row["refutation_line"] else None,
                 ),
             }
     finally:

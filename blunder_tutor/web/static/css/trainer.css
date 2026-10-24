@@ -457,6 +457,48 @@
   margin-bottom: var(--s-sm);
 }
 
+.board-result-section {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--s-sm);
+  margin-top: var(--s-sm);
+}
+
+/* Not uppercase like the details summaries: headings carry SAN moves. */
+.board-result-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-sm);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 var(--s-xs);
+}
+
+.board-result-loss {
+  font-size: var(--text-xs);
+  color: var(--error);
+  white-space: nowrap;
+}
+
+.board-result-refutation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-sm);
+  margin-bottom: var(--s-xs);
+}
+
+.board-result-section-text {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
 .board-result-details-body {
   font-family: var(--font-sans);
   font-size: var(--text-sm);

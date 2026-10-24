@@ -77,6 +77,7 @@ export interface PuzzleData {
   best_move_uci: string;
   best_move_san: string;
   best_line: string[];
+  refutation_line: string[];
   player_color: 'white' | 'black';
   eval_before: number;
   eval_after: number;

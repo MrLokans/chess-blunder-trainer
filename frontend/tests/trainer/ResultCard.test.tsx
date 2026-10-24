@@ -6,7 +6,7 @@ const puzzle = {
   game_id: 'abc', fen: 'startpos', ply: 10,
   blunder_uci: 'e2e4', blunder_san: 'e4',
   best_move_uci: 'd2d4', best_move_san: 'd4',
-  best_line: ['d4', 'Nf6', 'c4'], player_color: 'white' as const,
+  best_line: ['d4', 'Nf6', 'c4'], refutation_line: ['Nf6', 'Nc3', 'Bb4'], player_color: 'white' as const,
   eval_before: 50, eval_after: -200,
   eval_before_display: '+0.5', eval_after_display: '-2.0',
   cp_loss: 250, game_phase: 'middlegame',
@@ -27,6 +27,7 @@ describe('ResultCard', () => {
     bestRevealed: true,
     moveHistory: [] as string[],
     onPlayBest: vi.fn(),
+    onPlayRefutation: vi.fn(),
     onNext: vi.fn(),
     onClose: vi.fn(),
   };
@@ -75,5 +76,32 @@ describe('ResultCard', () => {
   it('shows play best button for non-correct feedback', () => {
     render(<ResultCard {...defaults} feedbackType="blunder" />);
     expect(screen.getByText('trainer.button.play_best', { exact: false })).not.toBeNull();
+  });
+
+  it('shows the refutation of the played move', () => {
+    const { getByTestId } = render(<ResultCard {...defaults} />);
+    expect(getByTestId('result-blunder').textContent).toContain('trainer.result.you_played');
+    expect(getByTestId('refutation-line').textContent).toBe('Nf6 Nc3 Bb4');
+    expect(screen.getByText('Loses material')).not.toBeNull();
+  });
+
+  it('calls onPlayRefutation when show refutation is clicked', () => {
+    const onPlayRefutation = vi.fn();
+    const { getByTestId } = render(<ResultCard {...defaults} onPlayRefutation={onPlayRefutation} />);
+    fireEvent.click(getByTestId('show-refutation'));
+    expect(onPlayRefutation).toHaveBeenCalled();
+  });
+
+  it('omits the refutation button when there is no refutation line', () => {
+    const { queryByTestId, getByTestId } = render(
+      <ResultCard {...defaults} puzzle={{ ...puzzle, refutation_line: [] }} />,
+    );
+    expect(queryByTestId('show-refutation')).toBeNull();
+    expect(getByTestId('result-blunder')).not.toBeNull();
+  });
+
+  it('explains why the best move is better', () => {
+    const { getByTestId } = render(<ResultCard {...defaults} />);
+    expect(getByTestId('result-best').textContent).toContain('Maintains advantage');
   });
 });
