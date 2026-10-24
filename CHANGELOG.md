@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.7.0]
+
+### Added
+
+- **Dashboard next step**: The dashboard now suggests what to do next — import games, analyze imported ones, or widen filters that match nothing.
+- **Fairer comparisons**: Dashboard charts show blunders per game, so periods and time controls with different game counts compare fairly.
+
+### Changed
+
+- **Dashboard layout**: Insights are reordered into coaching insights, further insights and library management, with compact growth metrics. Sections that ignore dashboard filters now say so.
+- **Accuracy**: Move accuracy is computed from the drop in winning chances instead of raw centipawn loss, so moves in already-decided positions no longer drag it down.
+- **`ALLOWED_HOSTS` default (action may be required)**: In no-login mode, the app now only accepts `localhost` and IP addresses unless `ALLOWED_HOSTS` is set, to block DNS-rebinding attacks. If you open a no-login install by hostname (e.g. `chess.home.lan`), set `ALLOWED_HOSTS` or requests will fail with `400 Invalid host header`.
+- **Import limits**: Pasted PGN is capped at 100,000 characters and a single import at 10,000 games.
+
+### Fixed
+
+- **Black's moves**: Good moves as black are no longer graded "Not quite", the trainer's eval bar shows the right side, and conversion/resilience stats no longer flip black's evaluations twice.
+- **Puzzle grading**: Answers are checked against the stored puzzle, including Chess960 games.
+- **Dates**: Dashboard and trainer end-date filters include the whole last day, and dashboard times follow your timezone.
+- **Background jobs**: Stopped jobs stay stopped; jobs cut off by a restart are marked failed instead of spinning forever; tactics backfill and imports for a deleted profile no longer leave jobs hanging; one large analysis no longer blocks everyone else's engine work.
+- **Auto-sync**: Running or failing syncs are no longer re-dispatched every few minutes.
+- **Data cleanup**: "Delete all data" removes everything in one step, and deleting a profile also removes its review cards (existing orphaned cards are cleaned up on upgrade).
+- **Security**: Live updates only reach the user they belong to, `/ws` checks the request origin, post-login redirects are validated, the login rate limiter can't be bypassed with a forged `X-Forwarded-For`, and password checks no longer stall the server.
+
+---
+
 ## [3.6.0]
 
 ### Changed
