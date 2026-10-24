@@ -16,6 +16,10 @@ const TEST_PGN = `[Event "E2E Test"]
 test.describe('Import', () => {
   // Stockfish analysis is CPU-bound — short games still take a few seconds
   test('import valid PGN and see results', async ({ importPage }) => {
+    test.skip(
+      process.env.STOCKFISH_BINARY?.endsWith('fake-stockfish.sh') ?? false,
+      'fake-stockfish never answers `go`; real analysis runs in docker.yml',
+    );
     test.setTimeout(120_000);
     await test.step('Load import page', async () => {
       await importPage.goto();

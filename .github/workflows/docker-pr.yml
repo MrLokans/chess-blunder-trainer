@@ -1,0 +1,48 @@
+name: Docker (PR)
+
+# Builds the image on PRs that change its inputs, so a broken Dockerfile or
+# base-image bump fails the PR instead of the release tag in `docker.yml`.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - .python-version
+      - pyproject.toml
+      - uv.lock
+      - package.json
+      - package-lock.json
+      - .github/workflows/docker*.yml
+
+jobs:
+  build:
+    name: Build and smoke-test image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: blunder-tutor:pr
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Check the container starts healthy
+        run: |
+          docker run -d --name pr-app -p 8000:8000 blunder-tutor:pr
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8000/health > /dev/null 2>&1 && break
+            sleep 2
+          done
+          curl -sf http://localhost:8000/health || (docker logs pr-app && exit 1)
+          docker exec pr-app sh -c 'echo quit | stockfish | head -1'

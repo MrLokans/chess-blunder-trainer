@@ -124,9 +124,10 @@ lint/be: ## Lint and format-check Python with ruff (same rules as the pre-commit
 lint/be-wps: ## Lint Python with wemake-python-styleguide
 	$(UV) run flake8 --select=WPS blunder_tutor/ main.py tests/
 
-lint/fe: ## Lint TypeScript with ESLint + CSS with stylelint
+lint/fe: ## Lint TypeScript + legacy static JS with ESLint, CSS with stylelint
 	npm run lint
 	npm run lint:css
+	npx eslint blunder_tutor/web/static/js/
 
 lint/e2e: ## Lint E2E tests with ESLint
 	cd e2e && npm run lint
@@ -175,7 +176,10 @@ test/e2e/auth: ## Run credentials-mode auth E2E tests locally
 	mkdir -p e2e/.tmp-auth
 	cd e2e && npx playwright test --config playwright.auth.config.ts
 
-test/e2e/all: test/e2e test/e2e/auth ## Run every E2E suite (demo + credentials-mode auth)
+test/e2e/setup-import: ## Run credentials-mode setup → bulk-import E2E test locally
+	cd e2e && npx playwright test --config playwright.setup-import.config.ts
+
+test/e2e/all: test/e2e test/e2e/auth test/e2e/setup-import ## Run every E2E suite (demo + credentials-mode auth + setup-import)
 
 # Both suites run `npm run build` via their respective Playwright
 # webServer commands, so `make -j2 test/e2e/all` would race on
