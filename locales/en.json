@@ -271,6 +271,7 @@
   "explanation.best.saves_piece": "The best move {san} saves the {piece} from capture.",
   "explanation.best.threatens_capture_check": "The best move {san} threatens {piece} capture with check.",
   "explanation.best.threatens_mate": "The best move {san} threatens checkmate.",
+  "explanation.best.trades_piece": "The best move {san} trades off the {piece}.",
   "explanation.best.wins_piece": "The best move {san} wins the {piece}.",
   "explanation.blunder.bad_capture": "Capturing with your {piece} loses material — your {piece} is worth more than the captured piece.",
   "explanation.blunder.cp_loss": "This move loses about {loss} pawns worth of advantage.",

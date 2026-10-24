@@ -271,6 +271,7 @@
   "explanation.best.saves_piece": "Найкращий хід {san} рятує {piece} від взяття.",
   "explanation.best.threatens_capture_check": "Найкращий хід {san} загрожує взяттям {piece} із шахом.",
   "explanation.best.threatens_mate": "Найкращий хід {san} загрожує матом.",
+  "explanation.best.trades_piece": "Найкращий хід {san} розмінює {piece}.",
   "explanation.best.wins_piece": "Найкращий хід {san} виграє {piece}.",
   "explanation.blunder.bad_capture": "Взяття вашим {piece} втрачає матеріал — ваша фігура коштує більше за взяту.",
   "explanation.blunder.cp_loss": "Цей хід втрачає близько {loss} пішаків переваги.",

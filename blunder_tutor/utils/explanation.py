@@ -922,12 +922,34 @@ def _explain_best_capture(
     if not board.is_capture(best_move):
         return None
     captured = board.piece_at(best_move.to_square)
-    if captured is None:
+    capturer = board.piece_at(best_move.from_square)
+    if captured is None or capturer is None:
+        return None
+    key = _capture_outcome_key(board, best_move, captured, capturer)
+    if key is None:
         return None
     return I18nMessage(
-        key="explanation.best.wins_piece",
-        params={"san": san, "piece": _type_key(captured.piece_type, "acc")},
+        key=key, params={"san": san, "piece": _type_key(captured.piece_type, "acc")}
     )
+
+
+def _capture_outcome_key(
+    board: chess.Board,
+    capture: chess.Move,
+    captured: chess.Piece,
+    capturer: chess.Piece,
+) -> str | None:
+    captured_value = _piece_value(captured.piece_type)
+    capturer_value = _piece_value(capturer.piece_type)
+    board_after = board.copy()
+    board_after.push(capture)
+    recapturable = board_after.is_attacked_by(board_after.turn, capture.to_square)
+    if captured_value > capturer_value or not recapturable:
+        return "explanation.best.wins_piece"
+    if captured_value == capturer_value:
+        return "explanation.best.trades_piece"
+    # A defended lower-value target: the static view can't tell why it works.
+    return None
 
 
 def _explain_best_threat(

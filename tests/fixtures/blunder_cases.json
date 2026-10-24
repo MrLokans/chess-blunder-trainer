@@ -133,5 +133,31 @@
     "expect": {
       "blunder_key": "explanation.blunder.cp_loss"
     }
+  },
+  {
+    "id": "best-move-even-trade-is-not-winning-a-piece",
+    "source": "user report, trainer game 458f32dc ply 10",
+    "note": "Bxf3 gxf3 trades bishop for knight; it must not say the best move wins the knight.",
+    "fen": "rn2kb1r/ppp1pppp/5n2/3q4/6b1/1P3N2/P1PPBPPP/RNBQK2R b KQkq - 2 5",
+    "blunder": "e7e6",
+    "best": "g4f3",
+    "cp_loss": 192,
+    "best_line": [
+      "Bxf3",
+      "gxf3",
+      "Nc6",
+      "c3",
+      "e5"
+    ],
+    "refutation_line": [
+      "d4",
+      "Qa5+",
+      "c3",
+      "c5",
+      "h3"
+    ],
+    "expect": {
+      "best_key": "explanation.best.trades_piece"
+    }
   }
 ]

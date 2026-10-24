@@ -271,6 +271,7 @@
   "explanation.best.saves_piece": "Лепшы ход {san} ратуе {piece} ад узяцця.",
   "explanation.best.threatens_capture_check": "Лепшы ход {san} пагражае ўзяццем {piece} з шахам.",
   "explanation.best.threatens_mate": "Лепшы ход {san} пагражае матам.",
+  "explanation.best.trades_piece": "Лепшы ход {san} размяньвае {piece}.",
   "explanation.best.wins_piece": "Лепшы ход {san} выйгравае {piece}.",
   "explanation.blunder.bad_capture": "Узяцце вашым {piece} губіць матэрыял — ваша фігура каштуе больш за ўзятую.",
   "explanation.blunder.cp_loss": "Гэты ход губіць каля {loss} пешак перавагі.",

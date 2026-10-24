@@ -43,6 +43,7 @@ _EN_TEMPLATES = {
     "explanation.best.pattern_hanging_piece": "The best move {san} captures the undefended {piece} on {square}.",
     "explanation.best.check_wins_hanging": "The best move {san} gives check, winning the undefended {piece} on {square}.",
     "explanation.best.pattern_generic": "The best move {san} wins material with a {pattern}.",
+    "explanation.best.trades_piece": "The best move {san} trades off the {piece}.",
     "explanation.best.wins_piece": "The best move {san} wins the {piece}.",
     "explanation.best.attacks_piece": "The best move {san} attacks the {piece}.",
     "explanation.best.threatens_mate": "The best move {san} threatens checkmate.",
@@ -225,6 +226,12 @@ class TestGenerateExplanation:
         )
         assert "undefended" not in result.best_move_text.lower()
         assert result.best_move_text != ""
+
+    def test_recapturable_capture_is_a_trade_not_a_win(self):
+        fen = "rn2kb1r/ppp1pppp/5n2/3q4/6b1/1P3N2/P1PPBPPP/RNBQK2R b KQkq - 2 5"
+        result = _resolve(fen, blunder_uci="e7e6", best_move_uci="g4f3", cp_loss=192)
+        assert "trades off the knight" in result.best_move_text
+        assert "wins" not in result.best_move_text
 
     def test_best_move_simple_capture(self):
         fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"
