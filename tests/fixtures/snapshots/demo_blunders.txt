@@ -30,7 +30,7 @@
 050a8ae37fee:20 f5 (best e6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nd6+ | best: creates_threat piece=bishop.gen san=e6
 050a8ae37fee:21 Nc3 (best Nd6+) | Discovered Attack: Missed discovered attack on queen | blunder: cp_loss loss=3.9 | best: combination san=Nd6+
 050a8ae37fee:31 exf4 (best dxc6) | Discovered Attack: Missed discovered attack on rook | blunder: refuted_material reply=Rxd5 | best: pv_wins_piece line=dxc6 Be5 f4 Bf6 Nxa7+ piece=knight.acc san=dxc6
-050a8ae37fee:45 Kc2 (best cxd4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.9 | best: trades_piece piece=pawn.acc san=cxd4
+050a8ae37fee:45 Kc2 (best cxd4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.9 | best: opens_king file=c line=cxd4 cxd4
 050a8ae37fee:59 Kb4 (best Kd5) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=king.inst square=b2 | best: creates_threat piece=rook.gen san=Kd5
 05568d9d57f1:34 Na5 (best Ne5) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=knight.inst square=c7 | best: attacks_piece piece=queen.acc san=Ne5
 0611a839330e:13 Nh4 (best h4) | Hanging Piece: Created hanging knight | blunder: hanging_piece piece=knight square=h4 | best: avoids_loss loss=3.9 san=h4
@@ -167,7 +167,7 @@
 1661080d2638:20 Qb6 (best Nxd5) | Discovered Attack: Missed discovered attack on bishop | blunder: cp_loss loss=7.2 | best: pv_wins_piece line=Nxd5 f4 Nxc3 e5 Ne2+ piece=queen.acc san=Nxd5
 1661080d2638:26 Qc6 (best Be6) | Skewer: Missed skewer (queen to pawn) | blunder: cp_loss loss=3.0 | best: pattern_skewer san=Be6
 1661080d2638:29 Nf5 (best Nxc8) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Be6 | best: trades_piece piece=bishop.acc san=Nxc8
-1661080d2638:43 Bb7 (best Rbb1) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=bishop.inst square=a2 | best: saves_piece piece=rook.acc san=Rbb1
+1661080d2638:43 Bb7 (best Rbb1) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=bishop.inst square=a2 | best: opens_king file=g line=Rbb1 g6 Bxc4 gxf5
 1661080d2638:44 Rxa2 (best Rb8) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Rd1 | best: pv_wins_piece line=Rb8 Rxc6 Rbxb7 Rd6 Rd7 piece=bishop.acc san=Rb8
 1661080d2638:45 Bxc6 (best Rd1) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=rook.acc square=b6 | best: pv_wins_piece line=Rd1 Ra1 Rxa1 Bxa1 Bxc6 piece=pawn.acc san=Rd1
 17963c6fd5be:16 exd4 (best Nxd4) | Fork: Missed fork (bishop + knight) | blunder: cp_loss loss=2.1 | best: pattern_fork san=Nxd4
@@ -218,7 +218,7 @@
 1cb2033b62d5:30 Be7 (best Qxf6) | Pin: Created relative pin (bishop to queen) | blunder: cp_loss loss=5.9 | best: pv_wins_piece_via_combination line=Qxf6 Qxf6 Nxf6 g3 a5 piece=bishop.acc san=Qxf6
 1cb2033b62d5:31 c4 (best Bxe7) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.0 | best: trades_piece piece=bishop.acc san=Bxe7
 1cb2033b62d5:33 Qxf6 (best Qh3) | Hanging Piece: Created hanging queen | blunder: hanging_piece piece=queen square=f6 | best: pv_wins_piece line=Qh3 Ke8 cxd5 Rg5 Ne2 piece=knight.acc san=Qh3
-1cbd0fa520f8:38 b6 (best Kh7) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxh6 | best: avoids_loss loss=2.8 san=Kh7
+1cbd0fa520f8:38 b6 (best Kh7) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxh6 | best: doubles_pawns file=c line=Kh7 dxc5
 1cbd0fa520f8:41 dxc5 (best Rd3) | Hanging Piece: Created hanging pawn | blunder: hanging_piece piece=pawn square=c5 | best: avoids_loss loss=4.0 san=Rd3
 1cbd0fa520f8:43 Kh1 (best Rd4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxe5 | best: threatens_capture_check piece=rook.gen san=Rd4
 1cbd0fa520f8:49 Rd7 (best Rg1) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qf1# | best: avoids_loss loss=15.0 san=Rg1
@@ -278,7 +278,7 @@
 2a6d3c7e00ae:60 exf4 (best d3) | Hanging Piece: Created hanging pawn | blunder: hanging_piece piece=pawn square=f4 | best: avoids_loss loss=2.7 san=d3
 2a6d3c7e00ae:84 Kg8 (best Ke8) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=15.0 | best: creates_threat piece=rook.gen san=Ke8
 2a6d3c7e00ae:87 Re7 (best Raa8) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=15.0 | best: pv_wins_piece line=Raa8 Rb1+ Kh2 Rh1+ Kxh1 piece=rook.acc san=Raa8
-2ab897455566:19 Qa4+ (best Bxh6) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.2 | best: trades_piece piece=knight.acc san=Bxh6
+2ab897455566:19 Qa4+ (best Bxh6) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.2 | best: doubles_pawns file=h line=Bxh6 gxh6
 2ab897455566:26 Be7 (best Nf5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.7 | best: attacks_piece piece=queen.acc san=Nf5
 2ab897455566:37 c3 (best Nfd4) | Hanging Piece: Created hanging knight | blunder: exposed_piece exposed=knight.acc piece=pawn.inst square=e2 | best: pv_wins_piece line=Nfd4 Be8 Qxh6 Ba4 Qd2 piece=pawn.acc san=Nfd4
 2ab897455566:46 Be8 (best Rf5) | Skewer: Missed skewer (queen to rook); Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=bishop.inst square=e6 | best: combination san=Rf5
@@ -314,7 +314,7 @@
 34397dde6f23:59 Be3 (best Rxc2) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bd8+ | best: pattern_hanging_piece piece=pawn.acc san=Rxc2 square=c2
 34397dde6f23:60 Qh5+ (best Bd8+) | Discovered Check: Missed discovered check (by queen); Created hanging pawn | blunder: cp_loss loss=9.7 | best: pv_wins_piece_via_pattern line=Bd8+ Kg2 Bxa5 Rxc2 Bd8 pattern=discovered check piece=queen.acc san=Bd8+
 34397dde6f23:121 Rg8 (best Qf5#) | None: Positional error or deep tactical oversight | blunder: missed_mate | best: checkmate san=Qf5#
-35aa9105cebf:8 Be6 (best Nc6) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=bishop.inst square=b7 | best: avoids_loss loss=1.7 san=Nc6
+35aa9105cebf:8 Be6 (best Nc6) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=bishop.inst square=b7 | best: doubles_pawns file=d line=Nc6 c4 d5 cxd5
 35aa9105cebf:10 Nc6 (best Nbd7) | Hanging Piece: Created hanging knight | blunder: hanging_piece piece=knight square=c6 | best: avoids_loss loss=3.4 san=Nbd7
 35aa9105cebf:11 Bxa8 (best Bxc6+) | Fork: Missed fork with check (2 pieces); Created hanging bishop | blunder: hanging_piece piece=bishop square=a8 | best: pv_wins_piece line=Bxc6+ Nd7 Nf3 Rb8 Bxd7+ piece=knight.acc san=Bxc6+
 35aa9105cebf:15 g4 (best c4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.7 | best: avoids_loss loss=1.7 san=c4
@@ -322,12 +322,12 @@
 35aa9105cebf:23 a4 (best c4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.3 | best: pv_wins_piece line=c4 Bxg4 fxg4 Nxg4 e4 piece=bishop.acc san=c4
 35aa9105cebf:33 Qd1 (best g5) | Fork: Missed fork (knight + pawn) | blunder: refuted_material reply=Nxg4 | best: pv_wins_piece line=g5 Ng4 gxh6 Nf2 hxg7 piece=pawn.acc san=g5
 35aa9105cebf:36 Nfd5 (best Qxf3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=O-O | best: pv_wins_piece line=Qxf3 Rf1 Qh3 Bxe5 Nxg4 piece=pawn.acc san=Qxf3
-35aa9105cebf:43 Nec3 (best Qd1) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=rook.acc square=a3 | best: avoids_loss loss=2.7 san=Qd1
+35aa9105cebf:43 Nec3 (best Qd1) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=rook.acc square=a3 | best: opens_king file=f line=Qd1 f5 gxf5
 35aa9105cebf:46 Bxa3 (best e2+) | Discovered Check: Missed discovered check (by bishop); Created hanging bishop | blunder: hanging_piece piece=bishop square=a3 | best: pv_wins_piece_via_pattern line=e2+ Kh2 exf1=B Qxf1 Bxa3 pattern=discovered check piece=rook.acc san=e2+
 35efa96d29e6:19 Bxb5 (best Bb3) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=bishop.inst | best: saves_piece piece=bishop.acc san=Bb3
 35efa96d29e6:33 Bb6 (best O-O-O) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxb6 | best: avoids_loss loss=3.6 san=O-O-O
 35efa96d29e6:73 Kf2 (best Kh1) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qc5+ | best: avoids_loss loss=15.0 san=Kh1
-3700b8821a56:25 O-O-O (best Bxh6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=f4 | best: trades_piece piece=knight.acc san=Bxh6
+3700b8821a56:25 O-O-O (best Bxh6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=f4 | best: opens_king file=g line=Bxh6 Qxh6 Qxh6 gxh6
 3700b8821a56:26 fxe4 (best f4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bh3 | best: pv_wins_piece line=f4 Bd4 exd4 Kb2 dxc3+ piece=bishop.acc san=f4
 3700b8821a56:34 Rxf3 (best Bf5) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxg6+ | best: avoids_loss loss=4.3 san=Bf5
 3700b8821a56:38 Kg8 (best Kf7) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Rg1+ | best: avoids_loss loss=15.0 san=Kf7
@@ -426,7 +426,7 @@
 45a4bf3dd89a:36 Rb8 (best Qg5) | Skewer: Missed skewer (queen to knight); Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=rook.inst square=a7 | best: pattern_skewer san=Qg5
 45a4bf3dd89a:41 c4 (best Rxf7) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Rxb2 | best: pv_wins_piece line=Rxf7 Kxf7 Qc4+ Kg6 Qxb5 piece=pawn.acc san=Rxf7
 45a4bf3dd89a:54 Qxc4 (best Qe6) | Hanging Piece: Created hanging queen | blunder: hanging_piece piece=queen square=c4 | best: pv_wins_piece line=Qe6 Rf8 Qxe4 h4 Rd1+ piece=pawn.acc san=Qe6
-467bcb09f830:53 Qb4 (best Rxf7) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=queen.inst square=f2 | best: attacks_piece piece=queen.acc san=Rxf7
+467bcb09f830:53 Qb4 (best Rxf7) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=queen.inst square=f2 | best: opens_king file=f line=Rxf7
 46b8615e2464:21 Qf3 (best Bxg6+) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=3.7 | best: capture_with_check piece=pawn.acc san=Bxg6+
 46b8615e2464:29 Bd4 (best Bc5) | Discovered Attack: Missed discovered attack on knight | blunder: refuted_material reply=Nxd3+ | best: pattern_discovered san=Bc5
 46b8615e2464:32 Bxd4 (best dxc4) | Discovered Attack: Missed discovered attack on bishop; Created hanging bishop | blunder: hanging_piece piece=bishop square=d4 | best: pattern_discovered san=dxc4
@@ -448,7 +448,7 @@
 4de24dc5ee08:24 Ra7 (best Nbd7) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.9 | best: pv_wins_piece line=Nbd7 Nc3 b5 Bxb5 cxb5 piece=bishop.acc san=Nbd7
 4de24dc5ee08:25 O-O-O (best Nb6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=b5 | best: avoids_loss loss=2.1 san=Nb6
 4de24dc5ee08:34 d5 (best Be7) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=e5 | best: avoids_loss loss=3.0 san=Be7
-4de24dc5ee08:40 Kxf6 (best b4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bc3+ | best: avoids_loss loss=6.3 san=b4
+4de24dc5ee08:40 Kxf6 (best b4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bc3+ | best: opens_king file=c line=b4 c3 Bd6 cxb4
 4de24dc5ee08:41 Re8 (best Bc3+) | Skewer: Missed skewer (king to rook) | blunder: cp_loss loss=4.6 | best: pv_wins_piece line=Bc3+ Kf7 Bxh8 Bc5 Kd2 piece=rook.acc san=Bc3+
 4de24dc5ee08:42 Bg7 (best b4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bc3+ | best: avoids_loss loss=3.0 san=b4
 4de24dc5ee08:45 Bxa5 (best Bc3+) | Skewer: Missed skewer (king to bishop) | blunder: cp_loss loss=3.1 | best: pv_wins_piece line=Bc3+ Kf5 Bxh8 g4 Kd1 piece=bishop.acc san=Bc3+
@@ -516,7 +516,7 @@
 59a6495ae9f5:80 Qe1 (best Qf5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.8 | best: avoids_loss loss=1.8 san=Qf5
 59fd95f95f3f:23 h3 (best Qf1) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=queen.acc square=d3 | best: saves_piece piece=queen.acc san=Qf1
 59fd95f95f3f:24 Nh6 (best cxd3) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=5.4 | best: combination san=cxd3
-59fd95f95f3f:30 Nxe5 (best a6) | Hanging Piece: Created hanging knight | blunder: hanging_piece piece=knight square=e5 | best: avoids_loss loss=2.9 san=a6
+59fd95f95f3f:30 Nxe5 (best a6) | Hanging Piece: Created hanging knight | blunder: hanging_piece piece=knight square=e5 | best: opens_king file=g line=a6 g4 axb5 gxf5
 5aa71fb8c4a2:42 Rc8 (best Qxc2) | Discovered Attack: Missed discovered attack on rook; Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=rook.inst square=e6 | best: pattern_discovered san=Qxc2
 5aa71fb8c4a2:48 Rd2 (best Rg8) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxf8+ | best: avoids_loss loss=7.4 san=Rg8
 5aa71fb8c4a2:57 Rf1 (best Rxd5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=5.2 | best: pattern_hanging_piece piece=pawn.acc san=Rxd5 square=d5
@@ -524,7 +524,7 @@
 5b8abad375eb:25 Nf3 (best Nxe6) | Fork: Missed fork (rook + bishop) | blunder: cp_loss loss=3.5 | best: pv_wins_piece line=Nxe6 Qxe6 Bg4 f5 Bxf5 piece=pawn.acc san=Nxe6
 5b8abad375eb:29 Ng5 (best Bxc4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=3.4 | best: pattern_hanging_piece piece=pawn.acc san=Bxc4 square=c4
 5b8abad375eb:30 e6 (best e5) | Fork: Missed fork (pawn + bishop) | blunder: refuted_material reply=O-O | best: pattern_fork san=e5
-5b8abad375eb:33 d5 (best Be2) | Pin: Created relative pin (pawn to queen) | blunder: refuted_material reply=Nxc4 | best: avoids_loss loss=5.1 san=Be2
+5b8abad375eb:33 d5 (best Be2) | Pin: Created relative pin (pawn to queen) | blunder: refuted_material reply=Nxc4 | best: opens_king file=c line=Be2 Bd6 Bxd6 cxd6
 5b8abad375eb:54 Qf3+ (best Rxh7) | Hanging Piece: Created hanging rook | blunder: ignored_threat piece=rook.acc square=d7 | best: pv_wins_piece_via_combination line=Rxh7 Kg1 Nxe5 Rxe5 Bh1 piece=queen.acc san=Rxh7
 5b8abad375eb:56 Rxf4 (best Rxh7) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=bishop.acc square=g2 | best: pv_wins_piece_via_combination line=Rxh7 Kxg2 Rhf7 Ne5 Rxf4 piece=queen.acc san=Rxh7
 5b95a4f5a4f0:35 Bxh6 (best Ng3) | Discovered Attack: Missed discovered attack on bishop; Created hanging bishop | blunder: hanging_piece piece=bishop square=h6 | best: pattern_discovered san=Ng3
@@ -547,12 +547,12 @@
 5d25c648c998:52 Qh5 (best Qxf1+) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=6.6 | best: capture_with_check piece=rook.acc san=Qxf1+
 5d25c648c998:59 Kg2 (best Rxf8+) | Fork: Missed royal fork (king + queen) | blunder: cp_loss loss=1.8 | best: pv_wins_piece line=Rxf8+ Kxf8 Qh7 Qf7 Qxh6+ piece=pawn.acc san=Rxf8+
 5d25c648c998:84 Qe4+ (best Ke8) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=3.1 | best: avoids_loss loss=3.1 san=Ke8
-5d25c648c998:85 Kf1 (best Qxe4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxc2 | best: trades_piece piece=queen.acc san=Qxe4
+5d25c648c998:85 Kf1 (best Qxe4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxc2 | best: doubles_pawns file=e line=Qxe4 dxe4
 5e2db69378ee:16 fxe6 (best dxe6) | Discovered Attack: Missed discovered attack on bishop | blunder: cp_loss loss=4.2 | best: pattern_discovered san=dxe6
 5e2db69378ee:19 Qd2 (best Bxg6+) | Discovered Attack: Missed discovered attack on knight | blunder: cp_loss loss=3.0 | best: pv_wins_piece line=Bxg6+ Ke7 Nf4 Qc7 Nfxd5+ piece=pawn.acc san=Bxg6+
 5e2db69378ee:20 Bg7 (best Ne7) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxg6+ | best: avoids_loss loss=2.7 san=Ne7
 5e2db69378ee:23 f4 (best Bxg6+) | Discovered Attack: Missed discovered attack on bishop | blunder: cp_loss loss=3.2 | best: pv_wins_piece line=Bxg6+ Ke7 c4 Bxe5 cxd5 piece=bishop.acc san=Bxg6+
-5e2db69378ee:33 exd6 (best Be4) | Hanging Piece: Created hanging rook | blunder: exposed_piece exposed=rook.acc piece=pawn.inst square=a1 | best: avoids_loss loss=2.4 san=Be4
+5e2db69378ee:33 exd6 (best Be4) | Hanging Piece: Created hanging rook | blunder: exposed_piece exposed=rook.acc piece=pawn.inst square=a1 | best: doubles_pawns file=e line=Be4 Rc8 Qd3 dxe5
 5e2db69378ee:37 Bb2 (best Kh1) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxb2 | best: creates_threat piece=rook.gen san=Kh1
 5e2db69378ee:40 h5 (best Qxd6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qd2 | best: pattern_hanging_piece piece=pawn.acc san=Qxd6 square=d6
 5e2db69378ee:41 Bxc6 (best Qd2) | Hanging Piece: Created hanging bishop | blunder: hanging_piece piece=bishop square=c6 | best: pv_wins_piece line=Qd2 Nd4 Nxd4 Qxd6 Nf3 piece=knight.acc san=Qd2
@@ -579,7 +579,7 @@
 621fbc21aee8:56 Nf3 (best Rd3+) | Skewer: Missed skewer (king to pawn) | blunder: cp_loss loss=15.0 | best: check_with_pattern pattern=skewer san=Rd3+
 621fbc21aee8:70 Ka4 (best Re7) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=king.inst square=a6 | best: saves_piece piece=rook.acc san=Re7
 6283dc6163af:8 Nb4 (best Qxd5) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=knight.inst square=e5 | best: pv_wins_piece line=Qxd5 Nc3 Bb4 Bd2 Bxc3 piece=pawn.acc san=Qxd5
-6283dc6163af:14 c6 (best Nxc3) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.7 | best: trades_piece piece=knight.acc san=Nxc3
+6283dc6163af:14 c6 (best Nxc3) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.7 | best: doubles_pawns file=c line=Nxc3 bxc3
 6283dc6163af:21 Re1 (best Nxc4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=4.5 | best: pattern_hanging_piece piece=bishop.acc san=Nxc4 square=c4
 6283dc6163af:22 Bd5 (best Be6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Ng4+ | best: avoids_loss loss=4.9 san=Be6
 631482ef3316:12 Qd6 (best Nxf3+) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.2 | best: capture_with_check piece=knight.acc san=Nxf3+
@@ -624,7 +624,7 @@
 6c462ea8c539:14 N4c6 (best Nc2+) | Fork: Missed fork with check (2 pieces) | blunder: cp_loss loss=3.6 | best: pv_wins_piece line=Nc2+ Kd2 Nxa1 Kc3 Bf5 piece=rook.acc san=Nc2+
 6c462ea8c539:30 Nf6 (best Nd4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.2 | best: creates_threat piece=knight.gen san=Nd4
 6c462ea8c539:31 Nf7+ (best Be3) | Hanging Piece: Created hanging knight | blunder: hanging_piece piece=knight square=f7 | best: creates_threat piece=rook.gen san=Be3
-6dd017817183:30 g5 (best c5) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qh5+ | best: avoids_loss loss=15.0 san=c5
+6dd017817183:30 g5 (best c5) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qh5+ | best: doubles_pawns file=c line=c5 dxc6
 6dd017817183:31 Nc6 (best Qh5+) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=15.0 | best: pv_mate line=Qh5+ Qf7 Qxf7+ Kd8 Qxf8# moves=3 san=Qh5+
 6dd017817183:43 Ba5 (best Rac1) | Skewer: Missed skewer (queen to pawn) | blunder: refuted_material reply=Qxe2 | best: pv_wins_piece line=Rac1 Qf5 dxc6 h5 a4 piece=pawn.acc san=Rac1
 6dd017817183:51 Rxd5 (best g3) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Rc1+ | best: avoids_loss loss=15.0 san=g3
@@ -684,7 +684,7 @@
 72f4c72edbb9:24 f6 (best Re8) | Pin: Created relative pin (pawn to rook) | blunder: cp_loss loss=2.1 | best: avoids_loss loss=2.1 san=Re8
 72f4c72edbb9:27 Qf5 (best Qh5) | Pin: Created relative pin (pawn to queen) | blunder: cp_loss loss=3.0 | best: pv_wins_piece_via_combination line=Qh5 f5 Bxf5 Rxf5 Qxf5 piece=rook.acc san=Qh5
 72f4c72edbb9:32 Bf6 (best Rf6) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.5 | best: pv_wins_piece line=Rf6 Bg5 Rxe6 Bxe7 Qxe7 piece=pawn.acc san=Rf6
-72f4c72edbb9:33 Re3 (best g4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=3.1 | best: avoids_loss loss=3.1 san=g4
+72f4c72edbb9:33 Re3 (best g4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=3.1 | best: opens_king file=f line=g4 fxg4
 72f4c72edbb9:61 Ng6+ (best Qf3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxg6 | best: saves_piece piece=queen.acc san=Qf3
 72f4c72edbb9:68 Qh7 (best Kg8) | Pin: Created absolute pin (queen to king) | blunder: cp_loss loss=4.3 | best: threatens_capture_check piece=rook.gen san=Kg8
 72f4c72edbb9:73 Qf6+ (best Qh6+) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=3.9 | best: avoids_loss loss=3.9 san=Qh6+
@@ -698,7 +698,7 @@
 73c0badf0429:97 Ke7 (best Kxd5) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qg7+ | best: pattern_hanging_piece piece=pawn.acc san=Kxd5 square=d5
 74de47ce7827:14 Nd4 (best a6) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.0 | best: avoids_loss loss=2.0 san=a6
 74de47ce7827:34 cxd6 (best Qxe2) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qf3 | best: pv_wins_piece line=Qxe2 Rxe2 cxd6 Be4 Be6 piece=pawn.acc san=Qxe2
-74de47ce7827:38 Be6 (best Qh4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=15.0 | best: avoids_loss loss=15.0 san=Qh4
+74de47ce7827:38 Be6 (best Qh4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=15.0 | best: opens_king file=g line=Qh4 g3 Ng4 gxh4
 74de47ce7827:39 Bd4 (best Bb5+) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=15.0 | best: avoids_loss loss=15.0 san=Bb5+
 74de47ce7827:43 Rc7 (best g3) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qxg2# | best: avoids_loss loss=15.0 san=g3
 75cd40c6843e:19 O-O (best Be2) | Pin: Created relative pin (pawn to rook) | blunder: ignored_threat piece=bishop.acc square=b5 | best: saves_piece piece=bishop.acc san=Be2
@@ -737,13 +737,13 @@
 7e2e8c357a4b:62 Bd3 (best Bg6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxd3 | best: avoids_loss loss=1.8 san=Bg6
 7e2e8c357a4b:63 Bd1 (best Bxd3) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.9 | best: pv_wins_piece line=Bxd3 cxd3 Qxd3 Qc7 h4 piece=pawn.acc san=Bxd3
 7ea4f2bba84d:21 Bxc6 (best Qb3) | Pin: Created relative pin (bishop to queen) | blunder: refuted_material reply=Bxc6 | best: creates_threat piece=queen.gen san=Qb3
-7ed5d0a8c784:17 Bd3 (best Qxf6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxd4 | best: trades_piece piece=queen.acc san=Qxf6
+7ed5d0a8c784:17 Bd3 (best Qxf6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxd4 | best: doubles_pawns file=f line=Qxf6 gxf6
 7f408200063b:10 Be7 (best axb5) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxc6 | best: pattern_hanging_piece piece=bishop.acc san=axb5 square=b5
 7f408200063b:11 Nxe5 (best Bxc6) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=bishop.acc square=b5 | best: pv_wins_piece line=Bxc6 dxc6 Nxe5 Nf6 f3 piece=pawn.acc san=Bxc6
 7f55d9a9aefb:29 Bg5 (best b4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=3.0 | best: avoids_loss loss=3.0 san=b4
 7f55d9a9aefb:32 Bxf6 (best gxf6) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=4.1 | best: pv_wins_piece_via_combination line=gxf6 Nc2 Nc6 Qxf8+ Bxf8 piece=queen.acc san=gxf6
 7f55d9a9aefb:33 h4 (best Nc2) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nc6 | best: avoids_loss loss=3.9 san=Nc2
-7f55d9a9aefb:38 Ra8 (best Be7) | Hanging Piece: Created hanging rook | blunder: hanging_piece piece=rook square=a8 | best: attacks_piece piece=queen.acc san=Be7
+7f55d9a9aefb:38 Ra8 (best Be7) | Hanging Piece: Created hanging rook | blunder: hanging_piece piece=rook square=a8 | best: opens_king file=b line=Be7 b4 cxb3
 8062ad64b771:14 e5 (best e6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=dxe5 | best: avoids_loss loss=2.1 san=e6
 8062ad64b771:15 Ba4 (best dxe5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.5 | best: trades_piece piece=pawn.acc san=dxe5
 8062ad64b771:18 Bd6 (best Qc7) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxc6 | best: pv_wins_piece line=Qc7 c4 dxc4 Nc3 Bb4 piece=pawn.acc san=Qc7
@@ -752,7 +752,7 @@
 8062ad64b771:34 Bxg3 (best h5) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=bishop.inst | best: avoids_loss loss=2.6 san=h5
 8062ad64b771:36 Qb6 (best Qxg3) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.9 | best: pattern_hanging_piece piece=pawn.acc san=Qxg3 square=g3
 8062ad64b771:37 b4 (best Kg1) | Pin: Created relative pin (pawn to knight) | blunder: cp_loss loss=2.2 | best: avoids_loss loss=2.2 san=Kg1
-8062ad64b771:38 Qh6+ (best h5) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxh6 | best: avoids_loss loss=6.5 san=h5
+8062ad64b771:38 Qh6+ (best h5) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxh6 | best: opens_king file=g line=h5 Bg5 h4 gxh4
 8062ad64b771:39 Kg1 (best Bxh6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxe3+ | best: pv_wins_piece_via_combination line=Bxh6 gxh6 Qe1 Rg8 Nd2 piece=queen.acc san=Bxh6
 8062ad64b771:48 e3 (best h5) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Re1 | best: avoids_loss loss=1.8 san=h5
 8062ad64b771:56 Bg4 (best Bb5) | Hanging Piece: Created hanging bishop | blunder: hanging_piece piece=bishop square=g4 | best: avoids_loss loss=4.2 san=Bb5
@@ -777,7 +777,7 @@
 82c510c40d00:35 Bxb6 (best Qa4) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=bishop.inst | best: avoids_loss loss=4.8 san=Qa4
 82c510c40d00:50 Rd2 (best Be2) | Skewer: Missed skewer (rook to knight); Created hanging rook | blunder: hanging_piece piece=rook square=d2 | best: pv_wins_piece line=Be2 Ne3 Bxf1 Nd5+ Kd8 piece=rook.acc san=Be2
 83906f99d99e:9 Bxc7 (best e3) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=bishop.inst | best: avoids_loss loss=2.3 san=e3
-83906f99d99e:31 Ng5 (best Nd2) | Hanging Piece: Created hanging knight | blunder: hanging_piece piece=knight square=g5 | best: avoids_loss loss=3.2 san=Nd2
+83906f99d99e:31 Ng5 (best Nd2) | Hanging Piece: Created hanging knight | blunder: hanging_piece piece=knight square=g5 | best: doubles_pawns file=e line=Nd2 f5 Nxe4 fxe4
 840e05a05cdd:17 Na4 (best O-O-O) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qb4+ | best: avoids_loss loss=3.3 san=O-O-O
 840e05a05cdd:18 h6 (best Qb4+) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=queen.acc square=b6 | best: pv_wins_piece line=Qb4+ Nc3 Qxb2 O-O Qxc3 piece=knight.acc san=Qb4+
 84105dd655cf:12 c6 (best Bb6) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=bishop.acc square=d4 | best: saves_piece piece=bishop.acc san=Bb6
@@ -796,7 +796,7 @@
 8765dc13206e:17 d6 (best Nb5) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxc4 | best: attacks_piece piece=queen.acc san=Nb5
 8765dc13206e:41 c5 (best g3) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qxh2+ | best: avoids_loss loss=15.0 san=g3
 887a38bcd451:9 b3 (best Bxe6) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.9 | best: trades_piece piece=bishop.acc san=Bxe6
-887a38bcd451:15 Rb1 (best Nge2) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.1 | best: avoids_loss loss=2.1 san=Nge2
+887a38bcd451:15 Rb1 (best Nge2) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.1 | best: doubles_pawns file=c line=Nge2 b6 O-O bxc5
 887a38bcd451:20 Be7 (best Nc3) | Fork: Missed fork (rook + queen) | blunder: refuted_material reply=Nxe6 | best: pv_wins_piece line=Nc3 Qd3 Qxd4 Rb3 Ne4 piece=pawn.acc san=Nc3
 887a38bcd451:21 N1f3 (best Nxe6) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.4 | best: pv_wins_piece line=Nxe6 Qd7 Nxg7+ Kf7 Bh6 piece=pawn.acc san=Nxe6
 887a38bcd451:25 c3 (best Nxe6) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=3.0 | best: pv_wins_piece line=Nxe6 Qd7 Nxg7+ Kf7 Nxf5 piece=pawn.acc san=Nxe6
@@ -811,7 +811,7 @@
 887a38bcd451:55 Nxc2 (best gxh6+) | Discovered Check: Missed discovered check (by queen) | blunder: refuted_material reply=h5 | best: capture_with_check piece=pawn.acc san=gxh6+
 887a38bcd451:56 Re8 (best h5) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=gxh6+ | best: pv_wins_piece line=h5 Qe4 Qxc5 Ne3 Qxg5 piece=pawn.acc san=h5
 89d8cd28e54a:10 Be6 (best Nd4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.8 | best: attacks_piece piece=queen.acc san=Nd4
-89d8cd28e54a:11 g4 (best Bxe6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxc4 | best: trades_piece piece=bishop.acc san=Bxe6
+89d8cd28e54a:11 g4 (best Bxe6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxc4 | best: doubles_pawns file=e line=Bxe6 fxe6
 8b599cc1e897:11 Ne4 (best Bb5+) | Hanging Piece: Created hanging knight | blunder: hanging_piece piece=knight square=e4 | best: avoids_loss loss=3.2 san=Bb5+
 8b599cc1e897:12 Nc6 (best Nxe4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=4.0 | best: pv_wins_piece_via_combination line=Nxe4 Bb5+ Nd7 Nxf7 Kxf7 piece=knight.acc san=Nxe4
 8b599cc1e897:31 Qe4 (best f3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bf5 | best: avoids_loss loss=3.4 san=f3
@@ -823,7 +823,7 @@
 8b8d1d361ea0:21 Bxg4 (best h3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=hxg4 | best: avoids_loss loss=3.4 san=h3
 8b8d1d361ea0:23 g3 (best d4) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qxh2# | best: avoids_loss loss=15.0 san=d4
 8b8d1d361ea0:24 Qxg5 (best Qxh2#) | None: Positional error or deep tactical oversight | blunder: missed_mate | best: checkmate san=Qxh2#
-8b8d1d361ea0:26 Qd5 (best Qh5) | Hanging Piece: Created hanging queen | blunder: hanging_piece piece=queen square=d5 | best: saves_piece piece=queen.acc san=Qh5
+8b8d1d361ea0:26 Qd5 (best Qh5) | Hanging Piece: Created hanging queen | blunder: hanging_piece piece=queen square=d5 | best: opens_king file=h line=Qh5 h4 gxh3
 8c1086a7e96a:13 e3 (best Bf4) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=bishop.acc square=g5 | best: saves_piece piece=bishop.acc san=Bf4
 8c1086a7e96a:23 Na5 (best h4) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qxh2# | best: avoids_loss loss=15.0 san=h4
 8c1086a7e96a:24 O-O (best Qxh2#) | None: Positional error or deep tactical oversight | blunder: missed_mate | best: checkmate san=Qxh2#
@@ -854,7 +854,7 @@
 8c730c125347:70 Rd6+ (best Qb3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxd6 | best: pv_wins_piece line=Qb3 Ke7 Qb4+ Ke6 Qxe1 piece=rook.acc san=Qb3
 8cc480c065ec:26 Kc7 (best Nb8) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Nd5# | best: avoids_loss loss=15.0 san=Nb8
 8cc480c065ec:27 Qa3 (best Nd5#) | None: Positional error or deep tactical oversight | blunder: missed_mate | best: checkmate san=Nd5#
-8cc480c065ec:31 Rd1 (best Bf4+) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qxd1+ | best: avoids_loss loss=15.0 san=Bf4+
+8cc480c065ec:31 Rd1 (best Bf4+) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qxd1+ | best: doubles_pawns file=e line=Bf4+ Ne5 Bxe5+ fxe5
 8d2bb6022c40:25 Nh4 (best b3) | Hanging Piece: Created hanging knight | blunder: hanging_piece piece=knight square=h4 | best: avoids_loss loss=4.0 san=b3
 8d2bb6022c40:26 b5 (best Qxh4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=3.7 | best: pattern_hanging_piece piece=knight.acc san=Qxh4 square=h4
 8d2bb6022c40:35 Nxg6 (best a3) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=knight.inst | best: pv_wins_piece line=a3 Nxd4 axb4 Nxc2 bxa5 piece=knight.acc san=a3
@@ -866,7 +866,7 @@
 8e497b69fc87:11 Bd3 (best Nxc6) | Discovered Attack: Missed discovered attack on bishop | blunder: refuted_material reply=Bxd4 | best: pv_wins_piece_via_pattern line=Nxc6 dxc6 Qxd8+ Kxd8 Bxc5 pattern=discovered attack piece=bishop.acc san=Nxc6
 8e497b69fc87:36 Bb6 (best d5) | Fork: Missed fork (queen + knight) | blunder: refuted_material reply=Nf6+ | best: pattern_fork san=d5
 8e497b69fc87:62 Rh7 (best Rae8) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qf5+ | best: avoids_loss loss=7.9 san=Rae8
-8e4ad8bf4301:18 b5 (best Bxc4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.1 | best: trades_piece piece=bishop.acc san=Bxc4
+8e4ad8bf4301:18 b5 (best Bxc4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.1 | best: doubles_pawns file=c line=Bxc4 dxc4
 8e4ad8bf4301:37 Bxg5 (best Qe2) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=bishop.inst | best: avoids_loss loss=3.7 san=Qe2
 8e4ad8bf4301:39 Qxg5 (best Qe2) | Hanging Piece: Created hanging queen | blunder: hanging_piece piece=queen square=g5 | best: avoids_loss loss=2.4 san=Qe2
 8e4ad8bf4301:42 c5 (best Be7) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=pawn.inst square=b5 | best: avoids_loss loss=2.5 san=Be7
@@ -896,7 +896,7 @@
 901b2cd24cdd:29 Nd2 (best Qd8#) | Skewer: Missed skewer (king to rook) | blunder: missed_mate | best: checkmate san=Qd8#
 903fb426f4a4:26 a6 (best f6) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.8 | best: avoids_loss loss=1.8 san=f6
 903fb426f4a4:28 b5 (best f6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=h5 | best: avoids_loss loss=1.9 san=f6
-903fb426f4a4:35 b3 (best Nxe4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxd6 | best: trades_piece piece=bishop.acc san=Nxe4
+903fb426f4a4:35 b3 (best Nxe4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxd6 | best: doubles_pawns file=e line=Nxe4 dxe4
 903fb426f4a4:36 Rab8 (best Nxd6) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.2 | best: pv_wins_piece line=Nxd6 exd6 Qxd6 Qd2 f6 piece=pawn.acc san=Nxd6
 903fb426f4a4:40 e3 (best b4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.2 | best: avoids_loss loss=2.2 san=b4
 903fb426f4a4:49 Ke1 (best Kg1) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.8 | best: pv_wins_piece_via_combination line=Kg1 Qe7 Qc1 Nxe5 Qxb2 piece=rook.acc san=Kg1
@@ -924,7 +924,7 @@
 94a49ded8219:21 Bb5 (best Nxh8) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=knight.acc square=f7 | best: pv_wins_piece_via_combination line=Nxh8 Bb4 Bd3 Bxc3+ bxc3 piece=rook.acc san=Nxh8
 94a49ded8219:22 Bb4 (best Kxf7) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=rook.acc square=h8 | best: pv_wins_piece_via_combination line=Kxf7 h4 Bd7 Bxc6 Bxc6 piece=bishop.acc san=Kxf7
 94a49ded8219:23 Qd3 (best Nxh8) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=knight.acc square=f7 | best: pv_wins_piece line=Nxh8 Qxb5 a3 Ba5 b4 piece=rook.acc san=Nxh8
-94a49ded8219:35 Bxf6 (best f5) | Hanging Piece: Created hanging bishop | blunder: hanging_piece piece=bishop square=f6 | best: avoids_loss loss=3.4 san=f5
+94a49ded8219:35 Bxf6 (best f5) | Hanging Piece: Created hanging bishop | blunder: hanging_piece piece=bishop square=f6 | best: opens_king file=e line=f5 exf5
 94a49ded8219:47 Rxe8 (best Re6) | Fork: Missed fork (queen + rook); Created hanging rook | blunder: hanging_piece piece=rook square=e8 | best: pv_wins_piece line=Re6 Qd8 cxd5 Qb6+ Rf2 piece=pawn.acc san=Re6
 94a49ded8219:50 Bxf5 (best Qe7) | Pin: Created relative pin (bishop to queen) | blunder: bad_capture piece=bishop.inst | best: avoids_loss loss=9.2 san=Qe7
 94a49ded8219:51 Qc4 (best Rxf5) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=cxd5 | best: pv_wins_piece_via_combination line=Rxf5 c5 Rxf6+ Kxf6 Qxa6+ piece=queen.acc san=Rxf5
@@ -956,7 +956,7 @@
 984c400d7388:30 Qd6 (best Qh5) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxg4 | best: pv_wins_piece line=Qh5 Qe4 Rb8 Ne5 Bxe2 piece=bishop.acc san=Qh5
 9865e10e3e26:11 Nh4 (best Nb5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.9 | best: creates_threat piece=knight.gen san=Nb5
 9865e10e3e26:16 Bb4 (best Qd8) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=queen.acc square=g5 | best: saves_piece piece=queen.acc san=Qd8
-999a8b486c30:31 Rae1 (best e6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxg4 | best: avoids_loss loss=1.9 san=e6
+999a8b486c30:31 Rae1 (best e6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxg4 | best: opens_king file=f line=e6 fxe6
 999a8b486c30:34 Bxe6 (best fxe6) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=bishop.inst | best: pv_wins_piece line=fxe6 f5 gxf5 Rxe6 Bf6 piece=pawn.acc san=fxe6
 999a8b486c30:38 gxf5 (best Bf8) | Discovered Attack: Missed discovered attack on rook; Created hanging pawn | blunder: hanging_piece piece=pawn square=f5 | best: pattern_discovered san=Bf8
 9a796415d5ad:26 Nce7 (best g5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.8 | best: avoids_loss loss=1.8 san=g5
@@ -978,7 +978,7 @@ a214310d0b20:16 Bxe4 (best Bxg4) | Hanging Piece: Created hanging bishop | blund
 a214310d0b20:26 Nf3+ (best Qxc3) | Hanging Piece: Created hanging knight | blunder: hanging_piece piece=knight square=f3 | best: pattern_hanging_piece piece=pawn.acc san=Qxc3 square=c3
 a214310d0b20:39 Be3 (best a3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxe3 | best: attacks_piece piece=queen.acc san=a3
 a214310d0b20:40 Rfd8 (best Bxe3) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=4.2 | best: pv_wins_piece line=Bxe3 a3 Qxd2 Rxd2 Bxd2 piece=rook.acc san=Bxe3
-a214310d0b20:49 Qg3 (best g6) | Hanging Piece: Created hanging knight | blunder: exposed_piece exposed=knight.acc piece=queen.inst square=e4 | best: avoids_loss loss=5.3 san=g6
+a214310d0b20:49 Qg3 (best g6) | Hanging Piece: Created hanging knight | blunder: exposed_piece exposed=knight.acc piece=queen.inst square=e4 | best: doubles_pawns file=g line=g6 fxg6
 a214310d0b20:62 Rxf4 (best exf4) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=rook.inst | best: trades_piece piece=pawn.acc san=exf4
 a24666073e7f:43 Qb7 (best Qd6) | Skewer: Missed skewer (queen to rook) | blunder: refuted_material reply=Rb8 | best: pattern_skewer san=Qd6
 a24666073e7f:44 Rxc1+ (best Rb8) | Skewer: Missed skewer (queen to pawn); Created hanging rook | blunder: hanging_piece piece=rook square=c1 | best: pv_wins_piece line=Rb8 Qa7 Rxb2 Rc7 Qa3 piece=pawn.acc san=Rb8
@@ -1014,7 +1014,7 @@ a32c383be011:40 Qc3 (best b2) | Hanging Piece: Created hanging queen | blunder: 
 a3d5561e4799:15 e5 (best Nc3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=dxe5 | best: avoids_loss loss=2.5 san=Nc3
 a3d5561e4799:25 Nxe4 (best O-O-O) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=knight.inst | best: avoids_loss loss=2.7 san=O-O-O
 a3d5561e4799:28 Nec5 (best Nef6) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qxh7# | best: creates_threat piece=rook.gen san=Nef6
-a4c2b53c0c66:21 h3 (best Bxh6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nf5 | best: trades_piece piece=knight.acc san=Bxh6
+a4c2b53c0c66:21 h3 (best Bxh6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nf5 | best: doubles_pawns file=h line=Bxh6 gxh6
 a548fcf79d6c:16 Nxe7 (best Kxe7) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxe5 | best: pv_wins_piece_via_combination line=Kxe7 Nxe5 Qxg2 Rf1 Nh6 piece=bishop.acc san=Kxe7
 a548fcf79d6c:18 Qxg2 (best Bg4) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Bxf7+ | best: attacks_piece piece=queen.acc san=Bg4
 a548fcf79d6c:19 Rf1 (best Bxf7+) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=rook.inst square=h2 | best: pv_mate line=Bxf7+ Kf8 Qd8# moves=2 san=Bxf7+
@@ -1059,7 +1059,7 @@ a910bc9c58d3:23 Nf5 (best Nf3) | Discovered Attack: Missed discovered attack on 
 a927af4e8db9:16 O-O-O (best a5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.8 | best: avoids_loss loss=1.8 san=a5
 a927af4e8db9:43 Qg3+ (best Bxe4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxg3 | best: trades_piece piece=knight.acc san=Bxe4
 a927af4e8db9:44 Ka8 (best Nxg3) | Fork: Missed fork (rook + knight) | blunder: cp_loss loss=4.3 | best: pv_wins_piece_via_pattern line=Nxg3 Nxg3 Ree8 Nf5 a6 pattern=fork piece=queen.acc san=Nxg3
-a927af4e8db9:60 Rxe3 (best Ne4) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=rook.inst | best: avoids_loss loss=2.6 san=Ne4
+a927af4e8db9:60 Rxe3 (best Ne4) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=rook.inst | best: opens_king file=g line=Ne4 Ra2 f5 gxf5
 a927af4e8db9:64 Bf5 (best Nd1) | Fork: Missed fork (rook + rook); Created hanging bishop | blunder: hanging_piece piece=bishop square=f5 | best: pv_wins_piece line=Nd1 Rff3 Nxe3 Rxe3 f5 piece=rook.acc san=Nd1
 a927af4e8db9:66 Qxf4 (best Nd1) | Fork: Missed fork (rook + rook); Created hanging queen | blunder: hanging_piece piece=queen square=f4 | best: pattern_fork san=Nd1
 ab4aab865562:13 Nd5 (best Nxe5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.3 | best: pv_wins_piece line=Nxe5 Nxb3 axb3 Bb7 d4 piece=pawn.acc san=Nxe5
@@ -1089,7 +1089,7 @@ af2af8ec354d:20 Bh3 (best Nc6) | Hanging Piece: Created hanging bishop | blunder
 af2af8ec354d:22 Nf6 (best Nc6) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=bishop.acc square=h3 | best: avoids_loss loss=5.3 san=Nc6
 af2af8ec354d:23 Bb2 (best Nd6+) | Discovered Attack: Missed discovered attack on queen | blunder: cp_loss loss=3.7 | best: combination san=Nd6+
 af2af8ec354d:24 Nxe4 (best Bf5) | Pin: Created relative pin (knight to queen) | blunder: ignored_threat piece=bishop.acc square=h3 | best: saves_piece piece=bishop.acc san=Bf5
-af2af8ec354d:26 Qg5 (best Qb6) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=bishop.acc square=h3 | best: saves_piece piece=queen.acc san=Qb6
+af2af8ec354d:26 Qg5 (best Qb6) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=bishop.acc square=h3 | best: opens_king file=g line=Qb6 gxh3
 af2af8ec354d:49 Rg2 (best Kf1) | Hanging Piece: Created hanging rook | blunder: exposed_piece exposed=rook.acc piece=rook.inst square=e1 | best: threatens_capture_check piece=bishop.gen san=Kf1
 af2af8ec354d:50 Qd6 (best Qxe1+) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=queen.inst square=g7 | best: capture_with_check piece=rook.acc san=Qxe1+
 af2af8ec354d:57 Qg4+ (best Qxe8#) | Hanging Piece: Created hanging rook | blunder: missed_mate | best: checkmate san=Qxe8#
@@ -1141,11 +1141,11 @@ ba8960504728:43 Rb5 (best Nd1) | Hanging Piece: Created hanging rook | blunder: 
 bb8556006db7:34 Qf8 (best Nf8) | Pin: Created absolute pin (queen to king) | blunder: exposed_piece exposed=pawn.acc piece=queen.inst square=e6 | best: creates_threat piece=queen.gen san=Nf8
 bb8556006db7:38 Qe8 (best Rb8) | Pin: Created relative pin (knight to queen) | blunder: refuted_material reply=Qxa8 | best: avoids_loss loss=4.2 san=Rb8
 bc33efdbdb81:33 Qf5 (best Bg4) | Hanging Piece: Created hanging bishop | blunder: exposed_piece exposed=bishop.acc piece=queen.inst square=h5 | best: avoids_loss loss=1.8 san=Bg4
-bc33efdbdb81:34 Qh6 (best Qxf5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.0 | best: trades_piece piece=queen.acc san=Qxf5
+bc33efdbdb81:34 Qh6 (best Qxf5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.0 | best: doubles_pawns file=f line=Qxf5 exf5
 bc33efdbdb81:37 b4 (best Qg6) | Skewer: Missed skewer (queen to pawn) | blunder: ignored_threat piece=queen.acc square=f5 | best: pattern_skewer san=Qg6
 bdf524468b01:28 Nxb3 (best Bg4) | Hanging Piece: Created hanging knight | blunder: hanging_piece piece=knight square=b3 | best: attacks_piece piece=queen.acc san=Bg4
 bdf524468b01:46 axb3 (best Qa7) | Hanging Piece: Created hanging pawn | blunder: hanging_piece piece=pawn square=b3 | best: avoids_loss loss=15.0 san=Qa7
-be405753c03a:61 Kg4 (best Nf3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=h5+ | best: creates_threat piece=queen.gen san=Nf3
+be405753c03a:61 Kg4 (best Nf3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=h5+ | best: opens_king file=f line=Nf3 Qd3 e6 fxe6
 be405753c03a:62 Qxb4 (best h5+) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qxh7+ | best: pv_wins_piece_via_combination line=h5+ Qxh5 gxh5+ Kxh5 bxc5 piece=queen.acc san=h5+
 be4b2eb350e0:19 O-O (best Bd2) | Pin: Created absolute pin (pawn to king) | blunder: refuted_material reply=Qxc3 | best: avoids_loss loss=3.5 san=Bd2
 be4b2eb350e0:20 Nc6 (best Qxc3) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=4.6 | best: pattern_hanging_piece piece=knight.acc san=Qxc3 square=c3
@@ -1154,7 +1154,7 @@ be4b2eb350e0:29 Nd4 (best c3) | Hanging Piece: Created hanging pawn | blunder: e
 be4b2eb350e0:30 b5 (best Qxe5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.6 | best: pv_wins_piece line=Qxe5 c3 Bxc3 Nf3 Qf6 piece=pawn.acc san=Qxe5
 be4b2eb350e0:31 Nb2 (best Bxb5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.9 | best: threatens_capture_check piece=bishop.gen san=Bxb5
 be4b2eb350e0:33 Ne2 (best Nxb5) | Fork: Missed fork (bishop + queen) | blunder: refuted_material reply=Bxb2 | best: pv_wins_piece line=Nxb5 Bxb5 Bxb5+ Kf8 Rb1 piece=pawn.acc san=Nxb5
-be4b2eb350e0:44 Bc6 (best Qd6) | Pin: Created relative pin (bishop to queen) | blunder: ignored_threat piece=bishop.acc square=h2 | best: saves_piece piece=queen.acc san=Qd6
+be4b2eb350e0:44 Bc6 (best Qd6) | Pin: Created relative pin (bishop to queen) | blunder: ignored_threat piece=bishop.acc square=h2 | best: opens_king file=g line=Qd6 g3 Bxg3
 be4b2eb350e0:45 Bxb5 (best Nd4) | Hanging Piece: Created hanging bishop | blunder: hanging_piece piece=bishop square=b5 | best: pv_wins_piece line=Nd4 O-O Rxc6 Qb8 Be4 piece=bishop.acc san=Nd4
 be4b2eb350e0:46 Bf4 (best Bxb5) | Discovered Attack: Missed discovered attack on rook | blunder: refuted_material reply=Bxc6+ | best: pattern_discovered san=Bxb5
 bf9056942110:19 Ne5 (best h3) | Hanging Piece: Created hanging bishop | blunder: hanging_piece piece=knight square=e5 | best: pv_wins_piece_via_combination line=h3 h6 hxg4 hxg5 Nxg5 piece=queen.acc san=h3
@@ -1201,7 +1201,7 @@ c34437e7088e:18 Bg4 (best Qa5) | None: Positional error or deep tactical oversig
 c34437e7088e:33 Bxg5 (best h3) | None: Positional error or deep tactical oversight | blunder: bad_capture piece=bishop.inst | best: avoids_loss loss=9.8 san=h3
 c34437e7088e:35 Qxg5 (best Qh3) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Qxh2# | best: creates_threat piece=queen.gen san=Qh3
 c3c983fd553e:10 Nxd4 (best Nd6) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=knight.inst square=e5 | best: avoids_loss loss=2.3 san=Nd6
-c3c983fd553e:15 Qxd4 (best f3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=c6 | best: avoids_loss loss=1.9 san=f3
+c3c983fd553e:15 Qxd4 (best f3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=c6 | best: doubles_pawns file=c line=f3 Bb4 c3 dxc3
 c3c983fd553e:16 Bc5 (best c6) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=bishop.inst square=g7 | best: pv_wins_piece line=c6 Nc3 d5 f3 cxb5 piece=bishop.acc san=c6
 c3c983fd553e:17 Qe5+ (best Qxc5) | Pin: Created absolute pin (pawn to king) | blunder: cp_loss loss=5.4 | best: avoids_loss loss=5.4 san=Qxc5
 c3c983fd553e:18 Be7 (best Qe7) | Skewer: Missed skewer (queen to rook); Created absolute pin (bishop to king) | blunder: refuted_material reply=Qxg7 | best: pattern_skewer san=Qe7
@@ -1243,7 +1243,7 @@ caa35f937660:20 Nh6 (best e6) | None: Positional error or deep tactical oversigh
 caa35f937660:28 Kd7 (best Nhf7) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qxe5 | best: creates_threat piece=knight.gen san=Nhf7
 caa35f937660:41 Bh6 (best Bc2) | Hanging Piece: Created hanging bishop | blunder: hanging_piece piece=bishop square=h6 | best: pv_wins_piece line=Bc2 Bxh2+ Kxh2 d3 Bb3 piece=bishop.acc san=Bc2
 caa35f937660:45 Qh5+ (best Qh3) | Hanging Piece: Created hanging queen | blunder: hanging_piece piece=queen square=h5 | best: saves_piece piece=queen.acc san=Qh3
-cb6e6087f090:10 a6 (best Rc8) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxc7+ | best: avoids_loss loss=3.4 san=Rc8
+cb6e6087f090:10 a6 (best Rc8) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxc7+ | best: doubles_pawns file=e line=Rc8 Ne5 Nxe5 dxe5
 cb6e6087f090:28 Re8 (best Qa7) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=15.0 | best: creates_threat piece=queen.gen san=Qa7
 cb6e6087f090:31 Qc7+ (best Qc5+) | Hanging Piece: Created hanging pawn | blunder: cp_loss loss=15.0 | best: pv_mate line=Qc5+ Kd8 Qd6+ Nd7 Qxd7# moves=3 san=Qc5+
 cb6e6087f090:35 e4 (best Rac1) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxd4 | best: avoids_loss loss=2.2 san=Rac1
@@ -1274,7 +1274,7 @@ cd25a222d13b:38 Qf5 (best Qxa2) | None: Positional error or deep tactical oversi
 cd25a222d13b:39 Nh4 (best Qe2) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Qf4+ | best: avoids_loss loss=3.7 san=Qe2
 cd25a222d13b:42 e5 (best Qxh4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=g3 | best: pattern_hanging_piece piece=knight.acc san=Qxh4 square=h4
 cd4e751c667a:28 e5 (best Kf8) | Hanging Piece: Created hanging pawn | blunder: hanging_piece piece=pawn square=e5 | best: avoids_loss loss=4.5 san=Kf8
-cd78771e6727:14 g5 (best Nf5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.6 | best: avoids_loss loss=2.6 san=Nf5
+cd78771e6727:14 g5 (best Nf5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.6 | best: doubles_pawns file=d line=Nf5 Ne4 d5 exd6
 cd78771e6727:23 Qxg4 (best Nd5) | Hanging Piece: Created hanging queen | blunder: hanging_piece piece=queen square=g4 | best: creates_threat piece=knight.gen san=Nd5
 ceb319d4e331:17 O-O (best dxc5) | Discovered Attack: Missed discovered attack on queen | blunder: cp_loss loss=2.5 | best: pv_wins_piece line=dxc5 Qxc5 Be2 d5 Be3 piece=bishop.acc san=dxc5
 ceb319d4e331:21 cxd4 (best b4) | Pin: Created relative pin (pawn to queen) | blunder: cp_loss loss=1.9 | best: combination san=b4
@@ -1331,7 +1331,7 @@ d28aa0fc56be:10 Qg4 (best Qh5) | None: Positional error or deep tactical oversig
 d28aa0fc56be:13 Rf1 (best Rh2) | Hanging Piece: Created hanging pawn | blunder: exposed_piece exposed=pawn.acc piece=rook.inst square=h3 | best: combination san=Rh2
 d28aa0fc56be:17 Nbd2 (best Kd2) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=1.7 | best: avoids_loss loss=1.7 san=Kd2
 d28aa0fc56be:18 Ng4 (best Nb4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.1 | best: threatens_capture_check piece=bishop.gen san=Nb4
-d28aa0fc56be:24 Qh5 (best Nb4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Rh1 | best: threatens_capture_check piece=bishop.gen san=Nb4
+d28aa0fc56be:24 Qh5 (best Nb4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Rh1 | best: opens_king file=c line=Nb4 Rg1 Nxd3+ cxd3
 d28aa0fc56be:29 Kb1 (best axb4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=4.1 | best: pv_wins_piece line=axb4 Qa1+ Nb1 a5 bxa5 piece=knight.acc san=axb4
 d28aa0fc56be:30 Nbd5 (best Nxd3) | Discovered Attack: Missed discovered attack on knight | blunder: cp_loss loss=3.3 | best: pattern_discovered san=Nxd3
 d28aa0fc56be:35 bxa3 (best Rdg1) | Pin: Created absolute pin (knight to king) | blunder: refuted_material reply=Nc3+ | best: avoids_loss loss=4.8 san=Rdg1
@@ -1390,7 +1390,7 @@ d6b57c625419:68 Qh2+ (best Rf3+) | Skewer: Missed skewer (king to rook) | blunde
 d6b57c625419:70 f3 (best Qh3) | Pin: Created relative pin (pawn to rook) | blunder: ignored_threat piece=queen.acc square=h2 | best: saves_piece piece=queen.acc san=Qh3
 d6b57c625419:74 Rxf2 (best Rb8) | Hanging Piece: Created hanging rook | blunder: hanging_piece piece=rook square=f2 | best: avoids_loss loss=15.0 san=Rb8
 d6b57c625419:75 Rxf2 (best Qc8+) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=15.0 | best: pv_wins_piece line=Qc8+ Kf7 Rxf2+ Rf3 Rxf3+ piece=rook.acc san=Qc8+
-d6b57c625419:76 Re3+ (best h6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Kd1 | best: avoids_loss loss=15.0 san=h6
+d6b57c625419:76 Re3+ (best h6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Kd1 | best: doubles_pawns file=h line=h6 gxh6
 d961b1fe3c64:16 Nxe5 (best dxe5) | Pin: Created absolute pin (knight to king) | blunder: bad_capture piece=knight.inst | best: pv_wins_piece_via_combination line=dxe5 Nxe5 Nxe5 Qh5 Bd6 piece=knight.acc san=dxe5
 d961b1fe3c64:17 Nxe5 (best d4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=dxe5 | best: pv_wins_piece line=d4 f6 Qc2 Be6 dxe5 piece=knight.acc san=d4
 d961b1fe3c64:24 Bc5 (best c6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Rxe6+ | best: avoids_loss loss=4.4 san=c6
@@ -1405,7 +1405,7 @@ d9a32020b34e:26 Qxg3 (best Qh1#) | Back Rank Threat: Missed back rank mate threa
 d9a32020b34e:54 Rc2+ (best f5) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Kb3 | best: avoids_loss loss=6.2 san=f5
 d9a32020b34e:55 Kd5 (best Kb3) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=b3 | best: pv_wins_piece line=Kb3 c4+ Kxc2 Ra8 Kb1 piece=rook.acc san=Kb3
 d9c567e1b48d:16 a6 (best c6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nc3 | best: avoids_loss loss=2.0 san=c6
-d9c567e1b48d:18 Qe7 (best d5) | Pin: Created relative pin (knight to queen) | blunder: cp_loss loss=2.3 | best: avoids_loss loss=2.3 san=d5
+d9c567e1b48d:18 Qe7 (best d5) | Pin: Created relative pin (knight to queen) | blunder: cp_loss loss=2.3 | best: opens_king file=f line=d5 f3 Be6 fxe4
 d9dccdbe44f0:49 g4 (best Qf6) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.1 | best: pv_wins_piece line=Qf6 Be6 Bxe6 Qd1+ Kf2 piece=bishop.acc san=Qf6
 d9dccdbe44f0:61 Kf2 (best Kh2) | None: Positional error or deep tactical oversight | blunder: ignored_threat piece=bishop.acc square=e6 | best: creates_threat piece=queen.gen san=Kh2
 d9dccdbe44f0:64 Qe1+ (best Qxe3+) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=3.5 | best: capture_with_check piece=pawn.acc san=Qxe3+
@@ -1517,7 +1517,7 @@ e6f036185526:38 Bc5 (best Re8) | None: Positional error or deep tactical oversig
 e6f036185526:44 Qxg2 (best e4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=fxe5 | best: avoids_loss loss=4.0 san=e4
 e8842ad94559:29 b3 (best Qg5) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bd4 | best: threatens_capture_check piece=knight.gen san=Qg5
 e8842ad94559:30 O-O (best Bd4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=4.5 | best: pv_wins_piece_via_combination line=Bd4 Rf2 Bxe3 Bxe3 O-O piece=queen.acc san=Bd4
-e8842ad94559:31 Rae1 (best Qf4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=4.9 | best: avoids_loss loss=4.9 san=Qf4
+e8842ad94559:31 Rae1 (best Qf4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=4.9 | best: opens_king file=f line=Qf4 Bd4+ Kh1 fxe4
 e8842ad94559:32 h6 (best Bd4) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=5.3 | best: attacks_piece piece=queen.acc san=Bd4
 e8842ad94559:35 Ng3 (best f4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bd4 | best: avoids_loss loss=4.8 san=f4
 e8842ad94559:40 Be5 (best Ng6) | Pin: Created absolute pin (pawn to king) | blunder: cp_loss loss=3.7 | best: pv_wins_piece_via_combination line=Ng6 e5 Nxe5 Rxe5 Bxe5 piece=rook.acc san=Ng6
@@ -1548,7 +1548,7 @@ ee0cc1ed1abd:29 Rd1 (best Bb5+) | None: Positional error or deep tactical oversi
 ee0cc1ed1abd:30 Qc7 (best Bh4+) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.6 | best: avoids_loss loss=2.6 san=Bh4+
 ee0cc1ed1abd:31 Ke2 (best Bb5+) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=3.6 | best: avoids_loss loss=3.6 san=Bb5+
 ee0cc1ed1abd:41 Kg2 (best Nxd4) | None: Positional error or deep tactical oversight | blunder: refuted_mate reply=Nh4# | best: trades_piece piece=bishop.acc san=Nxd4
-ee7f7ea05b72:25 d5 (best Nf6+) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxe5 | best: avoids_loss loss=4.8 san=Nf6+
+ee7f7ea05b72:25 d5 (best Nf6+) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Nxe5 | best: doubles_pawns file=c line=Nf6+ Kg7 Bxc6 bxc6
 ee7f7ea05b72:26 Ne7 (best Nxe5) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.6 | best: pv_wins_piece line=Nxe5 Nxe5 dxe5 Qf3 Kh8 piece=pawn.acc san=Nxe5
 ee7f7ea05b72:27 e6 (best Qa4) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=fxe6 | best: avoids_loss loss=3.5 san=Qa4
 ee7f7ea05b72:28 c6 (best fxe6) | Discovered Attack: Missed discovered attack on knight | blunder: refuted_material reply=exf7+ | best: pv_wins_piece line=fxe6 dxe6 Bxe6 Nd4 Bd5 piece=pawn.acc san=fxe6
@@ -1571,7 +1571,7 @@ ef9c7889dc0a:48 Qh5 (best Rxe2) | Hanging Piece: Created hanging pawn | blunder:
 f08f7e2dd1a1:21 g3 (best Qe2) | None: Positional error or deep tactical oversight | blunder: cp_loss loss=2.8 | best: avoids_loss loss=2.8 san=Qe2
 f08f7e2dd1a1:23 Bxf5 (best Be2) | Discovered Attack: Missed discovered attack on queen; Created hanging queen | blunder: hanging_piece piece=bishop square=f5 | best: pattern_discovered san=Be2
 f08f7e2dd1a1:56 Rd8 (best Nd5) | Discovered Attack: Missed discovered attack on rook; Created hanging rook | blunder: hanging_piece piece=rook square=d8 | best: pattern_discovered san=Nd5
-f20a2880c195:33 e5 (best Rac1) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=dxe5 | best: avoids_loss loss=4.0 san=Rac1
+f20a2880c195:33 e5 (best Rac1) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=dxe5 | best: doubles_pawns file=g line=Rac1 hxg4
 f20a2880c195:34 hxg4 (best dxe5) | Discovered Attack: Missed discovered attack on knight | blunder: cp_loss loss=3.6 | best: pattern_discovered san=dxe5
 f20a2880c195:42 O-O (best Rb8) | Skewer: Missed skewer (queen to pawn) | blunder: cp_loss loss=4.2 | best: pattern_skewer san=Rb8
 f20a2880c195:43 Rg1 (best Qxc6) | None: Positional error or deep tactical oversight | blunder: refuted_material reply=Bxd5 | best: attacks_piece piece=queen.acc san=Qxc6

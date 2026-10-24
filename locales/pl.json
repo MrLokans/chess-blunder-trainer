@@ -271,6 +271,8 @@
   "explanation.best.threatens_capture_check": "Najlepszy ruch {san} grozi zbiciem {piece} z szachem.",
   "explanation.best.threatens_mate": "Najlepszy ruch {san} grozi matem.",
   "explanation.best.trades_piece": "Najlepszy ruch {san} wymienia {piece}.",
+  "explanation.best.doubles_pawns": "Po {line} przeciwnik zostaje ze zdublowanymi pionkami na linii {file}.",
+  "explanation.best.opens_king": "Po {line} król przeciwnika traci osłonę pionków na linii {file}.",
   "explanation.best.wins_piece": "Najlepszy ruch {san} wygrywa {piece}.",
   "explanation.blunder.bad_capture": "Bicie twoim {piece} traci materiał — twoja figura jest warta więcej niż zbita.",
   "explanation.blunder.cp_loss": "Ten ruch traci około {loss} pionków przewagi.",

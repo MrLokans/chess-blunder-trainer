@@ -137,7 +137,7 @@
   {
     "id": "best-move-even-trade-is-not-winning-a-piece",
     "source": "user report, trainer game 458f32dc ply 10",
-    "note": "Bxf3 gxf3 trades bishop for knight; it must not say the best move wins the knight.",
+    "note": "Bxf3 gxf3 trades bishop for knight; the reason it's best is White's doubled f-pawns, not a won knight.",
     "fen": "rn2kb1r/ppp1pppp/5n2/3q4/6b1/1P3N2/P1PPBPPP/RNBQK2R b KQkq - 2 5",
     "blunder": "e7e6",
     "best": "g4f3",
@@ -157,7 +157,11 @@
       "h3"
     ],
     "expect": {
-      "best_key": "explanation.best.trades_piece"
+      "best_key": "explanation.best.doubles_pawns",
+      "best_params": {
+        "line": "Bxf3 gxf3",
+        "file": "f"
+      }
     }
   },
   {

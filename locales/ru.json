@@ -271,6 +271,8 @@
   "explanation.best.threatens_capture_check": "Лучший ход {san} угрожает взятием {piece} с шахом.",
   "explanation.best.threatens_mate": "Лучший ход {san} угрожает матом.",
   "explanation.best.trades_piece": "Лучший ход {san} разменивает {piece}.",
+  "explanation.best.doubles_pawns": "После {line} у соперника остаются сдвоенные пешки на вертикали {file}.",
+  "explanation.best.opens_king": "После {line} король соперника теряет пешечное прикрытие на вертикали {file}.",
   "explanation.best.wins_piece": "Лучший ход {san} выигрывает {piece}.",
   "explanation.blunder.bad_capture": "Взятие вашим {piece} теряет материал — ваша фигура стоит больше взятой.",
   "explanation.blunder.cp_loss": "Этот ход теряет около {loss} пешек преимущества.",

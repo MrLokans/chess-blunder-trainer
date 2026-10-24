@@ -271,6 +271,8 @@
   "explanation.best.threatens_capture_check": "Найкращий хід {san} загрожує взяттям {piece} із шахом.",
   "explanation.best.threatens_mate": "Найкращий хід {san} загрожує матом.",
   "explanation.best.trades_piece": "Найкращий хід {san} розмінює {piece}.",
+  "explanation.best.doubles_pawns": "Після {line} у суперника залишаються здвоєні пішаки на вертикалі {file}.",
+  "explanation.best.opens_king": "Після {line} король суперника втрачає пішакове прикриття на вертикалі {file}.",
   "explanation.best.wins_piece": "Найкращий хід {san} виграє {piece}.",
   "explanation.blunder.bad_capture": "Взяття вашим {piece} втрачає матеріал — ваша фігура коштує більше за взяту.",
   "explanation.blunder.cp_loss": "Цей хід втрачає близько {loss} пішаків переваги.",

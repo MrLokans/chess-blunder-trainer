@@ -271,6 +271,8 @@
   "explanation.best.threatens_capture_check": "最佳走法 {san} 威胁吃{piece}同时将军。",
   "explanation.best.threatens_mate": "最佳走法 {san} 威胁将杀。",
   "explanation.best.trades_piece": "最佳走法 {san} 兑换{piece}。",
+  "explanation.best.doubles_pawns": "{line} 之后，对手在 {file} 线留下叠兵。",
+  "explanation.best.opens_king": "{line} 之后，对手的王在 {file} 线失去兵的掩护。",
   "explanation.best.wins_piece": "最佳走法 {san} 赢得{piece}。",
   "explanation.blunder.bad_capture": "用你的{piece}吃子会丢失子力——你的{piece}比被吃的棋子更有价值。",
   "explanation.blunder.cp_loss": "这步棋丢失了约 {loss} 个兵的优势。",

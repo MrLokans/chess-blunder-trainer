@@ -42,6 +42,8 @@ _EN_TEMPLATES = {
     "explanation.best.pattern_hanging_piece": "The best move {san} captures the undefended {piece} on {square}.",
     "explanation.best.check_wins_hanging": "The best move {san} gives check, winning the undefended {piece} on {square}.",
     "explanation.best.pattern_generic": "The best move {san} wins material with a {pattern}.",
+    "explanation.best.doubles_pawns": "After {line}, your opponent is left with doubled pawns on the {file}-file.",
+    "explanation.best.opens_king": "After {line}, your opponent's king loses its pawn cover on the {file}-file.",
     "explanation.best.trades_piece": "The best move {san} trades off the {piece}.",
     "explanation.best.wins_piece": "The best move {san} wins the {piece}.",
     "explanation.best.attacks_piece": "The best move {san} attacks the {piece}.",
@@ -260,6 +262,57 @@ class TestGenerateExplanation:
         fen = "3B4/8/1b6/k7/3N4/8/8/6K1 w - - 0 1"
         result = _resolve(fen, blunder_uci="d8h4", cp_loss=300)
         assert "knight on d4" in result.blunder_text
+
+    def test_best_line_pawn_damage_explains_a_quiet_trade(self):
+        fen = "rn2kb1r/ppp1pppp/5n2/3q4/6b1/1P3N2/P1PPBPPP/RNBQK2R b KQkq - 2 5"
+        result = _resolve(
+            fen,
+            blunder_uci="e7e6",
+            best_move_uci="g4f3",
+            cp_loss=192,
+            best_line=["Bxf3", "gxf3", "Nc6", "c3", "e5"],
+            refutation_line=["d4", "Qa5+", "c3", "c5", "h3"],
+        )
+        assert result.best_move_text == (
+            "After Bxf3 gxf3, your opponent is left with doubled pawns on the f-file."
+        )
+
+    def test_pawn_damage_the_refutation_also_causes_is_not_credited(self):
+        fen = "rn2kb1r/ppp1pppp/5n2/3q4/6b1/1P3N2/P1PPBPPP/RNBQK2R b KQkq - 2 5"
+        result = _resolve(
+            fen,
+            blunder_uci="e7e6",
+            best_move_uci="g4f3",
+            cp_loss=192,
+            best_line=["Bxf3", "gxf3", "Nc6", "c3", "e5"],
+            refutation_line=["h3", "Bxf3", "gxf3"],
+        )
+        assert "doubled" not in result.best_move_text
+
+    def test_broken_king_shelter_outranks_doubled_pawns(self):
+        fen = "rn2kb1r/ppp1pppp/5n2/3q4/6b1/1P3N2/P1PPBPPP/RNBQ1RK1 b kq - 2 5"
+        result = _resolve(
+            fen,
+            blunder_uci="e7e6",
+            best_move_uci="g4f3",
+            cp_loss=192,
+            best_line=["Bxf3", "gxf3", "Nc6"],
+            refutation_line=["d4", "Bd6"],
+        )
+        assert "king loses its pawn cover on the g-file" in result.best_move_text
+
+    def test_king_walking_to_an_open_square_is_not_lost_cover(self):
+        # The white king walks to g2 beside the empty f-file; nothing was taken from it.
+        fen = "4k3/pppp4/8/8/8/8/6PP/4K3 b - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="a7a5",
+            best_move_uci="a7a6",
+            cp_loss=150,
+            best_line=["a6", "Kf1", "a5", "Kg2"],
+            refutation_line=["Kf1"],
+        )
+        assert "pawn cover" not in result.best_move_text
 
     def test_best_move_simple_capture(self):
         fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"

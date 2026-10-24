@@ -271,6 +271,8 @@
   "explanation.best.threatens_capture_check": "La mejor jugada {san} amenaza captura de {piece} con jaque.",
   "explanation.best.threatens_mate": "La mejor jugada {san} amenaza jaque mate.",
   "explanation.best.trades_piece": "La mejor jugada {san} cambia el/la {piece}.",
+  "explanation.best.doubles_pawns": "Tras {line}, el rival queda con peones doblados en la columna {file}.",
+  "explanation.best.opens_king": "Tras {line}, el rey rival pierde su cobertura de peones en la columna {file}.",
   "explanation.best.wins_piece": "La mejor jugada {san} gana el/la {piece}.",
   "explanation.blunder.bad_capture": "Capturar con tu {piece} pierde material — tu {piece} vale más que la pieza capturada.",
   "explanation.blunder.cp_loss": "Este movimiento pierde aproximadamente {loss} peones de ventaja.",
