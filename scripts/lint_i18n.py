@@ -71,7 +71,7 @@ REFERENCE_LOCALE = "en"
 #: Source roots scanned for ``t('key')`` callsites. Tests count as
 #: callsites — they often serve as documentation of which keys exist.
 #: ``blunder_tutor`` covers both backend Python (lookup tables like
-#: ``utils/explanation.py``'s ``chess.piece.*`` map) and the static
+#: ``analysis/explanation/messages.py``'s ``chess.piece.*`` map) and the static
 #: JS that ships under ``web/static/js`` — the ``EXCLUDED_PATH_FRAGMENTS``
 #: list keeps build output (``static/dist/``, ``__pycache__``) out.
 SOURCE_ROOTS: tuple[str, ...] = (
@@ -95,7 +95,7 @@ EXCLUDED_PATH_FRAGMENTS: tuple[str, ...] = (
 
 #: Key prefixes constructed dynamically by Python code that the
 #: bare-string scan can't see (e.g. ``f"{base}.{case}"`` in
-#: ``utils/explanation.py``, or ``t(explanation.blunder.key)`` where
+#: ``analysis/explanation/messages.py``, or ``t(explanation.blunder.key)`` where
 #: ``key`` is a dataclass attribute). Any locale key starting with
 #: one of these is treated as referenced.
 DYNAMIC_PREFIXES: tuple[str, ...] = (

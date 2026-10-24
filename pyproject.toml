@@ -297,12 +297,13 @@ per-file-ignores = [
   # web/ui/router.py: WPS210 — UI route handler builds template context
   # by assembling user data + flags + nav + i18n + breadcrumbs in one place.
   "blunder_tutor/web/ui/router.py: WPS210",
-  # explanation.py: WPS202 — explanation strategies form one cohesive PV
-  # walker + i18n message factory. Splitting the per-strategy helpers across
-  # submodules would scatter the ordered fallback chain (PV → static check
-  # → static pattern → retreat → capture → threat → cp-loss) without
-  # architectural benefit. WPS226: I18nMessage params share names by design.
-  "blunder_tutor/utils/explanation.py: WPS202, WPS226",
+  # analysis/explanation/: WPS202 — each module is one stage of the ordered
+  # fallback chain (best-move sentences, blunder sentences, board predicates);
+  # splitting a stage further would scatter its strategies. WPS226:
+  # I18nMessage params share names by design. __init__ exposes the public API
+  # through __all__ (WPS410), as auth/ does.
+  "blunder_tutor/analysis/explanation/*: WPS202, WPS226",
+  "blunder_tutor/analysis/explanation/__init__.py: WPS410",
   "blunder_tutor/analysis/*: WPS301, WPS458",
   # tactics.py: WPS202 — every detect_* / analyze_* and its tightly-coupled
   # private helpers form one cohesive module. Splitting into submodules would

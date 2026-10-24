@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from blunder_tutor.utils.explanation import (
+from blunder_tutor.analysis.explanation import (
     BlunderExplanation,
     ResolvedExplanation,
     generate_explanation,

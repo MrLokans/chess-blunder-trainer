@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
+from blunder_tutor.analysis.explanation import generate_explanation, resolve_explanation
 from blunder_tutor.analysis.tactics import PATTERN_LABELS
 from blunder_tutor.cache.scope import user_scope
 from blunder_tutor.constants import PHASE_FROM_STRING, PHASE_LABELS
@@ -14,7 +15,6 @@ from blunder_tutor.errors import IllegalMoveError, PuzzleNotFoundError
 from blunder_tutor.events.event_types import TrainingEvent
 from blunder_tutor.trainer import BlunderFilter
 from blunder_tutor.utils.chess_utils import format_eval
-from blunder_tutor.utils.explanation import generate_explanation, resolve_explanation
 
 if TYPE_CHECKING:
     from collections.abc import Callable

@@ -12,9 +12,9 @@ from typing import Any
 import chess
 import chess.pgn
 
+from blunder_tutor.analysis.explanation import I18nMessage, generate_explanation
 from blunder_tutor.analysis.tactics import classify_blunder_tactics
 from blunder_tutor.utils.chess_utils import board_from_fen
-from blunder_tutor.utils.explanation import I18nMessage, generate_explanation
 
 DEMO_DB = Path(__file__).resolve().parents[2] / "demo" / "demo.sqlite3"
 
