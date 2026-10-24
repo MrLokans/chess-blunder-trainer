@@ -20,7 +20,7 @@ vi.mock('../../src/shared/api', () => ({
       getPuzzle: vi.fn().mockResolvedValue({
         game_id: 'test123', fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
         ply: 10, blunder_uci: 'e2e4', blunder_san: 'e4',
-        best_move_uci: 'd2d4', best_move_san: 'd4', best_line: ['d4'],
+        best_move_uci: 'd2d4', best_move_san: 'd4', best_line: ['d4'], refutation_line: [],
         player_color: 'white', eval_before: 50, eval_after: -200,
         eval_before_display: '+0.5', eval_after_display: '-2.0', cp_loss: 250,
         game_phase: 'middlegame', tactical_pattern: null, tactical_reason: null,

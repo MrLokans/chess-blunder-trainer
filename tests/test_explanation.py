@@ -29,19 +29,22 @@ _EN_TEMPLATES = {
     "explanation.blunder.exposed_piece": "Moving your {piece} left your {exposed} on {square} undefended.",
     "explanation.blunder.bad_capture": "Capturing with your {piece} loses material — your {piece} is worth more than the captured piece.",
     "explanation.blunder.cp_loss": "This move loses about {loss} pawns worth of advantage.",
+    "explanation.blunder.refuted_mate": "Your opponent answers {reply} and forces checkmate.",
+    "explanation.blunder.refuted_material": "Your opponent answers {reply} and wins material.",
     "explanation.best.checkmate": "The best move {san} delivers checkmate.",
     "explanation.best.capture_with_check": "The best move {san} captures the {piece} with check.",
     "explanation.best.check_with_pattern": "The best move {san} gives check, exploiting a {pattern}.",
-    "explanation.best.check_winning": "The best move {san} gives check, winning material.",
     "explanation.best.pattern_fork": "The best move {san} creates a fork, attacking multiple pieces at once.",
     "explanation.best.pattern_pin": "The best move {san} creates a pin, winning material.",
     "explanation.best.pattern_skewer": "The best move {san} creates a skewer, forcing a valuable piece to move and exposing another.",
     "explanation.best.pattern_discovered": "The best move {san} unleashes a discovered attack, hitting a valuable piece.",
     "explanation.best.pattern_back_rank": "The best move {san} exploits a back rank weakness.",
-    "explanation.best.pattern_hanging": "The best move {san} captures an undefended piece.",
     "explanation.best.pattern_hanging_piece": "The best move {san} captures the undefended {piece} on {square}.",
     "explanation.best.check_wins_hanging": "The best move {san} gives check, winning the undefended {piece} on {square}.",
     "explanation.best.pattern_generic": "The best move {san} wins material with a {pattern}.",
+    "explanation.best.doubles_pawns": "After {line}, your opponent is left with doubled pawns on the {file}-file.",
+    "explanation.best.opens_king": "After {line}, your opponent's king loses its pawn cover on the {file}-file.",
+    "explanation.best.trades_piece": "The best move {san} trades off the {piece}.",
     "explanation.best.wins_piece": "The best move {san} wins the {piece}.",
     "explanation.best.attacks_piece": "The best move {san} attacks the {piece}.",
     "explanation.best.threatens_mate": "The best move {san} threatens checkmate.",
@@ -95,37 +98,75 @@ class TestGenerateExplanation:
         assert "check" in result.best_move_text.lower()
 
     def test_best_move_with_fork_pattern(self):
-        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        result = _resolve(
-            fen,
-            blunder_uci="e2e3",
-            best_move_uci="e2e4",
-            tactical_pattern="Fork",
-            cp_loss=200,
-        )
+        fen = "r1bqkb1r/pppp1ppp/2n2n2/4p1N1/2B1P3/8/PPPP1PPP/RNBQK2R w KQkq - 0 1"
+        result = _resolve(fen, blunder_uci="g5h3", best_move_uci="g5f7", cp_loss=200)
         assert "fork" in result.best_move_text.lower()
 
-    def test_best_move_with_pin_pattern(self):
-        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        result = _resolve(
-            fen,
-            blunder_uci="e2e3",
-            best_move_uci="e2e4",
-            tactical_pattern="Pin",
-            cp_loss=200,
-        )
-        assert "pin" in result.best_move_text.lower()
-
     def test_best_move_with_skewer_pattern(self):
+        fen = "8/qk6/8/8/8/8/8/2K4R w - - 0 1"
+        result = _resolve(fen, blunder_uci="c1d2", best_move_uci="h1h7", cp_loss=600)
+        assert "skewer" in result.best_move_text.lower()
+
+    def test_quiet_best_move_gets_no_pattern(self):
         fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        result = _resolve(fen, blunder_uci="e2e3", best_move_uci="e2e4", cp_loss=200)
+        for pattern in ("fork", "pin", "skewer", "discovered"):
+            assert pattern not in result.best_move_text.lower()
+
+    def test_best_move_blocking_check_is_not_a_pin(self):
+        # GH #17: Be6 and Be7 both block Re1+; neither pins anything of White's.
+        fen = "r1b1kb1r/pp3ppp/2pn4/8/3N4/8/PPP2PPP/RNB1R1K1 b kq - 0 1"
+        result = _resolve(fen, blunder_uci="c8e6", best_move_uci="f8e7", cp_loss=190)
+        assert "pin" not in result.best_move_text.lower()
+        assert "Be7" in result.best_move_text
+
+    def test_blunder_refuted_by_mate(self):
+        fen = "6k1/5ppp/8/8/8/8/5PPP/R5K1 b - - 0 1"
         result = _resolve(
             fen,
-            blunder_uci="e2e3",
-            best_move_uci="e2e4",
-            tactical_pattern="Skewer",
-            cp_loss=200,
+            blunder_uci="g8h8",
+            best_move_uci="g8f8",
+            cp_loss=10000,
+            refutation_line=["Ra8#"],
         )
-        assert "skewer" in result.best_move_text.lower()
+        assert "Ra8#" in result.blunder_text
+        assert "checkmate" in result.blunder_text.lower()
+
+    def test_mate_by_the_blunderer_is_not_called_a_refutation(self):
+        # Even-length line: the player, not the opponent, delivers the final mate.
+        fen = "r5k1/5ppp/8/1N6/8/8/5PPP/6K1 b - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="h7h6",
+            best_move_uci="g7g6",
+            cp_loss=300,
+            refutation_line=["Nc7", "Ra1#"],
+        )
+        assert "checkmate" not in result.blunder_text.lower()
+
+    def test_blunder_refuted_by_material_win(self):
+        # GH #17: Nxe6 fxe6 Rxe6+ takes a bishop for a knight and nets a pawn.
+        fen = "r1b1kb1r/pp3ppp/2pn4/8/3N4/8/PPP2PPP/RNB1R1K1 b kq - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="c8e6",
+            best_move_uci="f8e7",
+            cp_loss=190,
+            refutation_line=["Nxe6", "fxe6", "Rxe6+", "Kf7", "Re2"],
+        )
+        assert "Nxe6" in result.blunder_text
+        assert "material" in result.blunder_text.lower()
+
+    def test_even_trade_refutation_falls_back_to_cp_loss(self):
+        fen = "r1b1kb1r/pp3ppp/2pn4/8/3N4/8/PPP2PPP/RNB1R1K1 b kq - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="c8e6",
+            best_move_uci="f8e7",
+            cp_loss=190,
+            refutation_line=["Nxe6", "fxe6"],
+        )
+        assert "1.9" in result.blunder_text
 
     def test_best_move_checkmate(self):
         fen = "7k/6pp/5Q2/8/8/8/8/6K1 w - - 0 1"
@@ -150,67 +191,128 @@ class TestGenerateExplanation:
         assert result.blunder_text != ""
 
     def test_discovered_attack_pattern(self):
-        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        result = _resolve(
-            fen,
-            blunder_uci="e2e3",
-            best_move_uci="e2e4",
-            tactical_pattern="Discovered Attack",
-            cp_loss=300,
-        )
+        fen = "3qk3/8/8/8/3B4/8/8/3RK3 w - - 0 1"
+        result = _resolve(fen, blunder_uci="e1f1", best_move_uci="d4b6", cp_loss=300)
         assert "discovered" in result.best_move_text.lower()
 
-    def test_back_rank_pattern(self):
-        fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-        result = _resolve(
-            fen,
-            blunder_uci="e2e3",
-            best_move_uci="e2e4",
-            tactical_pattern="Back Rank Threat",
-            cp_loss=300,
-        )
-        assert "back rank" in result.best_move_text.lower()
-
-    def test_hanging_piece_pattern_when_best_move_captures(self):
-        # Best move captures the hanging piece → use "captures undefended" template
+    def test_best_move_captures_undefended_piece(self):
         fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"
         result = _resolve(
             fen,
             blunder_uci="e1e2",
             best_move_uci="d1d5",
-            tactical_pattern="Hanging Piece",
             cp_loss=500,
         )
         assert "undefended" in result.best_move_text.lower()
 
-    def test_hanging_piece_pattern_capture_of_defended_piece(self):
-        # "Hanging Piece" pattern refers to the blunder creating a hanging piece
-        # (White queen on d4), NOT the captured piece being undefended.
-        # When best move captures a defended piece, don't say "undefended".
+    def test_best_move_captures_defended_piece(self):
         # Real bug: Qxf6 where queen on f6 is defended by rook on f8.
         fen = "r1b2rk1/p1p4p/2p1pqp1/3p4/2PQ4/8/PP1N1PPP/R3K2R w KQ - 1 18"
         result = _resolve(
             fen,
             blunder_uci="e1g1",
             best_move_uci="d4f6",
-            tactical_pattern="Hanging Piece",
             cp_loss=600,
         )
         assert "undefended" not in result.best_move_text.lower()
         assert result.best_move_text != ""
 
-    def test_hanging_piece_pattern_when_best_move_not_capture(self):
-        # Best move avoids hanging a piece but doesn't capture → fall through
+    def test_quiet_best_move_not_called_capture(self):
         fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         result = _resolve(
             fen,
             blunder_uci="e2e3",
             best_move_uci="e2e4",
-            tactical_pattern="Hanging Piece",
             cp_loss=300,
         )
         assert "undefended" not in result.best_move_text.lower()
         assert result.best_move_text != ""
+
+    def test_recapturable_capture_is_a_trade_not_a_win(self):
+        fen = "rn2kb1r/ppp1pppp/5n2/3q4/6b1/1P3N2/P1PPBPPP/RNBQK2R b KQkq - 2 5"
+        result = _resolve(fen, blunder_uci="e7e6", best_move_uci="g4f3", cp_loss=192)
+        assert "trades off the knight" in result.best_move_text
+        assert "wins" not in result.best_move_text
+
+    def test_line_ending_on_safe_capture_still_wins(self):
+        fen = "6k1/p4p2/8/8/2B5/8/8/5RK1 w - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="g1h2",
+            best_move_uci="g1h1",
+            cp_loss=150,
+            best_line=["Kh1", "a6", "Rxf7"],
+        )
+        assert "wins the pawn" in result.best_move_text
+
+    def test_assumed_recapture_cancels_the_named_piece(self):
+        # Rxd8+ can be taken back by Rxd8, so the line nets the a7 pawn, not a rook.
+        fen = "2rr2k1/p4ppp/8/8/8/4B3/5PPP/3R2K1 w - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="g1f1",
+            best_move_uci="e3a7",
+            cp_loss=150,
+            best_line=["Bxa7", "h6", "Rxd8+"],
+        )
+        assert "wins the pawn" in result.best_move_text
+
+    def test_unpinning_an_attacker_exposes_the_piece(self):
+        # Bd8 pinned the b6 bishop to the king; moving it lets Bxd4 happen.
+        fen = "3B4/8/1b6/k7/3N4/8/8/6K1 w - - 0 1"
+        result = _resolve(fen, blunder_uci="d8h4", cp_loss=300)
+        assert "knight on d4" in result.blunder_text
+
+    def test_best_line_pawn_damage_explains_a_quiet_trade(self):
+        fen = "rn2kb1r/ppp1pppp/5n2/3q4/6b1/1P3N2/P1PPBPPP/RNBQK2R b KQkq - 2 5"
+        result = _resolve(
+            fen,
+            blunder_uci="e7e6",
+            best_move_uci="g4f3",
+            cp_loss=192,
+            best_line=["Bxf3", "gxf3", "Nc6", "c3", "e5"],
+            refutation_line=["d4", "Qa5+", "c3", "c5", "h3"],
+        )
+        assert result.best_move_text == (
+            "After Bxf3 gxf3, your opponent is left with doubled pawns on the f-file."
+        )
+
+    def test_pawn_damage_the_refutation_also_causes_is_not_credited(self):
+        fen = "rn2kb1r/ppp1pppp/5n2/3q4/6b1/1P3N2/P1PPBPPP/RNBQK2R b KQkq - 2 5"
+        result = _resolve(
+            fen,
+            blunder_uci="e7e6",
+            best_move_uci="g4f3",
+            cp_loss=192,
+            best_line=["Bxf3", "gxf3", "Nc6", "c3", "e5"],
+            refutation_line=["h3", "Bxf3", "gxf3"],
+        )
+        assert "doubled" not in result.best_move_text
+
+    def test_broken_king_shelter_outranks_doubled_pawns(self):
+        fen = "rn2kb1r/ppp1pppp/5n2/3q4/6b1/1P3N2/P1PPBPPP/RNBQ1RK1 b kq - 2 5"
+        result = _resolve(
+            fen,
+            blunder_uci="e7e6",
+            best_move_uci="g4f3",
+            cp_loss=192,
+            best_line=["Bxf3", "gxf3", "Nc6"],
+            refutation_line=["d4", "Bd6"],
+        )
+        assert "king loses its pawn cover on the g-file" in result.best_move_text
+
+    def test_king_walking_to_an_open_square_is_not_lost_cover(self):
+        # The white king walks to g2 beside the empty f-file; nothing was taken from it.
+        fen = "4k3/pppp4/8/8/8/8/6PP/4K3 b - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="a7a5",
+            best_move_uci="a7a6",
+            cp_loss=150,
+            best_line=["a6", "Kf1", "a5", "Kg2"],
+            refutation_line=["Kf1"],
+        )
+        assert "pawn cover" not in result.best_move_text
 
     def test_best_move_simple_capture(self):
         fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"
@@ -225,7 +327,6 @@ class TestGenerateExplanation:
             fen,
             blunder_uci="e1g1",
             best_move_uci="b1d2",
-            tactical_pattern="Hanging Piece",
             cp_loss=262,
         )
         assert "captures" not in result.best_move_text.lower()
@@ -246,23 +347,22 @@ class TestGenerateExplanation:
             fen,
             blunder_uci="d5d6",
             best_move_uci="f3h4",
-            tactical_pattern="None",
             cp_loss=276,
         )
         assert "none" not in result.best_move_text.lower()
         assert result.best_move_text != ""
 
-    def test_quiet_move_detects_threat(self):
+    def test_threat_available_before_the_move_is_not_credited(self):
+        # Bh7+ was playable before Nh4, so Nh4 doesn't create that bishop threat.
         fen = "r1bqr1k1/p2p1pp1/n4n1p/1NbPp3/8/P2BBN2/1PPQ1PPP/R4RK1 w - - 1 14"
         result = _resolve(
             fen,
             blunder_uci="d5d6",
             best_move_uci="f3h4",
-            tactical_pattern="None",
             cp_loss=276,
             best_line=["Nh4", "Nxd5", "Bh7+", "Kxh7", "Qxd5"],
         )
-        assert "threat" in result.best_move_text.lower()
+        assert "threat" not in result.best_move_text.lower()
         assert "none" not in result.best_move_text.lower()
 
     def test_best_line_material_gain(self):
@@ -276,9 +376,8 @@ class TestGenerateExplanation:
         )
         assert result.best_move_text != ""
 
-    def test_sacrifice_with_check_uses_pv_to_explain_combination(self):
-        # Bxh7+ sacrifices bishop for pawn with check, then Ng5+ Kg8 Qxd5
-        # wins the queen. PV-first should show "wins the queen through a combination".
+    def test_sacrifice_with_check_names_pattern_and_line(self):
+        # Bxh7+ uncovers Qd1 on the d5 queen, and Ng5+ Kg8 Qxd5 collects it.
         fen = "r1b2rk1/pppp1ppp/8/3qB3/8/3B1N2/5PPP/1R1Q2K1 w - - 0 21"
         result = _resolve(
             fen,
@@ -288,7 +387,7 @@ class TestGenerateExplanation:
             best_line=["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qxd5"],
         )
         assert "queen" in result.best_move_text.lower()
-        assert "combination" in result.best_move_text.lower()
+        assert "discovered attack" in result.best_move_text.lower()
         assert "Bxh7+" in result.best_move_text
         assert "Qxd5" in result.best_move_text
 
@@ -331,20 +430,6 @@ class TestGenerateExplanation:
         assert "queen" in result.best_move_text.lower()
         assert "Ng5+" in result.best_move_text
 
-    def test_pv_with_pattern_enrichment(self):
-        # When PV wins material AND a tactical pattern is known, mention the pattern
-        fen = "r1b2rk1/pppp1ppp/8/3qB3/8/3B1N2/5PPP/1R1Q2K1 w - - 0 21"
-        result = _resolve(
-            fen,
-            blunder_uci="b1b5",
-            best_move_uci="d3h7",
-            cp_loss=298,
-            tactical_pattern="Discovered Attack",
-            best_line=["Bxh7+", "Kxh7", "Ng5+", "Kg8", "Qxd5"],
-        )
-        assert "queen" in result.best_move_text.lower()
-        assert "discovered attack" in result.best_move_text.lower()
-
     def test_pv_simple_capture_defers_to_static(self):
         # Simple Qxd5 (no sacrifice, direct capture) should use static "wins the piece"
         fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"
@@ -369,10 +454,11 @@ class TestGenerateExplanation:
         )
         assert result.best_move_text != ""
 
-    def test_best_move_gives_check_with_pattern(self):
-        fen = "4k3/8/8/8/8/8/8/3QK3 w - - 0 1"
-        result = _resolve(fen, blunder_uci="e1e2", best_move_uci="d1d8", cp_loss=500)
-        assert "check" in result.best_move_text.lower()
+    def test_plain_check_makes_no_material_claim(self):
+        fen = "4k3/8/8/8/8/8/8/R3K3 w - - 0 1"
+        result = _resolve(fen, blunder_uci="e1d2", best_move_uci="a1a8", cp_loss=150)
+        assert "winning" not in result.best_move_text.lower()
+        assert "Ra8+" in result.best_move_text
 
 
 class TestI18nKeys:

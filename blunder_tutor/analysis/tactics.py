@@ -648,6 +648,18 @@ def _new_weaknesses(
     ]
 
 
+def _created_weaknesses(
+    before: list[TacticalMotif], board_after: chess.Board, color: chess.Color
+) -> list[TacticalMotif]:
+    return _new_weaknesses(before, analyze_position_weaknesses(board_after, color))
+
+
+def _weakness_kind(
+    weakness: TacticalMotif,
+) -> tuple[TacticalPattern, tuple[chess.PieceType, ...]]:
+    return weakness.pattern, tuple(weakness.pieces)
+
+
 def classify_blunder_tactics(
     board_before: chess.Board,
     blunder_move: chess.Move,
@@ -668,7 +680,13 @@ def classify_blunder_tactics(
     player_color = board_before.turn
 
     _attach_allowed_tactic(
-        result, reasons, board_before, board_after_blunder, opponent_reply, player_color
+        result,
+        reasons,
+        board_before,
+        board_after_blunder,
+        best_move,
+        opponent_reply,
+        player_color,
     )
 
     result.blunder_reason = (
@@ -682,6 +700,7 @@ def _attach_allowed_tactic(
     reasons: list[str],
     board_before: chess.Board,
     board_after_blunder: chess.Board,
+    best_move: chess.Move | None,
     opponent_reply: chess.Move | None,
     player_color: chess.Color,
 ) -> None:
@@ -692,10 +711,20 @@ def _attach_allowed_tactic(
             reasons.append(f"Allowed {allowed.description.lower()}")
         return
 
-    new_weaknesses = _new_weaknesses(
-        analyze_position_weaknesses(board_before, player_color),
-        analyze_position_weaknesses(board_after_blunder, player_color),
-    )
+    before = analyze_position_weaknesses(board_before, player_color)
+    new_weaknesses = _created_weaknesses(before, board_after_blunder, player_color)
+    if best_move:
+        # A pin the best move creates too (e.g. of any piece blocking a check) is forced
+        # by the position. Only pins: a best-move capture briefly looks like a hanging
+        # piece and would mask a real one.
+        board_after_best = board_before.copy()
+        board_after_best.push(best_move)
+        forced = {
+            _weakness_kind(w)
+            for w in _created_weaknesses(before, board_after_best, player_color)
+            if w.pattern == TacticalPattern.PIN
+        }
+        new_weaknesses = [w for w in new_weaknesses if _weakness_kind(w) not in forced]
     if new_weaknesses:
         worst = max(new_weaknesses, key=lambda w: w.material_gain)
         result.allowed_tactic = worst

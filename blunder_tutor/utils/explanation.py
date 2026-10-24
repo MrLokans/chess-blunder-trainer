@@ -7,7 +7,8 @@ captures, net material change, mate.
 `_explain_best` tries, in order: immediate mate; PV analysis (mate in N, sacrifice
 combination, multi-move material win; a simple direct capture returns None so the static
 layer can word it more concisely); then the static fallback (check + capture, tactical
-pattern, capture, null-move threat, centipawn-loss avoidance).
+pattern, capture, null-move threat, centipawn-loss avoidance). The tactical pattern is the
+best move's own tactic: a puzzle's stored pattern may describe what the blunder allowed.
 
 `_explain_blunder` is static: missed mate, piece landing undefended, exposed piece, bad
 capture, else centipawn loss.
@@ -21,12 +22,15 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from functools import partial
 
 import chess
 
+from blunder_tutor.analysis.tactics import PATTERN_LABELS, analyze_move_tactics
 from blunder_tutor.utils.chess_utils import board_from_fen
 
 CENTIPAWNS_PER_PAWN = 100
+_MINOR_PIECE_VALUE = 3
 
 # 1.5 pawns: clearly visible to a beginner without firing only on blowouts.
 SIGNIFICANT_PAWN_LOSS = 1.5
@@ -129,6 +133,18 @@ def _is_hanging(board: chess.Board, square: chess.Square, color: chess.Color) ->
     )
 
 
+def _has_legal_capture(board: chess.Board, square: chess.Square) -> bool:
+    return any(move.to_square == square for move in board.legal_moves)
+
+
+def _is_capturable(
+    board: chess.Board, square: chess.Square, color: chess.Color
+) -> bool:
+    """Hanging with the opponent to move and able to take it: an attacker that is
+    pinned, or a check to answer first, doesn't count."""
+    return _is_hanging(board, square, color) and _has_legal_capture(board, square)
+
+
 def _move_gives_check(board: chess.Board, move: chess.Move) -> bool:
     b = board.copy()
     b.push(move)
@@ -218,22 +234,31 @@ def _classify_null_move_threat(
     return None
 
 
+def _threats_available(board: chess.Board, player: chess.Color) -> list[_Threat]:
+    threats = []
+    for candidate_move in board.legal_moves:
+        piece = board.piece_at(candidate_move.from_square)
+        if not piece or piece.color != player:
+            continue
+        threat = _classify_null_move_threat(board, candidate_move, piece, player)
+        if threat is not None:
+            threats.append(threat)
+    return threats
+
+
 def _threat_from_null_move(
-    board_after: chess.Board, player: chess.Color
+    board: chess.Board, board_after: chess.Board, player: chess.Color
 ) -> _Threat | None:
     if board_after.is_check():
         return None
     null_board = board_after.copy()
     null_board.push(chess.Move.null())
-
-    for candidate_move in null_board.legal_moves:
-        piece = null_board.piece_at(candidate_move.from_square)
-        if not piece or piece.color != player:
-            continue
-        threat = _classify_null_move_threat(null_board, candidate_move, piece, player)
-        if threat is not None:
-            return threat
-    return None
+    # Only threats the best move created: a rook check that was available all along
+    # doesn't explain the move, even if the rook now gives it from another square.
+    existing = set(_threats_available(board, player)) if not board.is_check() else set()
+    return next(
+        (t for t in _threats_available(null_board, player) if t not in existing), None
+    )
 
 
 def _detect_next_move_threat(board: chess.Board, move: chess.Move) -> _Threat | None:
@@ -244,7 +269,7 @@ def _detect_next_move_threat(board: chess.Board, move: chess.Move) -> _Threat | 
     new_attack_threat = _threat_from_new_attacks(board, board_after, player)
     if new_attack_threat is not None:
         return new_attack_threat
-    return _threat_from_null_move(board_after, player)
+    return _threat_from_null_move(board, board_after, player)
 
 
 def _iter_hanging_enemies(board: chess.Board, enemy: chess.Color):
@@ -267,9 +292,11 @@ def _find_hanging_piece(
     board_after = board.copy()
     board_after.push(move)
     enemy = not player_color
+    attacked_by_mover = board_after.attacks(move.to_square)
     candidates = [
         (_piece_value(piece.piece_type), piece.piece_type, sq)
         for sq, piece in _iter_hanging_enemies(board_after, enemy)
+        if sq in attacked_by_mover
     ]
     if not candidates:
         return None
@@ -429,7 +456,7 @@ class PVAnalysis:
     balance_gain: int
     player_captures: list[_PVCapture]
     opponent_captures: list[_PVCapture]
-    best_opponent_loss: chess.PieceType | None
+    assumed_recapture: chess.PieceType | None = None
 
     @property
     def is_sacrifice_combination(self) -> bool:
@@ -439,7 +466,27 @@ class PVAnalysis:
     def net_piece_won(self) -> chess.PieceType | None:
         if self.balance_gain < 1:
             return None
-        return self.best_opponent_loss
+        # Cancel like-for-like trades first: trading queens while also taking a knight
+        # wins a knight, not a queen.
+        won = [cap.piece_type for cap in self.player_captures]
+        lost = [cap.piece_type for cap in self.opponent_captures]
+        if self.assumed_recapture is not None:
+            lost.append(self.assumed_recapture)
+        for lost_type in lost:
+            traded = next(
+                (pt for pt in won if _piece_value(pt) == _piece_value(lost_type)), None
+            )
+            if traded is not None:
+                won.remove(traded)
+        named = max(won, key=_piece_value, default=None)
+        # Don't name a piece won back with much more given up elsewhere (a queen for
+        # a rook and two pawns); the generic combination wording fits instead.
+        if (
+            named is None
+            or _piece_value(named) - self.balance_gain > _MINOR_PIECE_VALUE
+        ):
+            return None
+        return named
 
 
 def _record_capture_if_any(
@@ -481,12 +528,29 @@ def _walk_pv_continuation(
     return True
 
 
-def _best_opponent_loss(
-    player_caps: list[_PVCapture],
+def _final_capture_at_risk(
+    line_board: chess.Board, player: chess.Color
 ) -> chess.PieceType | None:
-    if not player_caps:
+    """A line cut off mid-exchange: when it ends on the player's capture and the
+    opponent can profitably take the capturer back, assume it will be."""
+    last = line_board.pop()
+    is_capture = line_board.is_capture(last)
+    line_board.push(last)
+    capturer = line_board.piece_at(last.to_square)
+    if not is_capture or capturer is None or capturer.color != player:
         return None
-    return max((c.piece_type for c in player_caps), key=_piece_value)
+    recapturers = [
+        line_board.piece_at(move.from_square)
+        for move in line_board.legal_moves
+        if move.to_square == last.to_square
+    ]
+    if not recapturers:
+        return None
+    cheapest = min(_piece_value(piece.piece_type) for piece in recapturers if piece)
+    defended = bool(line_board.attackers(player, last.to_square))
+    if defended and cheapest > _piece_value(capturer.piece_type):
+        return None
+    return capturer.piece_type
 
 
 def _analyze_pv(
@@ -517,14 +581,18 @@ def _analyze_pv(
     if not walked_cleanly and not state.player_caps and not gives_check:
         return None
 
+    at_risk = _final_capture_at_risk(state.line_board, player)
+    at_risk_value = _piece_value(at_risk) if at_risk else 0
     return PVAnalysis(
         moves_san=best_line,
         gives_check=gives_check,
         gives_mate=state.gives_mate,
-        balance_gain=_material_balance(state.line_board, player) - balance_before,
+        balance_gain=_material_balance(state.line_board, player)
+        - balance_before
+        - at_risk_value,
         player_captures=state.player_caps,
         opponent_captures=state.opp_caps,
-        best_opponent_loss=_best_opponent_loss(state.player_caps),
+        assumed_recapture=at_risk,
     )
 
 
@@ -631,7 +699,7 @@ def _blunder_hanging(
     moved_key_nom: str,
     **_: object,
 ) -> I18nMessage | None:
-    if not _is_hanging(board_after, blunder_move.to_square, player_color):
+    if not _is_capturable(board_after, blunder_move.to_square, player_color):
         return None
     return I18nMessage(
         key="explanation.blunder.hanging_piece",
@@ -643,7 +711,7 @@ def _blunder_hanging(
 
 
 def _is_newly_exposed(
-    board: chess.Board,
+    board_before_null: chess.Board,
     board_after: chess.Board,
     sq: chess.Square,
     blunder_move_to: chess.Square,
@@ -652,8 +720,8 @@ def _is_newly_exposed(
     piece = board_after.piece_at(sq)
     if piece is None or piece.color != player_color or sq == blunder_move_to:
         return False
-    return _is_hanging(board_after, sq, player_color) and not _is_hanging(
-        board, sq, player_color
+    return _is_capturable(board_after, sq, player_color) and not _is_capturable(
+        board_before_null, sq, player_color
     )
 
 
@@ -663,9 +731,13 @@ def _find_exposed_piece(
     blunder_move: chess.Move,
     player_color: chess.Color,
 ) -> tuple[chess.PieceType, chess.Square] | None:
+    # Legal captures on both sides, with the opponent to move before the blunder too:
+    # unpinning an attacker newly exposes a piece.
+    board_before_null = board.copy()
+    board_before_null.push(chess.Move.null())
     for sq in chess.SQUARES:
         if not _is_newly_exposed(
-            board, board_after, sq, blunder_move.to_square, player_color
+            board_before_null, board_after, sq, blunder_move.to_square, player_color
         ):
             continue
         piece = board_after.piece_at(sq)
@@ -733,7 +805,7 @@ def _blunder_bad_capture(
         return None
     if _piece_value(mover.piece_type) <= _piece_value(captured.piece_type):
         return None
-    if not board_after.is_attacked_by(not player_color, blunder_move.to_square):
+    if not _has_legal_capture(board_after, blunder_move.to_square):
         return None
     return I18nMessage(
         key="explanation.blunder.bad_capture",
@@ -751,12 +823,41 @@ def _blunder_cp_loss(cp_loss: int, **_: object) -> I18nMessage | None:
     )
 
 
+def _refutation_pv(
+    board_after: chess.Board, refutation_line: list[str] | None
+) -> PVAnalysis | None:
+    if not refutation_line:
+        return None
+    try:
+        reply = board_after.parse_san(refutation_line[0])
+    except ValueError:
+        return None
+    return _analyze_pv(board_after, reply, refutation_line)
+
+
+def _blunder_refuted(
+    board_after: chess.Board, refutation_line: list[str] | None, **_: object
+) -> I18nMessage | None:
+    pv = _refutation_pv(board_after, refutation_line)
+    if pv is None:
+        return None
+    params = {"reply": pv.moves_san[0]}
+    # Engine lines stop at mate, so an odd length means the opponent delivered it.
+    if pv.gives_mate and len(pv.moves_san) % 2 == 1:
+        return I18nMessage(key="explanation.blunder.refuted_mate", params=params)
+    # Net balance, not the biggest capture: Nxe6 fxe6 Rxe6+ takes a bishop, nets a pawn.
+    if pv.balance_gain >= 1:
+        return I18nMessage(key="explanation.blunder.refuted_material", params=params)
+    return None
+
+
 _BLUNDER_STRATEGIES: tuple[Callable[..., I18nMessage | None], ...] = (
     _blunder_missed_mate,
     _blunder_hanging,
     _blunder_exposed,
     _blunder_ignored_threat,
     _blunder_bad_capture,
+    _blunder_refuted,
     _blunder_cp_loss,
 )
 
@@ -767,6 +868,7 @@ def _explain_blunder(
     player_color: chess.Color,
     cp_loss: int,
     best_move: chess.Move | None = None,
+    refutation_line: list[str] | None = None,
 ) -> I18nMessage | None:
     moved_key_nom = _piece_key(board, blunder_move.from_square)
     if not moved_key_nom:
@@ -780,6 +882,7 @@ def _explain_blunder(
         "player_color": player_color,
         "cp_loss": cp_loss,
         "best_move": best_move,
+        "refutation_line": refutation_line,
         "moved_key_nom": moved_key_nom,
         "moved_key_inst": _piece_key(board, blunder_move.from_square, "inst"),
     }
@@ -793,10 +896,8 @@ def _explain_blunder(
 _PATTERN_KEYS = frozendict(
     {
         "fork": "explanation.best.pattern_fork",
-        "pin": "explanation.best.pattern_pin",
         "skewer": "explanation.best.pattern_skewer",
         "back rank threat": "explanation.best.pattern_back_rank",
-        "hanging piece": "explanation.best.pattern_hanging",
     }
 )
 
@@ -823,25 +924,23 @@ def _explain_best_check(
                 key="explanation.best.capture_with_check",
                 params={"san": san, "piece": _type_key(captured.piece_type, "acc")},
             )
-    if not _has_pattern(tactical_pattern):
-        return I18nMessage(key="explanation.best.check_winning", params={"san": san})
-
-    if tactical_pattern.lower() == "hanging piece":
-        hanging = _find_hanging_piece(board, best_move, board.turn)
-        if hanging is not None:
-            piece_type, sq = hanging
-            return I18nMessage(
-                key="explanation.best.check_wins_hanging",
-                params={
-                    "san": san,
-                    "piece": _type_key(piece_type, "acc"),
-                    "square": chess.square_name(sq),
-                },
-            )
-    return I18nMessage(
-        key="explanation.best.check_with_pattern",
-        params={"san": san, "pattern": tactical_pattern.lower()},
-    )
+    if _has_pattern(tactical_pattern):
+        return I18nMessage(
+            key="explanation.best.check_with_pattern",
+            params={"san": san, "pattern": tactical_pattern.lower()},
+        )
+    hanging = _find_hanging_piece(board, best_move, board.turn)
+    if hanging is not None:
+        piece_type, sq = hanging
+        return I18nMessage(
+            key="explanation.best.check_wins_hanging",
+            params={
+                "san": san,
+                "piece": _type_key(piece_type, "acc"),
+                "square": chess.square_name(sq),
+            },
+        )
+    return None
 
 
 def _is_capturable_hanging(
@@ -852,30 +951,28 @@ def _is_capturable_hanging(
     return _is_hanging(board, best_move.to_square, not board.turn)
 
 
-def _explain_best_pattern(
-    board: chess.Board,
-    best_move: chess.Move,
-    san: str,
-    tactical_pattern: str,
+def _explain_best_hanging_capture(
+    board: chess.Board, best_move: chess.Move, san: str
 ) -> I18nMessage | None:
+    captured = board.piece_at(best_move.to_square)
+    if captured is None or not _is_capturable_hanging(board, best_move, captured):
+        return None
+    return I18nMessage(
+        key="explanation.best.pattern_hanging_piece",
+        params={
+            "san": san,
+            "piece": _type_key(captured.piece_type, "acc"),
+            "square": chess.square_name(best_move.to_square),
+        },
+    )
+
+
+def _explain_best_pattern(san: str, tactical_pattern: str) -> I18nMessage:
     pattern_lower = tactical_pattern.lower()
     if "discovered" in pattern_lower:
         return I18nMessage(
             key="explanation.best.pattern_discovered", params={"san": san}
         )
-    if pattern_lower == "hanging piece":
-        captured = board.piece_at(best_move.to_square)
-        if _is_capturable_hanging(board, best_move, captured):
-            assert captured is not None
-            return I18nMessage(
-                key="explanation.best.pattern_hanging_piece",
-                params={
-                    "san": san,
-                    "piece": _type_key(captured.piece_type, "acc"),
-                    "square": chess.square_name(best_move.to_square),
-                },
-            )
-        return None
     pattern_key = _PATTERN_KEYS.get(pattern_lower)
     if pattern_key:
         return I18nMessage(key=pattern_key, params={"san": san})
@@ -891,12 +988,34 @@ def _explain_best_capture(
     if not board.is_capture(best_move):
         return None
     captured = board.piece_at(best_move.to_square)
-    if captured is None:
+    capturer = board.piece_at(best_move.from_square)
+    if captured is None or capturer is None:
+        return None
+    key = _capture_outcome_key(board, best_move, captured, capturer)
+    if key is None:
         return None
     return I18nMessage(
-        key="explanation.best.wins_piece",
-        params={"san": san, "piece": _type_key(captured.piece_type, "acc")},
+        key=key, params={"san": san, "piece": _type_key(captured.piece_type, "acc")}
     )
+
+
+def _capture_outcome_key(
+    board: chess.Board,
+    capture: chess.Move,
+    captured: chess.Piece,
+    capturer: chess.Piece,
+) -> str | None:
+    captured_value = _piece_value(captured.piece_type)
+    capturer_value = _piece_value(capturer.piece_type)
+    board_after = board.copy()
+    board_after.push(capture)
+    recapturable = board_after.is_attacked_by(board_after.turn, capture.to_square)
+    if captured_value > capturer_value or not recapturable:
+        return "explanation.best.wins_piece"
+    if captured_value == capturer_value:
+        return "explanation.best.trades_piece"
+    # A defended lower-value target: the static view can't tell why it works.
+    return None
 
 
 def _explain_best_threat(
@@ -934,23 +1053,137 @@ def _explain_best_loss_avoidance(san: str, cp_loss: int) -> I18nMessage:
     return I18nMessage(key="explanation.best.fallback", params={"san": san})
 
 
+_PAWN_DAMAGE_PRIORITY = ("king_shelter", "doubled")
+_PAWN_DAMAGE_KEYS = frozendict(
+    {
+        "king_shelter": "explanation.best.opens_king",
+        "doubled": "explanation.best.doubles_pawns",
+    }
+)
+_KING_HOME_RANKS = frozendict({chess.WHITE: (0, 1), chess.BLACK: (7, 6)})
+_CENTRE_FILES = (3, 4)
+
+
+def _pawn_weaknesses(board: chess.Board, color: chess.Color) -> set[tuple[str, int]]:
+    files = [chess.square_file(sq) for sq in board.pieces(chess.PAWN, color)]
+    weak = {("doubled", f) for f in files if files.count(f) > 1}
+    king = board.king(color)
+    # Only a king tucked on a wing has a pawn shelter to lose; a centred king never had one.
+    if (
+        king is not None
+        and chess.square_rank(king) in _KING_HOME_RANKS[color]
+        and chess.square_file(king) not in _CENTRE_FILES
+    ):
+        king_file = chess.square_file(king)
+        weak |= {
+            ("king_shelter", f)
+            for f in (king_file - 1, king_file, king_file + 1)
+            if 0 <= f <= 7 and f not in files
+        }
+    return weak
+
+
+def _line_boards(board: chess.Board, moves_san: list[str]) -> list[chess.Board]:
+    boards = []
+    line_board = board.copy()
+    for san in moves_san:
+        try:
+            line_board.push_san(san)
+        except ValueError:
+            break
+        boards.append(line_board.copy())
+    return boards
+
+
+def _settled_line_end(
+    board: chess.Board, best_line: list[str] | None
+) -> list[chess.Board]:
+    best_boards = _line_boards(board, best_line or [])
+    # Like material: a line that ends on a capture the opponent can take back hasn't
+    # settled, so judge the structure before that capture.
+    if len(best_boards) > 1 and _final_capture_at_risk(best_boards[-1], board.turn):
+        return best_boards[:-1]
+    return best_boards
+
+
+def _refuted_board(
+    board: chess.Board, blunder_move: chess.Move, refutation_line: list[str] | None
+) -> chess.Board:
+    after_blunder = board.copy(stack=False)
+    after_blunder.push(blunder_move)
+    return (_line_boards(after_blunder, refutation_line or []) or [after_blunder])[-1]
+
+
+def _new_pawn_damage(
+    board: chess.Board, line_end: chess.Board, refuted: chess.Board
+) -> set[tuple[str, int]]:
+    opponent = not board.turn
+    damage = (
+        _pawn_weaknesses(line_end, opponent)
+        - _pawn_weaknesses(board, opponent)
+        - _pawn_weaknesses(refuted, opponent)
+    )
+    # A king that walks to an unguarded square chose that; only cover stripped from
+    # under a king that stayed put is damage the line inflicted.
+    if line_end.king(opponent) != board.king(opponent):
+        return {w for w in damage if w[0] != "king_shelter"}
+    return damage
+
+
+def _explain_best_structure(
+    board: chess.Board,
+    blunder_move: chess.Move,
+    best_line: list[str] | None,
+    refutation_line: list[str] | None,
+) -> I18nMessage | None:
+    """Pawn damage the best line inflicts on the opponent that the blunder's refutation
+    doesn't: the reason a quiet trade like Bxf3 gxf3 is best."""
+    best_boards = _settled_line_end(board, best_line)
+    if not best_line or not best_boards:
+        return None
+    damage = _new_pawn_damage(
+        board, best_boards[-1], _refuted_board(board, blunder_move, refutation_line)
+    )
+    if not damage:
+        return None
+    kind, file_index = min(
+        damage, key=lambda w: (_PAWN_DAMAGE_PRIORITY.index(w[0]), w[1])
+    )
+    plies = next(
+        ply
+        for ply, line_board in enumerate(best_boards, start=1)
+        if (kind, file_index) in _pawn_weaknesses(line_board, not board.turn)
+    )
+    return I18nMessage(
+        key=_PAWN_DAMAGE_KEYS[kind],
+        params={
+            "line": " ".join(best_line[:plies]),
+            "file": chess.FILE_NAMES[file_index],
+        },
+    )
+
+
 def _try_static_strategies(
     board: chess.Board,
     best_move: chess.Move,
     san: str,
     tactical_pattern: str | None,
+    structure: I18nMessage | None,
 ) -> I18nMessage | None:
     if _has_pattern(tactical_pattern):
-        pattern_msg = _explain_best_pattern(board, best_move, san, tactical_pattern)
-        if pattern_msg is not None:
-            return pattern_msg
-    retreat = _explain_best_retreat(board, best_move, san)
-    if retreat is not None:
-        return retreat
-    capture = _explain_best_capture(board, best_move, san)
-    if capture is not None:
-        return capture
-    return _explain_best_threat(board, best_move, san)
+        return _explain_best_pattern(san, tactical_pattern)
+    # Lazy: the threat search is the expensive one and runs only if nothing earlier fits.
+    strategies: tuple[Callable[[], I18nMessage | None], ...] = (
+        partial(_explain_best_hanging_capture, board, best_move, san),
+        lambda: structure,
+        partial(_explain_best_retreat, board, best_move, san),
+        partial(_explain_best_capture, board, best_move, san),
+        partial(_explain_best_threat, board, best_move, san),
+    )
+    return next(
+        (message for strategy in strategies if (message := strategy()) is not None),
+        None,
+    )
 
 
 def _explain_best_static(
@@ -958,13 +1191,18 @@ def _explain_best_static(
     best_move: chess.Move,
     tactical_pattern: str | None,
     cp_loss: int,
+    structure: I18nMessage | None = None,
 ) -> I18nMessage | None:
     san = board.san(best_move)
     if _move_gives_mate(board, best_move):
         return I18nMessage(key="explanation.best.checkmate", params={"san": san})
     if _move_gives_check(board, best_move):
-        return _explain_best_check(board, best_move, san, tactical_pattern)
-    static_msg = _try_static_strategies(board, best_move, san, tactical_pattern)
+        check_msg = _explain_best_check(board, best_move, san, tactical_pattern)
+        if check_msg is not None:
+            return check_msg
+    static_msg = _try_static_strategies(
+        board, best_move, san, tactical_pattern, structure
+    )
     if static_msg is not None:
         return static_msg
     return _explain_best_loss_avoidance(san, cp_loss)
@@ -976,6 +1214,7 @@ def _explain_best(
     tactical_pattern: str | None,
     cp_loss: int,
     best_line: list[str] | None = None,
+    structure: I18nMessage | None = None,
 ) -> I18nMessage | None:
     if _move_gives_mate(board, best_move):
         return I18nMessage(
@@ -989,7 +1228,7 @@ def _explain_best(
             if pv_msg:
                 return pv_msg
 
-    return _explain_best_static(board, best_move, tactical_pattern, cp_loss)
+    return _explain_best_static(board, best_move, tactical_pattern, cp_loss, structure)
 
 
 def _parse_legal_move(board: chess.Board, uci: str | None) -> chess.Move | None:
@@ -1004,13 +1243,18 @@ def _parse_legal_move(board: chess.Board, uci: str | None) -> chess.Move | None:
     return move
 
 
+def _best_move_pattern(board: chess.Board, best_move: chess.Move) -> str | None:
+    tactic = analyze_move_tactics(board, best_move)
+    return PATTERN_LABELS[tactic.pattern] if tactic else None
+
+
 def generate_explanation(
     fen: str,
     blunder_uci: str,
     best_move_uci: str | None,
-    tactical_pattern: str | None = None,
     cp_loss: int = 0,
     best_line: list[str] | None = None,
+    refutation_line: list[str] | None = None,
 ) -> BlunderExplanation:
     board = board_from_fen(fen)
     blunder_move = _parse_legal_move(board, blunder_uci)
@@ -1018,9 +1262,18 @@ def generate_explanation(
         return BlunderExplanation(blunder=None, best_move=None)
 
     best_move = _parse_legal_move(board, best_move_uci)
-    blunder_msg = _explain_blunder(board, blunder_move, board.turn, cp_loss, best_move)
+    blunder_msg = _explain_blunder(
+        board, blunder_move, board.turn, cp_loss, best_move, refutation_line
+    )
     best_msg = (
-        _explain_best(board, best_move, tactical_pattern, cp_loss, best_line)
+        _explain_best(
+            board,
+            best_move,
+            _best_move_pattern(board, best_move),
+            cp_loss,
+            best_line,
+            _explain_best_structure(board, blunder_move, best_line, refutation_line),
+        )
         if best_move
         else None
     )

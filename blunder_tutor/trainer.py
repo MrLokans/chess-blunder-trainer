@@ -76,6 +76,7 @@ class BlunderPuzzle:
     game_url: str | None = None
     pre_move_uci: str | None = None
     pre_move_fen: str | None = None
+    refutation_line: str | None = None
 
 
 class Trainer:
@@ -191,6 +192,12 @@ class Trainer:
         has_history = bool(failure_rates)
         return [_weight_for_blunder(b, failure_rates, has_history) for b in candidates]
 
+    async def _refutation_line(self, game_id: str, ply: int) -> str | None:
+        # The next ply was analysed from the position the blunder left, so its best
+        # line is the opponent's refutation.
+        next_move = await self.analysis.get_move_analysis(game_id, ply + 1)
+        return next_move.get("best_line") if next_move else None
+
     async def _build_puzzle(
         self,
         blunder: dict[str, object],
@@ -240,6 +247,7 @@ class Trainer:
             game_url=extract_game_url(game),
             pre_move_uci=pre_move_uci,
             pre_move_fen=pre_move_fen,
+            refutation_line=await self._refutation_line(game_id, ply),
         )
 
 
