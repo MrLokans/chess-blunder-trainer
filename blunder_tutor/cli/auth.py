@@ -8,7 +8,6 @@ import sys
 from datetime import timedelta
 from functools import partial
 from pathlib import Path
-from types import MappingProxyType
 
 from blunder_tutor.auth import (  # noqa: WPS235 — operator CLI consumes the public auth namespace surface to wire AuthService + admin + invite policy in one place.
     CREDENTIALS_PROVIDER_NAME,
@@ -119,7 +118,7 @@ async def cmd_prune_orphans(ctx: dict) -> None:
     print(f"Removed {removed} orphan director{'y' if removed == 1 else 'ies'}")
 
 
-_DISPATCH = MappingProxyType(
+_DISPATCH = frozendict(
     {
         "list-users": (cmd_list_users, ()),
         # Populated from stdin or getpass, never argparse: passwords must not appear on

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import Any
 
 from fastapi import Request
 
-LOCALE_DISPLAY_NAMES = MappingProxyType(
+LOCALE_DISPLAY_NAMES = frozendict(
     {
         "en": "English",
         "ru": "Русский",

@@ -3,7 +3,7 @@ name = "blunder-tutor"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.15"
 dependencies = [
   "aiosqlite>=0.22.0",
   "alembic>=1.19.2",
@@ -12,7 +12,7 @@ dependencies = [
   "fast-depends>=2.4.0",  # audit pending — see follow-up Trekker task
   "fastapi>=0.141.1",
   "fastapi-throttle>=0.1.8",  # niche, low-activity — audit pending
-  "httpx>=0.28.1",
+  "httpx2>=2.16.0",
   "hyx>=0.0.2",  # abandoned upstream — replacement audit pending
   "jinja2>=3.1.6",
   "python-chess>=1.999",  # upstream sentinel pin
@@ -54,7 +54,7 @@ package = true
 
 [tool.ruff]
 line-length = 88
-target-version = "py314"
+target-version = "py315"
 exclude = [
   ".venv",
   "__pycache__",
@@ -162,7 +162,7 @@ extend-ignore = [
 # tests/* — production thresholds don't fit test code: many asserts,
 #   float compares, repeated factory calls, schema-mirror factories
 #   whose arg count = SQL row width, multi-step integration scenarios.
-#   WPS301/WPS458 cover python-chess submodules + httpx ASGITransport.
+#   WPS301/WPS458 cover python-chess submodules + httpx2 ASGITransport.
 # blunder_tutor/cli/* — `print()` is the right output channel for
 #   operator-facing CLI UX (confirmations, list rows, errors).
 # blunder_tutor/repositories/* — raw aiosqlite SQL clause concat with
@@ -216,7 +216,7 @@ per-file-ignores = [
   #   WPS522 (lambda primitive) — `lambda: None` / `lambda: False` patches.
   # Additions for integration-test shapes:
   #   WPS201 (too many imports) — integration tests pull fixtures + factories
-  #     + auth-types + repositories + httpx + every service under test.
+  #     + auth-types + repositories + httpx2 + every service under test.
   #   WPS202 (too many module members) — test files legitimately accumulate
   #     12-16 helper functions + parametrize tables + fixtures.
   #   WPS213 (too many expressions) — rate-limit / request-sequence tests.
@@ -416,7 +416,7 @@ python_functions = ["test_*"]
 # bisect; `--randomly-seed=<int>` to reproduce a specific shuffle.
 addopts = ["-n", "auto", "--dist", "loadfile"]
 # Warnings are errors. The suite is warning-clean as of TREK-129/132/133;
-# this gate prevents new deprecations (Python, Starlette, httpx, etc.) from
+# this gate prevents new deprecations (Python, Starlette, httpx2, etc.) from
 # accumulating silently. Add a targeted `ignore::Category:source.module` line
 # below — with a rationale comment — when a third-party library emits an
 # unfixable warning we don't control.
@@ -424,7 +424,7 @@ filterwarnings = [
   "error",
   # python-chess 1.999 still imports the Python 3.14-deprecated event-loop policy.
   "ignore:'asyncio.DefaultEventLoopPolicy' is deprecated and slated for removal in Python 3.16:DeprecationWarning:chess.engine",
-  # Python 3.14's subprocess finalizer races pytest-xdist's worker teardown.
+  # Python 3.14+'s subprocess finalizer races pytest-xdist's worker teardown.
   "ignore:Exception ignored while calling deallocator <function BaseSubprocessTransport.__del__.*:pytest.PytestUnraisableExceptionWarning",
 ]
 markers = [

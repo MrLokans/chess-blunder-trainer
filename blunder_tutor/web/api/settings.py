@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 from fastapi import HTTPException, Request, status
@@ -157,7 +156,7 @@ def _validate_hex_color(field: str, value: str) -> None:
 
 type _BoardFieldSpec = tuple[Callable[[str], None], str]
 
-_BOARD_FIELDS: Mapping[str, _BoardFieldSpec] = MappingProxyType(
+_BOARD_FIELDS: Mapping[str, _BoardFieldSpec] = frozendict(
     {
         "piece_set": (_validate_piece_set, "board_piece_set"),
         "board_light": (

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
-import httpx
+import httpx2
 import pytest
 
 from blunder_tutor.fetchers import RateLimitError, chesscom
@@ -81,10 +81,10 @@ class TestFetchUserStats:
         response.status_code = HTTPStatus.NOT_FOUND
         _patch_fetch_with_retry(
             monkeypatch,
-            httpx.HTTPStatusError("404", request=request, response=response),
+            httpx2.HTTPStatusError("404", request=request, response=response),
         )
 
-        with pytest.raises(httpx.HTTPStatusError):
+        with pytest.raises(httpx2.HTTPStatusError):
             await chesscom.fetch_user_stats("ghost")
 
     async def test_empty_payload_returns_empty_list(

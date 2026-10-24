@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 import chess
@@ -32,7 +31,7 @@ LEGAL_COUNT_NARROW = 8
 LEGAL_COUNT_MODERATE = 15
 
 # Quiet best moves are harder to spot than captures or checks; checks dominate captures.
-_QUIETNESS_SCORES = MappingProxyType(
+_QUIETNESS_SCORES = frozendict(
     {
         (False, False): DIFFICULTY_QUIET_BEST,
         (True, False): DIFFICULTY_CAPTURE_NO_CHECK,

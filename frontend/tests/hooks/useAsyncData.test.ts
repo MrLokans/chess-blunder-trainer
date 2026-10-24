@@ -54,7 +54,7 @@ describe('useAsyncData', () => {
     await waitFor(() => { expect(signals.length).toBeGreaterThan(0); });
     const signal = signals[0];
     expect(signal?.aborted).toBe(false);
-    unmount();
+    await act(() => { unmount(); });
     expect(signal?.aborted).toBe(true);
   });
 

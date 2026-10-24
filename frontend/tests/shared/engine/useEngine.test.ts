@@ -55,7 +55,7 @@ describe('useEngine', () => {
     );
 
     await act(async () => {});
-    unmount();
+    await act(() => { unmount(); });
 
     expect(fakeRaw.dispose).toHaveBeenCalled();
   });

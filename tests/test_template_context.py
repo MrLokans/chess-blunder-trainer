@@ -4,11 +4,11 @@ import asyncio
 import json
 from types import SimpleNamespace
 
-import httpx
+import httpx2
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
-from httpx import ASGITransport
+from httpx2 import ASGITransport
 
 from blunder_tutor.web.middleware import LocaleMiddleware
 from blunder_tutor.web.per_user_cache import PerUserCache
@@ -116,7 +116,7 @@ async def test_concurrent_requests_see_own_features(tmp_path):
     features_b = {"trainer.tactics": False, "dashboard.traps": True}
     app = _build_concurrent_app(tmp_path, {"/a": features_a, "/b": features_b})
 
-    async with httpx.AsyncClient(
+    async with httpx2.AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         # Fire many concurrent A/B pairs; without the C1 fix one side's

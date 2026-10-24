@@ -92,7 +92,7 @@ All environment variables — auth, data, demo, engine, cache, analytics, observ
 | Tool | Version | Check | Install |
 |---|---|---|---|
 | [uv](https://docs.astral.sh/uv/) | any recent | `uv --version` | [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
-| Python | 3.14+ | `uv python find 3.14` | `uv python install 3.14` |
+| Python | 3.15+ | `uv python find 3.15` | `uv python install 3.15` |
 | Node.js | 22+ | `node -v` | [nodejs.org](https://nodejs.org) |
 | Stockfish | any | `which stockfish` | `brew install stockfish` / `apt install stockfish` |
 

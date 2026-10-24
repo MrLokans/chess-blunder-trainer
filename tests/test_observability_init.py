@@ -15,7 +15,7 @@ from unittest.mock import patch
 import pytest
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.httpx import HttpxIntegration
+from sentry_sdk.integrations.httpx2 import Httpx2Integration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 from sentry_sdk.scrubber import EventScrubber
@@ -102,7 +102,7 @@ class TestInitObservabilityWhenEnabled:
             }
             assert FastApiIntegration in integration_types
             assert StarletteIntegration in integration_types
-            assert HttpxIntegration in integration_types
+            assert Httpx2Integration in integration_types
             assert AsyncioIntegration in integration_types
             assert LoggingIntegration in integration_types
 

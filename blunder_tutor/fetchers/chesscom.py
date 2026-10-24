@@ -5,7 +5,7 @@ from collections.abc import Awaitable, Callable
 from datetime import datetime
 from http import HTTPStatus
 
-import httpx
+import httpx2
 from tqdm import tqdm
 
 from blunder_tutor.fetchers import USER_AGENT, ExistenceCheck, RateLimitError
@@ -61,7 +61,7 @@ async def fetch(
     state = FetchState(max_games=max_games, progress_callback=progress_callback)
     since_ts = int(since.timestamp()) if since is not None else None
 
-    async with httpx.AsyncClient(
+    async with httpx2.AsyncClient(
         timeout=60,
         follow_redirects=True,
         headers={_USER_AGENT_HEADER_KEY: USER_AGENT},
@@ -150,7 +150,7 @@ def _try_add_game(
 
 async def validate_username(username: str) -> bool:
     url = CHESSCOM_USER_URL.format(username=username.lower())
-    async with httpx.AsyncClient(
+    async with httpx2.AsyncClient(
         timeout=10,
         follow_redirects=True,
         headers={_USER_AGENT_HEADER_KEY: USER_AGENT},
@@ -158,13 +158,13 @@ async def validate_username(username: str) -> bool:
         try:
             response = await client.get(url)
             return response.status_code == HTTPStatus.OK
-        except httpx.HTTPError:
+        except httpx2.HTTPError:
             return False
 
 
 async def fetch_user_stats(username: str) -> list[ProfileStatSnapshot]:
     url = CHESSCOM_STATS_URL.format(username=username.lower())
-    async with httpx.AsyncClient(
+    async with httpx2.AsyncClient(
         timeout=10,
         follow_redirects=True,
         headers={_USER_AGENT_HEADER_KEY: USER_AGENT},
@@ -183,7 +183,7 @@ async def fetch_user_stats(username: str) -> list[ProfileStatSnapshot]:
 
 async def check_username_existence(username: str) -> ExistenceCheck:
     url = CHESSCOM_USER_URL.format(username=username.lower())
-    async with httpx.AsyncClient(
+    async with httpx2.AsyncClient(
         timeout=10,
         follow_redirects=True,
         headers={_USER_AGENT_HEADER_KEY: USER_AGENT},
@@ -194,7 +194,7 @@ async def check_username_existence(username: str) -> ExistenceCheck:
             if exc.response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
                 return ExistenceCheck(exists=False, rate_limited=True)
             raise
-        except httpx.HTTPStatusError as exc:
+        except httpx2.HTTPStatusError as exc:
             if exc.response.status_code == HTTPStatus.NOT_FOUND:
                 return ExistenceCheck(exists=False, rate_limited=False)
             raise

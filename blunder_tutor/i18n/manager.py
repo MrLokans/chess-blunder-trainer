@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from types import MappingProxyType
 
 # Boundaries from the CLDR plural spec, not magic numbers.
 _LAST_DIGIT_BASE = 10
@@ -40,7 +39,7 @@ def _polish_plural(n: int) -> str:
     return "many"
 
 
-PLURAL_RULES: MappingProxyType = MappingProxyType(
+PLURAL_RULES: frozendict = frozendict(
     {
         "en": lambda n: "one" if n == 1 else "other",  # noqa: WPS226 — locale codes and CLDR plural names repeat across rule defs by design.
         "ru": _east_slavic_plural,

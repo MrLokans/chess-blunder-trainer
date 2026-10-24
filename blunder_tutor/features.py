@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from types import MappingProxyType
 
 
 class Feature(StrEnum):
@@ -46,7 +45,7 @@ class Feature(StrEnum):
         return value in cls._value2member_map_
 
 
-DEFAULTS: MappingProxyType[Feature, bool] = MappingProxyType(
+DEFAULTS: frozendict[Feature, bool] = frozendict(
     {
         **dict.fromkeys(Feature, True),
         Feature.DASHBOARD_TRAPS: False,
@@ -114,7 +113,7 @@ FEATURE_GROUPS: tuple[FeatureGroup, ...] = (
     ),
 )
 
-FEATURE_LABELS: MappingProxyType[Feature, str] = MappingProxyType(
+FEATURE_LABELS: frozendict[Feature, str] = frozendict(
     {
         Feature.PAGE_DASHBOARD: "settings.features.page_dashboard",
         Feature.PAGE_MANAGEMENT: "settings.features.page_management",

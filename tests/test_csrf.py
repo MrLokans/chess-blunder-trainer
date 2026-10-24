@@ -5,9 +5,9 @@ import os as _os
 from http import HTTPStatus
 from pathlib import Path
 
-import httpx
+import httpx2
 import pytest
-from httpx import ASGITransport
+from httpx2 import ASGITransport
 
 from blunder_tutor.web.app import create_app
 from blunder_tutor.web.config import config_factory
@@ -86,14 +86,14 @@ async def app_client(tmp_path: Path, monkeypatch):
         app = create_app(config)
         async with app.router.lifespan_context(app):
             transport = ASGITransport(app=app)
-            async with httpx.AsyncClient(
+            async with httpx2.AsyncClient(
                 transport=transport, base_url="http://testserver"
             ) as client:
                 yield client
 
 
 class TestCsrfMiddleware:
-    async def test_same_origin_post_allowed(self, app_client: httpx.AsyncClient):
+    async def test_same_origin_post_allowed(self, app_client: httpx2.AsyncClient):
         r = await app_client.post(
             "/api/profiles/validate",
             json={"platform": "lichess", "username": "whoever"},
@@ -103,7 +103,7 @@ class TestCsrfMiddleware:
         assert r.status_code != HTTPStatus.FORBIDDEN or r.json().get("error") != "csrf"
 
     async def test_cross_origin_post_rejected_with_csrf_403(
-        self, app_client: httpx.AsyncClient
+        self, app_client: httpx2.AsyncClient
     ):
         r = await app_client.post(
             "/api/profiles/validate",
@@ -113,12 +113,12 @@ class TestCsrfMiddleware:
         assert r.status_code == HTTPStatus.FORBIDDEN
         assert r.json()["error"] == "csrf"
 
-    async def test_get_requests_are_untouched(self, app_client: httpx.AsyncClient):
+    async def test_get_requests_are_untouched(self, app_client: httpx2.AsyncClient):
         r = await app_client.get("/health", headers={"Origin": "https://evil.com"})
         assert r.status_code == HTTPStatus.OK
 
     async def test_absent_headers_allowed_by_default(
-        self, app_client: httpx.AsyncClient
+        self, app_client: httpx2.AsyncClient
     ):
         # Httpx doesn't set Origin — simulates CLI / programmatic access.
         r = await app_client.post(
@@ -146,18 +146,18 @@ async def host_pinned_client(tmp_path: Path, monkeypatch):
         app = create_app(config)
         async with app.router.lifespan_context(app):
             transport = ASGITransport(app=app)
-            async with httpx.AsyncClient(
+            async with httpx2.AsyncClient(
                 transport=transport, base_url="http://trusted.example"
             ) as client:
                 yield client
 
 
 class TestTrustedHostMiddleware:
-    async def test_allowed_host_passes(self, host_pinned_client: httpx.AsyncClient):
+    async def test_allowed_host_passes(self, host_pinned_client: httpx2.AsyncClient):
         r = await host_pinned_client.get("/health")
         assert r.status_code == HTTPStatus.OK
 
-    async def test_spoofed_host_rejected(self, host_pinned_client: httpx.AsyncClient):
+    async def test_spoofed_host_rejected(self, host_pinned_client: httpx2.AsyncClient):
         # Cross-origin attacker tries to pass Origin==Host by spoofing
         # the Host header. TrustedHostMiddleware returns 400 before
         # CsrfOriginMiddleware even runs.
@@ -182,7 +182,7 @@ async def _default_hosts_client(tmp_path: Path, monkeypatch, *, auth_mode: str):
         app = create_app(config)
         async with app.router.lifespan_context(app):
             transport = ASGITransport(app=app)
-            async with httpx.AsyncClient(
+            async with httpx2.AsyncClient(
                 transport=transport, base_url="http://localhost"
             ) as client:
                 yield client
@@ -230,13 +230,13 @@ class TestDefaultHostPolicy:
         ],
     )
     async def test_none_mode_blocks_dns_rebinding_hostnames(
-        self, none_mode_default_hosts: httpx.AsyncClient, host: str, expected: int
+        self, none_mode_default_hosts: httpx2.AsyncClient, host: str, expected: int
     ):
         r = await none_mode_default_hosts.get("/health", headers={"host": host})
         assert r.status_code == expected
 
     async def test_credentials_mode_keeps_any_host(
-        self, credentials_default_hosts: httpx.AsyncClient
+        self, credentials_default_hosts: httpx2.AsyncClient
     ):
         r = await credentials_default_hosts.get(
             "/health", headers={"host": "chess.example.com"}

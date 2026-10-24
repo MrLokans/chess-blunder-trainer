@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-from types import MappingProxyType
 
 import pytest
 
@@ -256,7 +255,7 @@ class TestSecretKeyWhitespace:
 
 class TestReadOnlyMappingCompat:
     def test_accepts_mapping_proxy(self):
-        env = MappingProxyType(_base_env())
+        env = frozendict(_base_env())
         config = config_factory(_args(), env)
         assert config.auth.mode == "none"
 

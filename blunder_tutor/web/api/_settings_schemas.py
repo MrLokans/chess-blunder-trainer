@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from types import MappingProxyType
 from typing import Annotated
 
 from pydantic import BaseModel, Field
@@ -148,7 +147,7 @@ class DeleteAllResponse(BaseModel):
     job_id: str = Field(description="Job ID for tracking the delete operation")
 
 
-DEFAULT_THEME = MappingProxyType(
+DEFAULT_THEME = frozendict(
     {
         "primary": "#1A3A8F",
         "success": "#2D8F3E",
@@ -169,7 +168,7 @@ DEFAULT_THEME = MappingProxyType(
     }
 )
 
-THEME_PRESETS = MappingProxyType(
+THEME_PRESETS = frozendict(
     {
         "default": {
             "name": "Default",
@@ -335,7 +334,7 @@ PIECE_SETS = (
 
 DEFAULT_PIECE_SET = "gioco"
 
-BOARD_COLOR_PRESETS = MappingProxyType(
+BOARD_COLOR_PRESETS = frozendict(
     {
         "brown": {"name": "Brown", "light": "#f0d9b5", "dark": "#b58863"},
         "blue": {"name": "Blue", "light": "#dee3e6", "dark": "#8ca2ad"},
