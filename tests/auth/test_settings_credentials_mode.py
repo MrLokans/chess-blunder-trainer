@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from http import HTTPStatus
 
-import httpx
+import httpx2
 
 from tests.auth.conftest import signup_via_http
 
@@ -23,7 +23,7 @@ class TestSettingsSaveInCredentialsMode:
     """
 
     async def test_post_settings_returns_200_in_credentials_mode(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         signup_response = await signup_via_http(client_credentials_mode, invite_code)
         assert signup_response.status_code == HTTPStatus.OK, signup_response.text
@@ -41,7 +41,7 @@ class TestSettingsSaveInCredentialsMode:
         assert r.json() == {"success": True}
 
     async def test_post_features_returns_200_in_credentials_mode(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         signup_response = await signup_via_http(client_credentials_mode, invite_code)
         assert signup_response.status_code == HTTPStatus.OK, signup_response.text

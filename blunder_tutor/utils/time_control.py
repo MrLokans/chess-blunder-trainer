@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 from enum import IntEnum
-from types import MappingProxyType
 
 # Formats: "180+0", "600+5" (base+increment, seconds) and "1/86400" (correspondence).
 TIME_CONTROL_WITH_INCREMENT = re.compile(r"^(\d+)\+(\d+)$")
@@ -22,7 +21,7 @@ class GameType(IntEnum):
     UNKNOWN = 6
 
 
-GAME_TYPE_LABELS: MappingProxyType[int, str] = MappingProxyType(
+GAME_TYPE_LABELS: frozendict[int, str] = frozendict(
     {
         GameType.ULTRABULLET: "ultrabullet",
         GameType.BULLET: "bullet",
@@ -34,7 +33,7 @@ GAME_TYPE_LABELS: MappingProxyType[int, str] = MappingProxyType(
     }
 )
 
-GAME_TYPE_FROM_STRING: MappingProxyType[str, int] = MappingProxyType(
+GAME_TYPE_FROM_STRING: frozendict[str, int] = frozendict(
     {v: k for k, v in GAME_TYPE_LABELS.items()}
 )
 

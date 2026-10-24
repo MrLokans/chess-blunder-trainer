@@ -6,11 +6,11 @@ import os
 from http import HTTPStatus
 from pathlib import Path
 
-import httpx
+import httpx2
 import pytest
 from fastapi import FastAPI
 from fastapi_throttle import RateLimiter
-from httpx import ASGITransport
+from httpx2 import ASGITransport
 
 from blunder_tutor.web.app import create_app
 from blunder_tutor.web.config import config_factory
@@ -56,7 +56,7 @@ async def _low_limit_app(
 async def low_rate_limit_client(tmp_path: Path, monkeypatch):
     async with _low_limit_app(tmp_path, monkeypatch) as app:
         transport = ASGITransport(app=app)
-        async with httpx.AsyncClient(
+        async with httpx2.AsyncClient(
             transport=transport, base_url="http://testserver"
         ) as client:
             yield client, app
@@ -64,7 +64,7 @@ async def low_rate_limit_client(tmp_path: Path, monkeypatch):
 
 class TestLoginRateLimit:
     async def test_login_returns_429_after_limit_exceeded(
-        self, low_rate_limit_client: tuple[httpx.AsyncClient, FastAPI]
+        self, low_rate_limit_client: tuple[httpx2.AsyncClient, FastAPI]
     ):
         client, _app = low_rate_limit_client
         # limit=2: first two attempts are rejected on credentials (401),
@@ -82,7 +82,7 @@ class TestLoginRateLimit:
         assert r.status_code == HTTPStatus.TOO_MANY_REQUESTS, r.text
 
     async def test_login_limiter_scoped_per_ip(
-        self, low_rate_limit_client: tuple[httpx.AsyncClient, FastAPI]
+        self, low_rate_limit_client: tuple[httpx2.AsyncClient, FastAPI]
     ):
         client, _app = low_rate_limit_client
         for _ in range(2):
@@ -128,7 +128,7 @@ class TestTrustProxyDefault:
                 add_headers=True,
             )
             transport = ASGITransport(app=app)
-            async with httpx.AsyncClient(
+            async with httpx2.AsyncClient(
                 transport=transport, base_url="http://testserver"
             ) as client:
                 for forged_ip in ("10.0.0.1", "10.0.0.2"):
@@ -150,7 +150,7 @@ class TestTrustProxyDefault:
 
 class TestSignupRateLimit:
     async def test_signup_returns_429_after_limit_exceeded(
-        self, low_rate_limit_client: tuple[httpx.AsyncClient, FastAPI]
+        self, low_rate_limit_client: tuple[httpx2.AsyncClient, FastAPI]
     ):
         client, _app = low_rate_limit_client
         for _ in range(2):
@@ -175,7 +175,7 @@ class TestSignupRateLimit:
 class TestFailedLoginLogged:
     async def test_failed_login_emits_warning(
         self,
-        low_rate_limit_client: tuple[httpx.AsyncClient, FastAPI],
+        low_rate_limit_client: tuple[httpx2.AsyncClient, FastAPI],
         caplog: pytest.LogCaptureFixture,
     ):
         client, _app = low_rate_limit_client

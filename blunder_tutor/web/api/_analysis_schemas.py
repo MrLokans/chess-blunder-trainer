@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from types import MappingProxyType
 
 from pydantic import BaseModel, Field
 
@@ -49,7 +48,7 @@ class DifficultyEnum(StrEnum):
 SPACED_REPETITION_DAYS_DEFAULT = 30
 
 
-DIFFICULTY_RANGES = MappingProxyType(
+DIFFICULTY_RANGES = frozendict(
     {
         "easy": (0, 30),
         "medium": (31, 60),
@@ -58,7 +57,7 @@ DIFFICULTY_RANGES = MappingProxyType(
 )
 
 
-PATTERN_FROM_STRING = MappingProxyType(
+PATTERN_FROM_STRING = frozendict(
     {
         "fork": TacticalPattern.FORK,
         "pin": TacticalPattern.PIN,
@@ -72,7 +71,7 @@ PATTERN_FROM_STRING = MappingProxyType(
     }
 )
 
-GAME_TYPE_FROM_STRING = MappingProxyType(
+GAME_TYPE_FROM_STRING = frozendict(
     {
         "ultrabullet": 0,
         "bullet": 1,
@@ -83,7 +82,7 @@ GAME_TYPE_FROM_STRING = MappingProxyType(
     }
 )
 
-COLOR_FROM_STRING = MappingProxyType(
+COLOR_FROM_STRING = frozendict(
     {
         "white": 0,
         "black": 1,

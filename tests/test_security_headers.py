@@ -5,9 +5,9 @@ import os as _os
 from http import HTTPStatus
 from pathlib import Path
 
-import httpx
+import httpx2
 import pytest
-from httpx import ASGITransport
+from httpx2 import ASGITransport
 
 from blunder_tutor.web.app import create_app
 from blunder_tutor.web.config import config_factory
@@ -30,7 +30,7 @@ async def none_mode_client(tmp_path: Path, monkeypatch):
         app = create_app(config)
         async with app.router.lifespan_context(app):
             transport = ASGITransport(app=app)
-            async with httpx.AsyncClient(
+            async with httpx2.AsyncClient(
                 transport=transport, base_url="http://testserver"
             ) as client:
                 yield client
@@ -38,20 +38,22 @@ async def none_mode_client(tmp_path: Path, monkeypatch):
 
 class TestSecurityHeaders:
     async def test_baseline_headers_on_every_response(
-        self, none_mode_client: httpx.AsyncClient
+        self, none_mode_client: httpx2.AsyncClient
     ):
         r = await none_mode_client.get("/health")
         assert r.headers.get("X-Frame-Options") == "DENY"
         assert r.headers.get("X-Content-Type-Options") == "nosniff"
         assert r.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
 
-    async def test_hsts_absent_on_plain_http(self, none_mode_client: httpx.AsyncClient):
+    async def test_hsts_absent_on_plain_http(
+        self, none_mode_client: httpx2.AsyncClient
+    ):
         r = await none_mode_client.get("/health")
         # Never emit HSTS on a plain-HTTP response — poisons browser HSTS cache.
         assert "Strict-Transport-Security" not in r.headers
 
     async def test_hsts_present_when_proxy_reports_https(
-        self, none_mode_client: httpx.AsyncClient, monkeypatch
+        self, none_mode_client: httpx2.AsyncClient, monkeypatch
     ):
         # `X-Forwarded-Proto` alone is ignored when AUTH_TRUST_PROXY is
         # false — this test is just verifying the header-absent path
@@ -64,7 +66,7 @@ class TestSecurityHeaders:
         assert "Strict-Transport-Security" not in r.headers
 
     async def test_html_response_has_no_store(
-        self, none_mode_client: httpx.AsyncClient
+        self, none_mode_client: httpx2.AsyncClient
     ):
         r = await none_mode_client.get("/health")
         # /health returns JSON unauth; confirm no-store is NOT set for

@@ -6,10 +6,10 @@ from http import HTTPStatus
 from pathlib import Path
 from types import SimpleNamespace
 
-import httpx
+import httpx2
 import pytest
 from fastapi import FastAPI, Request
-from httpx import ASGITransport
+from httpx2 import ASGITransport
 
 from blunder_tutor.auth import (
     AuthDb,
@@ -33,8 +33,8 @@ from blunder_tutor.web.resources import AuthResources
 from tests.helpers.auth import build_test_auth_service
 
 
-def _client(app: FastAPI, token: str) -> httpx.AsyncClient:
-    return httpx.AsyncClient(
+def _client(app: FastAPI, token: str) -> httpx2.AsyncClient:
+    return httpx2.AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://testserver",
         follow_redirects=False,
@@ -152,7 +152,7 @@ class TestSetupCacheIsolation:
         app, _user_a, token_a, _user_b, token_b, _ = two_user_app
 
         # Two clients (one per user) rather than one client with per-request
-        # cookies — httpx deprecates the latter, and two clients model the
+        # cookies — httpx2 deprecates the latter, and two clients model the
         # "two browsers, two sessions" reality the test is asserting against.
         async with _client(app, token_a) as client_a:
             r_a = await client_a.get("/some-page")

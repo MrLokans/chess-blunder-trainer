@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import httpx
+import httpx2
 from fastapi import HTTPException, status
 
 from blunder_tutor.fetchers import ExistenceCheck
@@ -35,7 +35,7 @@ async def safe_check_username_existence(platform: str, username: str) -> Existen
                 f"(status {exc.response.status_code} after retries)"
             ),
         ) from exc
-    except httpx.HTTPStatusError as exc:
+    except httpx2.HTTPStatusError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"{platform} upstream returned {exc.response.status_code}",
@@ -113,7 +113,7 @@ async def validate_username_change(
         )
     try:
         check = await check_username_existence(platform, new_username)
-    except RetryableHTTPError, httpx.HTTPStatusError:
+    except RetryableHTTPError, httpx2.HTTPStatusError:
         # Accept the change; mark as not-confirmed so caller skips
         # `last_validated_at` refresh.
         return False

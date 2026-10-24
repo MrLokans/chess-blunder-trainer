@@ -28,7 +28,10 @@ export function TextInput({
 }: TextInputProps) {
   return (
     <input
-      type={type}
+      // Preact 11 types <input> as a union keyed on a literal `type`, which a union-typed
+      // value can't match; the lint rule checks the attribute alone and misses that.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      type={type as 'text'}
       id={id}
       name={name}
       class={`text-input${invalid ? ' text-input--invalid' : ''}`}

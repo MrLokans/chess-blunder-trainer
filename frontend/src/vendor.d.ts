@@ -2,7 +2,7 @@
 // These cover the API surface actually used by this project.
 // Expanded incrementally as modules are converted.
 
-// chessground (v10.0.2) — vendored ES module
+// chessground (v10.5.0) — vendored ES module
 declare module '@vendor/chessground' {
   export function Chessground(element: HTMLElement, config?: Record<string, unknown>): ChessgroundApi;
   interface ChessgroundApi {
@@ -52,7 +52,7 @@ interface ChessStatic {
 
 declare const Chess: ChessStatic;
 
-// htmx (v1.9.10) — loaded globally via <script> in base.html
+// htmx (v2.0.11) — loaded globally via <script> in base.html
 interface HtmxStatic {
   process(elt: Element): void;
   trigger(elt: Element, event: string, detail?: unknown): void;
@@ -63,7 +63,7 @@ interface HtmxStatic {
 
 declare const htmx: HtmxStatic;
 
-// Chart.js (v4.4.1) — loaded globally via <script> in base.html
+// Chart.js (v4.6.1) — loaded globally via <script> in base.html
 interface ChartConfiguration {
   type: string;
   data: {

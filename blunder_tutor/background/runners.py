@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from types import MappingProxyType
 from typing import Annotated, Any
 
 from fast_depends import Depends, inject
@@ -274,7 +273,7 @@ async def run_import_pgn_job(
     return await job.execute(job_id=job_id, game_id=game_id, username=username)
 
 
-JOB_RUNNERS = MappingProxyType(
+JOB_RUNNERS = frozendict(
     {
         JOB_TYPE_IMPORT: run_import_job,
         JOB_TYPE_SYNC: run_sync_job,

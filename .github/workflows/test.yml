@@ -13,15 +13,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
+        uses: actions/checkout@v7
 
       - name: Install uv
-        run: pip install uv
+        uses: astral-sh/setup-uv@v10.3.2
 
       - name: Install dependencies
         run: uv sync --all-extras
@@ -50,23 +45,18 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
+        uses: actions/checkout@v7
 
       - name: Install uv
-        run: pip install uv
+        uses: astral-sh/setup-uv@v10.3.2
 
       - name: Install dependencies
         run: uv sync --all-extras
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "26"
           cache: "npm"
 
       - name: Build frontend
@@ -81,7 +71,7 @@ jobs:
         run: uv run pytest tests/ -m "not integration" --cov=blunder_tutor --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage.xml
           flags: unittests
@@ -96,12 +86,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "26"
           cache: "npm"
 
       - name: Install dependencies
@@ -119,12 +109,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "26"
           cache: "npm"
 
       - name: Install dependencies
@@ -148,23 +138,18 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
+        uses: actions/checkout@v7
 
       - name: Install uv
-        run: pip install uv
+        uses: astral-sh/setup-uv@v10.3.2
 
       - name: Install Python dependencies
         run: uv sync --all-extras
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "26"
           cache: "npm"
           cache-dependency-path: |
             package-lock.json
@@ -195,7 +180,7 @@ jobs:
 
       - name: Upload Playwright report on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-auth
           path: e2e/playwright-report-auth/

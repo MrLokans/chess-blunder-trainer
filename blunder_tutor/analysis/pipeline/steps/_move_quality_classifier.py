@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 import chess
@@ -21,7 +20,7 @@ _LABEL_INACCURACY = "inaccuracy"
 _LABEL_MISTAKE = "mistake"
 _LABEL_BLUNDER = "blunder"
 
-_LABEL_TO_INT = MappingProxyType(
+_LABEL_TO_INT = frozendict(
     {_LABEL_GOOD: 0, _LABEL_INACCURACY: 1, _LABEL_MISTAKE: 2, _LABEL_BLUNDER: 3}
 )
 

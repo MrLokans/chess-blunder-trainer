@@ -12,19 +12,19 @@ their licenses, and copyright holders.
 
 These files are shipped in `blunder_tutor/web/static/vendor/`.
 
-### chessground 10.0.2
+### chessground 10.5.0
 
 - **Author:** Lichess.org contributors
 - **License:** GPL-3.0
 - **Source:** [https://github.com/lichess-org/chessground](https://github.com/lichess-org/chessground)
-- **Files:** `chessground-10.0.2.min.js`, `chessground-10.0.2.base.css`
+- **Files:** `chessground-10.5.0.min.js`, `chessground-10.5.0.base.css`
 
-### htmx 1.9.10
+### htmx 2.0.11
 
 - **Author:** Big Sky Software (Carson Gross)
 - **License:** BSD-2-Clause
 - **Source:** [https://github.com/bigskysoftware/htmx](https://github.com/bigskysoftware/htmx)
-- **Files:** `htmx-1.9.10.min.js`
+- **Files:** `htmx-2.0.11.min.js`
 
 Copyright (c) 2020, Big Sky Software.
 Redistribution and use in source and binary forms, with or without
@@ -48,12 +48,12 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-### Chart.js 4.4.1
+### Chart.js 4.6.1
 
 - **Author:** Chart.js contributors
 - **License:** MIT
 - **Source:** [https://github.com/chartjs/Chart.js](https://github.com/chartjs/Chart.js)
-- **Files:** `chart-4.4.1.umd.min.js`
+- **Files:** `chart-4.6.1.umd.min.js`
 
 Copyright (c) 2014-2024 Chart.js Contributors.
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -103,16 +103,16 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-### Stockfish 18 (lite single-threaded WASM)
+### Stockfish 19 (lite single-threaded WASM)
 
 - **Author:** Stockfish contributors; WASM build by Nathan Rugg (`nmrugg`)
 - **License:** GPL-3.0-or-later
 - **Source:** [https://github.com/nmrugg/stockfish.js](https://github.com/nmrugg/stockfish.js)
   (built from [https://github.com/official-stockfish/Stockfish](https://github.com/official-stockfish/Stockfish))
-- **Files:** `stockfish/stockfish-18-lite-single.js`, `stockfish/stockfish-18-lite-single.wasm`
+- **Files:** `stockfish/stockfish-19-lite-single.js`, `stockfish/stockfish-19-lite-single.wasm`
 
-Browser-side single-threaded WASM build, fetched as version 18.0.7 from the
-`stockfish` npm package. Used by the game-review page for live engine
+Browser-side single-threaded WASM build, fetched as release v19.0.1 of
+`nmrugg/stockfish.js`. Used by the game-review page for live engine
 analysis in the user's browser. This is a separate distribution from the
 native Stockfish binary listed under *External Services* below, which the
 Python backend invokes server-side.
@@ -178,7 +178,7 @@ Installed at runtime via `uv`/pip. Not vendored in this repository.
 | Alembic          | MIT          | [https://github.com/sqlalchemy/alembic](https://github.com/sqlalchemy/alembic)                     |
 | Jinja2           | BSD-3-Clause | [https://github.com/pallets/jinja](https://github.com/pallets/jinja)                               |
 | python-chess     | GPL-3.0      | [https://github.com/niklasf/python-chess](https://github.com/niklasf/python-chess)                 |
-| httpx            | BSD-3-Clause | [https://github.com/encode/httpx](https://github.com/encode/httpx)                                 |
+| httpx2           | BSD-3-Clause | [https://github.com/pydantic/httpx2](https://github.com/pydantic/httpx2)                           |
 | APScheduler      | MIT          | [https://github.com/agronholm/apscheduler](https://github.com/agronholm/apscheduler)               |
 | websockets       | BSD-3-Clause | [https://github.com/python-websockets/websockets](https://github.com/python-websockets/websockets) |
 | python-multipart | Apache-2.0   | [https://github.com/Kludex/python-multipart](https://github.com/Kludex/python-multipart)           |

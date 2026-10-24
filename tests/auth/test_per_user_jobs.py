@@ -17,10 +17,10 @@ from contextlib import closing
 from http import HTTPStatus
 from pathlib import Path
 
-import httpx
+import httpx2
 import pytest
 from fastapi import FastAPI
-from httpx import ASGITransport
+from httpx2 import ASGITransport
 
 from blunder_tutor.auth import UserId
 from blunder_tutor.background.scheduler import (
@@ -63,7 +63,7 @@ VALID_PGN_2 = """[Event "Test2"]
 
 
 async def _wait_for_job(
-    client: httpx.AsyncClient, job_id: str, *, timeout_s: float = 10.0
+    client: httpx2.AsyncClient, job_id: str, *, timeout_s: float = 10.0
 ) -> dict:
     """Poll /api/import/status/{job_id} until status is terminal or
     timeout elapses. Returns the final status payload.
@@ -108,7 +108,7 @@ class TestBackgroundWiring:
 class TestImportPgnRunsToCompletion:
     async def test_post_import_pgn_completes(
         self,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         signup = await signup_via_http(client_credentials_mode, invite_code)
@@ -134,10 +134,10 @@ class TestTwoUserJobIsolation:
         transport = ASGITransport(app=credentials_app_multi)
 
         async with (
-            httpx.AsyncClient(
+            httpx2.AsyncClient(
                 transport=transport, base_url="http://testserver"
             ) as client_a,
-            httpx.AsyncClient(
+            httpx2.AsyncClient(
                 transport=transport, base_url="http://testserver"
             ) as client_b,
         ):
@@ -196,10 +196,10 @@ class TestFanoutSchedulerDispatchesPerUser:
     ):
         transport = ASGITransport(app=credentials_app_multi)
         async with (
-            httpx.AsyncClient(
+            httpx2.AsyncClient(
                 transport=transport, base_url="http://testserver"
             ) as client_a,
-            httpx.AsyncClient(
+            httpx2.AsyncClient(
                 transport=transport, base_url="http://testserver"
             ) as client_b,
         ):
@@ -311,7 +311,7 @@ class TestDeleteRaceGuard:
         self,
         credentials_app: FastAPI,
         invite_code: str,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
     ):
         signup = await signup_via_http(client_credentials_mode, invite_code)
         assert signup.status_code == HTTPStatus.OK
@@ -342,7 +342,7 @@ class TestDeleteRaceGuard:
         self, credentials_app: FastAPI, invite_code: str
     ):
         transport = ASGITransport(app=credentials_app)
-        async with httpx.AsyncClient(
+        async with httpx2.AsyncClient(
             transport=transport, base_url="http://testserver"
         ) as client:
             signup = await signup_via_http(client, invite_code)

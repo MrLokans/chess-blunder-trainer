@@ -3,9 +3,9 @@ from __future__ import annotations
 from http import HTTPStatus
 from pathlib import Path
 
-import httpx
+import httpx2
 from fastapi import FastAPI
-from httpx import ASGITransport
+from httpx2 import ASGITransport
 
 from blunder_tutor.repositories.settings import SettingsRepository
 
@@ -30,7 +30,7 @@ class TestUserDataIsolation:
         assert invite_code, "bootstrap should have seeded an invite code"
 
         transport = ASGITransport(app=credentials_app_multi)
-        async with httpx.AsyncClient(
+        async with httpx2.AsyncClient(
             transport=transport, base_url="http://testserver"
         ) as client:
             r = await client.post(
@@ -101,7 +101,7 @@ class TestUserDataIsolation:
         assert invite_code
 
         transport = ASGITransport(app=credentials_app_multi)
-        async with httpx.AsyncClient(
+        async with httpx2.AsyncClient(
             transport=transport, base_url="http://testserver"
         ) as client:
             r = await client.post(

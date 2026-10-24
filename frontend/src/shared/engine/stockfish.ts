@@ -16,7 +16,7 @@ export interface EngineUpdate {
 // next animation frame so an `info`-line burst collapses into a single render.
 export type FlushScheduler = (flush: () => void) => void;
 
-const ENGINE_URL = '/static/vendor/stockfish/stockfish-18-lite-single.js';
+const ENGINE_URL = '/static/vendor/stockfish/stockfish-19-lite-single.js';
 
 const rafScheduler: FlushScheduler = (flush) => {
   if (typeof requestAnimationFrame === 'function') requestAnimationFrame(flush);

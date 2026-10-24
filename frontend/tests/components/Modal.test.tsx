@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/preact';
+import { render, screen, cleanup, act } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'preact/hooks';
 import { Modal } from '../../src/components/feedback/Modal';
@@ -9,8 +9,8 @@ describe('Modal', () => {
     document.body.style.overflow = '';
   });
 
-  afterEach(() => {
-    cleanup();
+  afterEach(async () => {
+    await act(() => { cleanup(); });
     document.body.style.overflow = '';
   });
 
@@ -86,11 +86,11 @@ describe('Modal', () => {
     expect(screen.getByRole('button', { name: 'Cerrar' })).toBeDefined();
   });
 
-  test('locks body scroll while open and restores on unmount', () => {
+  test('locks body scroll while open and restores on unmount', async () => {
     document.body.style.overflow = 'auto';
     const { unmount } = render(<Modal open={true} onClose={() => {}} title="X">x</Modal>);
     expect(document.body.style.overflow).toBe('hidden');
-    unmount();
+    await act(() => { unmount(); });
     expect(document.body.style.overflow).toBe('auto');
   });
 
@@ -118,7 +118,7 @@ describe('Modal', () => {
     expect(document.activeElement?.textContent).toBe('Second');
   });
 
-  test('restores focus to the previously focused element on close', () => {
+  test('restores focus to the previously focused element on close', async () => {
     const trigger = document.createElement('button');
     trigger.textContent = 'opener';
     document.body.appendChild(trigger);
@@ -126,7 +126,7 @@ describe('Modal', () => {
     expect(document.activeElement).toBe(trigger);
 
     const { unmount } = render(<Modal open={true} onClose={() => {}} title="X">x</Modal>);
-    unmount();
+    await act(() => { unmount(); });
     expect(document.activeElement).toBe(trigger);
     document.body.removeChild(trigger);
   });

@@ -1,13 +1,11 @@
 # Vendored Stockfish WASM Engine
 
-The backend Docker image uses Stockfish 19. This browser engine remains on
-Stockfish 18 because `nmrugg/stockfish.js` has not released a Stockfish 19
-WASM distribution yet.
+Both the backend Docker image and this browser engine use Stockfish 19.
 
 ## Source
 
 - **Upstream**: [nmrugg/stockfish.js](https://github.com/nmrugg/stockfish.js)
-- **Variant**: `stockfish-18-lite-single` — single-threaded Stockfish 18 with a smaller NNUE.
+- **Variant**: `stockfish-19-lite-single` — single-threaded Stockfish 19 with a smaller NNUE.
   Weaker than the full build but does not require `SharedArrayBuffer` / cross-origin
   isolation, so no COOP/COEP headers are needed on the review route.
 - **License**: GPL-3.0-or-later
@@ -16,11 +14,11 @@ WASM distribution yet.
 
 | File | Role |
 |------|------|
-| `stockfish-18-lite-single.js` | Single-threaded entry — loaded by `frontend/src/shared/engine/stockfish.ts` |
-| `stockfish-18-lite-single.wasm` | WASM payload (embedded smaller NNUE — no separate `.nnue` file) |
+| `stockfish-19-lite-single.js` | Single-threaded entry — loaded by `frontend/src/shared/engine/stockfish.ts` |
+| `stockfish-19-lite-single.wasm` | WASM payload (embedded smaller NNUE — no separate `.nnue` file) |
 
-`stockfish-18-lite-single.wasm` is intentionally excluded from the prek
-`check-added-large-files` hook (see `prek.toml`) — the file is ~7 MB and is
+`stockfish-19-lite-single.wasm` is intentionally excluded from the prek
+`check-added-large-files` hook (see `prek.toml`) — the file is ~1.8 MB and is
 the only artifact in this directory that exceeds the 500 KB cap.
 
 ## Why same-origin

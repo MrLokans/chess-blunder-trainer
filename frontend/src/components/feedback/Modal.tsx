@@ -9,7 +9,7 @@ export interface ModalProps {
   onClose: () => void;
   title: string;
   size?: ModalSize;
-  initialFocusRef?: RefObject<HTMLElement>;
+  initialFocusRef?: RefObject<HTMLElement | null>;
   closeLabel?: string;
   children?: ComponentChildren;
 }

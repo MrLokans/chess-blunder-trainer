@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import IntEnum
-from types import MappingProxyType
 
 import chess
 
@@ -32,7 +31,7 @@ DOUBLE_CHECK_MATERIAL_GAIN = 500
 MATE_THREAT_MATERIAL_GAIN = 10_000
 
 
-PATTERN_LABELS = MappingProxyType(
+PATTERN_LABELS = frozendict(
     {
         TacticalPattern.NONE: "None",
         TacticalPattern.FORK: "Fork",
@@ -49,7 +48,7 @@ PATTERN_LABELS = MappingProxyType(
     }
 )
 
-PIECE_VALUES = MappingProxyType(
+PIECE_VALUES = frozendict(
     {
         chess.PAWN: 100,
         chess.KNIGHT: 320,

@@ -86,7 +86,7 @@ describe('useWebSocket', () => {
     });
 
     const ws = MockWebSocket.instances[0] as MockWebSocket;
-    unmount();
+    await act(() => { unmount(); });
     expect(ws.readyState).toBe(3);
   });
 });

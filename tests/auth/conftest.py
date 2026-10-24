@@ -6,10 +6,10 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-import httpx
+import httpx2
 import pytest
 from fastapi import FastAPI
-from httpx import ASGITransport
+from httpx2 import ASGITransport
 
 from blunder_tutor.auth import (
     AuthDb,
@@ -115,7 +115,7 @@ async def credentials_app_multi(tmp_path: Path, monkeypatch):
 @pytest.fixture
 async def client_credentials_mode(credentials_app: FastAPI):
     transport = ASGITransport(app=credentials_app)
-    async with httpx.AsyncClient(
+    async with httpx2.AsyncClient(
         transport=transport, base_url="http://testserver"
     ) as client:
         yield client
@@ -163,12 +163,12 @@ def service_factory(auth_db: AuthDb, tmp_path: Path):
 
 
 async def signup_via_http(
-    client: httpx.AsyncClient,
+    client: httpx2.AsyncClient,
     invite: str,
     *,
     username: str = DEFAULT_USERNAME,
     password: str = DEFAULT_PASSWORD,
-) -> httpx.Response:
+) -> httpx2.Response:
     """Shared helper for HTTP-layer tests that need a registered user as
     setup. Replaces the three byte-identical ``_signup`` copies that used
     to live in ``test_setup_flow.py``, ``test_ui_pages.py``, and

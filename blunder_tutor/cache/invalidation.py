@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-from types import MappingProxyType
 
 from blunder_tutor.cache.backend import CacheBackend
 from blunder_tutor.events.event_bus import EventBus
@@ -27,7 +26,7 @@ CACHE_TAGS: frozenset[str] = frozenset(
     (_TAG_STATS, _TAG_TRAPS, _TAG_TRAINING, _TAG_ELO_RATING)
 )
 
-EVENT_TAG_MAPPING: MappingProxyType[EventType, str] = MappingProxyType(
+EVENT_TAG_MAPPING: frozendict[EventType, str] = frozendict(
     {
         EventType.STATS_UPDATED: _TAG_STATS,
         EventType.TRAPS_UPDATED: _TAG_TRAPS,

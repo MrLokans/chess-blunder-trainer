@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from http import HTTPStatus
 
-import httpx
+import httpx2
 
 
 class TestSignupCap:
     async def test_first_user_requires_invite_code(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.post(
             "/api/auth/signup",
@@ -17,7 +17,7 @@ class TestSignupCap:
         assert r.json()["detail"] == "invite_code_required"
 
     async def test_first_user_with_bad_invite_rejected(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.post(
             "/api/auth/signup",
@@ -31,7 +31,7 @@ class TestSignupCap:
         assert r.json()["detail"] == "invite_code_invalid"
 
     async def test_first_user_with_valid_invite_succeeds(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         r = await client_credentials_mode.post(
             "/api/auth/signup",
@@ -46,7 +46,7 @@ class TestSignupCap:
         assert "session_token" in r.cookies
 
     async def test_invite_code_rotated_after_first_signup(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         await client_credentials_mode.post(
             "/api/auth/signup",
@@ -69,7 +69,7 @@ class TestSignupCap:
         assert r.status_code == HTTPStatus.FORBIDDEN
 
     async def test_max_users_cap_blocks_second_signup(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         first = await client_credentials_mode.post(
             "/api/auth/signup",
@@ -90,7 +90,7 @@ class TestSignupCap:
         assert r.json()["detail"] == "user_cap_reached"
 
     async def test_signup_rejects_invalid_username(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         r = await client_credentials_mode.post(
             "/api/auth/signup",
@@ -103,7 +103,7 @@ class TestSignupCap:
         assert r.status_code == HTTPStatus.BAD_REQUEST
 
     async def test_signup_rejects_short_password(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         r = await client_credentials_mode.post(
             "/api/auth/signup",

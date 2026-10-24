@@ -1,6 +1,5 @@
 import os
 import pathlib
-from types import MappingProxyType
 
 MATE_SCORE_ANALYSIS = 100000  # Used in analysis engine
 MATE_SCORE_WEB = 10000  # Used in web interface (lower for display)
@@ -36,15 +35,15 @@ PHASE_OPENING = 0
 PHASE_MIDDLEGAME = 1
 PHASE_ENDGAME = 2
 
-PHASE_LABELS = MappingProxyType({0: "opening", 1: "middlegame", 2: "endgame"})
-PHASE_FROM_STRING = MappingProxyType({"opening": 0, "middlegame": 1, "endgame": 2})
+PHASE_LABELS = frozendict({0: "opening", 1: "middlegame", 2: "endgame"})
+PHASE_FROM_STRING = frozendict({"opening": 0, "middlegame": 1, "endgame": 2})
 
 COLOR_WHITE = 0
 COLOR_BLACK = 1
 
-COLOR_LABELS = MappingProxyType({0: "white", 1: "black"})
+COLOR_LABELS = frozendict({0: "white", 1: "black"})
 
-CLASSIFICATION_LABELS = MappingProxyType(
+CLASSIFICATION_LABELS = frozendict(
     {
         CLASSIFICATION_NORMAL: "normal",
         CLASSIFICATION_INACCURACY: "inaccuracy",
@@ -52,7 +51,7 @@ CLASSIFICATION_LABELS = MappingProxyType(
         CLASSIFICATION_BLUNDER: "blunder",
     }
 )
-COLOR_FROM_STRING = MappingProxyType({"white": 0, "black": 1})
+COLOR_FROM_STRING = frozendict({"white": 0, "black": 1})
 
 ROOT_DIR = pathlib.Path(__file__).parent.parent
 DEFAULT_DATA_PATH = ROOT_DIR / "data"

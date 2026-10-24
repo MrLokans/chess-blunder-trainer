@@ -6,7 +6,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-import httpx
+import httpx2
 
 PIECES = ["wK", "wQ", "wR", "wB", "wN", "wP", "bK", "bQ", "bR", "bB", "bN", "bP"]
 LICHESS_BASE_URL = "https://lichess.org/assets/piece"
@@ -38,7 +38,7 @@ WANTED_SETS = [
 
 
 async def download_piece(
-    client: httpx.AsyncClient, set_name: str, piece: str, output_dir: Path
+    client: httpx2.AsyncClient, set_name: str, piece: str, output_dir: Path
 ) -> bool:
     output_path = output_dir / set_name / f"{piece}.svg"
     if output_path.exists():
@@ -63,7 +63,7 @@ async def main() -> None:
     headers = {
         "User-Agent": "BlunderTutor/1.0 (https://github.com/mrlokans/blunder-tutor; Chess training app)"
     }
-    async with httpx.AsyncClient(timeout=30.0, headers=headers) as client:
+    async with httpx2.AsyncClient(timeout=30.0, headers=headers) as client:
         for set_name in WANTED_SETS:
             set_dir = output_dir / set_name
             existing = len(list(set_dir.glob("*.svg"))) if set_dir.exists() else 0

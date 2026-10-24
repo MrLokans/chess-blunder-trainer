@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from http import HTTPStatus
 
-import httpx
+import httpx2
 from hyx.retry import jitters, retry
 from hyx.retry.backoffs import expo
 
@@ -14,12 +14,12 @@ _MAX_BACKOFF_SECONDS = 30
 class RetryableHTTPError(Exception):
     """Raised for HTTP errors that should be retried (5xx, 429)."""
 
-    def __init__(self, response: httpx.Response) -> None:
+    def __init__(self, response: httpx2.Response) -> None:
         self.response = response
         super().__init__(f"HTTP {response.status_code}")
 
 
-RETRYABLE_EXCEPTIONS = (httpx.TransportError, RetryableHTTPError)
+RETRYABLE_EXCEPTIONS = (httpx2.TransportError, RetryableHTTPError)
 
 
 def _is_retryable_status(status_code: int) -> bool:
@@ -40,10 +40,10 @@ def _is_retryable_status(status_code: int) -> bool:
     ),
 )
 async def fetch_with_retry(
-    client: httpx.AsyncClient,
+    client: httpx2.AsyncClient,
     url: str,
     **kwargs,
-) -> httpx.Response:
+) -> httpx2.Response:
     response = await client.get(url, **kwargs)
 
     if response.status_code >= HTTPStatus.BAD_REQUEST:

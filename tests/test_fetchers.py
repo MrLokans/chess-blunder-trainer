@@ -5,7 +5,7 @@ from http import HTTPStatus
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-import httpx
+import httpx2
 import pytest
 
 from blunder_tutor.fetchers import chesscom, lichess
@@ -61,12 +61,12 @@ def create_mock_response(
     text: str | None = None,
     json_data: dict[str, Any] | None = None,
 ) -> MagicMock:
-    response = MagicMock(spec=httpx.Response)
+    response = MagicMock(spec=httpx2.Response)
     response.status_code = status_code
     response.text = text or ""
     response.raise_for_status = MagicMock()
     if status_code >= 400:
-        response.raise_for_status.side_effect = httpx.HTTPStatusError(
+        response.raise_for_status.side_effect = httpx2.HTTPStatusError(
             "Error", request=MagicMock(), response=response
         )
     if json_data is not None:
@@ -108,7 +108,7 @@ class TestLichessFetch:
 
         handler = create_single_response_handler(response_text=pgn_response)
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         games, seen_ids = await lichess.fetch("testuser", max_games=10)
 
@@ -124,7 +124,7 @@ class TestLichessFetch:
             return create_mock_response(text=pgn_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         games, seen_ids = await lichess.fetch("testuser", max_games=2)
 
@@ -135,7 +135,7 @@ class TestLichessFetch:
 
         handler = create_single_response_handler(response_text=pgn_response)
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         callback_calls: list[tuple[int, int]] = []
 
@@ -159,7 +159,7 @@ class TestLichessFetch:
             return create_mock_response(text=pgn_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         callback_calls: list[tuple[int, int]] = []
 
@@ -179,7 +179,7 @@ class TestLichessFetch:
             return create_mock_response(text="")
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         games, seen_ids = await lichess.fetch("testuser")
 
@@ -193,9 +193,9 @@ class TestLichessFetch:
             )
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
-        with pytest.raises(httpx.HTTPStatusError):
+        with pytest.raises(httpx2.HTTPStatusError):
             await lichess.fetch("nonexistent_user")
 
 
@@ -217,7 +217,7 @@ class TestChesscomFetch:
             return create_mock_response(json_data=games_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         games, seen_ids = await chesscom.fetch("testuser")
 
@@ -246,7 +246,7 @@ class TestChesscomFetch:
             return create_mock_response(status_code=HTTPStatus.NOT_FOUND)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         games, seen_ids = await chesscom.fetch("testuser")
 
@@ -271,7 +271,7 @@ class TestChesscomFetch:
             return create_mock_response(json_data=games_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         games, seen_ids = await chesscom.fetch("testuser", max_games=2)
 
@@ -294,7 +294,7 @@ class TestChesscomFetch:
             return create_mock_response(json_data=games_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         callback_calls: list[tuple[int, int]] = []
 
@@ -329,7 +329,7 @@ class TestChesscomFetch:
             return create_mock_response(json_data=games_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         callback_calls: list[tuple[int, int]] = []
 
@@ -351,7 +351,7 @@ class TestChesscomFetch:
             return create_mock_response(json_data=archives_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         games, seen_ids = await chesscom.fetch("testuser")
 
@@ -378,7 +378,7 @@ class TestChesscomFetch:
             return create_mock_response(json_data=games_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         games, seen_ids = await chesscom.fetch("testuser")
 
@@ -391,9 +391,9 @@ class TestChesscomFetch:
             )
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
-        with pytest.raises(httpx.HTTPStatusError):
+        with pytest.raises(httpx2.HTTPStatusError):
             await chesscom.fetch("nonexistent_user")
 
     async def test_username_lowercased(self, monkeypatch: pytest.MonkeyPatch):
@@ -405,7 +405,7 @@ class TestChesscomFetch:
             return create_mock_response(json_data=archives_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         await chesscom.fetch("TestUser")
 
@@ -432,7 +432,7 @@ class TestChesscomFetch:
             return create_mock_response(json_data=games_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         games, _ = await chesscom.fetch("testuser", max_games=1)
 
@@ -451,7 +451,7 @@ class TestProgressCallbackBehavior:
             return create_mock_response(text=pgn_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         callback_calls: list[tuple[int, int]] = []
 
@@ -485,7 +485,7 @@ class TestProgressCallbackBehavior:
             return create_mock_response(json_data=games_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         callback_calls: list[tuple[int, int]] = []
 
@@ -504,7 +504,7 @@ class TestProgressCallbackBehavior:
 
         handler = create_single_response_handler(response_text=pgn_response)
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         games, _ = await lichess.fetch("testuser", progress_callback=None)
 
@@ -519,7 +519,7 @@ class TestProgressCallbackBehavior:
             return create_mock_response(text=pgn_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         callback_calls: list[tuple[int, int]] = []
 
@@ -551,7 +551,7 @@ class TestIncrementalFetch:
         mock_client = MagicMock()
         mock_client.__aenter__ = AsyncMock(return_value=client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         since_dt = datetime(2024, 1, 15, 12, 0, 0, tzinfo=UTC)
         await lichess.fetch("testuser", since=since_dt)
@@ -576,7 +576,7 @@ class TestIncrementalFetch:
         mock_client = MagicMock()
         mock_client.__aenter__ = AsyncMock(return_value=client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         await lichess.fetch("testuser")
 
@@ -606,7 +606,7 @@ class TestIncrementalFetch:
             return create_mock_response(json_data=games_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         # Since January 2024 - should skip 2023 archives
         since_dt = datetime(2024, 1, 1, tzinfo=UTC)
@@ -644,7 +644,7 @@ class TestIncrementalFetch:
             return create_mock_response(json_data=games_response)
 
         mock_client = create_mock_client(handler)
-        monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: mock_client)
+        monkeypatch.setattr(httpx2, "AsyncClient", lambda **kw: mock_client)
 
         # Since timestamp between game 2 and game 3
         since_dt = datetime(2024, 1, 20, tzinfo=UTC)  # 1705708800

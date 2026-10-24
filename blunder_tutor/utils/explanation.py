@@ -21,7 +21,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from types import MappingProxyType
 
 import chess
 
@@ -33,7 +32,7 @@ CENTIPAWNS_PER_PAWN = 100
 SIGNIFICANT_PAWN_LOSS = 1.5
 
 
-PIECE_NAMES = MappingProxyType(
+PIECE_NAMES = frozendict(
     {
         chess.PAWN: "pawn",
         chess.KNIGHT: "knight",
@@ -44,7 +43,7 @@ PIECE_NAMES = MappingProxyType(
     }
 )
 
-PIECE_VALUES = MappingProxyType(
+PIECE_VALUES = frozendict(
     {
         chess.PAWN: 1,
         chess.KNIGHT: 3,
@@ -791,7 +790,7 @@ def _explain_blunder(
     return None
 
 
-_PATTERN_KEYS = MappingProxyType(
+_PATTERN_KEYS = frozendict(
     {
         "fork": "explanation.best.pattern_fork",
         "pin": "explanation.best.pattern_pin",
@@ -801,7 +800,7 @@ _PATTERN_KEYS = MappingProxyType(
     }
 )
 
-_THREAT_KEYS = MappingProxyType(
+_THREAT_KEYS = frozendict(
     {
         _THREAT_MATE: "explanation.best.threatens_mate",
         _THREAT_CAPTURE_CHECK: "explanation.best.threatens_capture_check",

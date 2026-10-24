@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from http import HTTPStatus
 
-import httpx
+import httpx2
 
 from tests.auth.conftest import signup_via_http as _signup
 
 
 class TestLoginPage:
     async def test_renders_login_form_when_logged_out(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.get("/login")
         assert r.status_code == HTTPStatus.OK
@@ -18,7 +18,7 @@ class TestLoginPage:
 
     async def test_redirects_to_home_when_already_authenticated(
         self,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         await _signup(client_credentials_mode, invite_code)
@@ -29,7 +29,7 @@ class TestLoginPage:
 
 class TestSignupPage:
     async def test_redirects_to_setup_when_no_users_exist(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.get("/signup", follow_redirects=False)
         assert r.status_code == HTTPStatus.FOUND
@@ -37,7 +37,7 @@ class TestSignupPage:
 
     async def test_renders_instance_full_page_when_cap_reached(
         self,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         # MAX_USERS=1 in the fixture — signing up once fills the instance.
@@ -53,7 +53,7 @@ class TestSignupPage:
 
     async def test_redirects_to_home_when_already_authenticated(
         self,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         await _signup(client_credentials_mode, invite_code)
@@ -64,7 +64,7 @@ class TestSignupPage:
 
 class TestSetupPage:
     async def test_renders_first_setup_when_no_users_exist(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.get("/setup")
         assert r.status_code == HTTPStatus.OK
@@ -73,7 +73,7 @@ class TestSetupPage:
 
     async def test_redirects_to_login_when_users_exist_but_unauthenticated(
         self,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         await _signup(client_credentials_mode, invite_code)
@@ -90,14 +90,14 @@ class TestAuthLayoutBodyClass:
     lay the demo banner and the auth card out side-by-side."""
 
     async def test_login_page_body_has_auth_layout_class(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.get("/login")
         assert r.status_code == HTTPStatus.OK
         assert 'class="auth-layout"' in r.text
 
     async def test_setup_page_body_has_auth_layout_class(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.get("/setup")
         assert r.status_code == HTTPStatus.OK
@@ -105,7 +105,7 @@ class TestAuthLayoutBodyClass:
 
     async def test_signup_full_page_body_has_auth_layout_class(
         self,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         await _signup(client_credentials_mode, invite_code)
@@ -119,7 +119,7 @@ class TestAuthLayoutBodyClass:
 class TestLogoutUi:
     async def test_post_logout_clears_session_and_redirects_to_login(
         self,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         await _signup(client_credentials_mode, invite_code)
@@ -134,7 +134,7 @@ class TestLogoutUi:
         assert r.status_code == HTTPStatus.UNAUTHORIZED
 
     async def test_post_logout_is_idempotent_without_session(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.post("/logout", follow_redirects=False)
         assert r.status_code == HTTPStatus.SEE_OTHER

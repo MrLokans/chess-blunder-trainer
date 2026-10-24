@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from types import MappingProxyType
 
 from markupsafe import Markup
 
-ENTRY_MAP = MappingProxyType(
+ENTRY_MAP = frozendict(
     {
         "trainer": "src/trainer/index.tsx",
         "dashboard": "src/dashboard/index.tsx",

@@ -4,7 +4,7 @@ import logging
 from http import HTTPStatus
 from pathlib import Path
 
-import httpx
+import httpx2
 from fastapi import FastAPI
 
 from blunder_tutor.auth import AuthDb, SqliteStorage, initialize_auth_schema
@@ -14,7 +14,7 @@ from blunder_tutor.web.app import scan_orphans
 class TestAccountDeletion:
     async def test_delete_removes_user_db_dir(
         self,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
         tmp_path: Path,
     ) -> None:
@@ -68,7 +68,7 @@ class TestOrphanScan:
 
     async def test_no_warnings_when_all_dirs_match_users(
         self,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
         credentials_app: FastAPI,
         caplog,

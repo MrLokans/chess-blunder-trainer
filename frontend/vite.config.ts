@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [preact()],
   resolve: {
     alias: {
-      '@vendor/chessground': resolve(__dirname, '../blunder_tutor/web/static/vendor/chessground-10.0.2.min.js'),
+      '@vendor/chessground': resolve(__dirname, '../blunder_tutor/web/static/vendor/chessground-10.5.0.min.js'),
     },
   },
   build: {

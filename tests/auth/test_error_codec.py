@@ -12,10 +12,10 @@ from datetime import timedelta
 from http import HTTPStatus
 from pathlib import Path
 
-import httpx
+import httpx2
 import pytest
 from fastapi import FastAPI, Request, Response
-from httpx import ASGITransport
+from httpx2 import ASGITransport
 
 from blunder_tutor.auth import (
     AuthDb,
@@ -79,7 +79,7 @@ class TestDefaultErrorCodec:
     ):
         await service.signup(username=Username("alice"), password="password123")
         app = _make_app(service)
-        async with httpx.AsyncClient(
+        async with httpx2.AsyncClient(
             transport=ASGITransport(app=app), base_url="http://testserver"
         ) as client:
             r = await client.post(
@@ -107,7 +107,7 @@ class TestCustomErrorCodec:
 
         await service.signup(username=Username("alice"), password="password123")
         app = _make_app(service, error_codec=_Custom422Codec())
-        async with httpx.AsyncClient(
+        async with httpx2.AsyncClient(
             transport=ASGITransport(app=app), base_url="http://testserver"
         ) as client:
             r = await client.post(
@@ -130,7 +130,7 @@ class TestCustomErrorCodec:
                 return DefaultErrorCodec().to_http(exc)
 
         app = _make_app(service, error_codec=_OnlyDuplicates())
-        async with httpx.AsyncClient(
+        async with httpx2.AsyncClient(
             transport=ASGITransport(app=app), base_url="http://testserver"
         ) as client:
             r = await client.post(

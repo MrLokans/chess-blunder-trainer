@@ -7,7 +7,7 @@ from http import HTTPStatus
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import httpx
+import httpx2
 import pytest
 from fastapi.testclient import TestClient
 
@@ -254,7 +254,7 @@ class TestCreateProfile:
         forbidden.status_code = HTTPStatus.FORBIDDEN
         _patch_existence_raising(
             monkeypatch,
-            httpx.HTTPStatusError("403", request=request, response=forbidden),
+            httpx2.HTTPStatusError("403", request=request, response=forbidden),
         )
 
         response = app.post(

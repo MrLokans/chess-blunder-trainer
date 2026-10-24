@@ -3,14 +3,14 @@ from __future__ import annotations
 import asyncio
 from http import HTTPStatus
 
-import httpx
+import httpx2
 
 from tests.auth.conftest import signup_via_http as _signup
 
 
 class TestLogin:
     async def test_login_after_signup_sets_fresh_session(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         await _signup(client_credentials_mode, invite_code)
         client_credentials_mode.cookies.clear()
@@ -24,7 +24,7 @@ class TestLogin:
         assert r.json()["username"] == "alice"
 
     async def test_login_with_wrong_password_401s(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         await _signup(client_credentials_mode, invite_code)
         client_credentials_mode.cookies.clear()
@@ -37,7 +37,7 @@ class TestLogin:
         assert r.json()["detail"] == "invalid_credentials"
 
     async def test_login_with_unknown_user_401s(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.post(
             "/api/auth/login",
@@ -46,7 +46,7 @@ class TestLogin:
         assert r.status_code == HTTPStatus.UNAUTHORIZED
 
     async def test_login_with_malformed_username_401s(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.post(
             "/api/auth/login",
@@ -59,7 +59,7 @@ class TestLogin:
 
 class TestMe:
     async def test_me_returns_current_user(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         await _signup(client_credentials_mode, invite_code)
         r = await client_credentials_mode.get("/api/auth/me")
@@ -67,7 +67,7 @@ class TestMe:
         assert r.json()["username"] == "alice"
 
     async def test_me_without_session_401s(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.get("/api/auth/me")
         assert r.status_code == HTTPStatus.UNAUTHORIZED
@@ -75,7 +75,7 @@ class TestMe:
 
 class TestLogout:
     async def test_logout_revokes_session(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         await _signup(client_credentials_mode, invite_code)
         r = await client_credentials_mode.post("/api/auth/logout")
@@ -89,7 +89,7 @@ class TestLogout:
     async def test_logout_all_revokes_every_session_for_user(
         self,
         credentials_app,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         await _signup(client_credentials_mode, invite_code)
@@ -114,13 +114,13 @@ class TestLogout:
         assert await service.resolve_session(other.token, None) is None
 
     async def test_logout_is_idempotent_without_session(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.post("/api/auth/logout")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
     async def test_logout_all_is_idempotent_without_session(
-        self, client_credentials_mode: httpx.AsyncClient
+        self, client_credentials_mode: httpx2.AsyncClient
     ):
         r = await client_credentials_mode.post("/api/auth/logout-all")
         assert r.status_code == HTTPStatus.NO_CONTENT
@@ -130,7 +130,7 @@ class TestDeleteAccount:
     async def test_delete_account_removes_user_and_clears_cookie(
         self,
         credentials_app,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         await _signup(client_credentials_mode, invite_code)
@@ -147,7 +147,7 @@ class TestDeleteAccount:
     async def test_delete_account_evicts_per_user_cache_entries(
         self,
         credentials_app,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         r = await _signup(client_credentials_mode, invite_code)
@@ -182,7 +182,7 @@ class TestSignupAtomicity:
     async def test_concurrent_signups_respect_cap_of_one(
         self,
         credentials_app,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         async def post(username: str):
@@ -206,7 +206,7 @@ class TestSignupAtomicity:
         assert await service.user_count() == 1
 
     async def test_invite_cannot_be_replayed_across_transaction_boundary(
-        self, client_credentials_mode: httpx.AsyncClient, invite_code: str
+        self, client_credentials_mode: httpx2.AsyncClient, invite_code: str
     ):
         # First signup consumes the invite inside the atomic tx.
         ok = await client_credentials_mode.post(
@@ -237,7 +237,7 @@ class TestSignupAtomicity:
 
     async def test_invite_survives_secret_key_rotation(
         self,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
         credentials_app,
     ):

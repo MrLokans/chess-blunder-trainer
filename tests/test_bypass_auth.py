@@ -11,9 +11,9 @@ from __future__ import annotations
 
 from http import HTTPStatus
 
-import httpx
+import httpx2
 from fastapi import FastAPI, Request
-from httpx import ASGITransport
+from httpx2 import ASGITransport
 
 from blunder_tutor.web.bypass_auth import (
     LOCAL_USER_ID,
@@ -46,8 +46,8 @@ def _make_app() -> FastAPI:
 
 def _client(
     app: FastAPI, *, cookies: dict[str, str] | None = None
-) -> httpx.AsyncClient:
-    return httpx.AsyncClient(
+) -> httpx2.AsyncClient:
+    return httpx2.AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://testserver",
         cookies=cookies,

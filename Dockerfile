@@ -1,10 +1,10 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1
 # Multi-stage Dockerfile for Blunder Tutor with Stockfish 19
 # Compiles Stockfish from source with architecture-specific optimizations
 
 # Stage 1: Build Stockfish from source
 # This stage is independent of app code - changes to Python code won't invalidate this cache
-FROM ubuntu:24.04 AS stockfish-builder
+FROM ubuntu:26.04 AS stockfish-builder
 
 ARG TARGETARCH
 ARG STOCKFISH_VERSION=sf_19
@@ -35,7 +35,7 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     fi
 
 # Stage 2: Build frontend assets
-FROM node:22-slim AS frontend-builder
+FROM node:26-slim AS frontend-builder
 
 WORKDIR /app
 
@@ -48,10 +48,9 @@ COPY blunder_tutor/web/static/vendor/ ./blunder_tutor/web/static/vendor/
 RUN npm run build
 
 # Stage 3: Export dependencies to requirements.txt (separate stage for better caching)
-FROM python:3.14-slim AS deps-exporter
+FROM python:3.15-slim AS deps-exporter
 
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
@@ -62,15 +61,14 @@ COPY uv.lock pyproject.toml ./
 RUN uv export --frozen --no-dev --no-hashes --no-emit-project -o requirements.txt
 
 # Stage 3: Build Python dependencies
-FROM python:3.14-slim AS python-builder
+FROM python:3.15-slim AS python-builder
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
     build-essential
 
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
@@ -93,7 +91,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --no-deps .
 
 # Stage 4: Final runtime image
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 # Install runtime dependencies
 # Note: cache mounts don't help in final stage since we need to clean up apt lists

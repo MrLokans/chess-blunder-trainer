@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from http import HTTPStatus
 
-import httpx
+import httpx2
 import pytest
 from fastapi import FastAPI
 
@@ -27,7 +27,7 @@ class TestLoginRotation:
     async def test_login_revokes_pre_existing_session(
         self,
         credentials_app: FastAPI,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         await signup_via_http(client_credentials_mode, invite_code)
@@ -50,7 +50,7 @@ class TestLoginRotation:
     async def test_login_with_unknown_old_cookie_still_succeeds(
         self,
         credentials_app: FastAPI,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         """A garbage / already-revoked cookie must not crash the login
@@ -75,7 +75,7 @@ class TestLoginRotation:
     async def test_login_failure_does_not_revoke_existing_session(
         self,
         credentials_app: FastAPI,
-        client_credentials_mode: httpx.AsyncClient,
+        client_credentials_mode: httpx2.AsyncClient,
         invite_code: str,
     ):
         """A wrong-password POST must not log the caller out of their
@@ -97,8 +97,8 @@ class TestLoginRotation:
 class TestSignupRotation:
     @pytest.fixture
     async def client_multi(self, credentials_app_multi: FastAPI):
-        transport = httpx.ASGITransport(app=credentials_app_multi)
-        async with httpx.AsyncClient(
+        transport = httpx2.ASGITransport(app=credentials_app_multi)
+        async with httpx2.AsyncClient(
             transport=transport, base_url="http://testserver"
         ) as client:
             yield client
@@ -112,7 +112,7 @@ class TestSignupRotation:
     async def test_signup_revokes_pre_existing_session(
         self,
         credentials_app_multi: FastAPI,
-        client_multi: httpx.AsyncClient,
+        client_multi: httpx2.AsyncClient,
         invite_multi: str,
     ):
         """A second signup from the same browser (MAX_USERS=2) must
@@ -138,7 +138,7 @@ class TestSignupRotation:
     async def test_signup_failure_does_not_revoke_existing_session(
         self,
         credentials_app_multi: FastAPI,
-        client_multi: httpx.AsyncClient,
+        client_multi: httpx2.AsyncClient,
         invite_multi: str,
     ):
         """Pin the helper-call ordering: ``_revoke_caller_cookie`` runs
