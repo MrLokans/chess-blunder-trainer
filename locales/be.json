@@ -251,7 +251,6 @@
   "explanation.best.attacks_piece": "Лепшы ход {san} атакуе {piece}.",
   "explanation.best.avoids_loss": "Лепшы ход {san} дазваляе не страціць {loss} пешак перавагі.",
   "explanation.best.capture_with_check": "Лепшы ход {san} бярэ {piece} з шахам.",
-  "explanation.best.check_winning": "Лепшы ход {san} дае шах і выйгравае матэрыял.",
   "explanation.best.check_wins_hanging": "Лепшы ход {san} дае шах, выйгрываючы неабароненага {piece} на {square}.",
   "explanation.best.check_with_pattern": "Лепшы ход {san} дае шах, выкарыстоўваючы {pattern}.",
   "explanation.best.checkmate": "Лепшы ход {san} ставіць мат.",

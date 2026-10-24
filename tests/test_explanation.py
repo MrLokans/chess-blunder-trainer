@@ -34,7 +34,6 @@ _EN_TEMPLATES = {
     "explanation.best.checkmate": "The best move {san} delivers checkmate.",
     "explanation.best.capture_with_check": "The best move {san} captures the {piece} with check.",
     "explanation.best.check_with_pattern": "The best move {san} gives check, exploiting a {pattern}.",
-    "explanation.best.check_winning": "The best move {san} gives check, winning material.",
     "explanation.best.pattern_fork": "The best move {san} creates a fork, attacking multiple pieces at once.",
     "explanation.best.pattern_pin": "The best move {san} creates a pin, winning material.",
     "explanation.best.pattern_skewer": "The best move {san} creates a skewer, forcing a valuable piece to move and exposing another.",
@@ -233,6 +232,35 @@ class TestGenerateExplanation:
         assert "trades off the knight" in result.best_move_text
         assert "wins" not in result.best_move_text
 
+    def test_line_ending_on_safe_capture_still_wins(self):
+        fen = "6k1/p4p2/8/8/2B5/8/8/5RK1 w - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="g1h2",
+            best_move_uci="g1h1",
+            cp_loss=150,
+            best_line=["Kh1", "a6", "Rxf7"],
+        )
+        assert "wins the pawn" in result.best_move_text
+
+    def test_assumed_recapture_cancels_the_named_piece(self):
+        # Rxd8+ can be taken back by Rxd8, so the line nets the a7 pawn, not a rook.
+        fen = "2rr2k1/p4ppp/8/8/8/4B3/5PPP/3R2K1 w - - 0 1"
+        result = _resolve(
+            fen,
+            blunder_uci="g1f1",
+            best_move_uci="e3a7",
+            cp_loss=150,
+            best_line=["Bxa7", "h6", "Rxd8+"],
+        )
+        assert "wins the pawn" in result.best_move_text
+
+    def test_unpinning_an_attacker_exposes_the_piece(self):
+        # Bd8 pinned the b6 bishop to the king; moving it lets Bxd4 happen.
+        fen = "3B4/8/1b6/k7/3N4/8/8/6K1 w - - 0 1"
+        result = _resolve(fen, blunder_uci="d8h4", cp_loss=300)
+        assert "knight on d4" in result.blunder_text
+
     def test_best_move_simple_capture(self):
         fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"
         result = _resolve(fen, blunder_uci="e1e2", best_move_uci="d1d5", cp_loss=500)
@@ -271,7 +299,8 @@ class TestGenerateExplanation:
         assert "none" not in result.best_move_text.lower()
         assert result.best_move_text != ""
 
-    def test_quiet_move_detects_threat(self):
+    def test_threat_available_before_the_move_is_not_credited(self):
+        # Bh7+ was playable before Nh4, so Nh4 doesn't create that bishop threat.
         fen = "r1bqr1k1/p2p1pp1/n4n1p/1NbPp3/8/P2BBN2/1PPQ1PPP/R4RK1 w - - 1 14"
         result = _resolve(
             fen,
@@ -280,7 +309,7 @@ class TestGenerateExplanation:
             cp_loss=276,
             best_line=["Nh4", "Nxd5", "Bh7+", "Kxh7", "Qxd5"],
         )
-        assert "threat" in result.best_move_text.lower()
+        assert "threat" not in result.best_move_text.lower()
         assert "none" not in result.best_move_text.lower()
 
     def test_best_line_material_gain(self):
@@ -372,10 +401,11 @@ class TestGenerateExplanation:
         )
         assert result.best_move_text != ""
 
-    def test_best_move_gives_check_with_pattern(self):
-        fen = "4k3/8/8/8/8/8/8/3QK3 w - - 0 1"
-        result = _resolve(fen, blunder_uci="e1e2", best_move_uci="d1d8", cp_loss=500)
-        assert "check" in result.best_move_text.lower()
+    def test_plain_check_makes_no_material_claim(self):
+        fen = "4k3/8/8/8/8/8/8/R3K3 w - - 0 1"
+        result = _resolve(fen, blunder_uci="e1d2", best_move_uci="a1a8", cp_loss=150)
+        assert "winning" not in result.best_move_text.lower()
+        assert "Ra8+" in result.best_move_text
 
 
 class TestI18nKeys:

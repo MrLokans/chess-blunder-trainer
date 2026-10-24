@@ -159,5 +159,181 @@
     "expect": {
       "best_key": "explanation.best.trades_piece"
     }
+  },
+  {
+    "id": "traded-queens-name-the-net-piece",
+    "source": "demo 009b4ac19373:23",
+    "note": "Qxd5 Qxd5 exd5 trades queens and nets the bishop; it must not say it wins the queen.",
+    "fen": "r3kbnr/3q1ppp/p7/2pb1N2/4P3/8/PPP2PPP/R1BQK2R w KQkq - 0 12",
+    "blunder": "e4d5",
+    "best": "d1d5",
+    "cp_loss": 470,
+    "best_line": [
+      "Qxd5",
+      "Qxd5",
+      "exd5",
+      "O-O-O",
+      "Ne3"
+    ],
+    "refutation_line": [
+      "Qxf5",
+      "Qe2+",
+      "Kd7",
+      "g4",
+      "Qg6"
+    ],
+    "expect": {
+      "best_key": "explanation.best.pv_wins_piece_via_combination",
+      "best_params": {
+        "piece": "chess.piece.bishop.acc"
+      }
+    }
+  },
+  {
+    "id": "threat-available-before-the-move-not-credited",
+    "source": "demo 009b4ac19373:47",
+    "note": "Rg8+ was already playable, so Rdd7 doesn't create a rook threat.",
+    "fen": "3R4/4Rpkp/p5p1/2p2q2/8/8/PPP2PPP/6K1 w - - 2 24",
+    "blunder": "d8a8",
+    "best": "d8d7",
+    "cp_loss": 234,
+    "best_line": [
+      "Rdd7",
+      "Qxc2",
+      "Rxf7+",
+      "Kg8",
+      "h3"
+    ],
+    "refutation_line": [
+      "Qd5",
+      "Rae8",
+      "Qxa2",
+      "g3",
+      "Qxb2"
+    ],
+    "expect": {
+      "forbidden_best_keys": [
+        "explanation.best.creates_threat"
+      ]
+    }
+  },
+  {
+    "id": "plain-check-claims-no-material",
+    "source": "demo 009b4ac19373:52",
+    "note": "Qc1+ Kh2 Qf4+ Kg1 wins nothing; the old wording said the check wins material.",
+    "fen": "8/4Rpkp/R5p1/2p5/8/7P/Pq3PP1/6K1 b - - 0 26",
+    "blunder": "b2a3",
+    "best": "b2c1",
+    "cp_loss": 752,
+    "best_line": [
+      "Qc1+",
+      "Kh2",
+      "Qf4+",
+      "Kg1"
+    ],
+    "expect": {
+      "best_key": "explanation.best.avoids_loss"
+    }
+  },
+  {
+    "id": "line-ending-on-recapturable-capture-wins-nothing",
+    "source": "demo 0611a839330e:20",
+    "note": "The line ends with Nxd2, which can be taken back; no piece is won.",
+    "fen": "rn1qk2r/ppp2pp1/6p1/2bpP3/4n1P1/4B3/PPP1QP1P/RN2KB1R b KQkq - 3 10",
+    "blunder": "c5e7",
+    "best": "b8c6",
+    "cp_loss": 183,
+    "best_line": [
+      "Nc6",
+      "Nd2",
+      "Bxe3",
+      "Qxe3",
+      "Nxd2"
+    ],
+    "refutation_line": [
+      "Bg2",
+      "c6",
+      "Bxe4",
+      "dxe4",
+      "Nc3"
+    ],
+    "expect": {
+      "forbidden_best_keys": [
+        "explanation.best.pv_wins_piece",
+        "explanation.best.pv_wins_piece_via_combination"
+      ]
+    }
+  },
+  {
+    "id": "hanging-piece-needs-a-legal-capture",
+    "source": "demo af2af8ec354d:20",
+    "note": "The only attacker of the bishop on h3 is pinned, so it can't be captured.",
+    "fen": "rn2kbnr/ppp2ppp/6q1/5b2/4N3/1P1B1P2/P1PP2PP/R1BQ1RK1 b kq - 0 10",
+    "blunder": "f5h3",
+    "best": "b8c6",
+    "cp_loss": 210,
+    "best_line": [
+      "Nc6",
+      "a3",
+      "O-O-O",
+      "Bb2",
+      "Kb8"
+    ],
+    "refutation_line": [
+      "Qe2",
+      "Ne7",
+      "Kh1",
+      "Bf5",
+      "g4"
+    ],
+    "expect": {
+      "blunder_key": "explanation.blunder.cp_loss"
+    }
+  },
+  {
+    "id": "bad-capture-needs-a-legal-recapture",
+    "source": "demo cffef613d8e1:34",
+    "note": "Nothing can legally take back on f2, so Rxf2 isn't a losing capture.",
+    "fen": "5rk1/p1pq2pp/3bp3/6N1/5r2/3P3Q/PPP2PPP/RNB1K2R b KQ - 0 17",
+    "blunder": "f4f2",
+    "best": "h7h6",
+    "cp_loss": 1500,
+    "best_line": [
+      "h6",
+      "Bxf4",
+      "Qb5",
+      "Qxe6+",
+      "Kh8"
+    ],
+    "refutation_line": [
+      "Qxh7#"
+    ],
+    "expect": {
+      "forbidden_blunder_keys": [
+        "explanation.blunder.bad_capture"
+      ]
+    }
+  },
+  {
+    "id": "defended-final-capture-still-wins",
+    "source": "demo 01b517b1d29e:62",
+    "note": "Rhxh2 ends the line, but the rook on f2 guards h2, so Kg1 can't take back; the pawn is won.",
+    "fen": "6r1/ppk2p1p/2p5/4R3/N7/2P5/PP3r1P/1R5K b - - 0 31",
+    "blunder": "f2g2",
+    "best": "g8g4",
+    "cp_loss": 241,
+    "best_line": [
+      "Rg4",
+      "b3",
+      "Rh4",
+      "Kg1",
+      "Rhxh2"
+    ],
+    "expect": {
+      "best_key": "explanation.best.pv_wins_piece",
+      "best_params": {
+        "piece": "chess.piece.pawn.acc"
+      }
+    }
   }
 ]

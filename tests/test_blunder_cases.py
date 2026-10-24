@@ -46,3 +46,8 @@ def test_blunder_case(case: dict[str, Any]):
     assert expect.get("reason_contains", "") in actual["reason"], actual
     for forbidden in expect.get("forbidden_best_keys", []):
         assert _key(actual["best"]) != forbidden, actual
+    for forbidden in expect.get("forbidden_blunder_keys", []):
+        assert _key(actual["blunder"]) != forbidden, actual
+    best_params = actual["best"]["params"] if actual["best"] else {}
+    for name, value in expect.get("best_params", {}).items():
+        assert best_params.get(name) == value, actual

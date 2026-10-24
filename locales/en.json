@@ -251,7 +251,6 @@
   "explanation.best.attacks_piece": "The best move {san} attacks the {piece}.",
   "explanation.best.avoids_loss": "The best move {san} avoids losing {loss} pawns worth of advantage.",
   "explanation.best.capture_with_check": "The best move {san} captures the {piece} with check.",
-  "explanation.best.check_winning": "The best move {san} gives check, winning material.",
   "explanation.best.check_wins_hanging": "The best move {san} gives check, winning the undefended {piece} on {square}.",
   "explanation.best.check_with_pattern": "The best move {san} gives check, exploiting a {pattern}.",
   "explanation.best.checkmate": "The best move {san} delivers checkmate.",

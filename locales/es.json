@@ -251,7 +251,6 @@
   "explanation.best.attacks_piece": "La mejor jugada {san} ataca el/la {piece}.",
   "explanation.best.avoids_loss": "La mejor jugada {san} evita perder {loss} peones de ventaja.",
   "explanation.best.capture_with_check": "La mejor jugada {san} captura el/la {piece} con jaque.",
-  "explanation.best.check_winning": "La mejor jugada {san} da jaque y gana material.",
   "explanation.best.check_wins_hanging": "La mejor jugada {san} da jaque, ganando el/la {piece} indefenso/a en {square}.",
   "explanation.best.check_with_pattern": "La mejor jugada {san} da jaque, aprovechando un(a) {pattern}.",
   "explanation.best.checkmate": "La mejor jugada {san} da jaque mate.",

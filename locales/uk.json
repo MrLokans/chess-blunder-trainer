@@ -251,7 +251,6 @@
   "explanation.best.attacks_piece": "Найкращий хід {san} атакує {piece}.",
   "explanation.best.avoids_loss": "Найкращий хід {san} дозволяє не втратити {loss} пішаків переваги.",
   "explanation.best.capture_with_check": "Найкращий хід {san} бере {piece} із шахом.",
-  "explanation.best.check_winning": "Найкращий хід {san} дає шах і виграє матеріал.",
   "explanation.best.check_wins_hanging": "Найкращий хід {san} дає шах, вигравши незахищеного {piece} на {square}.",
   "explanation.best.check_with_pattern": "Найкращий хід {san} дає шах, використовуючи {pattern}.",
   "explanation.best.checkmate": "Найкращий хід {san} ставить мат.",

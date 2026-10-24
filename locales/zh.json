@@ -251,7 +251,6 @@
   "explanation.best.attacks_piece": "最佳走法 {san} 攻击{piece}。",
   "explanation.best.avoids_loss": "最佳走法 {san} 避免丢失 {loss} 个兵的优势。",
   "explanation.best.capture_with_check": "最佳走法 {san} 吃{piece}同时将军。",
-  "explanation.best.check_winning": "最佳走法 {san} 将军并赢得子力。",
   "explanation.best.check_wins_hanging": "最佳走法 {san} 将军，赢得{square}上无防守的{piece}。",
   "explanation.best.check_with_pattern": "最佳走法 {san} 将军，利用了{pattern}。",
   "explanation.best.checkmate": "最佳走法 {san} 将杀。",

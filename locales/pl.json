@@ -251,7 +251,6 @@
   "explanation.best.attacks_piece": "Najlepszy ruch {san} atakuje {piece}.",
   "explanation.best.avoids_loss": "Najlepszy ruch {san} pozwala nie stracić {loss} pionków przewagi.",
   "explanation.best.capture_with_check": "Najlepszy ruch {san} bije {piece} z szachem.",
-  "explanation.best.check_winning": "Najlepszy ruch {san} daje szacha i wygrywa materiał.",
   "explanation.best.check_wins_hanging": "Najlepszy ruch {san} daje szacha, wygrywając niebronionego {piece} na {square}.",
   "explanation.best.check_with_pattern": "Najlepszy ruch {san} daje szacha, wykorzystując {pattern}.",
   "explanation.best.checkmate": "Najlepszy ruch {san} daje mata.",
