@@ -166,6 +166,13 @@ class TestTrustedHostMiddleware:
         )
         assert r.status_code == HTTPStatus.BAD_REQUEST
 
+    @pytest.mark.parametrize("host", ["localhost:8000", "127.0.0.1:8000"])
+    async def test_loopback_passes_for_container_healthcheck(
+        self, host_pinned_client: httpx2.AsyncClient, host: str
+    ):
+        r = await host_pinned_client.get("/health", headers={"host": host})
+        assert r.status_code == HTTPStatus.OK
+
 
 async def _default_hosts_client(tmp_path: Path, monkeypatch, *, auth_mode: str):
     monkeypatch.setenv("STOCKFISH_BINARY", "/fake/stockfish")

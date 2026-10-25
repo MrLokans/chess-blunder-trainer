@@ -41,7 +41,7 @@ from blunder_tutor.web.auth_hooks import (
 )
 from blunder_tutor.web.bypass_auth import LOCAL_USER_ID, BypassAuthMiddleware
 from blunder_tutor.web.config import AppConfig
-from blunder_tutor.web.host_policy import LocalHostOnlyMiddleware
+from blunder_tutor.web.host_policy import LOOPBACK_HOSTS, LocalHostOnlyMiddleware
 from blunder_tutor.web.middleware import (
     CsrfOriginMiddleware,
     DemoModeMiddleware,
@@ -464,7 +464,8 @@ def _register_middleware(app: FastAPI, config: AppConfig) -> None:
     # and a no-login instance is open to DNS rebinding.
     if config.allowed_hosts is not None:
         app.add_middleware(
-            TrustedHostMiddleware, allowed_hosts=list(config.allowed_hosts)
+            TrustedHostMiddleware,
+            allowed_hosts=[*config.allowed_hosts, *LOOPBACK_HOSTS],
         )
     elif config.auth.mode == AUTH_MODE_NONE and not config.demo_mode:
         app.add_middleware(LocalHostOnlyMiddleware)

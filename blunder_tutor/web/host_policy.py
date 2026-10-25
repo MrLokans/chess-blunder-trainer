@@ -10,6 +10,11 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 logger = logging.getLogger(__name__)
 
+# Always served on top of an explicit `ALLOWED_HOSTS`, so the image's HEALTHCHECK and
+# local probes keep working. Rebinding needs an attacker-controlled name, and a
+# cross-origin page can't set its Host to loopback.
+LOOPBACK_HOSTS = ("localhost", "127.0.0.1")
+
 
 def _is_loopback_or_ip_host(hostname: str | None) -> bool:
     if hostname is None:
