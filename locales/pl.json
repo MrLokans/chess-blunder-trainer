@@ -263,6 +263,7 @@
   "explanation.best.pattern_generic": "Najlepszy ruch {san} wygrywa materiał za pomocą {pattern}.",
   "explanation.best.pattern_hanging_piece": "Najlepszy ruch {san} bije niebronionego {piece} na {square}.",
   "explanation.best.pattern_skewer": "Najlepszy ruch {san} tworzy szpikulec, zmuszając cenną figurę do odejścia.",
+  "explanation.best.perpetual_check": "Najlepszy ruch {san} zaczyna serię szachów, przed którymi przeciwnik nie ucieknie, i wymusza remis: {line}",
   "explanation.best.pv_mate": "Najlepszy ruch {san} prowadzi do mata w {moves} ruchach: {line}",
   "explanation.best.pv_wins_piece": "Najlepszy ruch {san} wygrywa {piece} po {line}",
   "explanation.best.pv_wins_piece_via_combination": "Najlepszy ruch {san} wygrywa {piece} dzięki kombinacji: {line}",

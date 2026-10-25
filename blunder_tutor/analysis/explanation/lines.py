@@ -20,6 +20,7 @@ class PVAnalysis:
     player_captures: list[chess.PieceType]
     opponent_captures: list[chess.PieceType]
     assumed_recapture: chess.PieceType | None = None
+    perpetual_check: bool = False
 
     @property
     def is_sacrifice_combination(self) -> bool:
@@ -112,6 +113,20 @@ def _replay(
     return [first, *line_boards(first, rest_san)]
 
 
+def _position_key(board: chess.Board) -> str:
+    return board.fen().rsplit(" ", 2)[0]
+
+
+def _is_perpetual_check(board: chess.Board, boards: list[chess.Board]) -> bool:
+    """Every move of the player's gives check and the line returns to a position it
+    already had: the engine is holding a draw by repetition."""
+    player_boards = boards[::2]
+    if len(boards) < 3 or not all(b.is_check() for b in player_boards):
+        return False
+    earlier = {_position_key(b) for b in (board, *boards[:-1])}
+    return _position_key(boards[-1]) in earlier
+
+
 def analyze_pv(
     board: chess.Board,
     best_move: chess.Move,
@@ -134,6 +149,7 @@ def analyze_pv(
         player_captures=player_captures,
         opponent_captures=opponent_captures,
         assumed_recapture=at_risk,
+        perpetual_check=_is_perpetual_check(board, boards),
     )
 
 

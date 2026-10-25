@@ -385,9 +385,9 @@
     }
   },
   {
-    "id": "real-game-check-wins-hanging",
+    "id": "check-attacking-a-loose-piece-the-line-never-takes",
     "source": "demo 0ca30ec7e23d:25",
-    "note": "The checking move also hits a loose piece it can take next.",
+    "note": "Qa4+ attacks the a5 knight, but the line is Qa4+ Nc6: the knight blocks and is never won. The real point is saving the queen from Na5.",
     "fen": "r2qk2r/ppp2ppp/4p3/n3P3/3P2Pb/1QP5/PP3PR1/RNB1K3 w Qkq - 3 13",
     "blunder": "b3b4",
     "best": "b3a4",
@@ -407,7 +407,10 @@
       "Bxf6"
     ],
     "expect": {
-      "best_key": "explanation.best.check_wins_hanging"
+      "best_key": "explanation.best.saves_piece",
+      "forbidden_best_keys": [
+        "explanation.best.check_wins_hanging"
+      ]
     }
   },
   {
@@ -564,6 +567,31 @@
       "best_params": {
         "piece": "chess.piece.rook.acc"
       }
+    }
+  },
+  {
+    "id": "repeated-checks-hold-the-draw",
+    "source": "demo 72f4c72edbb9:73",
+    "note": "Qh6+ Qh7 Qf8+ Qg8 repeats the position: the best move holds a draw by checks rather than winning anything.",
+    "fen": "4bQqk/pp6/2p3p1/3p1p1p/3P4/8/PP3PP1/6K1 w - - 2 37",
+    "blunder": "f8f6",
+    "best": "f8h6",
+    "cp_loss": 387,
+    "best_line": [
+      "Qh6+",
+      "Qh7",
+      "Qf8+",
+      "Qg8"
+    ],
+    "refutation_line": [
+      "Qg7",
+      "Qd8",
+      "Qf7",
+      "a4",
+      "f4"
+    ],
+    "expect": {
+      "best_key": "explanation.best.perpetual_check"
     }
   }
 ]

@@ -263,6 +263,7 @@
   "explanation.best.pattern_generic": "The best move {san} wins material with a {pattern}.",
   "explanation.best.pattern_hanging_piece": "The best move {san} captures the undefended {piece} on {square}.",
   "explanation.best.pattern_skewer": "The best move {san} creates a skewer, forcing a valuable piece to move and exposing another.",
+  "explanation.best.perpetual_check": "The best move {san} starts checks your opponent can't escape, forcing a draw: {line}",
   "explanation.best.pv_mate": "The best move {san} leads to checkmate in {moves} moves: {line}",
   "explanation.best.pv_wins_piece": "The best move {san} wins the {piece} after {line}",
   "explanation.best.pv_wins_piece_via_combination": "The best move {san} wins the {piece} through a combination: {line}",

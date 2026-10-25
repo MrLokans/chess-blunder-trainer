@@ -263,6 +263,7 @@
   "explanation.best.pattern_generic": "La mejor jugada {san} gana material con un(a) {pattern}.",
   "explanation.best.pattern_hanging_piece": "La mejor jugada {san} captura el/la {piece} indefenso/a en {square}.",
   "explanation.best.pattern_skewer": "La mejor jugada {san} crea un enfilado, forzando a una pieza valiosa a moverse.",
+  "explanation.best.perpetual_check": "La mejor jugada {san} inicia jaques de los que el rival no puede escapar y fuerza las tablas: {line}",
   "explanation.best.pv_mate": "La mejor jugada {san} lleva al mate en {moves} jugadas: {line}",
   "explanation.best.pv_wins_piece": "La mejor jugada {san} gana {piece} después de {line}",
   "explanation.best.pv_wins_piece_via_combination": "La mejor jugada {san} gana {piece} mediante una combinación: {line}",

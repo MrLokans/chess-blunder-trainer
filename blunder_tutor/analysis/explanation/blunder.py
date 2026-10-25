@@ -60,9 +60,21 @@ def _blunder_missed_mate(puzzle: Puzzle) -> I18nMessage | None:
     return None
 
 
+def _captured_by_blunder(puzzle: Puzzle) -> int:
+    if not puzzle.board.is_capture(puzzle.blunder_move):
+        return 0
+    captured = puzzle.board.piece_at(puzzle.blunder_move.to_square)
+    return piece_value(captured.piece_type) if captured else 0
+
+
 def _blunder_hanging(puzzle: Puzzle) -> I18nMessage | None:
     landing = puzzle.blunder_move.to_square
     if not is_capturable(puzzle.board_after_blunder, landing, puzzle.player):
+        return None
+    # Taking an equal or bigger piece with it is a trade (Qxc6+ Kxc6), not a hang.
+    if _captured_by_blunder(puzzle) >= piece_value(
+        puzzle.board.piece_type_at(puzzle.blunder_move.from_square) or chess.PAWN
+    ):
         return None
     return I18nMessage(
         key="explanation.blunder.hanging_piece",
@@ -180,8 +192,9 @@ def _blunder_refuted(puzzle: Puzzle) -> I18nMessage | None:
     # Engine lines stop at mate, so an odd length means the opponent delivered it.
     if pv.gives_mate and len(pv.moves_san) % 2 == 1:
         return I18nMessage(key="explanation.blunder.refuted_mate", params=params)
-    # Net balance, not the biggest capture: Nxe6 fxe6 Rxe6+ takes a bishop, nets a pawn.
-    if pv.balance_gain >= 1:
+    # Net balance from before the blunder, not the biggest capture: Nxe6 fxe6 Rxe6+
+    # takes a bishop but nets a pawn, and Qxc6+ Kxc6 only takes back what was taken.
+    if pv.balance_gain - _captured_by_blunder(puzzle) >= 1:
         return I18nMessage(key="explanation.blunder.refuted_material", params=params)
     return None
 

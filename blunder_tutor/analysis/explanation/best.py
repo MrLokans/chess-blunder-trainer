@@ -114,6 +114,21 @@ def _line_mate(best: _BestMove) -> I18nMessage | None:
     )
 
 
+def _line_perpetual(best: _BestMove) -> I18nMessage | None:
+    line = best.line
+    if line is None or not line.perpetual_check:
+        return None
+    return best.say(
+        "explanation.best.perpetual_check", line=format_line(line.moves_san)
+    )
+
+
+def _line_denies_gain(best: _BestMove) -> bool:
+    # A board-only "wins" claim must not contradict the engine line: Qg4+ attacks a
+    # loose pawn, but the line only repeats checks and never takes it.
+    return best.line is not None and best.line.balance_gain < 1
+
+
 def _line_sacrifice(best: _BestMove) -> I18nMessage | None:
     line = best.line
     if line is None or not line.is_sacrifice_combination:
@@ -187,7 +202,7 @@ def _check_pattern(best: _BestMove) -> I18nMessage | None:
 
 
 def _check_wins_hanging(best: _BestMove) -> I18nMessage | None:
-    if not best.gives_check:
+    if not best.gives_check or _line_denies_gain(best):
         return None
     hanging = find_hanging_piece(best.board, best.move, best.board.turn)
     if hanging is None:
@@ -264,6 +279,8 @@ def _capture(best: _BestMove) -> I18nMessage | None:
     key = _capture_outcome_key(best, captured)
     if key is None:
         return None
+    if key == "explanation.best.wins_piece" and _line_denies_gain(best):
+        return None
     return best.say(key, piece=type_key(captured.piece_type, "acc"))
 
 
@@ -286,6 +303,7 @@ def _loss_avoidance(best: _BestMove) -> I18nMessage:
 _BEST_STRATEGIES: tuple[Callable[[_BestMove], I18nMessage | None], ...] = (
     _mate_in_one,
     _line_mate,
+    _line_perpetual,
     _line_sacrifice,
     _line_material_win,
     _line_combination,

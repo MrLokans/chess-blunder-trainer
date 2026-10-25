@@ -263,6 +263,7 @@
   "explanation.best.pattern_generic": "Найкращий хід {san} виграє матеріал за допомогою {pattern}.",
   "explanation.best.pattern_hanging_piece": "Найкращий хід {san} бере незахищеного {piece} на {square}.",
   "explanation.best.pattern_skewer": "Найкращий хід {san} створює наскрізний удар, змушуючи цінну фігуру відійти.",
+  "explanation.best.perpetual_check": "Найкращий хід {san} починає серію шахів, від яких суперник не втече, і форсує нічию: {line}",
   "explanation.best.pv_mate": "Найкращий хід {san} веде до мату за {moves} ходи: {line}",
   "explanation.best.pv_wins_piece": "Найкращий хід {san} виграє {piece} після {line}",
   "explanation.best.pv_wins_piece_via_combination": "Найкращий хід {san} виграє {piece} за допомогою комбінації: {line}",

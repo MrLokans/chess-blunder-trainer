@@ -313,6 +313,33 @@ class TestGenerateExplanation:
         assert raw.blunder.key == "explanation.blunder.exposed_piece"
         assert raw.blunder.params["square"] == "e4"
 
+    def test_repeated_checks_are_a_draw_not_a_won_pawn(self):
+        # Qg4+ attacks the loose g7 pawn, but the line only repeats checks.
+        fen = "3r3r/2pk2p1/1pq2p1p/3p4/Q7/2P5/5PPP/RR4K1 w - - 0 28"
+        raw = generate_explanation(
+            fen,
+            "a4c6",
+            "a4g4",
+            400,
+            best_line=["Qg4+", "Qe6", "Qa4+", "Qc6"],
+            refutation_line=["Kxc6", "Ra4", "Ra8", "Rg4", "g5"],
+        )
+        assert raw.best_move is not None
+        assert raw.best_move.key == "explanation.best.perpetual_check"
+
+    def test_queen_trade_is_neither_a_hang_nor_a_material_loss(self):
+        # Qxc6+ Kxc6 trades queens; the loss is the endgame, not a hanging queen.
+        fen = "3r3r/2pk2p1/1pq2p1p/3p4/Q7/2P5/5PPP/RR4K1 w - - 0 28"
+        raw = generate_explanation(
+            fen,
+            "a4c6",
+            "a4g4",
+            400,
+            refutation_line=["Kxc6", "Ra4", "Ra8", "Rg4", "g5"],
+        )
+        assert raw.blunder is not None
+        assert raw.blunder.key == "explanation.blunder.cp_loss"
+
     def test_best_move_simple_capture(self):
         fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1"
         result = _resolve(fen, blunder_uci="e1e2", best_move_uci="d1d5", cp_loss=500)
