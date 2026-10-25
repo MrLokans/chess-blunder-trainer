@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/preact';
+import { act, render } from '@testing-library/preact';
 
 const { mockCg, mockChessground } = vi.hoisted(() => {
   const mockCg = {
@@ -42,7 +42,7 @@ describe('Board', () => {
 
   it('destroys Chessground on unmount', () => {
     const { unmount } = render(<Board {...defaultProps} />);
-    unmount();
+    void act(() => { unmount(); });
     expect(mockCg.destroy).toHaveBeenCalled();
   });
 

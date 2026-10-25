@@ -1,8 +1,10 @@
 import { vi, afterEach } from 'vitest';
-import { cleanup } from '@testing-library/preact';
+import { act, cleanup } from '@testing-library/preact';
 
+// Preact 11 defers useEffect cleanups on unmount to an after-paint timer;
+// inside act they flush now instead of firing after jsdom is torn down.
 afterEach(() => {
-  cleanup();
+  void act(() => { cleanup(); });
 });
 
 // Mock vendored globals that would normally be loaded via script in base.html
