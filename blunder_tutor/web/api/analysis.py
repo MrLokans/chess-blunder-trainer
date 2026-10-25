@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
+from blunder_tutor.analysis.explanation import generate_explanation, resolve_explanation
 from blunder_tutor.analysis.tactics import PATTERN_LABELS
 from blunder_tutor.cache.scope import user_scope
 from blunder_tutor.constants import PHASE_FROM_STRING, PHASE_LABELS
@@ -14,7 +15,6 @@ from blunder_tutor.errors import IllegalMoveError, PuzzleNotFoundError
 from blunder_tutor.events.event_types import TrainingEvent
 from blunder_tutor.trainer import BlunderFilter
 from blunder_tutor.utils.chess_utils import format_eval
-from blunder_tutor.utils.explanation import generate_explanation, resolve_explanation
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -137,13 +137,16 @@ def _build_puzzle_response(
         if puzzle_data.tactical_pattern is not None
         else None
     )
+    refutation_line = (
+        puzzle_data.refutation_line.split() if puzzle_data.refutation_line else []
+    )
     explanation_raw = generate_explanation(
         fen=puzzle_data.fen,
         blunder_uci=puzzle_data.blunder_uci,
         best_move_uci=analysis.best_move_uci,
-        tactical_pattern=pattern_label,
         cp_loss=puzzle_data.cp_loss,
         best_line=analysis.best_line,
+        refutation_line=refutation_line,
     )
     explanation = resolve_explanation(explanation_raw, _resolve_translator(request))
     phase_label = (
@@ -167,6 +170,7 @@ def _build_puzzle_response(
         "best_move_uci": analysis.best_move_uci or "",
         "best_move_san": analysis.best_move_san or "",
         "best_line": analysis.best_line or [],
+        "refutation_line": refutation_line,
         "best_move_eval": puzzle_data.best_move_eval,
         "game_phase": phase_label,
         "tactical_pattern": pattern_label,

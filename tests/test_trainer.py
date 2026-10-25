@@ -184,6 +184,37 @@ class TestPreMoveFields:
         assert puzzle.pre_move_fen is None
 
 
+class TestRefutationLine:
+    async def test_refutation_is_next_ply_best_line(self, trainer):
+        trainer.games.get_all_game_side_map = AsyncMock(return_value={"game1": 0})
+        trainer.attempts.get_recently_solved_puzzles = AsyncMock(return_value=set())
+        trainer.analysis.fetch_blunders_with_tactics = AsyncMock(
+            return_value=[make_blunder(game_id="game1", ply=5, game_phase=None)]
+        )
+        trainer.analysis.get_move_analysis = AsyncMock(
+            return_value={"best_line": "Nxe5 Nxe5 d4"}
+        )
+        trainer.games.load_game = AsyncMock(return_value=make_mock_game())
+
+        puzzle = await trainer.pick_random_blunder()
+
+        trainer.analysis.get_move_analysis.assert_awaited_once_with("game1", 6)
+        assert puzzle.refutation_line == "Nxe5 Nxe5 d4"
+
+    async def test_no_refutation_when_blunder_ends_game(self, trainer):
+        trainer.games.get_all_game_side_map = AsyncMock(return_value={"game1": 0})
+        trainer.attempts.get_recently_solved_puzzles = AsyncMock(return_value=set())
+        trainer.analysis.fetch_blunders_with_tactics = AsyncMock(
+            return_value=[make_blunder(game_id="game1", ply=5, game_phase=None)]
+        )
+        trainer.analysis.get_move_analysis = AsyncMock(return_value=None)
+        trainer.games.load_game = AsyncMock(return_value=make_mock_game())
+
+        puzzle = await trainer.pick_random_blunder()
+
+        assert puzzle.refutation_line is None
+
+
 def test_date_in_range_includes_whole_end_day():
     assert _date_in_range("2026-05-06T19:20:26+00:00", "2026-05-06", "2026-05-06")
     assert not _date_in_range("2026-05-07T00:00:01+00:00", None, "2026-05-06")

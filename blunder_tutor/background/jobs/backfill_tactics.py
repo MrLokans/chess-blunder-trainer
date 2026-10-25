@@ -65,11 +65,11 @@ class BackfillTacticsJob(BaseJob):
         if not game:
             return 0
 
-        ply_to_board = _build_ply_to_board(game)
+        ply_to_board = build_ply_to_board(game)
         updates = [
             update
             for blunder_data in blunders
-            if (update := _classify_blunder(blunder_data, ply_to_board, game_id))
+            if (update := classify_blunder(blunder_data, ply_to_board, game_id))
         ]
 
         if updates:
@@ -77,7 +77,7 @@ class BackfillTacticsJob(BaseJob):
         return len(updates)
 
 
-def _build_ply_to_board(
+def build_ply_to_board(
     game: chess.pgn.Game,
 ) -> dict[int, tuple[chess.Board, chess.Move]]:
     board = game.board()
@@ -88,7 +88,7 @@ def _build_ply_to_board(
     return ply_to_board
 
 
-def _classify_blunder(
+def classify_blunder(
     blunder_data: dict[str, Any],
     ply_to_board: dict[int, tuple[chess.Board, chess.Move]],
     game_id: str,

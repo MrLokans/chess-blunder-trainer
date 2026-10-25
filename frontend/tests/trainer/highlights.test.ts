@@ -18,6 +18,7 @@ function makePuzzle(overrides: Partial<PuzzleData> = {}): PuzzleData {
     best_move_uci: '',
     best_move_san: '',
     best_line: [],
+    refutation_line: [],
     player_color: 'white',
     eval_before: 0,
     eval_after: 0,
