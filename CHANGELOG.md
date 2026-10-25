@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.8.0]
+
+### Added
+
+- **Refutation on the result card**: After a puzzle, the trainer shows what you played, why the best move is better, and a "Show refutation" playback of how the opponent punishes the blunder.
+- **Pawn-structure explanations**: Quiet best moves are explained by the pawn damage they cause, such as stripped king cover or doubled pawns.
+
+### Changed
+
+- **Engine and runtime**: The Docker image ships Stockfish 19. Running from source now requires Python 3.15.
+
+### Fixed
+
+- **Tactic attribution**: Blunders are no longer blamed for pins that were forced, and the best move no longer gets credit for the blunder's tactic. Existing puzzles are re-tagged on upgrade.
+- **Accurate explanations**: Explanations no longer overstate material, threats or hanging pieces. A recapturable even capture is called a trade, claims the engine line doesn't back up are dropped, and draws by repeated checks are recognised.
+
+---
+
 ## [3.7.0]
 
 ### Added
