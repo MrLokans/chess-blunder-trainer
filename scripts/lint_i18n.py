@@ -123,6 +123,28 @@ INTENTIONAL_BORROWINGS: dict[tuple[str, str], str] = {
     # ``PGN`` is the chess game file format — universally untranslated.
     # ``Import`` is also a valid Polish noun (cognate with English).
     ("pl", "import.title"): "PGN file format + Polish/English cognate noun",
+    # ``CP`` (centipawn) is the engine-output abbreviation chess software
+    # shows untranslated; spelling the word out would need plural forms.
+    (
+        "be",
+        "dashboard.unit.cp",
+    ): "centipawn abbreviation used untranslated in chess software",
+    (
+        "es",
+        "dashboard.unit.cp",
+    ): "centipawn abbreviation used untranslated in chess software",
+    (
+        "pl",
+        "dashboard.unit.cp",
+    ): "centipawn abbreviation used untranslated in chess software",
+    (
+        "ru",
+        "dashboard.unit.cp",
+    ): "centipawn abbreviation used untranslated in chess software",
+    (
+        "uk",
+        "dashboard.unit.cp",
+    ): "centipawn abbreviation used untranslated in chess software",
 }
 
 # ---------------------------------------------------------------------------

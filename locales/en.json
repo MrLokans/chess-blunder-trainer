@@ -766,6 +766,7 @@
   "dashboard.nav.color": "Colour",
   "dashboard.nav.openings": "Openings",
   "dashboard.unit.pawns": "{value} pawns",
+  "dashboard.unit.cp": "{value} CP",
   "dashboard.trend.compare_ranges": "Games {firstStart}–{firstEnd} vs {lastStart}–{lastEnd}",
   "dashboard.coach.train.cta_pattern": "Train “{pattern}”",
   "dashboard.chart.date": "Date",

@@ -265,13 +265,15 @@ export function EcoBreakdown({ data }: { data: EcoData }) {
       render: row =>
         row.kind === 'header'
           ? String(row.totalCount)
-          : <>{String(row.item.count)} <span class="eco-percent">({String(row.item.percentage)}%)</span></>,
+          : <>{String(row.item.count)} <span class="eco-percent">({formatNumber(row.item.percentage / 100, { style: 'percent', maximumFractionDigits: 1 })})</span></>,
     },
     {
       key: 'avg_loss',
       header: t('dashboard.chart.eco_avg_loss'),
       render: row =>
-        `${(row.kind === 'header' ? row.avgCpLoss / 100 : row.item.avg_cp_loss / 100).toFixed(2)} pawns`,
+        t('dashboard.unit.pawns', {
+          value: formatNumber((row.kind === 'header' ? row.avgCpLoss : row.item.avg_cp_loss) / 100, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        }),
     },
     {
       key: 'games',

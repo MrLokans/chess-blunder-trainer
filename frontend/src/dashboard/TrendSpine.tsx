@@ -72,9 +72,9 @@ export function niceScale(max: number): { top: number; step: number } {
 function format(value: number, metric: TrendMetric): string {
   const digits = { minimumFractionDigits: metric.precision, maximumFractionDigits: metric.precision };
   if (metric.unit === 'pawns') return t('dashboard.unit.pawns', { value: formatNumber(value / 100, digits) });
+  if (metric.unit === 'percent') return formatNumber(value / 100, { ...digits, style: 'percent' });
   const number = formatNumber(value, digits);
-  if (metric.unit === 'percent') return `${number}%`;
-  return metric.unit === 'cp' ? `${number} CP` : number;
+  return metric.unit === 'cp' ? t('dashboard.unit.cp', { value: number }) : number;
 }
 
 function valuesOf(windows: GrowthWindow[], key: MetricKey): (number | null)[] {

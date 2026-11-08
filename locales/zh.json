@@ -766,6 +766,7 @@
   "dashboard.nav.color": "执子",
   "dashboard.nav.openings": "开局",
   "dashboard.unit.pawns": "{value} 兵",
+  "dashboard.unit.cp": "{value} 厘兵",
   "dashboard.trend.compare_ranges": "对局 {firstStart}–{firstEnd} 对比 {lastStart}–{lastEnd}",
   "dashboard.coach.train.cta_pattern": "练习「{pattern}」",
   "dashboard.chart.date": "日期",
