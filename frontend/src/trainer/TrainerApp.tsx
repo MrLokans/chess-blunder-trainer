@@ -410,6 +410,13 @@ function TrainerCore(): preact.JSX.Element {
             submitting={submitting}
             hasPuzzle={!!state.puzzle}
           />
+          <MoveActions
+            hasPuzzle={!!state.puzzle}
+            bestRevealed={state.bestRevealed}
+            onReset={handleReset}
+            onReveal={handleReveal}
+            onNext={handleNext}
+          />
         </div>
 
         <div class="trainer-panel">
@@ -417,14 +424,6 @@ function TrainerCore(): preact.JSX.Element {
             <ReviewBanner dueCount={reviewQueue.dueCount} onStart={handleStartReview} />
           )}
           <div class="panel-section panel-actions">
-            <MoveActions
-              hasPuzzle={!!state.puzzle}
-              bestRevealed={state.bestRevealed}
-              onReset={handleReset}
-              onReveal={handleReveal}
-              onNext={handleNext}
-              onUndo={handleUndo}
-            />
             <PuzzleTools
               puzzle={state.puzzle}
               starred={state.currentStarred}

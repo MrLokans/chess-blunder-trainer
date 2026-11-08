@@ -572,70 +572,19 @@
 }
 
 /* ==========================================================================
-   Action Keys (inline buttons + shortcut hints)
+   Move Actions — labelled buttons under the board
    ========================================================================== */
 
-.action-keys {
+.move-actions {
   display: flex;
-  align-items: center;
-  gap: var(--s-xs);
-}
-
-.action-key {
-  display: inline-flex;
-  align-items: center;
+  flex-wrap: wrap;
   justify-content: center;
-  width: auto;
-  height: 32px;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  font-family: var(--font-ui);
-  color: var(--text-secondary);
+  gap: var(--s-sm);
+  margin-top: var(--s-md);
 }
 
-.action-key:hover:not(:disabled) {
-  color: var(--text);
-}
-
-.action-key:hover:not(:disabled) kbd {
-  border-color: var(--border-strong);
-}
-
-.action-key:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.action-key kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-  height: auto;
-  padding: var(--s-xs) var(--s-md);
-  border: 2px solid var(--border-control);
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  font-weight: 400;
-  color: currentcolor;
-  background: transparent;
-  opacity: 1;
-}
-
-.action-key#submitBtn {
-  padding: 0;
-  background: var(--accent);
-  color: var(--text-on-accent);
-}
-
-.action-key#submitBtn:hover:not(:disabled) {
-  background: var(--accent-hover);
-}
-
-.action-key#submitBtn.submitting {
-  pointer-events: none;
+.move-actions kbd {
+  margin-left: var(--s-sm);
 }
 
 /* ==========================================================================
@@ -1214,11 +1163,6 @@
 }
 
 @media (pointer: coarse) {
-  .action-key {
-    height: 44px;
-    min-width: 44px;
-  }
-
   .tactical-filter-btn,
   .panel-toolbar .btn-ghost {
     min-height: 44px;

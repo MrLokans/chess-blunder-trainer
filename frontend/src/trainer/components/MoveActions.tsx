@@ -1,33 +1,29 @@
+import { Button } from '../../components/primitives/Button';
+
 interface MoveActionsProps {
   hasPuzzle: boolean;
   bestRevealed: boolean;
   onReset: () => void;
   onReveal: () => void;
   onNext: () => void;
-  onUndo: () => void;
 }
 
 export function MoveActions({
-  hasPuzzle, bestRevealed,
-  onReset, onReveal, onNext, onUndo: _onUndo,
+  hasPuzzle, bestRevealed, onReset, onReveal, onNext,
 }: MoveActionsProps): preact.JSX.Element | null {
   if (!hasPuzzle) return null;
 
   return (
-    <div class="action-keys">
-      <button class="action-key" id="resetBtn" onClick={onReset} aria-label={t('trainer.shortcuts.reset')} title={t('trainer.shortcuts.reset')}>
-        <kbd>R</kbd>
-      </button>
-
-      {!bestRevealed && (
-        <button class="action-key" id="showBestBtn" onClick={onReveal} aria-label={t('trainer.shortcuts.show_best')} title={t('trainer.shortcuts.show_best')}>
-          <kbd>B</kbd>
-        </button>
-      )}
-
-      <button class="action-key" id="nextBtn" onClick={onNext} aria-label={t('trainer.shortcuts.next')} title={t('trainer.shortcuts.next')}>
-        <kbd>N</kbd>
-      </button>
+    <div class="move-actions">
+      <Button variant="secondary" size="sm" testId="reset" onClick={onReset}>
+        {t('trainer.shortcuts.reset')}<kbd>R</kbd>
+      </Button>
+      <Button variant="secondary" size="sm" testId="show-best" disabled={bestRevealed} onClick={onReveal}>
+        {t('trainer.shortcuts.show_best')}<kbd>B</kbd>
+      </Button>
+      <Button variant="secondary" size="sm" testId="next" onClick={onNext}>
+        {t('trainer.shortcuts.next')}<kbd>N</kbd>
+      </Button>
     </div>
   );
 }

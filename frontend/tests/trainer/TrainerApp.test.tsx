@@ -130,7 +130,7 @@ describe('TrainerApp', () => {
 
     expect(shortcutButton.className).toContain('btn-ghost');
     expect(container.querySelector('.panel-toolbar')).not.toBeNull();
-    expect([...container.querySelectorAll('.action-keys kbd')].map((key) => key.textContent)).not.toContain('?');
+    expect([...container.querySelectorAll('.move-actions kbd')].map((key) => key.textContent)).toEqual(['R', 'B', 'N']);
     const dialog = await screen.findByRole('dialog', { name: 'trainer.shortcuts.title' });
     expect(dialog.contains(document.activeElement)).toBe(true);
     expect(screen.getByRole('button', { name: 'common.close' })).not.toBeNull();

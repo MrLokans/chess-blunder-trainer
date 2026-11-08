@@ -31,9 +31,9 @@ export class TrainerPage extends BasePage {
     this.bestMoveDisplay = page.locator('#bestMoveDisplay');
     this.movePrompt = page.locator('#movePrompt');
     this.emptyState = page.locator('#emptyState');
-    this.resetBtn = page.locator('#resetBtn');
-    this.showBestBtn = page.locator('#showBestBtn');
-    this.nextBtn = page.locator('#nextBtn');
+    this.resetBtn = page.getByTestId('reset');
+    this.showBestBtn = page.getByTestId('show-best');
+    this.nextBtn = page.getByTestId('next');
     this.vimInput = page.locator('#vimInput');
     this.vimInputField = page.locator('#vimInputField');
     this.vimInputError = page.locator('#vimInputError');
