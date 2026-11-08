@@ -70,9 +70,9 @@ REFERENCE_LOCALE = "en"
 
 #: Source roots scanned for ``t('key')`` callsites. Tests count as
 #: callsites — they often serve as documentation of which keys exist.
-#: ``blunder_tutor`` covers both backend Python (lookup tables like
-#: ``analysis/explanation/messages.py``'s ``chess.piece.*`` map) and the static
-#: JS that ships under ``web/static/js`` — the ``EXCLUDED_PATH_FRAGMENTS``
+#: ``blunder_tutor`` covers backend Python (lookup tables like
+#: ``analysis/explanation/messages.py``'s ``chess.piece.*`` map) and the two
+#: scripts left under ``web/static/js`` — the ``EXCLUDED_PATH_FRAGMENTS``
 #: list keeps build output (``static/dist/``, ``__pycache__``) out.
 SOURCE_ROOTS: tuple[str, ...] = (
     "frontend/src",

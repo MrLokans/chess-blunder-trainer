@@ -1287,17 +1287,13 @@ body:has(.demo-banner) {
   border: 2px solid var(--text-muted);
   border-top-color: transparent;
   border-radius: 50%;
-  animation: field-validation-spin 0.6s linear infinite;
+  animation: spin 0.6s linear infinite;
   margin-right: 6px;
   vertical-align: middle;
 }
 
 .field-validation.valid::before { content: '✓ '; }
 .field-validation.invalid::before { content: '✗ '; }
-
-@keyframes field-validation-spin {
-  to { transform: rotate(360deg); }
-}
 
 /* Status dot indicator */
 .status-dot {

@@ -33,16 +33,9 @@ export default [
     },
   },
   {
-    files: ['blunder_tutor/web/static/js/theme-loader.js', 'blunder_tutor/web/static/js/i18n.js'],
+    files: ['blunder_tutor/web/static/js/i18n.js'],
     languageOptions: {
       sourceType: 'script',
-    },
-  },
-  {
-    files: ['blunder_tutor/web/static/js/theme-loader.js'],
-    rules: {
-      'no-unused-vars': 'off',
-      'no-var': 'off',
     },
   },
 ];

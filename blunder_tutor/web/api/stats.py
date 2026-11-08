@@ -5,7 +5,6 @@ from typing import Annotated, Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import Depends, HTTPException, Query, Request, status
-from fastapi.responses import HTMLResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field, field_validator
 
@@ -397,25 +396,6 @@ async def get_training_stats(
     stats = await attempt_repo.get_user_stats()
 
     return TrainingStats(**stats)
-
-
-@stats_router.get(
-    "/api/stats/training/html",
-    response_class=HTMLResponse,
-    summary="Get training statistics HTML",
-    description="Returns training statistics as an HTML partial for HTMX.",
-)
-async def get_training_stats_html(
-    request: Request,
-    attempt_repo: PuzzleAttemptRepoDep,
-) -> HTMLResponse:
-    stats = await attempt_repo.get_user_stats()
-
-    return request.app.state.templates.TemplateResponse(
-        request,
-        "_stats_partial.html",
-        dict(stats),
-    )
 
 
 @stats_router.get(
