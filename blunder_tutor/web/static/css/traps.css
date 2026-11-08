@@ -1,3 +1,21 @@
+.traps-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-xs) var(--s-md);
+  margin: 0 0 var(--s-lg);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.traps-status strong { color: var(--text); }
+
+.traps-status > span + span::before {
+  content: '·';
+  margin-right: var(--s-md);
+  color: var(--border-strong);
+}
+
 .top-traps {
   margin-bottom: var(--s-md);
 }

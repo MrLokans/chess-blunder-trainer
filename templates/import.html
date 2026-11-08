@@ -11,6 +11,8 @@
 {{ render_nav('import') }}
 {% endblock %}
 
+{# Off the main nav, so the page names itself. #}
+{% block page_heading_class %}page-title{% endblock %}
 {% block page_heading %}{{ t('import.title') }}{% endblock %}
 
 {% block content %}

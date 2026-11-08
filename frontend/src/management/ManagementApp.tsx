@@ -40,8 +40,8 @@ function renderEngineStatus(status: EngineStatus) {
     return (
       <div>
         <div class="engine-status-row">
-          <span class="status-dot status-dot--success" />
-          <span class="text-success font-semibold">{t('management.engine.available')}</span>
+          <span class="status-dot status-dot--ok" />
+          <span class="font-semibold">{t('management.engine.available')}</span>
         </div>
         <table class="engine-details">
           <tr>

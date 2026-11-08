@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { client } from '../shared/api';
 import { useAsyncData } from '../hooks/useAsyncData';
-import { StatCard } from '../components/data/StatCard';
 import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
 import { EmptyState } from '../components/layout/EmptyState';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -186,12 +185,12 @@ function Summary({ summary, catalog }: SummaryProps) {
 
   return (
     <>
-      <div class="stats-grid">
-        <StatCard label={t('traps.times_fell')} value={summary.total_sprung} />
-        <StatCard label={t('traps.times_entered')} value={summary.total_entered} />
-        <StatCard label={t('traps.times_executed')} value={summary.total_executed} />
-        <StatCard label={t('traps.games_involved')} value={summary.games_with_traps} />
-      </div>
+      <p class="traps-status">
+        <span><strong>{formatNumber(summary.total_sprung)}</strong> {t('traps.times_fell')}</span>
+        <span><strong>{formatNumber(summary.total_entered)}</strong> {t('traps.times_entered')}</span>
+        <span><strong>{formatNumber(summary.total_executed)}</strong> {t('traps.times_executed')}</span>
+        <span><strong>{formatNumber(summary.games_with_traps)}</strong> {t('traps.games_involved')}</span>
+      </p>
       {summary.top_traps && summary.top_traps.length > 0 && (
         <div class="top-traps">
           <span class="top-traps-label">{t('traps.most_common')}:</span>{' '}

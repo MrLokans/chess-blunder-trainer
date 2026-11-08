@@ -92,7 +92,7 @@
   width: 28px;
   background: var(--eval-black-fill);
   position: relative;
-  border: none;
+  border: 2px solid var(--border-strong);
   overflow: hidden;
   border-radius: 0;
   flex: 1;

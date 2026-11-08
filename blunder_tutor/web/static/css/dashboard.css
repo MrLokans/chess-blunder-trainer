@@ -690,6 +690,7 @@
     .filter-bar-header { align-items: flex-start; flex-wrap: wrap; }
     .filter-bar-toggle { flex-basis: 100%; flex-wrap: wrap; }
     .filter-bar-clear.is-idle { display: none; }
+    .filter-chip-divider { display: none; }
     .filter-bar-summary { flex-basis: calc(100% - 24px); }
   }
 
@@ -711,10 +712,12 @@
 
   .filter-presets {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--s-xs);
   }
 
   .filter-presets button {
+    white-space: nowrap;
     padding: var(--s-xs) var(--s-md);
     font-family: var(--font-ui);
     font-size: var(--text-xs);

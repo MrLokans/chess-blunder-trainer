@@ -103,19 +103,16 @@ describe('TrapsApp', () => {
     render(<TrapsApp />);
 
     await waitFor(() => {
-      expect(screen.getByText(t('traps.times_fell'))).toBeDefined();
+      expect(document.querySelector('.traps-status')).not.toBeNull();
     });
 
-    expect(screen.getByText(t('traps.times_entered'))).toBeDefined();
-    expect(screen.getByText(t('traps.times_executed'))).toBeDefined();
-    expect(screen.getByText(t('traps.games_involved'))).toBeDefined();
-
-    const statValues = document.querySelectorAll('.stat-value');
-    const values = Array.from(statValues).map(el => el.textContent);
-    expect(values).toContain('4');
-    expect(values).toContain('7');
-    expect(values).toContain('2');
-    expect(values).toContain('3');
+    const parts = Array.from(document.querySelectorAll('.traps-status > span')).map(el => el.textContent);
+    expect(parts).toEqual([
+      `4 ${t('traps.times_fell')}`,
+      `7 ${t('traps.times_entered')}`,
+      `2 ${t('traps.times_executed')}`,
+      `3 ${t('traps.games_involved')}`,
+    ]);
   });
 
   test('shows empty summary when no data', async () => {
