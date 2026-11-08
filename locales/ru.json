@@ -108,7 +108,6 @@
   "dashboard.chart.avg_loss": "Ср. потеря: {loss} пешек",
   "dashboard.chart.blunders_per_game": "{rate} зевка/игру",
   "dashboard.chart.blunders_per_game_heading": "Зевки/игру",
-  "dashboard.chart.blunders_games": "{blunders} зевков / {games} игр",
   "dashboard.chart.blunders_by_color": "Зевки по цвету",
   "dashboard.chart.blunders_by_color_desc": "Сравните частоту зевков при игре белыми и чёрными.",
   "dashboard.chart.blunders_by_difficulty": "Зевки по сложности",
@@ -751,9 +750,6 @@
   "dashboard.trend.verdict.improving": "Лучше, чем в начале",
   "dashboard.trend.verdict.declining": "Хуже, чем в начале",
   "dashboard.trend.verdict.stable": "Примерно как в начале",
-  "dashboard.trend.compare": "{count, plural, one {Первая # партия против последней #} few {Первые # партии против последних #} many {Первые # партий против последних #} other {Первые # партии против последних #}}",
-  "dashboard.trend.first_n": "первые {count}",
-  "dashboard.trend.last_n": "последние {count}",
   "dashboard.trend.chart_note": "Каждый столбец — блок из {size} партий, самые старые слева. Тёмные столбцы — блоки, которые сравниваются.",
   "dashboard.status.games": "{count, plural, one {# партия} few {# партии} many {# партий} other {# партии}}",
   "dashboard.status.analyzed": "{count, plural, other {проанализировано: #}}",
@@ -769,5 +765,6 @@
   "dashboard.nav.time_control": "Контроль",
   "dashboard.nav.color": "Цвет",
   "dashboard.nav.openings": "Дебюты",
-  "dashboard.unit.pawns": "{value} пешки"
+  "dashboard.unit.pawns": "{value} пешки",
+  "dashboard.trend.compare_ranges": "Партии {firstStart}–{firstEnd} против {lastStart}–{lastEnd}"
 }

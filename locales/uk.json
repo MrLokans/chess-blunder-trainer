@@ -108,7 +108,6 @@
   "dashboard.chart.avg_loss": "Сер. втрата: {loss} пішаків",
   "dashboard.chart.blunders_per_game": "{rate} грубих помилок/гру",
   "dashboard.chart.blunders_per_game_heading": "Помилки/гру",
-  "dashboard.chart.blunders_games": "{blunders} грубих помилок / {games} ігор",
   "dashboard.chart.blunders_by_color": "Промахи за кольором",
   "dashboard.chart.blunders_by_color_desc": "Порівняйте частоту промахів при грі білими та чорними.",
   "dashboard.chart.blunders_by_difficulty": "Помилки за складністю",
@@ -751,9 +750,6 @@
   "dashboard.trend.verdict.improving": "Краще, ніж на початку",
   "dashboard.trend.verdict.declining": "Гірше, ніж на початку",
   "dashboard.trend.verdict.stable": "Приблизно як на початку",
-  "dashboard.trend.compare": "{count, plural, one {Перша # партія проти останньої #} few {Перші # партії проти останніх #} many {Перші # партій проти останніх #} other {Перші # партії проти останніх #}}",
-  "dashboard.trend.first_n": "перші {count}",
-  "dashboard.trend.last_n": "останні {count}",
   "dashboard.trend.chart_note": "Кожен стовпчик — блок із {size} партій, найстаріші ліворуч. Темні стовпчики — блоки, що порівнюються.",
   "dashboard.status.games": "{count, plural, one {# партія} few {# партії} many {# партій} other {# партії}}",
   "dashboard.status.analyzed": "{count, plural, other {проаналізовано: #}}",
@@ -769,5 +765,6 @@
   "dashboard.nav.time_control": "Контроль",
   "dashboard.nav.color": "Колір",
   "dashboard.nav.openings": "Дебюти",
-  "dashboard.unit.pawns": "{value} пішака"
+  "dashboard.unit.pawns": "{value} пішака",
+  "dashboard.trend.compare_ranges": "Партії {firstStart}–{firstEnd} проти {lastStart}–{lastEnd}"
 }

@@ -84,6 +84,23 @@ function valuesOf(windows: GrowthWindow[], key: MetricKey): (number | null)[] {
   });
 }
 
+interface CompareRanges {
+  firstStart: number;
+  firstEnd: number;
+  lastStart: number;
+  lastEnd: number;
+}
+
+// Blocks are anchored on the newest game, so the oldest few games can fall outside the first block.
+function compareRanges(windows: GrowthWindow[], blocks: number): CompareRanges {
+  return {
+    firstStart: windows[0]?.game_start ?? 0,
+    firstEnd: windows[blocks - 1]?.game_end ?? 0,
+    lastStart: windows[windows.length - blocks]?.game_start ?? 0,
+    lastEnd: windows.at(-1)?.game_end ?? 0,
+  };
+}
+
 function blockLabel(w: GrowthWindow): string {
   return t('growth.window_label', { start: w.game_start, end: w.game_end });
 }
@@ -93,11 +110,11 @@ interface BlockChartProps {
   values: (number | null)[];
   comparison: EndsComparison;
   metric: TrendMetric;
-  games: number;
+  ranges: CompareRanges;
   verdict: string;
 }
 
-function BlockChart({ windows, values, comparison, metric, games, verdict }: BlockChartProps) {
+function BlockChart({ windows, values, comparison, metric, ranges, verdict }: BlockChartProps) {
   const known = values.filter((v): v is number => v !== null);
   const { top, step } = niceScale(Math.max(...known, comparison.before, comparison.now));
   const ticks = Array.from({ length: Math.round(top / step) + 1 }, (_, i) => i * step);
@@ -133,10 +150,10 @@ function BlockChart({ windows, values, comparison, metric, games, verdict }: Blo
           })}
         </div>
         <span class="trend-chart__ref trend-chart__ref--first" style={{ bottom: pct(comparison.before), left: 0, width: span }}>
-          <span>{t('dashboard.trend.first_n', { count: games })} · {format(comparison.before, metric)}</span>
+          <span>{ranges.firstStart}–{ranges.firstEnd} · {format(comparison.before, metric)}</span>
         </span>
         <span class={`trend-chart__ref trend-chart__ref--last trend--${comparison.direction}`} style={{ bottom: pct(comparison.now), right: 0, width: span }}>
-          <span>{t('dashboard.trend.last_n', { count: games })} · {format(comparison.now, metric)}</span>
+          <span>{ranges.lastStart}–{ranges.lastEnd} · {format(comparison.now, metric)}</span>
         </span>
       </div>
       <div class="trend-chart__axis" aria-hidden="true">
@@ -171,7 +188,8 @@ export function TrendSpine({ growth, nextStep }: TrendSpineProps) {
   const metric = METRICS.find(m => m.key === selected) ?? BLUNDERS_PER_GAME;
   const values = valuesOf(growth.windows, metric.key);
   const comparison = compareEnds(values, metric);
-  const games = (comparison?.blocks ?? 0) * growth.window_size;
+  const ranges = comparison ? compareRanges(growth.windows, comparison.blocks) : null;
+  const rangesLabel = ranges ? t('dashboard.trend.compare_ranges', { ...ranges }) : '';
   const verdict = comparison ? t(`dashboard.trend.verdict.${comparison.direction}`) : '';
   const cplHelp = (
     <button type="button" class="info-help-btn" aria-label={t('growth.cpl_help_label')} onClick={() => { setCplHelpOpen(true); }}>?</button>
@@ -196,10 +214,10 @@ export function TrendSpine({ growth, nextStep }: TrendSpineProps) {
                   {t(metric.label)}
                   {metric.key === 'avg_cpl' && cplHelp}
                   <br />
-                  {t('dashboard.trend.compare', { count: games })}
+                  {rangesLabel}
                 </span>
               </p>
-              <BlockChart windows={growth.windows} values={values} comparison={comparison} metric={metric} games={games} verdict={verdict} />
+              <BlockChart windows={growth.windows} values={values} comparison={comparison} metric={metric} ranges={compareRanges(growth.windows, comparison.blocks)} verdict={verdict} />
               <p class="trend-chart__note">{t('dashboard.trend.chart_note', { size: growth.window_size })}</p>
             </>
           ) : (
@@ -213,7 +231,7 @@ export function TrendSpine({ growth, nextStep }: TrendSpineProps) {
       <aside class="trend-spine__side">
         {comparison && (
           <>
-            <h3 class="trend-side__title">{t('dashboard.trend.compare', { count: games })}</h3>
+            <h3 class="trend-side__title">{rangesLabel}</h3>
             <ul class="trend-side__list">
               {METRICS.filter(m => m.key !== selected).map(m => {
                 const series = valuesOf(growth.windows, m.key);

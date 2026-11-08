@@ -108,7 +108,6 @@
   "dashboard.chart.avg_loss": "Avg. loss: {loss} pawns",
   "dashboard.chart.blunders_per_game": "{rate} blunders/game",
   "dashboard.chart.blunders_per_game_heading": "Blunders/game",
-  "dashboard.chart.blunders_games": "{blunders} blunders / {games} games",
   "dashboard.chart.blunders_by_color": "Blunders by Color",
   "dashboard.chart.blunders_by_color_desc": "Compare your blunder rate when playing as white versus black.",
   "dashboard.chart.blunders_by_difficulty": "Blunders by Difficulty",
@@ -751,9 +750,6 @@
   "dashboard.trend.verdict.improving": "Better than when you started",
   "dashboard.trend.verdict.declining": "Worse than when you started",
   "dashboard.trend.verdict.stable": "About the same as when you started",
-  "dashboard.trend.compare": "{count, plural, one {First # game vs last #} other {First # games vs last #}}",
-  "dashboard.trend.first_n": "first {count}",
-  "dashboard.trend.last_n": "last {count}",
   "dashboard.trend.chart_note": "Each bar is a block of {size} games, oldest on the left. Bold bars are the blocks being compared.",
   "dashboard.status.games": "{count, plural, one {# game} other {# games}}",
   "dashboard.status.analyzed": "{count, plural, other {# analyzed}}",
@@ -769,5 +765,6 @@
   "dashboard.nav.time_control": "Time control",
   "dashboard.nav.color": "Colour",
   "dashboard.nav.openings": "Openings",
-  "dashboard.unit.pawns": "{value} pawns"
+  "dashboard.unit.pawns": "{value} pawns",
+  "dashboard.trend.compare_ranges": "Games {firstStart}–{firstEnd} vs {lastStart}–{lastEnd}"
 }

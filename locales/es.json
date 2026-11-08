@@ -108,7 +108,6 @@
   "dashboard.chart.avg_loss": "Pérdida media: {loss} peones",
   "dashboard.chart.blunders_per_game": "{rate} errores graves/partida",
   "dashboard.chart.blunders_per_game_heading": "Errores/partida",
-  "dashboard.chart.blunders_games": "{blunders} errores graves / {games} partidas",
   "dashboard.chart.blunders_by_color": "Errores graves por color",
   "dashboard.chart.blunders_by_color_desc": "Compara tu tasa de errores graves jugando con blancas y con negras.",
   "dashboard.chart.blunders_by_difficulty": "Errores por dificultad",
@@ -751,9 +750,6 @@
   "dashboard.trend.verdict.improving": "Mejor que al principio",
   "dashboard.trend.verdict.declining": "Peor que al principio",
   "dashboard.trend.verdict.stable": "Más o menos como al principio",
-  "dashboard.trend.compare": "{count, plural, one {Primera # partida frente a la última #} other {Primeras # partidas frente a las últimas #}}",
-  "dashboard.trend.first_n": "primeras {count}",
-  "dashboard.trend.last_n": "últimas {count}",
   "dashboard.trend.chart_note": "Cada barra es un bloque de {size} partidas, las más antiguas a la izquierda. Las barras oscuras son los bloques que se comparan.",
   "dashboard.status.games": "{count, plural, one {# partida} other {# partidas}}",
   "dashboard.status.analyzed": "{count, plural, one {# analizada} other {# analizadas}}",
@@ -769,5 +765,6 @@
   "dashboard.nav.time_control": "Ritmo",
   "dashboard.nav.color": "Color",
   "dashboard.nav.openings": "Aperturas",
-  "dashboard.unit.pawns": "{value} peones"
+  "dashboard.unit.pawns": "{value} peones",
+  "dashboard.trend.compare_ranges": "Partidas {firstStart}–{firstEnd} frente a {lastStart}–{lastEnd}"
 }

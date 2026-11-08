@@ -1026,7 +1026,7 @@
   }
 
   .trend-chart__note {
-    margin: var(--s-sm) 0 0 var(--gutter);
+    margin: var(--s-md) 0 0 var(--gutter);
     font-size: var(--text-sm);
     color: var(--text-muted);
   }
@@ -1039,7 +1039,7 @@
   .trend-spine__side {
     display: flex;
     flex-direction: column;
-    gap: var(--s-xl);
+    gap: var(--s-lg);
     min-width: 0;
   }
 
@@ -1055,7 +1055,7 @@
   }
 
   .trend-side__list {
-    margin: calc(-1 * var(--s-xl)) 0 0;
+    margin: calc(-1 * var(--s-lg)) 0 0;
     padding: 0;
     list-style: none;
   }
@@ -1064,8 +1064,8 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) 96px;
     grid-template-areas: "label word" "values spark";
-    gap: 2px var(--s-sm);
-    padding: var(--s-sm) 0;
+    gap: 0 var(--s-sm);
+    padding: var(--s-xs) 0;
     border-bottom: 1px solid var(--border-subtle);
   }
 

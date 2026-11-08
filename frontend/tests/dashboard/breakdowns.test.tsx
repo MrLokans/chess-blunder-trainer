@@ -69,8 +69,8 @@ describe('GameTypeBreakdown', () => {
         data={{
           total_blunders: 10,
           by_game_type: [
-            { game_type: 'blitz', count: 7, percentage: 70, game_count: 5, blunders_per_game: 1.4 },
-            { game_type: 'rapid', count: 3, percentage: 30, game_count: 6, blunders_per_game: 0.5 },
+            { game_type: 'blitz', count: 35, percentage: 70, game_count: 25, blunders_per_game: 1.4 },
+            { game_type: 'rapid', count: 15, percentage: 30, game_count: 30, blunders_per_game: 0.5 },
             { game_type: 'classical', count: 0, percentage: 0, game_count: 0, blunders_per_game: null },
           ],
         }}

@@ -108,7 +108,6 @@
   "dashboard.chart.avg_loss": "Śr. strata: {loss} pionów",
   "dashboard.chart.blunders_per_game": "{rate} poważnych błędów/gra",
   "dashboard.chart.blunders_per_game_heading": "Błędy/gra",
-  "dashboard.chart.blunders_games": "{blunders} poważnych błędów / {games} gier",
   "dashboard.chart.blunders_by_color": "Grube błędy wg koloru",
   "dashboard.chart.blunders_by_color_desc": "Porównaj częstotliwość grubych błędów grając białymi i czarnymi.",
   "dashboard.chart.blunders_by_difficulty": "Błędy wg trudności",
@@ -751,9 +750,6 @@
   "dashboard.trend.verdict.improving": "Lepiej niż na początku",
   "dashboard.trend.verdict.declining": "Gorzej niż na początku",
   "dashboard.trend.verdict.stable": "Mniej więcej jak na początku",
-  "dashboard.trend.compare": "{count, plural, one {Pierwsza # partia a ostatnia #} few {Pierwsze # partie a ostatnie #} many {Pierwsze # partii a ostatnie #} other {Pierwsze # partii a ostatnie #}}",
-  "dashboard.trend.first_n": "pierwsze {count}",
-  "dashboard.trend.last_n": "ostatnie {count}",
   "dashboard.trend.chart_note": "Każdy słupek to blok {size} partii, najstarsze po lewej. Ciemne słupki to porównywane bloki.",
   "dashboard.status.games": "{count, plural, one {# partia} few {# partie} many {# partii} other {# partii}}",
   "dashboard.status.analyzed": "{count, plural, other {przeanalizowano: #}}",
@@ -769,5 +765,6 @@
   "dashboard.nav.time_control": "Tempo",
   "dashboard.nav.color": "Kolor",
   "dashboard.nav.openings": "Otwarcia",
-  "dashboard.unit.pawns": "{value} pionka"
+  "dashboard.unit.pawns": "{value} pionka",
+  "dashboard.trend.compare_ranges": "Partie {firstStart}–{firstEnd} a {lastStart}–{lastEnd}"
 }

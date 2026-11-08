@@ -72,10 +72,17 @@ describe('niceScale', () => {
 });
 
 describe('TrendSpine', () => {
+  test('labels the compared games by their real ranges when the oldest games fall outside the blocks', () => {
+    const growth = makeGrowth([2, 2, 3, 3]);
+    growth.windows = growth.windows.map(w => ({ ...w, game_start: w.game_start + 15, game_end: w.game_end + 15 }));
+    render(<TrendSpine growth={growth} nextStep={null} />);
+    expect(screen.getAllByText(t('dashboard.trend.compare_ranges', { firstStart: 16, firstEnd: 55, lastStart: 56, lastEnd: 95 })).length).toBeGreaterThan(0);
+  });
+
   test('states the verdict and compares first and last blocks', () => {
     render(<TrendSpine growth={makeGrowth([2, 2, 2, 3, 3, 3])} nextStep={null} />);
     expect(screen.getByRole('heading', { level: 2 }).textContent).toBe(t('dashboard.trend.verdict.declining'));
-    expect(screen.getAllByText(t('dashboard.trend.compare', { count: 60 })).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(t('dashboard.trend.compare_ranges', { firstStart: 1, firstEnd: 60, lastStart: 61, lastEnd: 120 })).length).toBeGreaterThan(0);
   });
 
   test('switching the metric tab redraws the verdict for that metric', () => {

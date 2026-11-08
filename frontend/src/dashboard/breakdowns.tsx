@@ -89,6 +89,13 @@ function rateLabel(rate: number | null | undefined): string {
   return rate == null ? '—' : t('dashboard.chart.blunders_per_game', { rate: rate.toFixed(2) });
 }
 
+// A per-game rate from a handful of games is noise, so it never earns the highlight.
+const MIN_RATE_GAMES = 10;
+
+function blundersPerGamesDetail(blunders: number, games: number): string {
+  return `${t('dashboard.coach.evidence.count', { count: blunders })} / ${t('dashboard.status.games', { count: games })}`;
+}
+
 function blunderDetail(count: number, avgCpLoss: number): string {
   return `${t('dashboard.coach.evidence.count', { count })} · ${t('dashboard.chart.avg_loss', { loss: (avgCpLoss / 100).toFixed(1) })}`;
 }
@@ -123,7 +130,8 @@ export function ColorBreakdown({ data }: { data: ColorData }) {
         label: t('dashboard.chart.as_color', { color: t(`chess.color.${c.color}`) }),
         value: c.blunders_per_game ?? 0,
         display: rateLabel(c.blunders_per_game),
-        detail: t('dashboard.chart.blunders_games', { blunders: c.count, games: c.game_count }),
+        detail: blundersPerGamesDetail(c.count, c.game_count),
+        noLead: c.game_count < MIN_RATE_GAMES,
       }))}
     />
   );
@@ -142,7 +150,8 @@ export function GameTypeBreakdown({ data }: { data: GameTypeData }) {
         label: gameTypeLabel(g.game_type),
         value: g.blunders_per_game ?? 0,
         display: rateLabel(g.blunders_per_game),
-        detail: t('dashboard.chart.blunders_games', { blunders: g.count, games: g.game_count }),
+        detail: blundersPerGamesDetail(g.count, g.game_count),
+        noLead: g.game_count < MIN_RATE_GAMES,
       }))}
     />
   );

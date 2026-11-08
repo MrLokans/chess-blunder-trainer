@@ -108,7 +108,6 @@
   "dashboard.chart.avg_loss": "平均损失：{loss} 个兵",
   "dashboard.chart.blunders_per_game": "每局 {rate} 次严重失误",
   "dashboard.chart.blunders_per_game_heading": "严重失误/局",
-  "dashboard.chart.blunders_games": "{blunders} 次严重失误 / {games} 局",
   "dashboard.chart.blunders_by_color": "按颜色分类的严重失误",
   "dashboard.chart.blunders_by_color_desc": "比较执白和执黑时的严重失误率。",
   "dashboard.chart.blunders_by_difficulty": "按难度分类的失误",
@@ -751,9 +750,6 @@
   "dashboard.trend.verdict.improving": "比起步时更好",
   "dashboard.trend.verdict.declining": "比起步时更差",
   "dashboard.trend.verdict.stable": "与起步时相差不大",
-  "dashboard.trend.compare": "{count, plural, other {前 # 局对比最近 # 局}}",
-  "dashboard.trend.first_n": "前 {count} 局",
-  "dashboard.trend.last_n": "最近 {count} 局",
   "dashboard.trend.chart_note": "每根柱代表 {size} 局一组，最早的在左侧。深色柱为参与对比的组。",
   "dashboard.status.games": "{count, plural, other {# 局对局}}",
   "dashboard.status.analyzed": "{count, plural, other {已分析 #}}",
@@ -769,5 +765,6 @@
   "dashboard.nav.time_control": "时限",
   "dashboard.nav.color": "执子",
   "dashboard.nav.openings": "开局",
-  "dashboard.unit.pawns": "{value} 兵"
+  "dashboard.unit.pawns": "{value} 兵",
+  "dashboard.trend.compare_ranges": "对局 {firstStart}–{firstEnd} 对比 {lastStart}–{lastEnd}"
 }

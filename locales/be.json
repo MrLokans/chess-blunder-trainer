@@ -108,7 +108,6 @@
   "dashboard.chart.avg_loss": "Сяр. страта: {loss} пешак",
   "dashboard.chart.blunders_per_game": "{rate} грубых промахаў/гульню",
   "dashboard.chart.blunders_per_game_heading": "Промахі/гульню",
-  "dashboard.chart.blunders_games": "{blunders} грубых промахаў / {games} гульняў",
   "dashboard.chart.blunders_by_color": "Промахі па колеры",
   "dashboard.chart.blunders_by_color_desc": "Параўнайце частату промахаў пры гульні белымі і чорнымі.",
   "dashboard.chart.blunders_by_difficulty": "Памылкі па складанасці",
@@ -751,9 +750,6 @@
   "dashboard.trend.verdict.improving": "Лепш, чым напачатку",
   "dashboard.trend.verdict.declining": "Горш, чым напачатку",
   "dashboard.trend.verdict.stable": "Прыкладна як напачатку",
-  "dashboard.trend.compare": "{count, plural, one {Першая # партыя супраць апошняй #} few {Першыя # партыі супраць апошніх #} many {Першыя # партый супраць апошніх #} other {Першыя # партыі супраць апошніх #}}",
-  "dashboard.trend.first_n": "першыя {count}",
-  "dashboard.trend.last_n": "апошнія {count}",
   "dashboard.trend.chart_note": "Кожны слупок — блок з {size} партый, самыя старыя злева. Цёмныя слупкі — блокі, якія параўноўваюцца.",
   "dashboard.status.games": "{count, plural, one {# партыя} few {# партыі} many {# партый} other {# партыі}}",
   "dashboard.status.analyzed": "{count, plural, other {прааналізавана: #}}",
@@ -769,5 +765,6 @@
   "dashboard.nav.time_control": "Кантроль",
   "dashboard.nav.color": "Колер",
   "dashboard.nav.openings": "Дэбюты",
-  "dashboard.unit.pawns": "{value} пешкі"
+  "dashboard.unit.pawns": "{value} пешкі",
+  "dashboard.trend.compare_ranges": "Партыі {firstStart}–{firstEnd} супраць {lastStart}–{lastEnd}"
 }

@@ -15,6 +15,10 @@ describe('leaderKey', () => {
     expect(leaderKey([row('a', 0.95), row('b', 0.94)])).toBeNull();
   });
 
+  test('gives no highlight when the top row rests on too few games', () => {
+    expect(leaderKey([row('bullet', 4.5, { noLead: true }), row('rapid', 2.7)])).toBeNull();
+  });
+
   test('ignores muted rows and all-zero values', () => {
     expect(leaderKey([row('other', 60, { muted: true }), row('fork', 10), row('pin', 2)])).toBe('fork');
     expect(leaderKey([row('a', 0), row('b', 0)])).toBeNull();
