@@ -15,6 +15,24 @@ import { useAnalysisMode } from './useAnalysisMode';
 import type { ReviewMove, ReviewData } from '../types/api';
 import { scrollBehavior } from '../shared/motion';
 
+const TRANSPORT_ICONS = {
+  first: <><polygon points="19 20 9 12 19 4 19 20" /><line x1="5" y1="19" x2="5" y2="5" /></>,
+  prev: <polyline points="15 18 9 12 15 6" />,
+  play: <polygon points="6 4 20 12 6 20 6 4" />,
+  pause: <><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></>,
+  next: <polyline points="9 18 15 12 9 6" />,
+  last: <><polygon points="5 4 15 12 5 20 5 4" /><line x1="19" y1="5" x2="19" y2="19" /></>,
+  flip: <path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4" />,
+};
+
+function TransportIcon({ name }: { name: keyof typeof TRANSPORT_ICONS }) {
+  return (
+    <svg class="review-nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square">
+      {TRANSPORT_ICONS[name]}
+    </svg>
+  );
+}
+
 interface MovePair {
   white: (ReviewMove & { index: number }) | null;
   black: (ReviewMove & { index: number }) | null;
@@ -579,44 +597,50 @@ function ReviewView({ data, startPly }: ReviewViewProps) {
                 class="review-nav-btn"
                 id="reviewFirst"
                 title={t('game_review.controls.first')}
+                aria-label={t('game_review.controls.first')}
                 disabled={atStart}
                 onClick={goFirst}
-              >&#x23EE;</button>
+              ><TransportIcon name="first" /></button>
               <button
                 class="review-nav-btn"
                 id="reviewPrev"
                 title={t('game_review.controls.prev')}
+                aria-label={t('game_review.controls.prev')}
                 disabled={atStart}
                 onClick={goPrev}
-              >&#x25C0;</button>
+              ><TransportIcon name="prev" /></button>
               <button
                 class="review-nav-btn"
                 id="reviewPlayPause"
                 title={isPlaying ? t('game_review.controls.pause') : t('game_review.controls.play')}
+                aria-label={isPlaying ? t('game_review.controls.pause') : t('game_review.controls.play')}
                 onClick={togglePlayPause}
               >
-                {isPlaying ? '\u23F8' : '\u25B6'}
+                <TransportIcon name={isPlaying ? 'pause' : 'play'} />
               </button>
               <button
                 class="review-nav-btn"
                 id="reviewNext"
                 title={t('game_review.controls.next')}
+                aria-label={t('game_review.controls.next')}
                 disabled={atEnd}
                 onClick={goNext}
-              >&#x25B6;</button>
+              ><TransportIcon name="next" /></button>
               <button
                 class="review-nav-btn"
                 id="reviewLast"
                 title={t('game_review.controls.last')}
+                aria-label={t('game_review.controls.last')}
                 disabled={atEnd}
                 onClick={goLast}
-              >&#x23ED;</button>
+              ><TransportIcon name="last" /></button>
               <button
                 class="review-nav-btn"
                 id="reviewFlip"
                 title={t('game_review.flip_board')}
+                aria-label={t('game_review.flip_board')}
                 onClick={flipBoard}
-              >&#x21C5;</button>
+              ><TransportIcon name="flip" /></button>
             </div>
           </div>
         </div>

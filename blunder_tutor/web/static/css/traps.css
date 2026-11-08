@@ -63,10 +63,6 @@
   font-weight: 600;
 }
 
-.traps-table .count-entered {
-  color: var(--color-dashboard-caution);
-}
-
 .traps-table .count-executed {
   color: var(--success);
 }

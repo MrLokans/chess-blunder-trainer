@@ -275,6 +275,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
             failedPrefix={t('management.backfill_phases.failed', { error: '' })}
             externalStatus={backfillStatus}
             startLabel={t('management.backfill_phases.start')}
+            startVariant="secondary"
           />
         )}
       </section>
@@ -294,6 +295,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
               failedPrefix={t('management.backfill_eco.failed', { error: '' })}
               externalStatus={ecoBackfillStatus}
               startLabel={t('management.backfill_eco.start')}
+              startVariant="secondary"
             />
             <JobCard
               fetchStatus={() => client.backfill.ecoStatus()}
@@ -303,6 +305,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
               failedPrefix={t('management.backfill_eco.failed', { error: '' })}
               externalStatus={ecoBackfillStatus}
               startLabel={t('management.backfill_eco.force_start')}
+              startVariant="danger"
             />
           </div>
         )}
@@ -322,6 +325,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
             failedPrefix={t('management.backfill_traps.failed', { error: '' })}
             externalStatus={trapsBackfillStatus}
             startLabel={t('management.backfill_traps.start')}
+            startVariant="secondary"
           />
         )}
       </section>

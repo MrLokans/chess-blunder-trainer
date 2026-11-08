@@ -233,6 +233,11 @@
   justify-content: center;
 }
 
+.review-nav-icon {
+  width: 16px;
+  height: 16px;
+}
+
 .review-nav-btn:hover {
   background: var(--surface-sunken);
   border-color: var(--border-hover);

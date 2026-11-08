@@ -263,9 +263,9 @@ function TrapsView({ data }: TrapsViewProps) {
                 >
                   <td>{s.name}</td>
                   <td><Badge>{t(`traps.category.${s.category}`) || s.category}</Badge></td>
-                  <td class="count-entered">{s.entered}</td>
-                  <td class="count-sprung">{s.sprung}</td>
-                  <td class="count-executed">{s.executed}</td>
+                  <td>{s.entered}</td>
+                  <td class={s.sprung > 0 ? 'count-sprung' : undefined}>{s.sprung}</td>
+                  <td class={s.executed > 0 ? 'count-executed' : undefined}>{s.executed}</td>
                   <td>{s.last_seen ? formatDate(s.last_seen, { year: 'numeric', month: '2-digit', day: '2-digit' }) : '-'}</td>
                 </tr>
               ))

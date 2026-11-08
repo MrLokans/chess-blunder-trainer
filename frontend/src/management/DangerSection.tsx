@@ -75,7 +75,7 @@ export function DangerSection({ externalStatus }: DangerSectionProps) {
       <h2 class="danger-title">{t('management.danger.title')}</h2>
       <Alert type={message?.type ?? 'success'} message={message?.text ?? null} />
       <p class="section-description mb-4">
-        {t('management.danger.description')}
+        {t('management.danger.description')}{' '}
         <strong>{t('management.danger.warning')}</strong> {t('management.danger.settings_preserved')}
       </p>
       {!jobId && (
