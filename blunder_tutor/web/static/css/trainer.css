@@ -1315,3 +1315,10 @@
     min-height: 44px;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .board-result-card.visible,
+  .result-banner {
+    animation: none;
+  }
+}

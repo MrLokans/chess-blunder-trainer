@@ -1,6 +1,7 @@
 import { Chessground } from '@vendor/chessground';
 import { applyBoardVisuals, buildDests, type BoardArrow, type ChessgroundVisualApi } from './board-visuals';
 import type { HighlightMap } from './highlights';
+import { boardAnimation } from './motion';
 
 interface ChessgroundApi extends ChessgroundVisualApi {
   destroy(): void;
@@ -30,7 +31,7 @@ export class AnalysisBoard {
       orientation: opts.orientation ?? 'white',
       coordinates: true,
       ranksPosition: 'left',
-      animation: { enabled: true, duration: 150 },
+      animation: boardAnimation(150),
       movable: {
         free: false,
         color: 'both',

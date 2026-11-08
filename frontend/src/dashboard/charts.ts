@@ -1,4 +1,5 @@
 import { readColorToken } from '../shared/css-color';
+import { prefersReducedMotion } from '../shared/motion';
 
 interface ChartPalette {
   accent: string;
@@ -24,6 +25,7 @@ function sharedChartOptions(xAxisConfig: Record<string, unknown> = {}): Record<s
   return {
     responsive: true,
     maintainAspectRatio: false,
+    animation: prefersReducedMotion() ? false : undefined,
     interaction: { mode: 'index', intersect: false },
     plugins: {
       legend: { position: 'top', labels: { color: colors.text } },

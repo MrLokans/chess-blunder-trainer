@@ -56,6 +56,20 @@ describe('VimInput', () => {
     expect(input.getAttribute('aria-describedby')).toBe(error.id);
   });
 
+  it('drops the illegal-move state when closed and reopened', () => {
+    const game = new Chess();
+    const { rerender } = render(<VimInput {...defaultProps} game={game} />);
+    const input = screen.getByRole('textbox');
+    fireEvent.input(input, { target: { value: 'Ke5' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(document.querySelector('.vim-input-overlay.shake')).not.toBeNull();
+
+    rerender(<VimInput {...defaultProps} visible={false} game={game} />);
+    rerender(<VimInput {...defaultProps} game={game} />);
+    expect(document.querySelector('.vim-input-overlay.shake')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('executes move on Enter', () => {
     const game = new Chess();
     render(<VimInput {...defaultProps} game={game} />);

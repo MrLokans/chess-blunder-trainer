@@ -36,6 +36,7 @@ export function VimInput({ visible, game, interactive, onMove, onClose }: VimInp
     if (!visible) {
       setValue('');
       setError('');
+      setShaking(false);
       setSelectedIndex(-1);
       return;
     }

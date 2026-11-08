@@ -1,4 +1,5 @@
 import { Chessground } from '@vendor/chessground';
+import { boardAnimation } from './motion';
 
 interface ChessgroundApi {
   set(config: Record<string, unknown>): void;
@@ -107,7 +108,7 @@ export class ReadOnlyBoard {
       fen: startFen,
       orientation,
       coordinates: false,
-      animation: { enabled: true, duration: 150 },
+      animation: boardAnimation(150),
       movable: { free: false, color: undefined },
       draggable: { enabled: false },
       highlight: { lastMove: true, check: true },

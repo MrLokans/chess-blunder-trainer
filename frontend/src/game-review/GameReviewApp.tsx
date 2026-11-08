@@ -13,6 +13,7 @@ import { EngineControls } from './EngineControls';
 import { EngineLinesPanel } from './EngineLinesPanel';
 import { useAnalysisMode } from './useAnalysisMode';
 import type { ReviewMove, ReviewData } from '../types/api';
+import { scrollBehavior } from '../shared/motion';
 
 interface MovePair {
   white: (ReviewMove & { index: number }) | null;
@@ -86,7 +87,7 @@ function MoveList({ moves, activeIndex, onSelect }: MoveListProps) {
 
   useEffect(() => {
     if (activeRef.current) {
-      activeRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      activeRef.current.scrollIntoView({ block: 'nearest', behavior: scrollBehavior() });
     }
   }, [activeIndex]);
 

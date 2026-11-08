@@ -3,6 +3,7 @@ import { Chessground } from '@vendor/chessground';
 import type { HighlightMap } from '../../shared/highlights';
 import type { Arrow } from '../hooks/useBoardState';
 import { applyBoardVisuals, buildDests, type ChessgroundVisualApi } from '../../shared/board-visuals';
+import { boardAnimation } from '../../shared/motion';
 
 interface ChessgroundApi extends ChessgroundVisualApi {
   destroy(): void;
@@ -48,7 +49,7 @@ export function Board({
       turnColor,
       coordinates: true,
       ranksPosition: 'left',
-      animation: { enabled: true, duration: 150 },
+      animation: boardAnimation(150),
       movable: {
         free: false,
         color: interactive ? orientation : undefined,
@@ -146,7 +147,7 @@ export function Board({
 
     const t1 = setTimeout(() => {
       cg.set({
-        animation: { duration: 350 },
+        animation: boardAnimation(350),
         fen,
         lastMove: [animateFrom.from, animateFrom.to],
         turnColor: game?.turn() === 'w' ? 'white' : 'black',
@@ -154,7 +155,7 @@ export function Board({
 
       t2 = setTimeout(() => {
         // Movability comes from the sync effect once onComplete clears `animating`.
-        cg.set({ animation: { duration: 150 } });
+        cg.set({ animation: boardAnimation(150) });
         animateFrom.onComplete();
       }, 400);
     }, 400);

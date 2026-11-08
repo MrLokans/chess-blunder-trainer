@@ -117,3 +117,11 @@
   cursor: default;
   font-style: italic;
 }
+
+/* Reduced motion: an illegal move is marked by a static error outline instead of the shake. */
+@media (prefers-reduced-motion: reduce) {
+  .vim-input-overlay.shake {
+    animation: none;
+    outline: 2px solid var(--error);
+  }
+}
