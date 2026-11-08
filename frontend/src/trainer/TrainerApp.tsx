@@ -94,7 +94,7 @@ function TrainerCore(): preact.JSX.Element {
   useEffect(() => {
     if (filterLoadRequest === 0) return;
     setUserAttempt(null);
-    void puzzleApi.loadPuzzle(filtersRef.current?.getFilterParams());
+    void puzzleApi.loadPuzzle(filtersRef.current?.getFilterParams(), { force: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per request; puzzleApi changes identity every render
   }, [filterLoadRequest]);
 

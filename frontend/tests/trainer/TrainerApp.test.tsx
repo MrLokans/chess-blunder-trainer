@@ -143,8 +143,6 @@ describe('TrainerApp', () => {
     fireEvent.click(checkboxes[1] as HTMLInputElement);
     expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(callsBefore);
 
-    // loadPuzzle ignores calls within 500ms of the previous load.
-    await new Promise((resolve) => { setTimeout(resolve, 550); });
     fireEvent.click(screen.getByTestId('apply-filters'));
     await waitFor(() => {
       expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(callsBefore + 1);
