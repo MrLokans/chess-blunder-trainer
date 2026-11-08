@@ -7,7 +7,7 @@ const TOKENS = [
   '--control-accent', '--accent', '--accent-hover', '--success', '--success-hover', '--warning-hover',
   '--error', '--error-hover', '--info', '--success-bg', '--success-border', '--warning-bg', '--error-bg',
   '--error-border', '--info-bg', '--info-border', '--bg-phase', '--focus-ring-color', '--focus-ring-error',
-  '--modal-backdrop', '--elevation-shadow', '--shadow-card', '--eval-white-advantage-fill', '--eval-black-fill',
+  '--modal-backdrop', '--elevation-shadow', '--eval-white-advantage-fill', '--eval-black-fill',
   '--eval-black-advantage-fill', '--color-phase-opening', '--color-phase-endgame', '--heatmap-empty-future',
   '--heatmap-empty', '--heatmap-l1', '--heatmap-l2', '--heatmap-l3', '--heatmap-l4',
 ];

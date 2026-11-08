@@ -17,7 +17,7 @@ export function SyncSettings({ settings, syncVisible, analyzeVisible, onChange }
     <>
       <div data-section="sync" class={syncVisible ? '' : 'hidden'}>
         <hr class="section-divider" />
-        <h2 class="settings-section-title">{t('settings.auto_sync.title')}</h2>
+        <h2>{t('settings.auto_sync.title')}</h2>
 
         <div class="form-group">
           <label class="checkbox-label">
@@ -76,7 +76,7 @@ export function SyncSettings({ settings, syncVisible, analyzeVisible, onChange }
       </div>
 
       <hr class="section-divider" />
-      <h2 class="settings-section-title">{t('settings.training.title')}</h2>
+      <h2>{t('settings.training.title')}</h2>
       <div class="form-group">
         <label>{t('settings.spaced_repetition.label')}</label>
         <input
