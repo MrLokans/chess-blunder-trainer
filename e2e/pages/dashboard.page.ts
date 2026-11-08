@@ -2,15 +2,15 @@ import { type Page, type Locator, expect } from '@playwright/test';
 import { BasePage } from './base.page';
 
 export class DashboardPage extends BasePage {
-  readonly statsGrid: Locator;
-  readonly kpis: Locator;
+  readonly trendSpine: Locator;
+  readonly libraryStatus: Locator;
   readonly moreInsights: Locator;
   readonly management: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.statsGrid = page.locator('.stats-grid');
-    this.kpis = page.locator('.dashboard-kpi');
+    this.trendSpine = page.locator('.trend-spine');
+    this.libraryStatus = page.getByTestId('library-status');
     this.moreInsights = page.locator('.dashboard-more-insights');
     this.management = page.locator('.dashboard-management');
   }
@@ -20,6 +20,6 @@ export class DashboardPage extends BasePage {
   }
 
   async expectLoaded(): Promise<void> {
-    await expect(this.statsGrid).toBeVisible();
+    await expect(this.trendSpine).toBeVisible();
   }
 }

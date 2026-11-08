@@ -1,15 +1,15 @@
 import { test, expect } from '../fixtures/app.fixture';
 
 test.describe('Dashboard', () => {
-  test('displays stats cards with data from demo DB', async ({ dashboardPage }) => {
+  test('leads with the trend and library status from the demo DB', async ({ dashboardPage }) => {
     await test.step('Load dashboard', async () => {
       await dashboardPage.goto();
       await dashboardPage.expectLoaded();
     });
 
-    await test.step('KPI strip shows demo data', async () => {
-      await expect(dashboardPage.kpis).toHaveCount(4);
-      await expect(dashboardPage.kpis.first().locator('strong')).not.toHaveText('0');
+    await test.step('Library status and trend show demo data', async () => {
+      await expect(dashboardPage.libraryStatus).toContainText('315');
+      await expect(dashboardPage.trendSpine.locator('.trend-chart__bar')).not.toHaveCount(0);
     });
   });
 

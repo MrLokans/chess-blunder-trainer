@@ -7,12 +7,12 @@ import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
 import { debounce } from '../shared/debounce';
 import { useDashboardFilters } from './useDashboardFilters';
 import { DashboardFilters } from './DashboardFilters';
-import { StatsOverview } from './StatsOverview';
+import { LibraryStatus } from './LibraryStatus';
 import { CoachingAction, libraryTotals, selectNextAction } from './CoachingAction';
 import { ChartPanel } from './ChartPanel';
 import { BreakdownSection } from './BreakdownSection';
 import { InfoModal } from './InfoModal';
-import { GrowthMetrics } from './GrowthMetrics';
+import { TrendSpine } from './TrendSpine';
 import { createDateChart, createHourChart } from './charts';
 import { ActivityHeatmap } from './ActivityHeatmap';
 import {
@@ -42,6 +42,7 @@ import type {
   CollapsePointData,
   ConversionResilienceData,
   GameBreakdownItem,
+  GrowthData,
 } from './types';
 import type { TrapStatsResponse } from '../types/api';
 
@@ -61,6 +62,7 @@ interface DashboardData {
   conversionData: ConversionResilienceData | null;
   trapsData: TrapStatsResponse | null;
   gameBreakdown: GameBreakdownItem[] | null;
+  growth: GrowthData | null;
 }
 
 interface DashboardFeatures {
@@ -109,7 +111,7 @@ export function DashboardApp() {
   const ws = useWebSocket(['stats.updated', 'job.completed', 'job.progress_updated', 'job.status_changed']);
 
   const getParams = filters.getParams;
-  const { hasAccuracy, hasPhase, hasOpening, hasDifficulty, hasTactical, hasCollapse, hasConversion, hasTraps } = features;
+  const { hasAccuracy, hasPhase, hasOpening, hasDifficulty, hasTactical, hasCollapse, hasConversion, hasTraps, hasGrowth } = features;
 
   const state = useAsyncData<DashboardData>(
     async (): Promise<DashboardData> => {
@@ -133,6 +135,7 @@ export function DashboardApp() {
         collapseData,
         conversionData,
         trapsResp,
+        growth,
       ] = await Promise.all([
         hasAccuracy ? client.stats.gamesByDate(qp) : Promise.resolve(null),
         hasAccuracy ? client.stats.gamesByHour({ ...qp, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }) : Promise.resolve(null),
@@ -145,6 +148,7 @@ export function DashboardApp() {
         hasCollapse ? client.stats.collapsePoint(qp) : Promise.resolve(null),
         hasConversion ? client.stats.conversionResilience(qp) : Promise.resolve(null),
         hasTraps ? client.traps.stats() : Promise.resolve(null),
+        hasGrowth ? client.stats.growth(qp) : Promise.resolve(null),
       ] as const);
 
       return {
@@ -163,9 +167,10 @@ export function DashboardApp() {
         conversionData: conversionData ?? null,
         trapsData: trapsResp ?? null,
         gameBreakdown: gameBreakdownResp.items,
+        growth: growth ?? null,
       };
     },
-    [getParams, hasAccuracy, hasPhase, hasOpening, hasDifficulty, hasTactical, hasCollapse, hasConversion, hasTraps],
+    [getParams, hasAccuracy, hasPhase, hasOpening, hasDifficulty, hasTactical, hasCollapse, hasConversion, hasTraps, hasGrowth],
   );
 
   const reload = state.reload;
@@ -195,7 +200,6 @@ export function DashboardApp() {
           data={data}
           features={features}
           filters={filters}
-          getParams={getParams}
           difficultyHelpOpen={difficultyHelpOpen}
           setDifficultyHelpOpen={setDifficultyHelpOpen}
           onRetryAnalysis={() => { void handleRetryAnalysis(); }}
@@ -209,7 +213,6 @@ interface DashboardBodyProps {
   data: DashboardData;
   features: DashboardFeatures;
   filters: ReturnType<typeof useDashboardFilters>;
-  getParams: () => DateFilterParams;
   difficultyHelpOpen: boolean;
   setDifficultyHelpOpen: (open: boolean) => void;
   onRetryAnalysis: () => void;
@@ -219,14 +222,13 @@ function DashboardBody({
   data: state,
   features,
   filters,
-  getParams,
   difficultyHelpOpen,
   setDifficultyHelpOpen,
   onRetryAnalysis,
 }: DashboardBodyProps) {
   const {
     hasAccuracy, hasPhase, hasOpening, hasDifficulty, hasTactical,
-    hasCollapse, hasConversion, hasTraps, hasGrowth, hasHeatmap,
+    hasCollapse, hasConversion, hasTraps, hasHeatmap,
   } = features;
 
   const dateChartData = state.dateItems && state.dateItems.length > 0 ? {
@@ -260,6 +262,8 @@ function DashboardBody({
     hasHeatmap || (hasTraps && state.trapsData),
   );
 
+  const coaching = <CoachingAction action={nextAction} onRetryAnalysis={onRetryAnalysis} />;
+
   return (
     <>
       <DashboardFilters
@@ -275,9 +279,7 @@ function DashboardBody({
         onGamePhasesChange={filters.setGamePhases}
       />
 
-      <CoachingAction action={nextAction} onRetryAnalysis={onRetryAnalysis} />
-
-      <StatsOverview
+      <LibraryStatus
         totalGames={state.overview.total_games}
         analyzedGames={state.overview.analyzed_games}
         pendingAnalysis={state.overview.pending_analysis}
@@ -287,11 +289,9 @@ function DashboardBody({
         showRetry={nextAction.kind !== 'analysis_failed'}
       />
 
-      {hasGrowth && (
-        <BreakdownSection title={t('dashboard.chart.growth')} description={t('dashboard.chart.growth_desc')}>
-          <GrowthMetrics params={toQueryParams(getParams())} />
-        </BreakdownSection>
-      )}
+      {state.growth ? (
+        <TrendSpine growth={state.growth} nextStep={coaching} />
+      ) : coaching}
 
       {hasPrimaryInsights && (
         <section class="dashboard-section" aria-labelledby="coaching-insights-title">

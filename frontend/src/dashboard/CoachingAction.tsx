@@ -193,7 +193,6 @@ export function CoachingAction({ action, onRetryAnalysis }: CoachingActionProps)
       data-action={action.kind}
       aria-labelledby={headlineId}
     >
-      <p class="coach-eyebrow">{t('dashboard.coach.title')}</p>
       <h2 id={headlineId} class="coach-headline">{t(copy.headline)}</h2>
       <p class="coach-body">{bodyText(action)}</p>
 
