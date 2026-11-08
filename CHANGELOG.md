@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.9.0]
+
+### Added
+
+- **Dashboard trend first**: The dashboard opens on one trend — your chosen metric over blocks of 20 games, with a plain verdict comparing your first and latest games, the other metrics beside it, and what to train next. A one-line library status replaces the stat cards.
+- **Train a pattern from the dashboard**: The train button names your most frequent tactical pattern and opens the trainer on it, showing every blunder of that pattern for that visit without changing your saved filters.
+- **Trainer result beside the board**: Your move and the best move appear as two mini boards next to the board instead of covering it. Reset, Show best move and Next sit under the board, and the trainer filters live in a drawer behind a one-line summary.
+
+### Changed
+
+- **Calmer, consistent look**: Charts are drawn in ink, and colours keep one meaning across the app — green for better, red for worse or your miss, yellow for the action to take. The activity heatmap (including the Ocean and Forest themes) follows suit; colours you picked yourself are kept.
+- **Dashboard breakdowns**: Below the trend, breakdowns are grouped into three sections of ranked bars that highlight at most one clear leader. The library-by-source table moved to Management.
+- **Other pages**: Headings read as sentences, Management keeps a single primary button (force-reclassify is marked as risky), Traps shows its totals as one line, and the theme settings describe what each colour actually paints.
+- **Board display settings** moved from the trainer to Settings.
+
+### Fixed
+
+- **Dashboard numbers**: Colour and time-control rates count each game once, the trend compares your newest games, and blocks without blunders are no longer scored as perfect.
+- **Accessibility**: Every page has a heading, landmarks and a skip link; focus rings are visible everywhere; buttons and badges meet WCAG AA contrast in both themes; trainer filters, results and move entry work with a keyboard and screen readers; reduced-motion preferences are honoured.
+- **Phones**: Pages no longer scroll sideways at 390px, touch targets are 44px, and dashboard filters wrap.
+- **Trainer filters**: Closing the filter drawer always loads a new puzzle, even right after the previous one.
+- **Translations**: Percentages, centipawns and pawns are formatted for your language.
+
+---
+
 ## [3.8.2]
 
 ### Fixed
