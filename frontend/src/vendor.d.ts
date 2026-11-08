@@ -64,35 +64,6 @@ interface HtmxStatic {
 
 declare const htmx: HtmxStatic;
 
-// Chart.js (v4.6.1) — loaded via <script defer> in dashboard.html only
-interface ChartConfiguration {
-  type: string;
-  data: {
-    labels?: unknown[];
-    datasets: Array<{
-      label?: string;
-      data: unknown[];
-      [key: string]: unknown;
-    }>;
-  };
-  options?: Record<string, unknown>;
-}
-
-interface ChartInstance {
-  destroy(): void;
-  resize(): void;
-  update(): void;
-  data: ChartConfiguration['data'];
-  options: Record<string, unknown>;
-}
-
-interface ChartStatic {
-  new(ctx: CanvasRenderingContext2D | HTMLCanvasElement, config: ChartConfiguration): ChartInstance;
-  defaults: Record<string, unknown>;
-}
-
-declare const Chart: ChartStatic;
-
 // i18n globals (injected by i18n.js in base.html)
 declare function t(key: string, params?: Record<string, unknown>): string;
 declare function formatNumber(n: number, opts?: Intl.NumberFormatOptions): string;

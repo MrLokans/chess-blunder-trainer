@@ -159,20 +159,23 @@ function BlockChart({ windows, values, comparison, metric, ranges, verdict }: Bl
       <div class="trend-chart__axis" aria-hidden="true">
         {windows.map((w, i) => <span key={w.window_index}>{i % labelEvery === 0 ? formatNumber(w.game_start) : ''}</span>)}
       </div>
-      <table class="sr-only">
-        <caption>{t(metric.label)}</caption>
-        <tbody>
-          {windows.map((w, i) => {
-            const value = values[i];
-            return (
-              <tr key={w.window_index}>
-                <th scope="row">{blockLabel(w)}</th>
-                <td>{value === null || value === undefined ? '—' : format(value, metric)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      {/* Table elements ignore the 1px box, so the wrapper carries the hiding. */}
+      <div class="sr-only">
+        <table>
+          <caption>{t(metric.label)}</caption>
+          <tbody>
+            {windows.map((w, i) => {
+              const value = values[i];
+              return (
+                <tr key={w.window_index}>
+                  <th scope="row">{blockLabel(w)}</th>
+                  <td>{value === null || value === undefined ? '—' : format(value, metric)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

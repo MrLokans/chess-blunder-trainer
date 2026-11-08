@@ -9,11 +9,10 @@ import { useDashboardFilters } from './useDashboardFilters';
 import { DashboardFilters } from './DashboardFilters';
 import { LibraryStatus } from './LibraryStatus';
 import { CoachingAction, libraryTotals, selectNextAction } from './CoachingAction';
-import { ChartPanel } from './ChartPanel';
+import { AccuracyChart } from './AccuracyChart';
 import { BreakdownSection } from './BreakdownSection';
 import { InfoModal } from './InfoModal';
 import { TrendSpine } from './TrendSpine';
-import { createDateChart, createHourChart } from './charts';
 import { ActivityHeatmap } from './ActivityHeatmap';
 import {
   PhaseBreakdown,
@@ -326,8 +325,8 @@ function DashboardBody({
         <div class="dashboard-insight-grid">
           {hasCollapse && state.collapseData && <BreakdownSection wide title={t('dashboard.chart.collapse_point')} description={t('dashboard.chart.collapse_point_desc')}><CollapsePointBreakdown data={state.collapseData} /></BreakdownSection>}
           {hasConversion && state.conversionData && <BreakdownSection wide title={t('dashboard.chart.conversion_resilience')} description={t('dashboard.chart.conversion_resilience_desc')}><ConversionResilienceBreakdown data={state.conversionData} /></BreakdownSection>}
-          {hasAccuracy && <ChartPanel title={t('dashboard.chart.accuracy_by_date')} description={t('dashboard.chart.accuracy_by_date_desc')} emptyMessage={t('dashboard.chart.no_accuracy_data')} data={dateChartData} createChart={createDateChart} />}
-          {hasAccuracy && <ChartPanel title={t('dashboard.chart.accuracy_by_hour')} description={t('dashboard.chart.accuracy_by_hour_desc', { timezone: state.hourTimezone })} emptyMessage={t('dashboard.chart.no_hourly_data')} data={hourChartData} createChart={createHourChart} />}
+          {hasAccuracy && <AccuracyChart title={t('dashboard.chart.accuracy_by_date')} description={t('dashboard.chart.accuracy_by_date_desc')} emptyMessage={t('dashboard.chart.no_accuracy_data')} data={dateChartData} />}
+          {hasAccuracy && <AccuracyChart title={t('dashboard.chart.accuracy_by_hour')} description={t('dashboard.chart.accuracy_by_hour_desc', { timezone: state.hourTimezone })} emptyMessage={t('dashboard.chart.no_hourly_data')} data={hourChartData} />}
         </div>
       </section>
 

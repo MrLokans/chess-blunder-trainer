@@ -86,6 +86,7 @@
   .ranked-bars td {
     padding: var(--s-xs) 0;
     border: 0;
+    background: none;
     vertical-align: middle;
   }
 
@@ -144,12 +145,6 @@
     .ranked-bars td { display: block; width: auto; padding: 2px 0 !important; text-align: left; }
     .ranked-bars__value { min-width: 0; white-space: normal; }
     .ranked-bars__detail { display: inline; margin-left: var(--s-sm); }
-  }
-
-  /* Dashboard-specific: chart canvas heights */
-  .chart-canvas-container {
-    position: relative;
-    height: 300px;
   }
 
   .chart-empty-state {
@@ -1023,6 +1018,7 @@
     flex: 1;
     text-align: center;
     min-width: 0;
+    white-space: nowrap;
   }
 
   .trend-chart__note {
@@ -1125,6 +1121,61 @@
     .trend-chart { --gutter: 28px; }
     .trend-chart__plot { height: 200px; }
   }
+
+  .accuracy-chart__plot { height: clamp(160px, 22vh, 220px); }
+
+  .accuracy-chart__line {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .accuracy-chart__line polyline {
+    fill: none;
+    stroke: var(--text);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  .accuracy-chart__dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    margin: -4px 0 0 -4px;
+    background: var(--surface);
+    border: 2px solid var(--text);
+  }
+
+  .accuracy-chart__games {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 32px;
+    margin: var(--s-xs) 0 0 var(--gutter);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .accuracy-chart__games > span {
+    flex: 1;
+    background: var(--text);
+    opacity: 0.25;
+  }
+
+  .accuracy-chart .trend-chart__note { display: flex; gap: var(--s-lg); }
+
+  .accuracy-chart__key::before {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    margin-right: var(--s-xs);
+    vertical-align: middle;
+    background: var(--text);
+  }
+
+  .accuracy-chart__key--line::before { height: 2px; }
+  .accuracy-chart__key--games::before { height: 10px; opacity: 0.25; }
 
   @media (prefers-reduced-motion: reduce) {
     .trend-chart__bar { transition: none; }
