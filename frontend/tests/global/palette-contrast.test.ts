@@ -71,7 +71,42 @@ const DARK_ONLY_TEXT = [
   ['selection-text', 'selection-surface'] as const,
 ];
 
+const ON_FILL_TEXT = [
+  ['text-on-warning', 'warning'],
+  ['text-on-warning', 'warning-hover'],
+  ['text-on-warning', 'badge-primary'],
+  ['text-on-success', 'success'],
+  ['text-on-success', 'success-hover'],
+  ['text-on-accent', 'accent'],
+  ['text-on-accent', 'error'],
+  ['text-on-phase-middlegame', 'color-phase-middlegame'],
+] as const;
+const DATA_TEXT = [
+  'success', 'color-dashboard-caution',
+  ...['easy', 'medium', 'hard', 'unscored'].map(level => `color-diff-${level}`),
+  ...['ultrabullet', 'bullet', 'blitz', 'rapid', 'classical', 'correspondence'].map(type => `color-gametype-${type}`),
+];
+
 describe('palette contrast', () => {
+  it.each(['light', 'dark'] as const)('%s text on filled buttons, badges and pills meets WCAG AA', mode => {
+    for (const [foreground, fill] of ON_FILL_TEXT) {
+      expect(contrast(foreground, fill, mode), `--${foreground} on --${fill}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it.each(['light', 'dark'] as const)('%s status and data-label colours read as text on surfaces', mode => {
+    for (const token of DATA_TEXT) {
+      expect(contrast(token, 'surface-raised', mode), `--${token} on --surface-raised`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it.each(['light', 'dark'] as const)('%s data-bar segments keep their label readable', mode => {
+    for (const fill of DATA_TEXT.filter(token => token.startsWith('color-'))) {
+      expect(contrast('text-on-accent', fill, mode), `--text-on-accent on --${fill}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+
   it.each(['light', 'dark'] as const)('%s neutral text meets WCAG AA on every surface', mode => {
     for (const [text, surface] of NEUTRAL_TEXT) {
       expect(contrast(text, surface, mode), `--${text} on --${surface}`).toBeGreaterThanOrEqual(4.5);

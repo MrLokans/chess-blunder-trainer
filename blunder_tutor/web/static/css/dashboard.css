@@ -97,7 +97,7 @@
   }
 
   .traps-summary-stat.fell { color: var(--error); }
-  .traps-summary-stat.entered { color: var(--warning); }
+  .traps-summary-stat.entered { color: var(--color-dashboard-caution); }
 
   .traps-summary-label {
     color: var(--text-muted);
@@ -910,7 +910,7 @@
   }
 
   .phase-bar-segment.opening { background: var(--color-phase-opening); }
-  .phase-bar-segment.middlegame { background: var(--color-phase-middlegame); color: var(--text); }
+  .phase-bar-segment.middlegame { background: var(--color-phase-middlegame); color: var(--text-on-phase-middlegame); }
   .phase-bar-segment.endgame { background: var(--color-phase-endgame); }
   .phase-bar-segment.unknown { background: var(--color-phase-unknown); }
 

@@ -67,7 +67,7 @@
 .badge--primary {
   background: var(--badge-primary);
   border-color: var(--badge-primary);
-  color: var(--text-on-accent);
+  color: var(--text-on-warning);
 }
 
 .badge--info {

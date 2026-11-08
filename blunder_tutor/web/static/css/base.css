@@ -224,13 +224,13 @@ nav a.active {
 .btn-primary {
   background: var(--warning);
   border: 2px solid var(--warning-border);
-  color: var(--text-on-accent);
+  color: var(--text-on-warning);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--warning-hover);
   border-color: var(--warning-hover);
-  color: var(--text-on-accent);
+  color: var(--text-on-warning);
 }
 
 /* Secondary (outlined) */
@@ -248,7 +248,7 @@ nav a.active {
 /* Success */
 .btn-success {
   background: var(--success);
-  color: var(--text-on-accent);
+  color: var(--text-on-success);
   border: 2px solid var(--success-border);
 }
 

@@ -7,7 +7,7 @@ const CUSTOM_SURFACE = 'rgb(18, 52, 86)';
 
 // Mirrors DEFAULT_THEME in web/api/_settings_schemas.py; Settings needs the full set.
 const DEFAULT_THEME = {
-  primary: '#1A3A8F', success: '#2D8F3E', error: '#D42828', warning: '#F2C12E',
+  primary: '#1A3A8F', success: '#247A33', error: '#D42828', warning: '#F2C12E',
   phase_opening: '#1A3A8F', phase_middlegame: '#F2C12E', phase_endgame: '#3A3A3A',
   bg: '#F5F2EB', bg_card: '#F5F2EB', text: '#1A1A1A', text_muted: '#3A3A3A',
   heatmap_empty: '#E8E4DB', heatmap_l1: '#B8D9CA', heatmap_l2: '#5BAA7D',

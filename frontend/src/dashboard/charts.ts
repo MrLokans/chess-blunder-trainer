@@ -12,7 +12,7 @@ interface ChartPalette {
 
 function chartPalette(): ChartPalette {
   return {
-    accent: readColorToken('--accent', '#1A3A8F'), success: readColorToken('--success', '#2D8F3E'),
+    accent: readColorToken('--accent', '#1A3A8F'), success: readColorToken('--success', '#247A33'),
     text: readColorToken('--text', '#1A1A1A'), muted: readColorToken('--text-muted', '#706E68'),
     border: readColorToken('--border', '#B8B4AB'), grid: readColorToken('--border-subtle', '#E8E4DB'),
     surface: readColorToken('--surface-raised', '#F5F2EB'),

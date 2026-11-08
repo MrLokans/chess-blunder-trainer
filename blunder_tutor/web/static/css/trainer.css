@@ -561,7 +561,7 @@
 
 .result-banner.correct {
   background: var(--success);
-  color: var(--text-on-accent);
+  color: var(--text-on-success);
 }
 
 .result-banner.incorrect {
@@ -628,7 +628,7 @@
 
 .phase.explore {
   background: var(--success);
-  color: var(--text-on-accent);
+  color: var(--text-on-success);
 }
 
 /* ==========================================================================

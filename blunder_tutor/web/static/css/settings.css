@@ -264,6 +264,7 @@
 
   .phase-pill.middlegame {
     background: var(--color-phase-middlegame);
+    color: var(--text-on-phase-middlegame);
   }
 
   .phase-pill.endgame {
@@ -273,6 +274,7 @@
   .preview-primary {
     background: var(--accent) !important;
     border-color: var(--accent) !important;
+    color: var(--text-on-accent);
   }
 
   .preview-success {
@@ -443,5 +445,6 @@
 
 .status.preview-warning {
   background: var(--warning-bg);
-  color: var(--warning);
+  border: 2px solid var(--warning-border);
+  color: var(--text);
 }

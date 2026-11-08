@@ -97,7 +97,7 @@
 }
 
 .result-mistakes .result-value {
-  color: var(--warning);
+  color: var(--color-dashboard-caution);
 }
 
 .result-inaccuracies .result-value {
