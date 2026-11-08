@@ -145,7 +145,6 @@
   "dashboard.chart.no_phase_data": "Пакуль няма даных пра промахі. Прааналізуйце некалькі партый, каб убачыць размеркаванне па фазах.",
   "dashboard.chart.no_tactical_data": "Пакуль няма даных пра тактычныя матывы. Запусціце запаўненне, каб прааналізаваць наяўныя промахі.",
   "dashboard.chart.pending": "Чакае",
-  "dashboard.chart.phase_percent": "{percentage}% промахаў",
   "dashboard.chart.puzzle_activity": "Актыўнасць задач",
   "dashboard.chart.puzzle_activity_desc": "Ваша актыўнасць рашэння задач за апошні год.",
   "dashboard.chart.source": "Крыніца",
@@ -221,12 +220,8 @@
   "dashboard.game_type.rapid": "Рапід",
   "dashboard.game_type.ultrabullet": "Ультрабуліт",
   "dashboard.game_type.unknown": "Невядома",
-  "dashboard.link.manage_imports": "Кіраваць імпартам і сінхранізацыяй",
   "dashboard.no_data": "Дадзеныя пакуль недаступныя.",
   "dashboard.scope.unfiltered": "Не залежыць ад фільтраў панэлі.",
-  "dashboard.section.coaching_insights": "Трэніровачныя высновы",
-  "dashboard.section.explore_more": "Больш высноў",
-  "dashboard.section.management": "Кіраванне бібліятэкай",
   "dashboard.opening.learn_link_tooltip": "Даведацца пра гэты дэбют",
   "dashboard.opening.variations_count": "{count, plural, one {# варыянт} few {# варыянты} other {# варыянтаў}}",
   "dashboard.resilience.detail": "Выратавана {saved} з {total} прайграных пазіцый",
@@ -772,5 +767,8 @@
   "dashboard.status.games": "{count, plural, one {# партыя} few {# партыі} many {# партый} other {# партыі}}",
   "dashboard.status.analyzed": "{count, plural, other {прааналізавана: #}}",
   "dashboard.status.blunders": "{count, plural, one {# промах} few {# промахі} many {# промахаў} other {# промахаў}}",
-  "settings.board_display.description": "Захоўваецца адразу на гэтай прыладзе, націскаць «Захаваць» не трэба. Клавішы A і T пераключаюць стрэлкі і пагрозы падчас трэніроўкі."
+  "settings.board_display.description": "Захоўваецца адразу на гэтай прыладзе, націскаць «Захаваць» не трэба. Клавішы A і T пераключаюць стрэлкі і пагрозы падчас трэніроўкі.",
+  "dashboard.section.where_from": "Адкуль бяруцца памылкі",
+  "dashboard.section.practice": "Вашы трэніроўкі",
+  "dashboard.section.game_flow": "Як складваюцца вашы партыі"
 }

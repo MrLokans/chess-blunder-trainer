@@ -3,61 +3,126 @@
     --dashboard-info: var(--color-dashboard-info);
     --dashboard-caution: var(--color-dashboard-caution);
     --dashboard-negative: var(--color-dashboard-negative);
-    --dashboard-tactic-fork: var(--color-dashboard-tactic-fork);
-    --dashboard-tactic-pin: var(--color-dashboard-tactic-pin);
-    --dashboard-tactic-skewer: var(--color-dashboard-tactic-skewer);
-    --dashboard-tactic-discovered: var(--color-dashboard-tactic-discovered);
-    --dashboard-tactic-hanging: var(--color-dashboard-tactic-hanging);
-    --dashboard-tactic-back-rank: var(--color-dashboard-tactic-back-rank);
-    --dashboard-tactic-trapped: var(--color-dashboard-tactic-trapped);
-    --dashboard-tactic-other: var(--color-dashboard-tactic-other);
   }
 
-  .dashboard-section > h2,
-  .dashboard-more-insights > summary {
+  .dashboard-section { margin-bottom: var(--s-2xl); }
+
+  .dashboard-section > h2 {
+    margin: 0 0 var(--s-lg);
     font-family: var(--font-ui);
-    font-size: var(--text-base);
-    font-weight: 700;
-    letter-spacing: var(--ls-wide);
-    text-transform: uppercase;
+    font-size: var(--text-3xl);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: normal;
+    text-transform: none;
   }
 
-  .dashboard-section > h2 { margin: 0 0 var(--s-md); }
+  .dashboard-section > h2 + .dashboard-scope-note { margin-top: calc(-1 * var(--s-md)); }
 
   .dashboard-insight-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s-lg);
+    gap: var(--s-2xl) var(--s-2xl);
   }
 
-  .dashboard-insight-grid .chart-container { margin-bottom: 0; }
-
-  .dashboard-more-insights {
-    margin-bottom: var(--s-lg);
-    border: 2px solid var(--border-card);
-    background: var(--surface-raised);
+  #dashboard-root .chart-container {
+    min-width: 0;
+    margin: 0;
+    padding: var(--s-md) 0 0;
+    border: 0;
+    border-top: 3px solid var(--border-strong);
+    background: none;
   }
 
-  .dashboard-more-insights > summary {
-    cursor: pointer;
-    padding: var(--s-md) var(--s-xl);
-  }
+  #dashboard-root .chart-container--wide { grid-column: 1 / -1; }
 
-  .dashboard-more-insights > .dashboard-insight-grid { padding: var(--s-xl); }
+  #dashboard-root .chart-title {
+    display: flex;
+    align-items: center;
+    gap: var(--s-sm);
+    margin: 0 0 var(--s-xs);
+    font-size: var(--text-sm);
+  }
 
   .dashboard-scope-note {
     margin: 0 0 var(--s-md);
     color: var(--text-muted);
-    font-size: var(--text-xs);
-    font-style: italic;
+    font-size: var(--text-sm);
   }
 
-  .dashboard-management { border-top: 2px solid var(--border-strong); padding-top: var(--s-lg); }
-
-  @media (max-width: 640px) {
+  @media (max-width: 760px) {
     .dashboard-insight-grid { grid-template-columns: minmax(0, 1fr); }
-    .dashboard-more-insights > summary,
-    .dashboard-more-insights > .dashboard-insight-grid { padding: var(--s-md); }
+    .dashboard-section > h2 { font-size: var(--text-2xl); }
+  }
+
+  .ranked-bars {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ranked-bars th,
+  .ranked-bars td {
+    padding: var(--s-xs) 0;
+    border: 0;
+    vertical-align: middle;
+  }
+
+  .ranked-bars__label {
+    width: 1%;
+    padding-right: var(--s-md) !important;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--text);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .ranked-bars__track { width: 100%; }
+
+  .ranked-bars__bar {
+    display: block;
+    height: 14px;
+    min-width: 2px;
+    background: var(--text);
+    opacity: 0.35;
+  }
+
+  .ranked-bars__value {
+    min-width: 7.5rem;
+    padding-left: var(--s-md) !important;
+    font-weight: 700;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .ranked-bars__detail {
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  .ranked-bars__row--top .ranked-bars__bar { opacity: 1; }
+  .ranked-bars__row--top .ranked-bars__label { font-weight: 700; }
+  .ranked-bars__row--muted .ranked-bars__bar { opacity: 0.15; }
+  .ranked-bars__row--muted .ranked-bars__label,
+  .ranked-bars__row--muted .ranked-bars__value { color: var(--text-muted); font-weight: 400; }
+
+  @media (max-width: 480px) {
+    .ranked-bars tr {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      padding: var(--s-xs) 0;
+    }
+
+    .ranked-bars th,
+    .ranked-bars td { display: block; width: auto; padding: 2px 0 !important; text-align: left; }
+    .ranked-bars__value { min-width: 0; white-space: normal; }
+    .ranked-bars__detail { display: inline; margin-left: var(--s-sm); }
   }
 
   /* Dashboard-specific: chart canvas heights */
@@ -96,9 +161,6 @@
     font-weight: 700;
   }
 
-  .traps-summary-stat.fell { color: var(--error); }
-  .traps-summary-stat.entered { color: var(--color-dashboard-caution); }
-
   .traps-summary-label {
     color: var(--text-muted);
     font-size: 0.85rem;
@@ -133,210 +195,6 @@
     cursor: pointer;
     font-size: var(--text-sm);
   }
-
-  /* ==========================================================================
-     Breakdown Bars — shared pattern for tactical/difficulty/game-type
-     ========================================================================== */
-
-  .tactical-bar-container,
-  .difficulty-bar-container,
-  .game-type-bar-container {
-    margin-bottom: var(--s-md);
-  }
-
-  .tactical-bar,
-  .difficulty-bar,
-  .game-type-bar {
-    display: flex;
-    height: 24px;
-    border-radius: 0;
-    overflow: hidden;
-  }
-
-  .tactical-bar-segment,
-  .difficulty-bar-segment,
-  .game-type-bar-segment {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-on-accent);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    transition: flex 0.3s ease;
-  }
-
-  /* Tactical bar segment colors */
-  .tactical-bar-segment.fork { background: var(--dashboard-tactic-fork); }
-  .tactical-bar-segment.pin { background: var(--dashboard-tactic-pin); }
-  .tactical-bar-segment.skewer { background: var(--dashboard-tactic-skewer); }
-  .tactical-bar-segment.discovered { background: var(--dashboard-tactic-discovered); }
-  .tactical-bar-segment.hanging { background: var(--dashboard-tactic-hanging); }
-  .tactical-bar-segment.back_rank { background: var(--dashboard-tactic-back-rank); }
-  .tactical-bar-segment.trapped { background: var(--dashboard-tactic-trapped); }
-  .tactical-bar-segment.other { background: var(--dashboard-tactic-other); }
-
-  /* Difficulty bar segment colors */
-  .difficulty-bar-segment.diff-easy { background: var(--color-diff-easy); }
-  .difficulty-bar-segment.diff-medium { background: var(--color-diff-medium); }
-  .difficulty-bar-segment.diff-hard { background: var(--color-diff-hard); }
-  .difficulty-bar-segment.diff-unscored { background: var(--color-diff-unscored); }
-
-  /* Game type bar segment colors */
-  .game-type-bar-segment.ultrabullet { background: var(--color-gametype-ultrabullet); }
-  .game-type-bar-segment.bullet { background: var(--color-gametype-bullet); }
-  .game-type-bar-segment.blitz { background: var(--color-gametype-blitz); }
-  .game-type-bar-segment.rapid { background: var(--color-gametype-rapid); }
-  .game-type-bar-segment.classical { background: var(--color-gametype-classical); }
-  .game-type-bar-segment.correspondence { background: var(--color-gametype-correspondence); }
-
-  /* ==========================================================================
-     Breakdown Legends — shared pattern
-     ========================================================================== */
-
-  .tactical-legend,
-  .difficulty-legend,
-  .game-type-legend {
-    display: flex;
-    gap: var(--s-md);
-    flex-wrap: wrap;
-    margin-top: var(--s-sm);
-  }
-
-  .tactical-legend-item,
-  .difficulty-legend-item,
-  .game-type-legend-item {
-    display: flex;
-    align-items: center;
-    gap: var(--s-sm);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
-
-  .tactical-legend-color,
-  .difficulty-legend-color,
-  .game-type-legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 0;
-  }
-
-  /* Tactical legend colors */
-  .tactical-legend-color.fork { background: var(--dashboard-tactic-fork); }
-  .tactical-legend-color.pin { background: var(--dashboard-tactic-pin); }
-  .tactical-legend-color.skewer { background: var(--dashboard-tactic-skewer); }
-  .tactical-legend-color.discovered { background: var(--dashboard-tactic-discovered); }
-  .tactical-legend-color.hanging { background: var(--dashboard-tactic-hanging); }
-  .tactical-legend-color.back_rank { background: var(--dashboard-tactic-back-rank); }
-  .tactical-legend-color.trapped { background: var(--dashboard-tactic-trapped); }
-  .tactical-legend-color.other { background: var(--dashboard-tactic-other); }
-
-  /* Difficulty legend colors */
-  .difficulty-legend-color.diff-easy { background: var(--color-diff-easy); }
-  .difficulty-legend-color.diff-medium { background: var(--color-diff-medium); }
-  .difficulty-legend-color.diff-hard { background: var(--color-diff-hard); }
-  .difficulty-legend-color.diff-unscored { background: var(--color-diff-unscored); }
-
-  /* Game type legend colors */
-  .game-type-legend-color.ultrabullet { background: var(--color-gametype-ultrabullet); }
-  .game-type-legend-color.bullet { background: var(--color-gametype-bullet); }
-  .game-type-legend-color.blitz { background: var(--color-gametype-blitz); }
-  .game-type-legend-color.rapid { background: var(--color-gametype-rapid); }
-  .game-type-legend-color.classical { background: var(--color-gametype-classical); }
-  .game-type-legend-color.correspondence { background: var(--color-gametype-correspondence); }
-
-  /* ==========================================================================
-     Breakdown Card Grids — shared pattern
-     ========================================================================== */
-
-  .tactical-breakdown,
-  .difficulty-breakdown,
-  .game-type-breakdown {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: var(--s-md);
-    margin-top: var(--s-md);
-  }
-
-  .game-type-breakdown {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  }
-
-  .tactical-card,
-  .difficulty-card,
-  .game-type-card {
-    padding: var(--s-md);
-    border-radius: 0;
-    text-align: center;
-    border: 2px solid var(--border-card);
-  }
-
-  .tactical-name,
-  .difficulty-name,
-  .game-type-name {
-    font-weight: 600;
-    text-transform: capitalize;
-    margin-bottom: var(--s-xs);
-    font-size: var(--text-sm);
-  }
-
-  .tactical-count,
-  .difficulty-count,
-  .game-type-count {
-    font-size: var(--text-lg);
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .tactical-percent,
-  .difficulty-percent,
-  .game-type-percent {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
-
-  .difficulty-avg-loss {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    margin-top: var(--s-xs);
-  }
-
-  /* Tactical card colors */
-  .tactical-card.fork { background: color-mix(in srgb, var(--dashboard-tactic-fork) 10%, transparent); border-color: var(--dashboard-tactic-fork); }
-  .tactical-card.pin { background: color-mix(in srgb, var(--dashboard-tactic-pin) 10%, transparent); border-color: var(--dashboard-tactic-pin); }
-  .tactical-card.skewer { background: color-mix(in srgb, var(--dashboard-tactic-skewer) 10%, transparent); border-color: var(--dashboard-tactic-skewer); }
-  .tactical-card.discovered { background: color-mix(in srgb, var(--dashboard-tactic-discovered) 10%, transparent); border-color: var(--dashboard-tactic-discovered); }
-  .tactical-card.hanging { background: color-mix(in srgb, var(--dashboard-tactic-hanging) 10%, transparent); border-color: var(--dashboard-tactic-hanging); }
-  .tactical-card.back_rank { background: color-mix(in srgb, var(--dashboard-tactic-back-rank) 10%, transparent); border-color: var(--dashboard-tactic-back-rank); }
-  .tactical-card.trapped { background: color-mix(in srgb, var(--dashboard-tactic-trapped) 10%, transparent); border-color: var(--dashboard-tactic-trapped); }
-  .tactical-card.other { background: color-mix(in srgb, var(--dashboard-tactic-other) 10%, transparent); border-color: var(--dashboard-tactic-other); }
-
-  .tactical-card .tactical-name { color: var(--text); }
-
-  /* Difficulty card colors */
-  .difficulty-card.diff-easy { background: color-mix(in srgb, var(--color-diff-easy) 10%, transparent); border-color: color-mix(in srgb, var(--color-diff-easy) 30%, transparent); }
-  .difficulty-card.diff-medium { background: color-mix(in srgb, var(--color-diff-medium) 10%, transparent); border-color: color-mix(in srgb, var(--color-diff-medium) 30%, transparent); }
-  .difficulty-card.diff-hard { background: color-mix(in srgb, var(--color-diff-hard) 10%, transparent); border-color: color-mix(in srgb, var(--color-diff-hard) 30%, transparent); }
-  .difficulty-card.diff-unscored { background: color-mix(in srgb, var(--color-diff-unscored) 10%, transparent); border-color: color-mix(in srgb, var(--color-diff-unscored) 30%, transparent); }
-
-  .difficulty-card.diff-easy .difficulty-name { color: var(--color-diff-easy); }
-  .difficulty-card.diff-medium .difficulty-name { color: var(--color-diff-medium); }
-  .difficulty-card.diff-hard .difficulty-name { color: var(--color-diff-hard); }
-  .difficulty-card.diff-unscored .difficulty-name { color: var(--color-diff-unscored); }
-
-  /* Game type card colors */
-  .game-type-card.ultrabullet { background: color-mix(in srgb, var(--color-gametype-ultrabullet) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-ultrabullet) 30%, transparent); }
-  .game-type-card.bullet { background: color-mix(in srgb, var(--color-gametype-bullet) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-bullet) 30%, transparent); }
-  .game-type-card.blitz { background: color-mix(in srgb, var(--color-gametype-blitz) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-blitz) 30%, transparent); }
-  .game-type-card.rapid { background: color-mix(in srgb, var(--color-gametype-rapid) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-rapid) 30%, transparent); }
-  .game-type-card.classical { background: color-mix(in srgb, var(--color-gametype-classical) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-classical) 30%, transparent); }
-  .game-type-card.correspondence { background: color-mix(in srgb, var(--color-gametype-correspondence) 10%, transparent); border-color: color-mix(in srgb, var(--color-gametype-correspondence) 30%, transparent); }
-
-  .game-type-card.ultrabullet .game-type-name { color: var(--color-gametype-ultrabullet); }
-  .game-type-card.bullet .game-type-name { color: var(--color-gametype-bullet); }
-  .game-type-card.blitz .game-type-name { color: var(--color-gametype-blitz); }
-  .game-type-card.rapid .game-type-name { color: var(--color-gametype-rapid); }
-  .game-type-card.classical .game-type-name { color: var(--color-gametype-classical); }
-  .game-type-card.correspondence .game-type-name { color: var(--color-gametype-correspondence); }
 
   /* ==========================================================================
      Info Help Button & Modal
@@ -602,28 +460,18 @@
     }
   }
 
-  .cr-metric-card {
-    text-align: center;
-    padding: var(--s-md);
-    border: 2px solid var(--border-card);
-    border-radius: 0;
-    background: var(--surface-raised);
-  }
-
   .cr-metric-label {
     font-size: var(--text-sm);
-    font-weight: 600;
     color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: var(--ls-normal);
-    margin-bottom: var(--s-sm);
+    margin-bottom: var(--s-xs);
   }
 
   .cr-metric-value {
-    font-size: 2.5rem;
+    font-size: 2.75rem;
     font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: var(--s-sm);
+    line-height: 1;
+    margin-bottom: var(--s-xs);
+    font-variant-numeric: tabular-nums;
   }
 
   .cr-metric-detail {
@@ -636,12 +484,11 @@
      ========================================================================== */
 
   .collapse-summary {
-    text-align: center;
-    margin-bottom: var(--s-lg);
+    margin: var(--s-md) 0 var(--s-lg);
   }
 
   .collapse-big-number {
-    font-size: 1.25rem;
+    font-size: var(--text-2xl);
     font-weight: 700;
     color: var(--text);
     margin-bottom: var(--s-sm);
@@ -659,13 +506,19 @@
 
   .collapse-clean {
     font-size: var(--text-sm);
-    color: var(--success);
     font-weight: 600;
   }
 
-  .collapse-distribution {
-    margin-top: var(--s-md);
+  .collapse-zone-key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-xs) var(--s-lg);
+    margin: var(--s-sm) 0 0;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
   }
+
+  .collapse-zone-key strong { color: var(--text); margin-right: var(--s-xs); }
 
   .collapse-dist-title {
     font-size: var(--text-sm);
@@ -673,309 +526,6 @@
     color: var(--text-muted);
     margin-bottom: var(--s-md);
   }
-
-  .collapse-bar-row {
-    display: flex;
-    align-items: center;
-    gap: var(--s-sm);
-    margin-bottom: var(--s-xs);
-  }
-
-  .collapse-bar-label {
-    width: 3.5rem;
-    text-align: right;
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .collapse-bar-track {
-    flex: 1;
-    height: 1.25rem;
-    background: var(--surface-sunken);
-    border-radius: 0;
-    overflow: hidden;
-  }
-
-  .collapse-bar-fill {
-    height: 100%;
-    border-radius: 0;
-    transition: width 0.3s ease;
-    min-width: 2px;
-  }
-
-  .collapse-bar-count {
-    width: 2rem;
-    text-align: right;
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .collapse-zone-legend {
-    display: flex;
-    gap: var(--s-md);
-    justify-content: center;
-    margin-top: var(--s-md);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
-
-  .collapse-zone-item {
-    display: flex;
-    align-items: center;
-    gap: var(--s-xs);
-  }
-
-  .collapse-zone-dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    display: inline-block;
-  }
-
-  .info-modal-definitions dt.cpl-excellent,
-  .info-modal-definitions dt.cpl-good { color: var(--dashboard-positive); }
-  .info-modal-definitions dt.cpl-average { color: var(--dashboard-caution); }
-  .info-modal-definitions dt.cpl-high { color: var(--dashboard-negative); }
-
-  .growth-insufficient {
-    margin-top: 0.75rem;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    text-align: center;
-  }
-
-  /* ==========================================================================
-     Phase Cards
-     ========================================================================== */
-
-  .phase-breakdown {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: var(--s-md);
-    margin-top: var(--s-md);
-  }
-
-  .phase-card {
-    background: var(--surface-raised);
-    border: 2px solid var(--border-subtle);
-    border-radius: 0;
-    padding: var(--s-md);
-    text-align: center;
-    border-left: 4px solid var(--color-phase-unknown);
-  }
-
-  .phase-card.opening { border-left-color: var(--color-phase-opening); }
-  .phase-card.middlegame { border-left-color: var(--color-phase-middlegame); }
-  .phase-card.endgame { border-left-color: var(--color-phase-endgame); }
-  .phase-card.unknown { border-left-color: var(--color-phase-unknown); }
-
-  .phase-name {
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    font-weight: 400;
-    letter-spacing: var(--ls-wide);
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: var(--s-sm);
-  }
-
-  .phase-count {
-    font-family: var(--font-ui);
-    font-size: var(--text-xl);
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .phase-percent {
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    margin-top: var(--s-xs);
-  }
-
-  .phase-cpl {
-    font-family: var(--font-sans);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    margin-top: var(--s-sm);
-  }
-
-  /* Phase Bar */
-  .phase-bar-container { margin-top: var(--s-md); }
-
-  .phase-bar {
-    display: flex;
-    height: 24px;
-    border-radius: 0;
-    overflow: hidden;
-    background: var(--surface-sunken);
-  }
-
-  .phase-bar-segment {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    font-weight: 700;
-    color: var(--text-on-accent);
-    transition: width 0.3s ease;
-  }
-
-  .phase-bar-segment.opening { background: var(--color-phase-opening); }
-  .phase-bar-segment.middlegame { background: var(--color-phase-middlegame); color: var(--text-on-phase-middlegame); }
-  .phase-bar-segment.endgame { background: var(--color-phase-endgame); }
-  .phase-bar-segment.unknown { background: var(--color-phase-unknown); }
-
-  .phase-legend {
-    display: flex;
-    justify-content: center;
-    gap: var(--s-lg);
-    margin-top: var(--s-sm);
-    flex-wrap: wrap;
-  }
-
-  .phase-legend-item {
-    display: flex;
-    align-items: center;
-    gap: var(--s-sm);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
-
-  .phase-legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 0;
-  }
-
-  .phase-legend-color.opening { background: var(--color-phase-opening); }
-  .phase-legend-color.middlegame { background: var(--color-phase-middlegame); }
-  .phase-legend-color.endgame { background: var(--color-phase-endgame); }
-
-  /* ==========================================================================
-     Color Breakdown
-     ========================================================================== */
-
-  .color-breakdown {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: var(--s-md);
-    margin-top: var(--s-md);
-  }
-
-  .color-card {
-    background: var(--surface-raised);
-    border: 2px solid var(--border-subtle);
-    border-radius: 0;
-    padding: var(--s-lg);
-    text-align: center;
-    position: relative;
-  }
-
-  .color-card.white { border-left: 4px solid var(--piece-white); }
-  .color-card.black { border-left: 4px solid var(--piece-black); }
-
-  .color-card.white::before,
-  .color-card.black::before {
-    position: absolute;
-    right: var(--s-sm);
-    top: var(--s-sm);
-    font-size: var(--text-xl);
-    opacity: 0.15;
-  }
-
-  .color-card.white::before { content: '♔'; }
-  .color-card.black::before { content: '♚'; }
-
-  .color-name {
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    letter-spacing: var(--ls-wide);
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: var(--s-sm);
-  }
-
-  .color-count {
-    font-family: var(--font-ui);
-    font-size: var(--text-xl);
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .color-percent {
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    margin-top: var(--s-xs);
-  }
-
-  .color-cpl {
-    font-family: var(--font-sans);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    margin-top: var(--s-sm);
-  }
-
-  /* Color Bar */
-  .color-bar {
-    display: flex;
-    height: 28px;
-    border-radius: 0;
-    overflow: hidden;
-    background: var(--surface-sunken);
-  }
-
-  .color-bar-segment {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    font-weight: 700;
-    transition: width 0.3s ease;
-  }
-
-  .color-bar-segment.white {
-    background: var(--piece-white);
-    color: var(--piece-black);
-    border-right: 2px solid var(--piece-black);
-  }
-
-  .color-bar-segment.black {
-    background: var(--piece-black);
-    color: var(--piece-white);
-  }
-
-  .color-legend {
-    display: flex;
-    justify-content: center;
-    gap: var(--s-lg);
-    margin-top: var(--s-sm);
-  }
-
-  .color-legend-item {
-    display: flex;
-    align-items: center;
-    gap: var(--s-sm);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-  }
-
-  .color-legend-swatch {
-    width: 14px;
-    height: 14px;
-    border-radius: 0;
-    border: 2px solid var(--border-strong);
-  }
-
-  .color-legend-swatch.white { background: var(--piece-white); }
-  .color-legend-swatch.black { background: var(--piece-black); }
 
   /* ==========================================================================
      ECO Table

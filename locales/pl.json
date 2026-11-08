@@ -145,7 +145,6 @@
   "dashboard.chart.no_phase_data": "Brak danych o błędach. Przeanalizuj partie, aby zobaczyć rozkład wg faz.",
   "dashboard.chart.no_tactical_data": "Brak danych o motywach taktycznych. Uruchom uzupełnianie, aby przeanalizować istniejące błędy pod kątem taktyki.",
   "dashboard.chart.pending": "Oczekujące",
-  "dashboard.chart.phase_percent": "{percentage}% grubych błędów",
   "dashboard.chart.puzzle_activity": "Aktywność zadań",
   "dashboard.chart.puzzle_activity_desc": "Twoja aktywność rozwiązywania zadań w ciągu ostatniego roku.",
   "dashboard.chart.source": "Źródło",
@@ -221,12 +220,8 @@
   "dashboard.game_type.rapid": "Rapid",
   "dashboard.game_type.ultrabullet": "UltraBullet",
   "dashboard.game_type.unknown": "Nieznane",
-  "dashboard.link.manage_imports": "Zarządzaj importem i synchronizacją",
   "dashboard.no_data": "Brak dostępnych danych.",
   "dashboard.scope.unfiltered": "Niezależne od filtrów pulpitu.",
-  "dashboard.section.coaching_insights": "Wnioski treningowe",
-  "dashboard.section.explore_more": "Odkryj więcej informacji",
-  "dashboard.section.management": "Zarządzanie biblioteką",
   "dashboard.opening.learn_link_tooltip": "Dowiedz się o tym otwarciu",
   "dashboard.opening.variations_count": "{count, plural, one {# wariant} few {# warianty} other {# wariantów}}",
   "dashboard.resilience.detail": "Uratowano {saved} z {total} przegranych pozycji",
@@ -772,5 +767,8 @@
   "dashboard.status.games": "{count, plural, one {# partia} few {# partie} many {# partii} other {# partii}}",
   "dashboard.status.analyzed": "{count, plural, other {przeanalizowano: #}}",
   "dashboard.status.blunders": "{count, plural, one {# gruby błąd} few {# grube błędy} many {# grubych błędów} other {# grubych błędów}}",
-  "settings.board_display.description": "Zapisuje się od razu na tym urządzeniu, nie trzeba klikać „Zapisz”. Klawisze A i T przełączają strzałki i zagrożenia podczas treningu."
+  "settings.board_display.description": "Zapisuje się od razu na tym urządzeniu, nie trzeba klikać „Zapisz”. Klawisze A i T przełączają strzałki i zagrożenia podczas treningu.",
+  "dashboard.section.where_from": "Skąd biorą się błędy",
+  "dashboard.section.practice": "Twój trening",
+  "dashboard.section.game_flow": "Jak przebiegają twoje partie"
 }

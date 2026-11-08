@@ -6,7 +6,6 @@ import {
   GameTypeBreakdown,
   CollapsePointBreakdown,
   EcoBreakdown,
-  GameBreakdownTable,
   ConversionResilienceBreakdown,
 } from '../../src/dashboard/breakdowns';
 
@@ -16,7 +15,7 @@ describe('PhaseBreakdown', () => {
     expect(screen.getByText('dashboard.chart.no_phase_data')).toBeDefined();
   });
 
-  test('renders phase cards with percentages', () => {
+  test('draws one ranked row per phase and marks the largest', () => {
     const { container } = render(
       <PhaseBreakdown
         data={{
@@ -28,49 +27,33 @@ describe('PhaseBreakdown', () => {
         }}
       />
     );
-    expect(container.querySelectorAll('.phase-card').length).toBe(2);
-    expect(container.querySelector('.phase-card.opening')).toBeDefined();
-    expect(container.querySelector('.phase-card.middlegame')).toBeDefined();
+    expect(container.querySelectorAll('.ranked-bars tbody tr')).toHaveLength(2);
+    expect(container.querySelector('.ranked-bars__row--top')?.getAttribute('data-key')).toBe('middlegame');
+    expect(screen.getByText('70%')).toBeDefined();
   });
 
-  test('renders bar segments for non-zero percentages', () => {
-    const { container } = render(
-      <PhaseBreakdown
-        data={{
-          total_blunders: 10,
-          by_phase: [
-            { phase: 'opening', count: 3, percentage: 30, avg_cp_loss: 150 },
-            { phase: 'middlegame', count: 7, percentage: 70, avg_cp_loss: 200 },
-          ],
-        }}
-      />
-    );
-    expect(container.querySelectorAll('.phase-bar-segment').length).toBe(2);
-  });
 });
 
 describe('TacticalBreakdown', () => {
-  test('keeps trapped pieces separate from other tactics', () => {
+  test('ranks named patterns first and never singles out the unclassified bucket', () => {
     const { container } = render(
       <TacticalBreakdown
         data={{
-          total_blunders: 2,
+          total_blunders: 10,
           by_pattern: [
-            { pattern: 'Trapped Piece', count: 1, percentage: 50 },
-            { pattern: 'None', count: 1, percentage: 50 },
+            { pattern: 'None', count: 6, percentage: 60, avg_cp_loss: 300 },
+            { pattern: 'Fork', count: 1, percentage: 10, avg_cp_loss: 300 },
+            { pattern: 'Trapped Piece', count: 3, percentage: 30, avg_cp_loss: 300 },
           ],
         }}
       />
     );
 
-    expect(container.querySelectorAll('.tactical-bar-segment.trapped')).toHaveLength(1);
-    expect(container.querySelectorAll('.tactical-bar-segment.other')).toHaveLength(1);
-    expect(container.querySelectorAll('.tactical-legend-color.trapped')).toHaveLength(1);
-    expect(container.querySelectorAll('.tactical-legend-color.other')).toHaveLength(1);
-    expect(container.querySelectorAll('.tactical-card.trapped')).toHaveLength(1);
-    expect(container.querySelectorAll('.tactical-card.other')).toHaveLength(1);
-    expect(screen.getAllByText(t('dashboard.tactical.trapped'))).toHaveLength(2);
-    expect(screen.getAllByText(t('dashboard.tactical.other'))).toHaveLength(2);
+    const keys = Array.from(container.querySelectorAll('.ranked-bars tbody tr')).map(row => row.getAttribute('data-key'));
+    expect(keys).toEqual(['Trapped Piece', 'Fork', 'None']);
+    expect(container.querySelector('.ranked-bars__row--top')?.getAttribute('data-key')).toBe('Trapped Piece');
+    expect(container.querySelector('.ranked-bars__row--muted')?.getAttribute('data-key')).toBe('None');
+    expect(screen.getByText(t('dashboard.tactical.trapped'))).toBeDefined();
   });
 });
 
@@ -80,50 +63,21 @@ describe('GameTypeBreakdown', () => {
     expect(screen.getByText('dashboard.chart.no_game_type_data')).toBeDefined();
   });
 
-  test('renders bar segments', () => {
+  test('ranks played time controls by blunders per game', () => {
     const { container } = render(
       <GameTypeBreakdown
         data={{
           total_blunders: 10,
           by_game_type: [
-            { game_type: 'blitz', count: 7, percentage: 70 },
-            { game_type: 'rapid', count: 3, percentage: 30 },
+            { game_type: 'blitz', count: 7, percentage: 70, game_count: 5, blunders_per_game: 1.4 },
+            { game_type: 'rapid', count: 3, percentage: 30, game_count: 6, blunders_per_game: 0.5 },
+            { game_type: 'classical', count: 0, percentage: 0, game_count: 0, blunders_per_game: null },
           ],
         }}
       />
     );
-    expect(container.querySelectorAll('.game-type-bar-segment').length).toBe(2);
-  });
-
-  test('renders legend items', () => {
-    const { container } = render(
-      <GameTypeBreakdown
-        data={{
-          total_blunders: 10,
-          by_game_type: [
-            { game_type: 'blitz', count: 7, percentage: 70 },
-            { game_type: 'rapid', count: 3, percentage: 30 },
-          ],
-        }}
-      />
-    );
-    expect(container.querySelectorAll('.game-type-legend-item').length).toBe(2);
-  });
-
-  test('renders game type cards for non-zero counts', () => {
-    const { container } = render(
-      <GameTypeBreakdown
-        data={{
-          total_blunders: 10,
-          by_game_type: [
-            { game_type: 'blitz', count: 7, percentage: 70 },
-            { game_type: 'rapid', count: 0, percentage: 0 },
-          ],
-        }}
-      />
-    );
-    expect(container.querySelectorAll('.game-type-card').length).toBe(1);
-    expect(container.querySelector('.game-type-card.blitz')).toBeDefined();
+    expect(container.querySelectorAll('.ranked-bars tbody tr')).toHaveLength(2);
+    expect(container.querySelector('.ranked-bars__row--top')?.getAttribute('data-key')).toBe('blitz');
   });
 });
 
@@ -159,7 +113,7 @@ describe('CollapsePointBreakdown', () => {
         }}
       />
     );
-    expect(container.querySelectorAll('.collapse-bar-row').length).toBe(3);
+    expect(container.querySelectorAll('.ranked-bars tbody tr')).toHaveLength(3);
     expect(container.querySelector('.collapse-big-number')).toBeDefined();
   });
 
@@ -206,7 +160,7 @@ describe('CollapsePointBreakdown', () => {
         }}
       />
     );
-    expect(container.querySelectorAll('.collapse-zone-item').length).toBe(3);
+    expect(container.querySelectorAll('.collapse-zone-key > span')).toHaveLength(3);
   });
 });
 
@@ -268,41 +222,6 @@ describe('EcoBreakdown', () => {
 
     fireEvent.click(header);
     expect(container.querySelectorAll('.eco-child-indent').length).toBe(0);
-  });
-});
-
-describe('GameBreakdownTable', () => {
-  test('renders table rows with correct data', () => {
-    const { container } = render(
-      <GameBreakdownTable
-        items={[
-          { source: 'lichess', username: 'user1', total_games: 100, analyzed_games: 80, pending_games: 20 },
-        ]}
-      />
-    );
-    expect(screen.getByText('lichess')).toBeDefined();
-    expect(screen.getByText('user1')).toBeDefined();
-    expect(screen.getByText('100')).toBeDefined();
-    expect(screen.getByText('80')).toBeDefined();
-    expect(screen.getByText('20')).toBeDefined();
-    expect(container.querySelectorAll('tbody tr').length).toBe(1);
-  });
-
-  test('renders no_data message for empty items', () => {
-    render(<GameBreakdownTable items={[]} />);
-    expect(screen.getByText('dashboard.no_data')).toBeDefined();
-  });
-
-  test('renders multiple rows', () => {
-    const { container } = render(
-      <GameBreakdownTable
-        items={[
-          { source: 'lichess', username: 'user1', total_games: 50, analyzed_games: 40, pending_games: 10 },
-          { source: 'chess.com', username: 'user2', total_games: 30, analyzed_games: 25, pending_games: 5 },
-        ]}
-      />
-    );
-    expect(container.querySelectorAll('tbody tr').length).toBe(2);
   });
 });
 

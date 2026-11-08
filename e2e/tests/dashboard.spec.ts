@@ -8,19 +8,21 @@ test.describe('Dashboard', () => {
     });
 
     await test.step('Library status and trend show demo data', async () => {
-      await expect(dashboardPage.libraryStatus).toContainText('315');
+      await expect(dashboardPage.libraryStatus).toContainText(/[1-9]\d* games/);
       await expect(dashboardPage.trendSpine.locator('.trend-chart__bar')).not.toHaveCount(0);
     });
   });
 
-  test('progressively discloses secondary insights', async ({ dashboardPage }) => {
+  test('switching the trend metric redraws the verdict', async ({ dashboardPage, page }) => {
     await dashboardPage.goto();
     await dashboardPage.expectLoaded();
 
-    await expect(dashboardPage.moreInsights).not.toHaveAttribute('open', '');
-    await dashboardPage.moreInsights.locator('summary').click();
-    await expect(dashboardPage.moreInsights).toHaveAttribute('open', '');
-    await expect(dashboardPage.management).toBeVisible();
+    const verdict = dashboardPage.trendSpine.locator('.trend-verdict');
+    await expect(verdict).not.toBeEmpty();
+    await page.getByTestId('tab-clean_game_rate').click();
+    await expect(page.getByTestId('tab-clean_game_rate')).toHaveAttribute('aria-selected', 'true');
+    await expect(dashboardPage.trendSpine.locator('[data-metric="clean_game_rate"]')).toHaveCount(0);
+    await expect(dashboardPage.sectionHeadings).toHaveCount(3);
   });
 
   test('dashboard loads without console errors', async ({ dashboardPage, page }) => {

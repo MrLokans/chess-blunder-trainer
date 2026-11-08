@@ -10,6 +10,11 @@ vi.mock('../../src/shared/api', async (importActual) => {
     system: {
       engineStatus: vi.fn().mockResolvedValue({ available: true, name: 'Stockfish 16', path: '/usr/bin/stockfish' }),
     },
+    stats: {
+      gameBreakdown: vi.fn().mockResolvedValue({
+        items: [{ source: 'lichess', username: 'library-user', total_games: 12, analyzed_games: 10, pending_games: 2 }],
+      }),
+    },
     profiles: {
       list: vi.fn().mockResolvedValue({ profiles: [] }),
       sync: vi.fn().mockResolvedValue({ job_id: 'sync-job-1' }),
@@ -50,6 +55,14 @@ describe('ManagementApp', () => {
     vi.clearAllMocks();
     vi.stubGlobal('htmx', { process: vi.fn(), trigger: vi.fn() });
     vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
+  });
+
+  test('lists the game library by source', async () => {
+    render(<ManagementApp demoMode={false} />);
+    await waitFor(() => {
+      expect(screen.getByText('library-user')).toBeDefined();
+    });
+    expect(screen.getByText(t('dashboard.chart.game_breakdown'))).toBeDefined();
   });
 
   describe('Engine status', () => {

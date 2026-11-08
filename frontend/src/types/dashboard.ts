@@ -53,6 +53,7 @@ export interface TacticalEntry {
   pattern: string;
   count: number;
   percentage: number;
+  avg_cp_loss: number;
 }
 
 export interface TacticalData {

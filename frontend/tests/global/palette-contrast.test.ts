@@ -84,7 +84,6 @@ const ON_FILL_TEXT = [
 const DATA_TEXT = [
   'success', 'color-dashboard-caution',
   ...['easy', 'medium', 'hard', 'unscored'].map(level => `color-diff-${level}`),
-  ...['ultrabullet', 'bullet', 'blitz', 'rapid', 'classical', 'correspondence'].map(type => `color-gametype-${type}`),
 ];
 
 describe('palette contrast', () => {

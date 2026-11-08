@@ -1,12 +1,11 @@
 import { useId } from 'preact/hooks';
 import { Button, buttonClassName } from '../components/primitives/Button';
 import { patternLabel } from './breakdowns';
+import { UNNAMED_PATTERNS } from './patterns';
 import type { AnalysisStatus, GameBreakdownItem, PhaseData, TacticalData } from './types';
 
 const MIN_PATTERN_OCCURRENCES = 5;
 
-// Backend labels for blunders it could not attribute to a named tactic.
-const UNNAMED_PATTERNS = new Set(['None', 'Unknown', 'Not Classified']);
 
 const NAMED_PHASES = new Set(['opening', 'middlegame', 'endgame']);
 

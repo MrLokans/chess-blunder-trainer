@@ -123,28 +123,12 @@
   --color-dashboard-info: light-dark(#164E9A, #A9C6FF);
   --color-dashboard-caution: light-dark(#7A5200, #F5CE59);
   --color-dashboard-negative: light-dark(#B42318, #FF9B94);
-  --color-dashboard-tactic-fork: light-dark(#B91C1C, #EF6E6E);
-  --color-dashboard-tactic-pin: light-dark(#57534E, #B8B4AB);
-  --color-dashboard-tactic-skewer: light-dark(#086B7A, #4FC3D9);
-  --color-dashboard-tactic-discovered: light-dark(#9A5700, #EFB457);
-  --color-dashboard-tactic-hanging: light-dark(#A51B5D, #E877B0);
-  --color-dashboard-tactic-back-rank: light-dark(#087755, #45C492);
-  --color-dashboard-tactic-trapped: light-dark(#6D28D9, #A78BFA);
-  --color-dashboard-tactic-other: light-dark(#4B5563, #959BAA);
 
   /* Difficulty Colors */
   --color-diff-easy: light-dark(var(--blue), #8AA1E0);
   --color-diff-medium: light-dark(#8A4F00, #EFB457);
   --color-diff-hard: light-dark(#B42318, #EF6E6E);
   --color-diff-unscored: light-dark(#4B5563, #959BAA);
-
-  /* Game Type Colors */
-  --color-gametype-ultrabullet: light-dark(var(--dark-gray), #B8B4AB);
-  --color-gametype-bullet: light-dark(#B42318, #EF6E6E);
-  --color-gametype-blitz: light-dark(#7A5200, #F5CE59);
-  --color-gametype-rapid: light-dark(var(--blue), #8AA1E0);
-  --color-gametype-classical: light-dark(#176B2B, #4FB05F);
-  --color-gametype-correspondence: light-dark(#57534E, #959BAA);
 
   /* Focus ring */
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring-color);

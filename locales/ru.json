@@ -145,7 +145,6 @@
   "dashboard.chart.no_phase_data": "Нет данных. Проанализируйте партии, чтобы увидеть распределение по стадиям.",
   "dashboard.chart.no_tactical_data": "Нет данных по тактике. Запустите бэкфилл для анализа тактических приёмов.",
   "dashboard.chart.pending": "Ожидание",
-  "dashboard.chart.phase_percent": "{percentage}% зевков",
   "dashboard.chart.puzzle_activity": "Активность решения задач",
   "dashboard.chart.puzzle_activity_desc": "Ваша активность за последний год.",
   "dashboard.chart.source": "Источник",
@@ -221,12 +220,8 @@
   "dashboard.game_type.rapid": "Рапид",
   "dashboard.game_type.ultrabullet": "Ультрапуля",
   "dashboard.game_type.unknown": "Неизвестно",
-  "dashboard.link.manage_imports": "Управление импортом",
   "dashboard.no_data": "Данные пока недоступны.",
   "dashboard.scope.unfiltered": "Не зависит от фильтров панели.",
-  "dashboard.section.coaching_insights": "Тренировочные выводы",
-  "dashboard.section.explore_more": "Больше выводов",
-  "dashboard.section.management": "Управление библиотекой",
   "dashboard.opening.learn_link_tooltip": "Изучить этот дебют",
   "dashboard.opening.variations_count": "{count, plural, one {# вариант} few {# варианта} other {# вариантов}}",
   "dashboard.resilience.detail": "Спасено {saved} из {total} проигранных позиций",
@@ -772,5 +767,8 @@
   "dashboard.status.games": "{count, plural, one {# партия} few {# партии} many {# партий} other {# партии}}",
   "dashboard.status.analyzed": "{count, plural, other {проанализировано: #}}",
   "dashboard.status.blunders": "{count, plural, one {# зевок} few {# зевка} many {# зевков} other {# зевков}}",
-  "settings.board_display.description": "Сохраняется сразу на этом устройстве, нажимать «Сохранить» не нужно. Клавиши A и T переключают стрелки и угрозы во время тренировки."
+  "settings.board_display.description": "Сохраняется сразу на этом устройстве, нажимать «Сохранить» не нужно. Клавиши A и T переключают стрелки и угрозы во время тренировки.",
+  "dashboard.section.where_from": "Откуда берутся зевки",
+  "dashboard.section.practice": "Ваши тренировки",
+  "dashboard.section.game_flow": "Как складываются ваши партии"
 }

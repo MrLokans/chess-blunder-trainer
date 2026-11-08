@@ -25,7 +25,6 @@ import {
   CollapsePointBreakdown,
   ConversionResilienceBreakdown,
   TrapsSummary,
-  GameBreakdownTable,
 } from './breakdowns';
 import type {
   DateFilterParams,
@@ -253,15 +252,6 @@ function DashboardBody({
     accuracies: filledHours.map(d => d.avg_accuracy),
   } : null;
 
-  const hasPrimaryInsights = Boolean(
-    (hasCollapse && state.collapseData) || (hasTactical && state.tacticalData) || (hasConversion && state.conversionData),
-  );
-  const hasMoreInsights = Boolean(
-    hasAccuracy || (hasPhase && state.phaseData) || (hasOpening && state.ecoData) ||
-    (hasDifficulty && state.difficultyData) || state.colorData || state.gameTypeData ||
-    hasHeatmap || (hasTraps && state.trapsData),
-  );
-
   const coaching = <CoachingAction action={nextAction} onRetryAnalysis={onRetryAnalysis} />;
 
   return (
@@ -293,44 +283,37 @@ function DashboardBody({
         <TrendSpine growth={state.growth} nextStep={coaching} />
       ) : coaching}
 
-      {hasPrimaryInsights && (
-        <section class="dashboard-section" aria-labelledby="coaching-insights-title">
-          <h2 id="coaching-insights-title">{t('dashboard.section.coaching_insights')}</h2>
+      <section class="dashboard-section" aria-labelledby="where-from-title">
+        <h2 id="where-from-title">{t('dashboard.section.where_from')}</h2>
+        <div class="dashboard-insight-grid">
+          {hasPhase && state.phaseData && <BreakdownSection title={t('dashboard.chart.blunders_by_phase')} description={t('dashboard.chart.blunders_by_phase_desc')}><PhaseBreakdown data={state.phaseData} /></BreakdownSection>}
+          {hasTactical && state.tacticalData && <BreakdownSection title={t('dashboard.chart.blunders_by_tactical')} description={t('dashboard.chart.blunders_by_tactical_desc')}><TacticalBreakdown data={state.tacticalData} /></BreakdownSection>}
+          {hasDifficulty && state.difficultyData && <BreakdownSection title={t('dashboard.chart.blunders_by_difficulty')} description={t('dashboard.chart.blunders_by_difficulty_desc')} helpButton={<button class="info-help-btn" aria-label={t('dashboard.difficulty.help_label')} onClick={() => { setDifficultyHelpOpen(true); }}>?</button>}><DifficultyBreakdown data={state.difficultyData} /></BreakdownSection>}
+          {state.gameTypeData && <BreakdownSection title={t('dashboard.chart.blunders_by_game_type')} description={t('dashboard.chart.blunders_by_game_type_desc')}><GameTypeBreakdown data={state.gameTypeData} /></BreakdownSection>}
+          {state.colorData && <BreakdownSection title={t('dashboard.chart.blunders_by_color')} description={t('dashboard.chart.blunders_by_color_desc')}><ColorBreakdown data={state.colorData} /></BreakdownSection>}
+          {hasOpening && state.ecoData && <BreakdownSection wide title={t('dashboard.chart.blunders_by_opening')} description={t('dashboard.chart.blunders_by_opening_desc')}><EcoBreakdown data={state.ecoData} /></BreakdownSection>}
+        </div>
+      </section>
+
+      {(hasHeatmap || (hasTraps && state.trapsData)) && (
+        <section class="dashboard-section" aria-labelledby="practice-title">
+          <h2 id="practice-title">{t('dashboard.section.practice')}</h2>
+          <p class="dashboard-scope-note">{t('dashboard.scope.unfiltered')}</p>
           <div class="dashboard-insight-grid">
-            {hasCollapse && state.collapseData && <BreakdownSection title={t('dashboard.chart.collapse_point')} description={t('dashboard.chart.collapse_point_desc')}><CollapsePointBreakdown data={state.collapseData} /></BreakdownSection>}
-            {hasTactical && state.tacticalData && <BreakdownSection title={t('dashboard.chart.blunders_by_tactical')} description={t('dashboard.chart.blunders_by_tactical_desc')}><TacticalBreakdown data={state.tacticalData} /></BreakdownSection>}
-            {hasConversion && state.conversionData && <BreakdownSection title={t('dashboard.chart.conversion_resilience')} description={t('dashboard.chart.conversion_resilience_desc')}><ConversionResilienceBreakdown data={state.conversionData} /></BreakdownSection>}
+            {hasHeatmap && <BreakdownSection title={t('dashboard.chart.puzzle_activity')} description={t('dashboard.chart.puzzle_activity_desc')}><ActivityHeatmap /></BreakdownSection>}
+            {hasTraps && state.trapsData && <BreakdownSection title={t('traps.dashboard_card_title')} description={t('traps.dashboard_card_desc')}><TrapsSummary data={state.trapsData} /></BreakdownSection>}
           </div>
         </section>
       )}
 
-      {hasMoreInsights && (
-        <details class="dashboard-more-insights" onToggle={(event) => {
-          if ((event.currentTarget).open) window.dispatchEvent(new Event('dashboarddisclosureopen'));
-        }}>
-          <summary>{t('dashboard.section.explore_more')}</summary>
-          <div class="dashboard-insight-grid">
-            {hasAccuracy && <ChartPanel title={t('dashboard.chart.accuracy_by_date')} description={t('dashboard.chart.accuracy_by_date_desc')} emptyMessage={t('dashboard.chart.no_accuracy_data')} data={dateChartData} createChart={createDateChart} />}
-            {hasPhase && state.phaseData && <BreakdownSection title={t('dashboard.chart.blunders_by_phase')} description={t('dashboard.chart.blunders_by_phase_desc')}><PhaseBreakdown data={state.phaseData} /></BreakdownSection>}
-            {hasOpening && state.ecoData && <BreakdownSection title={t('dashboard.chart.blunders_by_opening')} description={t('dashboard.chart.blunders_by_opening_desc')}><EcoBreakdown data={state.ecoData} /></BreakdownSection>}
-            {hasDifficulty && state.difficultyData && <BreakdownSection title={t('dashboard.chart.blunders_by_difficulty')} description={t('dashboard.chart.blunders_by_difficulty_desc')} helpButton={<button class="info-help-btn" aria-label={t('dashboard.difficulty.help_label')} onClick={() => { setDifficultyHelpOpen(true); }}>?</button>}><DifficultyBreakdown data={state.difficultyData} /></BreakdownSection>}
-            {state.colorData && <BreakdownSection title={t('dashboard.chart.blunders_by_color')} description={t('dashboard.chart.blunders_by_color_desc')}><ColorBreakdown data={state.colorData} /></BreakdownSection>}
-            {state.gameTypeData && <BreakdownSection title={t('dashboard.chart.blunders_by_game_type')} description={t('dashboard.chart.blunders_by_game_type_desc')}><GameTypeBreakdown data={state.gameTypeData} /></BreakdownSection>}
-            {hasHeatmap && <BreakdownSection title={t('dashboard.chart.puzzle_activity')} description={t('dashboard.chart.puzzle_activity_desc')} scopeNote={t('dashboard.scope.unfiltered')}><ActivityHeatmap /></BreakdownSection>}
-            {hasTraps && state.trapsData && <BreakdownSection title={t('traps.dashboard_card_title')} description={t('traps.dashboard_card_desc')} scopeNote={t('dashboard.scope.unfiltered')}><TrapsSummary data={state.trapsData} /></BreakdownSection>}
-            {hasAccuracy && <ChartPanel title={t('dashboard.chart.accuracy_by_hour')} description={t('dashboard.chart.accuracy_by_hour_desc', { timezone: state.hourTimezone })} emptyMessage={t('dashboard.chart.no_hourly_data')} data={hourChartData} createChart={createHourChart} timezone={state.hourTimezone} />}
-          </div>
-        </details>
-      )}
-
-      <section class="dashboard-section dashboard-management" aria-labelledby="management-insights-title">
-        <h2 id="management-insights-title">{t('dashboard.section.management')}</h2>
-        <div class="chart-container">
-          <div class="chart-title">{t('dashboard.chart.game_breakdown')}</div>
-          <p class="dashboard-scope-note">{t('dashboard.scope.unfiltered')}</p>
-          <GameBreakdownTable items={state.gameBreakdown ?? []} />
+      <section class="dashboard-section" aria-labelledby="game-flow-title">
+        <h2 id="game-flow-title">{t('dashboard.section.game_flow')}</h2>
+        <div class="dashboard-insight-grid">
+          {hasCollapse && state.collapseData && <BreakdownSection title={t('dashboard.chart.collapse_point')} description={t('dashboard.chart.collapse_point_desc')}><CollapsePointBreakdown data={state.collapseData} /></BreakdownSection>}
+          {hasConversion && state.conversionData && <BreakdownSection title={t('dashboard.chart.conversion_resilience')} description={t('dashboard.chart.conversion_resilience_desc')}><ConversionResilienceBreakdown data={state.conversionData} /></BreakdownSection>}
+          {hasAccuracy && <ChartPanel title={t('dashboard.chart.accuracy_by_date')} description={t('dashboard.chart.accuracy_by_date_desc')} emptyMessage={t('dashboard.chart.no_accuracy_data')} data={dateChartData} createChart={createDateChart} />}
+          {hasAccuracy && <ChartPanel title={t('dashboard.chart.accuracy_by_hour')} description={t('dashboard.chart.accuracy_by_hour_desc', { timezone: state.hourTimezone })} emptyMessage={t('dashboard.chart.no_hourly_data')} data={hourChartData} createChart={createHourChart} timezone={state.hourTimezone} />}
         </div>
-        <a class="btn" href="/management">{t('dashboard.link.manage_imports')}</a>
       </section>
 
       <InfoModal

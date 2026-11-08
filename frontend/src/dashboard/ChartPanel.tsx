@@ -16,12 +16,9 @@ export function ChartPanel({ title, description, emptyMessage, data, createChart
 
   useEffect(() => {
     const onThemeChange = () => { setThemeVersion(version => version + 1); };
-    const onDisclosureOpen = () => { requestAnimationFrame(() => { chartRef.current?.resize(); }); };
     window.addEventListener('themechange', onThemeChange);
-    window.addEventListener('dashboarddisclosureopen', onDisclosureOpen);
     return () => {
       window.removeEventListener('themechange', onThemeChange);
-      window.removeEventListener('dashboarddisclosureopen', onDisclosureOpen);
     };
   }, []);
 
@@ -53,7 +50,7 @@ export function ChartPanel({ title, description, emptyMessage, data, createChart
 
   return (
     <div class="chart-container">
-      <div class="chart-title">{title}</div>
+      <h3 class="chart-title">{title}</h3>
       <p class="chart-description">{description}</p>
       <div class={`chart-canvas-container ${isEmpty ? 'hidden' : ''}`}>
         <canvas ref={canvasRef} />

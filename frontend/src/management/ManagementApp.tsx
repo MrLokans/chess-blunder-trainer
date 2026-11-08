@@ -10,6 +10,7 @@ import { debounce } from '../shared/debounce';
 import type { ExternalJobStatus } from '../components/data/JobCard';
 import type { Profile } from '../types/profiles';
 import { DangerSection } from './DangerSection';
+import { GameBreakdownTable } from './GameBreakdownTable';
 
 interface ManagementInit {
   demoMode: boolean;
@@ -68,6 +69,17 @@ function renderEngineStatus(status: EngineStatus) {
         {t('management.engine.install_hint')}
       </p>
     </div>
+  );
+}
+
+function LibrarySection({ refreshKey }: { refreshKey: number }) {
+  const state = useAsyncData(() => client.stats.gameBreakdown(), [refreshKey]);
+  return (
+    <Section title={t('dashboard.chart.game_breakdown')}>
+      <AsyncBoundary state={state}>
+        {(data) => <GameBreakdownTable items={data.items} />}
+      </AsyncBoundary>
+    </Section>
   );
 }
 
@@ -225,6 +237,10 @@ export function ManagementApp({ demoMode }: ManagementInit) {
           demoMode={demoMode}
         />
       </section>
+
+      <hr class="section-divider" />
+
+      <LibrarySection refreshKey={jobsRefreshKey} />
 
       <hr class="section-divider" />
 

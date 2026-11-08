@@ -145,7 +145,6 @@
   "dashboard.chart.no_phase_data": "No blunder data available yet. Analyze some games to see your phase breakdown.",
   "dashboard.chart.no_tactical_data": "No tactical pattern data available yet. Run a backfill to analyze existing blunders for tactical patterns.",
   "dashboard.chart.pending": "Pending",
-  "dashboard.chart.phase_percent": "{percentage}% of blunders",
   "dashboard.chart.puzzle_activity": "Puzzle Activity",
   "dashboard.chart.puzzle_activity_desc": "Your puzzle solving activity over the past year.",
   "dashboard.chart.source": "Source",
@@ -221,12 +220,8 @@
   "dashboard.game_type.rapid": "Rapid",
   "dashboard.game_type.ultrabullet": "UltraBullet",
   "dashboard.game_type.unknown": "Unknown",
-  "dashboard.link.manage_imports": "Manage Imports & Sync",
   "dashboard.no_data": "No data available yet.",
   "dashboard.scope.unfiltered": "Not affected by dashboard filters.",
-  "dashboard.section.coaching_insights": "Coaching insights",
-  "dashboard.section.explore_more": "Explore more insights",
-  "dashboard.section.management": "Library management",
   "dashboard.opening.learn_link_tooltip": "Learn about this opening",
   "dashboard.opening.variations_count": "{count, plural, one {# variation} other {# variations}}",
   "dashboard.resilience.detail": "Saved {saved} of {total} losing positions",
@@ -772,5 +767,8 @@
   "dashboard.status.games": "{count, plural, one {# game} other {# games}}",
   "dashboard.status.analyzed": "{count, plural, other {# analyzed}}",
   "dashboard.status.blunders": "{count, plural, one {# blunder} other {# blunders}}",
-  "settings.board_display.description": "Saved instantly on this device, no need to press Save. A and T toggle arrows and threats while training."
+  "settings.board_display.description": "Saved instantly on this device, no need to press Save. A and T toggle arrows and threats while training.",
+  "dashboard.section.where_from": "Where your blunders come from",
+  "dashboard.section.practice": "Your practice",
+  "dashboard.section.game_flow": "How your games unfold"
 }

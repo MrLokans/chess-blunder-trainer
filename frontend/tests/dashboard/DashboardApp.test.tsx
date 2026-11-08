@@ -89,30 +89,30 @@ describe('DashboardApp', () => {
     });
   });
 
-  test('renders game breakdown table', async () => {
-    render(<DashboardApp />);
-    await waitFor(() => {
-      expect(screen.getByText(t('dashboard.chart.game_breakdown'))).toBeDefined();
-    });
-  });
-
-  test('collapses secondary insights and labels unfiltered reports', async () => {
+  test('follows the trend with where-from, practice and game-flow sections, without the library table', async () => {
+    window.__features = { 'dashboard.heatmap': true };
     const { container } = render(<DashboardApp />);
     await waitFor(() => {
-      expect(screen.getByText(t('dashboard.section.explore_more'))).toBeDefined();
+      expect(screen.getByText(t('dashboard.section.where_from'))).toBeDefined();
     });
 
-    const details = container.querySelector('.dashboard-more-insights') as HTMLDetailsElement;
-    expect(details.open).toBe(false);
-    expect(container.querySelector('.dashboard-management')).not.toBeNull();
-    expect(screen.getAllByText(t('dashboard.scope.unfiltered')).length).toBeGreaterThan(0);
+    const headings = Array.from(container.querySelectorAll('.dashboard-section > h2')).map(h => h.textContent);
+    expect(headings).toEqual([
+      t('dashboard.section.where_from'),
+      t('dashboard.section.practice'),
+      t('dashboard.section.game_flow'),
+    ]);
+    expect(container.querySelector('.dashboard-section .dashboard-scope-note')?.textContent).toBe(t('dashboard.scope.unfiltered'));
+    expect(screen.queryByText(t('dashboard.chart.game_breakdown'))).toBeNull();
   });
 
-  test('renders management link', async () => {
-    render(<DashboardApp />);
+  test('puts hour-of-day accuracy last', async () => {
+    const { container } = render(<DashboardApp />);
     await waitFor(() => {
-      expect(screen.getByText(t('dashboard.link.manage_imports'))).toBeDefined();
+      expect(screen.getByText(t('dashboard.chart.accuracy_by_hour'))).toBeDefined();
     });
+    const titles = Array.from(container.querySelectorAll('.chart-title')).map(el => el.textContent);
+    expect(titles.at(-1)).toBe(t('dashboard.chart.accuracy_by_hour'));
   });
 
   test('feature-gated sections hidden when disabled', async () => {

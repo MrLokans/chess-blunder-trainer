@@ -145,7 +145,6 @@
   "dashboard.chart.no_phase_data": "Aún no hay datos de errores. Analiza algunas partidas para ver el desglose por fases.",
   "dashboard.chart.no_tactical_data": "Aún no hay datos de patrones tácticos. Ejecuta un relleno para analizar los errores existentes en busca de patrones tácticos.",
   "dashboard.chart.pending": "Pendientes",
-  "dashboard.chart.phase_percent": "{percentage}% de errores graves",
   "dashboard.chart.puzzle_activity": "Actividad de puzzles",
   "dashboard.chart.puzzle_activity_desc": "Tu actividad de resolución de puzzles durante el último año.",
   "dashboard.chart.source": "Fuente",
@@ -221,12 +220,8 @@
   "dashboard.game_type.rapid": "Rápida",
   "dashboard.game_type.ultrabullet": "UltraBullet",
   "dashboard.game_type.unknown": "Desconocido",
-  "dashboard.link.manage_imports": "Gestionar importaciones y sincronización",
   "dashboard.no_data": "Aún no hay datos disponibles.",
   "dashboard.scope.unfiltered": "No se ve afectado por los filtros del panel.",
-  "dashboard.section.coaching_insights": "Información de entrenamiento",
-  "dashboard.section.explore_more": "Explorar más información",
-  "dashboard.section.management": "Gestión de la biblioteca",
   "dashboard.opening.learn_link_tooltip": "Aprender sobre esta apertura",
   "dashboard.opening.variations_count": "{count, plural, one {# variante} other {# variantes}}",
   "dashboard.resilience.detail": "Salvadas {saved} de {total} posiciones perdedoras",
@@ -772,5 +767,8 @@
   "dashboard.status.games": "{count, plural, one {# partida} other {# partidas}}",
   "dashboard.status.analyzed": "{count, plural, one {# analizada} other {# analizadas}}",
   "dashboard.status.blunders": "{count, plural, one {# error grave} other {# errores graves}}",
-  "settings.board_display.description": "Se guarda al instante en este dispositivo, no hace falta pulsar Guardar. Las teclas A y T alternan flechas y amenazas mientras entrenas."
+  "settings.board_display.description": "Se guarda al instante en este dispositivo, no hace falta pulsar Guardar. Las teclas A y T alternan flechas y amenazas mientras entrenas.",
+  "dashboard.section.where_from": "De dónde vienen tus errores",
+  "dashboard.section.practice": "Tu práctica",
+  "dashboard.section.game_flow": "Cómo se desarrollan tus partidas"
 }

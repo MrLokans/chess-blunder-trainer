@@ -145,7 +145,6 @@
   "dashboard.chart.no_phase_data": "暂无失误数据。分析一些对局以查看阶段分布。",
   "dashboard.chart.no_tactical_data": "暂无战术模式数据。运行回填以分析现有失误的战术模式。",
   "dashboard.chart.pending": "待处理",
-  "dashboard.chart.phase_percent": "{percentage}% 的严重失误",
   "dashboard.chart.puzzle_activity": "题目活动",
   "dashboard.chart.puzzle_activity_desc": "过去一年您的题目解答活动。",
   "dashboard.chart.source": "来源",
@@ -221,12 +220,8 @@
   "dashboard.game_type.rapid": "慢棋",
   "dashboard.game_type.ultrabullet": "超超快棋",
   "dashboard.game_type.unknown": "未知",
-  "dashboard.link.manage_imports": "管理导入和同步",
   "dashboard.no_data": "暂无数据。",
   "dashboard.scope.unfiltered": "不受仪表板筛选条件影响。",
-  "dashboard.section.coaching_insights": "训练洞察",
-  "dashboard.section.explore_more": "探索更多洞察",
-  "dashboard.section.management": "资料库管理",
   "dashboard.opening.learn_link_tooltip": "了解这个开局",
   "dashboard.opening.variations_count": "{count, plural, other {# 个变体}}",
   "dashboard.resilience.detail": "在 {total} 个劣势局面中挽回了 {saved} 个",
@@ -772,5 +767,8 @@
   "dashboard.status.games": "{count, plural, other {# 局对局}}",
   "dashboard.status.analyzed": "{count, plural, other {已分析 #}}",
   "dashboard.status.blunders": "{count, plural, other {# 次严重失误}}",
-  "settings.board_display.description": "在本设备上即时保存，无需点击保存。训练时按 A 和 T 切换箭头和威胁显示。"
+  "settings.board_display.description": "在本设备上即时保存，无需点击保存。训练时按 A 和 T 切换箭头和威胁显示。",
+  "dashboard.section.where_from": "失误从何而来",
+  "dashboard.section.practice": "你的练习",
+  "dashboard.section.game_flow": "你的对局走势"
 }

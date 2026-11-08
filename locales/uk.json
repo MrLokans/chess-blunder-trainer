@@ -145,7 +145,6 @@
   "dashboard.chart.no_phase_data": "Поки немає даних про промахи. Проаналізуйте кілька партій, щоб побачити розподіл за фазами.",
   "dashboard.chart.no_tactical_data": "Поки немає даних про тактичні мотиви. Запустіть заповнення, щоб проаналізувати наявні промахи.",
   "dashboard.chart.pending": "Очікує",
-  "dashboard.chart.phase_percent": "{percentage}% промахів",
   "dashboard.chart.puzzle_activity": "Активність задач",
   "dashboard.chart.puzzle_activity_desc": "Ваша активність розв'язування задач за останній рік.",
   "dashboard.chart.source": "Джерело",
@@ -221,12 +220,8 @@
   "dashboard.game_type.rapid": "Рапід",
   "dashboard.game_type.ultrabullet": "Ультрабліц",
   "dashboard.game_type.unknown": "Невідомо",
-  "dashboard.link.manage_imports": "Керувати імпортом та синхронізацією",
   "dashboard.no_data": "Дані поки недоступні.",
   "dashboard.scope.unfiltered": "Не залежить від фільтрів панелі.",
-  "dashboard.section.coaching_insights": "Тренувальні висновки",
-  "dashboard.section.explore_more": "Більше висновків",
-  "dashboard.section.management": "Керування бібліотекою",
   "dashboard.opening.learn_link_tooltip": "Дізнатися про цей дебют",
   "dashboard.opening.variations_count": "{count, plural, one {# варіант} few {# варіанти} other {# варіантів}}",
   "dashboard.resilience.detail": "Врятовано {saved} з {total} програних позицій",
@@ -772,5 +767,8 @@
   "dashboard.status.games": "{count, plural, one {# партія} few {# партії} many {# партій} other {# партії}}",
   "dashboard.status.analyzed": "{count, plural, other {проаналізовано: #}}",
   "dashboard.status.blunders": "{count, plural, one {# промах} few {# промахи} many {# промахів} other {# промахів}}",
-  "settings.board_display.description": "Зберігається одразу на цьому пристрої, натискати «Зберегти» не потрібно. Клавіші A і T перемикають стрілки та загрози під час тренування."
+  "settings.board_display.description": "Зберігається одразу на цьому пристрої, натискати «Зберегти» не потрібно. Клавіші A і T перемикають стрілки та загрози під час тренування.",
+  "dashboard.section.where_from": "Звідки беруться зівки",
+  "dashboard.section.practice": "Ваші тренування",
+  "dashboard.section.game_flow": "Як складаються ваші партії"
 }

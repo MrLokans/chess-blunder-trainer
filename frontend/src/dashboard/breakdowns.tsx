@@ -12,9 +12,10 @@ import type {
   DifficultyData,
   CollapsePointData,
   ConversionResilienceData,
-  GameBreakdownItem,
 } from './types';
 import type { TrapStatsResponse } from '../types/api';
+import { RankedBars } from './RankedBars';
+import { UNNAMED_PATTERNS } from './patterns';
 
 export function renderOpeningName(ecoCode: string, ecoName: string): import('preact').JSX.Element {
   const colonIdx = ecoName.indexOf(': ');
@@ -71,13 +72,6 @@ function gameTypeLabel(type: string): string {
   return key ? t(key) : type;
 }
 
-const PATTERN_CLASSES: Record<string, string> = {
-  Fork: 'fork', Pin: 'pin', Skewer: 'skewer',
-  'Discovered Attack': 'discovered', 'Discovered Check': 'discovered', 'Double Check': 'discovered',
-  'Hanging Piece': 'hanging', 'Back Rank Threat': 'back_rank',
-  'Trapped Piece': 'trapped', None: 'other',
-};
-
 const PATTERN_LABEL_KEYS: Record<string, string> = {
   Fork: 'dashboard.tactical.fork', Pin: 'dashboard.tactical.pin',
   Skewer: 'dashboard.tactical.skewer', 'Discovered Attack': 'dashboard.tactical.discovery',
@@ -95,33 +89,26 @@ function rateLabel(rate: number | null | undefined): string {
   return rate == null ? '—' : t('dashboard.chart.blunders_per_game', { rate: rate.toFixed(2) });
 }
 
+function blunderDetail(count: number, avgCpLoss: number): string {
+  return `${t('dashboard.coach.evidence.count', { count })} · ${t('dashboard.chart.avg_loss', { loss: (avgCpLoss / 100).toFixed(1) })}`;
+}
+
 export function PhaseBreakdown({ data }: { data: PhaseData }) {
   if (data.total_blunders <= 0 || data.by_phase.length === 0) {
     return <div class="no-data-message">{t('dashboard.chart.no_phase_data')}</div>;
   }
 
   return (
-    <>
-      <div class="phase-bar">
-        {data.by_phase
-          .filter(p => p.percentage > 0)
-          .map(p => (
-            <div key={p.phase} class={`phase-bar-segment ${p.phase}`} style={{ width: `${String(p.percentage)}%` }}>
-              {p.percentage > 10 ? `${String(p.percentage)}%` : ''}
-            </div>
-          ))}
-      </div>
-      <div class="phase-breakdown">
-        {data.by_phase.map(p => (
-          <div key={p.phase} class={`phase-card ${p.phase}`}>
-            <div class="phase-name">{t(`chess.phase.${p.phase}`)}</div>
-            <div class="phase-count">{String(p.count)}</div>
-            <div class="phase-percent">{t('dashboard.chart.phase_percent', { percentage: p.percentage })}</div>
-            <div class="phase-cpl">{t('dashboard.chart.avg_loss', { loss: (p.avg_cp_loss / 100).toFixed(1) })}</div>
-          </div>
-        ))}
-      </div>
-    </>
+    <RankedBars
+      caption={t('dashboard.chart.blunders_by_phase')}
+      rows={data.by_phase.map(p => ({
+        key: p.phase,
+        label: t(`chess.phase.${p.phase}`),
+        value: p.count,
+        display: `${String(p.percentage)}%`,
+        detail: blunderDetail(p.count, p.avg_cp_loss),
+      }))}
+    />
   );
 }
 
@@ -131,68 +118,36 @@ export function ColorBreakdown({ data }: { data: ColorData }) {
   }
 
   return (
-    <>
-      <div class="color-bar">
-        {data.by_color
-          .filter(c => c.percentage > 0)
-          .map(c => (
-            <div key={c.color} class={`color-bar-segment ${c.color}`} style={{ width: `${String(c.percentage)}%` }}>
-              {c.percentage > 15 ? `${String(c.percentage)}%` : ''}
-            </div>
-          ))}
-      </div>
-      <div class="color-breakdown">
-        {data.by_color.map(c => (
-          <div key={c.color} class={`color-card ${c.color}`}>
-            <div class="color-name">{t('dashboard.chart.as_color', { color: t(`chess.color.${c.color}`) })}</div>
-            <div class="color-count">{rateLabel(c.blunders_per_game)}</div>
-            <div class="color-percent">{t('dashboard.chart.blunders_games', { blunders: c.count, games: c.game_count })}</div>
-            <div class="color-cpl">{t('dashboard.chart.avg_loss', { loss: (c.avg_cp_loss / 100).toFixed(1) })}</div>
-          </div>
-        ))}
-      </div>
-    </>
+    <RankedBars
+      caption={t('dashboard.chart.blunders_by_color')}
+      rows={data.by_color.map(c => ({
+        key: c.color,
+        label: t('dashboard.chart.as_color', { color: t(`chess.color.${c.color}`) }),
+        value: c.blunders_per_game ?? 0,
+        display: rateLabel(c.blunders_per_game),
+        detail: t('dashboard.chart.blunders_games', { blunders: c.count, games: c.game_count }),
+      }))}
+    />
   );
 }
 
 export function GameTypeBreakdown({ data }: { data: GameTypeData }) {
-  if (data.by_game_type.length === 0) {
+  const played = data.by_game_type.filter(g => g.game_count > 0);
+  if (played.length === 0) {
     return <div class="no-data-message">{t('dashboard.chart.no_game_type_data')}</div>;
   }
 
-  const usedTypes = data.by_game_type.filter(g => g.count > 0).map(g => g.game_type);
-
   return (
-    <>
-      <div class="game-type-bar">
-        {data.by_game_type
-          .filter(g => g.percentage > 0)
-          .map(g => (
-            <div key={g.game_type} class={`game-type-bar-segment ${g.game_type}`} style={{ flex: String(g.percentage) }}>
-              {g.percentage > 8 ? `${String(g.percentage)}%` : ''}
-            </div>
-          ))}
-      </div>
-      <div class="game-type-legend">
-        {usedTypes.map(type => (
-          <div key={type} class="game-type-legend-item">
-            <span class={`game-type-legend-color ${type}`}></span>
-            <span>{gameTypeLabel(type)}</span>
-          </div>
-        ))}
-      </div>
-      <div class="game-type-breakdown">
-        {data.by_game_type
-          .filter(g => g.count > 0)
-          .map(g => (
-            <div key={g.game_type} class={`game-type-card ${g.game_type}`}>
-              <div class="game-type-name">{gameTypeLabel(g.game_type)}</div>
-              <div class="game-type-count">{rateLabel(g.blunders_per_game)}</div>
-              <div class="game-type-percent">{t('dashboard.chart.blunders_games', { blunders: g.count, games: g.game_count })}</div>
-            </div>
-          ))}
-      </div>
-    </>
+    <RankedBars
+      caption={t('dashboard.chart.blunders_by_game_type')}
+      rows={played.map(g => ({
+        key: g.game_type,
+        label: gameTypeLabel(g.game_type),
+        value: g.blunders_per_game ?? 0,
+        display: rateLabel(g.blunders_per_game),
+        detail: t('dashboard.chart.blunders_games', { blunders: g.count, games: g.game_count }),
+      }))}
+    />
   );
 }
 
@@ -334,126 +289,59 @@ export function TacticalBreakdown({ data }: { data: TacticalData }) {
     return <div class="no-data-message">{t('dashboard.chart.no_tactical_data')}</div>;
   }
 
-  const patterns = [...new Set(data.by_pattern.map(p => p.pattern))];
+  const named = data.by_pattern.filter(p => p.count > 0 && !UNNAMED_PATTERNS.has(p.pattern)).sort((a, b) => b.count - a.count);
+  const unnamed = data.by_pattern.filter(p => p.count > 0 && UNNAMED_PATTERNS.has(p.pattern));
 
   return (
-    <>
-      <div class="tactical-bar">
-        {data.by_pattern
-          .filter(p => p.percentage > 0)
-          .map(p => {
-            const cls = PATTERN_CLASSES[p.pattern] ?? 'other';
-            return (
-              <div key={p.pattern} class={`tactical-bar-segment ${cls}`} style={{ flex: String(p.percentage) }}>
-                {p.percentage > 8 ? `${String(p.percentage)}%` : ''}
-              </div>
-            );
-          })}
-      </div>
-      <div class="tactical-legend">
-        {patterns.map(pattern => {
-          const cls = PATTERN_CLASSES[pattern] ?? 'other';
-          return (
-            <div key={pattern} class="tactical-legend-item">
-              <span class={`tactical-legend-color ${cls}`}></span>
-              <span>{patternLabel(pattern)}</span>
-            </div>
-          );
-        })}
-      </div>
-      <div class="tactical-breakdown">
-        {data.by_pattern
-          .filter(p => p.count > 0)
-          .map(p => {
-            const cls = PATTERN_CLASSES[p.pattern] ?? 'other';
-            return (
-              <div key={p.pattern} class={`tactical-card ${cls}`}>
-                <div class="tactical-name">{patternLabel(p.pattern)}</div>
-                <div class="tactical-count">{String(p.count)}</div>
-                <div class="tactical-percent">{`${String(p.percentage)}%`}</div>
-              </div>
-            );
-          })}
-      </div>
-    </>
+    <RankedBars
+      caption={t('dashboard.chart.blunders_by_tactical')}
+      rows={[...named, ...unnamed].map(p => ({
+        key: p.pattern,
+        label: patternLabel(p.pattern),
+        value: p.count,
+        display: `${String(p.percentage)}%`,
+        detail: blunderDetail(p.count, p.avg_cp_loss),
+        muted: UNNAMED_PATTERNS.has(p.pattern),
+      }))}
+    />
   );
 }
 
-export function DifficultyBreakdown({ data }: { data: DifficultyData }) {
-  const diffToClass: Record<string, string> = {
-    easy: 'diff-easy', medium: 'diff-medium', hard: 'diff-hard', unscored: 'diff-unscored',
-  };
-  const diffLabels: Record<string, string> = {
-    easy: t('dashboard.difficulty.easy'),
-    medium: t('dashboard.difficulty.medium'),
-    hard: t('dashboard.difficulty.hard'),
-    unscored: t('dashboard.difficulty.unscored'),
-  };
+const DIFFICULTY_LABEL_KEYS: Record<string, string> = {
+  easy: 'dashboard.difficulty.easy',
+  medium: 'dashboard.difficulty.medium',
+  hard: 'dashboard.difficulty.hard',
+  unscored: 'dashboard.difficulty.unscored',
+};
 
+export function DifficultyBreakdown({ data }: { data: DifficultyData }) {
   if (data.total_blunders <= 0 || data.by_difficulty.length === 0) {
     return <div class="no-data-message">{t('dashboard.chart.no_difficulty_data')}</div>;
   }
 
   return (
-    <>
-      <div class="difficulty-bar">
-        {data.by_difficulty
-          .filter(d => d.percentage > 0)
-          .map(d => {
-            const cls = diffToClass[d.difficulty] ?? 'diff-unscored';
-            return (
-              <div key={d.difficulty} class={`difficulty-bar-segment ${cls}`} style={{ flex: String(d.percentage) }}>
-                {d.percentage > 8 ? `${String(d.percentage)}%` : ''}
-              </div>
-            );
-          })}
-      </div>
-      <div class="difficulty-legend">
-        {data.by_difficulty
-          .filter(d => d.count > 0)
-          .map(d => {
-            const cls = diffToClass[d.difficulty] ?? 'diff-unscored';
-            return (
-              <div key={d.difficulty} class="difficulty-legend-item">
-                <span class={`difficulty-legend-color ${cls}`}></span>
-                <span>{diffLabels[d.difficulty] ?? d.difficulty}</span>
-              </div>
-            );
-          })}
-      </div>
-      <div class="difficulty-breakdown">
-        {data.by_difficulty
-          .filter(d => d.count > 0)
-          .map(d => {
-            const cls = diffToClass[d.difficulty] ?? 'diff-unscored';
-            const label = diffLabels[d.difficulty] ?? d.difficulty;
-            return (
-              <div key={d.difficulty} class={`difficulty-card ${cls}`}>
-                <div class="difficulty-name">{label}</div>
-                <div class="difficulty-count">{String(d.count)}</div>
-                <div class="difficulty-percent">{`${String(d.percentage)}%`}</div>
-                <div class="difficulty-avg-loss">{t('dashboard.chart.avg_loss', { loss: (d.avg_cp_loss / 100).toFixed(1) })}</div>
-              </div>
-            );
-          })}
-      </div>
-    </>
+    <RankedBars
+      caption={t('dashboard.chart.blunders_by_difficulty')}
+      rows={data.by_difficulty.filter(d => d.count > 0).map(d => {
+        const key = DIFFICULTY_LABEL_KEYS[d.difficulty];
+        return {
+          key: d.difficulty,
+          label: key ? t(key) : d.difficulty,
+          value: d.count,
+          display: `${String(d.percentage)}%`,
+          detail: blunderDetail(d.count, d.avg_cp_loss),
+          muted: d.difficulty === 'unscored',
+        };
+      })}
+    />
   );
 }
 
-function zoneColor(label: string): string {
-  const start = parseInt(label.split('-')[0] ?? '0');
-  if (start <= 10) return 'var(--dashboard-positive)';
-  if (start <= 25) return 'var(--dashboard-caution)';
-  return 'var(--dashboard-negative)';
-}
-
-function zoneLabel(label: string): string {
-  const start = parseInt(label.split('-')[0] ?? '0');
-  if (start <= 10) return t('dashboard.collapse.zone_opening');
-  if (start <= 25) return t('dashboard.collapse.zone_middle');
-  return t('dashboard.collapse.zone_late');
-}
+const ZONES = [
+  { range: '1–10', key: 'dashboard.collapse.zone_opening' },
+  { range: '11–25', key: 'dashboard.collapse.zone_middle' },
+  { range: '26+', key: 'dashboard.collapse.zone_late' },
+];
 
 export function CollapsePointBreakdown({ data }: { data: CollapsePointData }) {
   if (data.median_collapse_move === null || data.total_games_with_blunders <= 0) {
@@ -464,7 +352,6 @@ export function CollapsePointBreakdown({ data }: { data: CollapsePointData }) {
   const cleanPercent = totalGamesForClean > 0
     ? Math.round(data.total_games_without_blunders / totalGamesForClean * 100)
     : 0;
-  const maxCount = Math.max(...data.distribution.map(d => d.count), 1);
 
   return (
     <>
@@ -477,36 +364,19 @@ export function CollapsePointBreakdown({ data }: { data: CollapsePointData }) {
         </div>
         <div class="collapse-clean">{t('dashboard.collapse.clean_games', { count: data.total_games_without_blunders, percentage: cleanPercent })}</div>
       </div>
-      <div class="collapse-distribution">
-        <div class="collapse-dist-title">{t('dashboard.collapse.distribution_title')}</div>
-        {data.distribution.map(d => {
-          const pct = Math.round(d.count / maxCount * 100);
-          const color = zoneColor(d.move_range);
-          return (
-            <div key={d.move_range} class="collapse-bar-row">
-              <span class="collapse-bar-label">{d.move_range}</span>
-              <div class="collapse-bar-track">
-                <div class="collapse-bar-fill" style={{ width: `${String(pct)}%`, background: color }} title={zoneLabel(d.move_range)}></div>
-              </div>
-              <span class="collapse-bar-count">{String(d.count)}</span>
-            </div>
-          );
-        })}
-      </div>
-      <div class="collapse-zone-legend">
-        <span class="collapse-zone-item">
-          <span class="collapse-zone-dot" style={{ background: 'var(--dashboard-positive)' }}></span>
-          {t('dashboard.collapse.zone_opening')}
-        </span>
-        <span class="collapse-zone-item">
-          <span class="collapse-zone-dot" style={{ background: 'var(--dashboard-caution)' }}></span>
-          {t('dashboard.collapse.zone_middle')}
-        </span>
-        <span class="collapse-zone-item">
-          <span class="collapse-zone-dot" style={{ background: 'var(--dashboard-negative)' }}></span>
-          {t('dashboard.collapse.zone_late')}
-        </span>
-      </div>
+      <div class="collapse-dist-title">{t('dashboard.collapse.distribution_title')}</div>
+      <RankedBars
+        caption={t('dashboard.collapse.distribution_title')}
+        rows={data.distribution.map(d => ({
+          key: d.move_range,
+          label: d.move_range,
+          value: d.count,
+          display: String(d.count),
+        }))}
+      />
+      <p class="collapse-zone-key">
+        {ZONES.map(zone => <span key={zone.key}><strong>{zone.range}</strong> {t(zone.key)}</span>)}
+      </p>
     </>
   );
 }
@@ -516,28 +386,16 @@ export function ConversionResilienceBreakdown({ data }: { data: ConversionResili
     return <div class="no-data-message">{t('dashboard.conversion.no_data')}</div>;
   }
 
-  const conversionColor = data.conversion_rate >= 70
-    ? 'var(--dashboard-positive)'
-    : data.conversion_rate >= 50
-      ? 'var(--dashboard-caution)'
-      : 'var(--dashboard-negative)';
-
-  const resilienceColor = data.resilience_rate >= 20
-    ? 'var(--dashboard-positive)'
-    : data.resilience_rate >= 10
-      ? 'var(--dashboard-caution)'
-      : 'var(--dashboard-negative)';
-
   return (
     <div class="cr-metrics">
       <div class="cr-metric-card">
         <div class="cr-metric-label">{t('dashboard.conversion.title')}</div>
-        <div class="cr-metric-value" style={{ color: conversionColor }}>{`${String(data.conversion_rate)}%`}</div>
+        <div class="cr-metric-value">{`${String(data.conversion_rate)}%`}</div>
         <div class="cr-metric-detail">{t('dashboard.conversion.detail', { converted: data.games_converted, total: data.games_with_advantage })}</div>
       </div>
       <div class="cr-metric-card">
         <div class="cr-metric-label">{t('dashboard.resilience.title')}</div>
-        <div class="cr-metric-value" style={{ color: resilienceColor }}>{`${String(data.resilience_rate)}%`}</div>
+        <div class="cr-metric-value">{`${String(data.resilience_rate)}%`}</div>
         <div class="cr-metric-detail">{t('dashboard.resilience.detail', { saved: data.games_saved, total: data.games_with_disadvantage })}</div>
       </div>
     </div>
@@ -574,27 +432,5 @@ export function TrapsSummary({ data }: { data: TrapStatsResponse }) {
       {topItems.length > 0 && <div>{topItems}</div>}
       <a href="/traps" class="traps-view-all">{t('traps.view_all')} →</a>
     </>
-  );
-}
-
-export function GameBreakdownTable({ items }: { items: GameBreakdownItem[] }) {
-  if (items.length === 0) {
-    return <div class="no-data-message">{t('dashboard.no_data')}</div>;
-  }
-
-  const columns: Column<GameBreakdownItem>[] = [
-    { key: 'source', header: t('dashboard.chart.source') },
-    { key: 'username', header: t('dashboard.chart.username') },
-    { key: 'total_games', header: t('dashboard.chart.total_games'), render: row => String(row.total_games) },
-    { key: 'analyzed_games', header: t('dashboard.chart.analyzed'), render: row => String(row.analyzed_games) },
-    { key: 'pending_games', header: t('dashboard.chart.pending'), render: row => String(row.pending_games) },
-  ];
-
-  return (
-    <DataTable
-      columns={columns}
-      rows={items}
-      rowKey={row => `${row.source}-${row.username}`}
-    />
   );
 }
