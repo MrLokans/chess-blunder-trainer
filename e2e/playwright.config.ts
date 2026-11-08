@@ -56,7 +56,7 @@ export default defineConfig({
     },
   ],
   webServer: process.env.E2E_BASE_URL ? undefined : {
-    command: 'cp demo/demo.sqlite3 e2e/.tmp/test.sqlite3 && DB_PATH=e2e/.tmp/test.sqlite3 uv run python -m uvicorn blunder_tutor.web.app:create_app_factory --factory --host 0.0.0.0 --port 8000',
+    command: 'rm -f e2e/.tmp/test.sqlite3-wal e2e/.tmp/test.sqlite3-shm && cp demo/demo.sqlite3 e2e/.tmp/test.sqlite3 && DB_PATH=e2e/.tmp/test.sqlite3 uv run python -m uvicorn blunder_tutor.web.app:create_app_factory --factory --host 0.0.0.0 --port 8000',
     cwd: PROJECT_ROOT,
     url: 'http://localhost:8000/health',
     reuseExistingServer: !process.env.CI,
