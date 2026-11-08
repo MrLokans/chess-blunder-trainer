@@ -290,6 +290,7 @@
   /* Board styling */
   .board-preview-container {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--s-md);
     align-items: flex-start;
   }
@@ -327,12 +328,13 @@
   }
 
   .board-settings-controls {
-    flex: 1;
+    flex: 1 1 240px;
+    min-width: 0;
   }
 
   .piece-set-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
     gap: var(--s-sm);
     margin-bottom: var(--s-md);
   }
@@ -447,4 +449,11 @@
   background: var(--warning-bg);
   border: 2px solid var(--warning-border);
   color: var(--text);
+}
+
+@media (pointer: coarse) {
+  .feature-toggle-row,
+  .checkbox-label {
+    min-height: 44px;
+  }
 }

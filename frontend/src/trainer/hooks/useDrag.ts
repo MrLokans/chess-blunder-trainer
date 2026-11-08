@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'preact/hooks';
+import { useRef, useCallback, useEffect, useMemo } from 'preact/hooks';
 import { STORAGE_KEYS } from '../../shared/storage-keys';
 
 const DRAG_STORAGE_KEY = STORAGE_KEYS.trainerResultCardPos;
@@ -48,6 +48,7 @@ export function useDrag(cardRef: preact.RefObject<HTMLDivElement | null>): {
   }, [cardRef]);
 
   const onPointerDown = useCallback((e: PointerEvent) => {
+    if (!e.isPrimary) return;
     e.preventDefault();
     const card = cardRef.current;
     const handle = handleElRef.current;
@@ -78,39 +79,37 @@ export function useDrag(cardRef: preact.RefObject<HTMLDivElement | null>): {
     card.style.bottom = 'auto';
   }, [cardRef]);
 
-  const onPointerUp = useCallback((e: PointerEvent) => {
+  // Also bound to pointercancel and lostpointercapture so an interrupted touch never leaves the drag stuck.
+  const onPointerEnd = useCallback((e: PointerEvent) => {
     if (!draggingRef.current) return;
     draggingRef.current = false;
     cardRef.current?.classList.remove('dragging');
-    handleElRef.current?.releasePointerCapture(e.pointerId);
+    const handle = handleElRef.current;
+    if (handle?.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
     savePosition();
   }, [cardRef, savePosition]);
 
+  const listeners = useMemo((): Array<[string, (e: PointerEvent) => void]> => [
+    ['pointerdown', onPointerDown],
+    ['pointermove', onPointerMove],
+    ['pointerup', onPointerEnd],
+    ['pointercancel', onPointerEnd],
+    ['lostpointercapture', onPointerEnd],
+  ], [onPointerDown, onPointerMove, onPointerEnd]);
+
   const handleRef = useCallback((el: HTMLDivElement | null) => {
     const prev = handleElRef.current;
-    if (prev) {
-      prev.removeEventListener('pointerdown', onPointerDown);
-      prev.removeEventListener('pointermove', onPointerMove);
-      prev.removeEventListener('pointerup', onPointerUp);
-    }
+    if (prev) for (const [type, fn] of listeners) prev.removeEventListener(type, fn as EventListener);
     handleElRef.current = el;
-    if (el) {
-      el.addEventListener('pointerdown', onPointerDown);
-      el.addEventListener('pointermove', onPointerMove);
-      el.addEventListener('pointerup', onPointerUp);
-    }
-  }, [onPointerDown, onPointerMove, onPointerUp]);
+    if (el) for (const [type, fn] of listeners) el.addEventListener(type, fn as EventListener);
+  }, [listeners]);
 
   useEffect(() => {
     return () => {
       const el = handleElRef.current;
-      if (el) {
-        el.removeEventListener('pointerdown', onPointerDown);
-        el.removeEventListener('pointermove', onPointerMove);
-        el.removeEventListener('pointerup', onPointerUp);
-      }
+      if (el) for (const [type, fn] of listeners) el.removeEventListener(type, fn as EventListener);
     };
-  }, [onPointerDown, onPointerMove, onPointerUp]);
+  }, [listeners]);
 
   return { handleRef, restorePosition };
 }

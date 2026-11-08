@@ -602,6 +602,10 @@ tr:hover td {
   margin-bottom: var(--s-lg);
 }
 
+.chart-container:has(> table) {
+  overflow-x: auto;
+}
+
 .chart-title {
   font-family: var(--font-ui);
   font-size: var(--text-base);
@@ -1317,6 +1321,7 @@ body:has(.demo-banner) {
 .engine-details td {
   padding: var(--s-sm) var(--s-lg) var(--s-sm) var(--s-md);
   border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
 }
 
 .engine-details td:first-child {
@@ -1339,4 +1344,22 @@ body:has(.demo-banner) {
 
 .nav-badge[hidden] {
   display: none;
+}
+
+/* Touch screens: primary controls get at least a 44px hit area. */
+@media (pointer: coarse) {
+  .nav-hamburger {
+    width: 44px;
+    height: 44px;
+  }
+
+  .btn,
+  .filter-checkbox-label,
+  .chip-label .chip {
+    min-height: 44px;
+  }
+
+  .btn-sm {
+    min-width: 44px;
+  }
 }

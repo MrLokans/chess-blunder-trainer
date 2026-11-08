@@ -55,7 +55,7 @@
   .dashboard-management { border-top: 2px solid var(--border-strong); padding-top: var(--s-lg); }
 
   @media (max-width: 640px) {
-    .dashboard-insight-grid { grid-template-columns: 1fr; }
+    .dashboard-insight-grid { grid-template-columns: minmax(0, 1fr); }
     .dashboard-more-insights > summary,
     .dashboard-more-insights > .dashboard-insight-grid { padding: var(--s-md); }
   }
@@ -1195,7 +1195,7 @@
   .filter-bar-body {
     border-top: 1px solid var(--border-subtle);
     overflow: hidden;
-    max-height: 500px;
+    max-height: 1200px;
     transition: max-height 0.25s ease, opacity 0.2s ease;
     opacity: 1;
   }
@@ -1299,10 +1299,11 @@
   /* Custom date row (collapsible) */
   .filter-bar-dates {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--s-md);
     overflow: hidden;
-    max-height: 60px;
+    max-height: 200px;
     transition: max-height 0.2s ease, padding 0.2s ease, opacity 0.15s ease;
     opacity: 1;
   }
@@ -1330,8 +1331,10 @@
 
   .filter-chip-group {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--s-sm);
+    min-width: 0;
   }
 
   .filter-chip-label {
@@ -1457,3 +1460,19 @@
       width: 100%;
     }
   }
+
+@media (pointer: coarse) {
+  #dashboard-root .filter-bar-custom-toggle {
+    min-height: 44px;
+  }
+
+  #dashboard-root .info-help-btn {
+    position: relative;
+  }
+
+  #dashboard-root .info-help-btn::after {
+    content: '';
+    position: absolute;
+    inset: -12px;
+  }
+}

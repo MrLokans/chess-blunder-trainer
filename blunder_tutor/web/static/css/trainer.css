@@ -44,7 +44,7 @@
 
 @media (max-width: 1080px) {
   .trainer-main {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .trainer-panel {
@@ -55,11 +55,6 @@
   .trainer-board-area {
     padding: var(--s-lg);
   }
-
-  #board {
-    width: min(480px, calc(100vw - 80px)) !important;
-    height: min(480px, calc(100vw - 80px)) !important;
-  }
 }
 
 /* Context tags, eval bar, board wrapper — see board-layout.css */
@@ -68,6 +63,19 @@
   flex: 1;
   max-width: min(580px, calc(100vh - 240px));
   position: relative;
+}
+
+@media (max-width: 1080px) {
+  /* Width-driven on narrow screens; the height cap must not shrink the board to nothing in phone landscape. */
+  #boardWrapper {
+    min-width: 0;
+    max-width: min(480px, max(280px, calc(100dvh - 240px)));
+  }
+
+  /* 280px board + eval bar + gap */
+  .trainer-board-area .board-eval-wrapper {
+    max-width: min(620px, max(324px, calc(100dvh - 200px)));
+  }
 }
 
 #board {
@@ -326,6 +334,7 @@
 .board-result-drag-handle {
   padding: var(--s-sm) 0;
   cursor: grab;
+  touch-action: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1286,4 +1295,23 @@
   margin-top: var(--s-md);
   color: var(--text-muted);
   font-size: var(--text-sm);
+}
+
+@media (pointer: coarse) {
+  .action-key {
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .tactical-filter-btn,
+  .panel-toolbar .btn-ghost {
+    min-height: 44px;
+  }
+
+  .color-option,
+  .arrow-toggle label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
 }
