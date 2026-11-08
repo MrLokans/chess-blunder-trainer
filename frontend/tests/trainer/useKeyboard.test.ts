@@ -8,7 +8,7 @@ function actions(overrides: Partial<Parameters<typeof useKeyboard>[0]> = {}): Pa
     next: vi.fn(), reset: vi.fn(), undo: vi.fn(), flip: vi.fn(), reveal: vi.fn(), playBest: vi.fn(),
     lichess: vi.fn(), vimInput: vi.fn(), toggleShortcuts: vi.fn(), navigateLine: vi.fn(),
     toggleArrows: vi.fn(), toggleThreats: vi.fn(), hideResult: vi.fn(),
-    isAnimating: false, isVimInputActive: false, isShortcutsVisible: false, isResultVisible: false,
+    isAnimating: false, isVimInputActive: false, isShortcutsVisible: false, isFiltersOpen: false, isResultVisible: false,
     ...overrides,
   };
 }

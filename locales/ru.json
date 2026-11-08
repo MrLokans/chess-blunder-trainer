@@ -642,8 +642,11 @@
   "trainer.button.show_refutation": "Показать опровержение",
   "trainer.debug.copied": "Скопировано!",
   "trainer.debug.copy_title": "Скопировать отладочную информацию в буфер обмена",
-  "trainer.result.why_better": "Почему {move} лучше",
   "trainer.result.you_played": "В партии вы сыграли {move}",
+  "trainer.result.your_move": "Ваш ход",
+  "trainer.result.in_game": "В партии",
+  "trainer.result.best": "Лучший",
+  "trainer.result.position_after": "Позиция после {move}",
   "trainer.details.tactical": "Тактические детали",
   "trainer.empty.analyzing_action": "Посмотреть прогресс",
   "trainer.empty.analyzing_message": "Ваши партии импортируются и анализируются. Это может занять некоторое время — задачи появятся автоматически.",
@@ -684,6 +687,9 @@
   "trainer.filters.tactical_pin": "Связка",
   "trainer.filters.tactical_skewer": "Линейный удар",
   "trainer.filters.title": "Фильтры задач",
+  "trainer.filters.all_puzzles": "Все задачи",
+  "trainer.filters.change": "Изменить",
+  "trainer.filters.apply": "Показать задачи",
   "trainer.game_type.blitz": "Блиц",
   "trainer.game_type.bullet": "Пуля",
   "trainer.game_type.classical": "Классика",
@@ -756,5 +762,6 @@
   "traps.title": "Ловушки и атаки",
   "traps.view_all": "Все ловушки",
   "traps.your_games": "Ваши партии",
-  "dashboard.stat.pending_analysis": "{count, plural, =0 {Нет ожидающих партий} one {# ожидает} few {# ожидают} many {# ожидают} other {# ожидают}}"
+  "dashboard.stat.pending_analysis": "{count, plural, =0 {Нет ожидающих партий} one {# ожидает} few {# ожидают} many {# ожидают} other {# ожидают}}",
+  "settings.board_display.description": "Сохраняется сразу на этом устройстве, нажимать «Сохранить» не нужно. Клавиши A и T переключают стрелки и угрозы во время тренировки."
 }

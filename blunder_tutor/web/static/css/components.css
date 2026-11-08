@@ -299,6 +299,42 @@
   color: var(--text);
 }
 
+/* Side placement: a full-height drawer on the right; a bottom sheet on phones. */
+.modal-overlay--side {
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.modal.modal--side {
+  display: flex;
+  flex-direction: column;
+  width: min(440px, 100vw);
+  max-width: none;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  border-width: 0 0 0 3px;
+}
+
+.modal--side .modal__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+@media (max-width: 640px) {
+  .modal-overlay--side {
+    align-items: flex-end;
+  }
+
+  .modal.modal--side {
+    width: 100%;
+    height: auto;
+    max-height: 85dvh;
+    border-width: 3px 0 0;
+  }
+}
+
 /* --------------------------------------------------------------------------
    ConfirmDialog
    -------------------------------------------------------------------------- */

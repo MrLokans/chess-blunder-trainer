@@ -642,8 +642,11 @@
   "trainer.button.show_refutation": "Паказаць абвяржэнне",
   "trainer.debug.copied": "Скапіравана!",
   "trainer.debug.copy_title": "Скапіраваць адладачную інфармацыю ў буфер абмену",
-  "trainer.result.why_better": "Чаму {move} лепш",
   "trainer.result.you_played": "У партыі вы згулялі {move}",
+  "trainer.result.your_move": "Ваш ход",
+  "trainer.result.in_game": "У партыі",
+  "trainer.result.best": "Лепшы",
+  "trainer.result.position_after": "Пазіцыя пасля {move}",
   "trainer.details.tactical": "Тактычныя дэталі",
   "trainer.empty.analyzing_action": "Паглядзець прагрэс",
   "trainer.empty.analyzing_message": "Вашы партыі імпартуюцца і аналізуюцца. Гэта можа заняць некаторы час — задачы з'явяцца аўтаматычна.",
@@ -684,6 +687,9 @@
   "trainer.filters.tactical_pin": "Звязка",
   "trainer.filters.tactical_skewer": "Скразны ўдар",
   "trainer.filters.title": "Фільтры задач",
+  "trainer.filters.all_puzzles": "Усе задачы",
+  "trainer.filters.change": "Змяніць",
+  "trainer.filters.apply": "Паказаць задачы",
   "trainer.game_type.blitz": "Бліц",
   "trainer.game_type.bullet": "Буліт",
   "trainer.game_type.classical": "Класічныя",
@@ -756,5 +762,6 @@
   "traps.title": "Пасткі і атакі",
   "traps.view_all": "Усе пасткі",
   "traps.your_games": "Вашы партыі",
-  "dashboard.stat.pending_analysis": "{count, plural, =0 {Няма гульняў у чаканні} one {# у чаканні} few {# у чаканні} many {# у чаканні} other {# у чаканні}}"
+  "dashboard.stat.pending_analysis": "{count, plural, =0 {Няма гульняў у чаканні} one {# у чаканні} few {# у чаканні} many {# у чаканні} other {# у чаканні}}",
+  "settings.board_display.description": "Захоўваецца адразу на гэтай прыладзе, націскаць «Захаваць» не трэба. Клавішы A і T пераключаюць стрэлкі і пагрозы падчас трэніроўкі."
 }

@@ -13,8 +13,10 @@ import { Board } from './components/Board';
 import { VimInput } from './components/VimInput';
 import { ContextTags } from './components/ContextTags';
 import { BoardPrompt } from './components/BoardPrompt';
-import { ResultCard } from './components/ResultCard';
-import { FiltersPanel } from './components/FiltersPanel';
+import { ResultCard, type UserAttempt } from './components/ResultCard';
+import { FiltersPanel, FilterSummary } from './components/FiltersPanel';
+import { Modal } from '../components/feedback/Modal';
+import { Button } from '../components/primitives/Button';
 import { MoveActions } from './components/MoveActions';
 import { PuzzleTools } from './components/PuzzleTools';
 import { ShortcutsOverlay } from './components/ShortcutsOverlay';
@@ -36,7 +38,7 @@ function TrainerCore(): preact.JSX.Element {
   const { state, dispatch } = useContext(TrainerContext);
   const [submitting, setSubmitting] = useState(false);
   const [vimInputVisible, setVimInputVisible] = useState(false);
-  const [userMoveUci, setUserMoveUci] = useState<string | null>(null);
+  const [userAttempt, setUserAttempt] = useState<UserAttempt | null>(null);
   const [feedbackTitle, setFeedbackTitle] = useState('');
   const [feedbackDetail, setFeedbackDetail] = useState('');
   const gameRef = useRef<ChessInstance | null>(null);
@@ -64,14 +66,35 @@ function TrainerCore(): preact.JSX.Element {
   const puzzleApi = usePuzzle();
   useBoardSettings();
 
-  // Filters — onFilterChange triggers a new puzzle load
+  // Filters — a change loads a new puzzle after the next render, so the request sees the new filters.
+  // While the drawer is open the load waits until it closes.
   const filtersRef = useRef<FiltersAPI | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersOpenRef = useRef(false);
+  filtersOpenRef.current = filtersOpen;
+  const filtersReloadPendingRef = useRef(false);
+  const [filterLoadRequest, setFilterLoadRequest] = useState(0);
   const filtersApi = useFilters(useCallback(() => {
-    setUserMoveUci(null);
-    const params = filtersRef.current?.getFilterParams();
-    void puzzleApi.loadPuzzle(params);
-  }, [puzzleApi]));
+    if (filtersOpenRef.current) {
+      filtersReloadPendingRef.current = true;
+      return;
+    }
+    setFilterLoadRequest(n => n + 1);
+  }, []));
   filtersRef.current = filtersApi;
+  const closeFilters = useCallback(() => {
+    setFiltersOpen(false);
+    if (filtersReloadPendingRef.current) {
+      filtersReloadPendingRef.current = false;
+      setFilterLoadRequest(n => n + 1);
+    }
+  }, []);
+  useEffect(() => {
+    if (filterLoadRequest === 0) return;
+    setUserAttempt(null);
+    void puzzleApi.loadPuzzle(filtersRef.current?.getFilterParams());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per request; puzzleApi changes identity every render
+  }, [filterLoadRequest]);
 
   // Line player
   const { playBestMove, playRefutation, navigateLine } = useLinePlayer(gameRef);
@@ -82,7 +105,8 @@ function TrainerCore(): preact.JSX.Element {
     filtersApi.state.showArrows,
     filtersApi.state.showThreats,
     filtersApi.state.showTactics,
-    userMoveUci,
+    // A repeated game blunder keeps its red error highlight instead of the user-move one.
+    state.feedbackType === 'blunder' ? null : userAttempt?.uci ?? null,
   );
 
   // Pre-move animation config
@@ -129,6 +153,9 @@ function TrainerCore(): preact.JSX.Element {
       }
     }
 
+    if (!data.is_best) {
+      setUserAttempt({ san: data.user_san, uci: data.user_uci, evalDisplay: data.user_eval_display });
+    }
     if (data.is_best) {
       setFeedbackTitle(t('trainer.feedback.excellent'));
       setFeedbackDetail(t('trainer.feedback.found_best'));
@@ -148,7 +175,6 @@ function TrainerCore(): preact.JSX.Element {
         setFeedbackDetail(t('trainer.feedback.not_quite_detail', { userMove: data.user_san, userEval: data.user_eval_display }));
         dispatch({ type: 'SET_FEEDBACK', feedbackType: 'not-quite' });
       }
-      setUserMoveUci(data.user_uci);
     }
 
     dispatch({ type: 'REVEAL_BEST' });
@@ -235,7 +261,7 @@ function TrainerCore(): preact.JSX.Element {
 
   // Review session
   const loadNextReview = useCallback(async () => {
-    setUserMoveUci(null);
+    setUserAttempt(null);
     setSrsSuspended(false);
     const loaded = await puzzleApi.loadReviewPuzzle();
     if (!loaded) setShowInboxZero(true);
@@ -255,7 +281,7 @@ function TrainerCore(): preact.JSX.Element {
   // Next puzzle
   const handleNext = useCallback(() => {
     trackEvent('Puzzle Next');
-    setUserMoveUci(null);
+    setUserAttempt(null);
     setSrsSuspended(false);
     if (inReview) {
       const session = reviewQueue.session;
@@ -290,6 +316,7 @@ function TrainerCore(): preact.JSX.Element {
     isAnimating: state.animating,
     isVimInputActive: vimInputVisible,
     isShortcutsVisible: state.shortcutsVisible,
+    isFiltersOpen: filtersOpen,
     isResultVisible: state.resultVisible,
     hideResult: () => { dispatch({ type: 'SET_RESULT_VISIBLE', visible: false }); },
   });
@@ -407,19 +434,12 @@ function TrainerCore(): preact.JSX.Element {
             submitting={submitting}
             hasPuzzle={!!state.puzzle}
           />
-          <ResultCard
-            visible={state.resultVisible}
-            feedbackType={state.feedbackType}
-            feedbackTitle={feedbackTitle}
-            feedbackDetail={feedbackDetail}
-            puzzle={state.puzzle}
+          <MoveActions
+            hasPuzzle={!!state.puzzle}
             bestRevealed={state.bestRevealed}
-            moveHistory={state.moveHistory}
-            srsSuspended={srsSuspended}
-            onPlayBest={playBestMove}
-            onPlayRefutation={playRefutation}
+            onReset={handleReset}
+            onReveal={handleReveal}
             onNext={handleNext}
-            onClose={() => { dispatch({ type: 'SET_RESULT_VISIBLE', visible: false }); }}
           />
         </div>
 
@@ -428,14 +448,6 @@ function TrainerCore(): preact.JSX.Element {
             <ReviewBanner dueCount={reviewQueue.dueCount} onStart={handleStartReview} />
           )}
           <div class="panel-section panel-actions">
-            <MoveActions
-              hasPuzzle={!!state.puzzle}
-              bestRevealed={state.bestRevealed}
-              onReset={handleReset}
-              onReveal={handleReveal}
-              onNext={handleNext}
-              onUndo={handleUndo}
-            />
             <PuzzleTools
               puzzle={state.puzzle}
               starred={state.currentStarred}
@@ -443,13 +455,34 @@ function TrainerCore(): preact.JSX.Element {
               onShowShortcuts={() => { dispatch({ type: 'TOGGLE_SHORTCUTS' }); }}
             />
           </div>
-          {!inReview && <FiltersPanel filters={filtersApi} />}
+          {!inReview && <FilterSummary filters={filtersApi} onChange={() => { setFiltersOpen(true); }} />}
+          <ResultCard
+            visible={state.resultVisible}
+            feedbackType={state.feedbackType}
+            feedbackTitle={feedbackTitle}
+            feedbackDetail={feedbackDetail}
+            puzzle={state.puzzle}
+            bestRevealed={state.bestRevealed}
+            userAttempt={userAttempt}
+            moveHistory={state.moveHistory}
+            srsSuspended={srsSuspended}
+            onPlayBest={playBestMove}
+            onPlayRefutation={playRefutation}
+            onNext={handleNext}
+          />
         </div>
       </div>
 
       <div class="sr-only" role="status" aria-live="polite" id="resultAnnouncement">
         {state.resultVisible ? `${feedbackTitle} ${feedbackDetail}`.trim() : ''}
       </div>
+
+      <Modal open={filtersOpen} onClose={closeFilters} title={t('trainer.filters.title')} placement="side">
+        <FiltersPanel filters={filtersApi} />
+        <div class="filters-drawer-footer">
+          <Button testId="apply-filters" onClick={closeFilters}>{t('trainer.filters.apply')}</Button>
+        </div>
+      </Modal>
 
       <ShortcutsOverlay
         visible={state.shortcutsVisible}

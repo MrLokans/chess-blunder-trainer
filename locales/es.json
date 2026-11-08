@@ -642,8 +642,11 @@
   "trainer.button.show_refutation": "Ver refutación",
   "trainer.debug.copied": "¡Copiado!",
   "trainer.debug.copy_title": "Copiar información de depuración al portapapeles",
-  "trainer.result.why_better": "Por qué {move} es mejor",
   "trainer.result.you_played": "En la partida jugaste {move}",
+  "trainer.result.your_move": "Tu jugada",
+  "trainer.result.in_game": "En la partida",
+  "trainer.result.best": "Mejor",
+  "trainer.result.position_after": "Posición tras {move}",
   "trainer.details.tactical": "Detalles tácticos",
   "trainer.empty.analyzing_action": "Ver progreso",
   "trainer.empty.analyzing_message": "Tus partidas se están importando y analizando. Esto puede tomar un momento — los puzzles aparecerán automáticamente.",
@@ -684,6 +687,9 @@
   "trainer.filters.tactical_pin": "Clavada",
   "trainer.filters.tactical_skewer": "Enfilada",
   "trainer.filters.title": "Filtros de puzzles",
+  "trainer.filters.all_puzzles": "Todos los problemas",
+  "trainer.filters.change": "Cambiar",
+  "trainer.filters.apply": "Mostrar problemas",
   "trainer.game_type.blitz": "Blitz",
   "trainer.game_type.bullet": "Bullet",
   "trainer.game_type.classical": "Clásica",
@@ -756,5 +762,6 @@
   "traps.title": "Trampas y ataques",
   "traps.view_all": "Ver todas las trampas",
   "traps.your_games": "Tus partidas",
-  "dashboard.stat.pending_analysis": "{count, plural, =0 {No hay partidas pendientes} one {# pendiente} other {# pendientes}}"
+  "dashboard.stat.pending_analysis": "{count, plural, =0 {No hay partidas pendientes} one {# pendiente} other {# pendientes}}",
+  "settings.board_display.description": "Se guarda al instante en este dispositivo, no hace falta pulsar Guardar. Las teclas A y T alternan flechas y amenazas mientras entrenas."
 }

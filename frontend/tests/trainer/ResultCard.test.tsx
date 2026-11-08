@@ -1,9 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { ResultCard } from '../../src/trainer/components/ResultCard';
+import { loadChessGlobal } from '../helpers/chess';
+
+const { mockChessground } = vi.hoisted(() => ({
+  mockChessground: vi.fn(() => ({ set: vi.fn(), setAutoShapes: vi.fn(), destroy: vi.fn() })),
+}));
+
+vi.mock('@vendor/chessground', () => ({ Chessground: mockChessground }));
 
 const puzzle = {
-  game_id: 'abc', fen: 'startpos', ply: 10,
+  game_id: 'abc', fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', ply: 10,
   blunder_uci: 'e2e4', blunder_san: 'e4',
   best_move_uci: 'd2d4', best_move_san: 'd4',
   best_line: ['d4', 'Nf6', 'c4'], refutation_line: ['Nf6', 'Nc3', 'Bb4'], player_color: 'white' as const,
@@ -18,6 +25,8 @@ const puzzle = {
 };
 
 describe('ResultCard', () => {
+  beforeEach(() => { loadChessGlobal(); });
+
   const defaults = {
     visible: true,
     feedbackType: 'correct' as const,
@@ -25,11 +34,11 @@ describe('ResultCard', () => {
     feedbackDetail: 'You found the best move',
     puzzle,
     bestRevealed: true,
+    userAttempt: null,
     moveHistory: [] as string[],
     onPlayBest: vi.fn(),
     onPlayRefutation: vi.fn(),
     onNext: vi.fn(),
-    onClose: vi.fn(),
   };
 
   it('renders when visible', () => {
@@ -40,7 +49,7 @@ describe('ResultCard', () => {
 
   it('does not render when not visible', () => {
     const { container } = render(<ResultCard {...defaults} visible={false} />);
-    expect(container.querySelector('.board-result-card')).toBeNull();
+    expect(container.querySelector('#boardResultCard')).toBeNull();
   });
 
   it('shows best move when revealed', () => {
@@ -103,5 +112,33 @@ describe('ResultCard', () => {
   it('explains why the best move is better', () => {
     const { getByTestId } = render(<ResultCard {...defaults} />);
     expect(getByTestId('result-best').textContent).toContain('Maintains advantage');
+  });
+
+  it('compares the attempted move with the best move on two boards', () => {
+    mockChessground.mockClear();
+    render(<ResultCard {...defaults} feedbackType="not-quite" userAttempt={{ san: 'Nf3', uci: 'g1f3', evalDisplay: '+0.2' }} />);
+    expect(screen.getByText('trainer.result.your_move')).not.toBeNull();
+    expect(screen.getAllByRole('img')).toHaveLength(2);
+    expect(mockChessground).toHaveBeenCalledTimes(2);
+    expect(mockChessground.mock.calls.map(([, cfg]) => (cfg as { lastMove: string[] }).lastMove)).toEqual([['g1', 'f3'], ['d2', 'd4']]);
+  });
+
+  it('falls back to the game move when the answer was only revealed', () => {
+    render(<ResultCard {...defaults} feedbackType={null} />);
+    expect(screen.getByText('trainer.result.in_game')).not.toBeNull();
+  });
+
+  it('shows only the best board when the move was correct', () => {
+    mockChessground.mockClear();
+    render(<ResultCard {...defaults} />);
+    expect(screen.queryByText('trainer.result.your_move')).toBeNull();
+    expect(mockChessground).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips a board whose move is illegal in the puzzle position', () => {
+    mockChessground.mockClear();
+    render(<ResultCard {...defaults} feedbackType="not-quite" userAttempt={{ san: 'Ke2', uci: 'e1e2', evalDisplay: '-9' }} />);
+    expect(screen.queryByText('trainer.result.your_move')).toBeNull();
+    expect(mockChessground).toHaveBeenCalledTimes(1);
   });
 });

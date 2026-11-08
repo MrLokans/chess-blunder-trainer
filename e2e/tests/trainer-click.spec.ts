@@ -32,9 +32,9 @@ test.describe('Trainer - Click-based Moves', () => {
       await trainerPage.makeMoveAndWaitForSubmit(wrongFrom, wrongTo);
     });
 
-    await test.step('Result card shows (not accent-correct)', async () => {
+    await test.step('Result card shows non-best feedback', async () => {
       await expect(trainerPage.resultCard).toBeVisible();
-      await expect(trainerPage.resultCard).not.toHaveClass(/accent-correct/);
+      await expect(trainerPage.resultCard).not.toHaveAttribute('data-feedback', 'correct');
     });
   });
 

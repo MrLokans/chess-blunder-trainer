@@ -3,12 +3,14 @@ import { createPortal } from 'preact/compat';
 import { useEffect, useId, useRef } from 'preact/hooks';
 
 export type ModalSize = 'sm' | 'md' | 'lg';
+export type ModalPlacement = 'center' | 'side';
 
 export interface ModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
   size?: ModalSize;
+  placement?: ModalPlacement;
   initialFocusRef?: RefObject<HTMLElement | null>;
   closeLabel?: string;
   children?: ComponentChildren;
@@ -28,6 +30,7 @@ export function Modal({
   onClose,
   title,
   size = 'md',
+  placement = 'center',
   initialFocusRef,
   closeLabel = t('common.close'),
   children,
@@ -92,10 +95,10 @@ export function Modal({
   };
 
   return createPortal(
-    <div class="modal-overlay visible" onClick={handleBackdropClick}>
+    <div class={`modal-overlay visible modal-overlay--${placement}`} onClick={handleBackdropClick}>
       <div
         ref={dialogRef}
-        class={`modal modal--${size}`}
+        class={`modal modal--${size} modal--${placement}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

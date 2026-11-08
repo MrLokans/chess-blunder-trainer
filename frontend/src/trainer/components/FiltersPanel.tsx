@@ -1,6 +1,7 @@
 import type { FiltersAPI } from '../hooks/useFilters';
 import { useFeature } from '../../hooks/useFeature';
 import { GAME_TYPES, GAME_PHASES, DIFFICULTIES } from '../../shared/constants';
+import { Button } from '../../components/primitives/Button';
 
 interface FiltersPanelProps {
   filters: FiltersAPI;
@@ -42,157 +43,120 @@ function CheckboxGroup({ items, selected, onChange, labelPrefix }: {
   );
 }
 
-const ChevronSvg = ({ collapsed }: { collapsed: boolean }) => (
-  <svg class={`chevron-icon ${collapsed ? 'collapsed' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <polyline points="6 9 12 15 18 9" />
-  </svg>
-);
+export function FilterSummary({ filters, onChange }: { filters: FiltersAPI; onChange: () => void }): preact.JSX.Element {
+  const { state } = filters;
+  const narrowed = (selected: string[], all: readonly string[], prefix: string): string | null =>
+    selected.length > 0 && selected.length < all.length ? selected.map(v => t(`${prefix}.${v}`)).join(', ') : null;
+  const tactical = TACTICAL_PATTERNS.find(p => p.value === state.tacticalPattern);
+  const parts = [
+    narrowed(state.gameTypes, GAME_TYPES, 'trainer.game_type'),
+    narrowed(state.phases, GAME_PHASES, 'chess.phase'),
+    narrowed(state.difficulties, DIFFICULTIES, 'dashboard.difficulty'),
+    tactical ? t(tactical.key) : null,
+    state.color !== 'both' ? t(`chess.color.${state.color}`) : null,
+  ].filter(Boolean);
+
+  return (
+    <div class="filter-summary">
+      <div class="filter-summary-text">
+        <span class="filter-summary-label">{t('trainer.filters.title')}</span>
+        <span class="filter-summary-value" data-testid="filter-summary">
+          {parts.length > 0 ? parts.join(' · ') : t('trainer.filters.all_puzzles')}
+        </span>
+      </div>
+      <Button variant="secondary" size="sm" testId="change-filters" onClick={onChange}>
+        {t('trainer.filters.change')}
+      </Button>
+    </div>
+  );
+}
 
 export function FiltersPanel({ filters }: FiltersPanelProps): preact.JSX.Element {
   const { state } = filters;
-  const hasTactics = useFeature('trainer.tactics');
   const hasPhaseFilter = useFeature('trainer.filter.phase');
   const hasDifficultyFilter = useFeature('trainer.filter.difficulty');
   const hasTacticalFilter = useFeature('trainer.filter.tactical');
-  const hasThreats = useFeature('trainer.threats');
-  const activeCount = filters.activeFilterCount();
 
   return (
-    <>
-      {/* Puzzle Filters */}
-      <div class="panel-section filters-panel" style="padding: 0;">
-        <div class="section-title filters-header" id="filtersHeader" onClick={filters.toggleFiltersCollapsed}>
-          <div class="filters-header-left">
-            <span>{t('trainer.filters.title')}</span>
-            {activeCount > 0 && <span class="filters-count-badge" id="filtersCountBadge">{activeCount} active</span>}
-          </div>
-          <button class="filters-toggle-btn" id="filtersToggleBtn" title="Toggle filters">
-            <ChevronSvg collapsed={state.filtersCollapsed} />
-          </button>
+    <div class="filters-content">
+      <div class="filter-group">
+        <div class="filter-label">{t('trainer.filters.game_type')}</div>
+        <div class="game-type-filter">
+          <CheckboxGroup
+            items={GAME_TYPES}
+            selected={state.gameTypes}
+            onChange={filters.setGameTypes}
+            labelPrefix="trainer.game_type"
+          />
         </div>
-        {!state.filtersCollapsed && (
-          <div class="filters-content">
-            <div class="filter-group">
-              <div class="filter-label">{t('trainer.filters.game_type')}</div>
-              <div class="game-type-filter">
-                <CheckboxGroup
-                  items={GAME_TYPES}
-                  selected={state.gameTypes}
-                  onChange={filters.setGameTypes}
-                  labelPrefix="trainer.game_type"
-                />
-              </div>
-            </div>
-
-            {hasPhaseFilter && (
-              <div class="filter-group">
-                <div class="filter-label">{t('trainer.filters.phase')}</div>
-                <div class="phase-filter">
-                  <CheckboxGroup
-                    items={GAME_PHASES}
-                    selected={state.phases}
-                    onChange={filters.setPhases}
-                    labelPrefix="chess.phase"
-                  />
-                </div>
-              </div>
-            )}
-
-            {hasDifficultyFilter && (
-              <div class="filter-group">
-                <div class="filter-label">{t('trainer.filters.difficulty')}</div>
-                <div class="difficulty-filter">
-                  <CheckboxGroup
-                    items={DIFFICULTIES}
-                    selected={state.difficulties}
-                    onChange={filters.setDifficulties}
-                    labelPrefix="dashboard.difficulty"
-                  />
-                </div>
-              </div>
-            )}
-
-            {hasTacticalFilter && (
-              <div class="filter-group">
-                <div class="filter-label">{t('trainer.filters.tactical')}</div>
-                <div class="tactical-filter">
-                  {TACTICAL_PATTERNS.map(({ value, key }) => (
-                    <button
-                      key={value}
-                      class={`tactical-filter-btn ${state.tacticalPattern === value ? 'active' : ''}`}
-                      onClick={() => { filters.setTacticalPattern(
-                        state.tacticalPattern === value ? null : value,
-                      ); }}
-                    >
-                      {t(key)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div class="filter-group">
-              <div class="filter-label">{t('trainer.filters.color')}</div>
-              <div class="color-filter">
-                {(['both', 'white', 'black'] as const).map(c => (
-                  <label key={c} class="filter-radio-label" data-value={c}>
-                    <input
-                      type="radio"
-                      name="colorFilter"
-                      checked={state.color === c}
-                      onChange={() => { filters.setColor(c); }}
-                    />
-                    <span class={`color-option ${c}`}>
-                      {c === 'white' ? '\u2654 ' : c === 'black' ? '\u265a ' : ''}
-                      {t(`chess.color.${c}`)}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Board Settings */}
-      <div class="panel-section filters-panel" style="padding: 0;">
-        <div class="section-title filters-header" id="boardSettingsHeader" onClick={filters.toggleBoardSettingsCollapsed}>
-          <div class="filters-header-left">
-            <span>{t('trainer.board_settings.title')}</span>
+      {hasPhaseFilter && (
+        <div class="filter-group">
+          <div class="filter-label">{t('trainer.filters.phase')}</div>
+          <div class="phase-filter">
+            <CheckboxGroup
+              items={GAME_PHASES}
+              selected={state.phases}
+              onChange={filters.setPhases}
+              labelPrefix="chess.phase"
+            />
           </div>
-          <button class="filters-toggle-btn" id="boardSettingsToggleBtn" title="Toggle board settings">
-            <ChevronSvg collapsed={state.boardSettingsCollapsed} />
-          </button>
         </div>
-        {!state.boardSettingsCollapsed && (
-          <div class="filters-content">
-            <div class="filter-group">
-              <div class="board-toggles-vertical">
-                <div class="arrow-toggle">
-                  <input type="checkbox" id="showArrows" checked={state.showArrows} onChange={(e) => { filters.setShowArrows(e.currentTarget.checked); }} />
-                  <label for="showArrows">{t('trainer.toggle.show_arrows')}</label>
-                </div>
-                {hasThreats && (
-                  <div class="arrow-toggle">
-                    <input type="checkbox" id="showThreats" checked={state.showThreats} onChange={(e) => { filters.setShowThreats(e.currentTarget.checked); }} />
-                    <label for="showThreats">{t('trainer.toggle.show_threats')}</label>
-                  </div>
-                )}
-                {hasTactics && (
-                  <div class="arrow-toggle">
-                    <input type="checkbox" id="showTactics" checked={state.showTactics} onChange={(e) => { filters.setShowTactics(e.currentTarget.checked); }} />
-                    <label for="showTactics">{t('trainer.toggle.show_tactics')}</label>
-                  </div>
-                )}
-                <div class="arrow-toggle">
-                  <input type="checkbox" id="showCoordinates" checked={state.showCoordinates} onChange={(e) => { filters.setShowCoordinates(e.currentTarget.checked); }} />
-                  <label for="showCoordinates">{t('trainer.toggle.show_coordinates')}</label>
-                </div>
-              </div>
-            </div>
+      )}
+
+      {hasDifficultyFilter && (
+        <div class="filter-group">
+          <div class="filter-label">{t('trainer.filters.difficulty')}</div>
+          <div class="difficulty-filter">
+            <CheckboxGroup
+              items={DIFFICULTIES}
+              selected={state.difficulties}
+              onChange={filters.setDifficulties}
+              labelPrefix="dashboard.difficulty"
+            />
           </div>
-        )}
+        </div>
+      )}
+
+      {hasTacticalFilter && (
+        <div class="filter-group">
+          <div class="filter-label">{t('trainer.filters.tactical')}</div>
+          <div class="tactical-filter">
+            {TACTICAL_PATTERNS.map(({ value, key }) => (
+              <button
+                key={value}
+                class={`tactical-filter-btn ${state.tacticalPattern === value ? 'active' : ''}`}
+                onClick={() => { filters.setTacticalPattern(
+                  state.tacticalPattern === value ? null : value,
+                ); }}
+              >
+                {t(key)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div class="filter-group">
+        <div class="filter-label">{t('trainer.filters.color')}</div>
+        <div class="color-filter">
+          {(['both', 'white', 'black'] as const).map(c => (
+            <label key={c} class="filter-radio-label" data-value={c}>
+              <input
+                type="radio"
+                name="colorFilter"
+                checked={state.color === c}
+                onChange={() => { filters.setColor(c); }}
+              />
+              <span class={`color-option ${c}`}>
+                {c === 'white' ? '\u2654 ' : c === 'black' ? '\u265a ' : ''}
+                {t(`chess.color.${c}`)}
+              </span>
+            </label>
+          ))}
+        </div>
       </div>
-    </>
+    </div>
   );
 }

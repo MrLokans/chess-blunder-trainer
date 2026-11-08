@@ -642,8 +642,11 @@
   "trainer.button.show_refutation": "显示反驳",
   "trainer.debug.copied": "已复制！",
   "trainer.debug.copy_title": "复制游戏调试信息到剪贴板",
-  "trainer.result.why_better": "为什么 {move} 更好",
   "trainer.result.you_played": "对局中你走了 {move}",
+  "trainer.result.your_move": "你的走法",
+  "trainer.result.in_game": "对局中",
+  "trainer.result.best": "最佳",
+  "trainer.result.position_after": "{move} 之后的局面",
   "trainer.details.tactical": "战术详情",
   "trainer.empty.analyzing_action": "查看进度",
   "trainer.empty.analyzing_message": "正在导入和分析您的棋局。这可能需要一些时间——题目准备好后将自动显示。",
@@ -684,6 +687,9 @@
   "trainer.filters.tactical_pin": "牵制",
   "trainer.filters.tactical_skewer": "串打",
   "trainer.filters.title": "题目筛选",
+  "trainer.filters.all_puzzles": "全部谜题",
+  "trainer.filters.change": "更改",
+  "trainer.filters.apply": "显示谜题",
   "trainer.game_type.blitz": "快棋",
   "trainer.game_type.bullet": "超快棋",
   "trainer.game_type.classical": "古典棋",
@@ -756,5 +762,6 @@
   "traps.title": "陷阱与攻击",
   "traps.view_all": "查看所有陷阱",
   "traps.your_games": "你的对局",
-  "dashboard.stat.pending_analysis": "{count, plural, =0 {没有待分析对局} other {# 待分析}}"
+  "dashboard.stat.pending_analysis": "{count, plural, =0 {没有待分析对局} other {# 待分析}}",
+  "settings.board_display.description": "在本设备上即时保存，无需点击保存。训练时按 A 和 T 切换箭头和威胁显示。"
 }
