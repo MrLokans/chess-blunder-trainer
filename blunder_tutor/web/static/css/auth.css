@@ -7,7 +7,13 @@
   flex-direction: column;
 }
 
-.auth-layout > #auth-root,
+.auth-layout > main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-layout #auth-root,
 .auth-layout > .container {
   flex: 1 1 auto;
   display: flex;

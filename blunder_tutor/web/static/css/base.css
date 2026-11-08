@@ -905,6 +905,7 @@ body:has(.demo-banner) {
   text-transform: uppercase;
   color: var(--text);
   margin: 0;
+  line-height: 1.3;
 }
 
 .trainer-logo-icon {
@@ -1202,6 +1203,22 @@ body:has(.demo-banner) {
    ========================================================================== */
 
 .hidden { display: none !important; }
+
+.skip-link {
+  position: absolute;
+  top: var(--s-sm);
+  left: var(--s-sm);
+  z-index: 10000; /* above the fixed demo banner */
+  padding: var(--s-sm) var(--s-md);
+  background: var(--surface-inverse);
+  color: var(--text-inverse);
+  font-family: var(--font-ui);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
 
 /* Hidden from sight but kept in the tab order and accessibility tree; styled labels draw the control. */
 .sr-only,

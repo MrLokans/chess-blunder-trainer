@@ -51,25 +51,27 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">{{ t('nav.skip_to_content') }}</a>
   {% block body %}
   {% include '_demo_banner.html' %}
   {% block header %}
   <header class="trainer-header">
     <div class="trainer-header-left">
-      <h1 class="trainer-logo">
+      <div class="trainer-logo">
         <span class="trainer-logo-icon"></span>
         Blunder Tutor
-      </h1>
+      </div>
     </div>
     {% block header_nav %}{% endblock %}
   </header>
   {% endblock %}
 
-  <div class="container">
+  <main class="container" id="main">
+    {% if self.page_heading()|trim %}<h1 class="sr-only">{% block page_heading %}{% endblock %}</h1>{% endif %}
     {% block navigation %}{% endblock %}
 
     {% block content %}{% endblock %}
-  </div>
+  </main>
   {% endblock %}
 
   <!-- Base JavaScript (jQuery for chessboard, if needed) -->

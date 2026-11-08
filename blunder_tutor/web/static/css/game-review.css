@@ -9,6 +9,7 @@
   overflow: hidden;
 }
 
+.trainer-page:has(.review-page) > main,
 #game-review-root {
   flex: 1;
   display: flex;

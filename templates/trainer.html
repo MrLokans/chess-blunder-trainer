@@ -19,14 +19,17 @@
 {% include '_demo_banner.html' %}
 <header class="trainer-header">
   <div class="trainer-header-left">
-    <h1 class="trainer-logo">
+    <div class="trainer-logo">
       <span class="trainer-logo-icon"></span>
       Blunder Tutor
-    </h1>
+    </div>
   </div>
   {{ render_nav('trainer') }}
 </header>
-<div id="trainer-root"></div>
+<main id="main">
+  <h1 class="sr-only">{{ t('nav.trainer') }}</h1>
+  <div id="trainer-root"></div>
+</main>
 {% endblock %}
 
 {% block base_scripts %}

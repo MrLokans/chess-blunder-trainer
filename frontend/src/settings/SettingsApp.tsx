@@ -157,8 +157,9 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
       <form onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }}>
         <h2 class="settings-section-title">{t('settings.locale.label')}</h2>
         <div class="form-group">
-          <label>{t('settings.locale.label')}</label>
+          <label for="settingsLocale">{t('settings.locale.label')}</label>
           <select
+            id="settingsLocale"
             value={init.currentLocale}
             onChange={(e) => { handleLocaleChange(e.currentTarget.value); }}
           >

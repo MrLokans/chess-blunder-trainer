@@ -11,6 +11,8 @@
 <link rel="stylesheet" href="/static/css/profiles.css">
 {% endblock %}
 
+{% block page_heading %}{{ t('profiles.title') }}{% endblock %}
+
 {% block content %}
 {% include '_demo_banner.html' %}
 <div id="profiles-root" data-demo-mode="{{ demo_mode | tojson }}"></div>

@@ -18,15 +18,18 @@
 <div class="trainer-page">
 <header class="trainer-header">
   <div class="trainer-header-left">
-    <h1 class="trainer-logo">
+    <div class="trainer-logo">
       <span class="trainer-logo-icon"></span>
       Blunder Tutor
-    </h1>
+    </div>
   </div>
   {{ render_nav() }}
 </header>
 
-<div id="game-review-root"></div>
+<main id="main">
+  <h1 class="sr-only">{{ t('game_review.title') }}</h1>
+  <div id="game-review-root"></div>
+</main>
 </div>
 {% endblock %}
 
