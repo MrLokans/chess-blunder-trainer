@@ -88,6 +88,8 @@ describe('TrainerApp', () => {
 
   it('opens on the pattern named in the URL, loads once with it and cleans the URL', async () => {
     const { client } = await import('../../src/shared/api');
+    localStorage.setItem(STORAGE_KEYS.trainerColor, 'white');
+    localStorage.setItem(STORAGE_KEYS.trainerPhases, JSON.stringify(['endgame']));
     window.history.replaceState(null, '', '/?pattern=hanging_piece');
     render(<TrainerApp />);
     await waitFor(() => {
@@ -95,10 +97,27 @@ describe('TrainerApp', () => {
     });
     await new Promise((resolve) => { setTimeout(resolve, 50); });
     expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(client.trainer.getPuzzle).mock.calls[0]?.[0]).toMatchObject({ tactical_patterns: ['hanging_piece'] });
+    expect(vi.mocked(client.trainer.getPuzzle).mock.calls[0]?.[0]).toEqual({ tactical_patterns: ['hanging_piece'] });
     expect(window.location.search).toBe('');
     expect(localStorage.getItem(STORAGE_KEYS.trainerTactical) ?? '').toBe('');
+    expect(localStorage.getItem(STORAGE_KEYS.trainerColor)).toBe('white');
+    expect(localStorage.getItem(STORAGE_KEYS.trainerPhases)).toBe(JSON.stringify(['endgame']));
     expect(screen.getByTestId('filter-summary').textContent).toBe('trainer.filters.tactical_hanging');
+  });
+
+  it('saves the filters shown after a deep link once the drawer changes one of them', async () => {
+    localStorage.setItem(STORAGE_KEYS.trainerColor, 'white');
+    localStorage.setItem(STORAGE_KEYS.trainerPhases, JSON.stringify(['endgame']));
+    window.history.replaceState(null, '', '/?pattern=hanging_piece');
+    render(<TrainerApp />);
+    fireEvent.click(await screen.findByTestId('change-filters'));
+    const dialog = await screen.findByRole('dialog', { name: 'trainer.filters.title' });
+    fireEvent.click(dialog.querySelectorAll<HTMLInputElement>('.game-type-filter input')[0] as HTMLInputElement);
+
+    expect(localStorage.getItem(STORAGE_KEYS.trainerTactical)).toBe('hanging_piece');
+    expect(localStorage.getItem(STORAGE_KEYS.trainerColor)).toBe('both');
+    expect(localStorage.getItem(STORAGE_KEYS.trainerPhases)).toBe(JSON.stringify(['opening', 'middlegame', 'endgame']));
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.trainerGameTypes) ?? '[]')).toHaveLength(3);
   });
 
   it('ignores an unknown pattern in the URL', async () => {
