@@ -187,7 +187,7 @@ A warm two-tone paper-and-ink palette with three semantic marks; volume is shown
 - **Night Ground / Night Raised / Night Ink** (night-ground, night-raised, night-ink): dark-mode surface, raised surface and text. Dark-mode semantic hues are lightened (see the sidecar) so they hold contrast on the night ground.
 
 ### Named Rules
-**The One Meaning Rule.** Green only ever means better or best; red only ever means worse or your miss; yellow only ever means the action to take. A colour that means something on one chart may not mean something else on the next.
+**The One Meaning Rule.** Green only ever means better or best; red only ever means worse or your miss; yellow only ever means the action to take. A colour that means something on one chart may not mean something else on the next. Deliberate exception, kept by the owner: chess convention keeps yellow for inaccuracies and mistakes in game review (move-list dots, eval-graph markers), for the middlegame phase colour (a user-themable palette) and for the game-review result badge.
 
 **The Ink For Volume Rule.** Counts, shares and frequencies are drawn in ink at stepped opacity or along the ink ramp (heatmap levels, ranked bars, games-played strips). Hue is never used to encode volume.
 
@@ -295,5 +295,5 @@ A right-aligned, muted, tabular line of counts separated by ink middle dots; the
 - **Don't** add drop shadows, glows or gradients; the shadow tokens are none on purpose.
 - **Don't** round corners on cards, buttons, inputs, tabs or charts.
 - **Don't** encode volume or rank with hue; use the ink ramp or ink opacity.
-- **Don't** use green, red or yellow for anything other than better, worse and the primary action.
+- **Don't** use green, red or yellow for anything other than better, worse and the primary action, outside the chess-convention exception under the One Meaning Rule.
 - **Don't** cover the board with the trainer result; it belongs beside the board.
