@@ -75,7 +75,7 @@ describe('Modal', () => {
     const onClose = vi.fn();
     const user = userEvent.setup();
     render(<Modal open={true} onClose={onClose} title="X">x</Modal>);
-    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await user.click(screen.getByRole('button', { name: 'common.close' }));
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -129,5 +129,21 @@ describe('Modal', () => {
     await act(() => { unmount(); });
     expect(document.activeElement).toBe(trigger);
     document.body.removeChild(trigger);
+  });
+
+  test('keeps focus in place when re-rendered with a new onClose', async () => {
+    const user = userEvent.setup();
+    const first = vi.fn();
+    const { rerender } = render(<Modal open={true} onClose={first} title="Hi">body</Modal>);
+    const close = screen.getByRole('button', { name: 'common.close' });
+    close.focus();
+
+    const second = vi.fn();
+    rerender(<Modal open={true} onClose={second} title="Hi">body</Modal>);
+    expect(document.activeElement).toBe(close);
+
+    await user.keyboard('{Escape}');
+    expect(second).toHaveBeenCalledOnce();
+    expect(first).not.toHaveBeenCalled();
   });
 });

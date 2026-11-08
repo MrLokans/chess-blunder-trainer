@@ -669,10 +669,6 @@ tr:hover td {
   color: var(--selection-text);
 }
 
-.filter-checkbox-label input[type="checkbox"] {
-  display: none;
-}
-
 /* ==========================================================================
    Delete Button
    ========================================================================== */
@@ -1191,9 +1187,8 @@ body:has(.demo-banner) {
   user-select: none;
 }
 
-.chip-label input[type="checkbox"],
-.chip-label input[type="radio"] {
-  display: none;
+.chip-label:has(input:focus-visible) .chip {
+  box-shadow: var(--focus-ring);
 }
 
 .chip-label:has(input:checked) .chip {
@@ -1207,6 +1202,34 @@ body:has(.demo-banner) {
    ========================================================================== */
 
 .hidden { display: none !important; }
+
+/* Hidden from sight but kept in the tab order and accessibility tree; styled labels draw the control. */
+.sr-only,
+.filter-checkbox-label input[type="checkbox"],
+.filter-radio-label input[type="radio"],
+.chip-label input[type="checkbox"],
+.chip-label input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.filter-checkbox-label,
+.filter-radio-label,
+.chip-label {
+  position: relative;
+}
+
+.filter-checkbox-label:has(input:focus-visible),
+.filter-radio-label input:focus-visible + .color-option {
+  box-shadow: var(--focus-ring);
+}
 .gap-sm { gap: var(--s-sm); }
 .gap-md { gap: var(--s-md); }
 .flex { display: flex; }

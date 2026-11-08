@@ -31,22 +31,23 @@ export function useKeyboard(actions: KeyboardActions): void {
       if (tag === 'input') {
         const inputType = (target as HTMLInputElement).type;
         if (inputType !== 'checkbox' && inputType !== 'radio') return;
+        // Arrow keys move the selection within a radio group natively.
+        if (inputType === 'radio' && e.key.startsWith('Arrow')) return;
       }
 
       if (actions.isAnimating) return;
 
-      if (e.key === 'Escape') {
-        if (actions.isShortcutsVisible) {
-          actions.toggleShortcuts();
-        } else if (actions.isResultVisible) {
-          actions.hideResult();
-        }
-        return;
-      }
-
       if (e.key === '?') {
         e.preventDefault();
         actions.toggleShortcuts();
+        return;
+      }
+
+      // The shortcuts dialog owns Escape and keeps puzzle shortcuts from acting behind it.
+      if (actions.isShortcutsVisible) return;
+
+      if (e.key === 'Escape') {
+        if (actions.isResultVisible) actions.hideResult();
         return;
       }
 

@@ -43,6 +43,19 @@ describe('VimInput', () => {
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
 
+  it('labels the field and ties an illegal-move error to it', () => {
+    render(<VimInput {...defaultProps} game={new Chess()} />);
+    const input = screen.getByRole('textbox', { name: 'trainer.shortcuts.type_move' });
+    expect(input.getAttribute('aria-invalid')).toBeNull();
+
+    fireEvent.input(input, { target: { value: 'Ke5' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    const error = screen.getByRole('alert');
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+    expect(input.getAttribute('aria-describedby')).toBe(error.id);
+  });
+
   it('executes move on Enter', () => {
     const game = new Chess();
     render(<VimInput {...defaultProps} game={game} />);

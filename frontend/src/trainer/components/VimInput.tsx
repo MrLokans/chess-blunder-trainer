@@ -137,8 +137,11 @@ export function VimInput({ visible, game, interactive, onMove, onClose }: VimInp
         autocomplete="off"
         spellcheck={false}
         placeholder={t('trainer.vim.placeholder')}
+        aria-label={t('trainer.shortcuts.type_move')}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? 'vimInputError' : undefined}
       />
-      {error && <div class="vim-input-error visible" id="vimInputError">{error}</div>}
+      {error && <div class="vim-input-error visible" id="vimInputError" role="alert">{error}</div>}
       <div class={`vim-suggestions ${showSuggestions ? 'visible' : ''}`} id="vimSuggestions">
         {visibleSuggestions.map((s, i) => {
           const matchLen = value.trim().length;

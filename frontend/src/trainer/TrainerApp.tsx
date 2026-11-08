@@ -463,6 +463,10 @@ function TrainerCore(): preact.JSX.Element {
         </div>
       </div>
 
+      <div class="sr-only" role="status" aria-live="polite" id="resultAnnouncement">
+        {state.resultVisible ? `${feedbackTitle} ${feedbackDetail}`.trim() : ''}
+      </div>
+
       <ShortcutsOverlay
         visible={state.shortcutsVisible}
         onClose={() => { dispatch({ type: 'TOGGLE_SHORTCUTS' }); }}
