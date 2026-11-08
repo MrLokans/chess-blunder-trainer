@@ -1,0 +1,608 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T19:34:00+00:00",
+  "title": "Design System: Blunder Tutor",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ],
+        "dark": "#F5F2EB",
+        "note": "Token --black via --text/--border-strong; inverts in dark mode."
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ],
+        "dark": "#16150F",
+        "note": "Token --white via --surface; user-themeable through --user-surface (light only)."
+      },
+      "paper-sunken": {
+        "role": "neutral",
+        "displayName": "Sunken Paper",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ],
+        "dark": "#100F0B"
+      },
+      "graphite": {
+        "role": "neutral",
+        "displayName": "Graphite",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ],
+        "dark": "#D5D0C5"
+      },
+      "pencil": {
+        "role": "neutral",
+        "displayName": "Pencil",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ],
+        "dark": "#B8B4AB"
+      },
+      "rule-light": {
+        "role": "neutral",
+        "displayName": "Light Rule",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ],
+        "dark": "#706E68"
+      },
+      "train-yellow": {
+        "role": "primary",
+        "displayName": "Train Yellow",
+        "tonalRamp": [
+          "oklch(15% 0.05 88)",
+          "oklch(25% 0.075 88)",
+          "oklch(35% 0.1 88)",
+          "oklch(45% 0.125 88)",
+          "oklch(58% 0.142 88)",
+          "oklch(70% 0.112 88)",
+          "oklch(82% 0.083 88)",
+          "oklch(95% 0.05 88)"
+        ],
+        "dark": "#F2C12E",
+        "note": "Token --warning; the one primary action."
+      },
+      "train-yellow-hover": {
+        "role": "primary",
+        "displayName": "Train Yellow, pressed",
+        "tonalRamp": [
+          "oklch(15% 0.05 88)",
+          "oklch(25% 0.075 88)",
+          "oklch(35% 0.1 88)",
+          "oklch(45% 0.125 88)",
+          "oklch(58% 0.142 88)",
+          "oklch(70% 0.112 88)",
+          "oklch(82% 0.083 88)",
+          "oklch(95% 0.05 88)"
+        ],
+        "dark": "#FFD451"
+      },
+      "better-green": {
+        "role": "secondary",
+        "displayName": "Better Green",
+        "tonalRamp": [
+          "oklch(15% 0.043 148)",
+          "oklch(25% 0.065 148)",
+          "oklch(35% 0.087 148)",
+          "oklch(45% 0.108 148)",
+          "oklch(58% 0.123 148)",
+          "oklch(70% 0.098 148)",
+          "oklch(82% 0.072 148)",
+          "oklch(95% 0.043 148)"
+        ],
+        "dark": "#4FB05F",
+        "note": "Token --success / --board-ring-success."
+      },
+      "worse-red": {
+        "role": "secondary",
+        "displayName": "Worse Red",
+        "tonalRamp": [
+          "oklch(15% 0.063 27)",
+          "oklch(25% 0.095 27)",
+          "oklch(35% 0.127 27)",
+          "oklch(45% 0.158 27)",
+          "oklch(58% 0.18 27)",
+          "oklch(70% 0.143 27)",
+          "oklch(82% 0.105 27)",
+          "oklch(95% 0.063 27)"
+        ],
+        "dark": "#E38585",
+        "note": "Token --error; also --brand-mark (#E05C5C dark)."
+      },
+      "link-blue": {
+        "role": "tertiary",
+        "displayName": "Link Blue",
+        "tonalRamp": [
+          "oklch(15% 0.047 265)",
+          "oklch(25% 0.07 265)",
+          "oklch(35% 0.093 265)",
+          "oklch(45% 0.117 265)",
+          "oklch(58% 0.133 265)",
+          "oklch(70% 0.105 265)",
+          "oklch(82% 0.077 265)",
+          "oklch(95% 0.047 265)"
+        ],
+        "dark": "#8AA1E0",
+        "note": "Token --accent / --focus-ring-color / --info."
+      },
+      "dashboard-positive": {
+        "role": "secondary",
+        "displayName": "Better Green, text",
+        "tonalRamp": [
+          "oklch(15% 0.043 148)",
+          "oklch(25% 0.065 148)",
+          "oklch(35% 0.087 148)",
+          "oklch(45% 0.108 148)",
+          "oklch(58% 0.123 148)",
+          "oklch(70% 0.098 148)",
+          "oklch(82% 0.072 148)",
+          "oklch(95% 0.043 148)"
+        ],
+        "dark": "#6DD97D"
+      },
+      "dashboard-negative": {
+        "role": "secondary",
+        "displayName": "Worse Red, text",
+        "tonalRamp": [
+          "oklch(15% 0.063 27)",
+          "oklch(25% 0.095 27)",
+          "oklch(35% 0.127 27)",
+          "oklch(45% 0.158 27)",
+          "oklch(58% 0.18 27)",
+          "oklch(70% 0.143 27)",
+          "oklch(82% 0.105 27)",
+          "oklch(95% 0.063 27)"
+        ],
+        "dark": "#FF9B94"
+      },
+      "dashboard-info": {
+        "role": "tertiary",
+        "displayName": "Link Blue, text",
+        "tonalRamp": [
+          "oklch(15% 0.047 265)",
+          "oklch(25% 0.07 265)",
+          "oklch(35% 0.093 265)",
+          "oklch(45% 0.117 265)",
+          "oklch(58% 0.133 265)",
+          "oklch(70% 0.105 265)",
+          "oklch(82% 0.077 265)",
+          "oklch(95% 0.047 265)"
+        ],
+        "dark": "#A9C6FF"
+      },
+      "dashboard-caution": {
+        "role": "tertiary",
+        "displayName": "Caution Ochre, text",
+        "tonalRamp": [
+          "oklch(15% 0.04 75)",
+          "oklch(25% 0.06 75)",
+          "oklch(35% 0.08 75)",
+          "oklch(45% 0.1 75)",
+          "oklch(58% 0.114 75)",
+          "oklch(70% 0.09 75)",
+          "oklch(82% 0.066 75)",
+          "oklch(95% 0.04 75)"
+        ],
+        "dark": "#F5CE59"
+      },
+      "ink-ramp-1": {
+        "role": "neutral",
+        "displayName": "Ink Ramp 1",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ],
+        "dark": "#4A473D"
+      },
+      "ink-ramp-2": {
+        "role": "neutral",
+        "displayName": "Ink Ramp 2",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ],
+        "dark": "#77735F"
+      },
+      "ink-ramp-3": {
+        "role": "neutral",
+        "displayName": "Ink Ramp 3",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ],
+        "dark": "#ADA898"
+      },
+      "night-ground": {
+        "role": "neutral",
+        "displayName": "Night Ground",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ]
+      },
+      "night-raised": {
+        "role": "neutral",
+        "displayName": "Night Raised",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ]
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "tonalRamp": [
+          "#1A1A1A",
+          "#3A3A3A",
+          "#57534A",
+          "#706E68",
+          "#8F8A7E",
+          "#B8B4AB",
+          "#E8E4DB",
+          "#F5F2EB"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Sentence-case section headings and the trend verdict."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Before and after values, big rates; tabular."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Trainer result headline, coaching headline."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card and modal titles, side-column values."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text."
+      },
+      "body-small": {
+        "displayName": "Body Small",
+        "purpose": "Explanations, captions, scope and chart notes."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase container and section titles."
+      },
+      "label-micro": {
+        "displayName": "Label Micro",
+        "purpose": "Uppercase buttons, tabs, badges, form labels, table headers."
+      }
+    },
+    "shadows": [
+      {
+        "name": "none",
+        "value": "none",
+        "purpose": "shadow-sm, shadow, shadow-md, shadow-lg are deliberately none; the system is flat."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring-color)",
+        "purpose": "Two-ring focus indicator on tabs and custom controls; elsewhere a 2px outline offset 2px."
+      },
+      {
+        "name": "mini-board-frame",
+        "value": "0 0 0 3px var(--border-strong)",
+        "purpose": "Stroke frame around trainer mini boards; green (--board-ring-success) for the best move."
+      },
+      {
+        "name": "board-square-ring",
+        "value": "inset 0 0 0 3px var(--board-ring-*)",
+        "purpose": "Square highlight rings on the chessboard (error, success, warning, accent)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "transition-fast",
+        "value": "0.1s ease",
+        "purpose": "Micro state changes."
+      },
+      {
+        "name": "transition",
+        "value": "0.15s ease",
+        "purpose": "Default hover and colour transitions on buttons, tabs, inputs."
+      },
+      {
+        "name": "transition-slow",
+        "value": "0.25s ease",
+        "purpose": "Larger state changes."
+      },
+      {
+        "name": "chart-grow",
+        "value": "height 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Trend bars growing in; disabled under prefers-reduced-motion."
+      },
+      {
+        "name": "fade-up",
+        "value": "opacity 0 to 1, translateY(8px) to 0",
+        "purpose": "Entrance keyframe in base.css."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "480px",
+        "purpose": "Ranked bars stack; trend values shrink; chart gutter narrows."
+      },
+      {
+        "name": "drawer-sheet",
+        "value": "640px",
+        "purpose": "Side drawer becomes a bottom sheet."
+      },
+      {
+        "name": "breakdown-grid",
+        "value": "760px",
+        "purpose": "Breakdown grid goes single-column."
+      },
+      {
+        "name": "general",
+        "value": "768px",
+        "purpose": "Legacy base.css narrow layout."
+      },
+      {
+        "name": "split",
+        "value": "1080px",
+        "purpose": "Trend spine and trainer collapse to one column."
+      },
+      {
+        "name": "coarse-pointer",
+        "value": "(pointer: coarse)",
+        "purpose": "44px minimum touch targets."
+      }
+    ],
+    "theming": {
+      "model": "Every semantic token is light-dark(<light>, <dark>). Light values read --user-* custom properties first, written at runtime from the user's saved theme (DEFAULT_THEME / THEME_PRESETS in blunder_tutor/web/api/_settings_schemas.py); dark values are fixed. color-scheme follows data-theme (light/dark) or prefers-color-scheme. Board colours and piece sets are a separate subsystem with their own presets.",
+      "userKeys": [
+        "primary",
+        "success",
+        "error",
+        "warning",
+        "phase_opening",
+        "phase_middlegame",
+        "phase_endgame",
+        "bg",
+        "bg_card",
+        "text",
+        "text_muted",
+        "heatmap_empty",
+        "heatmap_l1",
+        "heatmap_l2",
+        "heatmap_l3",
+        "heatmap_l4"
+      ]
+    },
+    "accessibility": [
+      "WCAG 2.2 AA target; dashboard text uses contrast-checked --color-dashboard-* tokens.",
+      "Every chart ships an sr-only data table.",
+      "2px focus outline offset 2px on all focusable elements.",
+      "44px minimum hit areas under pointer: coarse.",
+      "Reduced-motion fallbacks for chart and trainer animation.",
+      "Better/worse is always stated in words, not colour alone."
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one yellow action per view (Train, Next).",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Train “Hanging”</button>",
+      "css": ".ds-btn{font-family: var(--font-ui, 'Jost', sans-serif);font-size:0.6875rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 16px;border-radius:0;border:2px solid var(--border-strong,#1A1A1A);background:transparent;color:var(--text,#1A1A1A);cursor:pointer;transition:all .15s ease}.ds-btn-primary{background:var(--warning,#F2C12E);border-color:var(--warning-border,#F2C12E);color:var(--text-on-warning,#1A1A1A)}.ds-btn-primary:hover{background:var(--warning-hover,#E0B020);border-color:var(--warning-hover,#E0B020)}.ds-btn:focus-visible{outline:2px solid var(--focus-ring-color,#1A3A8F);outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Ink-outlined action; inverts on hover.",
+      "html": "<button class=\"ds-btn2\">Play best line</button>",
+      "css": ".ds-btn2{font-family: var(--font-ui, 'Jost', sans-serif);font-size:0.6875rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 16px;border-radius:0;border:2px solid var(--border-strong,#1A1A1A);background:transparent;color:var(--text,#1A1A1A);cursor:pointer;transition:all .15s ease}.ds-btn2:hover{background:var(--surface-inverse,#1A1A1A);color:var(--text-inverse,#F5F2EB)}.ds-btn2:focus-visible{outline:2px solid var(--focus-ring-color,#1A3A8F);outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "text-input",
+      "description": "2px ink outline, square; blue on focus.",
+      "html": "<label class=\"ds-label\">Username<input class=\"ds-input\" value=\"mrlokans\"></label>",
+      "css": ".ds-label{display:block;font-family: var(--font-ui, 'Jost', sans-serif);font-size:0.6875rem;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted,#706E68)}.ds-input{display:block;width:100%;margin-top:4px;padding:8px;font-family:var(--font-sans,'DM Sans',sans-serif);font-size:0.875rem;color:var(--text,#1A1A1A);background:var(--surface-raised,#F5F2EB);border:2px solid var(--border-strong,#1A1A1A);border-radius:0;transition:border-color .15s ease}.ds-input:focus{outline:none;border-color:var(--accent,#1A3A8F)}"
+    },
+    {
+      "name": "Top Navigation",
+      "kind": "nav",
+      "refersTo": "nav-link-active",
+      "description": "Red-square mark, caps links, active page as an ink block.",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-brand\"><i></i>Blunder Tutor</span><a href=\"#\">Trainer</a><a href=\"#\" class=\"on\">Dashboard</a><a href=\"#\">Settings</a></nav>",
+      "css": ".ds-nav{display:flex;align-items:center;gap:8px;font-family: var(--font-ui, 'Jost', sans-serif);}.ds-brand{display:flex;align-items:center;gap:8px;margin-right:auto;font-weight:700;letter-spacing:2px;text-transform:uppercase}.ds-brand i{width:16px;height:16px;background:var(--brand-mark,#D42828)}.ds-nav a{padding:8px 16px;font-size:0.8125rem;letter-spacing:1px;text-transform:uppercase;text-decoration:none;color:var(--text-secondary,#3A3A3A);border-bottom:2px solid transparent}.ds-nav a:hover{color:var(--text,#1A1A1A);border-bottom-color:var(--border-strong,#1A1A1A)}.ds-nav a.on{background:var(--selection-surface,#1A1A1A);color:var(--selection-text,#F5F2EB);box-shadow:inset 0 -2px var(--selection-border,#1A1A1A)}.ds-nav a:focus-visible{outline:2px solid var(--focus-ring-color,#1A3A8F);outline-offset:2px}"
+    },
+    {
+      "name": "Tabs",
+      "kind": "nav",
+      "refersTo": "tab-active",
+      "description": "Folder tabs on a 2px ink baseline.",
+      "html": "<div class=\"ds-tabs\"><button class=\"on\">Blunders / game</button><button>Clean games</button><button>Average CPL</button></div>",
+      "css": ".ds-tabs{display:flex;gap:4px;border-bottom:2px solid var(--border-strong,#1A1A1A)}.ds-tabs button{font-family: var(--font-ui, 'Jost', sans-serif);font-size:0.6875rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 16px;margin-bottom:-2px;background:transparent;color:var(--text-muted,#706E68);border:2px solid transparent;border-bottom:none;cursor:pointer}.ds-tabs button:hover{color:var(--text,#1A1A1A)}.ds-tabs button.on{color:var(--text,#1A1A1A);background:var(--surface-raised,#F5F2EB);border-color:var(--border-strong,#1A1A1A)}.ds-tabs button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--surface,#F5F2EB),0 0 0 4px var(--focus-ring-color,#1A3A8F)}"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Square outlined caps tag.",
+      "html": "<span class=\"ds-badge\">Hanging</span>",
+      "css": ".ds-badge{display:inline-block;padding:2px 8px;font-family: var(--font-ui, 'Jost', sans-serif);font-size:0.6875rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:2px solid var(--border-strong,#1A1A1A);border-radius:0;color:var(--text,#1A1A1A)}"
+    },
+    {
+      "name": "Breakdown Container with Ranked Bars",
+      "kind": "card",
+      "refersTo": "chart-container",
+      "description": "Open container under a 3px rule; one full-ink leader.",
+      "html": "<section class=\"ds-box\"><h3>Blunders by game phase</h3><p>Where in your games you tend to make mistakes.</p><table class=\"ds-rank\"><tr><th>Opening</th><td><i style=\"width:78%\"></i></td><td>41.3%</td></tr><tr class=\"top\"><th>Middlegame</th><td><i style=\"width:100%\"></i></td><td>53.1%</td></tr><tr class=\"mute\"><th>Endgame</th><td><i style=\"width:10%\"></i></td><td>5.6%</td></tr></table></section>",
+      "css": ".ds-box{border-top:3px solid var(--border-strong,#1A1A1A);padding-top:16px;color:var(--text,#1A1A1A)}.ds-box h3{margin:0 0 4px;font-family: var(--font-ui, 'Jost', sans-serif);font-size:0.8125rem;font-weight:700;letter-spacing:2px;text-transform:uppercase}.ds-box p{margin:0 0 16px;font-size:0.8125rem;color:var(--text-muted,#706E68)}.ds-rank{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}.ds-rank th{width:1%;padding:4px 16px 4px 0;text-align:left;font-weight:500;white-space:nowrap}.ds-rank td{padding:4px 0}.ds-rank td:last-child{padding-left:16px;text-align:right;font-weight:700}.ds-rank i{display:block;height:14px;background:var(--text,#1A1A1A);opacity:.35}.ds-rank tr.top i{opacity:1}.ds-rank tr.top th{font-weight:700}.ds-rank tr.mute i{opacity:.15}.ds-rank tr.mute th,.ds-rank tr.mute td{color:var(--text-muted,#706E68);font-weight:400}"
+    },
+    {
+      "name": "Block Trend Chart",
+      "kind": "custom",
+      "refersTo": "chart-container",
+      "description": "Ink bars per 20-game block with then/now reference lines.",
+      "html": "<figure class=\"ds-trend\"><div class=\"plot\"><i style=\"height:40%;opacity:.45\"></i><i style=\"height:55%;opacity:.22\"></i><i style=\"height:80%;opacity:.22\"></i><i style=\"height:70%;opacity:.22\"></i><i style=\"height:60%\"></i><i style=\"height:72%\"></i><b class=\"then\" style=\"bottom:40%\"><span>then 2.0</span></b><b class=\"now\" style=\"bottom:70%\"><span>now 2.8</span></b></div></figure>",
+      "css": ".ds-trend{margin:0}.ds-trend .plot{position:relative;height:180px;display:flex;align-items:flex-end;gap:8px;border-bottom:2px solid var(--border-strong,#1A1A1A)}.ds-trend i{flex:1;background:var(--text,#1A1A1A);transition:height .4s cubic-bezier(.16,1,.3,1)}.ds-trend b{position:absolute;left:0;right:0;height:0;border-top:3px solid currentcolor}.ds-trend b span{position:absolute;bottom:6px;padding:1px 6px;background:var(--surface,#F5F2EB);font-size:0.6875rem;font-weight:700;font-variant-numeric:tabular-nums}.ds-trend .then{color:var(--text,#1A1A1A);border-top-style:dashed}.ds-trend .then span{left:0}.ds-trend .now{color:var(--color-dashboard-negative,#B42318)}.ds-trend .now span{right:0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Annotated Scoresheet",
+    "overview": "Blunder Tutor reads like a chess player's own scoresheet after a bad game: warm paper, black ink, heavy rules between sections, and a few marks in colour where something went right or wrong. The ground is a warm off-white in light mode and a warm near-black in dark mode; everything structural is drawn in ink (or its dark-mode inversion) with flat fills and square corners. There are no drop shadows, no gradients, no rounded cards. Depth comes from rules and inversion, never from lift.\n\nDensity is that of a working document, not a marketing page. One element owns each view: on the dashboard a single trend chart with a sentence-case verdict above it; in the trainer the board, kept whole, with the result laid beside it as two mini boards. Everything else is ranked under that owner with ink weight and opacity rather than with extra colour. Colour is reserved for meaning: green says better or best, red says worse or your miss, yellow marks the one action you should take next.\n\nThe system descends from a Bauhaus token set (the source still names it that), and the primary triad survives in the tokens. The newest surfaces have narrowed it: blue has retreated to links, focus and informational states, and charts are ink.",
+    "keyCharacteristics": [
+      "Warm paper ground, ink text and ink charts; dark mode is the same world inverted, not a new palette.",
+      "3px ink rules divide sections and frame boards; 2px ink strokes outline controls.",
+      "Square corners everywhere (radius 0).",
+      "Jost uppercase for small labels, tabs, buttons and nav; Jost sentence case for display headings and verdicts; DM Sans for body and numbers.",
+      "Colour carries meaning only: green better, red worse, yellow the single primary action.",
+      "Charts are hand-drawn in HTML/SVG with ink bars, reference lines and a screen-reader table; no chart library."
+    ],
+    "rules": [
+      {
+        "name": "The One Meaning Rule",
+        "body": "Green only ever means better or best; red only ever means worse or your miss; yellow only ever means the action to take. A colour that means something on one chart may not mean something else on the next.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink For Volume Rule",
+        "body": "Counts, shares and frequencies are drawn in ink at stepped opacity or along the ink ramp (heatmap levels, ranked bars, games-played strips). Hue is never used to encode volume.",
+        "section": "colors"
+      },
+      {
+        "name": "The Single Highlight Rule",
+        "body": "Within one breakdown, exactly one row may be drawn at full ink (the leader); the rest sit at about 35% ink, and rows resting on too little data (fewer than 10 games) drop to about 15% and muted text and are never the highlight.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Yellow Rule",
+        "body": "A view carries one yellow button. Secondary actions are ink-outlined.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Voices Rule",
+        "body": "Uppercase Jost is for naming things (labels, controls, containers). Statements meant to be read as sentences (verdicts, section headings, result headlines) are sentence case. Never set a sentence in caps.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Every number that can be compared with another number uses tabular figures: chart axes, trend values, side-column values, ranked-bar values, library status.",
+        "section": "typography"
+      },
+      {
+        "name": "The Owner Rule",
+        "body": "Each view has one element that owns the first viewport (the trend, the board). Everything else is visibly subordinate to it.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat Paper Rule",
+        "body": "Nothing floats. Surfaces do not cast shadows; if something needs separating, draw a rule.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** separate sections with a 3px ink rule and outline controls with 2px ink.",
+      "**Do** keep every corner square.",
+      "**Do** draw new charts in ink with reference lines, a baseline, tabular axis labels and an sr-only data table, using no third-party chart library.",
+      "**Do** give each breakdown exactly one full-ink highlight and mute rows with fewer than 10 games behind it.",
+      "**Do** use one yellow primary button per view and ink outlines for everything else.",
+      "**Do** set statements in sentence-case Jost and names of things in uppercase Jost labels.",
+      "**Do** route every colour through the light-dark() tokens so dark mode and user themes follow.",
+      "**Do** meet WCAG 2.2 AA: contrast-checked dashboard text colours, visible 2px focus outlines, 44px touch targets on coarse pointers, reduced-motion fallbacks."
+    ],
+    "donts": [
+      "**Don't** add drop shadows, glows or gradients; the shadow tokens are none on purpose.",
+      "**Don't** round corners on cards, buttons, inputs, tabs or charts.",
+      "**Don't** encode volume or rank with hue; use the ink ramp or ink opacity.",
+      "**Don't** use green, red or yellow for anything other than better, worse and the primary action.",
+      "**Don't** cover the board with the trainer result; it belongs beside the board."
+    ]
+  }
+}
