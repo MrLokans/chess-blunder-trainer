@@ -108,10 +108,10 @@ describe('TrapsApp', () => {
 
     const parts = Array.from(document.querySelectorAll('.traps-status > span')).map(el => el.textContent);
     expect(parts).toEqual([
-      `4 ${t('traps.times_fell')}`,
-      `7 ${t('traps.times_entered')}`,
-      `2 ${t('traps.times_executed')}`,
-      `3 ${t('traps.games_involved')}`,
+      t('traps.times_fell', { count: '4' }),
+      t('traps.times_entered', { count: '7' }),
+      t('traps.times_executed', { count: '2' }),
+      t('traps.games_involved', { count: '3' }),
     ]);
   });
 

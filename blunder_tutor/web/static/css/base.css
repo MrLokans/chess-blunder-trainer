@@ -733,7 +733,7 @@ kbd {
 }
 
 .danger-title { color: var(--error); }
-.table-placeholder { text-align: center; color: var(--text-muted); }
+.table-placeholder { text-align: left; color: var(--text-muted); }
 .table-scroll { overflow-x: auto; }
 .progress-fill.danger { background: var(--error); }
 

@@ -186,10 +186,10 @@ function Summary({ summary, catalog }: SummaryProps) {
   return (
     <>
       <p class="traps-status">
-        <span><strong>{formatNumber(summary.total_sprung)}</strong> {t('traps.times_fell')}</span>
-        <span><strong>{formatNumber(summary.total_entered)}</strong> {t('traps.times_entered')}</span>
-        <span><strong>{formatNumber(summary.total_executed)}</strong> {t('traps.times_executed')}</span>
-        <span><strong>{formatNumber(summary.games_with_traps)}</strong> {t('traps.games_involved')}</span>
+        <span>{t('traps.times_fell', { count: formatNumber(summary.total_sprung) })}</span>
+        <span>{t('traps.times_entered', { count: formatNumber(summary.total_entered) })}</span>
+        <span>{t('traps.times_executed', { count: formatNumber(summary.total_executed) })}</span>
+        <span>{t('traps.games_involved', { count: formatNumber(summary.games_with_traps) })}</span>
       </p>
       {summary.top_traps && summary.top_traps.length > 0 && (
         <div class="top-traps">

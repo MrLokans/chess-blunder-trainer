@@ -859,9 +859,9 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .library-status > span + span::before {
+  .library-status > span:not(:last-child)::after {
     content: '·';
-    margin-right: var(--s-md);
+    margin-left: var(--s-md);
     color: var(--border-strong);
   }
 

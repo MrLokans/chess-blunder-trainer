@@ -8,11 +8,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-.traps-status strong { color: var(--text); }
-
-.traps-status > span + span::before {
+/* The dot trails its item so a wrapped line never starts with one. */
+.traps-status > span:not(:last-child)::after {
   content: '·';
-  margin-right: var(--s-md);
+  margin-left: var(--s-md);
   color: var(--border-strong);
 }
 
