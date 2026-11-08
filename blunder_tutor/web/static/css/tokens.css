@@ -109,15 +109,6 @@
   --color-phase-endgame: light-dark(var(--user-phase-endgame, var(--dark-gray)), #B8B4AB);
   --color-phase-unknown: var(--mid-gray);
 
-  /* Tactical Pattern Colors */
-  --color-tactic-fork: light-dark(#ef4444, #EF6E6E);
-  --color-tactic-pin: light-dark(var(--mid-gray-light), #8C8778);
-  --color-tactic-skewer: light-dark(#06b6d4, #4FC3D9);
-  --color-tactic-discovered: light-dark(#f59e0b, #EFB457);
-  --color-tactic-hanging: light-dark(#ec4899, #E877B0);
-  --color-tactic-back-rank: light-dark(#10b981, #45C492);
-  --color-tactic-other: light-dark(#6b7280, #959BAA);
-
   /* Dashboard accessibility colors */
   --color-dashboard-positive: light-dark(#176B2B, #6DD97D);
   --color-dashboard-info: light-dark(#164E9A, #A9C6FF);
@@ -215,8 +206,8 @@
   --preview-board-dark: #b58863;
 
   /* Activity heatmap (ink ramp; green stays reserved for "better") */
-  --heatmap-empty-future: light-dark(#d5d0c5, #211F18);
-  --heatmap-empty: light-dark(var(--user-heatmap-empty, #d5d0c5), #2B291F);
+  --heatmap-empty-future: light-dark(#EFECE4, #211F18);
+  --heatmap-empty: light-dark(var(--user-heatmap-empty, #E8E4DB), #2B291F);
   --heatmap-l1: light-dark(var(--user-heatmap-l1, #BFB9AC), #4A473D);
   --heatmap-l2: light-dark(var(--user-heatmap-l2, #8F8A7E), #77735F);
   --heatmap-l3: light-dark(var(--user-heatmap-l3, #57534A), #ADA898);
