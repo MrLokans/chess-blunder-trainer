@@ -5,12 +5,13 @@ interface BreakdownSectionProps {
   description: string;
   helpButton?: ComponentChildren;
   wide?: boolean;
+  id?: string;
   children: ComponentChildren;
 }
 
-export function BreakdownSection({ title, description, helpButton, wide = false, children }: BreakdownSectionProps) {
+export function BreakdownSection({ title, description, helpButton, wide = false, id, children }: BreakdownSectionProps) {
   return (
-    <div class={`chart-container${wide ? ' chart-container--wide' : ''}`}>
+    <div id={id} class={`chart-container${wide ? ' chart-container--wide' : ''}`}>
       <h3 class="chart-title">
         {title}
         {helpButton}

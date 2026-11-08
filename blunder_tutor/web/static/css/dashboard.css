@@ -19,6 +19,26 @@
 
   .dashboard-section > h2 + .dashboard-scope-note { margin-top: calc(-1 * var(--s-md)); }
 
+  .dashboard-jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-xs) var(--s-lg);
+    margin: calc(-1 * var(--s-sm)) 0 var(--s-xl);
+    font-weight: 600;
+  }
+
+  .dashboard-jump a {
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+    text-decoration-color: var(--border-subtle);
+  }
+
+  .dashboard-jump a:hover { text-decoration-color: currentcolor; }
+
+  .chart-container[id] { scroll-margin-top: var(--s-xl); }
+
   .dashboard-insight-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -35,6 +55,7 @@
   }
 
   #dashboard-root .chart-container--wide { grid-column: 1 / -1; }
+  #dashboard-root .chart-container--wide .ranked-bars { max-width: 760px; }
 
   #dashboard-root .chart-title {
     display: flex;
@@ -600,7 +621,6 @@
   }
 
   .eco-child-indent { padding-left: calc(var(--s-sm) + 1.5em) !important; }
-  .eco-group-child { font-size: var(--text-xs); }
 
   /* ==========================================================================
      Dashboard Filter Bar — unified filter strip
@@ -831,6 +851,7 @@
   .library-status {
     display: flex;
     flex-wrap: wrap;
+    justify-content: flex-end;
     align-items: center;
     gap: var(--s-xs) var(--s-md);
     margin: calc(-1 * var(--s-sm)) 0 var(--s-lg);
@@ -916,10 +937,9 @@
 
   .trend-numbers__label .info-help-btn { margin-left: var(--s-xs); }
 
-  .trend-chart { margin: 0; }
+  .trend-chart { --gutter: 40px; margin: 0; }
 
   .trend-chart__plot {
-    --gutter: 40px;
     position: relative;
     height: clamp(200px, 34vh, 320px);
     margin: var(--s-lg) 0 0 var(--gutter);
@@ -959,6 +979,7 @@
   }
 
   .trend-chart__bar--middle { opacity: 0.22; }
+  .trend-chart__bar--empty { background: none; min-height: 0; }
   .trend-chart__bar--first { opacity: 0.45; }
 
   .trend-chart__ref {
@@ -991,7 +1012,7 @@
   .trend-chart__axis {
     display: flex;
     gap: clamp(3px, 0.8vw, 12px);
-    margin-left: 40px;
+    margin-left: var(--gutter);
     padding-top: var(--s-xs);
     font-size: var(--text-xs);
     color: var(--text-muted);
@@ -1005,7 +1026,7 @@
   }
 
   .trend-chart__note {
-    margin: var(--s-sm) 0 0 40px;
+    margin: var(--s-sm) 0 0 var(--gutter);
     font-size: var(--text-sm);
     color: var(--text-muted);
   }
@@ -1041,8 +1062,8 @@
 
   .trend-side__row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: "label label" "values word" "spark spark";
+    grid-template-columns: minmax(0, 1fr) 96px;
+    grid-template-areas: "label word" "values spark";
     gap: 2px var(--s-sm);
     padding: var(--s-sm) 0;
     border-bottom: 1px solid var(--border-subtle);
@@ -1050,8 +1071,8 @@
 
   .trend-side__label { grid-area: label; font-size: var(--text-sm); color: var(--text-muted); }
   .trend-side__values { grid-area: values; font-size: var(--text-lg); font-weight: 700; font-variant-numeric: tabular-nums; }
-  .trend-side__word { grid-area: word; align-self: center; font-size: var(--text-sm); font-weight: 600; }
-  .trend-side__spark { grid-area: spark; display: none; color: var(--text); }
+  .trend-side__word { grid-area: word; justify-self: end; font-size: var(--text-sm); font-weight: 600; }
+  .trend-side__spark { grid-area: spark; align-self: center; color: var(--text); }
   .trend-side__label .info-help-btn { margin-left: var(--s-xs); }
 
   .coach-card {
@@ -1088,23 +1109,21 @@
 
   .coach-evidence-label { font-size: var(--text-sm); color: var(--text-muted); }
   .coach-evidence-value { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-xs) var(--s-sm); }
-  .coach-evidence-name { font-size: var(--text-lg); font-weight: 700; }
+  .coach-evidence-name { font-weight: 700; }
   .coach-evidence-count { color: var(--text-muted); }
   .coach-actions { display: flex; flex-wrap: wrap; gap: var(--s-sm); padding-top: var(--s-xs); }
   .coach-actions .btn { width: 100%; justify-content: center; }
 
   @media (max-width: 1080px) {
     .trend-spine { grid-template-columns: minmax(0, 1fr); gap: var(--s-xl); }
-    .trend-side__row { grid-template-columns: minmax(0, 1fr) 96px auto; grid-template-areas: "label spark word" "values spark word"; }
-    .trend-side__spark { display: block; align-self: center; }
   }
 
   @media (max-width: 480px) {
     .trend-verdict { font-size: var(--text-2xl); }
     .trend-numbers__value { font-size: 2rem; }
     .trend-numbers__label { margin-left: 0; flex-basis: 100%; }
-    .trend-chart__plot { --gutter: 28px; margin-left: 28px; height: 200px; }
-    .trend-chart__axis, .trend-chart__note { margin-left: 28px; }
+    .trend-chart { --gutter: 28px; }
+    .trend-chart__plot { height: 200px; }
   }
 
   @media (prefers-reduced-motion: reduce) {

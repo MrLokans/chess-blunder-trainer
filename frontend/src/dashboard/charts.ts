@@ -28,6 +28,7 @@ function sharedChartOptions(xAxisConfig: Record<string, unknown> = {}): Record<s
     plugins: {
       legend: { position: 'top', align: 'start', labels: { color: colors.text, font, boxWidth: 12, boxHeight: 12 } },
       tooltip: {
+        filter: (item: { raw: unknown }) => item.raw !== null,
         backgroundColor: colors.surface,
         titleColor: colors.text,
         bodyColor: colors.text,
@@ -53,7 +54,7 @@ function sharedChartOptions(xAxisConfig: Record<string, unknown> = {}): Record<s
       },
       y: {
         type: 'linear', display: true, position: 'left',
-        title: { display: true, text: t('dashboard.chart.games_axis'), color: colors.muted, font },
+        title: { display: false },
         ticks: { color: colors.muted, font },
         grid: { color: colors.grid },
         border: { display: false },
@@ -61,7 +62,7 @@ function sharedChartOptions(xAxisConfig: Record<string, unknown> = {}): Record<s
       },
       y1: {
         type: 'linear', display: true, position: 'right',
-        title: { display: true, text: t('dashboard.chart.accuracy_axis'), color: colors.muted, font },
+        title: { display: false },
         ticks: { color: colors.muted, font },
         min: 0, max: 100,
         grid: { drawOnChartArea: false },
@@ -114,7 +115,7 @@ export function createDateChart(
     type: 'bar',
     data: datasets(labels, gameCounts, accuracies),
     options: sharedChartOptions({
-      ticks: { maxRotation: 45, minRotation: 45, maxTicksLimit: 15 },
+      ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
     }),
   });
 }
@@ -124,13 +125,12 @@ export function createHourChart(
   labels: string[],
   gameCounts: number[],
   accuracies: number[],
-  timezone = 'UTC',
 ): ChartInstance {
   return new Chart(ctx, {
     type: 'bar',
     data: datasets(labels, gameCounts, accuracies),
     options: sharedChartOptions({
-      title: { display: true, text: t('dashboard.chart.hour_axis', { timezone }) },
+      ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
     }),
   });
 }

@@ -2,11 +2,7 @@ from __future__ import annotations
 
 from http import HTTPStatus
 
-from blunder_tutor.web.api.stats import (
-    GrowthWindow,
-    _compute_growth_windows,
-    _compute_trend,
-)
+from blunder_tutor.web.api.stats import _compute_growth_windows
 from tests.helpers.stats_db import insert_test_game, insert_test_move
 
 
@@ -63,121 +59,22 @@ class TestComputeGrowthWindows:
         windows = _compute_growth_windows(games, 5)
         assert windows[0].catastrophic_rate == 50.0
 
-    def test_catastrophic_rate_zero_blunders(self):
+    def test_blunder_rates_are_null_without_blunders(self):
         games = [
-            _make_game_data(blunder_count=0, catastrophic_count=0) for _ in range(5)
+            _make_game_data(blunder_count=0, avg_blunder_cpl=0.0, catastrophic_count=0)
+            for _ in range(5)
         ]
         windows = _compute_growth_windows(games, 5)
-        assert windows[0].catastrophic_rate == 0.0
+        assert windows[0].catastrophic_rate is None
+        assert windows[0].avg_blunder_severity is None
 
-    def test_partial_last_window_discarded(self):
-        games = [_make_game_data() for _ in range(23)]
+    def test_partial_window_dropped_from_the_oldest_end(self):
+        games = [_make_game_data(blunder_count=5) for _ in range(3)]
+        games += [_make_game_data(blunder_count=1) for _ in range(20)]
         windows = _compute_growth_windows(games, 10)
         assert len(windows) == 2
-
-
-class TestComputeTrend:
-    def test_none_with_single_window(self):
-        windows = [
-            GrowthWindow(
-                window_index=0,
-                game_start=1,
-                game_end=20,
-                avg_blunders_per_game=2.0,
-                avg_cpl=60.0,
-                avg_blunder_severity=300.0,
-                clean_game_rate=10.0,
-                catastrophic_rate=5.0,
-            )
-        ]
-        assert _compute_trend(windows) is None
-
-    def test_none_with_empty(self):
-        assert _compute_trend([]) is None
-
-    def test_improving(self):
-        old = GrowthWindow(
-            window_index=0,
-            game_start=1,
-            game_end=5,
-            avg_blunders_per_game=3.0,
-            avg_cpl=80.0,
-            avg_blunder_severity=400.0,
-            clean_game_rate=10.0,
-            catastrophic_rate=20.0,
-        )
-        new = GrowthWindow(
-            window_index=1,
-            game_start=6,
-            game_end=10,
-            avg_blunders_per_game=1.0,
-            avg_cpl=40.0,
-            avg_blunder_severity=200.0,
-            clean_game_rate=50.0,
-            catastrophic_rate=5.0,
-        )
-        trend = _compute_trend([old, new])
-        assert trend.blunder_frequency == "improving"
-        assert trend.move_quality == "improving"
-        assert trend.severity == "improving"
-        assert trend.clean_rate == "improving"
-        assert trend.catastrophic_rate == "improving"
-
-    def test_declining(self):
-        old = GrowthWindow(
-            window_index=0,
-            game_start=1,
-            game_end=5,
-            avg_blunders_per_game=1.0,
-            avg_cpl=30.0,
-            avg_blunder_severity=200.0,
-            clean_game_rate=60.0,
-            catastrophic_rate=5.0,
-        )
-        new = GrowthWindow(
-            window_index=1,
-            game_start=6,
-            game_end=10,
-            avg_blunders_per_game=3.0,
-            avg_cpl=80.0,
-            avg_blunder_severity=400.0,
-            clean_game_rate=10.0,
-            catastrophic_rate=20.0,
-        )
-        trend = _compute_trend([old, new])
-        assert trend.blunder_frequency == "declining"
-        assert trend.move_quality == "declining"
-        assert trend.severity == "declining"
-        assert trend.clean_rate == "declining"
-        assert trend.catastrophic_rate == "declining"
-
-    def test_stable(self):
-        w = GrowthWindow(
-            window_index=0,
-            game_start=1,
-            game_end=5,
-            avg_blunders_per_game=2.0,
-            avg_cpl=50.0,
-            avg_blunder_severity=300.0,
-            clean_game_rate=30.0,
-            catastrophic_rate=10.0,
-        )
-        w2 = GrowthWindow(
-            window_index=1,
-            game_start=6,
-            game_end=10,
-            avg_blunders_per_game=2.0,
-            avg_cpl=50.0,
-            avg_blunder_severity=300.0,
-            clean_game_rate=30.0,
-            catastrophic_rate=10.0,
-        )
-        trend = _compute_trend([w, w2])
-        assert trend.blunder_frequency == "stable"
-        assert trend.move_quality == "stable"
-        assert trend.severity == "stable"
-        assert trend.clean_rate == "stable"
-        assert trend.catastrophic_rate == "stable"
+        assert (windows[0].game_start, windows[-1].game_end) == (4, 23)
+        assert all(w.avg_blunders_per_game == 1.0 for w in windows)
 
 
 class TestGetGrowthMetricsRepository:
@@ -251,7 +148,7 @@ class TestGrowthApiEndpoint:
         assert resp.status_code == HTTPStatus.OK
         data = resp.json()
         assert data["windows"] == []
-        assert data["trend"] is None
+        assert "trend" not in data
         assert data["total_games"] == 0
 
     async def test_insufficient_for_trends(self, app, stats_repo):
@@ -270,7 +167,7 @@ class TestGrowthApiEndpoint:
         resp = app.get("/api/stats/growth")
         data = resp.json()
         assert data["total_games"] == 15
-        assert data["trend"] is None
+        assert data["windows"] == []
 
     async def test_custom_window_size(self, app, stats_repo):
         for i in range(12):
@@ -289,4 +186,4 @@ class TestGrowthApiEndpoint:
         data = resp.json()
         assert data["window_size"] == 5
         assert len(data["windows"]) == 2
-        assert data["trend"] is not None
+        assert data["windows"][0]["game_start"] == 3

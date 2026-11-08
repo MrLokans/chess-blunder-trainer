@@ -100,7 +100,6 @@ export function PhaseBreakdown({ data }: { data: PhaseData }) {
 
   return (
     <RankedBars
-      caption={t('dashboard.chart.blunders_by_phase')}
       rows={data.by_phase.map(p => ({
         key: p.phase,
         label: t(`chess.phase.${p.phase}`),
@@ -119,7 +118,6 @@ export function ColorBreakdown({ data }: { data: ColorData }) {
 
   return (
     <RankedBars
-      caption={t('dashboard.chart.blunders_by_color')}
       rows={data.by_color.map(c => ({
         key: c.color,
         label: t('dashboard.chart.as_color', { color: t(`chess.color.${c.color}`) }),
@@ -139,7 +137,6 @@ export function GameTypeBreakdown({ data }: { data: GameTypeData }) {
 
   return (
     <RankedBars
-      caption={t('dashboard.chart.blunders_by_game_type')}
       rows={played.map(g => ({
         key: g.game_type,
         label: gameTypeLabel(g.game_type),
@@ -294,7 +291,6 @@ export function TacticalBreakdown({ data }: { data: TacticalData }) {
 
   return (
     <RankedBars
-      caption={t('dashboard.chart.blunders_by_tactical')}
       rows={[...named, ...unnamed].map(p => ({
         key: p.pattern,
         label: patternLabel(p.pattern),
@@ -321,7 +317,6 @@ export function DifficultyBreakdown({ data }: { data: DifficultyData }) {
 
   return (
     <RankedBars
-      caption={t('dashboard.chart.blunders_by_difficulty')}
       rows={data.by_difficulty.filter(d => d.count > 0).map(d => {
         const key = DIFFICULTY_LABEL_KEYS[d.difficulty];
         return {
@@ -366,7 +361,6 @@ export function CollapsePointBreakdown({ data }: { data: CollapsePointData }) {
       </div>
       <div class="collapse-dist-title">{t('dashboard.collapse.distribution_title')}</div>
       <RankedBars
-        caption={t('dashboard.collapse.distribution_title')}
         rows={data.distribution.map(d => ({
           key: d.move_range,
           label: d.move_range,
@@ -387,18 +381,26 @@ export function ConversionResilienceBreakdown({ data }: { data: ConversionResili
   }
 
   return (
-    <div class="cr-metrics">
-      <div class="cr-metric-card">
-        <div class="cr-metric-label">{t('dashboard.conversion.title')}</div>
-        <div class="cr-metric-value">{`${String(data.conversion_rate)}%`}</div>
-        <div class="cr-metric-detail">{t('dashboard.conversion.detail', { converted: data.games_converted, total: data.games_with_advantage })}</div>
-      </div>
-      <div class="cr-metric-card">
-        <div class="cr-metric-label">{t('dashboard.resilience.title')}</div>
-        <div class="cr-metric-value">{`${String(data.resilience_rate)}%`}</div>
-        <div class="cr-metric-detail">{t('dashboard.resilience.detail', { saved: data.games_saved, total: data.games_with_disadvantage })}</div>
-      </div>
-    </div>
+    <RankedBars
+      scale={100}
+      highlight={false}
+      rows={[
+        {
+          key: 'conversion',
+          label: t('dashboard.conversion.title'),
+          value: data.conversion_rate,
+          display: `${String(data.conversion_rate)}%`,
+          detail: t('dashboard.conversion.detail', { converted: data.games_converted, total: data.games_with_advantage }),
+        },
+        {
+          key: 'resilience',
+          label: t('dashboard.resilience.title'),
+          value: data.resilience_rate,
+          display: `${String(data.resilience_rate)}%`,
+          detail: t('dashboard.resilience.detail', { saved: data.games_saved, total: data.games_with_disadvantage }),
+        },
+      ]}
+    />
   );
 }
 

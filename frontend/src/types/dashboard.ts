@@ -144,16 +144,15 @@ export interface GrowthWindow {
   game_end: number;
   avg_blunders_per_game: number;
   avg_cpl: number;
-  avg_blunder_severity: number;
+  avg_blunder_severity: number | null;
   clean_game_rate: number;
-  catastrophic_rate: number;
+  catastrophic_rate: number | null;
 }
 
 export interface GrowthData {
   total_games: number;
   window_size: number;
   windows: GrowthWindow[];
-  trend?: Record<string, string>;
 }
 
 export interface DailyCount {

@@ -8,23 +8,45 @@ export interface RankedBar {
   muted?: boolean;
 }
 
-// Ink bars scaled to the largest row; the largest actionable row is the one to train, so it alone is full strength.
-export function RankedBars({ rows, caption }: { rows: RankedBar[]; caption?: string }) {
-  const max = Math.max(...rows.map(r => r.value), 0);
-  if (rows.length === 0 || max <= 0) return null;
-  const top = Math.max(...rows.filter(r => !r.muted).map(r => r.value), 0);
+// A leader only earns the highlight when it clearly beats the runner-up.
+const LEAD_MARGIN = 1.1;
 
+export function leaderKey(rows: RankedBar[]): string | null {
+  const ranked = rows.filter(r => !r.muted).sort((a, b) => b.value - a.value);
+  const [first, second] = ranked;
+  if (!first || first.value <= 0) return null;
+  return !second || first.value >= second.value * LEAD_MARGIN ? first.key : null;
+}
+
+interface RankedBarsProps {
+  rows: RankedBar[];
+  // Fixed top of the scale (e.g. 100 for rates); defaults to the largest row.
+  scale?: number;
+  // Off where a bigger bar is good news rather than the thing to train.
+  highlight?: boolean;
+}
+
+export function RankedBars({ rows, scale, highlight = true }: RankedBarsProps) {
+  if (rows.length === 0) return null;
+  const top = scale ?? (Math.max(...rows.map(r => r.value)) || 1);
+  const leader = highlight ? leaderKey(rows) : null;
+
+  // Explicit roles keep row/header semantics when phones restyle the rows as grids.
   return (
-    <table class="ranked-bars">
-      {caption && <caption class="sr-only">{caption}</caption>}
-      <tbody>
+    <table class="ranked-bars" role="table">
+      <tbody role="rowgroup">
         {rows.map(row => (
-          <tr key={row.key} class={row.muted ? 'ranked-bars__row--muted' : row.value === top && top > 0 ? 'ranked-bars__row--top' : undefined} data-key={row.key}>
-            <th scope="row" class="ranked-bars__label">{row.label}</th>
-            <td class="ranked-bars__track" aria-hidden="true">
-              <span class="ranked-bars__bar" style={{ width: `${String((row.value / max) * 100)}%` }} />
+          <tr
+            key={row.key}
+            role="row"
+            class={row.muted ? 'ranked-bars__row--muted' : row.key === leader ? 'ranked-bars__row--top' : undefined}
+            data-key={row.key}
+          >
+            <th scope="row" role="rowheader" class="ranked-bars__label">{row.label}</th>
+            <td role="cell" class="ranked-bars__track">
+              <span class="ranked-bars__bar" aria-hidden="true" style={{ width: `${String(Math.min(row.value / top, 1) * 100)}%` }} />
             </td>
-            <td class="ranked-bars__value">
+            <td role="cell" class="ranked-bars__value">
               {row.display}
               {row.detail && <span class="ranked-bars__detail">{row.detail}</span>}
             </td>

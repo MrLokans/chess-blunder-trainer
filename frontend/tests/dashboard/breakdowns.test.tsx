@@ -255,7 +255,8 @@ describe('ConversionResilienceBreakdown', () => {
         }}
       />
     );
-    expect(container.querySelectorAll('.cr-metric-card').length).toBe(2);
+    expect(container.querySelectorAll('.ranked-bars tbody tr')).toHaveLength(2);
+    expect(container.querySelector('.ranked-bars__row--top')).toBeNull();
     expect(screen.getByText('70%')).toBeDefined();
     expect(screen.getByText('20%')).toBeDefined();
   });
@@ -273,6 +274,7 @@ describe('ConversionResilienceBreakdown', () => {
         }}
       />
     );
-    expect(container.querySelectorAll('.cr-metric-card').length).toBe(2);
+    expect(container.querySelectorAll('.ranked-bars tbody tr')).toHaveLength(2);
+    expect(container.querySelector('.ranked-bars__row--top')).toBeNull();
   });
 });

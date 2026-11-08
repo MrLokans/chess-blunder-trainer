@@ -7,27 +7,30 @@ import type { GrowthData, GrowthWindow } from './types';
 
 type MetricKey = keyof Pick<GrowthWindow, 'avg_blunders_per_game' | 'clean_game_rate' | 'catastrophic_rate' | 'avg_blunder_severity' | 'avg_cpl'>;
 
+type Unit = 'count' | 'percent' | 'cp' | 'pawns';
+
 interface TrendMetric {
   key: MetricKey;
-  tab: string;
   label: string;
   precision: number;
   lowerIsBetter: boolean;
-  suffix: string;
+  unit: Unit;
+  // Smallest move between the compared ends that counts as a change, in the metric's own units.
+  noise: number;
 }
 
-const BLUNDERS_PER_GAME: TrendMetric = { key: 'avg_blunders_per_game', tab: 'dashboard.trend.tab.blunders', label: 'growth.blunders_per_game', precision: 1, lowerIsBetter: true, suffix: '' };
+const BLUNDERS_PER_GAME: TrendMetric = { key: 'avg_blunders_per_game', label: 'dashboard.trend.tab.blunders', precision: 1, lowerIsBetter: true, unit: 'count', noise: 0.1 };
 
 const METRICS: TrendMetric[] = [
   BLUNDERS_PER_GAME,
-  { key: 'clean_game_rate', tab: 'dashboard.trend.tab.clean', label: 'growth.clean_game_rate', precision: 0, lowerIsBetter: false, suffix: '%' },
-  { key: 'catastrophic_rate', tab: 'dashboard.trend.tab.game_losing', label: 'growth.catastrophic_rate', precision: 0, lowerIsBetter: true, suffix: '%' },
-  { key: 'avg_blunder_severity', tab: 'dashboard.trend.tab.severity', label: 'growth.blunder_severity', precision: 0, lowerIsBetter: true, suffix: ' CP' },
-  { key: 'avg_cpl', tab: 'dashboard.trend.tab.cpl', label: 'growth.avg_cpl', precision: 0, lowerIsBetter: true, suffix: ' CP' },
+  { key: 'clean_game_rate', label: 'dashboard.trend.tab.clean', precision: 0, lowerIsBetter: false, unit: 'percent', noise: 2 },
+  { key: 'catastrophic_rate', label: 'dashboard.trend.tab.game_losing', precision: 0, lowerIsBetter: true, unit: 'percent', noise: 2 },
+  { key: 'avg_blunder_severity', label: 'dashboard.trend.tab.severity', precision: 1, lowerIsBetter: true, unit: 'pawns', noise: 10 },
+  { key: 'avg_cpl', label: 'dashboard.trend.tab.cpl', precision: 0, lowerIsBetter: true, unit: 'cp', noise: 5 },
 ];
 
 const MAX_COMPARED_BLOCKS = 3;
-// Changes within 5% of the starting value read as noise between 20-game blocks.
+// A change counts once it beats both 5% of the starting value and the metric's own noise floor.
 const STABLE_TOLERANCE = 0.05;
 
 export type TrendDirection = 'improving' | 'declining' | 'stable';
@@ -39,18 +42,23 @@ export interface EndsComparison {
   direction: TrendDirection;
 }
 
-function mean(values: number[]): number {
-  return values.reduce((sum, v) => sum + v, 0) / values.length;
+function mean(values: (number | null)[]): number | null {
+  const known = values.filter((v): v is number => v !== null);
+  return known.length > 0 ? known.reduce((sum, v) => sum + v, 0) / known.length : null;
 }
 
-export function compareEnds(values: number[], lowerIsBetter: boolean): EndsComparison | null {
+export function compareEnds(
+  values: (number | null)[],
+  { lowerIsBetter, noise }: Pick<TrendMetric, 'lowerIsBetter' | 'noise'>,
+): EndsComparison | null {
   const blocks = Math.min(MAX_COMPARED_BLOCKS, Math.floor(values.length / 2));
   if (blocks < 1) return null;
   const before = mean(values.slice(0, blocks));
   const now = mean(values.slice(-blocks));
-  const change = (now - before) / Math.max(Math.abs(before), 1);
-  if (Math.abs(change) <= STABLE_TOLERANCE) return { before, now, blocks, direction: 'stable' };
-  return { before, now, blocks, direction: (change < 0) === lowerIsBetter ? 'improving' : 'declining' };
+  if (before === null || now === null) return null;
+  const delta = now - before;
+  if (Math.abs(delta) <= Math.max(Math.abs(before) * STABLE_TOLERANCE, noise)) return { before, now, blocks, direction: 'stable' };
+  return { before, now, blocks, direction: (delta < 0) === lowerIsBetter ? 'improving' : 'declining' };
 }
 
 export function niceScale(max: number): { top: number; step: number } {
@@ -62,16 +70,27 @@ export function niceScale(max: number): { top: number; step: number } {
 }
 
 function format(value: number, metric: TrendMetric): string {
-  return `${formatNumber(value, { minimumFractionDigits: metric.precision, maximumFractionDigits: metric.precision })}${metric.suffix}`;
+  const digits = { minimumFractionDigits: metric.precision, maximumFractionDigits: metric.precision };
+  if (metric.unit === 'pawns') return t('dashboard.unit.pawns', { value: formatNumber(value / 100, digits) });
+  const number = formatNumber(value, digits);
+  if (metric.unit === 'percent') return `${number}%`;
+  return metric.unit === 'cp' ? `${number} CP` : number;
 }
 
-function valuesOf(windows: GrowthWindow[], key: MetricKey): number[] {
-  return windows.map(w => (Number.isFinite(w[key]) ? w[key] : 0));
+function valuesOf(windows: GrowthWindow[], key: MetricKey): (number | null)[] {
+  return windows.map(w => {
+    const value = w[key];
+    return value !== null && Number.isFinite(value) ? value : null;
+  });
+}
+
+function blockLabel(w: GrowthWindow): string {
+  return t('growth.window_label', { start: w.game_start, end: w.game_end });
 }
 
 interface BlockChartProps {
   windows: GrowthWindow[];
-  values: number[];
+  values: (number | null)[];
   comparison: EndsComparison;
   metric: TrendMetric;
   games: number;
@@ -79,11 +98,12 @@ interface BlockChartProps {
 }
 
 function BlockChart({ windows, values, comparison, metric, games, verdict }: BlockChartProps) {
-  const { top, step } = niceScale(Math.max(...values, comparison.before, comparison.now));
+  const known = values.filter((v): v is number => v !== null);
+  const { top, step } = niceScale(Math.max(...known, comparison.before, comparison.now));
   const ticks = Array.from({ length: Math.round(top / step) + 1 }, (_, i) => i * step);
   const pct = (v: number) => `${String((v / top) * 100)}%`;
   const span = `${String((comparison.blocks / values.length) * 100)}%`;
-  const labelEvery = values.length > 10 ? 2 : 1;
+  const labelEvery = Math.ceil(values.length / 8);
 
   return (
     <figure class="trend-chart">
@@ -101,12 +121,13 @@ function BlockChart({ windows, values, comparison, metric, games, verdict }: Blo
           {values.map((value, i) => {
             const w = windows[i];
             const role = i < comparison.blocks ? 'first' : i >= values.length - comparison.blocks ? 'last' : 'middle';
+            if (!w || value === null) return <span key={w?.window_index ?? i} class="trend-chart__bar trend-chart__bar--empty" />;
             return (
               <span
-                key={w?.window_index ?? i}
+                key={w.window_index}
                 class={`trend-chart__bar trend-chart__bar--${role}`}
                 style={{ height: pct(value) }}
-                title={`${t('growth.window_label', { start: w?.game_start ?? 0, end: w?.game_end ?? 0 })}: ${format(value, metric)}`}
+                title={`${blockLabel(w)}: ${format(value, metric)}`}
               />
             );
           })}
@@ -121,6 +142,20 @@ function BlockChart({ windows, values, comparison, metric, games, verdict }: Blo
       <div class="trend-chart__axis" aria-hidden="true">
         {windows.map((w, i) => <span key={w.window_index}>{i % labelEvery === 0 ? formatNumber(w.game_start) : ''}</span>)}
       </div>
+      <table class="sr-only">
+        <caption>{t(metric.label)}</caption>
+        <tbody>
+          {windows.map((w, i) => {
+            const value = values[i];
+            return (
+              <tr key={w.window_index}>
+                <th scope="row">{blockLabel(w)}</th>
+                <td>{value === null || value === undefined ? '—' : format(value, metric)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </figure>
   );
 }
@@ -135,7 +170,7 @@ export function TrendSpine({ growth, nextStep }: TrendSpineProps) {
   const [cplHelpOpen, setCplHelpOpen] = useState(false);
   const metric = METRICS.find(m => m.key === selected) ?? BLUNDERS_PER_GAME;
   const values = valuesOf(growth.windows, metric.key);
-  const comparison = compareEnds(values, metric.lowerIsBetter);
+  const comparison = compareEnds(values, metric);
   const games = (comparison?.blocks ?? 0) * growth.window_size;
   const verdict = comparison ? t(`dashboard.trend.verdict.${comparison.direction}`) : '';
   const cplHelp = (
@@ -146,7 +181,7 @@ export function TrendSpine({ growth, nextStep }: TrendSpineProps) {
     <section class="trend-spine" aria-label={t('dashboard.chart.growth')}>
       <div class="trend-spine__main">
         <Tabs
-          tabs={METRICS.map(m => ({ key: m.key, label: t(m.tab) }))}
+          tabs={METRICS.map(m => ({ key: m.key, label: t(m.label) }))}
           value={selected}
           onChange={setSelected}
         >
@@ -182,13 +217,13 @@ export function TrendSpine({ growth, nextStep }: TrendSpineProps) {
             <ul class="trend-side__list">
               {METRICS.filter(m => m.key !== selected).map(m => {
                 const series = valuesOf(growth.windows, m.key);
-                const ends = compareEnds(series, m.lowerIsBetter);
+                const ends = compareEnds(series, m);
                 if (!ends) return null;
                 return (
                   <li key={m.key} class="trend-side__row" data-metric={m.key}>
                     <span class="trend-side__label">{t(m.label)}{m.key === 'avg_cpl' && cplHelp}</span>
                     <span class="trend-side__values">{format(ends.before, m)} → {format(ends.now, m)}</span>
-                    <span class="trend-side__spark" aria-hidden="true"><Sparkline values={series} width={96} height={28} /></span>
+                    <span class="trend-side__spark" aria-hidden="true"><Sparkline values={series.filter((v): v is number => v !== null)} width={96} height={28} /></span>
                     <span class={`trend-side__word trend--${ends.direction}`}>{t(`growth.${ends.direction}`)}</span>
                   </li>
                 );

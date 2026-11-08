@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import Depends, HTTPException, Query, Request, status
 from fastapi.routing import APIRouter
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from blunder_tutor.cache.decorator import cached
 from blunder_tutor.constants import PHASE_FROM_STRING
@@ -210,54 +210,33 @@ class GrowthWindow(BaseModel):
     game_end: int = Field(description="1-based index of last game in window")
     avg_blunders_per_game: float = Field(description="Average blunders per game")
     avg_cpl: float = Field(description="Average centipawn loss per game")
-    avg_blunder_severity: float = Field(description="Average CPL of blunders only")
+    avg_blunder_severity: float | None = Field(
+        description="Average CPL of blunders only; null when the window has no blunders"
+    )
     clean_game_rate: float = Field(description="Percentage of games with 0 blunders")
-    catastrophic_rate: float = Field(
-        description="Percentage of blunders with CPL > 500"
+    catastrophic_rate: float | None = Field(
+        description="Percentage of blunders with CPL > 500; null when the window has no blunders"
     )
-
-
-class GrowthTrend(BaseModel):
-    blunder_frequency: str = Field(description="improving / stable / declining")
-    move_quality: str = Field(description="improving / stable / declining")
-    severity: str = Field(description="improving / stable / declining")
-    clean_rate: str = Field(description="improving / stable / declining")
-    catastrophic_rate: str = Field(description="improving / stable / declining")
-
-    @field_validator(
-        "blunder_frequency",
-        "move_quality",
-        "severity",
-        "clean_rate",
-        "catastrophic_rate",
-    )
-    @classmethod
-    def validate_direction(cls, v: str) -> str:
-        if v not in ("improving", "stable", "declining"):
-            msg = "Must be improving, stable, or declining"
-            raise ValueError(msg)
-        return v
 
 
 class GrowthMetricsResponse(BaseModel):
     windows: list[GrowthWindow] = Field(description="Rolling window metrics")
-    trend: GrowthTrend | None = Field(description="Trend comparing last two windows")
     total_games: int = Field(description="Total analyzed games")
     window_size: int = Field(description="Games per window")
-
-
-TREND_THRESHOLD = 0.05
 
 
 def _compute_growth_windows(
     per_game: list[dict], window_size: int
 ) -> list[GrowthWindow]:
+    # Anchor blocks on the newest game so a partial block drops off the oldest end.
+    first = len(per_game) % window_size
     windows = []
-    for i in range(0, len(per_game) - window_size + 1, window_size):
+    for i in range(first, len(per_game) - window_size + 1, window_size):
         chunk = per_game[i : i + window_size]
         total_blunders = sum(g["blunder_count"] for g in chunk)
         total_catastrophic = sum(g["catastrophic_count"] for g in chunk)
         clean_games = sum(1 for g in chunk if g["blunder_count"] == 0)
+        blunder_cpls = [g["avg_blunder_cpl"] for g in chunk if g["avg_blunder_cpl"] > 0]
 
         windows.append(
             GrowthWindow(
@@ -266,58 +245,20 @@ def _compute_growth_windows(
                 game_end=i + len(chunk),
                 avg_blunders_per_game=round(total_blunders / len(chunk), 2),
                 avg_cpl=round(sum(g["avg_cpl"] for g in chunk) / len(chunk), 1),
-                avg_blunder_severity=round(
-                    (
-                        sum(
-                            g["avg_blunder_cpl"]
-                            for g in chunk
-                            if g["avg_blunder_cpl"] > 0
-                        )
-                        / max(sum(1 for g in chunk if g["avg_blunder_cpl"] > 0), 1)
-                    ),
-                    1,
+                avg_blunder_severity=(
+                    round(sum(blunder_cpls) / len(blunder_cpls), 1)
+                    if blunder_cpls
+                    else None
                 ),
                 clean_game_rate=round(clean_games / len(chunk) * 100, 1),
-                catastrophic_rate=round(
-                    total_catastrophic / max(total_blunders, 1) * 100, 1
+                catastrophic_rate=(
+                    round(total_catastrophic / total_blunders * 100, 1)
+                    if total_blunders
+                    else None
                 ),
             )
         )
     return windows
-
-
-def _trend_direction(old: float, new: float, *, lower_is_better: bool) -> str:
-    if old == 0:
-        return "stable"
-    change = (new - old) / abs(old)
-    if lower_is_better:
-        change = -change
-    if change > TREND_THRESHOLD:
-        return "improving"
-    if change < -TREND_THRESHOLD:
-        return "declining"
-    return "stable"
-
-
-def _compute_trend(windows: list[GrowthWindow]) -> GrowthTrend | None:
-    if len(windows) < 2:
-        return None
-    prev, last = windows[-2], windows[-1]
-    return GrowthTrend(
-        blunder_frequency=_trend_direction(
-            prev.avg_blunders_per_game, last.avg_blunders_per_game, lower_is_better=True
-        ),
-        move_quality=_trend_direction(prev.avg_cpl, last.avg_cpl, lower_is_better=True),
-        severity=_trend_direction(
-            prev.avg_blunder_severity, last.avg_blunder_severity, lower_is_better=True
-        ),
-        clean_rate=_trend_direction(
-            prev.clean_game_rate, last.clean_game_rate, lower_is_better=False
-        ),
-        catastrophic_rate=_trend_direction(
-            prev.catastrophic_rate, last.catastrophic_rate, lower_is_better=True
-        ),
-    )
 
 
 stats_router = APIRouter(dependencies=[Depends(set_request_scope)])
@@ -476,7 +417,7 @@ async def get_blunders_by_eco(
     summary="Get blunders by player color",
     description="Returns blunder statistics grouped by the color the user was playing (white/black). Only counts the user's own blunders, not opponent blunders.",
 )
-@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=2, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=3, key_params=["filters"])
 async def get_blunders_by_color(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -599,7 +540,7 @@ async def get_blunders_by_tactical_pattern(
     summary="Get blunders by game type",
     description="Returns blunder statistics grouped by game type (bullet, blitz, rapid, classical).",
 )
-@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=2, key_params=["filters"])
+@cached(tag="stats", ttl=STATS_CACHE_TTL_SECONDS, version=3, key_params=["filters"])
 async def get_blunders_by_game_type(
     request: Request,
     stats_repo: StatsRepoDep,
@@ -720,7 +661,7 @@ async def get_conversion_resilience(
 @cached(
     tag="stats",
     ttl=STATS_CACHE_TTL_SECONDS,
-    version=1,
+    version=2,
     key_params=["filters", "window_size"],
 )
 async def get_growth_metrics(
@@ -733,11 +674,8 @@ async def get_growth_metrics(
     ] = 20,
 ) -> GrowthMetricsResponse:
     per_game = await stats_repo.get_growth_metrics(filters=filters)
-    windows = _compute_growth_windows(per_game, window_size)
-    trend = _compute_trend(windows)
     return GrowthMetricsResponse(
-        windows=windows,
-        trend=trend,
+        windows=_compute_growth_windows(per_game, window_size),
         total_games=len(per_game),
         window_size=window_size,
     )

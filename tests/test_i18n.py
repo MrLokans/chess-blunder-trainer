@@ -165,8 +165,8 @@ class TestRawLocaleParity:
             "dashboard.tactical.trapped",
             "dashboard.collapse.avg_move",
             "dashboard.collapse.median_move",
-            "growth.avg_cpl",
-            "growth.blunder_severity",
+            "dashboard.trend.tab.cpl",
+            "dashboard.trend.tab.severity",
         ):
             assert translated[key]
 
@@ -186,8 +186,8 @@ class TestEnJsonIntegrity:
         assert "dashboard.tactical.trapped" in data
         assert "dashboard.collapse.avg_move" in data
         assert "dashboard.collapse.median_move" in data
-        assert "growth.avg_cpl" in data
-        assert "growth.blunder_severity" in data
+        assert "dashboard.trend.tab.cpl" in data
+        assert "dashboard.trend.tab.severity" in data
 
     def test_en_json_all_values_are_strings(self):
         en_path = Path(__file__).parent.parent / "locales" / "en.json"

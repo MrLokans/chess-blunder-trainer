@@ -20,29 +20,39 @@ function makeGrowth(bpg: number[], clean: number[] = bpg.map(() => 20)): GrowthD
   };
 }
 
+const LOWER = { lowerIsBetter: true, noise: 0.1 };
+const HIGHER = { lowerIsBetter: false, noise: 2 };
+
 describe('compareEnds', () => {
   test('averages up to three blocks at each end', () => {
-    expect(compareEnds([1, 2, 3, 9, 4, 5, 6], true)).toEqual({ before: 2, now: 5, blocks: 3, direction: 'declining' });
+    expect(compareEnds([1, 2, 3, 9, 4, 5, 6], LOWER)).toEqual({ before: 2, now: 5, blocks: 3, direction: 'declining' });
   });
 
-  test('uses one block per end when only two exist', () => {
-    expect(compareEnds([3, 2], true)).toMatchObject({ before: 3, now: 2, blocks: 1, direction: 'improving' });
+  test('uses one block per end when only two or three exist', () => {
+    expect(compareEnds([3, 2], LOWER)).toMatchObject({ before: 3, now: 2, blocks: 1, direction: 'improving' });
+    expect(compareEnds([3, 9, 2], LOWER)).toMatchObject({ before: 3, now: 2, blocks: 1 });
   });
 
   test('reads a rise as improving when higher is better', () => {
-    expect(compareEnds([10, 30], false)?.direction).toBe('improving');
+    expect(compareEnds([10, 30], HIGHER)?.direction).toBe('improving');
   });
 
-  test('calls small moves stable', () => {
-    expect(compareEnds([2, 2.08], true)?.direction).toBe('stable');
+  test('calls moves inside the noise floor stable, even from a small start', () => {
+    expect(compareEnds([0.8, 0.88], LOWER)?.direction).toBe('stable');
+    expect(compareEnds([0.8, 0.95], LOWER)?.direction).toBe('declining');
   });
 
-  test('measures moves from a zero start in absolute units', () => {
-    expect(compareEnds([0, 0.5], false)?.direction).toBe('improving');
+  test('calls moves inside 5% of a large start stable', () => {
+    expect(compareEnds([500, 520], { lowerIsBetter: true, noise: 10 })?.direction).toBe('stable');
+  });
+
+  test('skips blocks without a value instead of reading them as zero', () => {
+    expect(compareEnds([30, null, 20, 40, null, 40], { lowerIsBetter: true, noise: 2 })).toMatchObject({ before: 25, now: 40, direction: 'declining' });
+    expect(compareEnds([null, 30], { lowerIsBetter: true, noise: 2 })).toBeNull();
   });
 
   test('needs two blocks', () => {
-    expect(compareEnds([2], true)).toBeNull();
+    expect(compareEnds([2], LOWER)).toBeNull();
   });
 });
 
@@ -50,6 +60,10 @@ describe('niceScale', () => {
   test('rounds the top up to a whole step', () => {
     expect(niceScale(4.25)).toEqual({ top: 5, step: 1 });
     expect(niceScale(37)).toEqual({ top: 40, step: 10 });
+  });
+
+  test('keeps small fractional maxima readable', () => {
+    expect(niceScale(0.03)).toEqual({ top: 0.03, step: 0.01 });
   });
 
   test('handles an all-zero series', () => {
@@ -77,6 +91,15 @@ describe('TrendSpine', () => {
     expect(container.querySelectorAll('.trend-chart__bar')).toHaveLength(7);
     expect(container.querySelectorAll('.trend-chart__bar--first')).toHaveLength(3);
     expect(container.querySelectorAll('.trend-chart__bar--last')).toHaveLength(3);
+  });
+
+  test('leaves a gap for a block without blunders when showing loss per blunder', () => {
+    const growth = makeGrowth([2, 2, 2, 2]);
+    growth.windows = growth.windows.map((w, i) => (i === 1 ? { ...w, avg_blunder_severity: null } : w));
+    const { container } = render(<TrendSpine growth={growth} nextStep={null} />);
+    fireEvent.click(screen.getByTestId('tab-avg_blunder_severity'));
+    expect(container.querySelectorAll('.trend-chart__bar--empty')).toHaveLength(1);
+    expect(container.querySelectorAll('.trend-chart table tbody tr')).toHaveLength(4);
   });
 
   test('asks for more games with a single block and still shows the next step', () => {
