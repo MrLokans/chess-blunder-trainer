@@ -61,7 +61,7 @@ export function PuzzleTools({ puzzle, starred, onStarredChange, onShowShortcuts 
       {hasDebug && (
         // eslint-disable-next-line no-restricted-syntax -- needs a visible title tooltip; <Button> exposes no title prop
         <button class="btn btn-ghost" id="copyDebugBtn" onClick={() => { void handleCopyDebug(); }} aria-label={t('trainer.debug.copy_title')} title={t('trainer.debug.copy_title')}>
-          {copyLabel ? `✓ ${copyLabel}` : <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="8" width="10" height="12" /><path d="M15 8V4H5v12h4" /></svg>}
+          {copyLabel ?? <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="8" width="10" height="12" /><path d="M15 8V4H5v12h4" /></svg>}
         </button>
       )}
 

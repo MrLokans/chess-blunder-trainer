@@ -304,7 +304,7 @@ export function TrapsApp() {
     <AsyncBoundary
       state={state}
       isEmpty={(data) => data.stats.length === 0}
-      empty={<EmptyState title={t('traps.title')} message={t('traps.no_data')} />}
+      empty={<EmptyState message={t('traps.no_data')} />}
     >
       {(data) => <TrapsView data={data} />}
     </AsyncBoundary>
