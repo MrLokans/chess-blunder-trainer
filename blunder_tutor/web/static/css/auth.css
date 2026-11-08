@@ -24,10 +24,8 @@
 
 .auth-card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg, 8px);
+  border: 2px solid var(--border-strong);
   padding: var(--s-xl, 32px);
-  box-shadow: var(--shadow-card);
   max-width: 440px;
   width: 100%;
 }
