@@ -43,6 +43,7 @@ vi.mock('../../src/shared/api', () => ({
 }));
 
 import { TrainerApp } from '../../src/trainer/TrainerApp';
+import { STORAGE_KEYS } from '../../src/shared/storage-keys';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -92,8 +93,11 @@ describe('TrainerApp', () => {
     await waitFor(() => {
       expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(1);
     });
+    await new Promise((resolve) => { setTimeout(resolve, 50); });
+    expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(1);
     expect(vi.mocked(client.trainer.getPuzzle).mock.calls[0]?.[0]).toMatchObject({ tactical_patterns: ['hanging_piece'] });
     expect(window.location.search).toBe('');
+    expect(localStorage.getItem(STORAGE_KEYS.trainerTactical) ?? '').toBe('');
     expect(screen.getByTestId('filter-summary').textContent).toBe('trainer.filters.tactical_hanging');
   });
 

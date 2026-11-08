@@ -229,7 +229,11 @@ function DashboardBody({
     hasCollapse, hasConversion, hasTraps, hasHeatmap,
   } = features;
 
-  const shortDate = new Intl.DateTimeFormat(document.documentElement.lang || undefined, { month: 'short', day: 'numeric' });
+  const dateYears = new Set((state.dateItems ?? []).map(d => d.date.slice(0, 4)));
+  // Month and day alone repeat once the range crosses a year.
+  const shortDate = new Intl.DateTimeFormat(document.documentElement.lang || undefined, {
+    month: 'short', day: 'numeric', ...(dateYears.size > 1 ? { year: '2-digit' } : {}),
+  });
   const dateChartData = state.dateItems && state.dateItems.length > 0 ? {
     labels: state.dateItems.map(d => shortDate.format(new Date(`${d.date}T00:00:00`))),
     gameCounts: state.dateItems.map(d => d.game_count),
@@ -325,8 +329,8 @@ function DashboardBody({
         <div class="dashboard-insight-grid">
           {hasCollapse && state.collapseData && <BreakdownSection wide title={t('dashboard.chart.collapse_point')} description={t('dashboard.chart.collapse_point_desc')}><CollapsePointBreakdown data={state.collapseData} /></BreakdownSection>}
           {hasConversion && state.conversionData && <BreakdownSection wide title={t('dashboard.chart.conversion_resilience')} description={t('dashboard.chart.conversion_resilience_desc')}><ConversionResilienceBreakdown data={state.conversionData} /></BreakdownSection>}
-          {hasAccuracy && <AccuracyChart title={t('dashboard.chart.accuracy_by_date')} description={t('dashboard.chart.accuracy_by_date_desc')} emptyMessage={t('dashboard.chart.no_accuracy_data')} data={dateChartData} />}
-          {hasAccuracy && <AccuracyChart title={t('dashboard.chart.accuracy_by_hour')} description={t('dashboard.chart.accuracy_by_hour_desc', { timezone: state.hourTimezone })} emptyMessage={t('dashboard.chart.no_hourly_data')} data={hourChartData} />}
+          {hasAccuracy && <AccuracyChart title={t('dashboard.chart.accuracy_by_date')} slotLabel={t('dashboard.chart.date')} description={t('dashboard.chart.accuracy_by_date_desc')} emptyMessage={t('dashboard.chart.no_accuracy_data')} data={dateChartData} />}
+          {hasAccuracy && <AccuracyChart title={t('dashboard.chart.accuracy_by_hour')} slotLabel={t('dashboard.chart.hour')} description={t('dashboard.chart.accuracy_by_hour_desc', { timezone: state.hourTimezone })} emptyMessage={t('dashboard.chart.no_hourly_data')} data={hourChartData} />}
         </div>
       </section>
 

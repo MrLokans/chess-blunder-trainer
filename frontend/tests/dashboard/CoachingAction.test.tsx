@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { CoachingAction, libraryTotals, selectNextAction } from '../../src/dashboard/CoachingAction';
 import type { NextActionInput, NextActionKind } from '../../src/dashboard/CoachingAction';
@@ -199,6 +199,8 @@ function renderCard(overrides: Partial<NextActionInput> = {}, onRetry = () => {}
 }
 
 describe('CoachingAction', () => {
+  afterEach(() => { window.__features = undefined; });
+
   test('renders exactly one primary action per state', () => {
     const states: Array<Partial<NextActionInput>> = [
       { libraryGames: 0, libraryAnalyzedGames: 0, filteredGames: 0 },
@@ -233,7 +235,6 @@ describe('CoachingAction', () => {
     window.__features = { 'trainer.filter.tactical': false };
     renderCard({ filteredBlunders: 20, tacticalData: tactical([['Hanging Piece', 12]]) });
     expect(screen.getByText(t('dashboard.coach.train.cta')).getAttribute('href')).toBe('/');
-    window.__features = undefined;
   });
 
   test('sends the import and analysis states to management', () => {

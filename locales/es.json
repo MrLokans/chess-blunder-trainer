@@ -767,5 +767,7 @@
   "dashboard.nav.openings": "Aperturas",
   "dashboard.unit.pawns": "{value} peones",
   "dashboard.trend.compare_ranges": "Partidas {firstStart}–{firstEnd} frente a {lastStart}–{lastEnd}",
-  "dashboard.coach.train.cta_pattern": "Entrenar «{pattern}»"
+  "dashboard.coach.train.cta_pattern": "Entrenar «{pattern}»",
+  "dashboard.chart.date": "Fecha",
+  "dashboard.chart.hour": "Hora"
 }

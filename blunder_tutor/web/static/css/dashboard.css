@@ -1157,6 +1157,8 @@
     border-bottom: 1px solid var(--border-subtle);
   }
 
+  .accuracy-chart__games--dense { gap: 0; }
+
   .accuracy-chart__games > span {
     flex: 1;
     background: var(--text);

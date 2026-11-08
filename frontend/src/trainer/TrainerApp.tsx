@@ -333,7 +333,7 @@ function TrainerCore(): preact.JSX.Element {
       void puzzleApi.loadSpecificPuzzle(deepGameId, deepPly);
     } else if (deepPattern && hasTacticalFilter) {
       // The filter change schedules the first load, so the request already carries the pattern.
-      filtersApi.setTacticalPattern(deepPattern);
+      filtersApi.setTacticalPattern(deepPattern, { remember: false });
       urlParams.delete('pattern');
       const query = urlParams.toString();
       window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);

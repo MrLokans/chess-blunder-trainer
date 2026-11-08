@@ -41,7 +41,7 @@ export interface FiltersAPI {
   setPhases: (phases: string[]) => void;
   setGameTypes: (types: string[]) => void;
   setDifficulties: (diffs: string[]) => void;
-  setTacticalPattern: (pattern: string | null) => void;
+  setTacticalPattern: (pattern: string | null, options?: { remember?: boolean }) => void;
   setColor: (color: string) => void;
   setShowArrows: (enabled: boolean) => void;
   setShowThreats: (enabled: boolean) => void;
@@ -86,9 +86,10 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
     onFilterChange();
   }, [persist, onFilterChange]);
 
-  const setTacticalPattern = useCallback((pattern: string | null) => {
+  // A deep link narrows this visit only; choices made in the drawer are remembered.
+  const setTacticalPattern = useCallback((pattern: string | null, options: { remember?: boolean } = {}) => {
     setState(s => ({ ...s, tacticalPattern: pattern }));
-    persist(SK.tactical, pattern ?? '');
+    if (options.remember ?? true) persist(SK.tactical, pattern ?? '');
     onFilterChange();
   }, [persist, onFilterChange]);
 

@@ -767,5 +767,7 @@
   "dashboard.nav.openings": "Дебюты",
   "dashboard.unit.pawns": "{value} пешки",
   "dashboard.trend.compare_ranges": "Партии {firstStart}–{firstEnd} против {lastStart}–{lastEnd}",
-  "dashboard.coach.train.cta_pattern": "Тренировать «{pattern}»"
+  "dashboard.coach.train.cta_pattern": "Тренировать «{pattern}»",
+  "dashboard.chart.date": "Дата",
+  "dashboard.chart.hour": "Час"
 }

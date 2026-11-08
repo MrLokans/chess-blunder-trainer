@@ -214,7 +214,7 @@
   --preview-board-light: #f0d9b5;
   --preview-board-dark: #b58863;
 
-  /* Activity heatmap (GitHub-style green ramp) */
+  /* Activity heatmap (ink ramp; green stays reserved for "better") */
   --heatmap-empty-future: light-dark(#d5d0c5, #211F18);
   --heatmap-empty: light-dark(var(--user-heatmap-empty, #d5d0c5), #2B291F);
   --heatmap-l1: light-dark(var(--user-heatmap-l1, #BFB9AC), #4A473D);

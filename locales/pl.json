@@ -767,5 +767,7 @@
   "dashboard.nav.openings": "Otwarcia",
   "dashboard.unit.pawns": "{value} pionka",
   "dashboard.trend.compare_ranges": "Partie {firstStart}–{firstEnd} a {lastStart}–{lastEnd}",
-  "dashboard.coach.train.cta_pattern": "Trenuj „{pattern}”"
+  "dashboard.coach.train.cta_pattern": "Trenuj „{pattern}”",
+  "dashboard.chart.date": "Data",
+  "dashboard.chart.hour": "Godzina"
 }

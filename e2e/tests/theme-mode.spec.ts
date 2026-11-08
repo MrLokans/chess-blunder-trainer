@@ -10,8 +10,8 @@ const DEFAULT_THEME = {
   primary: '#1A3A8F', success: '#247A33', error: '#D42828', warning: '#F2C12E',
   phase_opening: '#1A3A8F', phase_middlegame: '#F2C12E', phase_endgame: '#3A3A3A',
   bg: '#F5F2EB', bg_card: '#F5F2EB', text: '#1A1A1A', text_muted: '#3A3A3A',
-  heatmap_empty: '#E8E4DB', heatmap_l1: '#B8D9CA', heatmap_l2: '#5BAA7D',
-  heatmap_l3: '#2D8F3E', heatmap_l4: '#1A6B2A',
+  heatmap_empty: '#E8E4DB', heatmap_l1: '#BFB9AC', heatmap_l2: '#8F8A7E',
+  heatmap_l3: '#57534A', heatmap_l4: '#1A1A1A',
 };
 
 interface ThemeSnapshot {
