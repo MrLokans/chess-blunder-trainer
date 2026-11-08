@@ -538,6 +538,13 @@
 }
 
 .segmented__btn:focus-visible {
+  position: relative;
+  z-index: 1;
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+/* Modal moves focus to the dialog itself so screen readers announce it; that is not a user focus stop. */
+.modal:focus-visible {
+  outline: none;
 }

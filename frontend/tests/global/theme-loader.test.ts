@@ -93,6 +93,14 @@ describe('theme loader', () => {
     expect(ratio(text, hover)).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('keeps the focus ring visible on a custom page background', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }));
+    const { focusRingOn } = await import('../../src/global/theme-loader');
+
+    expect(focusRingOn('#F5F2EB')).toBe('#1A3A8F');
+    expect(focusRingOn('#123456')).toBe('#F5F2EB');
+  });
+
   it('discards invalid cached colors', async () => {
     localStorage.setItem('theme', JSON.stringify({ primary: 'blue' }));
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }));

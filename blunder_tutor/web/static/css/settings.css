@@ -97,7 +97,7 @@
 
   .preset-card.active {
     border-color: var(--accent);
-    box-shadow: var(--focus-ring);
+    box-shadow: 0 0 0 2px var(--accent);
   }
 
   .preset-colors {
@@ -357,7 +357,7 @@
 
   .piece-set-card.active {
     border-color: var(--accent);
-    box-shadow: var(--focus-ring);
+    box-shadow: 0 0 0 2px var(--accent);
   }
 
   .board-color-presets {
@@ -386,7 +386,7 @@
 
   .board-color-preset.active {
     border-color: var(--accent);
-    box-shadow: var(--focus-ring);
+    box-shadow: 0 0 0 2px var(--accent);
   }
 
   .board-color-preset .light {

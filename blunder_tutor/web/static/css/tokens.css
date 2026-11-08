@@ -78,8 +78,8 @@
   --error-border: light-dark(var(--user-error-border, var(--red)), #E38585);
   --info-bg: light-dark(rgba(26, 58, 143, 0.08), #1C2945);
   --info-border: light-dark(var(--blue), #8AA1E0);
-  --focus-ring-color: light-dark(rgba(26, 58, 143, 0.25), rgba(138, 161, 224, 0.6));
-  --focus-ring-error: 0 0 0 2px light-dark(var(--red-focus-ring), rgba(227, 133, 133, 0.6));
+  --focus-ring-color: light-dark(var(--user-focus-ring, var(--blue)), #8AA1E0);
+  --focus-ring-error: 0 0 0 2px var(--surface), 0 0 0 4px var(--error-border);
   --modal-backdrop: light-dark(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7));
   --elevation-shadow: 0 4px 20px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.5));
   --shadow-card: 0 2px 12px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.35));
@@ -102,7 +102,6 @@
   --yellow-hover: #E0B020;
   --red-hover: #B81E1E;
   --danger-hover: var(--error-hover);
-  --red-focus-ring: rgba(212, 40, 40, 0.25);
 
   /* Phase Colors */
   --color-phase-opening: light-dark(var(--user-phase-opening, var(--blue)), #8AA1E0);
@@ -148,7 +147,7 @@
   --color-gametype-correspondence: light-dark(#57534E, #959BAA);
 
   /* Focus ring */
-  --focus-ring: 0 0 0 2px var(--focus-ring-color);
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring-color);
 
   /* No shadows in Bauhaus */
   --shadow-sm: none;

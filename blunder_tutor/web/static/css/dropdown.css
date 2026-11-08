@@ -43,7 +43,6 @@ select::-ms-expand {
 }
 
 .custom-dropdown__trigger:focus {
-  outline: none;
   border-color: var(--accent);
 }
 

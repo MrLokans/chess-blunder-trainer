@@ -79,6 +79,18 @@ function relativeLuminance(hex: string): number {
   return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
 }
 
+const FOCUS_BLUE = '#1A3A8F';
+
+function contrastRatio(a: string, b: string): number {
+  const [la, lb] = [relativeLuminance(a), relativeLuminance(b)];
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+// Brand blue when it stays visible on the custom page background, otherwise the readable text colour.
+export function focusRingOn(surface: string): string {
+  return contrastRatio(FOCUS_BLUE, surface) >= 3 ? FOCUS_BLUE : readableTextOn(surface);
+}
+
 export function readableTextOn(fill: string): string {
   const fillLum = relativeLuminance(fill);
   const ratio = (text: string): number => {
@@ -107,7 +119,7 @@ export function removeTheme(): void {
     '--user-accent-hover', '--user-success-bg', '--user-success-border',
     '--user-error-bg', '--user-error-border', '--user-warning-bg', '--user-warning-border',
     '--user-on-warning', '--user-on-success', '--user-success-hover', '--user-warning-hover',
-    '--user-on-phase-middlegame',
+    '--user-on-phase-middlegame', '--user-focus-ring',
   ]) {
     root.style.removeProperty(property);
   }
@@ -128,6 +140,7 @@ export function applyTheme(theme: ThemeColors): void {
     '--user-success-hover': theme.success && adjustColor(theme.success, -8),
     '--user-warning-hover': theme.warning && adjustColor(theme.warning, -8),
     '--user-on-phase-middlegame': theme.phase_middlegame && readableTextOn(theme.phase_middlegame),
+    '--user-focus-ring': theme.bg && focusRingOn(theme.bg),
   };
 
   removeTheme();

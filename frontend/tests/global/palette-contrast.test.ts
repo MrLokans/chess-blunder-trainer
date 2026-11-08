@@ -122,6 +122,10 @@ describe('palette contrast', () => {
 
   it.each(['light', 'dark'] as const)('%s controls and chess-side swatches stay distinguishable', mode => {
     expect(contrast('border-control', 'surface-raised', mode)).toBeGreaterThanOrEqual(3);
+    for (const surface of SURFACES) {
+      expect(contrast('focus-ring-color', surface, mode), `focus ring on --${surface}`).toBeGreaterThanOrEqual(3);
+      expect(contrast('error-border', surface, mode), `error focus ring on --${surface}`).toBeGreaterThanOrEqual(3);
+    }
     expect(contrast('piece-white', 'piece-black', mode)).toBeGreaterThanOrEqual(3);
     expect(luminance(resolveValue(TOKENS['piece-white'], mode)))
       .toBeGreaterThan(luminance(resolveValue(TOKENS['piece-black'], mode)));
