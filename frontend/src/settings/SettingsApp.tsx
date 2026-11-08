@@ -13,6 +13,7 @@ import { FeatureToggles } from './FeatureToggles';
 import { SyncSettings } from './SyncSettings';
 import { ThemeEditor } from './ThemeEditor';
 import { BoardEditor } from './BoardEditor';
+import { BoardDisplaySettings } from './BoardDisplaySettings';
 import { CacheManagement } from './CacheManagement';
 import type {
   SettingsInit, SyncSettings as SyncSettingsData,
@@ -196,6 +197,8 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
           settings={boardSettings}
           onChange={setBoardSettings}
         />
+
+        <BoardDisplaySettings />
 
         <hr class="section-divider" />
 

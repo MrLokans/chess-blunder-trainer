@@ -17,8 +17,8 @@ export class TrainerPage extends BasePage {
   readonly vimInputField: Locator;
   readonly vimInputError: Locator;
   readonly evalValue: Locator;
-  readonly filtersToggleBtn: Locator;
-  readonly filtersCountBadge: Locator;
+  readonly filtersDrawer: Locator;
+  readonly filterSummary: Locator;
   readonly vimSuggestions: Locator;
 
   constructor(page: Page) {
@@ -38,8 +38,8 @@ export class TrainerPage extends BasePage {
     this.vimInputField = page.locator('#vimInputField');
     this.vimInputError = page.locator('#vimInputError');
     this.evalValue = page.locator('#evalValue');
-    this.filtersToggleBtn = page.locator('#filtersToggleBtn');
-    this.filtersCountBadge = page.locator('#filtersCountBadge');
+    this.filtersDrawer = page.locator('.modal--side');
+    this.filterSummary = page.getByTestId('filter-summary');
     this.vimSuggestions = page.locator('#vimSuggestions');
   }
 
@@ -200,30 +200,26 @@ export class TrainerPage extends BasePage {
 
   // --- Filters ---
 
-  async toggleFiltersPanel(): Promise<void> {
-    await this.filtersToggleBtn.click();
+  async openFilters(): Promise<void> {
+    await this.page.getByTestId('change-filters').click();
+    // Modal focuses itself in the same effect that wires Escape; focus means it is ready for keys.
+    await expect(this.filtersDrawer).toBeFocused();
+  }
+
+  /** Closes the drawer and waits for the single puzzle request it triggers. */
+  async applyFilters(): Promise<void> {
+    const response = this.page.waitForResponse(resp => resp.url().includes('/api/puzzle'));
+    await this.page.getByTestId('apply-filters').click();
+    await response;
+    await expect(this.filtersDrawer).toBeHidden();
   }
 
   async uncheckGameTypeFilter(gameType: string): Promise<void> {
-    const section = this.page.locator('.game-type-filter');
-    await expect(section).toBeVisible();
-    const label = section.locator(`label.filter-checkbox-label[data-value="${gameType}"]`);
-    await label.click();
+    await this.filtersDrawer.locator(`.game-type-filter label.filter-checkbox-label[data-value="${gameType}"]`).click();
   }
 
   async setColorFilter(color: 'white' | 'black' | 'both'): Promise<void> {
-    const section = this.page.locator('.color-filter');
-    await expect(section).toBeVisible();
-    const label = section.locator(`label.filter-radio-label[data-value="${color}"]`);
-    await label.click();
-  }
-
-  async expectActiveFilterCount(minCount: number): Promise<void> {
-    await expect(this.filtersCountBadge).toBeVisible();
-    await expect(this.filtersCountBadge).not.toHaveText('0');
-    if (minCount > 1) {
-      await expect(this.filtersCountBadge).toContainText(String(minCount));
-    }
+    await this.filtersDrawer.locator(`.color-filter label.filter-radio-label[data-value="${color}"]`).click();
   }
 
   // --- Context info ---

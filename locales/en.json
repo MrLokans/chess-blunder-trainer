@@ -687,6 +687,9 @@
   "trainer.filters.tactical_pin": "Pin",
   "trainer.filters.tactical_skewer": "Skewer",
   "trainer.filters.title": "Puzzle Filters",
+  "trainer.filters.all_puzzles": "All puzzles",
+  "trainer.filters.change": "Change",
+  "trainer.filters.apply": "Show puzzles",
   "trainer.game_type.blitz": "Blitz",
   "trainer.game_type.bullet": "Bullet",
   "trainer.game_type.classical": "Classical",
@@ -759,5 +762,6 @@
   "traps.title": "Traps & Attacks",
   "traps.view_all": "View all traps",
   "traps.your_games": "Your Games",
-  "dashboard.stat.pending_analysis": "{count, plural, =0 {No games pending} one {# pending} other {# pending}}"
+  "dashboard.stat.pending_analysis": "{count, plural, =0 {No games pending} one {# pending} other {# pending}}",
+  "settings.board_display.description": "Saved instantly on this device, no need to press Save. A and T toggle arrows and threats while training."
 }

@@ -60,7 +60,8 @@
 
 #boardWrapper {
   flex: 1;
-  max-width: min(580px, calc(100vh - 240px));
+  /* Room for context tags, prompt and the action row under the board (~272px) plus breathing space. */
+  max-width: min(580px, max(280px, calc(100dvh - 296px)));
   position: relative;
 }
 
@@ -92,64 +93,6 @@
 }
 
 /* Board square colors defined in base.css :root */
-
-/* ==========================================================================
-   Board Toggles
-   ========================================================================== */
-
-.board-toggles-vertical {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-sm);
-}
-
-.arrow-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  margin-top: 0;
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.arrow-toggle input[type="checkbox"] {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-.arrow-toggle input[type="checkbox"]:focus-visible + label {
-  box-shadow: var(--focus-ring);
-}
-
-.arrow-toggle label {
-  cursor: pointer;
-  user-select: none;
-  margin-bottom: 0;
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--ls-normal);
-  color: var(--text-secondary);
-  padding: var(--s-xs) var(--s-md);
-  border: 2px solid var(--border-control);
-  transition: all 0.15s ease;
-}
-
-.arrow-toggle label:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-
-.arrow-toggle input[type="checkbox"]:checked + label {
-  background: var(--surface-inverse);
-  border-color: var(--border-strong);
-  color: var(--text-inverse);
-}
 
 /* ==========================================================================
    Panel Sections
@@ -588,87 +531,53 @@
 }
 
 /* ==========================================================================
-   Filters — Collapsible Drawer
+   Filters — summary line in the panel, full form in a side drawer
    ========================================================================== */
 
-.filters-panel {
-  border: none;
-  border-radius: 0;
-}
-
-.filters-header {
+.filter-summary {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--s-md);
   padding: var(--s-md) var(--s-xl);
   border-bottom: 3px solid var(--border-strong);
-  margin-bottom: 0;
-  cursor: pointer;
-  user-select: none;
-  background: transparent;
-  transition: background 0.15s ease;
 }
 
-.filters-header:hover {
-  background: var(--surface-sunken);
+.filter-summary-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
 }
 
-.filters-header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--s-sm);
-}
-
-.filters-count-badge {
-  background: var(--surface-inverse);
-  color: var(--text-inverse);
+.filter-summary-label {
   font-family: var(--font-ui);
   font-size: var(--text-xs);
-  padding: 2px 8px;
+  font-weight: 700;
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--text-secondary);
 }
 
-.filters-toggle-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: var(--s-xs);
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-base);
-  transition: transform 0.3s ease;
-}
-
-.filters-toggle-btn:hover {
+.filter-summary-value {
+  font-size: var(--text-sm);
   color: var(--text);
 }
 
-.chevron-icon {
-  transition: transform 0.3s ease;
-}
-
-.chevron-icon {
-  transition: transform 0.2s ease;
-}
-
-.chevron-icon.collapsed {
-  transform: rotate(-90deg);
-}
-
 .filters-content {
-  padding: var(--s-xl);
-  max-height: 800px;
-  overflow: hidden;
-  transition: max-height 0.25s ease, padding 0.25s ease, opacity 0.2s ease;
-  opacity: 1;
+  flex: 1;
 }
 
-.filters-content.collapsed {
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  opacity: 0;
+.filters-drawer-footer {
+  position: sticky;
+  bottom: calc(-1 * var(--s-xl));
+  margin: var(--s-lg) calc(-1 * var(--s-xl)) calc(-1 * var(--s-xl));
+  padding: var(--s-md) var(--s-xl) calc(var(--s-md) + env(safe-area-inset-bottom));
+  background: var(--surface-overlay);
+  border-top: 2px solid var(--border-strong);
+}
+
+.filters-drawer-footer .btn {
+  width: 100%;
 }
 
 .filter-group {
@@ -1168,8 +1077,7 @@
     min-height: 44px;
   }
 
-  .color-option,
-  .arrow-toggle label {
+  .color-option {
     display: inline-flex;
     align-items: center;
     min-height: 44px;

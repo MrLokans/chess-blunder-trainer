@@ -16,6 +16,7 @@ interface KeyboardActions {
   isAnimating: boolean;
   isVimInputActive: boolean;
   isShortcutsVisible: boolean;
+  isFiltersOpen: boolean;
   isResultVisible: boolean;
   hideResult: () => void;
 }
@@ -23,7 +24,8 @@ interface KeyboardActions {
 export function useKeyboard(actions: KeyboardActions): void {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
-      if (actions.isVimInputActive) return;
+      // Open dialogs own the keyboard: vim input, and the filters drawer whose Escape closes it.
+      if (actions.isVimInputActive || actions.isFiltersOpen) return;
 
       const target = e.target as HTMLElement;
       const tag = target.tagName.toLowerCase();

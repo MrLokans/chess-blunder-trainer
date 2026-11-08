@@ -85,6 +85,27 @@ describe('TrainerApp', () => {
     });
   });
 
+  it('loads one new puzzle when the filters drawer closes, not on every change', async () => {
+    const { client } = await import('../../src/shared/api');
+    render(<TrainerApp />);
+    fireEvent.click(await screen.findByTestId('change-filters'));
+    const callsBefore = vi.mocked(client.trainer.getPuzzle).mock.calls.length;
+
+    const dialog = await screen.findByRole('dialog', { name: 'trainer.filters.title' });
+    const checkboxes = dialog.querySelectorAll<HTMLInputElement>('.game-type-filter input');
+    fireEvent.click(checkboxes[0] as HTMLInputElement);
+    fireEvent.click(checkboxes[1] as HTMLInputElement);
+    expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(callsBefore);
+
+    // loadPuzzle ignores calls within 500ms of the previous load.
+    await new Promise((resolve) => { setTimeout(resolve, 550); });
+    fireEvent.click(screen.getByTestId('apply-filters'));
+    await waitFor(() => {
+      expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(callsBefore + 1);
+    });
+    expect(screen.queryByRole('dialog', { name: 'trainer.filters.title' })).toBeNull();
+  });
+
   it('submits a board move immediately', async () => {
     const { client } = await import('../../src/shared/api');
     const history: Array<{ san: string; from: string; to: string }> = [];

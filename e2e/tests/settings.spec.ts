@@ -6,6 +6,22 @@ test.describe('Settings', () => {
     await settingsPage.expectLoaded();
   });
 
+  test('board display toggles on Settings apply to the trainer board', async ({ settingsPage, trainerPage, page }) => {
+    await test.step('Turn coordinates off on Settings', async () => {
+      await settingsPage.goto();
+      await settingsPage.expectLoaded();
+      const coordinates = page.locator('#boardDisplay-showCoordinates');
+      await expect(coordinates).toBeChecked();
+      await coordinates.uncheck();
+    });
+
+    await test.step('Trainer board hides coordinates', async () => {
+      await trainerPage.goto();
+      await trainerPage.expectLoaded();
+      await expect(page.locator('#board')).toHaveClass(/hide-coords/);
+    });
+  });
+
   test('locale change updates page language', async ({ settingsPage, page }) => {
     await test.step('Load settings', async () => {
       await settingsPage.goto();

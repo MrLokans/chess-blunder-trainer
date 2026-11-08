@@ -687,6 +687,9 @@
   "trainer.filters.tactical_pin": "牵制",
   "trainer.filters.tactical_skewer": "串打",
   "trainer.filters.title": "题目筛选",
+  "trainer.filters.all_puzzles": "全部谜题",
+  "trainer.filters.change": "更改",
+  "trainer.filters.apply": "显示谜题",
   "trainer.game_type.blitz": "快棋",
   "trainer.game_type.bullet": "超快棋",
   "trainer.game_type.classical": "古典棋",
@@ -759,5 +762,6 @@
   "traps.title": "陷阱与攻击",
   "traps.view_all": "查看所有陷阱",
   "traps.your_games": "你的对局",
-  "dashboard.stat.pending_analysis": "{count, plural, =0 {没有待分析对局} other {# 待分析}}"
+  "dashboard.stat.pending_analysis": "{count, plural, =0 {没有待分析对局} other {# 待分析}}",
+  "settings.board_display.description": "在本设备上即时保存，无需点击保存。训练时按 A 和 T 切换箭头和威胁显示。"
 }

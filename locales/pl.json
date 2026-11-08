@@ -687,6 +687,9 @@
   "trainer.filters.tactical_pin": "Związanie",
   "trainer.filters.tactical_skewer": "Szpikulec",
   "trainer.filters.title": "Filtry zadań",
+  "trainer.filters.all_puzzles": "Wszystkie zadania",
+  "trainer.filters.change": "Zmień",
+  "trainer.filters.apply": "Pokaż zadania",
   "trainer.game_type.blitz": "Blitz",
   "trainer.game_type.bullet": "Bullet",
   "trainer.game_type.classical": "Klasyczne",
@@ -759,5 +762,6 @@
   "traps.title": "Pułapki i ataki",
   "traps.view_all": "Wszystkie pułapki",
   "traps.your_games": "Twoje partie",
-  "dashboard.stat.pending_analysis": "{count, plural, =0 {Brak oczekujących partii} one {# oczekuje} few {# oczekują} many {# oczekuje} other {# oczekuje}}"
+  "dashboard.stat.pending_analysis": "{count, plural, =0 {Brak oczekujących partii} one {# oczekuje} few {# oczekują} many {# oczekuje} other {# oczekuje}}",
+  "settings.board_display.description": "Zapisuje się od razu na tym urządzeniu, nie trzeba klikać „Zapisz”. Klawisze A i T przełączają strzałki i zagrożenia podczas treningu."
 }

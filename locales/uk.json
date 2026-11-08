@@ -687,6 +687,9 @@
   "trainer.filters.tactical_pin": "Зв'язка",
   "trainer.filters.tactical_skewer": "Наскрізний удар",
   "trainer.filters.title": "Фільтри задач",
+  "trainer.filters.all_puzzles": "Усі задачі",
+  "trainer.filters.change": "Змінити",
+  "trainer.filters.apply": "Показати задачі",
   "trainer.game_type.blitz": "Бліц",
   "trainer.game_type.bullet": "Бліц-куля",
   "trainer.game_type.classical": "Класичні",
@@ -759,5 +762,6 @@
   "traps.title": "Пастки та атаки",
   "traps.view_all": "Усі пастки",
   "traps.your_games": "Ваші партії",
-  "dashboard.stat.pending_analysis": "{count, plural, =0 {Немає партій в очікуванні} one {# в очікуванні} few {# в очікуванні} many {# в очікуванні} other {# в очікуванні}}"
+  "dashboard.stat.pending_analysis": "{count, plural, =0 {Немає партій в очікуванні} one {# в очікуванні} few {# в очікуванні} many {# в очікуванні} other {# в очікуванні}}",
+  "settings.board_display.description": "Зберігається одразу на цьому пристрої, натискати «Зберегти» не потрібно. Клавіші A і T перемикають стрілки та загрози під час тренування."
 }

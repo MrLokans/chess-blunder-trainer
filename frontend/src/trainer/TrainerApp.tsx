@@ -14,7 +14,9 @@ import { VimInput } from './components/VimInput';
 import { ContextTags } from './components/ContextTags';
 import { BoardPrompt } from './components/BoardPrompt';
 import { ResultCard, type UserAttempt } from './components/ResultCard';
-import { FiltersPanel } from './components/FiltersPanel';
+import { FiltersPanel, FilterSummary } from './components/FiltersPanel';
+import { Modal } from '../components/feedback/Modal';
+import { Button } from '../components/primitives/Button';
 import { MoveActions } from './components/MoveActions';
 import { PuzzleTools } from './components/PuzzleTools';
 import { ShortcutsOverlay } from './components/ShortcutsOverlay';
@@ -64,14 +66,35 @@ function TrainerCore(): preact.JSX.Element {
   const puzzleApi = usePuzzle();
   useBoardSettings();
 
-  // Filters — onFilterChange triggers a new puzzle load
+  // Filters — a change loads a new puzzle after the next render, so the request sees the new filters.
+  // While the drawer is open the load waits until it closes.
   const filtersRef = useRef<FiltersAPI | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersOpenRef = useRef(false);
+  filtersOpenRef.current = filtersOpen;
+  const filtersReloadPendingRef = useRef(false);
+  const [filterLoadRequest, setFilterLoadRequest] = useState(0);
   const filtersApi = useFilters(useCallback(() => {
-    setUserAttempt(null);
-    const params = filtersRef.current?.getFilterParams();
-    void puzzleApi.loadPuzzle(params);
-  }, [puzzleApi]));
+    if (filtersOpenRef.current) {
+      filtersReloadPendingRef.current = true;
+      return;
+    }
+    setFilterLoadRequest(n => n + 1);
+  }, []));
   filtersRef.current = filtersApi;
+  const closeFilters = useCallback(() => {
+    setFiltersOpen(false);
+    if (filtersReloadPendingRef.current) {
+      filtersReloadPendingRef.current = false;
+      setFilterLoadRequest(n => n + 1);
+    }
+  }, []);
+  useEffect(() => {
+    if (filterLoadRequest === 0) return;
+    setUserAttempt(null);
+    void puzzleApi.loadPuzzle(filtersRef.current?.getFilterParams());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per request; puzzleApi changes identity every render
+  }, [filterLoadRequest]);
 
   // Line player
   const { playBestMove, playRefutation, navigateLine } = useLinePlayer(gameRef);
@@ -293,6 +316,7 @@ function TrainerCore(): preact.JSX.Element {
     isAnimating: state.animating,
     isVimInputActive: vimInputVisible,
     isShortcutsVisible: state.shortcutsVisible,
+    isFiltersOpen: filtersOpen,
     isResultVisible: state.resultVisible,
     hideResult: () => { dispatch({ type: 'SET_RESULT_VISIBLE', visible: false }); },
   });
@@ -431,6 +455,7 @@ function TrainerCore(): preact.JSX.Element {
               onShowShortcuts={() => { dispatch({ type: 'TOGGLE_SHORTCUTS' }); }}
             />
           </div>
+          {!inReview && <FilterSummary filters={filtersApi} onChange={() => { setFiltersOpen(true); }} />}
           <ResultCard
             visible={state.resultVisible}
             feedbackType={state.feedbackType}
@@ -445,13 +470,19 @@ function TrainerCore(): preact.JSX.Element {
             onPlayRefutation={playRefutation}
             onNext={handleNext}
           />
-          {!inReview && <FiltersPanel filters={filtersApi} />}
         </div>
       </div>
 
       <div class="sr-only" role="status" aria-live="polite" id="resultAnnouncement">
         {state.resultVisible ? `${feedbackTitle} ${feedbackDetail}`.trim() : ''}
       </div>
+
+      <Modal open={filtersOpen} onClose={closeFilters} title={t('trainer.filters.title')} placement="side">
+        <FiltersPanel filters={filtersApi} />
+        <div class="filters-drawer-footer">
+          <Button testId="apply-filters" onClick={closeFilters}>{t('trainer.filters.apply')}</Button>
+        </div>
+      </Modal>
 
       <ShortcutsOverlay
         visible={state.shortcutsVisible}

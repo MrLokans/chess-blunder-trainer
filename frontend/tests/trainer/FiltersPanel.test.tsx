@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/preact';
-import { FiltersPanel } from '../../src/trainer/components/FiltersPanel';
+import { FiltersPanel, FilterSummary } from '../../src/trainer/components/FiltersPanel';
 import type { FiltersAPI } from '../../src/trainer/hooks/useFilters';
 
 function makeFilters(overrides?: Partial<FiltersAPI>): FiltersAPI {
@@ -15,24 +15,16 @@ function makeFilters(overrides?: Partial<FiltersAPI>): FiltersAPI {
       showArrows: true,
       showThreats: false,
       showTactics: true,
-      filtersCollapsed: false,
-      boardSettingsCollapsed: false,
     },
     getFilterParams: vi.fn(() => ({})),
-    hasActiveFilters: vi.fn(() => false),
-    activeFilterCount: vi.fn(() => 0),
     clearAllFilters: vi.fn(),
     setPhases: vi.fn(),
     setGameTypes: vi.fn(),
     setDifficulties: vi.fn(),
     setTacticalPattern: vi.fn(),
     setColor: vi.fn(),
-    setShowCoordinates: vi.fn(),
     setShowArrows: vi.fn(),
     setShowThreats: vi.fn(),
-    setShowTactics: vi.fn(),
-    toggleFiltersCollapsed: vi.fn(),
-    toggleBoardSettingsCollapsed: vi.fn(),
     ...overrides,
   };
 }
@@ -42,34 +34,34 @@ beforeEach(() => {
 });
 
 describe('FiltersPanel', () => {
-  it('renders filter groups when not collapsed', () => {
+  it('renders filter groups for the drawer', () => {
     const filters = makeFilters();
     render(<FiltersPanel filters={filters} />);
     expect(screen.getByText('trainer.filters.game_type')).not.toBeNull();
     expect(screen.getByText('trainer.filters.phase')).not.toBeNull();
     expect(screen.getByText('trainer.filters.difficulty')).not.toBeNull();
   });
+});
 
-  it('hides content when collapsed', () => {
-    const filters = makeFilters({
-      state: { ...makeFilters().state, filtersCollapsed: true },
-    });
-    render(<FiltersPanel filters={filters} />);
-    expect(screen.queryByText('trainer.filters.game_type')).toBeNull();
+describe('FilterSummary', () => {
+  it('says all puzzles when nothing is narrowed', () => {
+    render(<FilterSummary filters={makeFilters()} onChange={vi.fn()} />);
+    expect(screen.getByTestId('filter-summary').textContent).toBe('trainer.filters.all_puzzles');
   });
 
-  it('calls toggle on header click', () => {
-    const filters = makeFilters();
-    render(<FiltersPanel filters={filters} />);
-    fireEvent.click(screen.getByText('trainer.filters.title'));
-    expect(filters.toggleFiltersCollapsed).toHaveBeenCalled();
+  it('lists only the narrowed filters', () => {
+    const base = makeFilters().state;
+    const filters = makeFilters({ state: { ...base, gameTypes: ['blitz', 'rapid'], tacticalPattern: 'hanging_piece', color: 'black' } });
+    render(<FilterSummary filters={filters} onChange={vi.fn()} />);
+    expect(screen.getByTestId('filter-summary').textContent).toBe(
+      'trainer.game_type.blitz, trainer.game_type.rapid · trainer.filters.tactical_hanging · chess.color.black',
+    );
   });
 
-  it('shows active filter count badge', () => {
-    const filters = makeFilters({ activeFilterCount: vi.fn(() => 3) });
-    const { container } = render(<FiltersPanel filters={filters} />);
-    const badge = container.querySelector('.filters-count-badge');
-    expect(badge).not.toBeNull();
-    expect((badge as HTMLElement).textContent).toBe('3 active');
+  it('opens the drawer from the change button', () => {
+    const onChange = vi.fn();
+    render(<FilterSummary filters={makeFilters()} onChange={onChange} />);
+    fireEvent.click(screen.getByTestId('change-filters'));
+    expect(onChange).toHaveBeenCalled();
   });
 });
