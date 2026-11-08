@@ -39,11 +39,11 @@ class ThemeColors(BaseModel):
         default="#3A3A3A", description="Muted/secondary text color"
     )
     heatmap_empty: HexColor = Field(default="#E8E4DB", description="Heatmap empty cell")
-    heatmap_l1: HexColor = Field(default="#B8D9CA", description="Heatmap level 1 (low)")
-    heatmap_l2: HexColor = Field(default="#5BAA7D", description="Heatmap level 2")
-    heatmap_l3: HexColor = Field(default="#2D8F3E", description="Heatmap level 3")
+    heatmap_l1: HexColor = Field(default="#BFB9AC", description="Heatmap level 1 (low)")
+    heatmap_l2: HexColor = Field(default="#8F8A7E", description="Heatmap level 2")
+    heatmap_l3: HexColor = Field(default="#57534A", description="Heatmap level 3")
     heatmap_l4: HexColor = Field(
-        default="#1A6B2A", description="Heatmap level 4 (high)"
+        default="#1A1A1A", description="Heatmap level 4 (high)"
     )
 
 
@@ -161,10 +161,10 @@ DEFAULT_THEME = frozendict(
         "text": "#1A1A1A",
         "text_muted": "#3A3A3A",
         "heatmap_empty": "#E8E4DB",
-        "heatmap_l1": "#B8D9CA",
-        "heatmap_l2": "#5BAA7D",
-        "heatmap_l3": "#2D8F3E",
-        "heatmap_l4": "#1A6B2A",
+        "heatmap_l1": "#BFB9AC",
+        "heatmap_l2": "#8F8A7E",
+        "heatmap_l3": "#57534A",
+        "heatmap_l4": "#1A1A1A",
     }
 )
 

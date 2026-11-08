@@ -217,10 +217,10 @@
   /* Activity heatmap (GitHub-style green ramp) */
   --heatmap-empty-future: light-dark(#d5d0c5, #211F18);
   --heatmap-empty: light-dark(var(--user-heatmap-empty, #d5d0c5), #2B291F);
-  --heatmap-l1: light-dark(var(--user-heatmap-l1, #9be9a8), #1D5728);
-  --heatmap-l2: light-dark(var(--user-heatmap-l2, #40c463), #28773A);
-  --heatmap-l3: light-dark(var(--user-heatmap-l3, #30a14e), #2E913F);
-  --heatmap-l4: light-dark(var(--user-heatmap-l4, #216e39), #43B556);
+  --heatmap-l1: light-dark(var(--user-heatmap-l1, #BFB9AC), #4A473D);
+  --heatmap-l2: light-dark(var(--user-heatmap-l2, #8F8A7E), #77735F);
+  --heatmap-l3: light-dark(var(--user-heatmap-l3, #57534A), #ADA898);
+  --heatmap-l4: light-dark(var(--user-heatmap-l4, #1A1A1A), #F5F2EB);
 
   /* Vim-input overlay (dark terminal palette) */
   --vim-prefix: #888;
