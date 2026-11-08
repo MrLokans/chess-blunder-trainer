@@ -42,10 +42,6 @@ vi.mock('../../src/shared/api', () => ({
   },
 }));
 
-vi.mock('../../src/hooks/useWebSocket', () => ({
-  useWebSocket: vi.fn(() => ({ on: vi.fn(() => vi.fn()) })),
-}));
-
 import { TrainerApp } from '../../src/trainer/TrainerApp';
 
 beforeEach(() => {

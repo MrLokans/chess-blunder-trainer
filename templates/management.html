@@ -3,6 +3,10 @@
 
 {% block title %}{{ t('nav.management') }} - Blunder Tutor{% endblock %}
 
+{% block extra_head %}
+<script defer src="/static/vendor/htmx-2.0.11.min.js"></script>
+{% endblock %}
+
 {% block header_nav %}
 {{ render_nav('management') }}
 {% endblock %}

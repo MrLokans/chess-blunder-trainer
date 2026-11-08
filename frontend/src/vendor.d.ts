@@ -52,7 +52,7 @@ interface ChessStatic {
 
 declare const Chess: ChessStatic;
 
-// htmx (v2.0.11) — loaded globally via <script> in base.html
+// htmx (v2.0.11) — loaded via <script defer> in management.html only
 interface HtmxStatic {
   process(elt: Element): void;
   trigger(elt: Element, event: string, detail?: unknown): void;
@@ -63,7 +63,7 @@ interface HtmxStatic {
 
 declare const htmx: HtmxStatic;
 
-// Chart.js (v4.6.1) — loaded globally via <script> in base.html
+// Chart.js (v4.6.1) — loaded via <script defer> in dashboard.html only
 interface ChartConfiguration {
   type: string;
   data: {

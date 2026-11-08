@@ -1,6 +1,5 @@
 import { useReducer, useContext, useState, useCallback, useEffect, useRef, useMemo } from 'preact/hooks';
 import { TrainerContext, trainerReducer, initialState } from './context';
-import { useWebSocket } from '../hooks/useWebSocket';
 import { useFeature } from '../hooks/useFeature';
 import { useFilters, type FiltersAPI } from './hooks/useFilters';
 import { usePuzzle } from './hooks/usePuzzle';
@@ -76,17 +75,6 @@ function TrainerCore(): preact.JSX.Element {
 
   // Line player
   const { playBestMove, playRefutation, navigateLine } = useLinePlayer(gameRef);
-
-  // WebSocket for stats updates
-  const ws = useWebSocket(['stats.updated']);
-  useEffect(() => {
-    const unsub = ws.on('stats.updated', () => {
-      if (typeof htmx !== 'undefined') {
-        htmx.trigger(document.querySelector('#statsContent') ?? document.body, 'statsUpdate');
-      }
-    });
-    return unsub;
-  }, [ws]);
 
   // Board state (highlights + arrows)
   const { highlights, arrows } = useBoardState(
@@ -165,10 +153,6 @@ function TrainerCore(): preact.JSX.Element {
 
     dispatch({ type: 'REVEAL_BEST' });
     dispatch({ type: 'SET_RESULT_VISIBLE', visible: true });
-
-    if (typeof htmx !== 'undefined') {
-      htmx.trigger(document.body, 'statsUpdate');
-    }
   }, [puzzleApi, state.puzzle, dispatch, inReview, reviewQueue]);
 
   // Board move handler
