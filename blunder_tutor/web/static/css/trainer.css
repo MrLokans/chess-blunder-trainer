@@ -22,7 +22,7 @@
 
 .trainer-main {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: minmax(0, 1fr) clamp(380px, 32vw, 480px);
   flex: 1;
 }
 
@@ -40,7 +40,6 @@
   flex-direction: column;
   align-self: stretch;
 }
-
 
 @media (max-width: 1080px) {
   .trainer-main {
@@ -294,163 +293,149 @@
   padding: var(--s-sm) 0;
 }
 
-/* Board result card — floating draggable panel */
-.board-result-card {
-  display: none;
-  position: absolute;
-  z-index: 10;
-  bottom: var(--s-md);
-  right: var(--s-md);
-  max-width: 340px;
-  width: 85%;
-  max-height: 80%;
-}
-
-.board-result-card.visible {
-  display: block;
-  animation: fadeIn 0.2s ease;
-}
-
-.board-result-card.fading-out {
-  display: block;
-  opacity: 0;
-  transition: opacity 1s ease;
-  pointer-events: none;
-}
-
-/* Inner content panel */
-.board-result-inner {
-  background: var(--surface-raised);
-  border: 3px solid var(--border-strong);
-  border-left-width: 5px;
-  padding: var(--s-lg);
-  padding-top: 0;
-  max-height: inherit;
-  overflow-y: auto;
-  box-shadow: var(--elevation-shadow);
-}
-
-/* Drag handle */
-.board-result-drag-handle {
-  padding: var(--s-sm) 0;
-  cursor: grab;
-  touch-action: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.board-result-drag-handle:active {
-  cursor: grabbing;
-}
-
-.board-result-drag-handle-bar {
-  width: 32px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--surface-sunken);
-}
-
-.board-result-card.dragging {
-  user-select: none;
-}
-
-.board-result-card.dragging .board-result-drag-handle {
-  cursor: grabbing;
-}
-
-/* Accent left-border colors on inner panel */
-.board-result-card.accent-correct .board-result-inner {
-  border-left-color: var(--success);
-}
-
-.board-result-card.accent-revealed .board-result-inner {
-  border-left-color: var(--warning);
-}
-
-.board-result-card.accent-blunder .board-result-inner {
-  border-left-color: var(--error);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.board-result-header {
-  margin-bottom: var(--s-sm);
-}
-
-.board-result-title {
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: var(--text-base);
-  margin-bottom: 2px;
-}
-
-.board-result-detail {
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  opacity: 0.85;
-}
-
-.board-result-body {
-  display: none;
-}
-
-.board-result-card.best-revealed .board-result-body {
-  display: block;
-}
-
-.board-result-best {
-  display: flex;
-  align-items: baseline;
+/* Result panel — sits in the side panel so the board stays unobstructed */
+.result-panel {
+  display: grid;
   gap: var(--s-md);
-  margin-bottom: var(--s-sm);
+  padding: var(--s-lg);
+  border-bottom: 3px solid var(--border-strong);
 }
 
-.board-result-move {
+.result-panel-title {
   font-family: var(--font-ui);
-  font-size: var(--text-2xl);
+  font-size: var(--text-xl);
   font-weight: 700;
-  color: var(--success);
+  line-height: 1.2;
+  margin: 0;
 }
 
-.board-result-line {
+.result-panel-detail {
+  margin: var(--s-xs) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.result-twins {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-lg);
+}
+
+.result-twins.single {
+  grid-template-columns: minmax(0, 220px);
+}
+
+.result-twin {
+  display: grid;
+  gap: var(--s-xs);
+  margin: 0;
+  min-width: 0;
+}
+
+.result-twin figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0 var(--s-sm);
+}
+
+.result-twin-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.result-twin-move {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  color: var(--board-ring-success);
+  font-variant-numeric: tabular-nums;
+}
+
+.result-twin-move.miss {
+  color: var(--error);
+}
+
+.result-twin-eval {
+  font-weight: 500;
+}
+
+/* Chessground snaps the board to an 8px multiple, so the frame rides on its container, not the fluid box. */
+.mini-board {
+  aspect-ratio: 1 / 1;
+  padding: 3px;
+}
+
+.mini-board cg-container {
+  box-shadow: 0 0 0 3px var(--border-strong);
+}
+
+.result-twin.best .mini-board cg-container {
+  box-shadow: 0 0 0 3px var(--board-ring-success);
+}
+
+.mini-board .cg-wrap {
+  width: 100%;
+  height: 100%;
+}
+
+.result-line {
+  margin: 0;
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
-.board-result-action {
-  margin-bottom: var(--s-sm);
+.result-panel-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
 
-.board-result-inner .btn kbd {
-  background: color-mix(in srgb, var(--text-inverse) 20%, transparent);
-  border-color: color-mix(in srgb, var(--text-inverse) 40%, transparent);
-  color: inherit;
-  opacity: 0.8;
+.result-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-sm);
+}
+
+.result-panel .btn kbd {
   margin-left: var(--s-sm);
+  background: transparent;
+  border-color: currentcolor;
+  color: inherit;
 }
 
-.board-result-next {
+.result-panel-section {
+  display: grid;
+  gap: var(--s-xs);
   border-top: 1px solid var(--border-subtle);
   padding-top: var(--s-md);
-  margin-top: var(--s-md);
 }
 
-.board-result-next-btn {
-  width: 100%;
+/* Not uppercase like the labels: headings carry SAN moves. */
+.result-panel-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-sm);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  margin: 0;
 }
 
-.board-result-details {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: var(--s-sm);
-  margin-top: var(--s-sm);
+.result-panel-loss {
+  font-size: var(--text-xs);
+  color: var(--error);
+  white-space: nowrap;
 }
 
-.board-result-details summary {
+.result-panel-details summary {
   font-family: var(--font-ui);
   font-size: var(--text-xs);
   font-weight: 700;
@@ -458,75 +443,19 @@
   text-transform: uppercase;
   color: var(--text-secondary);
   cursor: pointer;
-  user-select: none;
-  list-style: none;
 }
 
-.board-result-details summary::-webkit-details-marker {
-  display: none;
-}
-
-.board-result-details[open] summary {
-  margin-bottom: var(--s-sm);
-}
-
-.board-result-section {
-  border-top: 1px solid var(--border-subtle);
-  padding-top: var(--s-sm);
-  margin-top: var(--s-sm);
-}
-
-/* Not uppercase like the details summaries: headings carry SAN moves. */
-.board-result-section-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s-sm);
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 var(--s-xs);
-}
-
-.board-result-loss {
-  font-size: var(--text-xs);
-  color: var(--error);
-  white-space: nowrap;
-}
-
-.board-result-refutation {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-sm);
-  margin-bottom: var(--s-xs);
-}
-
-.board-result-section-text {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  line-height: 1.6;
-  color: var(--text-secondary);
-}
-
-.board-result-details-body {
-  font-family: var(--font-sans);
-  font-size: var(--text-sm);
-  line-height: 1.6;
-  color: var(--text-secondary);
-}
-
-.board-result-details-heading {
+.result-panel-details-heading {
+  margin: var(--s-sm) 0 var(--s-xs);
   font-family: var(--font-ui);
   font-weight: 700;
   font-size: var(--text-xs);
-  letter-spacing: var(--ls-normal);
   text-transform: uppercase;
   color: var(--accent);
-  margin-bottom: var(--s-xs);
+}
+
+.result-panel-next {
+  width: 100%;
 }
 
 /* Pending move card */
@@ -586,8 +515,6 @@
   background: var(--text-muted);
   color: var(--text-on-accent);
 }
-
-/* (Best move info and feedback are now in board-result-card below the board) */
 
 /* ==========================================================================
    Move Indicator
@@ -681,7 +608,6 @@
   cursor: default;
 }
 
-
 .action-key kbd {
   display: inline-flex;
   align-items: center;
@@ -711,7 +637,6 @@
 .action-key#submitBtn.submitting {
   pointer-events: none;
 }
-
 
 /* ==========================================================================
    Filters — Collapsible Drawer
@@ -958,8 +883,6 @@
   color: var(--text-inverse);
 }
 
-
-
 /* ==========================================================================
    Color Badge
    ========================================================================== */
@@ -1149,8 +1072,6 @@
    Keyboard Shortcuts Overlay
    ========================================================================== */
 
-
-
 .shortcuts-table {
   width: 100%;
   border-collapse: collapse;
@@ -1177,8 +1098,6 @@
   color: var(--text-muted);
 }
 
-/* (Try Best Move button is now inside board-result-card) */
-
 /* ==========================================================================
    Tactical Badge
    ========================================================================== */
@@ -1202,8 +1121,6 @@
 .tactical-badge .icon {
   font-size: var(--text-sm);
 }
-
-/* (Tactical info and explanation are now in board-result-card details sections) */
 
 .explanation-blunder:empty,
 .explanation-best:empty {
@@ -1279,14 +1196,13 @@
   color: var(--text-muted);
 }
 
-.board-result-leech {
-  margin-top: var(--s-md);
+.result-panel-leech {
   padding: var(--s-sm) var(--s-md);
   background: var(--warning-bg);
-  border-left: 3px solid var(--warning);
+  border: 1px solid var(--warning-border);
 }
 
-.board-result-leech a {
+.result-panel-leech a {
   color: var(--text);
   font-weight: 700;
 }
@@ -1317,7 +1233,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .board-result-card.visible,
   .result-banner {
     animation: none;
   }

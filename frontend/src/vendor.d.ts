@@ -8,6 +8,7 @@ declare module '@vendor/chessground' {
   interface ChessgroundApi {
     set(config: Record<string, unknown>): void;
     setAutoShapes(shapes: unknown[]): void;
+    redrawAll(): void;
     destroy(): void;
   }
 }

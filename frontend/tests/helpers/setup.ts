@@ -12,6 +12,9 @@ vi.stubGlobal('Chess', undefined);
 vi.stubGlobal('htmx', undefined);
 vi.stubGlobal('Chart', undefined);
 
+// jsdom has no layout, so nothing ever resizes.
+vi.stubGlobal('ResizeObserver', class { observe(): void {} disconnect(): void {} });
+
 // Mock i18n globals. The `t` stub mirrors production's two-argument
 // shape — a callsite that forgets to pass `params` for a key with
 // `{placeholder}` substitutions would render the literal placeholder

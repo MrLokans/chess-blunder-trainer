@@ -13,7 +13,7 @@ import { Board } from './components/Board';
 import { VimInput } from './components/VimInput';
 import { ContextTags } from './components/ContextTags';
 import { BoardPrompt } from './components/BoardPrompt';
-import { ResultCard } from './components/ResultCard';
+import { ResultCard, type UserAttempt } from './components/ResultCard';
 import { FiltersPanel } from './components/FiltersPanel';
 import { MoveActions } from './components/MoveActions';
 import { PuzzleTools } from './components/PuzzleTools';
@@ -36,7 +36,7 @@ function TrainerCore(): preact.JSX.Element {
   const { state, dispatch } = useContext(TrainerContext);
   const [submitting, setSubmitting] = useState(false);
   const [vimInputVisible, setVimInputVisible] = useState(false);
-  const [userMoveUci, setUserMoveUci] = useState<string | null>(null);
+  const [userAttempt, setUserAttempt] = useState<UserAttempt | null>(null);
   const [feedbackTitle, setFeedbackTitle] = useState('');
   const [feedbackDetail, setFeedbackDetail] = useState('');
   const gameRef = useRef<ChessInstance | null>(null);
@@ -67,7 +67,7 @@ function TrainerCore(): preact.JSX.Element {
   // Filters — onFilterChange triggers a new puzzle load
   const filtersRef = useRef<FiltersAPI | null>(null);
   const filtersApi = useFilters(useCallback(() => {
-    setUserMoveUci(null);
+    setUserAttempt(null);
     const params = filtersRef.current?.getFilterParams();
     void puzzleApi.loadPuzzle(params);
   }, [puzzleApi]));
@@ -82,7 +82,8 @@ function TrainerCore(): preact.JSX.Element {
     filtersApi.state.showArrows,
     filtersApi.state.showThreats,
     filtersApi.state.showTactics,
-    userMoveUci,
+    // A repeated game blunder keeps its red error highlight instead of the user-move one.
+    state.feedbackType === 'blunder' ? null : userAttempt?.uci ?? null,
   );
 
   // Pre-move animation config
@@ -129,6 +130,9 @@ function TrainerCore(): preact.JSX.Element {
       }
     }
 
+    if (!data.is_best) {
+      setUserAttempt({ san: data.user_san, uci: data.user_uci, evalDisplay: data.user_eval_display });
+    }
     if (data.is_best) {
       setFeedbackTitle(t('trainer.feedback.excellent'));
       setFeedbackDetail(t('trainer.feedback.found_best'));
@@ -148,7 +152,6 @@ function TrainerCore(): preact.JSX.Element {
         setFeedbackDetail(t('trainer.feedback.not_quite_detail', { userMove: data.user_san, userEval: data.user_eval_display }));
         dispatch({ type: 'SET_FEEDBACK', feedbackType: 'not-quite' });
       }
-      setUserMoveUci(data.user_uci);
     }
 
     dispatch({ type: 'REVEAL_BEST' });
@@ -235,7 +238,7 @@ function TrainerCore(): preact.JSX.Element {
 
   // Review session
   const loadNextReview = useCallback(async () => {
-    setUserMoveUci(null);
+    setUserAttempt(null);
     setSrsSuspended(false);
     const loaded = await puzzleApi.loadReviewPuzzle();
     if (!loaded) setShowInboxZero(true);
@@ -255,7 +258,7 @@ function TrainerCore(): preact.JSX.Element {
   // Next puzzle
   const handleNext = useCallback(() => {
     trackEvent('Puzzle Next');
-    setUserMoveUci(null);
+    setUserAttempt(null);
     setSrsSuspended(false);
     if (inReview) {
       const session = reviewQueue.session;
@@ -407,20 +410,6 @@ function TrainerCore(): preact.JSX.Element {
             submitting={submitting}
             hasPuzzle={!!state.puzzle}
           />
-          <ResultCard
-            visible={state.resultVisible}
-            feedbackType={state.feedbackType}
-            feedbackTitle={feedbackTitle}
-            feedbackDetail={feedbackDetail}
-            puzzle={state.puzzle}
-            bestRevealed={state.bestRevealed}
-            moveHistory={state.moveHistory}
-            srsSuspended={srsSuspended}
-            onPlayBest={playBestMove}
-            onPlayRefutation={playRefutation}
-            onNext={handleNext}
-            onClose={() => { dispatch({ type: 'SET_RESULT_VISIBLE', visible: false }); }}
-          />
         </div>
 
         <div class="trainer-panel">
@@ -443,6 +432,20 @@ function TrainerCore(): preact.JSX.Element {
               onShowShortcuts={() => { dispatch({ type: 'TOGGLE_SHORTCUTS' }); }}
             />
           </div>
+          <ResultCard
+            visible={state.resultVisible}
+            feedbackType={state.feedbackType}
+            feedbackTitle={feedbackTitle}
+            feedbackDetail={feedbackDetail}
+            puzzle={state.puzzle}
+            bestRevealed={state.bestRevealed}
+            userAttempt={userAttempt}
+            moveHistory={state.moveHistory}
+            srsSuspended={srsSuspended}
+            onPlayBest={playBestMove}
+            onPlayRefutation={playRefutation}
+            onNext={handleNext}
+          />
           {!inReview && <FiltersPanel filters={filtersApi} />}
         </div>
       </div>

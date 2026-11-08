@@ -154,17 +154,17 @@ export class TrainerPage extends BasePage {
 
   async expectCorrectFeedback(): Promise<void> {
     await expect(this.resultCard).toBeVisible();
-    await expect(this.resultCard).toHaveClass(/accent-correct/);
+    await expect(this.resultCard).toHaveAttribute('data-feedback', /^(correct|good)$/);
   }
 
   async expectWrongFeedback(): Promise<void> {
     await expect(this.resultCard).toBeVisible();
-    await expect(this.resultCard).toHaveClass(/accent-blunder|accent-revealed/);
+    await expect(this.resultCard).toHaveAttribute('data-feedback', /^(blunder|not-quite|revealed)$/);
   }
 
   async expectBestMoveRevealed(): Promise<void> {
     await expect(this.resultCard).toBeVisible();
-    await expect(this.resultCard).toHaveClass(/best-revealed/);
+    await expect(this.resultCard).toHaveAttribute('data-best-revealed', 'true');
     await expect(this.bestMoveDisplay).toBeVisible();
   }
 
