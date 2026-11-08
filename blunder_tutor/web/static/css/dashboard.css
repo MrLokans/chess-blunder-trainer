@@ -11,10 +11,7 @@
     margin: 0 0 var(--s-lg);
     font-family: var(--font-ui);
     font-size: var(--text-3xl);
-    font-weight: 600;
     line-height: 1.15;
-    letter-spacing: normal;
-    text-transform: none;
   }
 
   .dashboard-section > h2 + .dashboard-scope-note { margin-top: calc(-1 * var(--s-md)); }

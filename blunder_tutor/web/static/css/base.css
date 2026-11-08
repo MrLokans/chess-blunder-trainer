@@ -45,15 +45,14 @@ h1, h2, h3, h4 {
 
 h1 {
   font-size: var(--text-xl);
-  letter-spacing: var(--ls-wide);
-  text-transform: uppercase;
   margin-bottom: var(--s-lg);
 }
 
 h2 {
-  font-size: var(--text-lg);
-  letter-spacing: var(--ls-tight);
-  text-transform: uppercase;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
   margin-bottom: var(--s-md);
 }
 
@@ -1135,9 +1134,7 @@ body:has(.demo-banner) {
 .empty-state-title {
   font-family: var(--font-ui);
   font-size: var(--text-xl);
-  font-weight: 700;
-  letter-spacing: var(--ls-wide);
-  text-transform: uppercase;
+  font-weight: 600;
   color: var(--text);
   margin: 0 0 var(--s-sm) 0;
 }

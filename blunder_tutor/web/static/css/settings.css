@@ -27,11 +27,6 @@
     color: var(--text-muted);
   }
 
-  .settings-section-title {
-    font-size: 1.25rem;
-    margin-bottom: var(--s-md);
-  }
-
   .checkbox-label {
     display: flex;
     align-items: center;
