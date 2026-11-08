@@ -766,5 +766,6 @@
   "dashboard.nav.color": "Color",
   "dashboard.nav.openings": "Aperturas",
   "dashboard.unit.pawns": "{value} peones",
-  "dashboard.trend.compare_ranges": "Partidas {firstStart}–{firstEnd} frente a {lastStart}–{lastEnd}"
+  "dashboard.trend.compare_ranges": "Partidas {firstStart}–{firstEnd} frente a {lastStart}–{lastEnd}",
+  "dashboard.coach.train.cta_pattern": "Entrenar «{pattern}»"
 }

@@ -766,5 +766,6 @@
   "dashboard.nav.color": "Colour",
   "dashboard.nav.openings": "Openings",
   "dashboard.unit.pawns": "{value} pawns",
-  "dashboard.trend.compare_ranges": "Games {firstStart}–{firstEnd} vs {lastStart}–{lastEnd}"
+  "dashboard.trend.compare_ranges": "Games {firstStart}–{firstEnd} vs {lastStart}–{lastEnd}",
+  "dashboard.coach.train.cta_pattern": "Train “{pattern}”"
 }

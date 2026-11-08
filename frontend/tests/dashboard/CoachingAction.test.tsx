@@ -217,10 +217,23 @@ describe('CoachingAction', () => {
   });
 
   test('sends the training state to the trainer without claiming a filtered queue', () => {
-    renderCard({ filteredBlunders: 12, tacticalData: tactical([['Fork', 12]]) });
+    renderCard({ filteredBlunders: 12, tacticalData: tactical([['Back Rank Threat', 12]]) });
     const cta = screen.getByText(t('dashboard.coach.train.cta'));
     expect(cta.getAttribute('href')).toBe('/');
     expect(screen.getByTestId('coaching-action').textContent).toContain(t('dashboard.coach.train.body'));
+  });
+
+  test('opens the trainer on the leading pattern when the trainer can filter by it', () => {
+    renderCard({ filteredBlunders: 20, tacticalData: tactical([['Hanging Piece', 12], ['Fork', 8]]) });
+    const cta = screen.getByText(t('dashboard.coach.train.cta_pattern', { pattern: t('dashboard.tactical.hanging') }));
+    expect(cta.getAttribute('href')).toBe('/?pattern=hanging_piece');
+  });
+
+  test('keeps the plain trainer link when the tactical filter is off', () => {
+    window.__features = { 'trainer.filter.tactical': false };
+    renderCard({ filteredBlunders: 20, tacticalData: tactical([['Hanging Piece', 12]]) });
+    expect(screen.getByText(t('dashboard.coach.train.cta')).getAttribute('href')).toBe('/');
+    window.__features = undefined;
   });
 
   test('sends the import and analysis states to management', () => {

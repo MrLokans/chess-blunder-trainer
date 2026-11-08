@@ -766,5 +766,6 @@
   "dashboard.nav.color": "Kolor",
   "dashboard.nav.openings": "Otwarcia",
   "dashboard.unit.pawns": "{value} pionka",
-  "dashboard.trend.compare_ranges": "Partie {firstStart}–{firstEnd} a {lastStart}–{lastEnd}"
+  "dashboard.trend.compare_ranges": "Partie {firstStart}–{firstEnd} a {lastStart}–{lastEnd}",
+  "dashboard.coach.train.cta_pattern": "Trenuj „{pattern}”"
 }

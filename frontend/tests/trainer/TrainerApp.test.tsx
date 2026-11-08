@@ -85,6 +85,29 @@ describe('TrainerApp', () => {
     });
   });
 
+  it('opens on the pattern named in the URL, loads once with it and cleans the URL', async () => {
+    const { client } = await import('../../src/shared/api');
+    window.history.replaceState(null, '', '/?pattern=hanging_piece');
+    render(<TrainerApp />);
+    await waitFor(() => {
+      expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(1);
+    });
+    expect(vi.mocked(client.trainer.getPuzzle).mock.calls[0]?.[0]).toMatchObject({ tactical_patterns: ['hanging_piece'] });
+    expect(window.location.search).toBe('');
+    expect(screen.getByTestId('filter-summary').textContent).toBe('trainer.filters.tactical_hanging');
+  });
+
+  it('ignores an unknown pattern in the URL', async () => {
+    const { client } = await import('../../src/shared/api');
+    window.history.replaceState(null, '', '/?pattern=bogus');
+    render(<TrainerApp />);
+    await waitFor(() => {
+      expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(1);
+    });
+    expect(vi.mocked(client.trainer.getPuzzle).mock.calls[0]?.[0]).not.toHaveProperty('tactical_patterns');
+    window.history.replaceState(null, '', '/');
+  });
+
   it('loads one new puzzle when the filters drawer closes, not on every change', async () => {
     const { client } = await import('../../src/shared/api');
     render(<TrainerApp />);

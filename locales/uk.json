@@ -766,5 +766,6 @@
   "dashboard.nav.color": "Колір",
   "dashboard.nav.openings": "Дебюти",
   "dashboard.unit.pawns": "{value} пішака",
-  "dashboard.trend.compare_ranges": "Партії {firstStart}–{firstEnd} проти {lastStart}–{lastEnd}"
+  "dashboard.trend.compare_ranges": "Партії {firstStart}–{firstEnd} проти {lastStart}–{lastEnd}",
+  "dashboard.coach.train.cta_pattern": "Тренувати «{pattern}»"
 }
