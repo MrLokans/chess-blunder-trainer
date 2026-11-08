@@ -27,11 +27,6 @@
     color: var(--text-muted);
   }
 
-  .settings-section-title {
-    font-size: 1.25rem;
-    margin-bottom: var(--s-md);
-  }
-
   .checkbox-label {
     display: flex;
     align-items: center;
@@ -96,8 +91,8 @@
   }
 
   .preset-card.active {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent);
+    border-color: var(--selection-border);
+    box-shadow: 0 0 0 2px var(--selection-border);
   }
 
   .preset-colors {
@@ -356,8 +351,8 @@
   }
 
   .piece-set-card.active {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent);
+    border-color: var(--selection-border);
+    box-shadow: 0 0 0 2px var(--selection-border);
   }
 
   .board-color-presets {
@@ -385,8 +380,8 @@
   }
 
   .board-color-preset.active {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent);
+    border-color: var(--selection-border);
+    box-shadow: 0 0 0 2px var(--selection-border);
   }
 
   .board-color-preset .light {

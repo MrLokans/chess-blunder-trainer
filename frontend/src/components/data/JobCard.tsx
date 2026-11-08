@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { ProgressBar } from '../feedback/ProgressBar';
 import { Alert } from '../feedback/Alert';
-import { Button } from '../primitives/Button';
+import { Button, type ButtonVariant } from '../primitives/Button';
 import type { JobState, JobStatus } from '../../types/api';
 
 export type { JobState, JobStatus };
@@ -26,6 +26,7 @@ export interface JobCardProps {
   textFormat?: (current: number, total: number) => string;
   externalStatus?: ExternalJobStatus;
   startLabel?: string;
+  startVariant?: ButtonVariant;
   stopLabel?: string;
 }
 
@@ -40,6 +41,7 @@ export function JobCard({
   textFormat,
   externalStatus,
   startLabel = 'Start',
+  startVariant = 'primary',
   stopLabel = 'Stop',
 }: JobCardProps) {
   const [jobId, setJobId] = useState<string | null>(null);
@@ -125,7 +127,7 @@ export function JobCard({
           )}
         </>
       ) : (
-        <Button variant="primary" onClick={() => { void handleStart(); }}>
+        <Button variant={startVariant} onClick={() => { void handleStart(); }}>
           {startLabel}
         </Button>
       )}

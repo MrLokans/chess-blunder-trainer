@@ -685,7 +685,7 @@ class StatsRepository(BaseDbRepository):
                 FROM game_index_cache g
                 {eligible_where}
             )
-            SELECT {bucket_column} AS {bucket}, COUNT(*) AS game_count,
+            SELECT {bucket_column} AS {bucket}, COUNT(DISTINCT eg.game_id) AS game_count,
                    COUNT(am.game_id) AS count, AVG(am.cp_loss) AS avg_cp_loss
             FROM eligible_games eg
             LEFT JOIN analysis_moves am ON am.game_id = eg.game_id

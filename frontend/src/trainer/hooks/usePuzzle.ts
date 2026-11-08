@@ -6,7 +6,7 @@ import type { SubmitMoveResponse } from '../../types/api';
 import type { QueryParams } from './useFilters';
 
 export interface PuzzleAPI {
-  loadPuzzle: (filterParams?: QueryParams) => Promise<void>;
+  loadPuzzle: (filterParams?: QueryParams, options?: { force?: boolean }) => Promise<void>;
   loadSpecificPuzzle: (gameId: string, ply: string) => Promise<void>;
   loadReviewPuzzle: () => Promise<boolean>;
   submitMove: (uci: string) => Promise<SubmitMoveResponse | null>;
@@ -28,8 +28,9 @@ export function usePuzzle(): PuzzleAPI {
   const animatePreMove = useFeature('trainer.pre_move');
   const cooldownRef = useRef(false);
 
-  const loadPuzzle = useCallback(async (filterParams?: QueryParams) => {
-    if (cooldownRef.current) return;
+  // The cooldown absorbs repeated "next" presses; a filter change forces its load through.
+  const loadPuzzle = useCallback(async (filterParams?: QueryParams, options: { force?: boolean } = {}) => {
+    if (cooldownRef.current && !options.force) return;
     cooldownRef.current = true;
     setTimeout(() => { cooldownRef.current = false; }, 500);
 

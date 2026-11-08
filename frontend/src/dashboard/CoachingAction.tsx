@@ -1,12 +1,13 @@
 import { useId } from 'preact/hooks';
 import { Button, buttonClassName } from '../components/primitives/Button';
 import { patternLabel } from './breakdowns';
+import { UNNAMED_PATTERNS } from './patterns';
+import { useFeature } from '../hooks/useFeature';
+import { TACTICAL_PATTERNS } from '../shared/constants';
 import type { AnalysisStatus, GameBreakdownItem, PhaseData, TacticalData } from './types';
 
 const MIN_PATTERN_OCCURRENCES = 5;
 
-// Backend labels for blunders it could not attribute to a named tactic.
-const UNNAMED_PATTERNS = new Set(['None', 'Unknown', 'Not Classified']);
 
 const NAMED_PHASES = new Set(['opening', 'middlegame', 'endgame']);
 
@@ -182,9 +183,16 @@ export interface CoachingActionProps {
 export function CoachingAction({ action, onRetryAnalysis }: CoachingActionProps) {
   const headlineId = useId();
   const copy = COPY_KEYS[action.kind];
-  const href = TRAINER_STATES.has(action.kind) ? TRAINER_HREF : MANAGEMENT_HREF;
+  const hasTacticalFilter = useFeature('trainer.filter.tactical');
   const evidence = action.evidence;
   const name = evidence ? evidenceName(evidence) : null;
+  const trainerPattern = action.kind === 'train' && evidence?.kind === 'pattern' && hasTacticalFilter
+    ? TACTICAL_PATTERNS.find(p => p.statsName === evidence.pattern)
+    : undefined;
+  const href = trainerPattern
+    ? `${TRAINER_HREF}?pattern=${trainerPattern.value}`
+    : TRAINER_STATES.has(action.kind) ? TRAINER_HREF : MANAGEMENT_HREF;
+  const cta = trainerPattern && name ? t('dashboard.coach.train.cta_pattern', { pattern: name }) : t(copy.cta);
 
   return (
     <section
@@ -193,7 +201,6 @@ export function CoachingAction({ action, onRetryAnalysis }: CoachingActionProps)
       data-action={action.kind}
       aria-labelledby={headlineId}
     >
-      <p class="coach-eyebrow">{t('dashboard.coach.title')}</p>
       <h2 id={headlineId} class="coach-headline">{t(copy.headline)}</h2>
       <p class="coach-body">{bodyText(action)}</p>
 
@@ -213,7 +220,7 @@ export function CoachingAction({ action, onRetryAnalysis }: CoachingActionProps)
         {action.kind === 'analysis_failed' ? (
           <Button onClick={onRetryAnalysis}>{t(copy.cta)}</Button>
         ) : (
-          <a class={buttonClassName('primary', 'md')} href={href}>{t(copy.cta)}</a>
+          <a class={buttonClassName('primary', 'md')} href={href}>{cta}</a>
         )}
       </div>
 

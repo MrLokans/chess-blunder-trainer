@@ -39,11 +39,11 @@ class ThemeColors(BaseModel):
         default="#3A3A3A", description="Muted/secondary text color"
     )
     heatmap_empty: HexColor = Field(default="#E8E4DB", description="Heatmap empty cell")
-    heatmap_l1: HexColor = Field(default="#B8D9CA", description="Heatmap level 1 (low)")
-    heatmap_l2: HexColor = Field(default="#5BAA7D", description="Heatmap level 2")
-    heatmap_l3: HexColor = Field(default="#2D8F3E", description="Heatmap level 3")
+    heatmap_l1: HexColor = Field(default="#BFB9AC", description="Heatmap level 1 (low)")
+    heatmap_l2: HexColor = Field(default="#8F8A7E", description="Heatmap level 2")
+    heatmap_l3: HexColor = Field(default="#57534A", description="Heatmap level 3")
     heatmap_l4: HexColor = Field(
-        default="#1A6B2A", description="Heatmap level 4 (high)"
+        default="#1A1A1A", description="Heatmap level 4 (high)"
     )
 
 
@@ -161,10 +161,10 @@ DEFAULT_THEME = frozendict(
         "text": "#1A1A1A",
         "text_muted": "#3A3A3A",
         "heatmap_empty": "#E8E4DB",
-        "heatmap_l1": "#B8D9CA",
-        "heatmap_l2": "#5BAA7D",
-        "heatmap_l3": "#2D8F3E",
-        "heatmap_l4": "#1A6B2A",
+        "heatmap_l1": "#BFB9AC",
+        "heatmap_l2": "#8F8A7E",
+        "heatmap_l3": "#57534A",
+        "heatmap_l4": "#1A1A1A",
     }
 )
 
@@ -190,11 +190,11 @@ THEME_PRESETS = frozendict(
                 "bg_card": "#EFF6F2",
                 "text": "#0A1628",
                 "text_muted": "#3A5060",
-                "heatmap_empty": "#D6E8E0",
-                "heatmap_l1": "#7DD3C0",
-                "heatmap_l2": "#2A9D8F",
-                "heatmap_l3": "#1A7A6E",
-                "heatmap_l4": "#0F5A52",
+                "heatmap_empty": "#E0E7E4",
+                "heatmap_l1": "#B1B9BB",
+                "heatmap_l2": "#7F888F",
+                "heatmap_l3": "#45505C",
+                "heatmap_l4": "#0A1628",
             },
         },
         "forest": {
@@ -212,11 +212,11 @@ THEME_PRESETS = frozendict(
                 "bg_card": "#F5F2ED",
                 "text": "#1B2E20",
                 "text_muted": "#4A5E4A",
-                "heatmap_empty": "#D8E8DC",
-                "heatmap_l1": "#95D5B2",
-                "heatmap_l2": "#52B788",
-                "heatmap_l3": "#2D6A4F",
-                "heatmap_l4": "#1B4332",
+                "heatmap_empty": "#E6E5DF",
+                "heatmap_l1": "#BABDB6",
+                "heatmap_l2": "#8A9289",
+                "heatmap_l3": "#536055",
+                "heatmap_l4": "#1B2E20",
             },
         },
         "sunset": {

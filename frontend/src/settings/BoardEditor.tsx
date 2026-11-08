@@ -60,7 +60,7 @@ export function BoardEditor({ pieceSets, colorPresets, settings, onChange }: Boa
 
   return (
     <>
-      <h2 class="settings-section-title">{t('settings.board.title')}</h2>
+      <h2>{t('settings.board.title')}</h2>
       <p class="help-text mb-4">{t('settings.board.description')}</p>
 
       <div class="board-preview-container">

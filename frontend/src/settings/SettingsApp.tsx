@@ -156,7 +156,7 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
       <Alert type={message?.type ?? 'success'} message={message?.text ?? null} />
 
       <form onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }}>
-        <h2 class="settings-section-title">{t('settings.locale.label')}</h2>
+        <h2>{t('settings.locale.label')}</h2>
         <div class="form-group">
           <label for="settingsLocale">{t('settings.locale.label')}</label>
           <select
@@ -173,7 +173,7 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
 
         <hr class="section-divider" />
 
-        <h2 class="settings-section-title mb-2">{t('settings.features.title')}</h2>
+        <h2 class="mb-2">{t('settings.features.title')}</h2>
         <p class="help-text mb-4">{t('settings.features.subtitle')}</p>
 
         <FeatureToggles
@@ -202,7 +202,7 @@ function SettingsForm({ init, bundle }: SettingsFormProps) {
 
         <hr class="section-divider" />
 
-        <h2 class="settings-section-title">{t('settings.theme.title')}</h2>
+        <h2>{t('settings.theme.title')}</h2>
         <p class="help-text mb-4">{t('settings.theme.description')}</p>
         <ThemeModeControl
           mode={themeMode}

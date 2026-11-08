@@ -149,16 +149,8 @@
 }
 
 .toolbar-icon {
-  width: 1em;
-  height: 1em;
-}
-
-.blunder-info {
-  background: var(--error-bg);
-  border: none;
-  border-left: 4px solid var(--error);
-  border-radius: 0;
-  padding: var(--s-md);
+  width: 18px;
+  height: 18px;
 }
 
 .blunder-move {
@@ -1046,7 +1038,6 @@
   text-align: center;
   background: var(--surface-raised);
   border: 3px solid var(--border-strong);
-  border-left: 6px solid var(--success);
 }
 
 .inbox-zero-card p {

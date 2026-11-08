@@ -1,18 +1,11 @@
 import type { FiltersAPI } from '../hooks/useFilters';
 import { useFeature } from '../../hooks/useFeature';
-import { GAME_TYPES, GAME_PHASES, DIFFICULTIES } from '../../shared/constants';
+import { GAME_TYPES, GAME_PHASES, DIFFICULTIES, TACTICAL_PATTERNS } from '../../shared/constants';
 import { Button } from '../../components/primitives/Button';
 
 interface FiltersPanelProps {
   filters: FiltersAPI;
 }
-const TACTICAL_PATTERNS = [
-  { value: 'fork', key: 'trainer.filters.tactical_fork' },
-  { value: 'pin', key: 'trainer.filters.tactical_pin' },
-  { value: 'hanging_piece', key: 'trainer.filters.tactical_hanging' },
-  { value: 'skewer', key: 'trainer.filters.tactical_skewer' },
-  { value: 'discovered_attack', key: 'trainer.filters.tactical_discovery' },
-] as const;
 
 function CheckboxGroup({ items, selected, onChange, labelPrefix }: {
   items: readonly string[];

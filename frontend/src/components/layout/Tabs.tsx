@@ -22,6 +22,8 @@ export function Tabs<K extends string = string>({
   children,
 }: TabsProps<K>) {
   const groupId = useId();
+  const tabId = (key: K) => `${groupId}-tab-${key}`;
+  const panelId = (key: K) => `${groupId}-panel-${key}`;
 
   const moveFocusTo = useCallback((startIndex: number, dir: 1 | -1) => {
     if (tabs.length === 0) return;
@@ -31,12 +33,14 @@ export function Tabs<K extends string = string>({
         const tab = tabs[pos];
         if (tab && !tab.disabled) {
           onChange(tab.key);
+          document.getElementById(tabId(tab.key))?.focus();
           return;
         }
         pos = (pos + dir + tabs.length) % tabs.length;
       }
     };
     tryFrom((startIndex + dir + tabs.length) % tabs.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tabId only closes over groupId, which useId keeps stable
   }, [tabs, onChange]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent, currentIndex: number) => {
@@ -54,9 +58,6 @@ export function Tabs<K extends string = string>({
       moveFocusTo(tabs.length, -1);
     }
   }, [tabs, moveFocusTo]);
-
-  const tabId = (key: K) => `${groupId}-tab-${key}`;
-  const panelId = (key: K) => `${groupId}-panel-${key}`;
 
   return (
     <div class="tabs">

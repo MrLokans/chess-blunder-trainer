@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'preact/hooks';
+import { useState, useCallback, useRef } from 'preact/hooks';
 import { GAME_TYPES, GAME_PHASES, DIFFICULTIES } from '../../shared/constants';
 import { STORAGE_KEYS } from '../../shared/storage-keys';
 import { loadFromStorage } from '../../hooks/useFilterPersistence';
@@ -42,6 +42,7 @@ export interface FiltersAPI {
   setGameTypes: (types: string[]) => void;
   setDifficulties: (diffs: string[]) => void;
   setTacticalPattern: (pattern: string | null) => void;
+  focusTacticalPattern: (pattern: string) => void;
   setColor: (color: string) => void;
   setShowArrows: (enabled: boolean) => void;
   setShowThreats: (enabled: boolean) => void;
@@ -68,35 +69,64 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
     }
   }, []);
 
+  // After a deep link, the first drawer edit saves the whole filter set the user sees, not one field over the hidden saved ones.
+  const focusedPatternRef = useRef<string | null>(null);
+  const save = useCallback((key: string, value: unknown) => {
+    const focused = focusedPatternRef.current;
+    if (focused !== null) {
+      focusedPatternRef.current = null;
+      persist(SK.phases, DEFAULT_PHASES);
+      persist(SK.gameTypes, DEFAULT_GAME_TYPES);
+      persist(SK.difficulties, DEFAULT_DIFFICULTIES);
+      persist(SK.tactical, focused);
+      persist(SK.color, 'both');
+    }
+    persist(key, value);
+  }, [persist]);
+
   const setPhases = useCallback((phases: string[]) => {
     setState(s => ({ ...s, phases }));
-    persist(SK.phases, phases);
+    save(SK.phases, phases);
     onFilterChange();
-  }, [persist, onFilterChange]);
+  }, [save, onFilterChange]);
 
   const setGameTypes = useCallback((types: string[]) => {
     setState(s => ({ ...s, gameTypes: types }));
-    persist(SK.gameTypes, types);
+    save(SK.gameTypes, types);
     onFilterChange();
-  }, [persist, onFilterChange]);
+  }, [save, onFilterChange]);
 
   const setDifficulties = useCallback((diffs: string[]) => {
     setState(s => ({ ...s, difficulties: diffs }));
-    persist(SK.difficulties, diffs);
+    save(SK.difficulties, diffs);
     onFilterChange();
-  }, [persist, onFilterChange]);
+  }, [save, onFilterChange]);
 
   const setTacticalPattern = useCallback((pattern: string | null) => {
     setState(s => ({ ...s, tacticalPattern: pattern }));
-    persist(SK.tactical, pattern ?? '');
+    save(SK.tactical, pattern ?? '');
     onFilterChange();
-  }, [persist, onFilterChange]);
+  }, [save, onFilterChange]);
+
+  // A deep link shows every blunder of the pattern, so saved filters are set aside for this visit and kept in storage.
+  const focusTacticalPattern = useCallback((pattern: string) => {
+    setState(s => ({
+      ...s,
+      phases: DEFAULT_PHASES,
+      gameTypes: DEFAULT_GAME_TYPES,
+      difficulties: DEFAULT_DIFFICULTIES,
+      tacticalPattern: pattern,
+      color: 'both',
+    }));
+    focusedPatternRef.current = pattern;
+    onFilterChange();
+  }, [onFilterChange]);
 
   const setColor = useCallback((color: string) => {
     setState(s => ({ ...s, color }));
-    persist(SK.color, color);
+    save(SK.color, color);
     onFilterChange();
-  }, [persist, onFilterChange]);
+  }, [save, onFilterChange]);
 
   const setShowArrows = useCallback((enabled: boolean) => {
     setState(s => ({ ...s, showArrows: enabled }));
@@ -129,6 +159,7 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
   }, [state.phases, state.gameTypes, state.difficulties, state.tacticalPattern, state.color]);
 
   const clearAllFilters = useCallback(() => {
+    focusedPatternRef.current = null;
     setState(s => ({
       ...s,
       phases: DEFAULT_PHASES,
@@ -147,7 +178,7 @@ export function useFilters(onFilterChange: () => void): FiltersAPI {
 
   return {
     state, getFilterParams, clearAllFilters,
-    setPhases, setGameTypes, setDifficulties, setTacticalPattern, setColor,
+    setPhases, setGameTypes, setDifficulties, setTacticalPattern, focusTacticalPattern, setColor,
     setShowArrows, setShowThreats,
   };
 }

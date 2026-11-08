@@ -10,6 +10,7 @@ import { debounce } from '../shared/debounce';
 import type { ExternalJobStatus } from '../components/data/JobCard';
 import type { Profile } from '../types/profiles';
 import { DangerSection } from './DangerSection';
+import { GameBreakdownTable } from './GameBreakdownTable';
 
 interface ManagementInit {
   demoMode: boolean;
@@ -39,8 +40,8 @@ function renderEngineStatus(status: EngineStatus) {
     return (
       <div>
         <div class="engine-status-row">
-          <span class="status-dot status-dot--success" />
-          <span class="text-success font-semibold">{t('management.engine.available')}</span>
+          <span class="status-dot status-dot--ok" />
+          <span class="font-semibold">{t('management.engine.available')}</span>
         </div>
         <table class="engine-details">
           <tr>
@@ -68,6 +69,17 @@ function renderEngineStatus(status: EngineStatus) {
         {t('management.engine.install_hint')}
       </p>
     </div>
+  );
+}
+
+function LibrarySection({ refreshKey }: { refreshKey: number }) {
+  const state = useAsyncData(() => client.stats.gameBreakdown(), [refreshKey]);
+  return (
+    <Section title={t('dashboard.chart.game_breakdown')}>
+      <AsyncBoundary state={state}>
+        {(data) => <GameBreakdownTable items={data.items} />}
+      </AsyncBoundary>
+    </Section>
   );
 }
 
@@ -228,6 +240,10 @@ export function ManagementApp({ demoMode }: ManagementInit) {
 
       <hr class="section-divider" />
 
+      <LibrarySection refreshKey={jobsRefreshKey} />
+
+      <hr class="section-divider" />
+
       <Section title={t('management.analysis.title')}>
         <p class="section-description mb-4">{t('management.analysis.pending_desc')}</p>
         {!demoMode && (
@@ -259,6 +275,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
             failedPrefix={t('management.backfill_phases.failed', { error: '' })}
             externalStatus={backfillStatus}
             startLabel={t('management.backfill_phases.start')}
+            startVariant="secondary"
           />
         )}
       </section>
@@ -278,6 +295,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
               failedPrefix={t('management.backfill_eco.failed', { error: '' })}
               externalStatus={ecoBackfillStatus}
               startLabel={t('management.backfill_eco.start')}
+              startVariant="secondary"
             />
             <JobCard
               fetchStatus={() => client.backfill.ecoStatus()}
@@ -287,6 +305,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
               failedPrefix={t('management.backfill_eco.failed', { error: '' })}
               externalStatus={ecoBackfillStatus}
               startLabel={t('management.backfill_eco.force_start')}
+              startVariant="danger"
             />
           </div>
         )}
@@ -306,6 +325,7 @@ export function ManagementApp({ demoMode }: ManagementInit) {
             failedPrefix={t('management.backfill_traps.failed', { error: '' })}
             externalStatus={trapsBackfillStatus}
             startLabel={t('management.backfill_traps.start')}
+            startVariant="secondary"
           />
         )}
       </section>

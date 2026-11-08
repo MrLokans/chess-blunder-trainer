@@ -144,6 +144,15 @@ class TestGetBlundersByColor:
         assert colors["white"]["game_count"] == 1
         assert colors["white"]["blunders_per_game"] == 1.0
 
+    async def test_game_with_several_blunders_counts_once(self, stats_repo):
+        await _seed_blunder_game(stats_repo, game_id="g1", blunder_ply=5)
+        await insert_test_move(stats_repo, "g1", 9, 0, classification=3, cp_loss=400)
+        result = await stats_repo.get_blunders_by_color()
+        white = next(c for c in result["by_color"] if c["color"] == "white")
+        assert white["count"] == 2
+        assert white["game_count"] == 1
+        assert white["blunders_per_game"] == 2.0
+
     async def test_rate_includes_clean_analyzed_games(self, stats_repo):
         await _seed_blunder_game(stats_repo, game_id="g1")
         await insert_test_game(stats_repo, "g2", "testuser", "testuser", "opp")

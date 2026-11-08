@@ -45,15 +45,20 @@ h1, h2, h3, h4 {
 
 h1 {
   font-size: var(--text-xl);
-  letter-spacing: var(--ls-wide);
-  text-transform: uppercase;
   margin-bottom: var(--s-lg);
 }
 
+.page-title {
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
 h2 {
-  font-size: var(--text-lg);
-  letter-spacing: var(--ls-tight);
-  text-transform: uppercase;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
   margin-bottom: var(--s-md);
 }
 
@@ -364,7 +369,7 @@ input[type="checkbox"] {
 .section-divider {
   margin: var(--s-xl) 0;
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 3px solid var(--border-strong);
 }
 
 /* ==========================================================================
@@ -413,7 +418,7 @@ tr:hover td {
   padding: var(--s-sm) var(--s-md);
   margin-bottom: var(--s-sm);
   border-radius: 0;
-  border-left: 3px solid;
+  border: 2px solid;
   font-size: var(--text-sm);
   font-family: var(--font-sans);
 }
@@ -425,7 +430,7 @@ tr:hover td {
   font-family: var(--font-sans);
   margin-bottom: var(--s-md);
   display: none;
-  border-left: 4px solid;
+  border: 2px solid;
 }
 
 .alert.visible,
@@ -436,26 +441,26 @@ tr:hover td {
 .alert-success,
 .message.success {
   background: var(--success-bg);
-  border-left-color: var(--success-border);
+  border-color: var(--success-border);
   color: var(--text);
 }
 
 .alert-error,
 .message.error {
   background: var(--error-bg);
-  border-left-color: var(--error-border);
+  border-color: var(--error-border);
   color: var(--text);
 }
 
 .alert-warning {
   background: var(--warning-bg);
-  border-left-color: var(--warning-border);
+  border-color: var(--warning-border);
   color: var(--text);
 }
 
 .alert-info {
   background: var(--info-bg);
-  border-left-color: var(--info-border);
+  border-color: var(--info-border);
   color: var(--text);
 }
 
@@ -520,77 +525,6 @@ tr:hover td {
   font-weight: 400;
   color: var(--text-muted);
   margin-top: var(--s-xs);
-}
-
-/* ==========================================================================
-   Stat Cards
-   ========================================================================== */
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--s-md);
-  margin-bottom: var(--s-lg);
-}
-
-.stat-card {
-  background: var(--surface-raised);
-  border: 2px solid var(--border-card);
-  border-radius: 0;
-  padding: var(--s-lg);
-  box-shadow: none;
-}
-
-.stat-label {
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: var(--ls-normal);
-  color: var(--text-secondary);
-  margin-bottom: var(--s-sm);
-}
-
-.stat-value {
-  font-family: var(--font-ui);
-  font-size: var(--text-xl);
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1;
-}
-
-.stat-value.success {
-  color: var(--success);
-}
-
-.stat-value.error {
-  color: var(--error);
-}
-
-.stat-delta {
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  margin-top: var(--s-sm);
-}
-
-.stat-delta--up {
-  color: var(--success);
-}
-
-.stat-delta--down {
-  color: var(--error);
-}
-
-.stat-delta--flat {
-  color: var(--text-muted);
-}
-
-.stat-hint {
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  margin-top: var(--s-sm);
 }
 
 /* ==========================================================================
@@ -799,7 +733,7 @@ kbd {
 }
 
 .danger-title { color: var(--error); }
-.table-placeholder { text-align: center; color: var(--text-muted); }
+.table-placeholder { text-align: left; color: var(--text-muted); }
 .table-scroll { overflow-x: auto; }
 .progress-fill.danger { background: var(--error); }
 
@@ -1135,9 +1069,7 @@ body:has(.demo-banner) {
 .empty-state-title {
   font-family: var(--font-ui);
   font-size: var(--text-xl);
-  font-weight: 700;
-  letter-spacing: var(--ls-wide);
-  text-transform: uppercase;
+  font-weight: 600;
   color: var(--text);
   margin: 0 0 var(--s-sm) 0;
 }
@@ -1304,7 +1236,7 @@ body:has(.demo-banner) {
   vertical-align: middle;
 }
 
-.status-dot--success { background: var(--success); }
+.status-dot--ok { background: var(--text); }
 .status-dot--error { background: var(--error); }
 
 .engine-status-row {
@@ -1326,6 +1258,7 @@ body:has(.demo-banner) {
 
 .engine-details td:first-child {
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 /* Nav review-queue badge */

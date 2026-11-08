@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Button } from '../components/primitives/Button';
+import { Button, buttonClassName } from '../components/primitives/Button';
 import type { DatePreset } from './types';
 import { GAME_TYPES, GAME_PHASES } from '../shared/constants';
 
@@ -109,7 +109,7 @@ export function DashboardFilters({
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </button>
-        {hasActiveFilters && <button type="button" class="filter-bar-clear" onClick={clearAll}>{t('dashboard.filter.clear_all')}</button>}
+        <button type="button" class={`${buttonClassName('secondary', 'sm')} filter-bar-clear${hasActiveFilters ? '' : ' is-idle'}`} onClick={clearAll}>{t('dashboard.filter.clear_all')}</button>
       </div>
 
       <div id="dashboard-filter-body" class={`filter-bar-body${collapsed ? ' collapsed' : ''}`}>

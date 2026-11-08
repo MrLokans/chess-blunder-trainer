@@ -4,19 +4,19 @@ interface BreakdownSectionProps {
   title: string;
   description: string;
   helpButton?: ComponentChildren;
-  scopeNote?: string;
+  wide?: boolean;
+  id?: string;
   children: ComponentChildren;
 }
 
-export function BreakdownSection({ title, description, helpButton, scopeNote, children }: BreakdownSectionProps) {
+export function BreakdownSection({ title, description, helpButton, wide = false, id, children }: BreakdownSectionProps) {
   return (
-    <div class="chart-container">
-      <div class="chart-title">
+    <div id={id} class={`chart-container${wide ? ' chart-container--wide' : ''}`}>
+      <h3 class="chart-title">
         {title}
         {helpButton}
-      </div>
+      </h3>
       <p class="chart-description">{description}</p>
-      {scopeNote && <p class="dashboard-scope-note">{scopeNote}</p>}
       {children}
     </div>
   );

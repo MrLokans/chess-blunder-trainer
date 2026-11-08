@@ -38,9 +38,9 @@
   --surface-sunken: light-dark(var(--warm-gray), #100F0B);
   --surface-hover: light-dark(var(--mid-gray-light), #353226);
   --surface-inverse: light-dark(var(--black), #F5F2EB);
-  --selection-surface: light-dark(var(--black), var(--surface-hover));
-  --selection-text: light-dark(var(--white), var(--text));
-  --selection-border: light-dark(var(--black), var(--accent));
+  --selection-surface: light-dark(var(--black), #F5F2EB);
+  --selection-text: light-dark(var(--white), #16150F);
+  --selection-border: light-dark(var(--black), #F5F2EB);
   --text: light-dark(var(--user-text, var(--black)), #F5F2EB);
   --text-secondary: light-dark(var(--dark-gray), #D5D0C5);
   --text-muted: light-dark(var(--user-text-muted, var(--mid-gray)), #B8B4AB);
@@ -82,7 +82,6 @@
   --focus-ring-error: 0 0 0 2px var(--surface), 0 0 0 4px var(--error-border);
   --modal-backdrop: light-dark(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7));
   --elevation-shadow: 0 4px 20px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.5));
-  --shadow-card: 0 2px 12px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.35));
   --eval-white-advantage-fill: light-dark(rgba(255, 255, 255, 0.55), rgba(245, 242, 235, 0.30));
   --eval-black-fill: light-dark(var(--black), #3A362B);
   --eval-black-advantage-fill: light-dark(rgba(26, 26, 26, 0.10), #3A362B);
@@ -109,42 +108,17 @@
   --color-phase-endgame: light-dark(var(--user-phase-endgame, var(--dark-gray)), #B8B4AB);
   --color-phase-unknown: var(--mid-gray);
 
-  /* Tactical Pattern Colors */
-  --color-tactic-fork: light-dark(#ef4444, #EF6E6E);
-  --color-tactic-pin: light-dark(var(--mid-gray-light), #8C8778);
-  --color-tactic-skewer: light-dark(#06b6d4, #4FC3D9);
-  --color-tactic-discovered: light-dark(#f59e0b, #EFB457);
-  --color-tactic-hanging: light-dark(#ec4899, #E877B0);
-  --color-tactic-back-rank: light-dark(#10b981, #45C492);
-  --color-tactic-other: light-dark(#6b7280, #959BAA);
-
   /* Dashboard accessibility colors */
   --color-dashboard-positive: light-dark(#176B2B, #6DD97D);
   --color-dashboard-info: light-dark(#164E9A, #A9C6FF);
   --color-dashboard-caution: light-dark(#7A5200, #F5CE59);
   --color-dashboard-negative: light-dark(#B42318, #FF9B94);
-  --color-dashboard-tactic-fork: light-dark(#B91C1C, #EF6E6E);
-  --color-dashboard-tactic-pin: light-dark(#57534E, #B8B4AB);
-  --color-dashboard-tactic-skewer: light-dark(#086B7A, #4FC3D9);
-  --color-dashboard-tactic-discovered: light-dark(#9A5700, #EFB457);
-  --color-dashboard-tactic-hanging: light-dark(#A51B5D, #E877B0);
-  --color-dashboard-tactic-back-rank: light-dark(#087755, #45C492);
-  --color-dashboard-tactic-trapped: light-dark(#6D28D9, #A78BFA);
-  --color-dashboard-tactic-other: light-dark(#4B5563, #959BAA);
 
   /* Difficulty Colors */
   --color-diff-easy: light-dark(var(--blue), #8AA1E0);
   --color-diff-medium: light-dark(#8A4F00, #EFB457);
   --color-diff-hard: light-dark(#B42318, #EF6E6E);
   --color-diff-unscored: light-dark(#4B5563, #959BAA);
-
-  /* Game Type Colors */
-  --color-gametype-ultrabullet: light-dark(var(--dark-gray), #B8B4AB);
-  --color-gametype-bullet: light-dark(#B42318, #EF6E6E);
-  --color-gametype-blitz: light-dark(#7A5200, #F5CE59);
-  --color-gametype-rapid: light-dark(var(--blue), #8AA1E0);
-  --color-gametype-classical: light-dark(#176B2B, #4FB05F);
-  --color-gametype-correspondence: light-dark(#57534E, #959BAA);
 
   /* Focus ring */
   --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring-color);
@@ -230,22 +204,21 @@
   --preview-board-light: #f0d9b5;
   --preview-board-dark: #b58863;
 
-  /* Activity heatmap (GitHub-style green ramp) */
-  --heatmap-empty-future: light-dark(#d5d0c5, #211F18);
-  --heatmap-empty: light-dark(var(--user-heatmap-empty, #d5d0c5), #2B291F);
-  --heatmap-l1: light-dark(var(--user-heatmap-l1, #9be9a8), #1D5728);
-  --heatmap-l2: light-dark(var(--user-heatmap-l2, #40c463), #28773A);
-  --heatmap-l3: light-dark(var(--user-heatmap-l3, #30a14e), #2E913F);
-  --heatmap-l4: light-dark(var(--user-heatmap-l4, #216e39), #43B556);
+  /* Activity heatmap (ink ramp; green stays reserved for "better") */
+  --heatmap-empty-future: light-dark(#EFECE4, #211F18);
+  --heatmap-empty: light-dark(var(--user-heatmap-empty, #E8E4DB), #2B291F);
+  --heatmap-l1: light-dark(var(--user-heatmap-l1, #BFB9AC), #4A473D);
+  --heatmap-l2: light-dark(var(--user-heatmap-l2, #8F8A7E), #77735F);
+  --heatmap-l3: light-dark(var(--user-heatmap-l3, #57534A), #ADA898);
+  --heatmap-l4: light-dark(var(--user-heatmap-l4, #1A1A1A), #F5F2EB);
 
-  /* Vim-input overlay (dark terminal palette) */
-  --vim-prefix: #888;
-  --vim-text: #e8e8e8;
-  --vim-caret: #7ec8e3;
-  --vim-placeholder: #555;
-  --vim-suggestion: #999;
-  --vim-suggestion-hover: #ccc;
-  --vim-error: #e74c3c;
+  /* Vim-input overlay: an ink strip in both modes, so its accents are the dark-mode ones */
+  --vim-bg: var(--black);
+  --vim-text: var(--white);
+  --vim-muted: var(--mid-gray-light);
+  --vim-placeholder: #8C8778;
+  --vim-caret: #8AA1E0;
+  --vim-error: #E38585;
 }
 
 :root,

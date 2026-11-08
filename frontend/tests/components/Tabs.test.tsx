@@ -1,4 +1,5 @@
 import { describe, test, expect, vi } from 'vitest';
+import { useState } from 'preact/hooks';
 import { render, screen } from '@testing-library/preact';
 import userEvent from '@testing-library/user-event';
 import { Tabs, type TabDescriptor } from '../../src/components/layout/Tabs';
@@ -50,6 +51,20 @@ describe('Tabs', () => {
     screen.getByRole('tab', { name: /Overview/ }).focus();
     await user.keyboard('{ArrowRight}');
     expect(onChange).toHaveBeenCalledWith('preferences');
+  });
+
+  test('arrow keys carry focus along, so repeated presses keep moving', async () => {
+    function Controlled() {
+      const [value, setValue] = useState<TabKey>('overview');
+      return <Tabs tabs={TABS} value={value} onChange={setValue} />;
+    }
+    const user = userEvent.setup();
+    render(<Controlled />);
+    screen.getByRole('tab', { name: /Overview/ }).focus();
+    await user.keyboard('{ArrowRight}{ArrowRight}');
+    const history = screen.getByRole('tab', { name: /History/ });
+    expect(history.getAttribute('aria-selected')).toBe('true');
+    expect(document.activeElement).toBe(history);
   });
 
   test('ArrowLeft wraps to last tab', async () => {

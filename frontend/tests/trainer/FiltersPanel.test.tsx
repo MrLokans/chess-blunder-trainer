@@ -22,6 +22,7 @@ function makeFilters(overrides?: Partial<FiltersAPI>): FiltersAPI {
     setGameTypes: vi.fn(),
     setDifficulties: vi.fn(),
     setTacticalPattern: vi.fn(),
+    focusTacticalPattern: vi.fn(),
     setColor: vi.fn(),
     setShowArrows: vi.fn(),
     setShowThreats: vi.fn(),

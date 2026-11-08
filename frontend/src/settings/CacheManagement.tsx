@@ -24,7 +24,7 @@ export function CacheManagement() {
   return (
     <section data-section="cache">
       <hr class="section-divider" />
-      <h2 class="settings-section-title">{t('settings.cache.title')}</h2>
+      <h2>{t('settings.cache.title')}</h2>
       <p class="help-text mb-4">{t('settings.cache.description')}</p>
       <Alert type={message?.type ?? 'success'} message={message?.text ?? null} />
       <Button

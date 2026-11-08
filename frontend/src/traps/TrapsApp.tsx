@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { client } from '../shared/api';
 import { useAsyncData } from '../hooks/useAsyncData';
-import { StatCard } from '../components/data/StatCard';
 import { AsyncBoundary } from '../components/feedback/AsyncBoundary';
 import { EmptyState } from '../components/layout/EmptyState';
 import { PageHeader } from '../components/layout/PageHeader';
@@ -186,12 +185,12 @@ function Summary({ summary, catalog }: SummaryProps) {
 
   return (
     <>
-      <div class="stats-grid">
-        <StatCard label={t('traps.times_fell')} value={summary.total_sprung} />
-        <StatCard label={t('traps.times_entered')} value={summary.total_entered} />
-        <StatCard label={t('traps.times_executed')} value={summary.total_executed} />
-        <StatCard label={t('traps.games_involved')} value={summary.games_with_traps} />
-      </div>
+      <p class="traps-status">
+        <span>{t('traps.times_fell', { count: formatNumber(summary.total_sprung) })}</span>
+        <span>{t('traps.times_entered', { count: formatNumber(summary.total_entered) })}</span>
+        <span>{t('traps.times_executed', { count: formatNumber(summary.total_executed) })}</span>
+        <span>{t('traps.games_involved', { count: formatNumber(summary.games_with_traps) })}</span>
+      </p>
       {summary.top_traps && summary.top_traps.length > 0 && (
         <div class="top-traps">
           <span class="top-traps-label">{t('traps.most_common')}:</span>{' '}
@@ -263,9 +262,9 @@ function TrapsView({ data }: TrapsViewProps) {
                 >
                   <td>{s.name}</td>
                   <td><Badge>{t(`traps.category.${s.category}`) || s.category}</Badge></td>
-                  <td class="count-entered">{s.entered}</td>
-                  <td class="count-sprung">{s.sprung}</td>
-                  <td class="count-executed">{s.executed}</td>
+                  <td>{s.entered}</td>
+                  <td class={s.sprung > 0 ? 'count-sprung' : undefined}>{s.sprung}</td>
+                  <td class={s.executed > 0 ? 'count-executed' : undefined}>{s.executed}</td>
                   <td>{s.last_seen ? formatDate(s.last_seen, { year: 'numeric', month: '2-digit', day: '2-digit' }) : '-'}</td>
                 </tr>
               ))
@@ -305,7 +304,7 @@ export function TrapsApp() {
     <AsyncBoundary
       state={state}
       isEmpty={(data) => data.stats.length === 0}
-      empty={<EmptyState title={t('traps.title')} message={t('traps.no_data')} />}
+      empty={<EmptyState message={t('traps.no_data')} />}
     >
       {(data) => <TrapsView data={data} />}
     </AsyncBoundary>

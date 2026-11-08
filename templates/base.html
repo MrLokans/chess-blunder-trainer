@@ -65,7 +65,7 @@
   {% endblock %}
 
   <main class="container" id="main">
-    {% if self.page_heading()|trim %}<h1 class="sr-only">{% block page_heading %}{% endblock %}</h1>{% endif %}
+    {% if self.page_heading()|trim %}<h1 class="{% block page_heading_class %}sr-only{% endblock %}">{% block page_heading %}{% endblock %}</h1>{% endif %}
     {% block navigation %}{% endblock %}
 
     {% block content %}{% endblock %}

@@ -7,9 +7,7 @@ const allPageModules = [
   'import', 'setup', 'starred', 'traps', 'heatmap', 'growth', 'profiles',
 ];
 
-const restrictedImportPaths = [
-  { name: 'chart.js', message: 'Chart is a global from vendor. Use window.Chart.' },
-];
+const restrictedImportPaths: Array<{ name: string; message: string }> = [];
 const restrictedImportPatterns = [
   { group: ['node:*'], message: 'Node.js APIs not available in browser.' },
 ];

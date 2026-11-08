@@ -17,6 +17,7 @@ import { ResultCard, type UserAttempt } from './components/ResultCard';
 import { FiltersPanel, FilterSummary } from './components/FiltersPanel';
 import { Modal } from '../components/feedback/Modal';
 import { Button } from '../components/primitives/Button';
+import { TACTICAL_PATTERNS } from '../shared/constants';
 import { MoveActions } from './components/MoveActions';
 import { PuzzleTools } from './components/PuzzleTools';
 import { ShortcutsOverlay } from './components/ShortcutsOverlay';
@@ -48,6 +49,7 @@ function TrainerCore(): preact.JSX.Element {
 
   const hasPreMoveFeature = useFeature('trainer.pre_move');
   const srsEnabled = useFeature('trainer.srs');
+  const hasTacticalFilter = useFeature('trainer.filter.tactical');
   const reviewQueue = useReviewQueue(srsEnabled);
   const inReview = reviewQueue.session !== null;
   const [showInboxZero, setShowInboxZero] = useState(false);
@@ -92,7 +94,7 @@ function TrainerCore(): preact.JSX.Element {
   useEffect(() => {
     if (filterLoadRequest === 0) return;
     setUserAttempt(null);
-    void puzzleApi.loadPuzzle(filtersRef.current?.getFilterParams());
+    void puzzleApi.loadPuzzle(filtersRef.current?.getFilterParams(), { force: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per request; puzzleApi changes identity every render
   }, [filterLoadRequest]);
 
@@ -326,8 +328,15 @@ function TrainerCore(): preact.JSX.Element {
     const urlParams = new URLSearchParams(window.location.search);
     const deepGameId = urlParams.get('game_id');
     const deepPly = urlParams.get('ply');
+    const deepPattern = TACTICAL_PATTERNS.find(p => p.value === urlParams.get('pattern'))?.value;
     if (deepGameId && deepPly) {
       void puzzleApi.loadSpecificPuzzle(deepGameId, deepPly);
+    } else if (deepPattern && hasTacticalFilter) {
+      // The filter change schedules the first load, so the request already carries the pattern.
+      filtersApi.focusTacticalPattern(deepPattern);
+      urlParams.delete('pattern');
+      const query = urlParams.toString();
+      window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
     } else {
       void puzzleApi.loadPuzzle(filtersApi.getFilterParams());
     }

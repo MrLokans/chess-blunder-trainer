@@ -4,8 +4,7 @@
   left: 0;
   right: 0;
   height: 36px;
-  background: rgba(0, 0, 0, 0.88);
-  border-radius: 0 0 4px 4px;
+  background: var(--vim-bg);
   z-index: 10;
   display: none;
   align-items: center;
@@ -20,12 +19,14 @@
 .vim-input-prefix {
   font-family: monospace;
   font-size: 1rem;
-  color: var(--vim-prefix);
+  color: var(--vim-muted);
   user-select: none;
   line-height: 36px;
 }
 
-.vim-input-field {
+/* Outranks the global text-input rules, focus state included. */
+.vim-input-overlay input.vim-input-field,
+.vim-input-overlay input.vim-input-field:focus {
   flex: 1;
   background: transparent;
   border: none;
@@ -45,7 +46,7 @@
 .vim-input-error {
   font-family: monospace;
   font-size: 0.8rem;
-  color: var(--error, var(--vim-error));
+  color: var(--vim-error);
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.2s;
@@ -76,8 +77,7 @@
   flex-wrap: wrap;
   gap: 2px;
   padding: 6px 10px;
-  background: rgba(0, 0, 0, 0.92);
-  border-radius: 4px 4px 0 0;
+  background: var(--vim-bg);
   max-height: 120px;
   overflow-y: auto;
 }
@@ -89,9 +89,8 @@
 .vim-suggestion {
   font-family: monospace;
   font-size: 0.85rem;
-  color: var(--vim-suggestion);
+  color: var(--vim-muted);
   padding: 2px 8px;
-  border-radius: 3px;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.1s, color 0.1s;
@@ -103,13 +102,17 @@
 }
 
 .vim-suggestion:hover {
-  background: rgba(126, 200, 227, 0.15);
-  color: var(--vim-suggestion-hover);
+  color: var(--vim-text);
+  text-decoration: underline;
 }
 
 .vim-suggestion.selected {
-  background: rgba(126, 200, 227, 0.25);
-  color: var(--vim-text);
+  background: var(--vim-text);
+  color: var(--vim-bg);
+}
+
+.vim-suggestion.selected b {
+  color: inherit;
 }
 
 .vim-suggestion.more {
@@ -122,6 +125,6 @@
 @media (prefers-reduced-motion: reduce) {
   .vim-input-overlay.shake {
     animation: none;
-    outline: 2px solid var(--error);
+    outline: 2px solid var(--vim-error);
   }
 }

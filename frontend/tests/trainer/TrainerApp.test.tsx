@@ -43,6 +43,7 @@ vi.mock('../../src/shared/api', () => ({
 }));
 
 import { TrainerApp } from '../../src/trainer/TrainerApp';
+import { STORAGE_KEYS } from '../../src/shared/storage-keys';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -85,6 +86,51 @@ describe('TrainerApp', () => {
     });
   });
 
+  it('opens on the pattern named in the URL, loads once with it and cleans the URL', async () => {
+    const { client } = await import('../../src/shared/api');
+    localStorage.setItem(STORAGE_KEYS.trainerColor, 'white');
+    localStorage.setItem(STORAGE_KEYS.trainerPhases, JSON.stringify(['endgame']));
+    window.history.replaceState(null, '', '/?pattern=hanging_piece');
+    render(<TrainerApp />);
+    await waitFor(() => {
+      expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(1);
+    });
+    await new Promise((resolve) => { setTimeout(resolve, 50); });
+    expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(client.trainer.getPuzzle).mock.calls[0]?.[0]).toEqual({ tactical_patterns: ['hanging_piece'] });
+    expect(window.location.search).toBe('');
+    expect(localStorage.getItem(STORAGE_KEYS.trainerTactical) ?? '').toBe('');
+    expect(localStorage.getItem(STORAGE_KEYS.trainerColor)).toBe('white');
+    expect(localStorage.getItem(STORAGE_KEYS.trainerPhases)).toBe(JSON.stringify(['endgame']));
+    expect(screen.getByTestId('filter-summary').textContent).toBe('trainer.filters.tactical_hanging');
+  });
+
+  it('saves the filters shown after a deep link once the drawer changes one of them', async () => {
+    localStorage.setItem(STORAGE_KEYS.trainerColor, 'white');
+    localStorage.setItem(STORAGE_KEYS.trainerPhases, JSON.stringify(['endgame']));
+    window.history.replaceState(null, '', '/?pattern=hanging_piece');
+    render(<TrainerApp />);
+    fireEvent.click(await screen.findByTestId('change-filters'));
+    const dialog = await screen.findByRole('dialog', { name: 'trainer.filters.title' });
+    fireEvent.click(dialog.querySelectorAll<HTMLInputElement>('.game-type-filter input')[0] as HTMLInputElement);
+
+    expect(localStorage.getItem(STORAGE_KEYS.trainerTactical)).toBe('hanging_piece');
+    expect(localStorage.getItem(STORAGE_KEYS.trainerColor)).toBe('both');
+    expect(localStorage.getItem(STORAGE_KEYS.trainerPhases)).toBe(JSON.stringify(['opening', 'middlegame', 'endgame']));
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.trainerGameTypes) ?? '[]')).toHaveLength(3);
+  });
+
+  it('ignores an unknown pattern in the URL', async () => {
+    const { client } = await import('../../src/shared/api');
+    window.history.replaceState(null, '', '/?pattern=bogus');
+    render(<TrainerApp />);
+    await waitFor(() => {
+      expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(1);
+    });
+    expect(vi.mocked(client.trainer.getPuzzle).mock.calls[0]?.[0]).not.toHaveProperty('tactical_patterns');
+    window.history.replaceState(null, '', '/');
+  });
+
   it('loads one new puzzle when the filters drawer closes, not on every change', async () => {
     const { client } = await import('../../src/shared/api');
     render(<TrainerApp />);
@@ -97,8 +143,6 @@ describe('TrainerApp', () => {
     fireEvent.click(checkboxes[1] as HTMLInputElement);
     expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(callsBefore);
 
-    // loadPuzzle ignores calls within 500ms of the previous load.
-    await new Promise((resolve) => { setTimeout(resolve, 550); });
     fireEvent.click(screen.getByTestId('apply-filters'));
     await waitFor(() => {
       expect(client.trainer.getPuzzle).toHaveBeenCalledTimes(callsBefore + 1);
