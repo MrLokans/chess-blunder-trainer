@@ -224,13 +224,13 @@ nav a.active {
 .btn-primary {
   background: var(--warning);
   border: 2px solid var(--warning-border);
-  color: var(--text-on-accent);
+  color: var(--text-on-warning);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--warning-hover);
   border-color: var(--warning-hover);
-  color: var(--text-on-accent);
+  color: var(--text-on-warning);
 }
 
 /* Secondary (outlined) */
@@ -248,7 +248,7 @@ nav a.active {
 /* Success */
 .btn-success {
   background: var(--success);
-  color: var(--text-on-accent);
+  color: var(--text-on-success);
   border: 2px solid var(--success-border);
 }
 
@@ -334,11 +334,15 @@ select {
   transition: border-color 0.15s ease;
 }
 
+:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 2px;
+}
+
 input[type="text"]:focus,
 input[type="number"]:focus,
 input[type="date"]:focus,
 select:focus {
-  outline: none;
   border-color: var(--accent);
 }
 
@@ -602,6 +606,10 @@ tr:hover td {
   margin-bottom: var(--s-lg);
 }
 
+.chart-container:has(> table) {
+  overflow-x: auto;
+}
+
 .chart-title {
   font-family: var(--font-ui);
   font-size: var(--text-base);
@@ -667,10 +675,6 @@ tr:hover td {
   background: var(--selection-surface);
   border-color: var(--selection-border);
   color: var(--selection-text);
-}
-
-.filter-checkbox-label input[type="checkbox"] {
-  display: none;
 }
 
 /* ==========================================================================
@@ -909,6 +913,7 @@ body:has(.demo-banner) {
   text-transform: uppercase;
   color: var(--text);
   margin: 0;
+  line-height: 1.3;
 }
 
 .trainer-logo-icon {
@@ -1191,9 +1196,8 @@ body:has(.demo-banner) {
   user-select: none;
 }
 
-.chip-label input[type="checkbox"],
-.chip-label input[type="radio"] {
-  display: none;
+.chip-label:has(input:focus-visible) .chip {
+  box-shadow: var(--focus-ring);
 }
 
 .chip-label:has(input:checked) .chip {
@@ -1207,6 +1211,50 @@ body:has(.demo-banner) {
    ========================================================================== */
 
 .hidden { display: none !important; }
+
+.skip-link {
+  position: absolute;
+  top: var(--s-sm);
+  left: var(--s-sm);
+  z-index: 10000; /* above the fixed demo banner */
+  padding: var(--s-sm) var(--s-md);
+  background: var(--surface-inverse);
+  color: var(--text-inverse);
+  font-family: var(--font-ui);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+/* Hidden from sight but kept in the tab order and accessibility tree; styled labels draw the control. */
+.sr-only,
+.filter-checkbox-label input[type="checkbox"],
+.filter-radio-label input[type="radio"],
+.chip-label input[type="checkbox"],
+.chip-label input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.filter-checkbox-label,
+.filter-radio-label,
+.chip-label {
+  position: relative;
+}
+
+.filter-checkbox-label:has(input:focus-visible),
+.filter-radio-label input:focus-visible + .color-option {
+  box-shadow: var(--focus-ring);
+}
 .gap-sm { gap: var(--s-sm); }
 .gap-md { gap: var(--s-md); }
 .flex { display: flex; }
@@ -1239,17 +1287,13 @@ body:has(.demo-banner) {
   border: 2px solid var(--text-muted);
   border-top-color: transparent;
   border-radius: 50%;
-  animation: field-validation-spin 0.6s linear infinite;
+  animation: spin 0.6s linear infinite;
   margin-right: 6px;
   vertical-align: middle;
 }
 
 .field-validation.valid::before { content: '✓ '; }
 .field-validation.invalid::before { content: '✗ '; }
-
-@keyframes field-validation-spin {
-  to { transform: rotate(360deg); }
-}
 
 /* Status dot indicator */
 .status-dot {
@@ -1277,6 +1321,7 @@ body:has(.demo-banner) {
 .engine-details td {
   padding: var(--s-sm) var(--s-lg) var(--s-sm) var(--s-md);
   border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
 }
 
 .engine-details td:first-child {
@@ -1299,4 +1344,22 @@ body:has(.demo-banner) {
 
 .nav-badge[hidden] {
   display: none;
+}
+
+/* Touch screens: primary controls get at least a 44px hit area. */
+@media (pointer: coarse) {
+  .nav-hamburger {
+    width: 44px;
+    height: 44px;
+  }
+
+  .btn,
+  .filter-checkbox-label,
+  .chip-label .chip {
+    min-height: 44px;
+  }
+
+  .btn-sm {
+    min-width: 44px;
+  }
 }

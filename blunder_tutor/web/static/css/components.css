@@ -33,15 +33,11 @@
   border: 2px solid currentColor;
   border-right-color: transparent;
   border-radius: 50%;
-  animation: btn-spin 0.6s linear infinite;
+  animation: spin 0.6s linear infinite;
 }
 
 .btn__label {
   display: inline-block;
-}
-
-@keyframes btn-spin {
-  to { transform: rotate(360deg); }
 }
 
 /* --------------------------------------------------------------------------
@@ -67,7 +63,7 @@
 .badge--primary {
   background: var(--badge-primary);
   border-color: var(--badge-primary);
-  color: var(--text-on-accent);
+  color: var(--text-on-warning);
 }
 
 .badge--info {
@@ -538,6 +534,13 @@
 }
 
 .segmented__btn:focus-visible {
+  position: relative;
+  z-index: 1;
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+/* Modal moves focus to the dialog itself so screen readers announce it; that is not a user focus stop. */
+.modal:focus-visible {
+  outline: none;
 }

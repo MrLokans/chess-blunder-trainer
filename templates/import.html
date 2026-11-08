@@ -11,6 +11,8 @@
 {{ render_nav('import') }}
 {% endblock %}
 
+{% block page_heading %}{{ t('import.title') }}{% endblock %}
+
 {% block content %}
 {% include '_demo_banner.html' %}
 <div id="import-root" data-demo-mode="{{ demo_mode | tojson }}"></div>

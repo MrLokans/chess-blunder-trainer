@@ -1,10 +1,10 @@
 {# Server-rendered auth shell for static pages (e.g. the cap-reached
    signup_full). Dynamic forms use the Preact AuthCard component instead. #}
 {% macro auth_card(title) %}
-<div class="container">
+<main class="container" id="main">
   <div class="auth-card">
     <h1>{{ title }}</h1>
     {{ caller() }}
   </div>
-</div>
+</main>
 {% endmacro %}

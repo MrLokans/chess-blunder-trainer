@@ -42,10 +42,6 @@ vi.mock('../../src/shared/api', () => ({
   },
 }));
 
-vi.mock('../../src/hooks/useWebSocket', () => ({
-  useWebSocket: vi.fn(() => ({ on: vi.fn(() => vi.fn()) })),
-}));
-
 import { TrainerApp } from '../../src/trainer/TrainerApp';
 
 beforeEach(() => {
@@ -121,6 +117,9 @@ describe('TrainerApp', () => {
     await waitFor(() => {
       expect(client.trainer.submitMove).toHaveBeenCalledWith(expect.objectContaining({ move: 'e2e4' }));
     });
+    await waitFor(() => {
+      expect(screen.getByRole('status').textContent).not.toBe('');
+    });
   });
 
   it('opens shortcuts from the toolbar, not the action keys', async () => {
@@ -132,8 +131,21 @@ describe('TrainerApp', () => {
     expect(shortcutButton.className).toContain('btn-ghost');
     expect(container.querySelector('.panel-toolbar')).not.toBeNull();
     expect([...container.querySelectorAll('.action-keys kbd')].map((key) => key.textContent)).not.toContain('?');
-    await waitFor(() => {
-      expect(document.querySelector('#shortcutsOverlay')).not.toBeNull();
-    });
+    const dialog = await screen.findByRole('dialog', { name: 'trainer.shortcuts.title' });
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    expect(screen.getByRole('button', { name: 'common.close' })).not.toBeNull();
+  });
+
+  it('closes the shortcuts dialog with a single Escape and restores focus', async () => {
+    render(<TrainerApp />);
+    const shortcutButton = await screen.findByRole('button', { name: 'trainer.shortcuts.title' });
+    shortcutButton.focus();
+    fireEvent.click(shortcutButton);
+    await screen.findByRole('dialog');
+
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+
+    await waitFor(() => { expect(screen.queryByRole('dialog')).toBeNull(); });
+    expect(document.activeElement).toBe(shortcutButton);
   });
 });

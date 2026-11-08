@@ -33,8 +33,9 @@ export function SyncSettings({ settings, syncVisible, analyzeVisible, onChange }
         </div>
 
         <div class="form-group">
-          <label>{t('settings.sync_interval.label')}</label>
+          <label for="syncInterval">{t('settings.sync_interval.label')}</label>
           <select
+            id="syncInterval"
             value={String(settings.sync_interval)}
             onChange={(e) => { update('sync_interval', Number(e.currentTarget.value)); }}
           >

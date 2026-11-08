@@ -43,6 +43,33 @@ describe('VimInput', () => {
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
 
+  it('labels the field and ties an illegal-move error to it', () => {
+    render(<VimInput {...defaultProps} game={new Chess()} />);
+    const input = screen.getByRole('textbox', { name: 'trainer.shortcuts.type_move' });
+    expect(input.getAttribute('aria-invalid')).toBeNull();
+
+    fireEvent.input(input, { target: { value: 'Ke5' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    const error = screen.getByRole('alert');
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+    expect(input.getAttribute('aria-describedby')).toBe(error.id);
+  });
+
+  it('drops the illegal-move state when closed and reopened', () => {
+    const game = new Chess();
+    const { rerender } = render(<VimInput {...defaultProps} game={game} />);
+    const input = screen.getByRole('textbox');
+    fireEvent.input(input, { target: { value: 'Ke5' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(document.querySelector('.vim-input-overlay.shake')).not.toBeNull();
+
+    rerender(<VimInput {...defaultProps} visible={false} game={game} />);
+    rerender(<VimInput {...defaultProps} game={game} />);
+    expect(document.querySelector('.vim-input-overlay.shake')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('executes move on Enter', () => {
     const game = new Chess();
     render(<VimInput {...defaultProps} game={game} />);

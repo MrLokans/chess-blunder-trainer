@@ -13,6 +13,7 @@ import type {
   TrapStat, TrapSummary, TrapCatalogEntry,
   TrapDetail, TrapDetailData,
 } from '../types/api';
+import { scrollBehavior } from '../shared/motion';
 
 type TabKey = 'trap' | 'refutation';
 
@@ -82,7 +83,7 @@ function DetailPanel({ trapId, catalog, onClose }: DetailPanelProps) {
   useEffect(() => {
     const panel = document.getElementById('trapDetailPanel');
     if (panel && typeof panel.scrollIntoView === 'function') {
-      panel.scrollIntoView({ behavior: 'smooth' });
+      panel.scrollIntoView({ behavior: scrollBehavior() });
     }
   }, [trapId]);
 

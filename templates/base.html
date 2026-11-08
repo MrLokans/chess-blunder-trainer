@@ -2,6 +2,7 @@
 <html lang="{{ locale|default('en') }}">
 <head>
   <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
   <title>{% block title %}Blunder Tutor{% endblock %}</title>
@@ -27,9 +28,6 @@
   <script>window.__features = {{ features_json|default('{}')|safe }};</script>
   <script defer src="/static/js/srs-badge.js"></script>
 
-  <!-- HTMX for reactive components -->
-  <script src="/static/vendor/htmx-2.0.11.min.js"></script>
-
   <!-- Page-specific CSS -->
   {% block extra_css %}{% endblock %}
 
@@ -51,25 +49,27 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">{{ t('nav.skip_to_content') }}</a>
   {% block body %}
   {% include '_demo_banner.html' %}
   {% block header %}
   <header class="trainer-header">
     <div class="trainer-header-left">
-      <h1 class="trainer-logo">
+      <div class="trainer-logo">
         <span class="trainer-logo-icon"></span>
         Blunder Tutor
-      </h1>
+      </div>
     </div>
     {% block header_nav %}{% endblock %}
   </header>
   {% endblock %}
 
-  <div class="container">
+  <main class="container" id="main">
+    {% if self.page_heading()|trim %}<h1 class="sr-only">{% block page_heading %}{% endblock %}</h1>{% endif %}
     {% block navigation %}{% endblock %}
 
     {% block content %}{% endblock %}
-  </div>
+  </main>
   {% endblock %}
 
   <!-- Base JavaScript (jQuery for chessboard, if needed) -->

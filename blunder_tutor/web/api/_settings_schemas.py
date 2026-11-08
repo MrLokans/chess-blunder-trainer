@@ -20,7 +20,7 @@ def is_hex_color(value: str) -> bool:
 
 class ThemeColors(BaseModel):
     primary: HexColor = Field(default="#1A3A8F", description="Primary accent color")
-    success: HexColor = Field(default="#2D8F3E", description="Success/positive color")
+    success: HexColor = Field(default="#247A33", description="Success/positive color")
     error: HexColor = Field(default="#D42828", description="Error/danger color")
     warning: HexColor = Field(default="#F2C12E", description="Warning color")
     phase_opening: HexColor = Field(
@@ -150,7 +150,7 @@ class DeleteAllResponse(BaseModel):
 DEFAULT_THEME = frozendict(
     {
         "primary": "#1A3A8F",
-        "success": "#2D8F3E",
+        "success": "#247A33",
         "error": "#D42828",
         "warning": "#F2C12E",
         "phase_opening": "#1A3A8F",

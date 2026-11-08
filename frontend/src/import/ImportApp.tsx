@@ -75,6 +75,7 @@ export function ImportApp({ demoMode }: Props) {
           class="pgn-textarea"
           rows={14}
           placeholder={t('import.placeholder')}
+          aria-label={t('import.description')}
           value={pgn}
           onInput={(e) => { setPgn(e.currentTarget.value); }}
           disabled={analyzing}

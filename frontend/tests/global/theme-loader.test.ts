@@ -56,6 +56,51 @@ describe('theme loader', () => {
     expect(root.style.getPropertyValue('--user-success')).toBe('');
   });
 
+  it('derives readable on-fill text for custom warning and success colours', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }));
+    const { applyTheme, readableTextOn, removeTheme } = await import('../../src/global/theme-loader');
+
+    expect(readableTextOn('#F2C12E')).toBe('#1A1A1A');
+    expect(readableTextOn('#1A3A8F')).toBe('#F5F2EB');
+
+    applyTheme({ warning: '#F2C12E', success: '#176B2B' });
+    expect(root.style.getPropertyValue('--user-on-warning')).toBe('#1A1A1A');
+    expect(root.style.getPropertyValue('--user-on-success')).toBe('#F5F2EB');
+    removeTheme();
+    expect(root.style.getPropertyValue('--user-on-warning')).toBe('');
+  });
+
+  it.each([
+    ['success', '#7FD38A'], ['success', '#247A33'], ['warning', '#8A4F00'], ['warning', '#F2C12E'],
+  ] as const)('keeps %s button text readable on hover for %s', async (key, colour) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }));
+    const { applyTheme } = await import('../../src/global/theme-loader');
+    const channel = (hex: string, i: number): number => {
+      const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    };
+    const luminance = (hex: string): number =>
+      0.2126 * channel(hex, 1) + 0.7152 * channel(hex, 3) + 0.0722 * channel(hex, 5);
+    const ratio = (a: string, b: string): number => {
+      const [la, lb] = [luminance(a), luminance(b)];
+      return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+    };
+
+    applyTheme({ [key]: colour });
+    const text = root.style.getPropertyValue(`--user-on-${key}`);
+    const hover = root.style.getPropertyValue(`--user-${key}-hover`);
+    expect(ratio(text, colour)).toBeGreaterThanOrEqual(4.5);
+    expect(ratio(text, hover)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('keeps the focus ring visible on a custom page background', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }));
+    const { focusRingOn } = await import('../../src/global/theme-loader');
+
+    expect(focusRingOn('#F5F2EB')).toBe('#1A3A8F');
+    expect(focusRingOn('#123456')).toBe('#F5F2EB');
+  });
+
   it('discards invalid cached colors', async () => {
     localStorage.setItem('theme', JSON.stringify({ primary: 'blue' }));
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }));

@@ -11,6 +11,8 @@
 {{ render_nav('settings') }}
 {% endblock %}
 
+{% block page_heading %}{{ t('nav.settings') }}{% endblock %}
+
 {% block content %}
   {% include '_demo_banner.html' %}
   <script>

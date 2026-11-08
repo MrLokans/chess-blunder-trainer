@@ -68,6 +68,38 @@ export function adjustColor(hex: string, lightness: number | null, saturation?: 
   return `#${toHex(r2)}${toHex(g2)}${toHex(b2)}`;
 }
 
+const DARK_TEXT = '#1A1A1A';
+const LIGHT_TEXT = '#F5F2EB';
+
+function relativeLuminance(hex: string): number {
+  const channel = (i: number): number => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
+}
+
+const FOCUS_BLUE = '#1A3A8F';
+
+function contrastRatio(a: string, b: string): number {
+  const [la, lb] = [relativeLuminance(a), relativeLuminance(b)];
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+// Brand blue when it stays visible on the custom page background, otherwise the readable text colour.
+export function focusRingOn(surface: string): string {
+  return contrastRatio(FOCUS_BLUE, surface) >= 3 ? FOCUS_BLUE : readableTextOn(surface);
+}
+
+export function readableTextOn(fill: string): string {
+  const fillLum = relativeLuminance(fill);
+  const ratio = (text: string): number => {
+    const textLum = relativeLuminance(text);
+    return (Math.max(fillLum, textLum) + 0.05) / (Math.min(fillLum, textLum) + 0.05);
+  };
+  return ratio(DARK_TEXT) >= ratio(LIGHT_TEXT) ? DARK_TEXT : LIGHT_TEXT;
+}
+
 const USER_PROPERTIES: Record<keyof ThemeColors, string> = {
   primary: '--user-accent', success: '--user-success', error: '--user-error',
   warning: '--user-warning', phase_opening: '--user-phase-opening',
@@ -86,6 +118,8 @@ export function removeTheme(): void {
   for (const property of [
     '--user-accent-hover', '--user-success-bg', '--user-success-border',
     '--user-error-bg', '--user-error-border', '--user-warning-bg', '--user-warning-border',
+    '--user-on-warning', '--user-on-success', '--user-success-hover', '--user-warning-hover',
+    '--user-on-phase-middlegame', '--user-focus-ring',
   ]) {
     root.style.removeProperty(property);
   }
@@ -101,6 +135,12 @@ export function applyTheme(theme: ThemeColors): void {
     '--user-error-border': theme.error && adjustColor(theme.error, 50, 0.4),
     '--user-warning-bg': theme.warning && adjustColor(theme.warning, 85, 0.15),
     '--user-warning-border': theme.warning && adjustColor(theme.warning, 50, 0.4),
+    '--user-on-warning': theme.warning && readableTextOn(theme.warning),
+    '--user-on-success': theme.success && readableTextOn(theme.success),
+    '--user-success-hover': theme.success && adjustColor(theme.success, -8),
+    '--user-warning-hover': theme.warning && adjustColor(theme.warning, -8),
+    '--user-on-phase-middlegame': theme.phase_middlegame && readableTextOn(theme.phase_middlegame),
+    '--user-focus-ring': theme.bg && focusRingOn(theme.bg),
   };
 
   removeTheme();

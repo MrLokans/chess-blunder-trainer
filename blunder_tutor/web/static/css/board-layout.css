@@ -121,3 +121,9 @@
   padding: 2px 0;
   line-height: 1;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .eval-bar-fill {
+    transition: none;
+  }
+}

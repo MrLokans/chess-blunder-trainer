@@ -4,7 +4,7 @@
 {% block title %}{{ t('nav.dashboard') }} - Blunder Tutor{% endblock %}
 
 {% block extra_head %}
-<script src="/static/vendor/chart-4.6.1.umd.min.js"></script>
+<script defer src="/static/vendor/chart-4.6.1.umd.min.js"></script>
 {% endblock %}
 
 {% block extra_css %}
@@ -14,6 +14,8 @@
 {% block header_nav %}
 {{ render_nav('dashboard') }}
 {% endblock %}
+
+{% block page_heading %}{{ t('nav.dashboard') }}{% endblock %}
 
 {% block content %}
   <div id="dashboard-root"></div>

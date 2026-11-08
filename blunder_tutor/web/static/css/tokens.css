@@ -29,7 +29,7 @@
   --dark-gray: #3A3A3A;
 
   /* Semantic */
-  --correct: #2D8F3E;
+  --correct: #247A33;
 
   /* Themeable semantic tokens */
   --surface: light-dark(var(--user-surface, var(--white)), #16150F);
@@ -47,6 +47,10 @@
   --text-disabled: light-dark(var(--mid-gray-light), #706E68);
   --text-inverse: light-dark(var(--white), #16150F);
   --text-on-accent: light-dark(var(--white), #16150F);
+  /* On-fill text for user-customisable light fills; theme-loader derives --user-on-* by contrast. */
+  --text-on-warning: light-dark(var(--user-on-warning, var(--black)), #16150F);
+  --text-on-success: light-dark(var(--user-on-success, var(--white)), #16150F);
+  --text-on-phase-middlegame: light-dark(var(--user-on-phase-middlegame, var(--black)), #16150F);
   --text-on-eval-fill: var(--white);
   --border: light-dark(var(--mid-gray-light), #706E68);
   --border-subtle: light-dark(var(--warm-gray), #35322A);
@@ -59,10 +63,10 @@
   --accent: light-dark(var(--user-accent, var(--blue)), #8AA1E0);
   --accent-hover: light-dark(var(--user-accent-hover, #223FA8), #A1B4ED);
   --success: light-dark(var(--user-success, var(--correct)), #4FB05F);
-  --success-hover: light-dark(#247A33, #65C874);
+  --success-hover: light-dark(var(--user-success-hover, #176B2B), #65C874);
   --warning: light-dark(var(--user-warning, var(--yellow)), #F2C12E);
-  --warning-hover: light-dark(var(--yellow-hover), #FFD451);
-  --badge-primary: var(--yellow);
+  --warning-hover: light-dark(var(--user-warning-hover, var(--yellow-hover)), #FFD451);
+  --badge-primary: var(--warning);
   --error: light-dark(var(--user-error, var(--red)), #E38585);
   --error-hover: light-dark(var(--red-hover), #F09B9B);
   --info: light-dark(var(--blue), #8AA1E0);
@@ -74,8 +78,8 @@
   --error-border: light-dark(var(--user-error-border, var(--red)), #E38585);
   --info-bg: light-dark(rgba(26, 58, 143, 0.08), #1C2945);
   --info-border: light-dark(var(--blue), #8AA1E0);
-  --focus-ring-color: light-dark(rgba(26, 58, 143, 0.25), rgba(138, 161, 224, 0.6));
-  --focus-ring-error: 0 0 0 2px light-dark(var(--red-focus-ring), rgba(227, 133, 133, 0.6));
+  --focus-ring-color: light-dark(var(--user-focus-ring, var(--blue)), #8AA1E0);
+  --focus-ring-error: 0 0 0 2px var(--surface), 0 0 0 4px var(--error-border);
   --modal-backdrop: light-dark(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7));
   --elevation-shadow: 0 4px 20px light-dark(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.5));
   --shadow-card: 0 2px 12px light-dark(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.35));
@@ -98,7 +102,6 @@
   --yellow-hover: #E0B020;
   --red-hover: #B81E1E;
   --danger-hover: var(--error-hover);
-  --red-focus-ring: rgba(212, 40, 40, 0.25);
 
   /* Phase Colors */
   --color-phase-opening: light-dark(var(--user-phase-opening, var(--blue)), #8AA1E0);
@@ -131,20 +134,20 @@
 
   /* Difficulty Colors */
   --color-diff-easy: light-dark(var(--blue), #8AA1E0);
-  --color-diff-medium: light-dark(#f59e0b, #EFB457);
-  --color-diff-hard: light-dark(#ef4444, #EF6E6E);
-  --color-diff-unscored: light-dark(#6b7280, #959BAA);
+  --color-diff-medium: light-dark(#8A4F00, #EFB457);
+  --color-diff-hard: light-dark(#B42318, #EF6E6E);
+  --color-diff-unscored: light-dark(#4B5563, #959BAA);
 
   /* Game Type Colors */
-  --color-gametype-ultrabullet: var(--dark-gray);
-  --color-gametype-bullet: var(--red);
-  --color-gametype-blitz: #C4A826;
-  --color-gametype-rapid: var(--blue);
-  --color-gametype-classical: var(--correct);
-  --color-gametype-correspondence: var(--mid-gray-light);
+  --color-gametype-ultrabullet: light-dark(var(--dark-gray), #B8B4AB);
+  --color-gametype-bullet: light-dark(#B42318, #EF6E6E);
+  --color-gametype-blitz: light-dark(#7A5200, #F5CE59);
+  --color-gametype-rapid: light-dark(var(--blue), #8AA1E0);
+  --color-gametype-classical: light-dark(#176B2B, #4FB05F);
+  --color-gametype-correspondence: light-dark(#57534E, #959BAA);
 
   /* Focus ring */
-  --focus-ring: 0 0 0 2px var(--focus-ring-color);
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring-color);
 
   /* No shadows in Bauhaus */
   --shadow-sm: none;
@@ -159,17 +162,6 @@
   --s-lg: 24px;
   --s-xl: 32px;
   --s-2xl: 48px;
-
-  /* Legacy spacing aliases */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
 
   /* No border-radius — sharp corners everywhere */
   --radius-sm: 0;
@@ -230,7 +222,7 @@
   /* Highlight ring strokes — fixed primitives in light, lightened in dark so
      they read against the dimmed squares. */
   --board-ring-error: light-dark(#D42828, #E38585);
-  --board-ring-success: light-dark(#2D8F3E, #4FB05F);
+  --board-ring-success: light-dark(var(--correct), #4FB05F);
   --board-ring-warning: light-dark(#F2C12E, #F2C12E);
   --board-ring-accent: light-dark(#1A3A8F, #8AA1E0);
 

@@ -97,7 +97,7 @@
 
   .preset-card.active {
     border-color: var(--accent);
-    box-shadow: var(--focus-ring);
+    box-shadow: 0 0 0 2px var(--accent);
   }
 
   .preset-colors {
@@ -264,6 +264,7 @@
 
   .phase-pill.middlegame {
     background: var(--color-phase-middlegame);
+    color: var(--text-on-phase-middlegame);
   }
 
   .phase-pill.endgame {
@@ -273,6 +274,7 @@
   .preview-primary {
     background: var(--accent) !important;
     border-color: var(--accent) !important;
+    color: var(--text-on-accent);
   }
 
   .preview-success {
@@ -288,6 +290,7 @@
   /* Board styling */
   .board-preview-container {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--s-md);
     align-items: flex-start;
   }
@@ -325,12 +328,13 @@
   }
 
   .board-settings-controls {
-    flex: 1;
+    flex: 1 1 240px;
+    min-width: 0;
   }
 
   .piece-set-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
     gap: var(--s-sm);
     margin-bottom: var(--s-md);
   }
@@ -353,7 +357,7 @@
 
   .piece-set-card.active {
     border-color: var(--accent);
-    box-shadow: var(--focus-ring);
+    box-shadow: 0 0 0 2px var(--accent);
   }
 
   .board-color-presets {
@@ -382,7 +386,7 @@
 
   .board-color-preset.active {
     border-color: var(--accent);
-    box-shadow: var(--focus-ring);
+    box-shadow: 0 0 0 2px var(--accent);
   }
 
   .board-color-preset .light {
@@ -443,5 +447,13 @@
 
 .status.preview-warning {
   background: var(--warning-bg);
-  color: var(--warning);
+  border: 2px solid var(--warning-border);
+  color: var(--text);
+}
+
+@media (pointer: coarse) {
+  .feature-toggle-row,
+  .checkbox-label {
+    min-height: 44px;
+  }
 }

@@ -9,6 +9,7 @@
   overflow: hidden;
 }
 
+.trainer-page:has(.review-page) > main,
 #game-review-root {
   flex: 1;
   display: flex;
@@ -252,8 +253,15 @@
    ========================================================================== */
 
 @media (max-width: 768px) {
+  /* Phones scroll the page instead of squeezing board and panel into one fixed-height frame. */
+  .trainer-page:has(.review-page) {
+    height: auto;
+    overflow: visible;
+  }
+
   .review-main {
     grid-template-columns: 1fr;
+    overflow: visible;
   }
 
   .review-board-area {
@@ -452,4 +460,11 @@
 
 .engine-status-error {
   color: var(--error);
+}
+
+@media (pointer: coarse) {
+  .review-nav-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }

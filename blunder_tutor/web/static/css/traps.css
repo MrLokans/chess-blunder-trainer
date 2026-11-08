@@ -64,7 +64,7 @@
 }
 
 .traps-table .count-entered {
-  color: var(--warning);
+  color: var(--color-dashboard-caution);
 }
 
 .traps-table .count-executed {
@@ -152,7 +152,7 @@
 }
 
 .trap-game-item .match-type-entered {
-  color: var(--warning);
+  color: var(--color-dashboard-caution);
 }
 
 .trap-game-item .match-type-executed {

@@ -44,7 +44,7 @@
 
 @media (max-width: 1080px) {
   .trainer-main {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .trainer-panel {
@@ -55,11 +55,6 @@
   .trainer-board-area {
     padding: var(--s-lg);
   }
-
-  #board {
-    width: min(480px, calc(100vw - 80px)) !important;
-    height: min(480px, calc(100vw - 80px)) !important;
-  }
 }
 
 /* Context tags, eval bar, board wrapper — see board-layout.css */
@@ -68,6 +63,19 @@
   flex: 1;
   max-width: min(580px, calc(100vh - 240px));
   position: relative;
+}
+
+@media (max-width: 1080px) {
+  /* Width-driven on narrow screens; the height cap must not shrink the board to nothing in phone landscape. */
+  #boardWrapper {
+    min-width: 0;
+    max-width: min(480px, max(280px, calc(100dvh - 240px)));
+  }
+
+  /* 280px board + eval bar + gap */
+  .trainer-board-area .board-eval-wrapper {
+    max-width: min(620px, max(324px, calc(100dvh - 200px)));
+  }
 }
 
 #board {
@@ -113,6 +121,10 @@
   width: 0;
   height: 0;
   pointer-events: none;
+}
+
+.arrow-toggle input[type="checkbox"]:focus-visible + label {
+  box-shadow: var(--focus-ring);
 }
 
 .arrow-toggle label {
@@ -322,6 +334,7 @@
 .board-result-drag-handle {
   padding: var(--s-sm) 0;
   cursor: grab;
+  touch-action: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -561,7 +574,7 @@
 
 .result-banner.correct {
   background: var(--success);
-  color: var(--text-on-accent);
+  color: var(--text-on-success);
 }
 
 .result-banner.incorrect {
@@ -628,7 +641,7 @@
 
 .phase.explore {
   background: var(--success);
-  color: var(--text-on-accent);
+  color: var(--text-on-success);
 }
 
 /* ==========================================================================
@@ -869,10 +882,6 @@
   color: var(--text-inverse);
 }
 
-.filter-checkbox-label input[type="checkbox"] {
-  display: none;
-}
-
 .game-type-icon {
   font-size: var(--text-base);
   display: none;
@@ -885,10 +894,6 @@
   gap: var(--s-xs);
   cursor: pointer;
   user-select: none;
-}
-
-.filter-radio-label input[type="radio"] {
-  display: none;
 }
 
 .color-option {
@@ -1146,61 +1151,6 @@
 
 
 
-.shortcuts-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: var(--modal-backdrop);
-  z-index: 1000;
-  justify-content: center;
-  align-items: center;
-}
-
-.shortcuts-overlay.visible {
-  display: flex;
-}
-
-.shortcuts-modal {
-  background: var(--surface-overlay);
-  border: 3px solid var(--border-strong);
-  border-radius: 0;
-  padding: var(--s-xl);
-  min-width: 320px;
-  max-width: 380px;
-  box-shadow: none;
-}
-
-.shortcuts-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--s-md);
-}
-
-.shortcuts-header h3 {
-  margin: 0;
-  font-family: var(--font-ui);
-  font-size: var(--text-xs);
-  font-weight: 400;
-  letter-spacing: var(--ls-wide);
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.shortcuts-close {
-  background: none;
-  border: none;
-  font-size: var(--text-xl);
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 0 var(--s-xs);
-  line-height: 1;
-}
-
-.shortcuts-close:hover {
-  color: var(--text);
-}
-
 .shortcuts-table {
   width: 100%;
   border-collapse: collapse;
@@ -1345,4 +1295,30 @@
   margin-top: var(--s-md);
   color: var(--text-muted);
   font-size: var(--text-sm);
+}
+
+@media (pointer: coarse) {
+  .action-key {
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .tactical-filter-btn,
+  .panel-toolbar .btn-ghost {
+    min-height: 44px;
+  }
+
+  .color-option,
+  .arrow-toggle label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-result-card.visible,
+  .result-banner {
+    animation: none;
+  }
 }

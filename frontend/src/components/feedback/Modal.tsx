@@ -29,13 +29,16 @@ export function Modal({
   title,
   size = 'md',
   initialFocusRef,
-  closeLabel = 'Close',
+  closeLabel = t('common.close'),
   children,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
+  // Callers pass inline closures; reading them through a ref keeps re-renders from re-running the open effect.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -54,7 +57,7 @@ export function Modal({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab' || !node) return;
@@ -80,7 +83,7 @@ export function Modal({
       document.body.style.overflow = previousOverflow;
       previouslyFocusedRef.current?.focus();
     };
-  }, [open, onClose, initialFocusRef]);
+  }, [open, initialFocusRef]);
 
   if (!open) return null;
 

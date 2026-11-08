@@ -31,7 +31,7 @@ body {
   border: 3px solid var(--text-muted);
   border-top-color: var(--accent);
   border-radius: 50%;
-  animation: field-validation-spin 0.8s linear infinite;
+  animation: spin 0.8s linear infinite;
   margin: 24px auto 16px;
 }
 
