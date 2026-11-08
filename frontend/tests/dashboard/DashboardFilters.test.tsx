@@ -70,6 +70,14 @@ describe('DashboardFilters', () => {
     expect(onGameTypesChange).toHaveBeenCalledWith(['blitz', 'rapid', 'classical']);
   });
 
+  test('marks clear all idle when filters are at their defaults', () => {
+    const { rerender } = render(<DashboardFilters {...defaultProps} />);
+    const clear = screen.getByRole('button', { name: t('dashboard.filter.clear_all') });
+    expect(clear.classList.contains('is-idle')).toBe(true);
+    rerender(<DashboardFilters {...defaultProps} gamePhases={['endgame']} />);
+    expect(clear.classList.contains('is-idle')).toBe(false);
+  });
+
   test('shows and clears non-default filters', async () => {
     const onClearDate = vi.fn();
     const onGameTypesChange = vi.fn();

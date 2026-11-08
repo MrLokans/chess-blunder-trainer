@@ -659,6 +659,9 @@
 
   .filter-bar-clear { flex-shrink: 0; }
 
+  /* Kept in layout so the header height doesn't jump when a filter turns on. */
+  .filter-bar-clear.is-idle { visibility: hidden; }
+
   .filter-bar-title {
     display: flex;
     align-items: center;
@@ -689,6 +692,7 @@
   @media (max-width: 480px) {
     .filter-bar-header { align-items: flex-start; flex-wrap: wrap; }
     .filter-bar-toggle { flex-basis: 100%; flex-wrap: wrap; }
+    .filter-bar-clear.is-idle { display: none; }
     .filter-bar-summary { flex-basis: calc(100% - 24px); }
   }
 
